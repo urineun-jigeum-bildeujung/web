@@ -51,6 +51,7 @@
 - 4의 배수가 아닌 px(예: `158px`)는 먼저 디자인 의도를 의심한다. 가까운 스케일 값으로 맞출 수 있으면 맞춘다.
 - 스케일로 표현할 수 없는 값이 정말 필요하면 임의 값을 쓰되, 같은 값이 반복되면 그건 토큰이 되어야 한다는 신호다. `@theme`에 올린다.
 - 이 규칙은 길이(width·height·padding·margin·gap 등)에 적용된다. `text-[0.9em]` 같은 비율 값은 대상이 아니다.
+- ESLint의 `tailwindcss/no-unnecessary-arbitrary-value`가 이 규칙을 자동으로 잡고 `--fix`로 교정한다. 클래스 오타(`no-custom-classname`)와 상충 클래스(`no-contradicting-classname`)도 함께 검사된다.
 
 ## shadcn 컴포넌트
 

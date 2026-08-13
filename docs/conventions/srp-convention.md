@@ -17,6 +17,8 @@
 
 바깥에서는 `index.ts`가 노출한 것만 import한다. 슬라이스 내부 파일을 깊게 참조하지 않는다.
 
+의존 방향과 공개 API 규칙은 ESLint(`boundaries/dependencies`)가 강제한다. `views`·`widgets`·`features`·`entities`는 `index.ts(x)`로만 들어갈 수 있고, `shared`는 세그먼트 직접 import를 허용한다. lint 에러가 나면 규칙을 우회하지 말고 구조를 고친다.
+
 ## 이 코드 어디 두지
 
 | 대상 | 위치 |
