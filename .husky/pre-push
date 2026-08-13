@@ -1,0 +1,37 @@
+# main·dev의 이력을 되감는 push를 막는다. 상세는 docs/conventions/git-convention.md.
+#
+# rebase 전략에서 사고가 나는 지점은 하나다 — 이미 공유된 이력을 다시 쓰는 것.
+# 기능 브랜치는 혼자 쓰므로 force push해도 되지만, main·dev는 모두가 붙어 있어
+# 되감는 순간 다른 사람의 로컬과 어긋난다.
+
+zero='0000000000000000000000000000000000000000'
+
+while read -r _local_ref local_oid remote_ref remote_oid; do
+  # 보호 대상이 아니면 통과
+  case "$remote_ref" in
+    refs/heads/main | refs/heads/dev) ;;
+    *) continue ;;
+  esac
+
+  # 브랜치 삭제
+  if [ "$local_oid" = "$zero" ]; then
+    echo ""
+    echo "$remote_ref 삭제를 막았습니다. 통합 브랜치는 지우지 않습니다."
+    exit 1
+  fi
+
+  # 새 브랜치 생성이면 되감을 이력이 없다
+  [ "$remote_oid" = "$zero" ] && continue
+
+  # 원격 커밋이 로컬 이력에 없으면 되감기(force push)다
+  if ! git merge-base --is-ancestor "$remote_oid" "$local_oid" 2>/dev/null; then
+    echo ""
+    echo "$remote_ref 로의 force push를 막았습니다."
+    echo "원격에 있는 커밋이 지금 push하려는 이력에 없습니다."
+    echo ""
+    echo "- 남의 작업을 덮어쓰는 상황일 수 있습니다. git fetch 후 확인하십시오."
+    echo "- 이미 올라간 커밋을 되돌리려면 git revert로 새 커밋을 쌓으십시오."
+    echo "- rebase는 자기 기능 브랜치에서만 합니다. main·dev는 되감지 않습니다."
+    exit 1
+  fi
+done

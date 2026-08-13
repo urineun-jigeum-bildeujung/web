@@ -135,6 +135,7 @@
 - 형식은 `유형(#이슈번호): 내용`이고 한글로 씁니다. 상세는 [git-convention](./docs/conventions/git-convention.md)을 따릅니다.
 - **AI가 작성한 커밋에 AI 표기를 남기지 마십시오.** `Co-Authored-By`, `Generated with`, 🤖 같은 트레일러나 서명을 넣지 않습니다. 저자는 로그인된 Git 계정 하나로만 남고, 사람이 쓴 커밋과 구분하지 않습니다. `git commit --author`로 저자를 바꾸지도 않습니다.
 - 푸시는 사용자가 명시적으로 요청·허락할 때만 합니다.
+- **`main`·`dev`를 rebase하거나 force push하지 마십시오.** 기능 브랜치를 최신 `dev`에 맞출 때만 rebase하고, 그때도 `--force`가 아니라 `--force-with-lease`를 씁니다. 상세는 [git-convention](./docs/conventions/git-convention.md)의 "rebase에서 꼬이는 지점"을 따릅니다.
 
 ---
 

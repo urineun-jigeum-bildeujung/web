@@ -44,8 +44,9 @@
 
 - **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
 - **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
+- **pre-push** — `main`·`dev`의 이력을 되감는 force push와 브랜치 삭제만 막는다. 기능 브랜치는 자유롭다.
 
-push는 막지 않는다. 작업 중인 브랜치에는 아직 조립되지 않은 슬라이스가 정상적으로 존재하므로, 미사용 코드 검사는 병합 시점(CI)에서 한다.
+미사용 코드(knip)나 테스트로 push를 막지는 않는다. 작업 중인 브랜치에는 아직 조립되지 않은 슬라이스가 정상적으로 존재하므로, 그 검사는 병합 시점(CI)에서 한다.
 
 ### CI
 
@@ -83,7 +84,52 @@ push는 막지 않는다. 작업 중인 브랜치에는 아직 조립되지 않�
 
 ### 머지
 
-**rebase 머지만 사용한다.** repo 설정에서 squash·merge commit을 비활성화한다. 기능 브랜치는 CI 통과 후 `dev`로 rebase 머지하고 브랜치를 삭제한다. 히스토리를 선형으로 유지한다.
+**rebase 머지만 사용한다.** repo 설정에서 squash·merge commit을 비활성화한다. 기능 브랜치는 CI 통과 후 `dev`로 rebase 머지하고 브랜치를 삭제한다(머지 후 자동 삭제 설정됨). 히스토리를 선형으로 유지한다.
+
+GitHub의 "Rebase and merge" 버튼은 PR의 커밋들을 base 브랜치 위에 다시 얹는다. 커밋 SHA가 새로 생기지만 머지 커밋이 없어 히스토리가 한 줄로 남는다.
+
+## rebase에서 꼬이는 지점
+
+rebase 자체는 위험하지 않다. **이미 공유된 이력을 다시 쓸 때만** 문제가 된다. 아래 셋만 지키면 꼬이지 않는다.
+
+### 1. 기능 브랜치는 1인 1브랜치
+
+**한 브랜치를 두 사람이 쓰지 않는다.** 내가 rebase하고 force push하는 순간, 같은 브랜치를 받아둔 사람의 로컬 이력과 어긋난다. 같이 봐야 하면 브랜치를 나누고 각자 PR을 올린다.
+
+### 2. `git pull`이 머지 커밋을 만들지 않게 한다
+
+기능 브랜치에서 `git pull`을 그냥 하면 머지 커밋이 생기고, 그 상태로 PR을 올리면 rebase 머지가 거부되거나 이력이 지저분해진다.
+
+`npm install`이 저장소 로컬 설정으로 `pull.rebase=true`를 걸어두므로 별도 조치는 필요 없다. 확인하려면 아래를 본다.
+
+```bash
+git config pull.rebase
+```
+
+### 3. `dev`가 앞서가면 merge가 아니라 rebase로 따라간다
+
+```bash
+git fetch origin
+git rebase origin/dev
+git push --force-with-lease
+```
+
+- `git merge dev`를 쓰지 않는다. 머지 커밋이 생긴다.
+- rebase 후에는 이력이 다시 쓰였으므로 force push가 필요하다. **`--force`가 아니라 `--force-with-lease`를 쓴다.** 내가 마지막으로 받아본 뒤 원격이 바뀌었으면 거부되므로, 남의 커밋을 덮어쓰는 사고를 막는다.
+- 충돌이 나면 `git rebase --continue`로 진행하고, 꼬였다 싶으면 `git rebase --abort`로 되돌린 뒤 다시 시작한다.
+
+### 절대 하지 않는 것
+
+- **`main`·`dev`를 rebase하지 않는다.** 통합 브랜치의 이력은 모두가 공유한다.
+- **`main`·`dev`에 force push하지 않는다.** `pre-push` 훅이 막지만, 훅은 우회 가능하므로 규칙으로도 지킨다.
+- 이미 올라간 커밋을 되돌려야 하면 이력을 되감지 말고 `git revert`로 새 커밋을 쌓는다.
+
+### 로컬 훅이 막는 것
+
+`.husky/pre-push`가 `main`·`dev`에 대해서만 아래를 차단한다. 기능 브랜치의 force push는 정상 작업이므로 막지 않는다.
+
+- 원격 이력을 되감는 force push
+- 브랜치 삭제
 
 ## 줄바꿈
 
