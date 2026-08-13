@@ -27,8 +27,13 @@
 ```
 entities/
 └── pet/
-    ├── ui/      # PetCard 등 표현 컴포넌트
-    ├── model/   # 타입, 순수 로직
-    ├── api/     # 조회 훅 (use-query-*)
-    └── index.ts
+    ├── ui/         # PetCard 등 표현 컴포넌트
+    ├── model/      # 타입, 순수 로직
+    ├── api/        # 조회 훅 (use-query-*)
+    ├── index.ts
+    └── README.md   # 슬라이스 역할과 파일 설명
 ```
+
+## 현재 슬라이스
+
+아직 없다. 백엔드 API 계약이 정해지면 반려동물·상품·구독부터 만든다.

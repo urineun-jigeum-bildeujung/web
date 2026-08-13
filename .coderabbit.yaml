@@ -25,10 +25,12 @@ reviews:
       instructions: >-
         shadcn CLI가 생성하고 소유하는 파일이다. CLI 재실행이 아닌 손수정이
         들어왔다면 사유를 확인하고, 접근성 속성(ARIA·포커스)을 제거하는 변경은 막는다.
-    - path: src/views/**
+    - path: src/**
       instructions: >-
-        새 페이지 슬라이스에는 README.md가 함께 추가되어야 한다. 템플릿은
-        src/views/README.md의 "페이지 README" 절을 따른다.
+        새 슬라이스나 shared 세그먼트에는 README.md가 함께 추가되어야 하고,
+        파일이 추가·삭제됐으면 해당 폴더 README의 파일 표도 갱신되어야 한다.
+        새 슬라이스면 레이어 README의 "현재 슬라이스" 표에도 올라가야 한다.
+        세그먼트 내부(ui·model·api)에는 README를 만들지 않는다.
     - path: e2e/**
       instructions: >-
         테스트가 유저 플로우 단위인지, CSS 셀렉터 대신 role·label 기반 셀렉터를

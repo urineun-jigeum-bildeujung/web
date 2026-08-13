@@ -23,3 +23,7 @@
 `features` · `entities` · `shared`를 import할 수 있다. `views`와 `app`은 import하지 않는다.
 
 같은 레이어의 다른 widget도 import하지 않는다.
+
+## 현재 슬라이스
+
+아직 없다. 첫 슬라이스는 `/new-slice widgets <이름>`으로 만든다.

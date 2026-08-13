@@ -27,8 +27,15 @@
 ```
 features/
 └── write-review/
-    ├── ui/      # 폼 컴포넌트
-    ├── model/   # 타입, zod 스키마, 상태
-    ├── api/     # mutation 훅
-    └── index.ts
+    ├── ui/         # 폼 컴포넌트
+    ├── model/      # 타입, zod 스키마, 상태
+    ├── api/        # mutation 훅
+    ├── index.ts
+    └── README.md   # 슬라이스 역할과 파일 설명
 ```
+
+## 현재 슬라이스
+
+| 슬라이스 | 설명 |
+| --- | --- |
+| `toggle-theme` | 다크 모드 토글 버튼 (디자인 확정 전 데모) |

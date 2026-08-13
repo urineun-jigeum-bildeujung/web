@@ -203,7 +203,9 @@ src/
 
 새 슬라이스를 만들 때 세그먼트는 `ui` · `model` · `api` · `lib` · `config`를 사용합니다. shadcn 컴포넌트는 `components.json`의 alias 설정에 따라 `src/shared/ui/`에 자동으로 추가됩니다.
 
-**페이지를 만들면 그 views 슬라이스에 `README.md`를 함께 만드십시오.** 라우트(`app/**/page.tsx`)를 추가할 때 대응하는 `views/<슬라이스>/README.md`에 화면의 역할·라우트·조립 블록·상태를 기록합니다. 템플릿은 `src/views/README.md`의 "페이지 README" 절을 따릅니다.
+**폴더에는 그 안의 파일을 설명하는 `README.md`를 둡니다.** 슬라이스와 `shared` 세그먼트까지가 대상이고, 세그먼트 내부(`ui/`·`model/`·`api/`)에는 만들지 않습니다. 파일을 추가·삭제하면 README의 파일 표도 함께 갱신하고, 새 슬라이스면 레이어 README의 "현재 슬라이스" 표에도 올립니다. 상세는 [code-convention](./docs/conventions/code-convention.md)의 "폴더 README" 절을 따릅니다.
+
+**루트 `README.md`는 예외입니다.** 프로젝트 소개 문서이므로 파일 설명이나 진행 상황을 넣지 마십시오.
 
 의존 방향과 슬라이스 공개 API는 ESLint(`boundaries/dependencies`)가 강제합니다. lint 에러가 나면 규칙을 우회하지 말고 구조를 고치십시오.
 
