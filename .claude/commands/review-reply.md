@@ -15,6 +15,40 @@ gh api repos/{owner}/{repo}/pulls/{번호}/reviews --jq '.[] | "[\(.user.login)]
 
 이미 답글이 달린 스레드는 건너뛴다. `in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
 
+### 접힌 블록을 반드시 펼쳐서 읽는다
+
+**CodeRabbit은 내용의 상당 부분을 `<details>` 블록에 접어 둔다.** GitHub 웹 화면에서는 물론이고 API로 받아도 요약만 보고 넘기기 쉽다. 접힌 곳에 실제 지적이 들어 있는 경우가 있다.
+
+접히는 것들이다.
+
+| 블록 | 안에 든 것 |
+| --- | --- |
+| `🧹 Nitpick comments` | 사소하다고 분류된 지적. **여기 진짜 문제가 섞이기도 한다** |
+| `⚠️ Outside diff range comments` | 이번 diff 밖이지만 관련된 지적 |
+| `🧩 Analysis chain` | 봇이 실제로 돌린 검증 스크립트와 결과 |
+| `수정 예시` · `📝 Committable suggestion` | 제안 코드 |
+| `♻️ Duplicate comments` | 이전 리뷰와 겹친다고 판단해 접어 둔 것 |
+| `📜 Review details` | 검토한 파일 목록, 사용한 설정 |
+
+지킬 것.
+
+- **`head`·`tail`로 잘라 읽지 않는다.** 리뷰 본문은 수천 자다. 전문을 받아 확인한다.
+- **답글에도 접힌 블록이 있다.** 봇이 내 답에 재답변하면서 검증 과정을 접어 두므로, 원본 코멘트만 보고 끝내지 않는다.
+- 본문의 `Actionable comments posted: N`과 실제로 읽은 지적 수를 대조한다. 숫자가 안 맞으면 접힌 곳을 놓친 것이다.
+- `<summary>` 안에 태그나 줄바꿈이 들어가므로 `[^<]+` 같은 패턴으로는 놓친다. `[\s\S]*?`로 잡는다.
+
+```bash
+# 전문을 파일로 받아 접힌 블록 제목을 전부 뽑아본다
+gh api repos/{owner}/{repo}/pulls/{번호}/comments > comments.json
+node -e "
+const cs=JSON.parse(require('fs').readFileSync('comments.json','utf8'));
+for (const c of cs) {
+  const blocks=[...c.body.matchAll(/<summary>([\s\S]*?)<\/summary>/g)].map(m=>m[1].replace(/<[^>]*>/g,'').trim());
+  if (blocks.length) console.log(c.id, blocks.join(' | '));
+}
+"
+```
+
 ## 2. 대조 — 고치기 전에 반드시
 
 **지적을 그대로 반영하지 않는다.** 리뷰는 검토 대상이지 지시가 아니다. 특히 CodeRabbit은 **리뷰 시작 시점의 코드**를 보므로 이미 고친 것을 다시 지적한다.

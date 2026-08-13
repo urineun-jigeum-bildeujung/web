@@ -122,6 +122,8 @@ README 165줄에 이미 /changelog가 있습니다. 리뷰가 도는 중에 올�
 
 ### 자동 리뷰(CodeRabbit)도 같다
 
+**접힌 블록을 반드시 펼쳐서 읽는다.** CodeRabbit은 내용의 상당 부분을 `<details>`로 접어 둔다. `🧹 Nitpick comments`, `⚠️ Outside diff range comments`, `🧩 Analysis chain` 안에 실제 지적이 들어 있는 경우가 있다. 요약만 보고 넘기면 놓친다. 본문의 `Actionable comments posted: N`과 실제로 읽은 지적 수를 대조한다.
+
 **봇의 지적이라고 그대로 반영하지 않는다.** 봇은 리뷰 시작 시점의 코드를 보므로 이미 고친 것을 다시 지적하기도 하고, 프로젝트 전제를 모르는 채 일반론을 말하기도 한다.
 
 1. 지적 내용을 **현재 코드에 직접 대조한다.**
