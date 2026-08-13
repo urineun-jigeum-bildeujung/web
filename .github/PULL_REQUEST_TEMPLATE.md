@@ -23,6 +23,8 @@ Closes #
 
 ## 체크리스트
 
+- [ ] `CHANGELOG.md`의 `[Unreleased]`에 이번 작업 기록 (기록할 가치가 없으면 사유 명시)
+- [ ] PR에 분류 라벨 부착 (릴리스 노트 그룹이 된다)
 - [ ] `npm run typecheck` 통과
 - [ ] `npm run build` 통과 (또는 단순 UI/CSS 조정이라 생략 — 사유 명시)
 - [ ] FSD 의존 방향 준수 (상위 → 하위 단방향, 같은 레이어 간 참조 없음)

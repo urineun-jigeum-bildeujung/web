@@ -1,0 +1,33 @@
+# 변경 이력
+
+이 프로젝트의 주요 변경을 기록합니다. 형식은 [Keep a Changelog](https://keepachangelog.com/ko/1.1.0/)를 따릅니다.
+
+작성 규칙은 [git-convention](./docs/conventions/git-convention.md)의 "변경 이력 기록" 절을 봅니다.
+
+## [Unreleased]
+
+### 추가
+
+- 초기 세팅 안내 홈 화면과 다크 모드 데모 토글
+- TanStack Query Provider 배선 (`shared/providers`)
+
+### 변경
+
+- 홈 화면을 create-next-app 템플릿에서 서비스 소개 자리 표시 화면으로 교체
+
+### 제거
+
+- PR 동작 확인용으로 넣었던 임시 주석 (#1)
+
+### 개발 환경
+
+- 프론트엔드 스택 설치 — Next.js 16, React 19, Tailwind v4, shadcn/ui, TanStack Query, Zustand, react-hook-form, zod, date-fns, Recharts
+- Feature-Sliced Design 폴더 구조와 레이어·슬라이스별 README
+- 컨벤션 문서 7종 (`docs/conventions`)
+- Prettier·LF 줄바꿈·에디터 공용 설정
+- ESLint 컨벤션 강제 — FSD 레이어 경계, Tailwind 클래스, 파일·폴더 네이밍, import 위치
+- 테스트 환경 — Vitest 단위 테스트, Playwright E2E
+- GitHub Actions CI — typecheck·format·lint·test·build·E2E
+- husky 로컬 훅 — pre-commit 린트·포맷, commit-msg 형식 검사, pre-push 이력 보호
+- GitHub 이슈·PR 템플릿, CodeRabbit 리뷰 설정
+- Claude Code 하네스 (`.claude`) — 슬래시 커맨드 4종, code-reviewer 에이전트, 알림 훅
