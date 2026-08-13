@@ -167,7 +167,8 @@
 | 린트 | eslint-plugin-boundaries | 7.2.0 | FSD 의존 방향·공개 API 강제 |
 | 린트 | eslint-plugin-tailwindcss | 4.2.0 | 임의 값·클래스 오타·상충 검사 |
 | 린트 | eslint-plugin-check-file | 3.3.2 | 파일·폴더 kebab-case 강제 |
-| 훅 | husky / lint-staged | 9.1.7 / 17.3.0 | pre-commit 린트·포맷, commit-msg 형식 검사 |
+| 훅 | husky / lint-staged | 9.1.7 / 17.3.0 | pre-commit 린트·포맷, commit-msg 형식, pre-push knip |
+| 미사용 코드 | knip | 6.32.2 | 죽은 파일·export·의존성 탐지 |
 
 **`react-is` 오버라이드는 제거하지 마십시오.** `package.json`의 `overrides`가 `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다.
 

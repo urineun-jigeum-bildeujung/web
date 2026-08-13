@@ -32,6 +32,7 @@
 
 - **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
 - **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
+- **pre-push** — `knip`으로 미사용 파일·export·의존성을 검사한다(약 10초). 죽은 코드가 있으면 push가 막힌다.
 
 ### 저자 표기
 

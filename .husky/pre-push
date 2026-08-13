@@ -1,0 +1,11 @@
+# push 전 죽은 코드 검사. 상세 규칙은 docs/conventions/validation-convention.md.
+echo "knip으로 미사용 파일·export·의존성을 검사합니다..."
+
+if ! npx knip; then
+  echo ""
+  echo "미사용 코드가 발견되어 push를 중단합니다."
+  echo "- 실제로 쓰는데 잡혔다면 knip.jsonc의 entry 또는 ignore를 조정하십시오."
+  echo "- 아직 안 쓰는 확정 스택 패키지는 knip.jsonc의 ignoreDependencies에 있습니다."
+  echo "- 정말 죽은 코드면 지우십시오."
+  exit 1
+fi

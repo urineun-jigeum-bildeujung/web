@@ -1,0 +1,27 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+
+  // Playwright 스펙은 knip이 자동 인식하지 못하므로 진입점으로 명시한다.
+  "entry": ["e2e/**/*.spec.ts"],
+
+  // shadcn CLI가 생성하고 소유하는 파일. buttonVariants처럼 CLI 표준 API가
+  // 당장 안 쓰인다고 지울 수 없으므로 분석 대상에서 뺀다.
+  "ignore": ["src/shared/ui/**"],
+
+  // 확정 스택이지만 아직 화면이 없어 사용처가 없는 패키지들.
+  // 해당 기능을 구현하면서 이 목록에서 하나씩 지운다. 목록이 비면 항목 자체를 삭제한다.
+  "ignoreDependencies": [
+    // 폼 — 온보딩·구독 설정 폼 구현 시 사용
+    "react-hook-form",
+    "@hookform/resolvers",
+    "zod",
+    // 상태 — 서버와 무관한 UI 상태 도입 시 사용
+    "zustand",
+    // 표현 — 날짜·차트·애니메이션. 소비 리포트와 예측 화면에서 사용
+    "date-fns",
+    "recharts",
+    "motion",
+    // shadcn 생성 컴포넌트 내부 전용. 우리 코드는 react-icons를 쓴다
+    "lucide-react",
+  ],
+}
