@@ -37,6 +37,8 @@ sandbox/네트워크 제한에 걸린 이력이 있어 아래는 처음부터 �
 
 단위 테스트가 존재하는 영역을 변경했다면 `npm run test`를 함께 실행한다. 유저 플로우(라우팅·핵심 인터랙션)가 바뀌었으면 `npm run test:e2e`도 실행한다.
 
+> **`typecheck`는 `next typegen`을 먼저 돌린다.** `LayoutProps`·`PageProps` 같은 전역 타입은 Next가 `.next/types`에 생성하는 것이라, 빌드한 적 없는 환경에서 `tsc`만 돌리면 `Cannot find name 'LayoutProps'`가 난다. 로컬에는 `.next`가 남아 있어 드러나지 않고 CI에서만 터진다. **`.next`를 지우고 한 번 돌려보면 CI와 같은 조건이 된다.**
+
 문서만 바뀐 경우 검증을 생략할 수 있다. `.md`는 `.prettierignore` 대상이라 `format:check`에도 걸리지 않는다.
 
 단일 파일 내부의 문구·색상·여백·className 조정처럼 타입과 빌드 결과에 영향이 없는 변경은 `build`를 생략할 수 있다. 다만 **새 파일 생성, import/export 변경, 타입 변경, hook 로직 변경, Query Key 변경, 라우트 변경, 공용 컴포넌트 변경**은 간단해 보여도 전체 검증을 돌린다.
