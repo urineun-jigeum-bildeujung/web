@@ -2,7 +2,26 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import boundaries from "eslint-plugin-boundaries";
+import checkFile from "eslint-plugin-check-file";
 import tailwindcss from "eslint-plugin-tailwindcss";
+
+// 패키지 import 위치 제한 — 컨벤션의 상태 경계·아이콘 규칙을 강제한다.
+// flat config는 같은 규칙을 나중 블록이 통째로 덮어쓰므로,
+// "src 전체 금지 → 허용 구역에서 좁혀서 재정의" 순서로 계단을 만든다.
+const RESTRICT_QUERY = {
+  name: "@tanstack/react-query",
+  message:
+    "서버 상태 훅은 슬라이스 api 세그먼트의 use-query-* 훅으로 감싸십시오. (code-convention)",
+};
+const RESTRICT_ZUSTAND = {
+  name: "zustand",
+  message: "스토어는 슬라이스 model 세그먼트 또는 shared에 두십시오. (srp-convention)",
+};
+const RESTRICT_LUCIDE = {
+  name: "lucide-react",
+  message:
+    "화면에 직접 배치하는 아이콘은 react-icons를 쓰십시오. lucide는 shared/ui의 shadcn 파일 전용입니다. (design-convention)",
+};
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -114,6 +133,74 @@ const eslintConfig = defineConfig([
           ],
         },
       ],
+    },
+  },
+  // 파일·폴더 이름 kebab-case — code-convention 네이밍 규칙을 강제한다.
+  // app은 [id]·(group) 같은 Next 라우트 규약이 있어 폴더 검사에서 제외한다.
+  {
+    files: ["src/**/*"],
+    plugins: { "check-file": checkFile },
+    rules: {
+      "check-file/filename-naming-convention": [
+        "error",
+        { "src/**/*.{ts,tsx}": "KEBAB_CASE" },
+        { ignoreMiddleExtensions: true },
+      ],
+      "check-file/folder-naming-convention": [
+        "error",
+        { "src/{views,widgets,features,entities,shared}/**/": "KEBAB_CASE" },
+      ],
+    },
+  },
+  // 컨벤션 2차 방어 — 문서 규칙 중 기계적으로 잡을 수 있는 것.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      // 원시 img 금지. next/image를 쓴다. (design-convention 이미지 규칙)
+      "@next/next/no-img-element": "error",
+      // 이중 단언 금지. (AGENTS.md 2.5)
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSAsExpression > TSAsExpression",
+          message:
+            "이중 단언(as unknown as ...)을 쓰지 마십시오. API 응답 타입 정의와 실제 사용 필드를 일치시킵니다.",
+        },
+      ],
+    },
+  },
+  // import 위치 제한 계단 — 아래로 갈수록 허용 구역.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        { paths: [RESTRICT_QUERY, RESTRICT_ZUSTAND, RESTRICT_LUCIDE] },
+      ],
+    },
+  },
+  {
+    files: ["src/**/api/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: [RESTRICT_ZUSTAND, RESTRICT_LUCIDE] }],
+    },
+  },
+  {
+    files: ["src/**/model/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: [RESTRICT_QUERY, RESTRICT_LUCIDE] }],
+    },
+  },
+  {
+    files: ["src/shared/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: [RESTRICT_LUCIDE] }],
+    },
+  },
+  {
+    files: ["src/shared/ui/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
   // Override default ignores of eslint-config-next.

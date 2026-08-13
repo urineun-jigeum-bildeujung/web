@@ -166,6 +166,7 @@
 | E2E 테스트 | @playwright/test | 1.62.1 | chromium 프로젝트, 루트 `e2e/` |
 | 린트 | eslint-plugin-boundaries | 7.2.0 | FSD 의존 방향·공개 API 강제 |
 | 린트 | eslint-plugin-tailwindcss | 4.2.0 | 임의 값·클래스 오타·상충 검사 |
+| 린트 | eslint-plugin-check-file | 3.3.2 | 파일·폴더 kebab-case 강제 |
 
 **`react-is` 오버라이드는 제거하지 마십시오.** `package.json`의 `overrides`가 `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다.
 

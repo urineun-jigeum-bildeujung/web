@@ -10,14 +10,14 @@
 | 상수 | UPPER_SNAKE_CASE | `PET_SPECIES`, `QUERY_KEYS` |
 | 타입·인터페이스 | PascalCase | `interface Props`, `type Product` |
 
-**파일명은 kebab-case로 통일한다.** FSD·Next 커뮤니티에서 가장 널리 쓰이고, Linux CI의 대소문자 이슈가 없다. 컴포넌트는 이름만 PascalCase이고 파일은 kebab-case다 (`PetCard` → `pet-card.tsx`).
+**파일명은 kebab-case로 통일한다.** FSD·Next 커뮤니티에서 가장 널리 쓰이고, Linux CI의 대소문자 이슈가 없다. 컴포넌트는 이름만 PascalCase이고 파일은 kebab-case다 (`PetCard` → `pet-card.tsx`). ESLint(`check-file`)가 파일명과 FSD 레이어의 폴더명을 강제한다.
 
 예외는 Next.js가 파일명을 규약으로 쓰는 경우다. `layout.tsx`, `page.tsx`, `not-found.tsx`, `route.ts` 등은 프레임워크가 정한 이름을 그대로 쓴다.
 
 ## 훅
 
 - 파일 kebab-case (`use-query-subscriptions.ts`), 함수 camelCase (`useQuerySubscriptions()`), `use-` 접두.
-- TanStack Query를 쓰는 로직은 반드시 `use-query-*.ts` 형태의 훅으로 감싼다. 컴포넌트에서 `useQuery`를 직접 호출하지 않는다.
+- TanStack Query를 쓰는 로직은 반드시 `use-query-*.ts` 형태의 훅으로 감싼다. 컴포넌트에서 `useQuery`를 직접 호출하지 않는다. ESLint가 `@tanstack/react-query` import를 `api` 세그먼트와 `shared` 밖에서 막고, `zustand` import도 `model` 세그먼트와 `shared`로 제한한다.
 - 컴포넌트 안에서 `useForm`/`useState`/`useEffect` 기반 로직이 3줄 이상이면 커스텀 훅으로 분리한다.
 
 ### `useEffect` 단일 상태 보정
