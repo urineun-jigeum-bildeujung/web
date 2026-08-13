@@ -6,12 +6,14 @@
 
 **모든 작업은 이슈에서 시작한다.**
 
-1. **작업 시작 = 이슈 생성.** 유형·라벨·마일스톤을 달고, 이슈 템플릿 형식(무엇/왜/완료조건)으로 쓴다.
+1. **작업 시작 = 이슈 생성.** 유형·라벨·마일스톤을 달고, 이슈 템플릿 형식(무엇/왜/완료조건)으로 쓴다. (`/start-task`)
 2. `dev`에서 기능 브랜치를 판다.
 3. 작업 → 논리 단위로 커밋.
-4. **PR 올리기 전에 이슈를 업데이트**하고(진행/완료 코멘트) PR을 만든다. PR은 `.github/PULL_REQUEST_TEMPLATE.md` 형식을 채우고 `Closes #N`으로 이슈를 닫는다.
+4. **PR 올리기 전에 이슈를 업데이트**하고(진행/완료 코멘트) PR을 만든다. PR은 `.github/PULL_REQUEST_TEMPLATE.md` 형식을 채우고 `Closes #N`으로 이슈를 닫는다. (`/pr`)
 
-이슈·PR 둘 다 **템플릿을 반드시 지킨다.** 검증([validation-convention](validation-convention.md))이 통과하지 않은 채로 PR을 올리지 않는다.
+이슈·PR 둘 다 **템플릿을 반드시 지킨다.** 검증(`/verify`, [validation-convention](validation-convention.md))이 통과하지 않은 채로 PR을 올리지 않는다.
+
+괄호 안은 Claude Code 슬래시 커맨드다. `.claude/commands/`에 있고 이 문서의 흐름을 그대로 실행한다.
 
 ## 커밋
 
@@ -29,7 +31,7 @@
 **커밋 저자는 로그인된 Git 계정 하나로만 남긴다.**
 
 - 커밋 메시지에 작성자 이름을 덧붙이지 않는다. 누가 썼는지는 Git 저자 정보로 충분하다.
-- **AI 에이전트가 작성한 커밋도 동일하다.** `Co-Authored-By`, `Generated with`, `🤖` 같은 AI 표기 트레일러나 서명을 넣지 않는다.
+- **AI 에이전트가 작성한 커밋도 동일하다.** `Co-Authored-By`, `Generated with`, `🤖` 같은 AI 표기 트레일러나 서명을 넣지 않는다. `.claude/settings.json`의 `attribution`이 커밋·PR 양쪽에서 이 표기를 빈 문자열로 막는다.
 - 사람이 쓴 커밋과 AI가 쓴 커밋을 구분하지 않는다. 저장소 히스토리에는 **계정 주인이 커밋한 것으로만** 남는다.
 - `git commit --author`로 저자를 바꾸지 않는다. 로컬 `user.name` / `user.email`을 그대로 쓴다.
 

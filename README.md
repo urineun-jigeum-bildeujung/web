@@ -141,3 +141,16 @@ AI 에이전트와 팀원 모두 [AGENTS.md](./AGENTS.md)의 행동 지침과 �
 Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 `node_modules/next/dist/docs/`의 해당 가이드를 확인하십시오.
 
 세부 규칙은 [docs/conventions](./docs/conventions/README.md)에 있습니다. 네이밍·FSD 구조·디자인·검증·Git 규칙을 다루며, 팀원과 AI 에이전트 모두 이 문서를 기준으로 작업합니다.
+
+### Claude Code 설정
+
+`.claude/`에 팀 공용 설정이 있습니다.
+
+| 커맨드 | 하는 일 |
+| --- | --- |
+| `/verify` | typecheck → format:check → lint → build 순서로 검증 |
+| `/new-slice <layer> <name>` | FSD 슬라이스 뼈대 생성 |
+| `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
+| `/pr` | 검증 → 이슈 업데이트 → PR 생성 |
+
+`code-reviewer` 에이전트가 커밋·PR 전 컨벤션 위반을 점검합니다. `settings.json`의 `attribution`은 커밋·PR에서 AI 표기가 붙지 않도록 막습니다.
