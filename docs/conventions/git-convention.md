@@ -145,7 +145,9 @@ GitHub의 "Rebase and merge" 버튼은 PR의 커밋들을 base 브랜치 위에 
 
 GitHub Releases의 **Generate release notes**는 머지된 PR을 라벨별로 자동 정리한다(`.github/release.yml`). 자동 목록은 PR 제목의 원본 나열이고, `CHANGELOG.md`는 사람이 고른 요약이다. 둘은 용도가 다르니 **자동 생성 결과를 CHANGELOG에 그대로 붙여넣지 않는다.**
 
-PR에 붙이는 라벨이 곧 릴리스 노트의 분류가 되므로, 이슈 템플릿이 달아주는 `bug`·`enhancement` 외에 `docs`·`chore`·`refactor` 등은 PR에서 직접 단다.
+PR에 붙는 라벨이 곧 릴리스 노트의 분류가 된다. **라벨은 PR 제목에서 자동으로 부착되므로 직접 달 필요가 없다.** `.github/workflows/pr-label.yml`이 제목 앞의 유형(`feat`·`fix`·`refactor`·`style`·`test`·`chore`·`docs`·`design`)을 읽어 같은 이름의 라벨을 붙이고, 제목을 고치면 라벨도 따라 바뀐다.
+
+즉 **PR 제목을 커밋 형식대로 쓰는 것만으로 릴리스 노트 분류까지 끝난다.** 제목이 형식에 안 맞으면 라벨이 안 붙고 릴리스 노트에서 "그 밖의 변경"으로 떨어진다.
 
 ## rebase에서 꼬이는 지점
 

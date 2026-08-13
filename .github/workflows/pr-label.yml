@@ -1,0 +1,54 @@
+# PR 제목의 유형으로 라벨을 자동 부착한다.
+# 라벨은 릴리스 노트(.github/release.yml)의 분류 기준이므로, 사람이 깜빡해도
+# 분류가 깨지지 않게 한다. 제목 형식은 docs/conventions/git-convention.md를 따른다.
+name: PR 라벨
+
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  label:
+    name: 제목 유형으로 라벨 부착
+    runs-on: ubuntu-latest
+    steps:
+      - name: 라벨 동기화
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          TYPES="feat fix refactor style test chore docs design"
+
+          TYPE=$(printf '%s' "$TITLE" \
+            | grep -oE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[0-9]+\))?:' \
+            | grep -oE '^[a-z]+' || true)
+
+          if [ -z "$TYPE" ]; then
+            echo "제목에서 유형을 찾지 못해 건너뜁니다: $TITLE"
+            echo "형식: 유형(#이슈번호): 내용"
+            exit 0
+          fi
+
+          echo "감지된 유형: $TYPE"
+
+          # 제목이 수정된 경우를 대비해 다른 유형 라벨을 먼저 뗀다.
+          CURRENT=$(gh pr view "$PR" --repo "$REPO" --json labels --jq '.labels[].name')
+          for t in $TYPES; do
+            [ "$t" = "$TYPE" ] && continue
+            if printf '%s\n' "$CURRENT" | grep -qx "$t"; then
+              gh pr edit "$PR" --repo "$REPO" --remove-label "$t"
+              echo "제거: $t"
+            fi
+          done
+
+          if printf '%s\n' "$CURRENT" | grep -qx "$TYPE"; then
+            echo "이미 부착됨: $TYPE"
+          else
+            gh pr edit "$PR" --repo "$REPO" --add-label "$TYPE"
+            echo "부착: $TYPE"
+          fi
