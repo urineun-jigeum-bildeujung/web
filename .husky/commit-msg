@@ -1,0 +1,17 @@
+# 커밋 메시지 형식 검사. 상세 규칙은 docs/conventions/git-convention.md.
+msg=$(head -n1 "$1")
+
+# merge·revert·autosquash 커밋은 Git이 만드는 형식이므로 통과시킨다.
+case "$msg" in
+  Merge*|Revert*|fixup!*|squash!*) exit 0 ;;
+esac
+
+if ! printf '%s' "$msg" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[0-9]+\))?: .+'; then
+  echo ""
+  echo "커밋 메시지 형식 위반: \"$msg\""
+  echo "형식: 유형(#이슈번호): 내용  (이슈가 없으면 유형: 내용)"
+  echo "유형: feat fix refactor style test chore docs design"
+  echo "예:   feat(#12): 구독 상세 화면 추가"
+  echo "상세: docs/conventions/git-convention.md"
+  exit 1
+fi

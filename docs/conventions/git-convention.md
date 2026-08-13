@@ -26,6 +26,13 @@
 
 `feat`(기능) · `fix`(버그) · `refactor` · `style`(간단 CSS) · `test` · `chore`(설정·문서·잡무) · `docs` · `design`.
 
+### 로컬 훅 (husky)
+
+`npm install` 시 husky가 Git 훅을 설치한다. 우회(`--no-verify`)하지 않는다.
+
+- **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
+- **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
+
 ### 저자 표기
 
 **커밋 저자는 로그인된 Git 계정 하나로만 남긴다.**
