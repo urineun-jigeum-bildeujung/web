@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "knip": "knip",
-    "prepare": "husky && git config pull.rebase true"
+    "prepare": "husky && (git config pull.rebase true || exit 0)"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.7.1",
