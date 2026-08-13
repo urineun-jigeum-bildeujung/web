@@ -15,10 +15,11 @@ INPUT=$(cat)
 CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""' 2>/dev/null) || exit 0
 
 # 어느 쪽인지 가린다. PR 생성 시점에는 README까지 본다.
-if printf '%s' "$CMD" | grep -qE '(^|[&;|][[:space:]]*)gh[[:space:]]+pr[[:space:]]+create'; then
-  KIND=pr
-elif printf '%s' "$CMD" | grep -qE '(^|[&;|][[:space:]]*)git[[:space:]]+push'; then
-  KIND=push
+# 선행 공백을 허용해야 if·for 블록 안에 들여쓴 명령도 잡힌다.
+if printf '%s' "$CMD" | grep -qE '(^|[&;|])[[:space:]]*gh[[:space:]]+pr[[:space:]]+create'; then
+  KIND="pr"
+elif printf '%s' "$CMD" | grep -qE '(^|[&;|])[[:space:]]*git[[:space:]]+push'; then
+  KIND="push"
 else
   exit 0
 fi
@@ -27,8 +28,14 @@ fi
 NUM=$(gh pr view --json number,state --jq 'select(.state == "OPEN") | .number' 2>/dev/null) || exit 0
 [ -z "$NUM" ] && exit 0
 
-PENDING=$(gh api "repos/{owner}/{repo}/pulls/$NUM/comments" --jq '
-  . as $all
+# 코멘트는 한 페이지에 30건씩만 온다. 리뷰가 몇 번 오가면 금방 넘으므로
+# 전체 페이지를 받는다. --slurp는 --jq와 함께 쓸 수 없어 jq를 따로 부르고,
+# 파이프로 잇지 않아야 gh의 실패가 jq의 성공에 가려지지 않는다.
+RAW=$(gh api --paginate --slurp "repos/{owner}/{repo}/pulls/$NUM/comments" 2>/dev/null) || exit 0
+
+PENDING=$(printf '%s' "$RAW" | jq '
+  (add // [])
+  | . as $all
   | [$all[] | select(.in_reply_to_id == null) | .id] as $roots
   | [$all[] | select(.in_reply_to_id != null) | .in_reply_to_id] as $replied
   | [$roots[] | select([.] | inside($replied) | not)] | length
