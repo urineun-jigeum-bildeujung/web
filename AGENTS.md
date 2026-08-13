@@ -164,6 +164,8 @@
 | 포매터 | prettier | 3.9.6 | prettier-plugin-tailwindcss 포함 |
 | 단위 테스트 | vitest | 4.1.10 | jsdom 환경, `@testing-library/react` 16.3.2 병용 |
 | E2E 테스트 | @playwright/test | 1.62.1 | chromium 프로젝트, 루트 `e2e/` |
+| 린트 | eslint-plugin-boundaries | 7.2.0 | FSD 의존 방향·공개 API 강제 |
+| 린트 | eslint-plugin-tailwindcss | 4.2.0 | 임의 값·클래스 오타·상충 검사 |
 
 **`react-is` 오버라이드는 제거하지 마십시오.** `package.json`의 `overrides`가 `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다.
 
@@ -197,6 +199,10 @@ src/
 **`src/app/`은 두 역할을 겸합니다.** Next.js 라우팅 파일(`layout.tsx`, `page.tsx`)과 FSD app 레이어(`providers.tsx`)가 함께 있습니다. 라우트 파일은 얇게 유지하고 실제 화면 조립은 `views/`에 두십시오.
 
 새 슬라이스를 만들 때 세그먼트는 `ui` · `model` · `api` · `lib` · `config`를 사용합니다. shadcn 컴포넌트는 `components.json`의 alias 설정에 따라 `src/shared/ui/`에 자동으로 추가됩니다.
+
+**페이지를 만들면 그 views 슬라이스에 `README.md`를 함께 만드십시오.** 라우트(`app/**/page.tsx`)를 추가할 때 대응하는 `views/<슬라이스>/README.md`에 화면의 역할·라우트·조립 블록·상태를 기록합니다. 템플릿은 `src/views/README.md`의 "페이지 README" 절을 따릅니다.
+
+의존 방향과 슬라이스 공개 API는 ESLint(`boundaries/dependencies`)가 강제합니다. lint 에러가 나면 규칙을 우회하지 말고 구조를 고치십시오.
 
 ---
 

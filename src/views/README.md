@@ -27,7 +27,25 @@ FSD 표준의 **pages 레이어**다. 라우트 하나에 대응하는 화면을
 views/
 └── subscription-detail/
     ├── ui/
-    └── index.ts
+    ├── index.ts
+    └── README.md
 ```
 
 바깥에서는 `index.ts`가 노출한 것만 import한다.
+
+## 페이지 README (필수)
+
+**페이지를 만들면 그 슬라이스에 `README.md`를 함께 만든다.** 라우트(`app/**/page.tsx`)를 추가할 때 대응하는 views 슬라이스에 아래 템플릿으로 작성한다.
+
+```markdown
+# <슬라이스명>
+
+<이 화면이 무엇을 하는지 한두 문장.>
+
+- **라우트**: <URL 경로> — <app 라우트 파일 경로>
+- **조립**: <사용하는 widgets/features/entities 슬라이스>
+- **상태**: <서버 상태·클라이언트 상태 요약. 없으면 "없음">
+- **참고**: <설계 결정, 엣지 케이스 등. 없으면 생략>
+```
+
+예시는 [home/README.md](./home/README.md)를 본다.

@@ -7,9 +7,10 @@ description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템�
 1. 현재 브랜치와 연관 이슈 번호를 확인한다.
 2. **검증** — `/verify` 순서(typecheck→format:check→lint→build)가 통과했는지 확인한다. 안 돌렸으면 먼저 돌리고, **실패하면 PR을 만들지 않는다.**
 3. **연관 이슈 업데이트** — 진행/완료 내용을 `gh issue comment`로 남긴다.
-4. 브랜치를 push한다 — `git push -u origin <branch>`.
-5. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다.
-6. PR 링크를 보고한다.
+4. **README.md 진행 상황 갱신** — "진행 상황" 섹션에 이번 작업의 완료 항목을 반영하고 다음 작업을 갱신한다. 갱신분은 이 브랜치에 커밋한다.
+5. 브랜치를 push한다 — `git push -u origin <branch>`.
+6. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다.
+7. PR 링크를 보고한다.
 
 push와 PR 생성은 외부에 나가는 작업이므로 **사용자 승인 후 진행한다.**
 

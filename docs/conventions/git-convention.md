@@ -9,7 +9,7 @@
 1. **작업 시작 = 이슈 생성.** 유형·라벨·마일스톤을 달고, 이슈 템플릿 형식(무엇/왜/완료조건)으로 쓴다. (`/start-task`)
 2. `dev`에서 기능 브랜치를 판다.
 3. 작업 → 논리 단위로 커밋.
-4. **PR 올리기 전에 이슈를 업데이트**하고(진행/완료 코멘트) PR을 만든다. PR은 `.github/PULL_REQUEST_TEMPLATE.md` 형식을 채우고 `Closes #N`으로 이슈를 닫는다. (`/pr`)
+4. **PR 올리기 전에** 이슈를 업데이트하고(진행/완료 코멘트), **README.md의 "진행 상황" 섹션을 이번 작업에 맞게 갱신**한다(완료 항목 반영, 다음 작업 갱신). 그 뒤 PR을 만든다. PR은 `.github/PULL_REQUEST_TEMPLATE.md` 형식을 채우고 `Closes #N`으로 이슈를 닫는다. (`/pr`)
 
 이슈·PR 둘 다 **템플릿을 반드시 지킨다.** 검증(`/verify`, [validation-convention](validation-convention.md))이 통과하지 않은 채로 PR을 올리지 않는다.
 

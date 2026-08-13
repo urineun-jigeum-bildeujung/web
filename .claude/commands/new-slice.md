@@ -14,6 +14,7 @@ argument-hint: <layer> <name> [segments]
 1. `src/<layer>/<name>/index.ts` — 공개 API(re-export). 첫 줄에 한국어 역할 주석.
 2. 요청한 세그먼트별 최소 파일(예: `ui/<name>.tsx`, `model/types.ts`)을 필요한 만큼 생성하되, 첫 줄 한국어 역할 주석과 kebab 파일명·PascalCase 컴포넌트를 지킨다.
 3. 바깥에서는 `index.ts`만 import하도록 공개 API를 구성한다.
+4. **layer가 `views`면 `README.md`도 함께 만든다.** 템플릿은 `src/views/README.md`의 "페이지 README" 절을 따른다.
 
 의존 방향은 `app → views → widgets → features → entities → shared` 단방향이다. 같은 레이어끼리도 참조하지 않는다.
 
