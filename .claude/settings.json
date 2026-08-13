@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "BRANCH=$(git branch --show-current 2>/dev/null); printf '현재 브랜치: %s\\n' \"$BRANCH\""
+            "command": "sh .claude/hooks/session-start.sh"
           }
         ]
       }

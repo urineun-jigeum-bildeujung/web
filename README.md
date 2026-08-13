@@ -17,6 +17,12 @@
 
 **요구 사항**은 Node.js 20.9.0 이상입니다. (개발 환경 검증 버전은 Node 22.22.2, npm 11.2.0)
 
+이슈·PR 관련 슬래시 커맨드를 쓰려면 [GitHub CLI](https://cli.github.com/)가 설치·인증되어 있어야 합니다.
+
+```bash
+gh auth login
+```
+
 ```bash
 npm install
 ```
