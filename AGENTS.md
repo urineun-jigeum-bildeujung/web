@@ -278,6 +278,7 @@ React Compiler가 활성화되어 있습니다(`next.config.ts`의 `reactCompile
 | --- | --- | --- |
 | 한글 본문 폰트 | `--font-sans`가 `Noto_Sans`(latin subset)로 지정되어 한글 글리프가 없습니다. 한글은 시스템 fallback으로 렌더링됩니다. | 디자인팀 폰트 확정 후 `layout.tsx`와 `globals.css`의 `@theme` 매핑을 함께 교체 |
 | 디자인 토큰 | `globals.css`가 shadcn 기본 neutral 팔레트 상태입니다. | 디자인팀 Design Tokens 명세 전달 후 |
+| 테마 토글 | 메인 페이지에 데모 버튼(`features/toggle-theme`)만 있습니다. 선택이 저장되지 않아 새로고침하면 라이트로 돌아갑니다. | 디자인 확정 후 정식 테마 도구(next-themes 등) 결정 |
 | 앱 메시지 체계 | `APP_MESSAGE`·`FORM_MESSAGE`·Toast 미도입. 규칙만 문서로 존재합니다. | 공통 Error 핸들러와 Toast 도입 시점 |
 | API 계약 | 미확정. | 백엔드 팀 Swagger 명세 공유 후 |
 | 테스트 도구 | Vitest·Playwright 미도입. | 핵심 플로우 확정 후 (Phase 4) |
