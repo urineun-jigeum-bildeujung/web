@@ -84,7 +84,35 @@
 
 ### 머지
 
-**rebase 머지만 사용한다.** repo 설정에서 squash·merge commit을 비활성화한다. 기능 브랜치는 CI 통과 후 `dev`로 rebase 머지하고 브랜치를 삭제한다(머지 후 자동 삭제 설정됨). 히스토리를 선형으로 유지한다.
+**rebase 머지만 사용한다.** 기능 브랜치는 CI 통과 후 `dev`로 rebase 머지하고 브랜치를 삭제한다. 히스토리를 선형으로 유지한다.
+
+## 저장소에 걸린 설정
+
+아래는 GitHub에서 강제하는 것이라 로컬 훅과 달리 우회할 수 없다. 팀에 합류하면 이 상태를 전제로 작업한다.
+
+**저장소 설정** (`Settings → General`)
+
+| 항목 | 상태 |
+| --- | --- |
+| Rebase merge | 허용 |
+| Merge commit · Squash merge | 비활성화 |
+| 머지 후 브랜치 자동 삭제 | 켬 |
+
+**Ruleset** — `Settings → Rules → Rulesets`의 "통합 브랜치 보호 (main·dev)"
+
+| 규칙 | 내용 |
+| --- | --- |
+| Pull request 필수 | 직접 push 차단. 승인은 0명(CI와 CodeRabbit이 검증을 맡는다) |
+| 대화 해결 필수 | PR 코멘트를 모두 Resolve해야 머지 |
+| 머지 방식 제한 | rebase만 |
+| 상태 체크 필수 | `검증 (typecheck·format·lint·test·build)`, `E2E (Playwright)` |
+| 브랜치 최신화 필수 | 뒤처진 브랜치는 먼저 rebase |
+| 선형 이력 | 머지 커밋 금지 |
+| force push 차단 · 삭제 차단 | `main`·`dev` 이력 보호 |
+
+**우회는 관리자(Admin 역할)만 가능하다.** 긴급 상황 대비로 열어둔 것이므로 평시에는 쓰지 않는다.
+
+Ruleset은 브랜치 패턴으로 여러 브랜치를 한 번에 관리한다. 보호할 브랜치가 늘어나면 새 규칙을 만들지 말고 이 Ruleset의 대상 목록에 추가한다.
 
 GitHub의 "Rebase and merge" 버튼은 PR의 커밋들을 base 브랜치 위에 다시 얹는다. 커밋 SHA가 새로 생기지만 머지 커밋이 없어 히스토리가 한 줄로 남는다.
 
