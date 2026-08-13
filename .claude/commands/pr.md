@@ -1,0 +1,16 @@
+---
+description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템플릿)
+---
+
+현재 작업을 PR로 올린다. `docs/conventions/git-convention.md`의 작업 흐름을 따른다.
+
+1. 현재 브랜치와 연관 이슈 번호를 확인한다.
+2. **검증** — `/verify` 순서(typecheck→format:check→lint→build)가 통과했는지 확인한다. 안 돌렸으면 먼저 돌리고, **실패하면 PR을 만들지 않는다.**
+3. **연관 이슈 업데이트** — 진행/완료 내용을 `gh issue comment`로 남긴다.
+4. 브랜치를 push한다 — `git push -u origin <branch>`.
+5. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다.
+6. PR 링크를 보고한다.
+
+push와 PR 생성은 외부에 나가는 작업이므로 **사용자 승인 후 진행한다.**
+
+**전제 확인** — 원격 저장소가 연결되어 있어야 한다. 없으면 멈추고 사용자에게 알린다.
