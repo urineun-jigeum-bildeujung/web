@@ -31,5 +31,5 @@
 - husky 로컬 훅 — pre-commit 린트·포맷, commit-msg 형식 검사, pre-push 이력 보호
 - GitHub 이슈·PR 템플릿, CodeRabbit 리뷰 설정
 - Claude Code 하네스 (`.claude`) — 슬래시 커맨드 5종, code-reviewer 에이전트, 알림 훅
-- 작업 기록 자동화 — PR 제목으로 라벨 부착, 라벨 기반 릴리스 노트 분류, 커밋에서 변경 이력 문장 생성
+- 작업 기록 자동화 — PR 제목으로 라벨 부착, 라벨 기반 릴리스 노트 분류, 커밋에서 변경 이력 문장 생성 (#3)
 - `main`·`dev` 브랜치 보호 Ruleset — PR 필수, CI 통과 필수, rebase 전용, 이력 되감기 차단
