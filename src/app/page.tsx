@@ -10,7 +10,7 @@ export default function Home() {
           <ThemeToggle />
         </div>
         <Image
-          className="h-5 w-[100px] dark:invert"
+          className="h-5 w-25 dark:invert"
           src="/next.svg"
           alt="Next.js logo"
           width={100}
@@ -51,7 +51,7 @@ export default function Home() {
             rel="noopener noreferrer"
           >
             <Image
-              className="h-[14px] w-4 dark:invert"
+              className="h-3.5 w-4 dark:invert"
               src="/vercel.svg"
               alt="Vercel logomark"
               width={16}
