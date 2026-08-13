@@ -200,8 +200,6 @@ Claude Code를 쓰면 `/changelog`가 브랜치 커밋과 변경 파일을 읽�
 - 해당하는 분류가 없으면 만든다. 비어 있는 분류는 남기지 않는다.
 - 오타 수정처럼 기록할 가치가 없으면 건너뛰고, PR 본문에 그 사유를 적는다.
 
-릴리스 시점에는 `[Unreleased]`를 버전 번호로 바꾸고 새 `[Unreleased]`를 위에 만든다.
-
 ### 릴리스 노트와의 관계
 
 GitHub Releases의 **Generate release notes**는 머지된 PR을 라벨별로 자동 정리한다(`.github/release.yml`). 자동 목록은 PR 제목의 원본 나열이고, `CHANGELOG.md`는 사람이 고른 요약이다. 둘은 용도가 다르니 **자동 생성 결과를 CHANGELOG에 그대로 붙여넣지 않는다.**
