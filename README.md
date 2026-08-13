@@ -164,5 +164,6 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 | `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
 | `/changelog` | 브랜치 커밋을 읽어 CHANGELOG 항목 작성 |
 | `/pr` | 검증 → CHANGELOG 기록 → 이슈 업데이트 → PR 생성 |
+| `/review-reply` | 리뷰 코멘트를 현재 코드에 대조해 처리하고 스레드에 답변 |
 
 `code-reviewer` 에이전트가 커밋·PR 전 컨벤션 위반을 점검합니다. `settings.json`의 `attribution`은 커밋·PR에서 AI 표기가 붙지 않도록 막습니다.
