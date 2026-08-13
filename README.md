@@ -162,6 +162,7 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 | `/verify` | typecheck → format:check → lint → build 순서로 검증 |
 | `/new-slice <layer> <name>` | FSD 슬라이스 뼈대 생성 |
 | `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
-| `/pr` | 검증 → 이슈 업데이트 → PR 생성 |
+| `/changelog` | 브랜치 커밋을 읽어 CHANGELOG 항목 작성 |
+| `/pr` | 검증 → CHANGELOG 기록 → 이슈 업데이트 → PR 생성 |
 
 `code-reviewer` 에이전트가 커밋·PR 전 컨벤션 위반을 점검합니다. `settings.json`의 `attribution`은 커밋·PR에서 AI 표기가 붙지 않도록 막습니다.
