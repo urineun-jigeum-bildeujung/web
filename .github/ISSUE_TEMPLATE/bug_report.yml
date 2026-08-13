@@ -1,0 +1,58 @@
+name: 🐛 버그 신고
+description: 동작이 기대와 다를 때
+title: "fix: "
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: 무엇이 잘못됐나
+      description: 어떤 문제가 있는지 한두 줄로.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 재현 절차
+      placeholder: |
+        1. 구독 관리 진입
+        2. 배송 주기 변경 클릭
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 기대한 동작
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 실제 동작
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: 환경
+      description: 웹 우선이지만 WebView 앱 확장을 고려한다. 앱에서만 재현되는 문제라면 반드시 표시한다.
+      options:
+        - 모바일 브라우저 (Android Chrome)
+        - 모바일 브라우저 (iOS Safari)
+        - 데스크톱 브라우저
+        - WebView 앱 (Android)
+        - WebView 앱 (iOS)
+        - 여러 환경에서 재현
+    validations:
+      required: true
+  - type: input
+    id: viewport
+    attributes:
+      label: 화면 너비 (선택)
+      description: 레이아웃 문제라면 적어준다.
+      placeholder: 390px
+  - type: textarea
+    id: extra
+    attributes:
+      label: 스크린샷 / 콘솔 로그 (선택)

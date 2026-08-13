@@ -1,0 +1,31 @@
+name: ✨ 기능 제안
+description: 새 기능이나 개선
+title: "feat: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 어떤 문제 / 필요
+      description: 보호자가 겪는 무슨 불편을 푸는지.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 제안
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: 고려한 대안 (선택)
+  - type: checkboxes
+    id: identity
+    attributes:
+      label: 정체성 점검
+      description: 골라주개의 방향과 맞는지 스스로 확인. 우리는 보호자의 추측을 근거 있는 판단으로 바꾸는 서비스다.
+      options:
+        - label: 추천·판단의 근거를 함께 보여주는 방향에 부합한다
+        - label: 단순 별점·인기순 나열로 되돌아가지 않는다
+        - label: 선택지를 넓히기만 해서 보호자의 판단 피로를 늘리지 않는다
