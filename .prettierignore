@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+coverage
+package-lock.json
+
+# 손으로 정렬한 표·ASCII 트리를 prettier가 흐트러뜨리지 않도록 문서는 제외한다.
+*.md
+
+# shadcn CLI가 생성하고 덮어쓰는 파일은 제외한다.
+# 세미콜론 없는 shadcn 스타일이라 포맷하면 add 할 때마다 diff가 되살아난다.
+src/shared/ui/
+src/shared/lib/utils.ts
