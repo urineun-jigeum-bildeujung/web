@@ -13,7 +13,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "knip": "knip",
     "prepare": "husky && (git config pull.rebase true || exit 0)"
   },
   "dependencies": {
@@ -54,7 +53,6 @@
     "eslint-plugin-tailwindcss": "^4.2.0",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
-    "knip": "^6.32.2",
     "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",

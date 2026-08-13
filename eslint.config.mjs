@@ -144,11 +144,19 @@ const eslintConfig = defineConfig([
       "check-file/filename-naming-convention": [
         "error",
         { "src/**/*.{ts,tsx}": "KEBAB_CASE" },
-        { ignoreMiddleExtensions: true },
+        {
+          ignoreMiddleExtensions: true,
+          errorMessage:
+            "파일명 '{{ target }}'이 kebab-case가 아닙니다. 컴포넌트는 이름만 PascalCase이고 파일은 kebab-case입니다 (PetCard → pet-card.tsx). (code-convention)",
+        },
       ],
       "check-file/folder-naming-convention": [
         "error",
         { "src/{views,widgets,features,entities,shared}/**/": "KEBAB_CASE" },
+        {
+          errorMessage:
+            "폴더명 '{{ target }}'이 kebab-case가 아닙니다. 슬라이스 이름은 kebab-case로 짓습니다 (write-review). (code-convention)",
+        },
       ],
     },
   },

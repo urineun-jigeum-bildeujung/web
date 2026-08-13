@@ -41,7 +41,6 @@ npm run dev
 | `npm run test` | Vitest 단위 테스트 1회 실행 |
 | `npm run test:watch` | Vitest watch 모드 |
 | `npm run test:e2e` | Playwright E2E 테스트 |
-| `npm run knip` | 미사용 파일·export·의존성 검사 |
 
 > 모든 명령은 **프로젝트 루트**에서 실행하십시오. `src/` 안에서 실행하면 Next가 `src`를 프로젝트 루트로 오인해 경로 별칭이 깨집니다.
 

@@ -46,13 +46,13 @@
 - **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
 - **pre-push** — `main`·`dev`의 이력을 되감는 force push와 브랜치 삭제만 막는다. 기능 브랜치는 자유롭다.
 
-미사용 코드(knip)나 테스트로 push를 막지는 않는다. 작업 중인 브랜치에는 아직 조립되지 않은 슬라이스가 정상적으로 존재하므로, 그 검사는 병합 시점(CI)에서 한다.
+테스트나 빌드로 push를 막지는 않는다. 작업 중인 브랜치는 미완성인 것이 정상이므로, 그 검사는 병합 시점(CI)에서 한다.
 
 ### CI
 
 `.github/workflows/ci.yml`이 `dev`·`main` 대상 PR과 push에서 돈다.
 
-- **verify** — typecheck → format:check → lint → knip → 단위 테스트 → build
+- **verify** — typecheck → format:check → lint → 단위 테스트 → build
 - **e2e** — verify 통과 후 Playwright 실행. 실패 시 리포트를 아티팩트로 올린다
 
 배포 파이프라인은 인프라팀이 별도로 관리한다. 이 워크플로우는 코드 품질만 본다.
