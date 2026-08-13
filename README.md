@@ -159,12 +159,14 @@ FSD 표준의 `pages` 레이어를 **`views`로 부르는 이유**는 Next.js가
 - [x] TanStack Query Provider 배선 (`shared/providers`)
 - [x] 초기 세팅 안내 홈 화면 + 다크 모드 데모 토글
 - [x] 테스트 환경 (Vitest 단위 5건, Playwright E2E 2건)
-- [x] ESLint 강제 (FSD 경계 `boundaries`, Tailwind 클래스 검사)
+- [x] ESLint 강제 (FSD 경계 `boundaries`, Tailwind 클래스, 파일명, import 위치)
+- [x] CI 워크플로우 (GitHub Actions — 원격 연결 시 자동 동작)
+- [x] husky 로컬 훅 (pre-commit 린트·포맷, commit-msg 형식 검사)
+- [x] CodeRabbit 리뷰 설정
 
 ### 다음
 
 - [ ] 원격 저장소 생성, `dev` 브랜치·default 설정, rebase 전용 머지 설정 (팀장)
-- [ ] CI 워크플로우 (원격 생성 후, 인프라팀과 조율)
 - [ ] 페이지 설계·라우터 설계 (~8/28)
 - [ ] 디자인 토큰·한글 폰트 적용 (디자인팀 명세 대기)
 - [ ] API 계약 (백엔드 Swagger 공유 대기)
