@@ -120,6 +120,8 @@ GitHub의 "Rebase and merge" 버튼은 PR의 커밋들을 base 브랜치 위에 
 
 **PR을 올릴 때 `CHANGELOG.md`의 `[Unreleased]`에 한 줄 추가한다.** 무엇을 했는지 남기는 기록이므로, 커밋 메시지가 아니라 **사람이 읽을 문장**으로 쓴다.
 
+Claude Code를 쓰면 `/changelog`가 브랜치 커밋과 변경 파일을 읽어 문장을 만들어 넣는다. `/pr`도 그 단계를 포함하므로 따로 부를 일은 많지 않다. 손으로 쓸 때는 아래 형식을 따른다.
+
 ```markdown
 ## [Unreleased]
 
