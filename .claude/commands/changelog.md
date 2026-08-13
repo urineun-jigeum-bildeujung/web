@@ -6,17 +6,18 @@ description: 브랜치 커밋을 읽어 CHANGELOG의 [Unreleased]에 기록
 
 ## 1. 커밋 수집
 
-기준 브랜치와의 차이를 읽는다. 기준은 보통 `dev`이고, 현재 브랜치가 `dev`면 `main`이다.
+기준 브랜치와의 차이를 읽는다. 기준은 보통 `dev`이고, 현재 브랜치가 `dev`면 릴리스 대상인 `main`이다.
+
+커밋 메시지만으로는 사용자에게 보이는 변화인지 판단하기 어려우므로 변경 파일도 함께 본다.
 
 ```bash
 git fetch origin --quiet
-git log --format="%s%n%b%n---" origin/dev..HEAD
-```
 
-변경 파일도 함께 본다. 커밋 메시지만으로는 사용자에게 보이는 변화인지 판단하기 어렵다.
+BASE=origin/dev
+[ "$(git branch --show-current)" = "dev" ] && BASE=origin/main
 
-```bash
-git diff --stat origin/dev..HEAD
+git log --format="%s%n%b%n---" "$BASE..HEAD"
+git diff --stat "$BASE..HEAD"
 ```
 
 ## 2. 문장으로 바꾸기
