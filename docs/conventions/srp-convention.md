@@ -26,7 +26,7 @@
 | 사용자 행동(폼·mutation) | `features/<name>/{ui,model,api}` |
 | 도메인 모델·카드·조회 | `entities/<name>/{ui,model,api}` |
 | shadcn 컴포넌트·공용 프리미티브 | `shared/ui` |
-| 외부 lib 설정(API 클라이언트, cn, zod 스키마) | `shared/lib` |
+| 외부 lib 설정(motion 프리셋, 공용 zod 스키마 등) | `shared/lib/<라이브러리>/` — 라이브러리·주제별 폴더. 상세는 [code-convention](code-convention.md)의 "shared/lib 폴더 구조" |
 | 상수·Query Key·앱 메시지 | `shared/config` |
 | 앱 전역 Provider(Query·Theme·Toaster) | `shared/providers` — `app/`은 라우팅 껍데기라 조립 로직을 두지 않는다. `layout`은 `AppProviders` 하나만 감싼다 |
 | 전역 스토어(auth 세션 등) | `shared` (슬라이스 전용 스토어는 그 슬라이스 `model`) |

@@ -162,6 +162,8 @@
 | 날짜 | date-fns | 4.4.0 | 소진일 계산, D-day, 배송일 |
 | 차트 | recharts | 3.10.1 | 소비 리포트, 예측 신뢰구간 |
 | 포매터 | prettier | 3.9.6 | prettier-plugin-tailwindcss 포함 |
+| 단위 테스트 | vitest | 4.1.10 | jsdom 환경, `@testing-library/react` 16.3.2 병용 |
+| E2E 테스트 | @playwright/test | 1.62.1 | chromium 프로젝트, 루트 `e2e/` |
 
 **`react-is` 오버라이드는 제거하지 마십시오.** `package.json`의 `overrides`가 `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다.
 
@@ -281,7 +283,6 @@ React Compiler가 활성화되어 있습니다(`next.config.ts`의 `reactCompile
 | 테마 토글 | 메인 페이지에 데모 버튼(`features/toggle-theme`)만 있습니다. 선택이 저장되지 않아 새로고침하면 라이트로 돌아갑니다. | 디자인 확정 후 정식 테마 도구(next-themes 등) 결정 |
 | 앱 메시지 체계 | `APP_MESSAGE`·`FORM_MESSAGE`·Toast 미도입. 규칙만 문서로 존재합니다. | 공통 Error 핸들러와 Toast 도입 시점 |
 | API 계약 | 미확정. | 백엔드 팀 Swagger 명세 공유 후 |
-| 테스트 도구 | Vitest·Playwright 미도입. | 핵심 플로우 확정 후 (Phase 4) |
 
 ---
 

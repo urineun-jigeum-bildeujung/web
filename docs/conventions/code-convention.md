@@ -56,6 +56,28 @@ React Compiler가 켜져 있다(`next.config.ts`의 `reactCompiler: true`). `use
 - 타입을 맞추기 위한 `as unknown as` 이중 단언을 쓰지 않는다. 응답 타입 정의와 실제 사용 필드를 일치시킨다.
 - API 명세상 nullable이 아닌 값에 불필요한 fallback을 넣지 않는다.
 
+## 테스트
+
+- **단위 테스트는 Vitest.** 대상 파일 바로 옆에 `<파일명>.test.ts(x)`로 둔다 (colocation). 별도 `__tests__` 폴더를 만들지 않는다.
+- **E2E는 Playwright.** 루트 `e2e/` 폴더에 `<플로우>.spec.ts`로 둔다.
+- 단위 테스트는 순수 함수 위주로 작성하고, 컴포넌트는 렌더링 스모크 수준까지만 단위로 다룬다. 사용자 플로우는 E2E가 맡는다.
+- 실행은 `npm run test`(1회) · `npm run test:watch` · `npm run test:e2e`.
+
+## shared/lib 폴더 구조
+
+**라이브러리·주제 단위로 폴더를 만들고 그 안에 파일을 둔다.** `utils.ts` 같은 포괄 이름의 파일이 늘어나면 무엇이 어디 있는지 찾을 수 없게 된다.
+
+```
+shared/lib/
+├── motion/       # motion 프리셋 (variants, transition 상수)
+├── date/         # date-fns 래퍼, 포맷 함수
+└── utils.ts      # 예외 — shadcn CLI 소유 (cn). 위치·이름을 바꾸지 않는다
+```
+
+- 폴더명은 라이브러리 이름(`motion`, `date`)이나 주제(`format`)로 짓는다.
+- `utils.ts`는 shadcn CLI가 `components.json`의 alias로 참조하고 덮어쓰는 파일이라 **예외로 현 위치를 유지한다.** cn 외의 유틸을 이 파일에 추가하지 않는다.
+- 폴더를 미리 만들지 않는다. 첫 파일이 생길 때 폴더를 만든다.
+
 ## 포맷
 
 포맷은 Prettier가 강제한다. 손으로 맞추지 않는다.

@@ -9,7 +9,7 @@
 | 세그먼트 | 담는 것 |
 |---|---|
 | `ui/` | shadcn 컴포넌트와 공용 프리미티브 |
-| `lib/` | 순수 유틸리티 (`cn` 등), 외부 라이브러리 설정 |
+| `lib/` | 순수 유틸리티, 외부 라이브러리 설정. **라이브러리·주제별 폴더**(`lib/motion/`, `lib/date/`)로 구성한다. `utils.ts`(cn)만 shadcn CLI 소유라 예외로 현 위치를 유지한다 |
 | `api/` | API 클라이언트, 공통 요청·에러 처리 |
 | `config/` | 상수, Query Key, 환경 설정 |
 | `providers/` | 앱 전역 Provider (`AppProviders`) |

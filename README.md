@@ -38,6 +38,9 @@ npm run dev
 | `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
 | `npm run format` | Prettier 포맷 적용 |
 | `npm run format:check` | 포맷 위반 확인 (수정 없음) |
+| `npm run test` | Vitest 단위 테스트 1회 실행 |
+| `npm run test:watch` | Vitest watch 모드 |
+| `npm run test:e2e` | Playwright E2E 테스트 |
 
 > 모든 명령은 **프로젝트 루트**에서 실행하십시오. `src/` 안에서 실행하면 Next가 `src`를 프로젝트 루트로 오인해 경로 별칭이 깨집니다.
 
@@ -86,6 +89,14 @@ cp .env.example .env.local
 | 스키마 검증 | zod | 4.4.3 |
 | 날짜 | date-fns | 4.4.0 |
 | 차트 | recharts | 3.10.1 |
+
+### 테스트
+
+| 구분 | 패키지 | 버전 |
+| --- | --- | --- |
+| 단위 | vitest | 4.1.10 |
+| 단위 | @testing-library/react | 16.3.2 |
+| E2E | @playwright/test | 1.62.1 |
 
 ### 설치 시 주의사항
 
