@@ -30,6 +30,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# claude code (개인 오버라이드 설정은 공유하지 않는다)
+.claude/settings.local.json
+
 # env files (can opt-in for committing if needed)
 .env
 .env.local
