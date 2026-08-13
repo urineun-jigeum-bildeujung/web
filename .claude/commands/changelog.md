@@ -1,8 +1,8 @@
 ---
-description: 브랜치 커밋을 읽어 CHANGELOG의 [Unreleased]에 기록
+description: 브랜치 커밋을 읽어 CHANGELOG의 오늘 날짜 절에 기록
 ---
 
-현재 브랜치의 커밋을 읽어 `CHANGELOG.md`의 `[Unreleased]`에 항목을 추가한다. **사람에게 묻지 말고 직접 작성한다.**
+현재 브랜치의 커밋을 읽어 `CHANGELOG.md`의 오늘 날짜 절에 항목을 추가한다. **사람에게 묻지 말고 직접 작성한다.**
 
 ## 1. 커밋 수집
 
