@@ -1,0 +1,91 @@
+# 디자인 컨벤션
+
+> **디자인 토큰은 확정 전이다.** `src/app/globals.css`는 현재 shadcn 기본 neutral 팔레트 상태다. 디자인팀의 Design Tokens 명세(Phase 2 산출물)가 오면 `@theme` 매핑을 교체한다. 그전까지 색을 임의로 정하지 않는다.
+
+## 토큰
+
+- **HEX·rgb를 하드코딩하지 않는다.** 시맨틱 토큰을 쓴다 (`bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border` 등).
+- 토큰은 `src/app/globals.css`의 `@theme inline` 블록과 `:root` / `.dark`에서 관리한다.
+- **Tailwind v4에는 설정 파일이 없다.** `tailwind.config.js`를 만들지 않는다. v3 예제를 그대로 옮기면 동작하지 않는다.
+- 새 토큰이 필요하면 임의로 클래스를 만들지 말고 `@theme`에 먼저 추가한다.
+
+## 다크 모드
+
+- `.dark` 클래스 기반이다(`@custom-variant dark`). 라이트에서만 확인하고 끝내지 않는다.
+- 색을 넣을 때 라이트·다크 양쪽 값을 함께 정의한다. 한쪽에만 정의된 색은 반대 테마에서 깨진다.
+
+## cn
+
+- 조건부 className은 문자열 결합 대신 `cn()`을 쓴다 (`@/shared/lib/utils`).
+- `cn`은 `clsx` + `tailwind-merge`다. 나중에 오는 클래스가 앞 클래스를 덮으므로, 기본 스타일을 먼저 두고 오버라이드를 뒤에 둔다.
+- 컴포넌트는 `className` prop을 받아 `cn(base, className)` 형태로 합쳐 호출부가 덮어쓸 수 있게 한다.
+
+```tsx
+<div className={cn("rounded-lg border p-4", isActive && "border-primary", className)} />
+```
+
+## 모바일 우선
+
+- **모든 스타일은 모바일 뷰를 기본으로 작성한다.** `sm:` 이상은 확장으로 붙인다. 데스크톱을 먼저 짜고 모바일을 덮지 않는다.
+- 반응형 브레이크포인트는 3개를 쓴다(모바일 기본 / `md` / `lg`).
+- **WebView 앱 확장 가능성을 고려한다.** 브라우저 UI(주소창·뒤로가기)에 의존하는 내비게이션을 만들지 않는다. 화면 안에 이동 수단을 둔다.
+
+## 터치 UX
+
+- 탭 대상은 최소 44×44px를 확보한다.
+- **hover에만 의존하는 정보·기능을 만들지 않는다.** 터치 기기에는 hover가 없다.
+- **색만으로 정보를 전달하지 않는다.** 아이콘·텍스트·패턴을 함께 쓴다.
+- 포커스 링을 지우지 않는다. 키보드 사용자가 위치를 잃는다.
+
+## 간격과 크기
+
+- Tailwind 기본 4px 스케일을 쓴다. 임의 값(`[13px]`)을 지양한다.
+- 임의 값이 반복되면 그건 토큰이 되어야 한다는 신호다.
+
+## shadcn 컴포넌트
+
+- shadcn은 라이브러리가 아니라 **코드가 저장소에 복사되는 방식**이다. `src/shared/ui/` 하위 파일은 CLI가 덮어쓴다.
+- 이 파일들을 임의로 수정하면 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
+- 스타일 변경은 파일을 고치는 대신 호출부에서 `className`으로 덮는 것을 먼저 검토한다.
+- `.prettierignore` 대상이므로 포맷을 손으로 맞추지 않는다.
+
+## 아이콘
+
+- 화면에 직접 배치하는 아이콘은 **react-icons**를 쓴다. lucide보다 종류가 많아 메인으로 채택했다.
+- `components.json`의 `iconLibrary`는 **`lucide`로 유지한다.** shadcn CLI가 지원하는 값은 lucide·phosphor·hugeicons·radix뿐이라 `react-icons`로 바꾸면 CLI가 인식하지 못한다.
+- `src/shared/ui/` 안의 lucide import는 그대로 둔다. 손으로 바꾸면 위의 소유권 규칙에 걸린다.
+- 의미를 전달하는 아이콘에는 접근성 이름을 준다. 장식용이면 `aria-hidden`을 준다.
+
+## 이미지
+
+| 규칙 | 근거 |
+|---|---|
+| `next/image` 사용, 원시 `img` 태그 금지 | WebP·AVIF 자동 변환. 국내 3사 모두 미사용 |
+| 모든 이미지에 width·height 또는 fill 지정 | 컬리 CLS 0.77 사례 |
+| 첫 화면 핵심 이미지에 priority 적용 | 펫프렌즈·컬리 LCP Load delay 75~80% |
+| 목록 이미지는 lazy 유지 | 어바웃펫 이미지 464개 즉시 로드 사례 |
+| 모든 이미지에 의미 있는 alt | 경쟁사 image-alt 검사 실패 |
+
+## 차트
+
+| 규칙 | 내용 |
+|---|---|
+| `accessibilityLayer` 기본 적용 | 차트는 SVG라 그냥 두면 스크린리더에서 비어 보인다 |
+| 첫 화면 사용 금지 | Recharts는 번들이 크다. 대시보드 초기 로드에 넣지 않는다 |
+| 지연 로드 | 차트가 필요한 화면은 `next/dynamic`으로 불러온다 |
+| 단순 게이지는 CSS | 잔량 표시에 차트 라이브러리를 쓰지 않는다 |
+
+```tsx
+<div className="bg-muted h-2 w-full rounded-full">
+  <div className="bg-primary h-full rounded-full" style={{ width: `${percent}%` }} />
+</div>
+```
+
+## 접근성 목표
+
+Lighthouse 접근성 **95점 이상**이 목표다. 국내 경쟁 3사가 75~89점에 머무는 지점이라 이 프로젝트의 차별화 축이다. 구현 중에는 아래를 기본으로 지킨다.
+
+- 버튼·링크에 접근 가능한 이름이 있다 (아이콘만 있는 버튼 주의).
+- 시맨틱 태그를 쓴다. 클릭 가능한 `div` 대신 `button`을 쓴다.
+- 폼 입력에 label이 연결되어 있다.
+- 텍스트 대비가 충분하다.
