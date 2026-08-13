@@ -60,7 +60,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -c 'if ((.tool_input.command // \"\") | test(\"(^|[&;|][[:space:]]*)gh[[:space:]]+pr[[:space:]]+create\")) then {hookSpecificOutput:{hookEventName:\"PostToolUse\",additionalContext:\"PR을 생성했다. README.md의 진행 상황 섹션을 이번 작업 내용에 맞게 갱신하라 — 완료 항목 반영, 다음 작업 갱신. 이미 갱신했거나 갱신할 것이 없으면 그 사유를 한 줄로 밝힌다.\"}} else empty end'"
+            "command": "jq -c 'if ((.tool_input.command // \"\") | test(\"(^|[&;|][[:space:]]*)gh[[:space:]]+pr[[:space:]]+create\")) then {hookSpecificOutput:{hookEventName:\"PostToolUse\",additionalContext:\"PR을 생성했다. README.md가 이번 작업 이후에도 여전히 사실인지 확인하라 — 스크립트 표, 기술 스택 표, 폴더 구조, 기능 소개, 실행 방법이 실제와 어긋나지 않는지 본다. README는 프로젝트 소개 문서이므로 진행 상황이나 작업 목록을 적지 않는다. 갱신할 것이 없으면 그 사유를 한 줄로 밝힌다.\"}} else empty end'"
           }
         ]
       }

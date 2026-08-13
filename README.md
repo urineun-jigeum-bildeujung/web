@@ -146,35 +146,6 @@ FSD 표준의 `pages` 레이어를 **`views`로 부르는 이유**는 Next.js가
 
 ---
 
-## 진행 상황
-
-하나의 작업(이슈)이 끝날 때마다 이 섹션을 갱신합니다.
-
-### 완료
-
-- [x] 기술 스택 설치와 의존성 정합성 확보 (`react-is` 오버라이드 포함)
-- [x] FSD 폴더 구조와 레이어별 README
-- [x] 컨벤션 문서 7종 (`docs/conventions`)
-- [x] Prettier·LF·에디터 설정, GitHub 이슈·PR 템플릿
-- [x] Claude Code 하네스 (`.claude` — 커맨드 4종, code-reviewer, 훅)
-- [x] TanStack Query Provider 배선 (`shared/providers`)
-- [x] 초기 세팅 안내 홈 화면 + 다크 모드 데모 토글
-- [x] 테스트 환경 (Vitest 단위 5건, Playwright E2E 2건)
-- [x] ESLint 강제 (FSD 경계 `boundaries`, Tailwind 클래스, 파일명, import 위치)
-- [x] CI 워크플로우 (GitHub Actions — typecheck·format·lint·knip·test·build·E2E)
-- [x] husky 로컬 훅 (pre-commit 린트·포맷, commit-msg 형식 검사)
-- [x] 미사용 코드 검사 (knip — CI에서 실행)
-- [x] CodeRabbit 리뷰 설정
-
-### 다음
-
-- [ ] 원격 저장소 생성, `dev` 브랜치·default 설정, rebase 전용 머지 설정 (팀장)
-- [ ] 페이지 설계·라우터 설계 (~8/28)
-- [ ] 디자인 토큰·한글 폰트 적용 (디자인팀 명세 대기)
-- [ ] API 계약 (백엔드 Swagger 공유 대기)
-
----
-
 ## 작업 전 확인
 
 AI 에이전트와 팀원 모두 [AGENTS.md](./AGENTS.md)의 행동 지침과 스택 사용 규칙을 먼저 읽으십시오. 상태 관리 경계, 서버 컴포넌트 경계, 차트·이미지 규칙, 보류 중인 결정 목록이 정리되어 있습니다.
