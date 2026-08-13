@@ -32,7 +32,17 @@
 
 - **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
 - **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
-- **pre-push** — `knip`으로 미사용 파일·export·의존성을 검사한다(약 10초). 죽은 코드가 있으면 push가 막힌다.
+
+push는 막지 않는다. 작업 중인 브랜치에는 아직 조립되지 않은 슬라이스가 정상적으로 존재하므로, 미사용 코드 검사는 병합 시점(CI)에서 한다.
+
+### CI
+
+`.github/workflows/ci.yml`이 `dev`·`main` 대상 PR과 push에서 돈다.
+
+- **verify** — typecheck → format:check → lint → knip → 단위 테스트 → build
+- **e2e** — verify 통과 후 Playwright 실행. 실패 시 리포트를 아티팩트로 올린다
+
+배포 파이프라인은 인프라팀이 별도로 관리한다. 이 워크플로우는 코드 품질만 본다.
 
 ### 저자 표기
 

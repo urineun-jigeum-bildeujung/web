@@ -35,6 +35,11 @@ jobs:
       - name: 린트
         run: npm run lint
 
+      # 작업 중인 브랜치에는 미완성 슬라이스가 정상적으로 존재하므로
+      # push가 아니라 병합 시점에 검사한다.
+      - name: 미사용 코드 검사
+        run: npm run knip
+
       - name: 단위 테스트
         run: npm run test
 

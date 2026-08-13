@@ -5,7 +5,7 @@ description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템�
 현재 작업을 PR로 올린다. `docs/conventions/git-convention.md`의 작업 흐름을 따른다.
 
 1. 현재 브랜치와 연관 이슈 번호를 확인한다.
-2. **검증** — `/verify` 순서(typecheck→format:check→lint→build)가 통과했는지 확인한다. 안 돌렸으면 먼저 돌리고, **실패하면 PR을 만들지 않는다.**
+2. **검증** — `/verify` 순서(typecheck→format:check→lint→knip→test→build)가 통과했는지 확인한다. 안 돌렸으면 먼저 돌리고, **실패하면 PR을 만들지 않는다.** CI가 같은 검사를 다시 하므로 여기서 걸러야 왕복이 줄어든다.
 3. **연관 이슈 업데이트** — 진행/완료 내용을 `gh issue comment`로 남긴다.
 4. **README.md 진행 상황 갱신** — "진행 상황" 섹션에 이번 작업의 완료 항목을 반영하고 다음 작업을 갱신한다. 갱신분은 이 브랜치에 커밋한다.
 5. 브랜치를 push한다 — `git push -u origin <branch>`.

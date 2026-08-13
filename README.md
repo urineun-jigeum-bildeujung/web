@@ -161,8 +161,9 @@ FSD 표준의 `pages` 레이어를 **`views`로 부르는 이유**는 Next.js가
 - [x] 초기 세팅 안내 홈 화면 + 다크 모드 데모 토글
 - [x] 테스트 환경 (Vitest 단위 5건, Playwright E2E 2건)
 - [x] ESLint 강제 (FSD 경계 `boundaries`, Tailwind 클래스, 파일명, import 위치)
-- [x] CI 워크플로우 (GitHub Actions — 원격 연결 시 자동 동작)
-- [x] husky 로컬 훅 (pre-commit 린트·포맷, commit-msg 형식, pre-push knip)
+- [x] CI 워크플로우 (GitHub Actions — typecheck·format·lint·knip·test·build·E2E)
+- [x] husky 로컬 훅 (pre-commit 린트·포맷, commit-msg 형식 검사)
+- [x] 미사용 코드 검사 (knip — CI에서 실행)
 - [x] CodeRabbit 리뷰 설정
 
 ### 다음
