@@ -18,16 +18,24 @@
       "Bash(git branch *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git checkout *)",
       "Bash(git switch *)",
-      "Bash(git restore *)",
+      "Bash(git restore --staged *)",
       "Bash(git remote *)",
       "Bash(git fetch *)",
+      "Bash(git pull)",
+      "Bash(git pull *)",
       "Bash(gh repo view *)",
       "Bash(gh issue list *)",
       "Bash(gh issue view *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue comment *)",
       "Bash(gh pr list *)",
       "Bash(gh pr view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh api repos/*/pulls/*/comments*)",
+      "Bash(gh api repos/*/pulls/*/reviews*)",
+      "Bash(gh label list *)",
+      "Bash(date *)",
       "Bash(jq *)",
       "Bash(awk *)",
       "Bash(sed *)",
@@ -56,7 +64,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "jq -c 'if ((.tool_input.file_path // \"\") | test(\"src..*[.](ts|tsx)$\")) then {hookSpecificOutput:{hookEventName:\"PostToolUse\",additionalContext:\"src 안에 파일을 만들었다. 이 파일이 속한 슬라이스 또는 shared 세그먼트의 README.md가 폴더 안 파일들을 설명하는지 확인하라 — README가 없으면 만들고, 새 파일이면 파일 표에 한 줄 추가한다. 레이어 README의 슬라이스 목록도 새 슬라이스면 갱신한다. 세그먼트 내부(ui/·model/·api/)에는 README를 만들지 않는다. views 슬라이스는 src/views/README.md의 페이지 README 템플릿을 따른다. 이미 반영했으면 언급하지 않아도 된다.\"}} else empty end'"
+            "command": "sh .claude/hooks/readme-check.sh"
           }
         ]
       },
