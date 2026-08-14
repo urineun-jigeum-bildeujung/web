@@ -36,6 +36,8 @@ yarn-error.log*
 
 # claude code (개인 오버라이드 설정은 공유하지 않는다)
 .claude/settings.local.json
+# /figma-watch가 남기는 로컬 감지 스냅샷 (개인 상태 파일)
+.claude/figma-watch-snapshot.json
 
 # env files (can opt-in for committing if needed)
 .env
