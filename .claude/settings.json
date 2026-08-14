@@ -29,7 +29,8 @@
       "Bash(gh pr list *)",
       "Bash(gh pr view *)",
       "Bash(jq *)",
-      "Bash(python3 *)",
+      "Bash(awk *)",
+      "Bash(sed *)",
       "mcp__plugin_figma_figma__get_metadata"
     ]
   },
