@@ -9,14 +9,16 @@ argument-hint: [PR번호]
 
 **전체 페이지를 받는다.** 코멘트는 한 번에 30건씩만 오고 답글·봇 재답변이 같은 목록을 나눠 쓰므로 금방 넘는다. `--slurp`는 `--jq`와 함께 쓸 수 없어 `jq`를 따로 부른다.
 
+**조회 결과를 변수에 먼저 받는다.** `gh api | jq`로 이으면 조회가 실패해도 빈 입력이 `jq`를 통과해 종료 코드가 0이 되고, **리뷰가 없는 것처럼 보인다.** 지적을 통째로 놓치는 경로다.
+
 ```bash
 gh pr view --json number,url --jq '.number'
 
-gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments \
-  | jq -r '(add // [])[] | "\(.id) | \(.path):\(.line // .original_line)\n\(.body)\n"'
+RAW=$(gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments) || exit 1
+printf '%s' "$RAW" | jq -r '(add // [])[] | "\(.id) | \(.path):\(.line // .original_line)\n\(.body)\n"'
 
-gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/reviews \
-  | jq -r '(add // [])[] | "[\(.user.login)] \(.state)\n\(.body)"'
+REVIEWS=$(gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/reviews) || exit 1
+printf '%s' "$REVIEWS" | jq -r '(add // [])[] | "[\(.user.login)] \(.state)\n\(.body)"'
 ```
 
 이미 답글이 달린 스레드는 건너뛴다. `in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
@@ -45,7 +47,8 @@ gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/reviews \
 
 ```bash
 # 전문을 파일로 받아 접힌 블록 제목을 전부 뽑아본다
-gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments | jq 'add // []' > comments.json
+RAW=$(gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments) || exit 1
+printf '%s' "$RAW" | jq 'add // []' > comments.json
 node -e "
 const cs=JSON.parse(require('fs').readFileSync('comments.json','utf8'));
 for (const c of cs) {

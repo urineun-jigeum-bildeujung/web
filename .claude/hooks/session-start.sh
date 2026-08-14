@@ -24,13 +24,15 @@ URL=${PR#* }
 # gh의 실패가 jq의 성공에 가려지지 않는다.
 RAW=$(gh api --paginate --slurp "repos/{owner}/{repo}/pulls/$NUM/comments" 2>/dev/null) || exit 0
 
+# jq가 실패하면 리뷰가 없는 게 아니라 읽지 못한 것이다. 아래 else 가지가
+# "미응답 리뷰 없음"이라고 단언하므로, 0으로 떨어뜨리지 말고 조용히 끝낸다.
 PENDING=$(printf '%s' "$RAW" | jq '
   (add // [])
   | . as $all
   | [$all[] | select(.in_reply_to_id == null) | .id] as $roots
   | [$all[] | select(.in_reply_to_id != null) | .in_reply_to_id] as $replied
   | [$roots[] | select([.] | inside($replied) | not)] | length
-' 2>/dev/null) || PENDING=0
+' 2>/dev/null) || exit 0
 
 if [ "${PENDING:-0}" -gt 0 ] 2>/dev/null; then
   printf '열린 PR #%s에 답 안 한 리뷰 %s건이 있습니다. /review-reply로 처리하십시오.\n%s\n' "$NUM" "$PENDING" "$URL"
