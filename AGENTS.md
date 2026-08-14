@@ -186,7 +186,7 @@ Feature-Sliced Design을 따릅니다. 상위 레이어는 하위 레이어만 i
 
 ```
 src/
-├── app/        # Next.js App Router + FSD app 레이어 (라우팅, providers, 전역 스타일)
+├── app/        # Next.js App Router 라우팅 (얇게 유지, 전역 스타일)
 ├── views/      # FSD pages 레이어. 페이지 단위 조립
 ├── widgets/    # 독립적으로 동작하는 큰 UI 블록
 ├── features/   # 사용자 시나리오 단위 기능
@@ -203,7 +203,7 @@ src/
 
 **`pages`가 아니라 `views`인 이유**를 기억하십시오. Next.js는 `src/pages/`를 Pages Router로 인식하므로 FSD 표준 이름을 그대로 쓸 수 없습니다. 이름을 되돌리지 마십시오.
 
-**`src/app/`은 두 역할을 겸합니다.** Next.js 라우팅 파일(`layout.tsx`, `page.tsx`)과 FSD app 레이어(`providers.tsx`)가 함께 있습니다. 라우트 파일은 얇게 유지하고 실제 화면 조립은 `views/`에 두십시오.
+**`src/app/`에는 Next.js 라우팅 파일(`layout.tsx`, `page.tsx`)과 전역 스타일(`globals.css`)이 있습니다.** FSD app 레이어에 해당하는 Provider 조립은 `shared/providers/app-providers.tsx`에 두고 `layout`이 그것 하나만 감쌉니다(5.2절). 라우트 파일은 얇게 유지하고 실제 화면 조립은 `views/`에 두십시오.
 
 새 슬라이스를 만들 때 세그먼트는 `ui` · `model` · `api` · `lib` · `config`를 사용합니다. shadcn 컴포넌트는 `components.json`의 alias 설정에 따라 `src/shared/ui/`에 자동으로 추가됩니다.
 

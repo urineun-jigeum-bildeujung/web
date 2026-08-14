@@ -41,7 +41,7 @@ npm run dev
 | `npm run build` | 프로덕션 빌드 및 타입 체크 |
 | `npm run start` | 빌드 결과 실행 |
 | `npm run lint` | ESLint 검사 |
-| `npm run typecheck` | 타입 검사 (`tsc --noEmit`) |
+| `npm run typecheck` | 타입 검사 (`next typegen && tsc --noEmit`) |
 | `npm run format` | Prettier 포맷 적용 |
 | `npm run format:check` | 포맷 위반 확인 (수정 없음) |
 | `npm run test` | Vitest 단위 테스트 1회 실행 |
@@ -165,11 +165,11 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 
 | 커맨드 | 하는 일 |
 | --- | --- |
-| `/verify` | typecheck → format:check → lint → build 순서로 검증 |
+| `/verify` | typecheck → format:check → lint → test → build 순서로 검증 |
 | `/new-slice <layer> <name>` | FSD 슬라이스 뼈대 생성 |
 | `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
 | `/changelog` | 브랜치 커밋을 읽어 CHANGELOG 항목 작성 |
-| `/pr` | 검증 → CHANGELOG 기록 → 이슈 업데이트 → PR 생성 |
+| `/pr` | 이슈 확인 → 검증 → 이슈 업데이트 → CHANGELOG 기록 → PR 생성 |
 | `/review-reply` | 리뷰 코멘트를 현재 코드에 대조해 처리하고 스레드에 답변 |
 | `/figma-watch [URL]` | Figma 파일의 프레임 변경 감지 — `/loop`로 감싸면 주기적 알림 |
 | `/from-figma <번호·URL>` | Figma 프레임 구현 착수 — 분석 → 배치 승인 게이트 → 이슈 → 구현 → 검증 → 커밋. 번호는 `/figma-watch` 백로그 기준 |
