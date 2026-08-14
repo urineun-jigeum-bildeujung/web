@@ -74,6 +74,10 @@
           {
             "type": "command",
             "command": "sh .claude/hooks/record-check.sh"
+          },
+          {
+            "type": "command",
+            "command": "sh .claude/hooks/branch-base-check.sh"
           }
         ]
       }

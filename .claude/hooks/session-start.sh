@@ -9,6 +9,18 @@
 BRANCH=$(git branch --show-current 2>/dev/null)
 printf '현재 브랜치: %s\n' "$BRANCH"
 
+# origin/dev보다 뒤처진 채로 작업을 이어가면 PR 단계에서 충돌로 되돌아온다.
+# 세션을 시작하는 지금이 맞추기 좋은 시점이라 알린다. 오프라인이면 건너뛴다.
+if git fetch origin --quiet 2>/dev/null; then
+  BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null)
+  if [ "${BEHIND:-0}" -gt 0 ] 2>/dev/null; then
+    case "$BRANCH" in
+      dev | main) printf 'origin/dev보다 %s커밋 뒤처졌습니다. git pull로 맞추십시오.\n' "$BEHIND" ;;
+      *) printf 'origin/dev보다 %s커밋 뒤처졌습니다. 작업 전 git rebase origin/dev를 검토하십시오.\n' "$BEHIND" ;;
+    esac
+  fi
+fi
+
 command -v jq >/dev/null 2>&1 || exit 0
 
 # 열린 PR만 본다. gh pr view는 열린 PR이 없으면 가장 최근의 머지·닫힌 PR로 폴백하므로
