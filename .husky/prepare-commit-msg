@@ -1,0 +1,41 @@
+# 브랜치명의 이슈 번호를 커밋 메시지에 채워 넣는다.
+#
+# 브랜치가 유형/도메인/#이슈번호-설명 형식이라 번호는 이미 브랜치에 있다.
+# 매 커밋 손으로 (#N)을 넣는 대신 여기서 채운다. 형식 검사는 commit-msg가
+# 최종 방어선으로 그대로 남는다. 상세는 docs/conventions/git-convention.md.
+
+MSG_FILE=$1
+SOURCE=$2
+
+# Git이 메시지를 만들어 주는 경우는 건드리지 않는다.
+# merge·squash는 병합 메시지고, commit은 -c·-C·--amend라 기존 메시지를 재사용한다.
+case "$SOURCE" in
+  merge | squash | commit) exit 0 ;;
+esac
+
+[ -f "$MSG_FILE" ] || exit 0
+
+BRANCH=$(git branch --show-current 2>/dev/null) || exit 0
+ISSUE=$(printf '%s' "$BRANCH" | grep -oE '#[0-9]+' | head -n1)
+[ -z "$ISSUE" ] && exit 0
+
+FIRST=$(head -n1 "$MSG_FILE")
+
+# autosquash·merge 접두는 Git이 만드는 형식이므로 그대로 둔다.
+case "$FIRST" in
+  Merge* | Revert* | fixup!* | squash!* | amend!*) exit 0 ;;
+esac
+
+# 이미 이슈 번호가 있으면 덮어쓰지 않는다. 다른 이슈를 일부러 적었을 수 있다.
+printf '%s' "$FIRST" | grep -qE '\(#[0-9]+\):' && exit 0
+
+# `유형: 내용` 형식일 때만 채운다. 그 밖의 형식은 commit-msg가 걸러낸다.
+printf '%s' "$FIRST" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|design): ' || exit 0
+
+NEW=$(printf '%s' "$FIRST" | sed -E "s/^([a-z]+): /\1($ISSUE): /")
+
+# 첫 줄만 바꾸고 본문은 그대로 둔다.
+{
+  printf '%s\n' "$NEW"
+  tail -n +2 "$MSG_FILE"
+} >"$MSG_FILE.tmp" && mv "$MSG_FILE.tmp" "$MSG_FILE"
