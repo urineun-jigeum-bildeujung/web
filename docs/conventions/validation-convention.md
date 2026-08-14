@@ -33,9 +33,10 @@ sandbox/네트워크 제한에 걸린 이력이 있어 아래는 처음부터 �
 1. `npm run typecheck`
 2. `npm run format:check`
 3. `npm run lint`
-4. `npm run build`
+4. `npm run test`
+5. `npm run build`
 
-단위 테스트가 존재하는 영역을 변경했다면 `npm run test`를 함께 실행한다. 유저 플로우(라우팅·핵심 인터랙션)가 바뀌었으면 `npm run test:e2e`도 실행한다.
+**CI(`.github/workflows/ci.yml`)가 도는 순서와 같다.** 단위 테스트를 로컬에서 빼면 CI에서야 실패를 발견해 왕복이 는다. 유저 플로우(라우팅·핵심 인터랙션)가 바뀌었으면 `npm run test:e2e`도 실행한다.
 
 > **`typecheck`는 `next typegen`을 먼저 돌린다.** `LayoutProps`·`PageProps` 같은 전역 타입은 Next가 `.next/types`에 생성하는 것이라, 빌드한 적 없는 환경에서 `tsc`만 돌리면 `Cannot find name 'LayoutProps'`가 난다. 로컬에는 `.next`가 남아 있어 드러나지 않고 CI에서만 터진다. **`.next`를 지우고 한 번 돌려보면 CI와 같은 조건이 된다.**
 

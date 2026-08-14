@@ -6,7 +6,7 @@ argument-hint: <작업 설명>
 새 작업을 시작한다. `$ARGUMENTS`를 작업 내용으로 삼아 `docs/conventions/git-convention.md`의 작업 흐름을 따른다.
 
 1. 유형을 판단한다 (feat/fix/design/chore/docs).
-2. **GitHub 이슈 생성** — `gh issue create`로 제목 `유형: 설명`, 알맞은 라벨과 마일스톤을 달고, 본문은 `.github/ISSUE_TEMPLATE`의 형식(무엇/왜/완료조건)으로 쓴다.
+2. **GitHub 이슈 생성** — `gh issue create`로 제목 `유형: 설명`, 알맞은 라벨과 마일스톤을 달고, 본문은 `.github/ISSUE_TEMPLATE`의 해당 템플릿 항목을 채우고(기능은 문제·제안·고려한 대안·정체성 점검, 버그는 재현 절차·기대한 동작·실제 동작·환경), 마지막에 완료 기준을 덧붙인다.
 3. 생성된 **이슈 번호로 브랜치를 판다** — `유형/도메인/#이슈번호-설명` (예: `feat/subscription/#12-detail-view`). `dev`에서 최신을 받아 분기한다:
    - `git switch dev && git pull && git switch -c <branch>`
 4. 이슈 링크와 브랜치명을 보고한다.
