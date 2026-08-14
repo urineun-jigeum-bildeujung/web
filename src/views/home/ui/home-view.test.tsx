@@ -6,7 +6,7 @@ import { HomeView } from "./home-view";
 
 test("서비스명 제목이 렌더링된다", () => {
   render(<HomeView />);
-  expect(screen.getByRole("heading", { level: 1, name: "골라주개" })).toBeDefined();
+  expect(screen.getByRole("heading", { level: 1, name: "골라주개냥" })).toBeDefined();
 });
 
 test("다크 모드 토글 버튼이 렌더링된다", () => {

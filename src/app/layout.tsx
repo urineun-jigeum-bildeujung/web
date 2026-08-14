@@ -13,10 +13,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "골라주개",
-    template: "%s | 골라주개",
+    default: "골라주개냥",
+    template: "%s | 골라주개냥",
   },
-  description: "고민은 줄이고, 우리 애한테 맞게 골라주개",
+  description: "고민은 줄이고, 우리 애한테 맞게 골라주개냥",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
