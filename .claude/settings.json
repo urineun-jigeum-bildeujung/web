@@ -27,7 +27,10 @@
       "Bash(gh issue list *)",
       "Bash(gh issue view *)",
       "Bash(gh pr list *)",
-      "Bash(gh pr view *)"
+      "Bash(gh pr view *)",
+      "Bash(jq *)",
+      "Bash(python3 *)",
+      "mcp__plugin_figma_figma__get_metadata"
     ]
   },
   "attribution": {
