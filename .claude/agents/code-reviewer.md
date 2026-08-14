@@ -23,6 +23,7 @@ tools: Read, Glob, Grep, Bash
 - **차트**: `accessibilityLayer` 켰는지, `next/dynamic`으로 지연 로드했는지. 단순 게이지에 Recharts를 쓰지 않았는지.
 - **네이밍/SRP**: 파일 kebab-case·컴포넌트 PascalCase·상수 UPPER_SNAKE. 한 컴포넌트가 폼 관리·페칭·렌더를 모두 하지 않는지.
 - **파일 헤더**: 새 소스 파일 첫 줄에 한국어 역할 주석. 단 `src/shared/ui/`의 shadcn 생성 파일은 예외다.
+- **테스트 동반**: 새 순수 함수·훅 로직에 colocated 테스트(`<파일명>.test.ts(x)`)가 있는지. 컴포넌트는 렌더링 스모크 수준이면 충분하고, 유저 플로우가 바뀌었으면 `e2e/`에 스펙이 따라왔는지 본다. 검증할 것이 없어 안 만든 경우와 그냥 빠뜨린 경우를 구분한다. 근거는 `code-convention`의 "테스트" 절이다.
 - **건드리면 안 되는 것**: `src/shared/ui/`·`src/shared/lib/utils.ts`(shadcn 소유, prettierignore 대상), `package.json`의 `react-is` overrides, `tailwind.config.js` 신규 생성(v4는 설정 파일이 없다).
 
 ## 보류 항목 (지적하지 말 것)
