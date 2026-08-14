@@ -1,9 +1,14 @@
 ---
 description: Figma 프레임 구현 착수 — 디자인 분석 → 배치 확인 → 이슈 → 구현 → 검증 → 커밋
-argument-hint: <Figma 프레임 URL> [범위 설명]
+argument-hint: <Figma 프레임 URL 또는 백로그 번호> [범위 설명]
 ---
 
-Figma 프레임을 코드로 구현하는 전체 흐름을 진행한다. `$ARGUMENTS`에서 Figma URL(필수)과 범위 설명(선택)을 얻는다. URL이 없으면 멈추고 요청한다.
+Figma 프레임을 코드로 구현하는 전체 흐름을 진행한다. `$ARGUMENTS`에서 대상과 범위 설명(선택)을 얻는다. 대상은 두 형태를 받는다.
+
+- **Figma 프레임 URL** — 그대로 사용한다.
+- **백로그 번호** (`1`, `3번` 등) — `.claude/figma-watch-snapshot.json`에서 `backlog` 필드가 그 번호인 프레임을 찾아 노드 ID로 URL을 만든다(콜론은 하이픈으로). 스냅샷이 없거나 번호가 없으면 멈추고 `/figma-watch` 첫 실행으로 백로그를 만들라고 안내한다.
+
+둘 다 없으면 멈추고 요청한다.
 
 1. **디자인 읽기** — `figma-design-to-code` 스킬을 먼저 로드한 뒤 `get_design_context`로 대상 프레임을 분석한다(필요 시 `get_screenshot` 병용). 스킬 로드는 Figma MCP의 선행 필수 조건이다.
 2. **배치 계획 수립 → 사용자 확인 (게이트)** — 분석 결과로 다음을 정리해 사용자에게 보여주고 **승인받기 전에는 이슈·브랜치·코드를 만들지 않는다.**
