@@ -3,7 +3,7 @@ msg=$(head -n1 "$1")
 
 # merge·revert·autosquash 커밋은 Git이 만드는 형식이므로 통과시킨다.
 case "$msg" in
-  Merge*|Revert*|fixup!*|squash!*) exit 0 ;;
+  Merge*|Revert*|fixup!*|squash!*|amend!*) exit 0 ;;
 esac
 
 if ! printf '%s' "$msg" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[0-9]+\))?: .+'; then

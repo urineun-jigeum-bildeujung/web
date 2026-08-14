@@ -15,10 +15,15 @@ INPUT=$(cat)
 CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // ""' 2>/dev/null) || exit 0
 
 # 어느 쪽인지 가린다. PR 생성 시점에는 README까지 본다.
-# 선행 공백을 허용해야 if·for 블록 안에 들여쓴 명령도 잡힌다.
-if printf '%s' "$CMD" | grep -qE '(^|[&;|])[[:space:]]*gh[[:space:]]+pr[[:space:]]+create'; then
+#
+# PRE는 줄 시작이나 명령 구분자 뒤의 들여쓰기와 환경변수 접두(GIT_TRACE=1 git push)를
+# 건너뛴다. 뒤이은 옵션 자리는 서브커맨드 앞에 오는 전역 옵션만 허용한다 — 여기를
+# 아무 옵션이나 받게 넓히면 git commit -m "git push" 같은 문자열이 걸린다.
+PRE='(^|[&;|])[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*'
+
+if printf '%s' "$CMD" | grep -qE "${PRE}gh[[:space:]]+((-R|--repo)[[:space:]]+[^[:space:]]+[[:space:]]+)*pr[[:space:]]+create"; then
   KIND="pr"
-elif printf '%s' "$CMD" | grep -qE '(^|[&;|])[[:space:]]*git[[:space:]]+push'; then
+elif printf '%s' "$CMD" | grep -qE "${PRE}git[[:space:]]+((-C|-c)[[:space:]]+[^[:space:]]+[[:space:]]+)*push"; then
   KIND="push"
 else
   exit 0
