@@ -72,24 +72,27 @@ REPO_JSON=$(gh repo view --json owner,name 2>/dev/null) || exit 0
 OWNER=$(printf '%s' "$REPO_JSON" | jq -r '.owner.login' 2>/dev/null) || exit 0
 NAME=$(printf '%s' "$REPO_JSON" | jq -r '.name' 2>/dev/null) || exit 0
 
-# 스레드 100개까지 본다. 그보다 많은 PR은 이 알림보다 먼저 쪼개야 할 상태다.
-RAW=$(gh api graphql -F owner="$OWNER" -F name="$NAME" -F num="$NUM" -f query='
-query($owner: String!, $name: String!, $num: Int!) {
+# --paginate가 pageInfo·endCursor를 보고 전체 페이지를 돌아 준다. 100개에서
+# 끊으면 앞이 다 해결된 PR에서 101번째 미해결 스레드를 0건으로 보고한다.
+RAW=$(gh api graphql --paginate -F owner="$OWNER" -F name="$NAME" -F num="$NUM" -f query='
+query($owner: String!, $name: String!, $num: Int!, $endCursor: String) {
   repository(owner: $owner, name: $name) {
     pullRequest(number: $num) {
-      reviewThreads(first: 100) {
+      reviewThreads(first: 100, after: $endCursor) {
+        pageInfo { hasNextPage endCursor }
         nodes { isResolved comments(last: 1) { nodes { author { login } } } }
       }
     }
   }
 }' 2>/dev/null) || exit 0
 
+# 페이지마다 JSON 문서가 하나씩 나오므로 -s로 묶어 합산한다.
 # jq가 실패하면 리뷰가 없는 게 아니라 읽지 못한 것이다. 아래 else 가지가
 # "확인할 스레드 없음"이라고 단언하므로, 0으로 떨어뜨리지 말고 조용히 끝낸다.
-PENDING=$(printf '%s' "$RAW" | jq --arg me "$ME" '
-  [.data.repository.pullRequest.reviewThreads.nodes[]
-   | select(.isResolved | not)
-   | select(.comments.nodes[0].author.login != $me)]
+PENDING=$(printf '%s' "$RAW" | jq -s --arg me "$ME" '
+  [.[].data.repository.pullRequest.reviewThreads.nodes[]]
+  | [.[] | select(.isResolved | not)
+         | select(.comments.nodes[0].author.login != $me)]
   | length
 ' 2>/dev/null) || exit 0
 
