@@ -8,17 +8,21 @@ import tailwindcss from "eslint-plugin-tailwindcss";
 // 패키지 import 위치 제한 — 컨벤션의 상태 경계·아이콘 규칙을 강제한다.
 // flat config는 같은 규칙을 나중 블록이 통째로 덮어쓰므로,
 // "src 전체 금지 → 허용 구역에서 좁혀서 재정의" 순서로 계단을 만든다.
+//
+// paths가 아니라 patterns를 쓴다. paths는 정확한 모듈명만 막아서 zustand/react나
+// zustand/middleware 같은 서브패스로 그대로 우회된다. zustand v5는 exports에
+// "./*"를 노출하므로 서브패스가 실제 진입점이다.
 const RESTRICT_QUERY = {
-  name: "@tanstack/react-query",
+  group: ["@tanstack/react-query", "@tanstack/react-query/*"],
   message:
     "서버 상태 훅은 슬라이스 api 세그먼트의 use-query-* 훅으로 감싸십시오. (code-convention)",
 };
 const RESTRICT_ZUSTAND = {
-  name: "zustand",
+  group: ["zustand", "zustand/*"],
   message: "스토어는 슬라이스 model 세그먼트 또는 shared에 두십시오. (srp-convention)",
 };
 const RESTRICT_LUCIDE = {
-  name: "lucide-react",
+  group: ["lucide-react", "lucide-react/*"],
   message:
     "화면에 직접 배치하는 아이콘은 react-icons를 쓰십시오. lucide는 shared/ui의 shadcn 파일 전용입니다. (design-convention)",
 };
@@ -35,7 +39,11 @@ const eslintConfig = defineConfig([
     settings: {
       tailwindcss: {
         cssConfigPath: "./src/app/globals.css",
-        callees: ["cn", "cva", "clsx"],
+        // v4는 문자열 인자를 functions로, 객체 키를 parseKeyFunctions로 본다.
+        // (v3의 callees는 없어진 키라 지정해도 조용히 무시된다.)
+        // cn·cva·clsx는 functions 기본값에 이미 있지만 parseKeyFunctions에는
+        // cn이 빠져 있어 cn({ "h-[20px]": on }) 형태가 검사에서 샜다.
+        parseKeyFunctions: ["classnames", "classNames", "clsx", "cn"],
       },
     },
     rules: {
@@ -183,26 +191,26 @@ const eslintConfig = defineConfig([
     rules: {
       "no-restricted-imports": [
         "error",
-        { paths: [RESTRICT_QUERY, RESTRICT_ZUSTAND, RESTRICT_LUCIDE] },
+        { patterns: [RESTRICT_QUERY, RESTRICT_ZUSTAND, RESTRICT_LUCIDE] },
       ],
     },
   },
   {
     files: ["src/**/api/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { paths: [RESTRICT_ZUSTAND, RESTRICT_LUCIDE] }],
+      "no-restricted-imports": ["error", { patterns: [RESTRICT_ZUSTAND, RESTRICT_LUCIDE] }],
     },
   },
   {
     files: ["src/**/model/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { paths: [RESTRICT_QUERY, RESTRICT_LUCIDE] }],
+      "no-restricted-imports": ["error", { patterns: [RESTRICT_QUERY, RESTRICT_LUCIDE] }],
     },
   },
   {
     files: ["src/shared/**/*.{ts,tsx}"],
     rules: {
-      "no-restricted-imports": ["error", { paths: [RESTRICT_LUCIDE] }],
+      "no-restricted-imports": ["error", { patterns: [RESTRICT_LUCIDE] }],
     },
   },
   {
@@ -218,6 +226,13 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // 테스트 산출물. .gitignore가 생성물로 잡는 경로와 맞춘다.
+    // Playwright 리포트에는 trace viewer의 JS 번들이 들어 있어, 인자 없는
+    // eslint가 저장소 전체를 훑을 때 이것까지 검사하게 된다.
+    "playwright-report/**",
+    "test-results/**",
+    "blob-report/**",
+    "coverage/**",
   ]),
 ]);
 
