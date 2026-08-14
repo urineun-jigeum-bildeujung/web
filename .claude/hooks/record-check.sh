@@ -33,25 +33,37 @@ fi
 NUM=$(gh pr view --json number,state --jq 'select(.state == "OPEN") | .number' 2>/dev/null) || exit 0
 [ -z "$NUM" ] && exit 0
 
-# 코멘트는 한 페이지에 30건씩만 온다. 리뷰가 몇 번 오가면 금방 넘으므로
-# 전체 페이지를 받는다. --slurp는 --jq와 함께 쓸 수 없어 jq를 따로 부르고,
-# 파이프로 잇지 않아야 gh의 실패가 jq의 성공에 가려지지 않는다.
-RAW=$(gh api --paginate --slurp "repos/{owner}/{repo}/pulls/$NUM/comments" 2>/dev/null) || exit 0
+# 아직 내 차례인 리뷰 스레드를 센다. 집계 방식은 session-start.sh와 같아야 한다.
+# resolve되지 않았고 마지막 코멘트가 내 것이 아닌 스레드만 센다 — "루트에 답글
+# 있음"으로 세면 봇이 내 답에 재답변하며 반박하는 경우를 통째로 놓친다.
+#
+# 이 훅은 리뷰 안내를 붙였다 뗐다 할 뿐 "리뷰 없음"을 말하지 않으므로,
+# 조회가 실패하면 0으로 두고 기록 점검 안내만 내보낸다.
+PENDING=0
+ME=$(gh api user --jq '.login' 2>/dev/null)
+REPO_JSON=$(gh repo view --json owner,name 2>/dev/null)
 
-# 스레드의 마지막 발화자가 내가 아니면 아직 내 차례다. 집계 방식은
-# session-start.sh와 같아야 한다 — 봇이 내 답에 재답변하며 반박하는 경우를
-# "루트에 답글 있음"으로 세면 통째로 놓친다.
-ME=$(gh api user --jq '.login' 2>/dev/null) || ME=""
+if [ -n "$ME" ] && [ -n "$REPO_JSON" ]; then
+  OWNER=$(printf '%s' "$REPO_JSON" | jq -r '.owner.login' 2>/dev/null)
+  NAME=$(printf '%s' "$REPO_JSON" | jq -r '.name' 2>/dev/null)
 
-# jq가 실패하면 리뷰 안내만 빠지고 기록 점검 안내는 그대로 나간다. 이 훅은
-# session-start.sh와 달리 "리뷰 없음"을 말하지 않으므로 0으로 떨어뜨려도
-# 없는 것을 없다고 단언하는 오보가 되지 않는다.
-PENDING=$(printf '%s' "$RAW" | jq --arg me "$ME" '
-  (add // [])
-  | group_by(.in_reply_to_id // .id)
-  | [.[] | (sort_by(.created_at) | last) | select(.user.login != $me)]
-  | length
-' 2>/dev/null) || PENDING=0
+  RAW=$(gh api graphql -F owner="$OWNER" -F name="$NAME" -F num="$NUM" -f query='
+query($owner: String!, $name: String!, $num: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $num) {
+      reviewThreads(first: 100) {
+        nodes { isResolved comments(last: 1) { nodes { author { login } } } }
+      }
+    }
+  }
+}' 2>/dev/null) &&
+    PENDING=$(printf '%s' "$RAW" | jq --arg me "$ME" '
+      [.data.repository.pullRequest.reviewThreads.nodes[]
+       | select(.isResolved | not)
+       | select(.comments.nodes[0].author.login != $me)]
+      | length
+    ' 2>/dev/null) || PENDING=0
+fi
 
 CHANGELOG="CHANGELOG.md의 오늘 날짜 절에 이번 변경이 기록됐는지 확인하라 — 안 됐으면 .claude/commands/changelog.md의 절차대로 브랜치 커밋을 읽어 직접 작성한다. 날짜 절이 없으면 만들고 최신이 위로 오게 한다. 사람에게 문장을 요청하지 않는다. 오타·포맷처럼 기록할 가치가 없으면 그 사유를 한 줄로 밝힌다."
 

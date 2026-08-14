@@ -53,27 +53,39 @@ PR=$(gh pr view --json number,url,state --jq 'select(.state == "OPEN") | "\(.num
 NUM=${PR%% *}
 URL=${PR#* }
 
-# 코멘트는 한 페이지에 30건씩만 온다. 리뷰가 몇 번 오가면 금방 넘으므로 전체 페이지를
-# 받는다. --slurp는 --jq와 함께 쓸 수 없어 jq를 따로 부르고, 파이프로 잇지 않아야
-# gh의 실패가 jq의 성공에 가려지지 않는다.
-RAW=$(gh api --paginate --slurp "repos/{owner}/{repo}/pulls/$NUM/comments" 2>/dev/null) || exit 0
-
-# 스레드의 마지막 발화자가 내가 아니면 아직 내 차례다.
+# 아직 내 차례인 리뷰 스레드를 센다. 판정은 둘을 함께 본다.
+#   - 아직 resolve되지 않았고
+#   - 스레드의 마지막 코멘트를 쓴 사람이 내가 아니다
 #
 # "루트에 답글이 하나라도 있으면 처리됨"으로 세면 안 된다. 봇은 내 답에
 # 재답변하면서 반박하거나 새 지적을 얹는데, 그 방식으로는 그것들이 전부
 # 0건으로 보인다. 실제로 그렇게 지적 하나를 놓쳤다.
 #
-# 로그인을 못 얻으면 빈 값이 되어 모든 스레드가 잡힌다. 과하게 알리는 쪽이
-# 놓치는 쪽보다 싸다.
-ME=$(gh api user --jq '.login' 2>/dev/null) || ME=""
+# resolve 여부는 REST 코멘트 목록에 없어 GraphQL로 받는다. 이걸 빼면 봇이
+# 확인만 남기고 닫은 스레드까지 매번 세어 알림이 소음이 된다.
+ME=$(gh api user --jq '.login' 2>/dev/null) || exit 0
+REPO_JSON=$(gh repo view --json owner,name 2>/dev/null) || exit 0
+OWNER=$(printf '%s' "$REPO_JSON" | jq -r '.owner.login' 2>/dev/null) || exit 0
+NAME=$(printf '%s' "$REPO_JSON" | jq -r '.name' 2>/dev/null) || exit 0
+
+# 스레드 100개까지 본다. 그보다 많은 PR은 이 알림보다 먼저 쪼개야 할 상태다.
+RAW=$(gh api graphql -F owner="$OWNER" -F name="$NAME" -F num="$NUM" -f query='
+query($owner: String!, $name: String!, $num: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $num) {
+      reviewThreads(first: 100) {
+        nodes { isResolved comments(last: 1) { nodes { author { login } } } }
+      }
+    }
+  }
+}' 2>/dev/null) || exit 0
 
 # jq가 실패하면 리뷰가 없는 게 아니라 읽지 못한 것이다. 아래 else 가지가
 # "확인할 스레드 없음"이라고 단언하므로, 0으로 떨어뜨리지 말고 조용히 끝낸다.
 PENDING=$(printf '%s' "$RAW" | jq --arg me "$ME" '
-  (add // [])
-  | group_by(.in_reply_to_id // .id)
-  | [.[] | (sort_by(.created_at) | last) | select(.user.login != $me)]
+  [.data.repository.pullRequest.reviewThreads.nodes[]
+   | select(.isResolved | not)
+   | select(.comments.nodes[0].author.login != $me)]
   | length
 ' 2>/dev/null) || exit 0
 
