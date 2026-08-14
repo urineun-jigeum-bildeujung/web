@@ -1,3 +1,5 @@
+// 루트 레이아웃. 폰트 변수와 전역 스타일을 걸고 AppProviders로 감싼다.
+
 import type { Metadata } from "next";
 import { Geist_Mono, Noto_Sans } from "next/font/google";
 import "./globals.css";

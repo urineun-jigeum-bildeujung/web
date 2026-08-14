@@ -2,6 +2,9 @@
   "name": "urineun-jigeum-bildeujung",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -66,7 +69,8 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{css,json,jsonc,mjs,mts,yml,yaml}": "prettier --write"
+    "*.{css,json,jsonc,mjs,mts,yml,yaml}": "prettier --write",
+    ".prettierrc": "prettier --write"
   },
   "overrides": {
     "react-is": "19.2.8"
