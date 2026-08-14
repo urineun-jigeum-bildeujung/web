@@ -1,10 +1,18 @@
 # PR 제목의 유형으로 라벨을 자동 부착한다.
 # 라벨은 릴리스 노트(.github/release.yml)의 분류 기준이므로, 사람이 깜빡해도
 # 분류가 깨지지 않게 한다. 제목 형식은 docs/conventions/git-convention.md를 따른다.
+#
+# pull_request가 아니라 pull_request_target을 쓴다. 공개 저장소에서 fork가 보낸
+# PR의 GITHUB_TOKEN은 permissions 선언과 무관하게 읽기 전용이라, pull_request로는
+# gh pr edit이 403으로 실패한다.
+#
+# 이 워크플로우는 PR 코드를 checkout하지 않고 제목만 읽으므로 pull_request_target을
+# 써도 안전하다. **여기에 checkout이나 PR 코드 실행을 추가하지 마십시오.**
+# base 브랜치 컨텍스트에서 쓰기 토큰을 들고 도는 자리다.
 name: PR 라벨
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, edited, reopened]
 
 permissions:

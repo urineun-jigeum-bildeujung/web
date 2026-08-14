@@ -7,6 +7,11 @@ on:
   push:
     branches: [dev, main]
 
+# 검사만 하는 워크플로우다. checkout과 리포트 업로드에 필요한 읽기만 준다.
+# 저장소 기본값에 기대지 않고 파일 안에 고정한다.
+permissions:
+  contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
