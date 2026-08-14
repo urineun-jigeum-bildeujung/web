@@ -24,14 +24,19 @@ case "$BRANCH" in
   dev | main) exit 0 ;;
 esac
 
-# 원격을 못 받으면(오프라인 등) 비교할 기준이 없다.
-# 자격 증명 프롬프트가 뜨면 훅이 거기서 멈춰 작업을 막으므로 프롬프트를 끄고,
-# timeout이 있으면 느린 연결에 상한도 건다. 실패하면 조용히 통과한다.
+# 원격을 못 받으면(오프라인 등) 비교할 기준이 없다. 실패하면 조용히 통과한다.
+#
+# 자격 증명 프롬프트나 무응답 원격에서 멈추면 작업이 막히므로 프롬프트를 끄고
+# 전송에 상한을 건다. timeout이 없는 환경(macOS 기본 등)에서는 fetch를 건너뛰는
+# 대신 git 자체 옵션으로 상한을 건다 — 건너뛰면 그 환경에서는 낡은 베이스를
+# 영영 못 알린다.
 export GIT_TERMINAL_PROMPT=0
 if command -v timeout >/dev/null 2>&1; then
   timeout 10 git fetch origin --quiet 2>/dev/null || exit 0
 else
-  git fetch origin --quiet 2>/dev/null || exit 0
+  git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
+    -c core.sshCommand='ssh -o ConnectTimeout=5 -o BatchMode=yes' \
+    fetch origin --quiet 2>/dev/null || exit 0
 fi
 
 BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null) || exit 0

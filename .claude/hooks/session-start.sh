@@ -17,16 +17,21 @@ printf '현재 브랜치: %s\n' "$BRANCH"
 case "$BRANCH" in
   main | "") ;;
   *)
-    # 자격 증명 프롬프트가 뜨면 훅이 거기서 멈춰 세션 시작을 막는다.
-    # 프롬프트를 끄고, timeout이 있으면 느린 연결에 상한도 건다.
+    # 자격 증명 프롬프트나 무응답 원격에서 멈추면 세션 시작이 막힌다.
+    # 프롬프트를 끄고 전송에 상한을 건다. timeout이 있으면 전체 시간을 자르고,
+    # 없는 환경(macOS 기본 등)에서는 fetch를 건너뛰는 대신 git 자체 옵션으로
+    # 상한을 건다 — 건너뛰면 그 환경에서는 뒤처짐을 영영 못 알린다.
     export GIT_TERMINAL_PROMPT=0
+    FETCH_FAILED=1
     if command -v timeout >/dev/null 2>&1; then
-      timeout 10 git fetch origin --quiet 2>/dev/null || FETCH_FAILED=1
+      timeout 10 git fetch origin --quiet 2>/dev/null && FETCH_FAILED=0
     else
-      git fetch origin --quiet 2>/dev/null || FETCH_FAILED=1
+      git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
+        -c core.sshCommand='ssh -o ConnectTimeout=5 -o BatchMode=yes' \
+        fetch origin --quiet 2>/dev/null && FETCH_FAILED=0
     fi
 
-    if [ -z "$FETCH_FAILED" ]; then
+    if [ "$FETCH_FAILED" -eq 0 ]; then
       BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null)
       if [ "${BEHIND:-0}" -gt 0 ] 2>/dev/null; then
         case "$BRANCH" in
