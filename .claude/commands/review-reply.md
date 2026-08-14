@@ -27,16 +27,25 @@ printf '%s' "$REVIEWS" | jq -r '(add // [])[] | "[\(.user.login)] \(.state)\n\(.
 
 스레드를 묶어 **마지막 코멘트의 작성자가 나인지** 본다. 내가 아니면 아직 내 차례다.
 
+**`root_id`와 `latest_id`를 함께 뽑는다.** 읽을 것은 마지막 코멘트지만 **답글은 루트에만 달 수 있다**(아래 "답글" 절).
+
 ```bash
 ME=$(gh api user --jq '.login')
 printf '%s' "$RAW" | jq -r --arg me "$ME" '
   (add // [])
   | group_by(.in_reply_to_id // .id)
-  | [.[] | (sort_by(.created_at) | last) | select(.user.login != $me)]
-  | "확인할 스레드 \(length)건", (.[] | "  \(.path):\(.line // .original_line) | \(.user.login) | \(.created_at)")'
+  | map({
+      root: (map(select(.in_reply_to_id == null)) | first // (sort_by(.created_at) | first)),
+      last: (sort_by(.created_at) | last)
+    })
+  | map(select(.last.user.login != $me))
+  | "확인할 스레드 \(length)건",
+    (.[] | "  \(.last.path):\(.last.line // .last.original_line) | 마지막 \(.last.user.login) | root_id=\(.root.id) latest_id=\(.last.id)")'
 ```
 
 봇이 `확인했습니다 ✅`만 남긴 스레드도 함께 잡힌다. 읽고 넘기면 되고, **놓치는 쪽이 훨씬 비싸다.**
+
+세션 시작·push 훅은 여기에 더해 **`isResolved`까지 본다**(GraphQL `reviewThreads`). 해결된 스레드는 세지 않아야 알림이 소음이 되지 않는다. 손으로 확인할 때도 해결 표시된 스레드는 건너뛴다.
 
 `in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
 
@@ -115,8 +124,10 @@ for (const c of cs) {
 
 **모든 지적에 답한다.** 해당 스레드 안에 남긴다.
 
+**반드시 `root_id`로 단다.** GitHub API는 **최상위 리뷰 코멘트에만** 답글을 허용하고 답글에 답글을 달 수 없다. 마지막 발화자로 스레드를 찾으면 손에 쥐는 것은 봇 재답변의 `latest_id`인데, 그걸로 호출하면 실패한다.
+
 ```bash
-gh api repos/{owner}/{repo}/pulls/{번호}/comments/{코멘트ID}/replies -f body="..."
+gh api repos/{owner}/{repo}/pulls/{번호}/comments/{root_id}/replies -f body="..."
 ```
 
 - 고쳤으면 **무엇이 어떻게 달라졌는지**와 확인 방법을 쓴다.
