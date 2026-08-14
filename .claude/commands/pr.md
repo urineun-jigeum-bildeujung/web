@@ -21,11 +21,17 @@ description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템�
    gh pr checks <번호> --watch --interval 20
    ```
 
-   **CodeRabbit도 상태 체크로 잡히므로 리뷰가 올라온 시점을 여기서 안다.** 감시가 끝나면 `/review-reply` 절차(`.claude/commands/review-reply.md`)를 그대로 실행한다. **사람이 다시 시킬 때까지 기다리지 않는다.**
+   **CodeRabbit도 상태 체크로 잡히므로 리뷰가 올라온 시점을 여기서 안다.** 감시가 끝나면 결과에 따라 갈라진다.
 
-   - CI가 실패했으면 리뷰 처리보다 실패 원인을 먼저 고친다.
-   - `Review rate limited`로 나오면 리뷰가 돌지 않은 것이다. 통과로 읽지 말고 사람에게 알린다.
-   - 세션이 끊겨 감시가 중단돼도 누락되지는 않는다. 다음 세션에서 `session-start.sh`가, push 시점에 `record-check.sh`가 미응답 리뷰를 잡는다.
+   | 결과 | 할 일 |
+   | --- | --- |
+   | 필수 체크 전부 통과 **그리고** CodeRabbit이 `Review completed` | `/review-reply` 절차(`.claude/commands/review-reply.md`)를 그대로 실행한다. **사람이 다시 시킬 때까지 기다리지 않는다** |
+   | 필수 체크 실패 | 리뷰 처리보다 실패 원인을 먼저 고친다. 고쳐서 push했으면 **감시를 다시 건다** |
+   | CodeRabbit이 `Review rate limited` | 리뷰가 돌지 않은 것이다. **통과로 읽지 말고** 사람에게 알린 뒤 판단을 받는다 |
+
+   즉 `/review-reply`는 **통과와 리뷰 완료가 모두 확인된 경우에만** 실행한다. 리뷰 대응으로 push해서 CI가 다시 돌면 그때도 감시를 다시 걸고 같은 게이트를 적용한다.
+
+   세션이 끊겨 감시가 중단돼도 누락되지는 않는다. 다음 세션에서 `session-start.sh`가, push 시점에 `record-check.sh`가 미응답 리뷰를 잡는다.
 
 10. PR 링크와 리뷰 처리 결과를 함께 보고한다.
 
