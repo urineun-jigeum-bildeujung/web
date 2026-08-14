@@ -43,7 +43,7 @@
 `npm install` 시 husky가 Git 훅을 설치한다. 우회(`--no-verify`)하지 않는다.
 
 - **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
-- **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert 커밋은 통과한다.
+- **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert와 autosquash(`fixup!`·`squash!`·`amend!`) 커밋은 Git이 만드는 형식이라 통과한다.
 - **pre-push** — `main`·`dev`의 이력을 되감는 force push와 브랜치 삭제만 막는다. 기능 브랜치는 자유롭다.
 
 테스트나 빌드로 push를 막지는 않는다. 작업 중인 브랜치는 미완성인 것이 정상이므로, 그 검사는 병합 시점(CI)에서 한다.

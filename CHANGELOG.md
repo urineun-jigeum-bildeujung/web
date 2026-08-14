@@ -50,7 +50,7 @@
 - GitHub Actions CI — typecheck·format·lint·test·build·E2E
 - husky 로컬 훅 — pre-commit 린트·포맷, commit-msg 형식 검사, pre-push 이력 보호
 - GitHub 이슈·PR 템플릿, CodeRabbit 리뷰 설정
-- Claude Code 하네스 (`.claude`) — 슬래시 커맨드 5종, code-reviewer 에이전트, 알림 훅
+- Claude Code 하네스 (`.claude`) — 슬래시 커맨드, code-reviewer 에이전트, 알림 훅
 - 작업 기록 자동화 — PR 제목으로 라벨 부착, 라벨 기반 릴리스 노트 분류, 커밋에서 변경 이력 문장 생성 (#3)
 - `main`·`dev` 브랜치 보호 Ruleset — PR 필수, CI 통과 필수, rebase 전용, 이력 되감기 차단
 - 원격에 올릴 때 변경 이력 반영과 미응답 리뷰를 확인하는 훅 — PR 생성과 그 이후의 push를 모두 보므로 리뷰 대응 커밋도 기록에서 빠지지 않는다 (#4)
