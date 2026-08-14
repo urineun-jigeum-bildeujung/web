@@ -51,7 +51,9 @@
 - 4의 배수가 아닌 px(예: `158px`)는 먼저 디자인 의도를 의심한다. 가까운 스케일 값으로 맞출 수 있으면 맞춘다.
 - 스케일로 표현할 수 없는 값이 정말 필요하면 임의 값을 쓰되, 같은 값이 반복되면 그건 토큰이 되어야 한다는 신호다. `@theme`에 올린다.
 - 이 규칙은 길이(width·height·padding·margin·gap 등)에 적용된다. `text-[0.9em]` 같은 비율 값은 대상이 아니다.
-- ESLint의 `tailwindcss/no-unnecessary-arbitrary-value`가 이 규칙을 자동으로 잡고 `--fix`로 교정한다. 클래스 오타(`no-custom-classname`)와 상충 클래스(`no-contradicting-classname`)도 함께 검사된다.
+- ESLint의 `tailwindcss/no-unnecessary-arbitrary-value`가 **정수 스케일 환산만** 잡고 `--fix`로 교정한다(`w-[100px]`→`w-25`, `p-[8px]`→`p-2`).
+- **소수 환산은 검출되지 않는다.** 위 표의 `h-[14px]`→`h-3.5`, `gap-[6px]`→`gap-1.5`가 그렇다. 플러그인 4.2.0의 한계이고 규칙에 설정 옵션이 없어 조정할 수 없으므로, 이 자리는 리뷰(CodeRabbit·`code-reviewer`)가 본다. **lint 통과를 근거로 이 규칙을 지켰다고 판단하지 않는다.**
+- 클래스 오타(`no-custom-classname`)와 상충 클래스(`no-contradicting-classname`)는 함께 검사된다.
 
 ## shadcn 컴포넌트
 

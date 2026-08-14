@@ -16,7 +16,7 @@ tools: Read, Glob, Grep, Bash
 - **서버/클라이언트 경계**: `use client`가 필요한 최하위에만 붙었는지. 레이아웃·페이지 최상단에 붙어 하위 전체를 클라이언트로 만들지 않았는지. 상품 목록·상세는 서버 컴포넌트 우선.
 - **상태 경계**: 서버 데이터는 TanStack Query, UI 상태는 Zustand. **서버 데이터를 Zustand에 복사하면 캐시 무효화가 깨진다.** `useQuery` 직접 호출 대신 `use-query-*` 훅으로 감쌌는지. Query Key는 `shared/config`에서 중앙관리.
 - **API 접근**: 컴포넌트에 fetch가 직접 있으면 슬라이스 `api/`로. 서버에서 필터·정렬·페이지네이션 가능한 것을 클라에서 재필터 금지. `as unknown as` 이중 단언 금지. 명세상 non-nullable에 불필요한 fallback 금지.
-- **디자인**: HEX 하드코딩 금지(시맨틱 토큰). 조건부 className은 `cn()`. 4px 단위, 임의값 지양. 라이트·다크 양쪽 값이 정의됐는지.
+- **디자인**: HEX 하드코딩 금지(시맨틱 토큰). 조건부 className은 `cn()`. 라이트·다크 양쪽 값이 정의됐는지. **4px 스케일 환산 중 소수 단위는 ESLint가 못 잡으니 직접 본다** — `h-[14px]`→`h-3.5`, `gap-[6px]`→`gap-1.5`, `p-[2px]`→`p-0.5`. 정수 환산만 자동 검출된다.
 - **터치 UX·접근성**: 최소 44×44, hover 의존 금지, 색 단독 정보전달 금지, 포커스 링 제거 금지. 아이콘만 있는 버튼에 접근 가능한 이름이 있는지. 클릭 가능한 `div` 대신 `button`인지.
 - **아이콘**: 화면에 직접 배치하는 아이콘은 react-icons. `src/shared/ui/` 안의 lucide import는 건드리지 않았는지.
 - **이미지**: `next/image` 사용(원시 `img` 금지), width·height 또는 fill 지정, 의미 있는 alt, 첫 화면 핵심 이미지에만 priority.
