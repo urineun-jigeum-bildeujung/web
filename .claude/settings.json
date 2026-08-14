@@ -31,6 +31,7 @@
       "Bash(jq *)",
       "Bash(awk *)",
       "Bash(sed *)",
+      "Bash(shasum *)",
       "mcp__plugin_figma_figma__get_metadata"
     ]
   },
