@@ -15,7 +15,19 @@ description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템�
 6. 위 두 단계의 변경분을 이 브랜치에 커밋한다.
 7. 브랜치를 push한다 — `git push -u origin <branch>`.
 8. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다. **라벨은 직접 달지 않는다** — `.github/workflows/pr-label.yml`이 제목의 유형을 읽어 자동 부착하고, 제목을 고치면 따라 바뀐다. 이 라벨이 릴리스 노트의 그룹이 된다.
-9. PR 링크를 보고한다.
+9. **CI와 리뷰 완료를 감시한다.** 아래를 백그라운드로 돌린다.
+
+   ```bash
+   gh pr checks <번호> --watch --interval 20
+   ```
+
+   **CodeRabbit도 상태 체크로 잡히므로 리뷰가 올라온 시점을 여기서 안다.** 감시가 끝나면 `/review-reply` 절차(`.claude/commands/review-reply.md`)를 그대로 실행한다. **사람이 다시 시킬 때까지 기다리지 않는다.**
+
+   - CI가 실패했으면 리뷰 처리보다 실패 원인을 먼저 고친다.
+   - `Review rate limited`로 나오면 리뷰가 돌지 않은 것이다. 통과로 읽지 말고 사람에게 알린다.
+   - 세션이 끊겨 감시가 중단돼도 누락되지는 않는다. 다음 세션에서 `session-start.sh`가, push 시점에 `record-check.sh`가 미응답 리뷰를 잡는다.
+
+10. PR 링크와 리뷰 처리 결과를 함께 보고한다.
 
 ## 리뷰가 달린 뒤
 
