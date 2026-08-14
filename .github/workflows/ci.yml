@@ -31,6 +31,17 @@ jobs:
       - name: 의존성 설치
         run: npm ci
 
+      # 빌드 캐시. 소스가 바뀌면 키가 어긋나므로 restore-keys로 직전 캐시를
+      # 받아 증분 빌드한다. 룰셋이 브랜치 최신화를 강제해 rebase 후 재실행이
+      # 잦은데, CI 대기가 곧 머지 대기다.
+      - name: Next 빌드 캐시
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**/*.[jt]s', 'src/**/*.[jt]sx') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
       - name: 타입 검사
         run: npm run typecheck
 
@@ -61,8 +72,23 @@ jobs:
       - name: 의존성 설치
         run: npm ci
 
+      # 브라우저 바이너리는 100MB가 넘고 매 실행 새로 받으면 그만큼 대기가 는다.
+      # 키는 Playwright 버전을 따라야 하므로 lockfile 해시를 쓴다.
+      - name: Playwright 브라우저 캐시
+        id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      # 캐시가 맞으면 바이너리는 이미 있고 시스템 라이브러리만 채우면 된다.
       - name: Playwright 브라우저 설치
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
+
+      - name: Playwright 시스템 의존성 설치
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
 
       - name: E2E 테스트
         run: npm run test:e2e
