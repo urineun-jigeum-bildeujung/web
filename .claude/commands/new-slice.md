@@ -16,6 +16,10 @@ argument-hint: <layer> <name> [segments]
 3. 바깥에서는 `index.ts`만 import하도록 공개 API를 구성한다.
 4. **`README.md`를 함께 만든다.** 슬라이스의 역할과 파일별 한 줄 설명을 담는다. 템플릿은 `docs/conventions/code-convention.md`의 "폴더 README" 절을 따르고, layer가 `views`면 라우트 정보가 더 필요하므로 `src/views/README.md`의 "페이지 README" 템플릿을 쓴다.
 5. **레이어 README의 "현재 슬라이스" 표에 새 슬라이스를 추가한다.** (`src/<layer>/README.md`)
+6. **테스트를 함께 만든다.** colocation 규칙은 `docs/conventions/code-convention.md`의 "테스트" 절을 따르고, `vitest.config.mts`의 `include`가 `src/**/*.test.{ts,tsx}`라 추가 설정은 필요 없다.
+   - `ui` 세그먼트 — 컴포넌트 옆에 `<파일명>.test.tsx`로 **렌더링 스모크**를 둔다. `src/views/home/ui/home-view.test.tsx`가 기준 예시다. 셀렉터는 `getByRole` 같은 역할 기반을 쓴다.
+   - `model`·`lib`에 순수 함수를 만들었으면 옆에 `<파일명>.test.ts`로 **의미 있는 케이스 한둘**을 채운다. 빈 `describe`만 남기지 않는다.
+   - 지금 검증할 것이 없으면(타입 선언만 있는 `model/types.ts` 등) 테스트를 만들지 말고 **왜 없는지 보고에 한 줄로 밝힌다.** 껍데기 테스트는 통과율만 올리고 아무것도 지키지 않는다.
 
 의존 방향은 `app → views → widgets → features → entities → shared` 단방향이다. 같은 레이어끼리도 참조하지 않는다.
 
