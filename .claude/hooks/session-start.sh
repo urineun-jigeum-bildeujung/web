@@ -29,6 +29,10 @@ case "$BRANCH" in
     FETCH_FAILED=1
     if command -v timeout >/dev/null 2>&1; then
       timeout 10 git fetch origin --quiet 2>/dev/null && FETCH_FAILED=0
+    else
+      # 건너뛴다는 사실을 알린다. 조용히 넘기면 점검이 도는 줄 알고 낡은
+      # 베이스로 작업하게 된다.
+      printf 'timeout 명령이 없어 브랜치 뒤처짐 점검을 건너뜁니다. coreutils를 설치하면 켜집니다.\n'
     fi
 
     if [ "$FETCH_FAILED" -eq 0 ]; then

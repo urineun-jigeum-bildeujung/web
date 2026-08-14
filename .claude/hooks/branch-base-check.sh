@@ -31,7 +31,14 @@ esac
 # 타임아웃을 설정으로 노출하지 않는다. 알림 하나를 잃는 것이 브랜치 생성이
 # 매다는 것보다 싸다. (coreutils를 설치하면 알림이 되살아난다.)
 export GIT_TERMINAL_PROMPT=0
-command -v timeout >/dev/null 2>&1 || exit 0
+
+# timeout이 없으면 조용히 넘기지 않고 건너뛴다는 사실을 알린다. 점검이 도는
+# 줄 알고 낡은 베이스로 작업을 이어가는 것이 가장 나쁘다.
+if ! command -v timeout >/dev/null 2>&1; then
+  jq -n '{hookSpecificOutput:{hookEventName:"PostToolUse",additionalContext:"timeout 명령이 없어 브랜치 베이스 점검을 건너뛰었다. 지금 git fetch origin 뒤 git rev-list --count HEAD..origin/dev로 직접 확인하고, 뒤처졌으면 git rebase origin/dev로 맞춰라. 사용자에게는 coreutils를 설치하면 이 점검이 자동으로 켜진다는 것도 한 줄로 알린다."}}'
+  exit 0
+fi
+
 timeout 10 git fetch origin --quiet 2>/dev/null || exit 0
 
 BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null) || exit 0
