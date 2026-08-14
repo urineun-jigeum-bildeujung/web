@@ -16,8 +16,10 @@ reviews:
     - path: src/**
       instructions: >-
         규칙의 출처는 AGENTS.md와 docs/conventions다. FSD 의존 방향·슬라이스 공개
-        API·파일명 kebab-case·임의 값·import 위치는 ESLint가 이미 잡으므로, 기계로
-        못 잡는 것을 본다 — 서버 데이터를 Zustand에 복사하지 않는지, use client가
+        API·파일명 kebab-case·import 위치는 ESLint가 이미 잡으므로, 기계로
+        못 잡는 것을 본다 — 4px 스케일 환산 중 소수 단위(h-[14px]→h-3.5,
+        gap-[6px]→gap-1.5, p-[2px]→p-0.5)는 ESLint가 정수 환산만 검출하므로
+        직접 확인하고, 서버 데이터를 Zustand에 복사하지 않는지, use client가
         필요한 최하위에만 있는지, 서버에서 가능한 필터·정렬·페이지네이션을
         클라이언트에서 재수행하지 않는지, HEX 하드코딩 대신 시맨틱 토큰을 쓰고
         라이트·다크 양쪽 값이 정의됐는지, 터치 UX(최소 44×44, hover 의존 금지, 색
