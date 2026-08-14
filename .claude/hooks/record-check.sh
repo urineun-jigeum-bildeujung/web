@@ -52,7 +52,7 @@ PENDING=$(printf '%s' "$RAW" | jq '
 CHANGELOG="CHANGELOG.md의 오늘 날짜 절에 이번 변경이 기록됐는지 확인하라 — 안 됐으면 .claude/commands/changelog.md의 절차대로 브랜치 커밋을 읽어 직접 작성한다. 날짜 절이 없으면 만들고 최신이 위로 오게 한다. 사람에게 문장을 요청하지 않는다. 오타·포맷처럼 기록할 가치가 없으면 그 사유를 한 줄로 밝힌다."
 
 if [ "$KIND" = pr ]; then
-  MSG="PR #${NUM}을 생성했다. 두 가지를 확인하라. (1) ${CHANGELOG} (2) README.md가 여전히 사실인가 — 스크립트 표, 기술 스택 표, 폴더 구조, 기능 소개, 실행 방법이 실제와 어긋나지 않는지 본다. README는 소개 문서이므로 작업 목록을 적지 않는다."
+  MSG="PR #${NUM}을 생성했다. 세 가지를 하라. (1) ${CHANGELOG} (2) README.md가 여전히 사실인가 — 스크립트 표, 기술 스택 표, 폴더 구조, 기능 소개, 실행 방법이 실제와 어긋나지 않는지 본다. README는 소개 문서이므로 작업 목록을 적지 않는다. (3) gh pr checks ${NUM} --watch --interval 20 을 백그라운드로 돌려 CI와 CodeRabbit 리뷰 완료를 감시하고, 끝나면 .claude/commands/review-reply.md의 절차를 그대로 실행하라 — 사람이 다시 시킬 때까지 기다리지 않는다. CI가 실패했으면 그 원인부터 고치고, Review rate limited로 나오면 리뷰가 돌지 않은 것이니 통과로 읽지 말고 사람에게 알린다."
 else
   MSG="열린 PR #${NUM}에 push했다. ${CHANGELOG} 리뷰 대응이나 추가 구현으로 달라진 것이 있으면 기존 항목을 고치거나 새로 추가한다."
 fi
