@@ -14,7 +14,7 @@ description: PR 올리기 — 검증 → 이슈 업데이트 → PR 생성(템�
 5. **README.md 정확성 확인** — 이번 작업으로 README의 서술이 사실과 달라졌는지 본다(스크립트 표·기술 스택 표·폴더 구조·기능 소개·실행 방법). 달라졌으면 갱신한다. **README는 프로젝트 소개 문서이므로 작업 목록을 적지 않는다.** 해당 없으면 건드리지 않는다.
 6. 위 두 단계의 변경분을 이 브랜치에 커밋한다.
 7. 브랜치를 push한다 — `git push -u origin <branch>`.
-8. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다. **분류 라벨을 함께 단다** — 라벨이 릴리스 노트의 그룹이 된다.
+8. **PR 생성** — `gh pr create --base dev`로, 본문은 `.github/PULL_REQUEST_TEMPLATE.md` 형식(요약 / `Closes #N` / 변경 유형 / 백엔드 의존 / 체크리스트)을 채운다. **라벨은 직접 달지 않는다** — `.github/workflows/pr-label.yml`이 제목의 유형을 읽어 자동 부착하고, 제목을 고치면 따라 바뀐다. 이 라벨이 릴리스 노트의 그룹이 된다.
 9. PR 링크를 보고한다.
 
 ## 리뷰가 달린 뒤

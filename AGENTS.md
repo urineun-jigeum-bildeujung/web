@@ -120,7 +120,7 @@
 
 **코드를 수정했다면 "완료"라고 말하기 전에 반드시 테스트를 실행하십시오.**
 
-- `npm run typecheck` → `npm run format:check` → `npm run lint` → `npm run build` 순으로 실행하십시오. 상세는 [validation-convention](./docs/conventions/validation-convention.md)을 따릅니다.
+- `npm run typecheck` → `npm run format:check` → `npm run lint` → `npm run test` → `npm run build` 순으로 실행하십시오. CI가 도는 순서와 같습니다. 상세는 [validation-convention](./docs/conventions/validation-convention.md)을 따릅니다.
 - 테스트 결과(통과/실패/불가능 사유)를 구체적으로 보고하십시오.
 - 단, 단일 파일 내부의 단순 문구, 위치, 색상, 여백, className 조정처럼 타입·데이터 흐름·빌드 결과에 영향을 주지 않는 변경은 전체 `npm run build` 또는 `npm run lint`를 생략할 수 있습니다.
 - 새 파일 생성, import/export 변경, 타입 변경, hook 로직 변경, API 응답 타입 변경, query key 변경, 라우트 변경, 공용 컴포넌트 변경은 간단해 보여도 `npm run build` 또는 관련 검증을 실행하십시오.

@@ -7,10 +7,16 @@ argument-hint: [PR번호]
 
 ## 1. 수집
 
+**전체 페이지를 받는다.** 코멘트는 한 번에 30건씩만 오고 답글·봇 재답변이 같은 목록을 나눠 쓰므로 금방 넘는다. `--slurp`는 `--jq`와 함께 쓸 수 없어 `jq`를 따로 부른다.
+
 ```bash
 gh pr view --json number,url --jq '.number'
-gh api repos/{owner}/{repo}/pulls/{번호}/comments --jq '.[] | "\(.id) | \(.path):\(.line // .original_line)\n\(.body)\n"'
-gh api repos/{owner}/{repo}/pulls/{번호}/reviews --jq '.[] | "[\(.user.login)] \(.state)\n\(.body)"'
+
+gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments \
+  | jq -r '(add // [])[] | "\(.id) | \(.path):\(.line // .original_line)\n\(.body)\n"'
+
+gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/reviews \
+  | jq -r '(add // [])[] | "[\(.user.login)] \(.state)\n\(.body)"'
 ```
 
 이미 답글이 달린 스레드는 건너뛴다. `in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
@@ -39,7 +45,7 @@ gh api repos/{owner}/{repo}/pulls/{번호}/reviews --jq '.[] | "[\(.user.login)]
 
 ```bash
 # 전문을 파일로 받아 접힌 블록 제목을 전부 뽑아본다
-gh api repos/{owner}/{repo}/pulls/{번호}/comments > comments.json
+gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/comments | jq 'add // []' > comments.json
 node -e "
 const cs=JSON.parse(require('fs').readFileSync('comments.json','utf8'));
 for (const c of cs) {
