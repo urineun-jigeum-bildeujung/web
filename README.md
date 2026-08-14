@@ -172,6 +172,6 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 | `/pr` | 검증 → CHANGELOG 기록 → 이슈 업데이트 → PR 생성 |
 | `/review-reply` | 리뷰 코멘트를 현재 코드에 대조해 처리하고 스레드에 답변 |
 | `/figma-watch [URL]` | Figma 파일의 프레임 변경 감지 — `/loop`로 감싸면 주기적 알림 |
-| `/from-figma <URL>` | Figma 프레임 구현 착수 — 분석 → 배치 승인 게이트 → 이슈 → 구현 → 검증 → 커밋 |
+| `/from-figma <번호·URL>` | Figma 프레임 구현 착수 — 분석 → 배치 승인 게이트 → 이슈 → 구현 → 검증 → 커밋. 번호는 `/figma-watch` 백로그 기준 |
 
 `code-reviewer` 에이전트가 커밋·PR 전 컨벤션 위반을 점검합니다. `settings.json`의 `attribution`은 커밋·PR에서 AI 표기가 붙지 않도록 막습니다.
