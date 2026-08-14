@@ -21,7 +21,34 @@ REVIEWS=$(gh api --paginate --slurp repos/{owner}/{repo}/pulls/{번호}/reviews)
 printf '%s' "$REVIEWS" | jq -r '(add // [])[] | "[\(.user.login)] \(.state)\n\(.body)"'
 ```
 
-이미 답글이 달린 스레드는 건너뛴다. `in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
+### 처리 여부는 "마지막 발화자"로 판단한다
+
+**"루트에 답글이 하나라도 달렸으면 처리됨"으로 세지 않는다.** 봇은 내 답에 재답변하면서 **반박하거나 새 지적을 얹는다.** 그 방식으로 세면 그것들이 전부 0건으로 보이고, 실제로 그렇게 지적 하나를 놓쳤다.
+
+스레드를 묶어 **마지막 코멘트의 작성자가 나인지** 본다. 내가 아니면 아직 내 차례다.
+
+```bash
+ME=$(gh api user --jq '.login')
+printf '%s' "$RAW" | jq -r --arg me "$ME" '
+  (add // [])
+  | group_by(.in_reply_to_id // .id)
+  | [.[] | (sort_by(.created_at) | last) | select(.user.login != $me)]
+  | "확인할 스레드 \(length)건", (.[] | "  \(.path):\(.line // .original_line) | \(.user.login) | \(.created_at)")'
+```
+
+봇이 `확인했습니다 ✅`만 남긴 스레드도 함께 잡힌다. 읽고 넘기면 되고, **놓치는 쪽이 훨씬 비싸다.**
+
+`in_reply_to_id`가 있는 코멘트는 답글이므로 원본과 구분한다.
+
+### 인라인 밖도 본다
+
+리뷰는 세 곳에 나뉘어 붙는다. 한 곳만 보면 놓친다.
+
+| 위치 | 엔드포인트 |
+| --- | --- |
+| 인라인 코멘트·답글 | `/pulls/{번호}/comments` |
+| 리뷰 본문 (`Outside diff range`가 여기 들어간다) | `/pulls/{번호}/reviews` |
+| PR 하단 코멘트 (rate limit 안내, 사람이 쓴 코멘트) | `/issues/{번호}/comments` |
 
 ### 접힌 블록을 반드시 펼쳐서 읽는다
 
