@@ -26,18 +26,13 @@ esac
 
 # 원격을 못 받으면(오프라인 등) 비교할 기준이 없다. 실패하면 조용히 통과한다.
 #
-# 자격 증명 프롬프트나 무응답 원격에서 멈추면 작업이 막히므로 프롬프트를 끄고
-# 전송에 상한을 건다. timeout이 없는 환경(macOS 기본 등)에서는 fetch를 건너뛰는
-# 대신 git 자체 옵션으로 상한을 건다 — 건너뛰면 그 환경에서는 낡은 베이스를
-# 영영 못 알린다.
+# timeout이 없으면 fetch를 건너뛴다. http.lowSpeedLimit·lowSpeedTime은 전송이
+# 시작된 뒤의 저속만 끊고 DNS·TCP·TLS 대기는 제한하지 못하는데, git은 연결 단계
+# 타임아웃을 설정으로 노출하지 않는다. 알림 하나를 잃는 것이 브랜치 생성이
+# 매다는 것보다 싸다. (coreutils를 설치하면 알림이 되살아난다.)
 export GIT_TERMINAL_PROMPT=0
-if command -v timeout >/dev/null 2>&1; then
-  timeout 10 git fetch origin --quiet 2>/dev/null || exit 0
-else
-  git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=5 \
-    -c core.sshCommand='ssh -o ConnectTimeout=5 -o BatchMode=yes' \
-    fetch origin --quiet 2>/dev/null || exit 0
-fi
+command -v timeout >/dev/null 2>&1 || exit 0
+timeout 10 git fetch origin --quiet 2>/dev/null || exit 0
 
 BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null) || exit 0
 [ "${BEHIND:-0}" -eq 0 ] 2>/dev/null && exit 0
