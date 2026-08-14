@@ -25,7 +25,14 @@ case "$BRANCH" in
 esac
 
 # 원격을 못 받으면(오프라인 등) 비교할 기준이 없다.
-git fetch origin --quiet 2>/dev/null || exit 0
+# 자격 증명 프롬프트가 뜨면 훅이 거기서 멈춰 작업을 막으므로 프롬프트를 끄고,
+# timeout이 있으면 느린 연결에 상한도 건다. 실패하면 조용히 통과한다.
+export GIT_TERMINAL_PROMPT=0
+if command -v timeout >/dev/null 2>&1; then
+  timeout 10 git fetch origin --quiet 2>/dev/null || exit 0
+else
+  git fetch origin --quiet 2>/dev/null || exit 0
+fi
 
 BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null) || exit 0
 [ "${BEHIND:-0}" -eq 0 ] 2>/dev/null && exit 0

@@ -43,7 +43,12 @@
 `npm install` 시 husky가 Git 훅을 설치한다. 우회(`--no-verify`)하지 않는다.
 
 - **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
-- **prepare-commit-msg** — 브랜치명의 `#이슈번호`를 메시지에 채운다. `chore: 내용`으로 쓰면 `chore(#24): 내용`이 된다. 이미 번호가 있거나(다른 이슈를 일부러 적었을 수 있다), Git이 만드는 형식(Merge·autosquash·`--amend`)이거나, 유형 형식에 맞지 않으면 건드리지 않는다.
+- **prepare-commit-msg** — 브랜치명의 `#이슈번호`를 메시지에 채운다. `chore: 내용`으로 쓰면 `chore(#24): 내용`이 된다. 아래는 건드리지 않는다.
+  - Git이 메시지를 만드는 경우 — `merge`·`squash` source와 `commit` source(`-c`·`-C`·`--amend`)
+  - `Merge`·`Revert`·`fixup!`·`squash!`·`amend!`로 시작하는 메시지
+  - 이미 `(#N)`이 있는 메시지. 다른 이슈를 일부러 적었을 수 있다
+  - `유형: 내용` 형식이 아닌 메시지. `commit-msg`가 거른다
+  - 브랜치명이 위 형식에 맞지 않거나 번호가 `#0`인 경우
 - **commit-msg** — 메시지가 `유형(#이슈번호): 내용` 형식(이슈 없으면 `유형: 내용`)인지 검사한다. Merge·Revert와 autosquash(`fixup!`·`squash!`·`amend!`) 커밋은 Git이 만드는 형식이라 통과한다.
 - **pre-push** — `main`·`dev`의 이력을 되감는 force push와 브랜치 삭제만 막는다. 기능 브랜치는 자유롭다.
 

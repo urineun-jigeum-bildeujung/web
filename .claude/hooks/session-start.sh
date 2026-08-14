@@ -10,16 +10,33 @@ BRANCH=$(git branch --show-current 2>/dev/null)
 printf '현재 브랜치: %s\n' "$BRANCH"
 
 # origin/dev보다 뒤처진 채로 작업을 이어가면 PR 단계에서 충돌로 되돌아온다.
-# 세션을 시작하는 지금이 맞추기 좋은 시점이라 알린다. 오프라인이면 건너뛴다.
-if git fetch origin --quiet 2>/dev/null; then
-  BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null)
-  if [ "${BEHIND:-0}" -gt 0 ] 2>/dev/null; then
-    case "$BRANCH" in
-      dev | main) printf 'origin/dev보다 %s커밋 뒤처졌습니다. git pull로 맞추십시오.\n' "$BEHIND" ;;
-      *) printf 'origin/dev보다 %s커밋 뒤처졌습니다. 작업 전 git rebase origin/dev를 검토하십시오.\n' "$BEHIND" ;;
-    esac
-  fi
-fi
+# 세션을 시작하는 지금이 맞추기 좋은 시점이라 알린다.
+#
+# main은 릴리스 브랜치라 dev보다 뒤처진 것이 정상이므로 비교하지 않는다.
+# 인자 없는 git pull은 자기 upstream(origin/main)을 받으므로 안내도 맞지 않는다.
+case "$BRANCH" in
+  main | "") ;;
+  *)
+    # 자격 증명 프롬프트가 뜨면 훅이 거기서 멈춰 세션 시작을 막는다.
+    # 프롬프트를 끄고, timeout이 있으면 느린 연결에 상한도 건다.
+    export GIT_TERMINAL_PROMPT=0
+    if command -v timeout >/dev/null 2>&1; then
+      timeout 10 git fetch origin --quiet 2>/dev/null || FETCH_FAILED=1
+    else
+      git fetch origin --quiet 2>/dev/null || FETCH_FAILED=1
+    fi
+
+    if [ -z "$FETCH_FAILED" ]; then
+      BEHIND=$(git rev-list --count "HEAD..origin/dev" 2>/dev/null)
+      if [ "${BEHIND:-0}" -gt 0 ] 2>/dev/null; then
+        case "$BRANCH" in
+          dev) printf 'origin/dev보다 %s커밋 뒤처졌습니다. git pull로 맞추십시오.\n' "$BEHIND" ;;
+          *) printf 'origin/dev보다 %s커밋 뒤처졌습니다. 작업 전 git rebase origin/dev를 검토하십시오.\n' "$BEHIND" ;;
+        esac
+      fi
+    fi
+    ;;
+esac
 
 command -v jq >/dev/null 2>&1 || exit 0
 
