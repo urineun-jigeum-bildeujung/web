@@ -20,6 +20,9 @@ export function ThemeToggle() {
     <Button
       variant="outline"
       size="icon"
+      // shadcn의 icon 크기는 32px이라 터치 최소 44×44px에 못 미친다.
+      // shared/ui는 CLI 소유라 호출부에서 덮는다. (design-convention)
+      className="size-11"
       onClick={handleToggle}
       aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
     >
