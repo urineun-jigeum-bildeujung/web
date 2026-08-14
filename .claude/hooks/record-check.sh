@@ -38,6 +38,9 @@ NUM=$(gh pr view --json number,state --jq 'select(.state == "OPEN") | .number' 2
 # 파이프로 잇지 않아야 gh의 실패가 jq의 성공에 가려지지 않는다.
 RAW=$(gh api --paginate --slurp "repos/{owner}/{repo}/pulls/$NUM/comments" 2>/dev/null) || exit 0
 
+# jq가 실패하면 리뷰 안내만 빠지고 기록 점검 안내는 그대로 나간다. 이 훅은
+# session-start.sh와 달리 "리뷰 없음"을 말하지 않으므로 0으로 떨어뜨려도
+# 없는 것을 없다고 단언하는 오보가 되지 않는다.
 PENDING=$(printf '%s' "$RAW" | jq '
   (add // [])
   | . as $all

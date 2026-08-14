@@ -169,7 +169,7 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 | `/new-slice <layer> <name>` | FSD 슬라이스 뼈대 생성 |
 | `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
 | `/changelog` | 브랜치 커밋을 읽어 CHANGELOG 항목 작성 |
-| `/pr` | 이슈 확인 → 검증 → 이슈 업데이트 → CHANGELOG 기록 → PR 생성 |
+| `/pr` | 이슈 확인 → 검증 → 이슈 업데이트 → CHANGELOG 기록 → README 확인 → PR 생성 |
 | `/review-reply` | 리뷰 코멘트를 현재 코드에 대조해 처리하고 스레드에 답변 |
 | `/figma-watch [URL]` | Figma 파일의 프레임 변경 감지 — `/loop`로 감싸면 주기적 알림 |
 | `/from-figma <번호·URL>` | Figma 프레임 구현 착수 — 분석 → 배치 승인 게이트 → 이슈 → 구현 → 검증 → 커밋. 번호는 `/figma-watch` 백로그 기준 |
