@@ -20,6 +20,9 @@ jobs:
   verify:
     name: 검증 (typecheck·format·lint·test·build)
     runs-on: ubuntu-latest
+    # 실측 40초대. 기본값(6시간)으로 두면 어딘가 멈췄을 때 아무도 모른 채
+    # 러너만 물고 있는다.
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
 
@@ -61,6 +64,8 @@ jobs:
     name: E2E (Playwright)
     runs-on: ubuntu-latest
     needs: verify
+    # 실측 1~4분. 브라우저 설치가 멈췄던 #33 같은 상황을 몇 분 안에 끊는다.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
 
@@ -81,14 +86,15 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
-      # 캐시가 맞으면 바이너리는 이미 있고 시스템 라이브러리만 채우면 된다.
+      # 캐시 적중 여부로 분기하지 않는다. install은 이미 받아둔 바이너리를
+      # 다시 내려받지 않으므로, 캐시가 맞으면 시스템 라이브러리만 처리하고
+      # 끝난다. 캐시 이득은 그대로다.
+      #
+      # 예전에는 적중 시 `playwright install-deps`를 따로 돌렸는데, 그 명령이
+      # sudo apt-get 프롬프트에서 stdin을 기다리며 멈췄다. 캐시가 처음 적중한
+      # 실행에서 E2E가 1시간 넘게 끝나지 않았다 (#33).
       - name: Playwright 브라우저 설치
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
-
-      - name: Playwright 시스템 의존성 설치
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
 
       - name: E2E 테스트
         run: npm run test:e2e
