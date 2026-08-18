@@ -73,6 +73,7 @@
     ".prettierrc": "prettier --write"
   },
   "overrides": {
+    "@swc/helpers": "0.5.23",
     "react-is": "19.2.8"
   }
 }
