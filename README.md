@@ -106,7 +106,7 @@ cp .env.example .env.local
 
 ### 설치 시 주의사항
 
-- **`package.json`의 `overrides`를 제거하지 마십시오.** `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링이 깨집니다.
+- **`package.json`의 `overrides`를 제거하지 마십시오.** `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링이 깨집니다. `@swc/helpers`는 0.5.23으로 고정합니다. 고정하지 않으면 중첩 설치가 생기고, 의존성 갱신기가 그 엔트리를 지우면서 CI의 `npm ci`가 깨집니다.
 - **Tailwind v4에는 설정 파일이 없습니다.** `tailwind.config.js`를 만들지 마십시오. 설정은 `src/app/globals.css`의 `@theme` 지시어로 합니다.
 - **Radix UI는 단일 패키지입니다.** `@radix-ui/react-*` 개별 패키지를 설치하지 마십시오.
 - **shadcn CLI는 react-icons를 지원하지 않습니다.** `components.json`의 `iconLibrary`는 `lucide`로 유지하고, 화면에 직접 배치하는 아이콘만 react-icons를 씁니다.
