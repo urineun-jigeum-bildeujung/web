@@ -15,6 +15,10 @@
 
 - Dependabot이 여는 PR마다 CI가 깨지던 문제 해결 — 두 패키지가 요구하는 버전 범위가 어긋나 중첩 설치되던 `@swc/helpers`를 `overrides`로 하나로 합쳤다. 지울 중첩 엔트리가 없으면 의존성 갱신기가 lockfile을 다시 써도 `npm ci`가 어긋나지 않는다 (#29)
 
+### 개발 환경
+
+- 정기 의존성 갱신(Dependabot version updates)을 껐다. 첫 실행에서 열린 3건이 전부 머지 불가였고, `eslint-config-next`가 딸고 오는 플러그인들이 major를 막고 있어 이 스택의 major는 Next.js와 함께 가야 한다. 취약점 알림은 저장소 설정에 있어 그대로 남는다 (#31)
+
 ## 2026-08-14
 
 ### 변경
