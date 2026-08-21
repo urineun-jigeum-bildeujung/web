@@ -33,7 +33,7 @@ jobs:
           TYPES="feat fix refactor style test chore docs design"
 
           TYPE=$(printf '%s' "$TITLE" \
-            | grep -oE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[1-9][0-9]*\))?:' \
+            | grep -oE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[1-9][0-9]*\))?: .+' \
             | grep -oE '^[a-z]+' || true)
 
           CURRENT=$(gh pr view "$PR" --repo "$REPO" --json labels --jq '.labels[].name')
