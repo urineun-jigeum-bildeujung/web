@@ -8,7 +8,8 @@ esac
 
 # 번호는 1 이상만 받는다. 이슈 번호 없는 `유형: 내용`은 그대로 허용하지만,
 # 실재하지 않는 #0을 손으로 적는 것은 막는다.
-if ! printf '%s' "$msg" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[1-9][0-9]*\))?: .+'; then
+# 콜론 뒤에는 공백 하나와 비공백 문자가 와야 한다. 공백만 있는 본문을 거른다.
+if ! printf '%s' "$msg" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|design)(\(#[1-9][0-9]*\))?: [^[:space:]].*'; then
   echo ""
   echo "커밋 메시지 형식 위반: \"$msg\""
   echo "형식: 유형(#이슈번호): 내용  (이슈가 없으면 유형: 내용)"
