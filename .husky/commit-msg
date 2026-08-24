@@ -14,7 +14,7 @@ if ! printf '%s' "$msg" | grep -qE '^(feat|fix|refactor|style|test|chore|docs|de
   echo "커밋 메시지 형식 위반: \"$msg\""
   echo "형식: 유형(#이슈번호): 내용  (이슈가 없으면 유형: 내용)"
   echo "유형: feat fix refactor style test chore docs design"
-  echo "예:   feat(#12): 구독 상세 화면 추가"
+  echo "예:   feat(#12): 구독 상세 화면을 추가합니다"
   echo "상세: docs/conventions/git-convention.md"
   exit 1
 fi
