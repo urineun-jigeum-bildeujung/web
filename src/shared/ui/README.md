@@ -19,6 +19,10 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | --- | --- |
 | `button.tsx` | shadcn Button. variant·size 조합을 cva로 정의한다 |
 | `skeleton.tsx` | shadcn Skeleton. 로딩 중 자리를 잡아 레이아웃이 밀리지 않게 한다 |
+| `input.tsx` | shadcn Input |
+| `label.tsx` | shadcn Label. `htmlFor`로 입력과 묶인다 |
+| `checkbox.tsx` | shadcn Checkbox |
+| `radio-group.tsx` | shadcn RadioGroup. 배타적 선택의 키보드 이동을 처리한다 |
 
 - `npx shadcn add <컴포넌트>`가 `components.json`의 alias에 따라 여기에 추가한다.
 - **임의로 수정하지 않는다.** 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
@@ -33,6 +37,11 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동 |
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
+| `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼 |
+| `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
+| `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
+| `checkbox-row/` | 체크박스 + 레이블 한 줄 |
+| `step-progress/` | 여러 단계 입력의 진행 표시 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
