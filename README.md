@@ -63,7 +63,7 @@ cp .env.example .env.local
 
 ## 기술 스택
 
-버전은 2026-08-13 기준 실제 설치값입니다.
+버전은 2026-08-28 기준 실제 설치값입니다.
 
 ### 코어
 
@@ -91,6 +91,7 @@ cp .env.example .env.local
 | --- | --- | --- |
 | 서버 상태 | @tanstack/react-query | 5.101.4 |
 | 클라이언트 상태 | zustand | 5.0.15 |
+| URL 상태 | nuqs | 2.10.1 |
 | 폼 | react-hook-form | 7.85.0 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 |
 | 스키마 검증 | zod | 4.4.3 |
