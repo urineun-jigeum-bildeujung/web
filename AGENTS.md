@@ -31,6 +31,7 @@
 | [srp-convention](./docs/conventions/srp-convention.md) | FSD 단일 책임·슬라이스/세그먼트 구조 |
 | [design-convention](./docs/conventions/design-convention.md) | 토큰·cn·모바일 우선·shadcn·아이콘 |
 | [component-convention](./docs/conventions/component-convention.md) | 컴포넌트 배치·공용화 기준·Props·상태·접근성 |
+| [library-convention](./docs/conventions/library-convention.md) | 라이브러리 도입 전 확인 순서·조사 항목·설치 위치 |
 | [app-message-convention](./docs/conventions/app-message-convention.md) | 사용자 문구 (**도입 예정, 현재 미적용**) |
 | [validation-convention](./docs/conventions/validation-convention.md) | 검증 순서·실패 보고 |
 | [git-convention](./docs/conventions/git-convention.md) | 커밋·브랜치·PR |
@@ -147,6 +148,8 @@
 ## 3. 기술 스택 (확정)
 
 버전은 2026-08-28 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
+
+**새 라이브러리는 작업을 시작하기 전에 정하십시오.** 이미 설치된 것·shadcn·플랫폼 기능으로 되는지 먼저 보고, 필요하면 최종 배포일과 React 19·Turbopack 호환을 확인합니다. 절차는 [library-convention](./docs/conventions/library-convention.md)을 따르고 `/check-library`가 그대로 실행합니다.
 
 | 구분 | 패키지 | 버전 | 역할 |
 | --- | --- | --- | --- |
