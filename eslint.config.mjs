@@ -35,7 +35,7 @@ const eslintConfig = defineConfig([
   // shadcn CLI 소유 파일은 손댈 수 없으므로 검사에서 제외한다.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/shared/ui/**", "src/shared/lib/utils.ts"],
+    ignores: ["src/shared/ui/*.tsx", "src/shared/lib/utils.ts"],
     extends: [tailwindcss.configs.recommended],
     settings: {
       tailwindcss: {
@@ -50,6 +50,11 @@ const eslintConfig = defineConfig([
     rules: {
       // 정렬은 prettier-plugin-tailwindcss가 담당한다. 이중 보고를 막는다.
       "tailwindcss/classnames-order": "off",
+      // cn(..., className)의 변수 인자를 클래스명 문자열로 오인해 경고한다.
+      // 바깥에서 여백을 덮을 수 있게 className을 받는 것은 컴포넌트 컨벤션이라,
+      // 켜 두면 공용 컴포넌트마다 오탐이 하나씩 쌓인다.
+      // 오타·임의 값 검사는 no-unnecessary-arbitrary-value와 prettier 정렬이 맡는다.
+      "tailwindcss/no-custom-classname": "off",
       // 4px 스케일로 표현 가능한 임의 값 금지. design-convention "간격과 크기" 절.
       "tailwindcss/no-unnecessary-arbitrary-value": "error",
     },
@@ -65,7 +70,7 @@ const eslintConfig = defineConfig([
   // "Cannot redefine plugin"으로 설정 로드 자체가 실패한다.
   {
     files: ["src/**/*.{ts,tsx}"],
-    ignores: ["src/shared/ui/**"],
+    ignores: ["src/shared/ui/*.tsx"],
     rules: { ...jsxA11y.flatConfigs.recommended.rules },
   },
   // FSD 레이어 경계 — srp-convention의 의존 방향을 자동 강제한다.
@@ -229,7 +234,7 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    files: ["src/shared/ui/**/*.{ts,tsx}"],
+    files: ["src/shared/ui/*.tsx"],
     rules: {
       "no-restricted-imports": "off",
     },

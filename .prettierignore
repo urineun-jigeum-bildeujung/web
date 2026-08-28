@@ -9,5 +9,7 @@ package-lock.json
 
 # shadcn CLI가 생성하고 덮어쓰는 파일은 제외한다.
 # 세미콜론 없는 shadcn 스타일이라 포맷하면 add 할 때마다 diff가 되살아난다.
-src/shared/ui/
+# CLI는 언제나 shared/ui 바로 아래에 파일을 만들므로 루트 직속만 제외한다.
+# 우리가 만든 공용 컴포넌트는 하위 폴더에 두고 포맷·린트를 그대로 받는다.
+src/shared/ui/*.tsx
 src/shared/lib/utils.ts
