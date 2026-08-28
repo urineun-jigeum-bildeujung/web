@@ -42,6 +42,11 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
 | `checkbox-row/` | 체크박스 + 레이블 한 줄 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
+| `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. 이동용(Link)과 실행용(Button) |
+| `setting-group/` | 목록 줄을 제목 아래 카드로 묶는다 |
+| `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
+| `price/` | 정가·할인가·할인율·단가 표기 |
+| `product-summary/` | 이미지와 상품명만 쓰는 짧은 표현 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
