@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "analyze": "next experimental-analyze",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
+    "@tanstack/react-query-devtools": "^5.101.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/react": "^16.3.2",
     "@types/node": "^20",
@@ -53,6 +55,7 @@
     "eslint-config-next": "16.3.0",
     "eslint-plugin-boundaries": "^7.2.0",
     "eslint-plugin-check-file": "^3.3.2",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-tailwindcss": "^4.2.0",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
