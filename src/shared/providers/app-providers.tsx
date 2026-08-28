@@ -3,6 +3,7 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { useState } from "react";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -21,10 +22,14 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      {children}
-      {/* 개발 빌드에만 포함된다. NODE_ENV가 production이면 자체적으로 아무것도 렌더하지 않는다. */}
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+    // NuqsAdapter가 없으면 useQueryState를 쓰는 쪽에서 "requires an adapter"로 터진다.
+    // App Router 전용 어댑터라 경로가 nuqs/adapters/next/app이다.
+    <NuqsAdapter>
+      <QueryClientProvider client={queryClient}>
+        {children}
+        {/* 개발 빌드에만 포함된다. NODE_ENV가 production이면 자체적으로 아무것도 렌더하지 않는다. */}
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </NuqsAdapter>
   );
 }
