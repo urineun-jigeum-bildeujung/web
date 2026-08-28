@@ -30,6 +30,7 @@
 | [code-convention](./docs/conventions/code-convention.md) | 네이밍·파일명·훅·Query Key |
 | [srp-convention](./docs/conventions/srp-convention.md) | FSD 단일 책임·슬라이스/세그먼트 구조 |
 | [design-convention](./docs/conventions/design-convention.md) | 토큰·cn·모바일 우선·shadcn·아이콘 |
+| [component-convention](./docs/conventions/component-convention.md) | 컴포넌트 배치·공용화 기준·Props·상태·접근성 |
 | [app-message-convention](./docs/conventions/app-message-convention.md) | 사용자 문구 (**도입 예정, 현재 미적용**) |
 | [validation-convention](./docs/conventions/validation-convention.md) | 검증 순서·실패 보고 |
 | [git-convention](./docs/conventions/git-convention.md) | 커밋·브랜치·PR |
