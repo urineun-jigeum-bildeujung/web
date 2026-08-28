@@ -8,6 +8,7 @@
 | [srp-convention](srp-convention.md) | FSD 안에서의 단일 책임·슬라이스/세그먼트 구조 |
 | [design-convention](design-convention.md) | 토큰·cn·모바일 우선·shadcn·아이콘 |
 | [component-convention](component-convention.md) | 컴포넌트 배치·공용화 기준·Props·상태·접근성 |
+| [library-convention](library-convention.md) | 라이브러리 도입 전 확인 순서·조사 항목·설치 위치 |
 | [app-message-convention](app-message-convention.md) | APP_MESSAGE / FORM_MESSAGE 사용자 문구 (**도입 예정**) |
 | [validation-convention](validation-convention.md) | 검증 순서·실패 보고 |
 | [git-convention](git-convention.md) | 커밋·브랜치·PR |
