@@ -2,6 +2,7 @@
 // 앱 전역 Provider를 한곳에서 조립한다. layout은 이 컴포넌트 하나만 감싼다.
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useState } from "react";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -19,5 +20,11 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       }),
   );
 
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+      {/* 개발 빌드에만 포함된다. NODE_ENV가 production이면 자체적으로 아무것도 렌더하지 않는다. */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
 }

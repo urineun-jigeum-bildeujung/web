@@ -3,6 +3,7 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import boundaries from "eslint-plugin-boundaries";
 import checkFile from "eslint-plugin-check-file";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 import tailwindcss from "eslint-plugin-tailwindcss";
 
 // 패키지 import 위치 제한 — 컨벤션의 상태 경계·아이콘 규칙을 강제한다.
@@ -52,6 +53,20 @@ const eslintConfig = defineConfig([
       // 4px 스케일로 표현 가능한 임의 값 금지. design-convention "간격과 크기" 절.
       "tailwindcss/no-unnecessary-arbitrary-value": "error",
     },
+  },
+  // 접근성 검사 — Lighthouse 접근성 95점 목표의 1차 방어선이다.
+  // eslint-config-next가 켜는 a11y 규칙은 alt-text·aria-* 계열 6개뿐이라,
+  // 레이블 없는 입력이나 키보드로 누를 수 없는 요소는 그냥 통과한다.
+  // 화면을 만들기 전에 켜야 위반이 쌓이지 않는다.
+  // shadcn 생성 파일은 CLI가 덮어써 우리가 고칠 수 없으므로 제외한다.
+  //
+  // 플러그인을 다시 등록하지 않고 규칙만 펼친다. eslint-config-next가 이미
+  // "jsx-a11y" 이름으로 등록해 두어, flat config에서 같은 이름을 다시 선언하면
+  // "Cannot redefine plugin"으로 설정 로드 자체가 실패한다.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/shared/ui/**"],
+    rules: { ...jsxA11y.flatConfigs.recommended.rules },
   },
   // FSD 레이어 경계 — srp-convention의 의존 방향을 자동 강제한다.
   {
