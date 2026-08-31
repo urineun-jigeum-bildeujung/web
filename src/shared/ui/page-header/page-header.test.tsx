@@ -41,3 +41,21 @@ test("onLeadingClick을 주면 그 함수가 불린다", () => {
   fireEvent.click(screen.getByRole("button", { name: "이전 화면으로" }));
   expect(onLeadingClick).toHaveBeenCalledOnce();
 });
+
+test("오른쪽 슬롯에 버튼이 여럿이어도 제목 자리가 흔들리지 않는다", () => {
+  const { container } = render(
+    <PageHeader
+      title="마이페이지"
+      right={
+        <>
+          <button type="button">장바구니</button>
+          <button type="button">알림</button>
+        </>
+      }
+    />,
+  );
+
+  // 좌우 열에 같은 유연 폭을 주는 3열 그리드여야 제목이 화면 중앙에 온다
+  const header = container.querySelector("header");
+  expect(header?.className).toContain("grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)]");
+});

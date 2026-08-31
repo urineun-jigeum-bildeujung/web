@@ -34,7 +34,7 @@ export function ErrorBoundary({ children, fallback }: ErrorBoundaryProps) {
                 <p className="text-sm text-muted-foreground">
                   잠시 문제가 생겼어요. 다시 시도해 주세요.
                 </p>
-                <Button variant="outline" onClick={resetErrorBoundary}>
+                <Button variant="outline" className="min-h-11 px-4" onClick={resetErrorBoundary}>
                   다시 시도
                 </Button>
               </div>

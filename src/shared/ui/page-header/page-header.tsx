@@ -41,11 +41,16 @@ export function PageHeader({
 
   return (
     <header
-      className={cn("flex h-14 items-center justify-between gap-2 px-2", className)}
+      // 좌우 슬롯 폭이 달라도 제목이 화면 중앙에 오도록 3열 그리드로 잡는다.
+      // justify-between으로 두면 오른쪽에 버튼을 더할 때마다 제목이 밀린다.
+      className={cn(
+        "grid h-14 grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] items-center gap-2 px-2",
+        className,
+      )}
       {...props}
     >
       {/* 좌우 자리를 같은 폭으로 잡아야 가운데 제목이 화면 중앙에 온다 */}
-      <div className="flex min-w-11 items-center justify-start">
+      <div className="flex items-center justify-start">
         {left ??
           (leading !== "none" && (
             <button
@@ -65,7 +70,7 @@ export function PageHeader({
         <span className="sr-only" />
       )}
 
-      <div className="flex min-w-11 items-center justify-end gap-1">{right}</div>
+      <div className="flex items-center justify-end gap-1">{right}</div>
     </header>
   );
 }

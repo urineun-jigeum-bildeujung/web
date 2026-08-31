@@ -10,6 +10,19 @@ staged() {
   git diff --cached --name-only --diff-filter=ACMR -- "$@"
 }
 
+# eslint --fix와 prettier --write는 인덱스가 아니라 작업 트리를 고친다.
+# 한 파일에서 일부 hunk만 스테이징했다면 뒤이은 git add가 나머지까지 끌어와
+# 의도하지 않은 변경이 커밋에 섞인다. 그런 파일이 있으면 여기서 멈춘다.
+PARTIAL=$(git status --porcelain | grep -E '^[MARC][MD]' | cut -c4-)
+if [ -n "$PARTIAL" ]; then
+  echo "부분 스테이징된 파일이 있어 커밋을 멈춥니다."
+  echo "$PARTIAL" | sed 's/^/  /'
+  echo
+  echo "포맷·린트가 파일 전체를 고치므로 스테이징하지 않은 변경까지 커밋에 섞입니다."
+  echo "파일 전체를 스테이징하거나(git add <파일>), 나머지를 따로 치워두고 다시 시도하십시오."
+  exit 1
+fi
+
 TS_FILES=$(staged '*.ts' '*.tsx')
 if [ -n "$TS_FILES" ]; then
   echo "$TS_FILES" | xargs npx eslint --fix

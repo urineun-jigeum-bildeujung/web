@@ -28,11 +28,13 @@ export function FormField({
   onClear,
   className,
   value,
+  disabled,
   ...props
 }: FormFieldProps) {
   const id = useId();
   const descriptionId = `${id}-description`;
-  const hasValue = value !== undefined && value !== "";
+  // 비활성 상태에서는 지우기도 막는다. 안 그러면 못 고치는 값을 지울 수 있다.
+  const canClear = Boolean(onClear) && !disabled && value !== undefined && value !== "";
 
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
@@ -44,17 +46,20 @@ export function FormField({
         <Input
           id={id}
           value={value}
+          disabled={disabled}
           aria-describedby={error || hint ? descriptionId : undefined}
           aria-invalid={error ? true : undefined}
-          className={cn(onClear && hasValue && "pr-10")}
+          // shadcn Input의 기본 높이는 32px이라 모바일 터치 기준에 못 미친다.
+          // 파일을 고치는 대신 호출부에서 덮는다.
+          className={cn("min-h-11", canClear && "pr-11")}
           {...props}
         />
-        {onClear && hasValue && (
+        {canClear && (
           <button
             type="button"
             aria-label="입력 지우기"
             onClick={onClear}
-            className="absolute inset-y-0 right-2 flex items-center text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
           >
             <IoCloseCircle aria-hidden className="size-5" />
           </button>
