@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 
-import { BreedPicker, type PetSpecies } from "@/entities/pet";
+import { BREEDS, BreedPicker, PET_SPECIES, type PetSpecies } from "@/entities/pet";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 
@@ -15,11 +15,17 @@ type BreedStepProps = {
   onCancel: () => void;
 };
 
+/** 고른 품종이 어느 종의 것인지 되찾는다. 종을 강아지로 고정하면 고양이 선택이 뒤집힌다 */
+function findSpecies(breed: string): PetSpecies {
+  const found = PET_SPECIES.find((species) => BREEDS[species].includes(breed));
+  return found ?? "dog";
+}
+
 export function BreedStep({ value, onConfirm, onCancel }: BreedStepProps) {
   // 고른 값을 바로 반영하지 않고 "선택 완료"를 누를 때 넘긴다.
   // 시안에 돌아가기·선택 완료 두 버튼이 있어 취소가 가능해야 한다.
   const [picked, setPicked] = useState<{ breed: string; species: PetSpecies } | null>(
-    value ? { breed: value, species: "dog" } : null,
+    value ? { breed: value, species: findSpecies(value) } : null,
   );
 
   return (
