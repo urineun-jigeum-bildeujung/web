@@ -66,7 +66,11 @@ export function EditAddressView() {
         onClear={() => setRequest("")}
       />
 
-      <CheckboxRow label="이 주소로 받을게요" checked={isDefault} onCheckedChange={setIsDefault} />
+      <CheckboxRow
+        label="계속 이 주소로 받을게요"
+        checked={isDefault}
+        onCheckedChange={setIsDefault}
+      />
     </SingleInputScreen>
   );
 }

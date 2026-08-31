@@ -8,7 +8,6 @@
 "use client";
 
 import { useState } from "react";
-import { IoCardOutline } from "react-icons/io5";
 
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -47,7 +46,12 @@ export function PaymentMethodsView() {
             {MOCK_CARDS.map((card) => (
               <ListRowButton
                 key={card.id}
-                icon={<IoCardOutline />}
+                // 시안은 카드사 로고 자리다. 이미지가 붙기 전까지 약칭을 보인다.
+                icon={
+                  <span className="flex h-7 w-10 items-center justify-center rounded bg-primary text-xs font-bold text-primary-foreground">
+                    {card.issuer}
+                  </span>
+                }
                 title={card.name}
                 description={card.masked}
                 onClick={() => setManagingId(card.id)}

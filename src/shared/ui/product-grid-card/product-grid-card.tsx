@@ -2,7 +2,7 @@
 // 와이어프레임 기준(mypa_031, mypa_031_수정하기)이라 디자인 확정 시 바뀔 수 있다.
 
 import Image from "next/image";
-import { IoCheckmarkCircle } from "react-icons/io5";
+import { IoCheckmarkCircle, IoImageOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
 import { Price } from "@/shared/ui/price/price";
@@ -40,9 +40,7 @@ export function ProductGridCard({
         {imageUrl ? (
           <Image src={imageUrl} alt="" fill className="object-cover" />
         ) : (
-          <span aria-hidden className="text-muted-foreground">
-            이미지
-          </span>
+          <IoImageOutline aria-hidden className="size-8 text-muted-foreground" />
         )}
         {selectable && (
           <IoCheckmarkCircle

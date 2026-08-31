@@ -25,7 +25,7 @@ import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
 /** API 연동 전까지 화면 확인용 값 */
 const MOCK_ORDERS: { id: string; orderedAt: string; status: OrderStatus; amount: number }[] = [
-  { id: "1", orderedAt: "26.08.28", status: "delivered", amount: 12345 },
+  { id: "1", orderedAt: "26.08.28", status: "preparing", amount: 12345 },
   { id: "2", orderedAt: "26.08.28", status: "shipping", amount: 12345 },
   { id: "3", orderedAt: "26.08.28", status: "delivered", amount: 12345 },
   { id: "4", orderedAt: "26.08.28", status: "confirmed", amount: 12345 },
@@ -47,10 +47,11 @@ export function OrdersView() {
             <article key={order.id} className="flex flex-col gap-2">
               <p className="text-xs text-muted-foreground">주문 일자 {order.orderedAt}</p>
 
-              <div className="flex items-start gap-2">
-                <ProductSummary name="상품명" meta="상품 옵션" className="flex-1" />
-                <OrderStatusBadge status={order.status} />
-              </div>
+              <ProductSummary
+                name="상품명"
+                meta="상품 옵션"
+                nameTrailing={<OrderStatusBadge status={order.status} />}
+              />
 
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">결제 금액</span>
@@ -63,7 +64,8 @@ export function OrdersView() {
                     배송 위치 보기
                   </Button>
                 )}
-                {order.status === "paid" && (
+                {/* 배송이 시작되기 전까지만 취소할 수 있다 (mypa_061) */}
+                {(order.status === "paid" || order.status === "preparing") && (
                   <Button
                     variant="outline"
                     className="min-h-11 flex-1"

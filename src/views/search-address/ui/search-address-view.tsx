@@ -45,6 +45,13 @@ const MOCK_RESULTS: AddressResult[] = [
   },
 ];
 
+/** 검색어를 어떻게 넣는지 보여주는 예시 (mypa_312_입력전) */
+const SEARCH_EXAMPLES = [
+  { label: "도로명", example: "예) 무학로 33, 도산대로 8길 23" },
+  { label: "동주소", example: "예) 연희동 42-18" },
+  { label: "건물명", example: "예) 역삼동 푸르지오, 텐즈힐" },
+];
+
 export function SearchAddressView() {
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
@@ -72,6 +79,18 @@ export function SearchAddressView() {
           검색
         </Button>
       </div>
+
+      {/* 어떻게 찾아야 하는지 알려주는 예시. 검색 전에만 보인다 (mypa_312_입력전) */}
+      {results === null && (
+        <dl className="flex flex-col gap-2 text-xs">
+          {SEARCH_EXAMPLES.map((item) => (
+            <div key={item.label} className="flex gap-2">
+              <dt className="shrink-0 font-medium text-foreground">{item.label}</dt>
+              <dd className="text-muted-foreground">{item.example}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       {results !== null &&
         (results.length > 0 ? (
