@@ -27,11 +27,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", notoSans.variable)}
     >
-      {/* 지금은 모바일 시안만 있어 화면 폭을 여기서 한 번에 제한한다.
-          화면마다 붙이면 새 화면에서 빠뜨리게 되고 실제로 그렇게 됐다.
-          태블릿·데스크톱 시안이 나오면 이 제한을 풀고 화면별로 정한다. */}
-      <body className="mx-auto flex min-h-full w-full max-w-105 flex-col">
-        <AppProviders>{children}</AppProviders>
+      <body className="min-h-full">
+        {/* 지금은 모바일 시안만 있어 화면 폭을 여기서 한 번에 제한한다.
+            화면마다 붙이면 새 화면에서 빠뜨리게 되고 실제로 그렇게 됐다.
+            태블릿·데스크톱 시안이 나오면 이 제한을 풀고 화면별로 정한다.
+
+            제한을 body가 아니라 이 div가 지는 이유가 있다. 바텀시트와 확인창은
+            포털로 body 바로 아래에 붙는데, body가 flex 컨테이너이면서 폭까지
+            제한하면 그 포털이 폭 계산에 끼어들어 뒤에 깔린 화면이 짜부라진다. */}
+        <div className="mx-auto flex min-h-full w-full max-w-105 flex-col">
+          <AppProviders>{children}</AppProviders>
+        </div>
       </body>
     </html>
   );
