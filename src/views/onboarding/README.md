@@ -1,14 +1,16 @@
 # views/onboarding
 
-반려동물 프로필을 등록하는 온보딩 화면. 와이어프레임 `onbo_001`~`onbo_005`에 대응한다.
+반려동물 프로필을 등록하는 온보딩 화면. 와이어프레임 `onboarding (완료)` 섹션에 대응한다.
+
+**체구를 고르면 몸무게와 체질 항목이 그 자리에 나타난다.** 시안이 `onbo_003_체구선택전`과 `체구선택후` 두 장으로 나뉘어 있는 이유다.
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/onboarding-view.tsx` | 단계 이동과 입력값 보관. 각 단계를 갈아 끼운다 |
 | `ui/steps/intro-step.tsx` | 도입부. 건너뛰기 / 프로필 입력하기 (`onbo_001`) |
 | `ui/steps/basic-step.tsx` | 사진·이름·성별·중성화 (`onbo_002`) |
-| `ui/steps/detail-step.tsx` | 품종·나이·체구 (`onbo_003`) |
-| `ui/steps/breed-step.tsx` | 품종 선택 하위 화면 (`onbo_003_품종선택`) |
+| `ui/steps/detail-step.tsx` | 품종·나이·체구, 체구 선택 후 몸무게·체질 (`onbo_003_체구선택전`·`체구선택후`) |
+| `ui/steps/breed-step.tsx` | 품종 선택 하위 화면 (`onbo_013_품종선택`) |
 | `ui/steps/health-step.tsx` | 염려질환·알러지 (`onbo_004`) |
 | `ui/steps/done-step.tsx` | 완료 (`onbo_005`) |
 | `model/steps.ts` | 단계 목록과 진행 표시 계산 |

@@ -78,3 +78,21 @@ test("닫기를 누르면 이탈 확인 모달이 뜬다", () => {
   expect(screen.getByRole("alertdialog")).toBeDefined();
   expect(screen.getByText("프로필 작성을 그만둘까요?")).toBeDefined();
 });
+
+test("체구를 고르기 전에는 몸무게·체질 항목이 없다", () => {
+  renderAt("?step=detail");
+
+  // 시안 onbo_003_체구선택전에는 두 항목이 보이지 않는다
+  expect(screen.queryByPlaceholderText("평균 몸무게 5kg")).toBeNull();
+  expect(screen.queryByRole("slider")).toBeNull();
+});
+
+test("체구를 고르면 몸무게와 체질 항목이 나타난다", () => {
+  renderAt("?step=detail");
+
+  fireEvent.click(screen.getByText("소형견"));
+
+  expect(screen.getByPlaceholderText("평균 몸무게 5kg")).toBeDefined();
+  expect(screen.getByRole("slider")).toBeDefined();
+  expect(screen.getByText("보통")).toBeDefined();
+});
