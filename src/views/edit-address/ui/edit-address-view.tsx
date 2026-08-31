@@ -24,9 +24,17 @@ const SAVED_PLACES: Record<string, { label: string; address: string; detail: str
 };
 
 export function EditAddressView() {
-  const router = useRouter();
   // 새 배송지와 이미 있는 곳의 수정을 한 화면이 맡는다. 어느 쪽인지는 주소창이 들고 있다.
   const [place] = useQueryState("place");
+
+  // App Router는 같은 경로에서 쿼리만 바뀌면 컴포넌트를 그대로 둔다.
+  // 그러면 고칠 대상이 집에서 회사로 바뀌어도 입력값이 앞의 것으로 남는다.
+  // key를 바꿔 대상이 달라질 때마다 폼을 새로 세운다.
+  return <EditAddressForm key={place ?? "new"} place={place} />;
+}
+
+function EditAddressForm({ place }: { place: string | null }) {
+  const router = useRouter();
   const saved = place ? SAVED_PLACES[place] : undefined;
 
   const [label, setLabel] = useState(saved?.label ?? "");
