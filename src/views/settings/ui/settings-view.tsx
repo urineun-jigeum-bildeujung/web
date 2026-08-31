@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   IoColorPaletteOutline,
   IoLogOutOutline,
@@ -16,6 +16,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Switch } from "@/shared/ui/switch";
 
 export function SettingsView() {
+  const pushId = useId();
   const [pushEnabled, setPushEnabled] = useState(true);
 
   return (
@@ -24,22 +25,16 @@ export function SettingsView() {
 
       <main className="flex flex-1 flex-col gap-6 pb-8">
         <section className="[&>*+*]:border-t [&>*+*]:border-border">
-          {/* 토글은 그 자리에서 값이 바뀌므로 화살표를 숨기고 스위치를 오른쪽에 둔다 */}
-          <ListRowButton
-            title="알림 설정"
-            icon={<IoNotificationsOutline />}
-            hideChevron
-            onClick={() => setPushEnabled((prev) => !prev)}
-            trailing={
-              <Switch
-                checked={pushEnabled}
-                aria-label="알림 설정"
-                // 행 전체가 버튼이라 스위치는 표시만 맡는다
-                tabIndex={-1}
-                className="pointer-events-none"
-              />
-            }
-          />
+          {/* 행을 버튼으로 만들면 스위치(버튼)가 버튼 안에 들어가 HTML이 깨진다.
+              레이블로 감싸 행 어디를 눌러도 스위치가 눌리게 한다. */}
+          <label
+            htmlFor={pushId}
+            className="flex min-h-14 cursor-pointer items-center gap-3 px-4 py-3"
+          >
+            <IoNotificationsOutline aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+            <span className="flex-1 text-sm font-medium text-foreground">알림 설정</span>
+            <Switch id={pushId} checked={pushEnabled} onCheckedChange={setPushEnabled} />
+          </label>
           <ListRowButton title="테마 설정" icon={<IoColorPaletteOutline />} />
         </section>
 
