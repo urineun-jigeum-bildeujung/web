@@ -68,6 +68,31 @@ export function ListRowLink({
   );
 }
 
+/**
+ * 아직 갈 곳이 없는 줄. 시안에는 있으나 화면을 만들지 않은 항목에 쓴다.
+ * 없는 주소로 링크를 걸면 눌렀을 때 404가 되므로 그 전까지 이것으로 둔다.
+ */
+export function ListRowStatic({
+  className,
+  title,
+  description,
+  icon,
+  trailing,
+  hideChevron,
+}: ListRowBaseProps) {
+  return (
+    <div className={cn(ROW_CLASS, "hover:bg-transparent", className)}>
+      <RowInner
+        title={title}
+        description={description}
+        icon={icon}
+        trailing={trailing}
+        hideChevron={hideChevron}
+      />
+    </div>
+  );
+}
+
 /** 그 자리에서 동작을 실행하는 줄 */
 export function ListRowButton({
   className,
