@@ -45,7 +45,7 @@ const SCREEN_GROUPS = [
 
 export function HomeView() {
   return (
-    <main className="mx-auto flex w-full max-w-105 flex-1 flex-col px-4 pb-12">
+    <main className="flex flex-1 flex-col px-4 pb-12">
       <div className="flex items-start justify-between gap-2 pt-6">
         <div className="flex flex-col gap-1">
           <p className="text-sm text-muted-foreground">소비량 예측형 스마트 구독 커머스</p>

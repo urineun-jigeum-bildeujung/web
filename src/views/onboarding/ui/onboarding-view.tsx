@@ -49,7 +49,7 @@ export function OnboardingView() {
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-105 flex-col">
+    <div className="flex min-h-dvh flex-col">
       {/* 도입부와 완료 화면에는 상단 바가 없다 */}
       {step !== "intro" && step !== "done" && (
         // 시안은 진행 표시가 왼쪽, 닫기가 오른쪽이다.

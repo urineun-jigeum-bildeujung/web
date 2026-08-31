@@ -27,7 +27,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", notoSans.variable)}
     >
-      <body className="flex min-h-full flex-col">
+      {/* 지금은 모바일 시안만 있어 화면 폭을 여기서 한 번에 제한한다.
+          화면마다 붙이면 새 화면에서 빠뜨리게 되고 실제로 그렇게 됐다.
+          태블릿·데스크톱 시안이 나오면 이 제한을 풀고 화면별로 정한다. */}
+      <body className="mx-auto flex min-h-full w-full max-w-105 flex-col">
         <AppProviders>{children}</AppProviders>
       </body>
     </html>
