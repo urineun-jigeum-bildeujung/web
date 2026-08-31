@@ -74,6 +74,18 @@ URL에 두면 두 가지가 따라온다.
 | 클라이언트가 이미 받은 데이터로 거르는 값 | 기본값 그대로 |
 | 서버가 다시 조회해야 하는 값 (검색 정렬, 페이지, 서버 필터) | `shallow: false` |
 
+**`useQueryState`를 쓰는 화면은 라우트에서 `Suspense`로 감싼다.** 내부에서 `useSearchParams`를 부르므로 감싸지 않으면 정적 프리렌더가 실패한다(`missing-suspense-with-csr-bailout`). 빌드에서만 드러나고 dev에서는 통과하므로 화면을 만들 때 함께 넣는다.
+
+```tsx
+export default function Page() {
+  return (
+    <Suspense>
+      <SomeView />
+    </Suspense>
+  );
+}
+```
+
 서버 컴포넌트는 `page.tsx`의 `searchParams`로 읽는다. 같은 파서를 클라이언트와 서버가 나눠 쓰려면 `nuqs/server`의 파서·캐시를 쓴다. 훅 자체는 클라이언트 전용이므로 **목록을 감싼 최상위가 아니라 필터 UI 컴포넌트에 둔다.** 최상위에 두면 목록 전체가 클라이언트로 넘어가 이 절의 목적이 사라진다.
 
 ## SRP 체크리스트
