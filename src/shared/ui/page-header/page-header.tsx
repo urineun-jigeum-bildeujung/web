@@ -64,10 +64,12 @@ export function PageHeader({
           ))}
       </div>
 
+      {/* 제목이 없어도 가운데 칸을 비워 둔다. sr-only는 position:absolute라
+          그리드 배치에서 빠지고, 그러면 오른쪽 슬롯이 가운데 칸으로 올라온다. */}
       {title ? (
         <h1 className="truncate text-base font-semibold text-foreground">{title}</h1>
       ) : (
-        <span className="sr-only" />
+        <span />
       )}
 
       <div className="flex items-center justify-end gap-1">{right}</div>
