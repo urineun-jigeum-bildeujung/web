@@ -6,9 +6,12 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
 import { SearchAddressView } from "./search-address-view";
 
-test("검색 전에는 결과 영역이 없다", () => {
+test("검색 전에는 결과 대신 입력 예시를 보여준다", () => {
   render(<SearchAddressView />);
-  expect(screen.queryByText("도로명")).toBeNull();
+
+  // 시안(mypa_312_입력전)의 안내. 어떻게 찾는지 알려 준다.
+  expect(screen.getByText("예) 연희동 42-18")).toBeDefined();
+  expect(screen.queryByText("06133")).toBeNull();
 });
 
 test("검색어가 없으면 검색 버튼이 꺼져 있다", () => {

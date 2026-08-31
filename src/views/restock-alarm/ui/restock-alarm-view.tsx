@@ -52,11 +52,12 @@ export function RestockAlarmView() {
         {/* 고르는 모드에서는 안내와 검색을 숨겨 목록에 집중하게 한다 */}
         {!editing && (
           <>
-            <InfoNotice title="다시 들어오길 기다려요" items={NOTICE_ITEMS} />
+            <InfoNotice items={NOTICE_ITEMS} />
 
             <FormField
               label="재입고 알림 검색"
               className="[&>label]:sr-only"
+              leading={<IoSearchOutline className="size-5" />}
               placeholder="상품명으로 찾기"
               value={keyword}
               onChange={(event) => setKeyword(event.target.value)}

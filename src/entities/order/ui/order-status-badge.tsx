@@ -10,7 +10,7 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   paid: "결제완료",
-  preparing: "상품 준비",
+  preparing: "배송준비중",
   shipping: "배송중",
   delivered: "배송완료",
   confirmed: "구매확정",

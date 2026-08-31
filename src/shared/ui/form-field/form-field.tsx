@@ -19,6 +19,8 @@ type FormFieldProps = {
   error?: ReactNode;
   /** 값을 지우는 버튼을 띄운다. 값이 있을 때만 보인다 */
   onClear?: () => void;
+  /** 입력칸 왼쪽 안에 놓는 아이콘. 검색창의 돋보기처럼 무엇을 넣는 칸인지 보일 때 쓴다 */
+  leading?: ReactNode;
 } & Omit<ComponentProps<typeof Input>, "id" | "aria-describedby" | "aria-invalid">;
 
 export function FormField({
@@ -26,6 +28,7 @@ export function FormField({
   hint,
   error,
   onClear,
+  leading,
   className,
   value,
   disabled,
@@ -43,6 +46,14 @@ export function FormField({
       </Label>
 
       <div className="relative">
+        {leading && (
+          <span
+            aria-hidden
+            className="absolute inset-y-0 left-0 flex w-10 items-center justify-center text-muted-foreground"
+          >
+            {leading}
+          </span>
+        )}
         <Input
           id={id}
           value={value}
@@ -51,7 +62,7 @@ export function FormField({
           aria-invalid={error ? true : undefined}
           // shadcn Input의 기본 높이는 32px이라 모바일 터치 기준에 못 미친다.
           // 파일을 고치는 대신 호출부에서 덮는다.
-          className={cn("min-h-11", canClear && "pr-11")}
+          className={cn("min-h-11", leading && "pl-10", canClear && "pr-11")}
           {...props}
         />
         {canClear && (

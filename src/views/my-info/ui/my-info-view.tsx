@@ -19,7 +19,7 @@ const MOCK = {
       id: "home",
       label: "집",
       isDefault: true,
-      address: "서울특별시 강남구 테헤란로 123, 나타워 4층 404호",
+      address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
       icon: <IoHomeOutline />,
     },
     {
