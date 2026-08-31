@@ -63,3 +63,9 @@ views/
 | `verify-phone` | `/mypage/info/phone` | 휴대폰 번호 인증 |
 | `edit-address` | `/mypage/address/new` | 배송지 추가·수정 |
 | `search-address` | `/mypage/address/search` | 주소 검색 |
+| `restock-alarm` | `/mypage/restock` | 재입고 알림 목록·선택 모드 |
+| `my-reviews` | `/mypage/reviews` | 나의 상품 후기 (탭) |
+| `payment-methods` | `/mypage/payment` | 간편결제 카드 관리 |
+| `orders` | `/mypage/orders` | 주문·배송 확인 |
+| `support` | `/mypage/support` | 고객지원 · FAQ |
+| `settings` | `/mypage/settings` | 설정 |
