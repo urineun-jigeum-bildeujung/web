@@ -23,6 +23,9 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `label.tsx` | shadcn Label. `htmlFor`로 입력과 묶인다 |
 | `checkbox.tsx` | shadcn Checkbox |
 | `radio-group.tsx` | shadcn RadioGroup. 배타적 선택의 키보드 이동을 처리한다 |
+| `alert-dialog.tsx` | shadcn AlertDialog. 되돌릴 수 없는 행동 확인 |
+| `slider.tsx` | shadcn Slider |
+| `select.tsx` | shadcn Select |
 
 - `npx shadcn add <컴포넌트>`가 `components.json`의 alias에 따라 여기에 추가한다.
 - **임의로 수정하지 않는다.** 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
@@ -47,6 +50,8 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
 | `price/` | 정가·할인가·할인율·단가 표기 |
 | `product-summary/` | 이미지와 상품명만 쓰는 짧은 표현 |
+| `single-input-screen/` | 한 가지만 묻고 하단 완료로 끝내는 화면 골격 |
+| `address-result-list/` | 주소 검색 결과. 우편번호·도로명·지번·건물명 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 

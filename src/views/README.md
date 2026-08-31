@@ -57,3 +57,9 @@ views/
 | `home` | `/` | 초기 세팅 안내 화면 (디자인 확정 후 교체) |
 | `dev-gallery` | `/dev` | 공용 컴포넌트 확인용 개발 화면. 프로덕션에서는 열리지 않는다 |
 | `onboarding` | `/onboarding` | 반려동물 프로필 등록 6단계 (경로는 임시) |
+| `mypage` | `/mypage` | 마이페이지 홈 (경로는 임시) |
+| `my-info` | `/mypage/info` | 내 정보와 배송지 목록 |
+| `edit-nickname` | `/mypage/info/nickname` | 닉네임 변경 |
+| `verify-phone` | `/mypage/info/phone` | 휴대폰 번호 인증 |
+| `edit-address` | `/mypage/address/new` | 배송지 추가·수정 |
+| `search-address` | `/mypage/address/search` | 주소 검색 |
