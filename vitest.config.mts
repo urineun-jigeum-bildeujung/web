@@ -9,5 +9,7 @@ export default defineConfig({
     // @testing-library/react의 자동 cleanup이 전역 afterEach에 의존한다.
     globals: true,
     include: ["src/**/*.test.{ts,tsx}"],
+    // jsdom에 없는 브라우저 API를 채운다. Radix 컴포넌트가 요구한다.
+    setupFiles: ["./vitest.setup.ts"],
   },
 });

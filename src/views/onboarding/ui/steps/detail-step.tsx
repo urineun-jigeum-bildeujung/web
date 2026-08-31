@@ -1,15 +1,16 @@
 // 품종·나이·체구를 받는 두 번째 입력 단계.
-// 와이어프레임 기준(onbo_003)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(onbo_003_체구선택전·체구선택후)이라 디자인 확정 시 바뀔 수 있다.
 
 "use client";
 
 import { IoChevronForward } from "react-icons/io5";
 
-import { SIZE_OPTIONS, type PetProfileDraft } from "@/entities/pet";
+import { BODY_TYPE_OPTIONS, SIZE_OPTIONS, type PetProfileDraft } from "@/entities/pet";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
+import { Slider } from "@/shared/ui/slider";
 
 type DetailStepProps = {
   draft: PetProfileDraft;
@@ -26,7 +27,8 @@ export function DetailStep({
   onPrev,
   onNext,
 }: DetailStepProps) {
-  const canProceed = Boolean(draft.breed && draft.size);
+  // 체구를 골라야 몸무게·체질 항목이 나타난다. 시안 onbo_003_체구선택후.
+  const canProceed = Boolean(draft.breed && draft.size && draft.weight);
 
   return (
     <>
@@ -84,6 +86,53 @@ export function DetailStep({
             onValueChange={(size) => onChange({ size })}
           />
         </div>
+
+        {draft.size && (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-medium text-foreground">
+                {draft.name ? `${draft.name}의` : "아이의"} 대략적인 몸무게를 알려주세요
+              </p>
+              <p className="text-xs text-muted-foreground">
+                정확하지 않아도 괜찮아요. 대략적으로 적어주세요.
+              </p>
+              <FormField
+                label="대략적인 몸무게"
+                className="[&>label]:sr-only"
+                placeholder="평균 몸무게 5kg"
+                inputMode="decimal"
+                value={draft.weight}
+                onChange={(event) => onChange({ weight: event.target.value })}
+                onClear={() => onChange({ weight: "" })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-medium text-foreground">
+                {draft.name ? `${draft.name}의` : "아이의"} 체질은 어떤 편인가요
+              </p>
+              <Slider
+                aria-label="체질"
+                min={0}
+                max={BODY_TYPE_OPTIONS.length - 1}
+                step={1}
+                value={[draft.bodyTypeIndex]}
+                onValueChange={([bodyTypeIndex]) => onChange({ bodyTypeIndex })}
+              />
+              {/* 손잡이 위치만으로는 어떤 값인지 알 수 없어 눈금 문구를 함께 둔다 */}
+              <div className="flex justify-between text-xs text-muted-foreground">
+                {BODY_TYPE_OPTIONS.map((label, index) => (
+                  <span
+                    key={label}
+                    className={index === draft.bodyTypeIndex ? "font-semibold text-foreground" : ""}
+                  >
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </main>
 
       <BottomActionBar>

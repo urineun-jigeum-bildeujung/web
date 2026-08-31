@@ -72,6 +72,10 @@ export const SIZE_OPTIONS = [
   { value: "large", label: "대형견", description: "25kg 이상" },
 ] as const;
 
+/** 시안 onbo_003_체구선택후의 슬라이더 5단계 */
+export const BODY_TYPE_OPTIONS = ["매우 마름", "마름", "보통", "통통", "비만"] as const;
+export const DEFAULT_BODY_TYPE_INDEX = 2;
+
 export type PetProfileDraft = {
   photo: File | null;
   name: string;
@@ -82,6 +86,8 @@ export type PetProfileDraft = {
   age: string;
   birthday: string;
   size: string;
+  weight: string;
+  bodyTypeIndex: number;
   concern: string;
   noConcern: boolean;
   allergy: string;
@@ -98,6 +104,8 @@ export const EMPTY_PROFILE_DRAFT: PetProfileDraft = {
   age: "",
   birthday: "",
   size: "",
+  weight: "",
+  bodyTypeIndex: DEFAULT_BODY_TYPE_INDEX,
   concern: "",
   noConcern: false,
   allergy: "",
