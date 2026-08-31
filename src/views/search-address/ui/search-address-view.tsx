@@ -18,13 +18,32 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_RESULTS: AddressResult[] = Array.from({ length: 4 }, () => ({
-  zipNo: "06133",
-  roadAddr: "서울특별시 강남구 테헤란로 123 (역삼동)",
-  jibunAddr: "서울특별시 강남구 역삼동 848-23 아남빌딩",
-  bdNm: "아남빌딩",
-}));
+/** API 연동 전까지 화면 확인용 값. 건물명이 없는 결과도 섞어 둔다 */
+const MOCK_RESULTS: AddressResult[] = [
+  {
+    zipNo: "06133",
+    roadAddr: "서울특별시 강남구 테헤란로 123 (역삼동)",
+    jibunAddr: "서울특별시 강남구 역삼동 848-23 아남빌딩",
+    bdNm: "아남빌딩",
+  },
+  {
+    zipNo: "06234",
+    roadAddr: "서울특별시 강남구 테헤란로 152 (역삼동)",
+    jibunAddr: "서울특별시 강남구 역삼동 737 강남파이낸스센터",
+    bdNm: "강남파이낸스센터",
+  },
+  {
+    zipNo: "06236",
+    roadAddr: "서울특별시 강남구 테헤란로 419 (삼성동)",
+    jibunAddr: "서울특별시 강남구 삼성동 168-26",
+  },
+  {
+    zipNo: "06158",
+    roadAddr: "서울특별시 강남구 테헤란로 501 (삼성동)",
+    jibunAddr: "서울특별시 강남구 삼성동 143-40 브이플렉스",
+    bdNm: "브이플렉스",
+  },
+];
 
 export function SearchAddressView() {
   const router = useRouter();

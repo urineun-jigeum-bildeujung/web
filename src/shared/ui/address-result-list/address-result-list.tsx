@@ -21,8 +21,9 @@ type AddressResultListProps = {
 export function AddressResultList({ results, onSelect, className }: AddressResultListProps) {
   return (
     <ul className={cn("flex flex-col", className)}>
-      {results.map((result) => (
-        <li key={`${result.zipNo}-${result.roadAddr}`} className="border-b border-border">
+      {/* 같은 건물의 여러 호수처럼 표시값이 겹치는 결과가 올 수 있어 순번을 함께 쓴다 */}
+      {results.map((result, index) => (
+        <li key={`${index}-${result.zipNo}-${result.roadAddr}`} className="border-b border-border">
           <button
             type="button"
             onClick={() => onSelect(result)}
