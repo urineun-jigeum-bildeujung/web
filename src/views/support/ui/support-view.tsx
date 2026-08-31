@@ -9,7 +9,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/shared/ui/accordion";
-import { ListRowLink } from "@/shared/ui/list-row/list-row";
+import { ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 const FAQS = [
@@ -43,16 +43,8 @@ export function SupportView() {
 
       <main className="flex flex-1 flex-col gap-6 pb-8">
         <section className="[&>*+*]:border-t [&>*+*]:border-border">
-          <ListRowLink
-            href="/mypage/support/inquiry"
-            title="1:1 문의"
-            icon={<IoChatbubbleOutline />}
-          />
-          <ListRowLink
-            href="/mypage/support/notice"
-            title="공지사항"
-            icon={<IoMegaphoneOutline />}
-          />
+          <ListRowStatic title="1:1 문의" icon={<IoChatbubbleOutline />} />
+          <ListRowStatic title="공지사항" icon={<IoMegaphoneOutline />} />
         </section>
 
         <section className="flex flex-col gap-2 px-4">

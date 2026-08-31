@@ -90,24 +90,6 @@ for (const { route, open, slot, name } of OVERLAYS) {
   });
 }
 
-/**
- * 시안에는 있으나 아직 화면을 만들지 않은 곳.
- * 만들 때 여기서 지운다. 목록에 없는 링크가 깨지면 그건 실수다.
- */
-const NOT_BUILT_YET = new Set([
-  "/mypage/cart",
-  "/mypage/notifications",
-  "/mypage/pets",
-  "/mypage/terms",
-  "/mypage/info/name",
-  "/mypage/info/birthday",
-  "/mypage/info/photo",
-  "/mypage/address/home",
-  "/mypage/address/office",
-  "/mypage/support/inquiry",
-  "/mypage/support/notice",
-]);
-
 /** 화면에 걸린 링크가 실제로 열리는지 본다. 메뉴는 눌러보기 전에는 404를 모른다 */
 test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
   // 화면을 모두 돌며 링크를 확인한다. dev 서버가 라우트를 그때그때 컴파일해 오래 걸린다.
@@ -126,8 +108,6 @@ test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
       const key = href.split("#")[0];
       if (visited.has(key)) continue;
       visited.add(key);
-
-      if (NOT_BUILT_YET.has(key)) continue;
 
       // dev 서버는 라우트를 첫 요청에 컴파일한다. 다른 테스트와 겹치면
       // 그 사이에 실패할 수 있어 한 번 더 확인하고 판단한다.

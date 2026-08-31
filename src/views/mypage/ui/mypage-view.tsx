@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import {
+  IoAdd,
   IoCartOutline,
   IoChevronForward,
   IoHeadsetOutline,
@@ -14,7 +15,7 @@ import {
   IoWalletOutline,
 } from "react-icons/io5";
 
-import { ListRowLink } from "@/shared/ui/list-row/list-row";
+import { ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 
@@ -63,7 +64,6 @@ const MENU_GROUPS = [
         icon: <IoHeadsetOutline />,
       },
       {
-        href: "/mypage/terms",
         title: "서비스 안내",
         description: "서비스 안내",
         icon: <IoInformationCircleOutline />,
@@ -88,20 +88,13 @@ export function MypageView() {
         leading="none"
         right={
           <>
-            <Link
-              href="/mypage/cart"
-              aria-label="장바구니"
-              className="flex size-11 items-center justify-center"
-            >
-              <IoCartOutline aria-hidden className="size-6" />
-            </Link>
-            <Link
-              href="/mypage/notifications"
-              aria-label="알림"
-              className="flex size-11 items-center justify-center"
-            >
-              <IoNotificationsOutline aria-hidden className="size-6" />
-            </Link>
+            {/* 장바구니·알림 화면이 아직 없어 아이콘만 둔다 */}
+            <span aria-hidden className="flex size-11 items-center justify-center">
+              <IoCartOutline className="size-6" />
+            </span>
+            <span aria-hidden className="flex size-11 items-center justify-center">
+              <IoNotificationsOutline className="size-6" />
+            </span>
           </>
         }
       />
@@ -122,26 +115,30 @@ export function MypageView() {
             <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           </Link>
 
-          {/* 반려동물 프로필 영역. 시안에 "여기 디자인 미변경" 메모가 있어 자리만 잡아 둔다 */}
-          <Link
-            href="/mypage/pets"
-            aria-label="반려동물 프로필 관리"
-            className="flex min-h-14 items-center gap-3 border-t border-border px-4 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <span aria-hidden className="flex flex-1 -space-x-2">
+          {/* 반려동물 프로필 영역. mypa_021 계열 화면을 아직 만들지 않아 자리만 잡아 둔다 */}
+          <div className="flex min-h-14 items-center gap-3 border-t border-border px-4 py-3">
+            <span aria-hidden className="flex flex-1 items-center -space-x-2">
               {Array.from({ length: MOCK_USER.petCount }, (_, index) => (
                 <span key={index} className="size-9 rounded-full border-2 border-card bg-muted" />
               ))}
+              {/* 시안의 아이 추가 자리. 점선 원으로 아직 비어 있음을 보인다 */}
+              <span className="flex size-9 items-center justify-center rounded-full border-2 border-dashed border-border bg-card text-muted-foreground">
+                <IoAdd className="size-4" />
+              </span>
             </span>
             <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-          </Link>
+          </div>
         </section>
 
         {MENU_GROUPS.map((group) => (
           <SettingGroup key={group.title} title={group.title}>
-            {group.items.map((item) => (
-              <ListRowLink key={item.href} {...item} />
-            ))}
+            {group.items.map((item) =>
+              item.href ? (
+                <ListRowLink key={item.title} {...item} href={item.href} />
+              ) : (
+                <ListRowStatic key={item.title} {...item} />
+              ),
+            )}
           </SettingGroup>
         ))}
       </main>

@@ -4,7 +4,7 @@
 import Link from "next/link";
 import { IoAdd, IoBusinessOutline, IoChevronForward, IoHomeOutline } from "react-icons/io5";
 
-import { ListRowLink } from "@/shared/ui/list-row/list-row";
+import { ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 /** API 연동 전까지 화면 확인용 값 */
@@ -39,18 +39,15 @@ export function MyInfoView() {
 
       <main className="flex flex-1 flex-col gap-6 px-4 pb-8">
         <div className="flex justify-center pt-2">
-          <Link
-            href="/mypage/info/photo"
-            aria-label="프로필 사진 변경"
-            className="relative flex size-20 items-center justify-center rounded-full bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
+          {/* 시안에 사진 등록 화면이 아직 없어 자리만 잡는다 */}
+          <div className="relative flex size-20 items-center justify-center rounded-full bg-muted">
             <span
               aria-hidden
               className="absolute right-0 bottom-0 flex size-6 items-center justify-center rounded-full border border-border bg-background"
             >
               <IoAdd className="size-4" />
             </span>
-          </Link>
+          </div>
         </div>
 
         {/* 각 행이 수정 화면으로 가는 입구라 값은 오른쪽에 붙인다 */}
@@ -60,13 +57,11 @@ export function MyInfoView() {
             title="닉네임"
             trailing={<span className="text-sm text-muted-foreground">{MOCK.nickname}</span>}
           />
-          <ListRowLink
-            href="/mypage/info/name"
+          <ListRowStatic
             title="이름"
             trailing={<span className="text-sm text-muted-foreground">{MOCK.name}</span>}
           />
-          <ListRowLink
-            href="/mypage/info/birthday"
+          <ListRowStatic
             title="생년월일"
             trailing={<span className="text-sm text-muted-foreground">{MOCK.birthday}</span>}
           />
@@ -75,8 +70,7 @@ export function MyInfoView() {
             title="휴대폰 번호"
             trailing={<span className="text-sm text-muted-foreground">{MOCK.phone}</span>}
           />
-          <ListRowLink
-            href="/mypage/pets"
+          <ListRowStatic
             title="내 아이들"
             trailing={
               <span aria-hidden className="flex -space-x-2">
@@ -97,7 +91,7 @@ export function MyInfoView() {
           {MOCK.addresses.map((item) => (
             <Link
               key={item.id}
-              href={`/mypage/address/${item.id}`}
+              href="/mypage/address/new"
               className="flex min-h-14 items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span aria-hidden className="mt-0.5 text-muted-foreground [&>svg]:size-5">
