@@ -54,13 +54,14 @@ export function ChipSelect({
 
         return (
           <div key={option.value} className="relative">
-            {/* 라디오 자체는 숨기고 레이블 전체를 누를 수 있게 한다 */}
-            <RadioGroupItem id={itemId} value={option.value} className="sr-only" />
+            {/* 라디오 자체는 숨기고 레이블 전체를 누를 수 있게 한다.
+                라디오가 레이블의 형제라 has-[]로는 포커스를 못 잡는다. peer로 잇는다. */}
+            <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
             <label
               htmlFor={itemId}
               className={cn(
                 "flex min-h-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border px-3 py-2 text-center transition-colors",
-                "has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
                 selected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-muted",

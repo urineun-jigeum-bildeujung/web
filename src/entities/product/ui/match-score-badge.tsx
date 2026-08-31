@@ -49,9 +49,12 @@ export function MatchScoreBadge({
       )}
       {...props}
     >
-      {/* 색만으로 구간을 구분하지 않도록 문구를 함께 읽힌다 */}
+      {/* 색만으로 구간을 구분하지 않도록 구간 문구를 화면에도 함께 보여준다 */}
       <span className="sr-only">{`${subject} ${level.label}. 적합도 ${score}점`}</span>
-      <span aria-hidden>{score}</span>
+      <span aria-hidden className="font-semibold">
+        {score}
+      </span>
+      <span aria-hidden>{level.label}</span>
     </span>
   );
 }

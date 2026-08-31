@@ -39,3 +39,10 @@ test("값이 있으면 클리어 버튼이 보이고 눌리면 콜백이 불린�
   fireEvent.click(screen.getByRole("button", { name: "입력 지우기" }));
   expect(onClear).toHaveBeenCalledOnce();
 });
+
+test("비활성 상태에서는 클리어 버튼을 그리지 않는다", () => {
+  render(<FormField label="이름" value="코코" onChange={() => {}} onClear={() => {}} disabled />);
+
+  // 값을 고칠 수 없는 필드에서 지우기만 되면 안 된다
+  expect(screen.queryByRole("button", { name: "입력 지우기" })).toBeNull();
+});

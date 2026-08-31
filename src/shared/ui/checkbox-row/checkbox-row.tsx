@@ -34,10 +34,11 @@ export function CheckboxRow({
         disabled={disabled}
         onCheckedChange={(next) => onCheckedChange?.(next === true)}
       />
+      {/* 레이블이 남은 폭을 모두 차지해 행 어디를 눌러도 체크된다 */}
       <label
         htmlFor={id}
         className={cn(
-          "cursor-pointer text-sm text-foreground select-none",
+          "flex min-h-11 flex-1 cursor-pointer items-center text-sm text-foreground select-none",
           disabled && "cursor-not-allowed text-muted-foreground",
         )}
       >

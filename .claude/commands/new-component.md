@@ -67,6 +67,12 @@ argument-hint: <layer> <name> [근거 화면 ID]
 
 ## 6. 검증하고 보고한다
 
-`npm run typecheck` → `format:check` → `lint` → `test` 순으로 돌린다. 단일 파일 추가라도 lint는 반드시 돌린다 — `jsx-a11y` 규칙 31개가 여기서 걸린다.
+아래를 순서대로 돌린다. 새 파일과 export를 만드는 작업이라 `build`도 생략하지 않는다.
+
+```bash
+npm run typecheck && npm run format:check && npm run lint && npm run test && npm run build
+```
+
+단일 파일 추가라도 lint는 반드시 돌린다 — `jsx-a11y` 규칙 31개가 여기서 걸린다.
 
 만든 경로와 검증 결과를 보고한다. 컨벤션 체크리스트 8항목 중 해당하지 않는 것이 있으면 이유를 밝힌다.

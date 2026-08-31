@@ -147,7 +147,7 @@
 
 ## 3. 기술 스택 (확정)
 
-버전은 2026-08-28 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
+버전은 2026-08-31 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
 
 **새 라이브러리는 작업을 시작하기 전에 정하십시오.** 이미 설치된 것·shadcn·플랫폼 기능으로 되는지 먼저 보고, 필요하면 최종 배포일과 React 19·Turbopack 호환을 확인합니다. 절차는 [library-convention](./docs/conventions/library-convention.md)을 따르고 `/check-library`가 그대로 실행합니다.
 
@@ -166,6 +166,7 @@
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |
+| 오류 경계 | react-error-boundary | 6.1.3 | 섹션 단위 오류 격리. TanStack Query 리셋과 연결 |
 | 폼 | react-hook-form | 7.85.0 | 다단계 온보딩·구독 설정 폼 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 | react-hook-form과 zod 연결 |
 | 스키마 검증 | zod | 4.4.3 | 폼·서버 응답 유효성 검증 |

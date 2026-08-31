@@ -63,7 +63,7 @@ cp .env.example .env.local
 
 ## 기술 스택
 
-버전은 2026-08-28 기준 실제 설치값입니다.
+버전은 2026-08-31 기준 실제 설치값입니다.
 
 ### 코어
 
@@ -92,6 +92,7 @@ cp .env.example .env.local
 | 서버 상태 | @tanstack/react-query | 5.101.4 |
 | 클라이언트 상태 | zustand | 5.0.15 |
 | URL 상태 | nuqs | 2.10.1 |
+| 오류 경계 | react-error-boundary | 6.1.3 |
 | 폼 | react-hook-form | 7.85.0 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 |
 | 스키마 검증 | zod | 4.4.3 |
@@ -169,6 +170,8 @@ Next.js 16은 이전 버전과 API가 다른 부분이 있습니다. 구현 전 
 | --- | --- |
 | `/verify` | typecheck → format:check → lint → test → build 순서로 검증 |
 | `/new-slice <layer> <name>` | FSD 슬라이스 뼈대 생성 |
+| `/new-component <layer> <name> [근거]` | 공용 컴포넌트 뼈대와 테스트 생성 |
+| `/check-library <작업·패키지>` | 라이브러리가 필요한지 확인하고 후보 조사 |
 | `/start-task <설명>` | 이슈 생성 + 기능 브랜치 분기 |
 | `/changelog` | 브랜치 커밋을 읽어 CHANGELOG 항목 작성 |
 | `/pr` | 이슈 확인 → 검증 → 이슈 업데이트 → CHANGELOG 기록 → README 확인 → PR 생성 |
