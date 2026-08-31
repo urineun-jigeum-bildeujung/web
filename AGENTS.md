@@ -167,6 +167,7 @@
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |
 | 오류 경계 | react-error-boundary | 6.1.3 | 섹션 단위 오류 격리. TanStack Query 리셋과 연결 |
+| 토스트 | sonner | 2.0.8 | shadcn Sonner가 함께 설치. `Toaster`는 `shared/providers` |
 | 폼 | react-hook-form | 7.85.0 | 다단계 온보딩·구독 설정 폼 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 | react-hook-form과 zod 연결 |
 | 스키마 검증 | zod | 4.4.3 | 폼·서버 응답 유효성 검증 |
