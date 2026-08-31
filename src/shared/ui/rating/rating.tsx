@@ -21,7 +21,7 @@ export function Rating({ value, max = 5, size = "sm", showValue, className }: Ra
   return (
     <span className={cn("inline-flex items-center gap-0.5", className)}>
       {/* 별 모양만으로는 값을 읽을 수 없어 스크린 리더용 문장을 따로 둔다 */}
-      <span className="sr-only">{`5점 만점에 ${value}점`}</span>
+      <span className="sr-only">{`${max}점 만점에 ${value}점`}</span>
       {Array.from({ length: max }, (_, index) => {
         const Icon = index < filled ? IoStar : IoStarOutline;
         return (

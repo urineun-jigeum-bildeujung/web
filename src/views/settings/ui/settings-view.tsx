@@ -11,7 +11,7 @@ import {
   IoPersonRemoveOutline,
 } from "react-icons/io5";
 
-import { ListRowButton } from "@/shared/ui/list-row/list-row";
+import { ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Switch } from "@/shared/ui/switch";
 
@@ -35,12 +35,12 @@ export function SettingsView() {
             <span className="flex-1 text-sm font-medium text-foreground">알림 설정</span>
             <Switch id={pushId} checked={pushEnabled} onCheckedChange={setPushEnabled} />
           </label>
-          <ListRowButton title="테마 설정" icon={<IoColorPaletteOutline />} />
+          <ListRowStatic title="테마 설정" icon={<IoColorPaletteOutline />} />
         </section>
 
         <section className="[&>*+*]:border-t [&>*+*]:border-border">
-          <ListRowButton title="로그아웃" icon={<IoLogOutOutline />} />
-          <ListRowButton title="회원탈퇴" icon={<IoPersonRemoveOutline />} />
+          <ListRowStatic title="로그아웃" icon={<IoLogOutOutline />} />
+          <ListRowStatic title="회원탈퇴" icon={<IoPersonRemoveOutline />} />
         </section>
       </main>
     </div>

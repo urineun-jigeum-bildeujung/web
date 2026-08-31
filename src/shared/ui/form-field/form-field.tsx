@@ -49,7 +49,7 @@ export function FormField({
         {leading && (
           <span
             aria-hidden
-            className="absolute inset-y-0 left-0 flex w-10 items-center justify-center text-muted-foreground"
+            className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-muted-foreground"
           >
             {leading}
           </span>

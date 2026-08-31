@@ -126,7 +126,6 @@ export function MypageView() {
                 <IoAdd className="size-4" />
               </span>
             </span>
-            <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           </div>
         </section>
 
