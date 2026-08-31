@@ -1,5 +1,5 @@
 // 화면 위쪽에서 정책이나 주의사항을 불릿으로 알린다.
-// 와이어프레임 기준(mypa_021)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(mypa_031)이라 디자인 확정 시 바뀔 수 있다.
 
 import type { ComponentProps, ReactNode } from "react";
 

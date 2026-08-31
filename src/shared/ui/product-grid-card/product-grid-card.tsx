@@ -1,5 +1,5 @@
 // 2열 격자에 놓는 상품 카드. 고르는 모드에서는 우상단에 선택 표시가 붙는다.
-// 와이어프레임 기준(mypa_021, mypa_021_수정하기)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(mypa_031, mypa_031_수정하기)이라 디자인 확정 시 바뀔 수 있다.
 
 import Image from "next/image";
 import { IoCheckmarkCircle } from "react-icons/io5";

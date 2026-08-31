@@ -1,5 +1,5 @@
 // 주문 상태를 뱃지로 보여준다.
-// 와이어프레임 기준(mypa_051)이며 상태 값은 IA 주문/배송 내역을 따른다.
+// 와이어프레임 기준(mypa_061)이며 상태 값은 IA 주문/배송 내역을 따른다.
 
 import type { ComponentProps } from "react";
 
