@@ -1,5 +1,5 @@
 // 고객지원. 문의·공지로 가는 입구와 자주 묻는 질문을 모은다.
-// 와이어프레임 기준(mypa_061)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(mypa_071)이라 디자인 확정 시 바뀔 수 있다.
 
 import { IoChatbubbleOutline, IoMegaphoneOutline } from "react-icons/io5";
 

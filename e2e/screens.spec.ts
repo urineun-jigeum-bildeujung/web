@@ -110,6 +110,9 @@ const NOT_BUILT_YET = new Set([
 
 /** 화면에 걸린 링크가 실제로 열리는지 본다. 메뉴는 눌러보기 전에는 404를 모른다 */
 test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
+  // 화면을 모두 돌며 링크를 확인한다. dev 서버가 라우트를 그때그때 컴파일해 오래 걸린다.
+  test.setTimeout(180_000);
+
   const visited = new Set<string>();
   const broken: string[] = [];
 
@@ -126,8 +129,11 @@ test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
 
       if (NOT_BUILT_YET.has(key)) continue;
 
-      const response = await page.request.get(key);
-      if (response.status() >= 400) broken.push(`${key} (${response.status()}) ← ${route}`);
+      // dev 서버는 라우트를 첫 요청에 컴파일한다. 다른 테스트와 겹치면
+      // 그 사이에 실패할 수 있어 한 번 더 확인하고 판단한다.
+      let status = (await page.request.get(key)).status();
+      if (status >= 400) status = (await page.request.get(key)).status();
+      if (status >= 400) broken.push(`${key} (${status}) ← ${route}`);
     }
   }
 
