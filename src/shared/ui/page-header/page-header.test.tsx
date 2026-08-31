@@ -59,3 +59,14 @@ test("오른쪽 슬롯에 버튼이 여럿이어도 제목 자리가 흔들리�
   const header = container.querySelector("header");
   expect(header?.className).toContain("grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)]");
 });
+
+test("제목이 없어도 오른쪽 슬롯이 오른쪽 칸에 남는다", () => {
+  const { container } = render(
+    <PageHeader leading="none" right={<button type="button">장바구니</button>} />,
+  );
+
+  // 가운데 칸 자리를 비워 두지 않으면 오른쪽 슬롯이 가운데로 올라온다
+  const header = container.querySelector("header");
+  expect(header?.children).toHaveLength(3);
+  expect(header?.children[1].className).not.toContain("sr-only");
+});
