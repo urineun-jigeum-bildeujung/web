@@ -4,10 +4,10 @@ import { expect, test, vi } from "vitest";
 
 import { BreedStep } from "./breed-step";
 
-test("고양이 품종을 고른 뒤 다시 열어도 고양이 탭이 남는다", () => {
+test("고양이 품종을 고른 값으로 다시 열면 그 품종이 눌린 채로 나온다", () => {
   render(<BreedStep value="랙돌" onConfirm={vi.fn()} onCancel={vi.fn()} />);
 
-  // 종을 강아지로 고정하면 이 버튼이 눌리지 않은 채로 열린다
+  // 종을 강아지로 고정하던 때는 고양이 품종을 찾지 못해 아무것도 눌리지 않았다.
   const picked = screen.getByRole("button", { name: "랙돌" });
   expect(picked.getAttribute("aria-pressed")).toBe("true");
 });
