@@ -18,3 +18,11 @@ test("보조 정보를 함께 보여준다", () => {
   render(<ProductSummary name="사료" imageUrl="/p.png" meta="31,200원 · 옵션 2kg" />);
   expect(screen.getByText("31,200원 · 옵션 2kg")).toBeDefined();
 });
+
+test("이미지가 없으면 자리만 잡고 img를 그리지 않는다", () => {
+  // next/image에 빈 src를 넘기면 런타임 에러가 난다
+  render(<ProductSummary name="사료" />);
+
+  expect(screen.getByText("사료")).toBeDefined();
+  expect(screen.queryByRole("presentation")).toBeNull();
+});

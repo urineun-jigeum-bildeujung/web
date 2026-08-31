@@ -4,6 +4,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { Toaster } from "@/shared/ui/sonner";
+import { Tooltip } from "radix-ui";
 import { useState } from "react";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -26,7 +28,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     // App Router 전용 어댑터라 경로가 nuqs/adapters/next/app이다.
     <NuqsAdapter>
       <QueryClientProvider client={queryClient}>
-        {children}
+        {/* 툴팁은 앱 전체가 한 Provider를 공유해야 열림 상태가 겹치지 않는다 */}
+        <Tooltip.Provider delayDuration={200}>{children}</Tooltip.Provider>
+        <Toaster position="bottom-center" />
         {/* 개발 빌드에만 포함된다. NODE_ENV가 production이면 자체적으로 아무것도 렌더하지 않는다. */}
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>

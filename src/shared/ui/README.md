@@ -26,6 +26,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `alert-dialog.tsx` | shadcn AlertDialog. 되돌릴 수 없는 행동 확인 |
 | `slider.tsx` | shadcn Slider |
 | `select.tsx` | shadcn Select |
+| `tabs.tsx` `accordion.tsx` `drawer.tsx` `tooltip.tsx` `switch.tsx` `sonner.tsx` | shadcn. 탭·아코디언·바텀시트·툴팁·스위치·토스트 |
 
 - `npx shadcn add <컴포넌트>`가 `components.json`의 alias에 따라 여기에 추가한다.
 - **임의로 수정하지 않는다.** 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
@@ -52,6 +53,9 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `product-summary/` | 이미지와 상품명만 쓰는 짧은 표현 |
 | `single-input-screen/` | 한 가지만 묻고 하단 완료로 끝내는 화면 골격 |
 | `address-result-list/` | 주소 검색 결과. 우편번호·도로명·지번·건물명 |
+| `info-notice/` | 정책·주의사항을 불릿으로 알리는 안내 블록 |
+| `product-grid-card/` | 2열 격자용 상품 카드. 고르는 모드 지원 |
+| `rating/` | 별점 표시. 값은 스크린 리더용 문장으로 함께 읽힌다 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 

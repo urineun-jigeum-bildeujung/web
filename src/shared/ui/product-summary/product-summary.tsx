@@ -8,7 +8,8 @@ import { cn } from "@/shared/lib/utils";
 
 type ProductSummaryProps = {
   name: string;
-  imageUrl: string;
+  /** 없으면 자리만 잡는다. 목 데이터 단계와 이미지 실패를 함께 다룬다 */
+  imageUrl?: string;
   /** 상품명 아래 붙는 것. 가격이나 옵션 */
   meta?: ReactNode;
   /** 이미지 한 변 길이. 4px 스케일 기준 */
@@ -27,14 +28,22 @@ export function ProductSummary({
 
   return (
     <div className={cn("flex items-center gap-3", className)} {...props}>
-      <Image
-        src={imageUrl}
-        alt=""
-        width={px}
-        height={px}
-        // 상품명이 옆에 글자로 있으므로 이미지는 장식으로 둔다
-        className="shrink-0 rounded-lg object-cover"
-      />
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt=""
+          width={px}
+          height={px}
+          // 상품명이 옆에 글자로 있으므로 이미지는 장식으로 둔다
+          className="shrink-0 rounded-lg object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden
+          style={{ width: px, height: px }}
+          className="shrink-0 rounded-lg bg-muted"
+        />
+      )}
       <div className="flex min-w-0 flex-col gap-0.5">
         <p className="truncate text-sm text-foreground">{name}</p>
         {meta && <div className="text-xs text-muted-foreground">{meta}</div>}
