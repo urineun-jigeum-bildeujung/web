@@ -70,7 +70,7 @@ export function DevGalleryView() {
   const [noAllergy, setNoAllergy] = useState(false);
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-105 flex-col border-x border-border">
+    <div className="flex min-h-dvh flex-col border-x border-border">
       <PageHeader
         title="공용 컴포넌트"
         leading="none"
