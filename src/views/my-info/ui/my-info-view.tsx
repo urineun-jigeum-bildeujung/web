@@ -91,7 +91,8 @@ export function MyInfoView() {
           {MOCK.addresses.map((item) => (
             <Link
               key={item.id}
-              href="/mypage/address/new"
+              // 같은 화면이 새 배송지와 수정 두 가지를 맡는다. 어느 곳인지는 쿼리로 넘긴다.
+              href={`/mypage/address/new?place=${item.id}`}
               className="flex min-h-14 items-start gap-3 rounded-lg px-2 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span aria-hidden className="mt-0.5 text-muted-foreground [&>svg]:size-5">

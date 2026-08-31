@@ -23,8 +23,10 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
+type Order = { id: string; orderedAt: string; status: OrderStatus; amount: number };
+
 /** API 연동 전까지 화면 확인용 값 */
-const MOCK_ORDERS: { id: string; orderedAt: string; status: OrderStatus; amount: number }[] = [
+const MOCK_ORDERS: Order[] = [
   { id: "1", orderedAt: "26.08.28", status: "preparing", amount: 12345 },
   { id: "2", orderedAt: "26.08.28", status: "shipping", amount: 12345 },
   { id: "3", orderedAt: "26.08.28", status: "delivered", amount: 12345 },
@@ -32,18 +34,23 @@ const MOCK_ORDERS: { id: string; orderedAt: string; status: OrderStatus; amount:
 ];
 
 export function OrdersView() {
+  // 확정·취소가 목록에 반영돼야 같은 버튼을 다시 누를 수 없다. 서버 연동 전까지 여기서 든다.
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+
+  const setStatus = (id: string, status: OrderStatus) =>
+    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, status } : order)));
 
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="주문·배송 확인" />
 
       <main className="flex flex-1 flex-col gap-6 px-4 pb-8">
-        {MOCK_ORDERS.length === 0 ? (
+        {orders.length === 0 ? (
           <EmptyState title="주문 내역이 없어요" description="마음에 드는 상품을 찾아보세요." />
         ) : (
-          MOCK_ORDERS.map((order) => (
+          orders.map((order) => (
             <article key={order.id} className="flex flex-col gap-2">
               <p className="text-xs text-muted-foreground">주문 일자 {order.orderedAt}</p>
 
@@ -59,8 +66,10 @@ export function OrdersView() {
               </div>
 
               <div className="flex gap-2">
+                {/* 배송 조회와 주문 상세(mypa_161)는 아직 화면이 없다.
+                    눌러도 아무 일이 없으면 고장으로 읽히므로 잠가 둔다. */}
                 {order.status === "shipping" && (
-                  <Button variant="outline" className="min-h-11 flex-1">
+                  <Button variant="outline" className="min-h-11 flex-1" disabled>
                     배송 위치 보기
                   </Button>
                 )}
@@ -83,7 +92,7 @@ export function OrdersView() {
                     구매 확정하기
                   </Button>
                 )}
-                <Button variant="outline" className="min-h-11 flex-1">
+                <Button variant="outline" className="min-h-11 flex-1" disabled>
                   자세히 보기
                 </Button>
               </div>
@@ -112,6 +121,7 @@ export function OrdersView() {
               <Button
                 className="min-h-11 flex-1"
                 onClick={() => {
+                  if (confirmingId) setStatus(confirmingId, "confirmed");
                   setConfirmingId(null);
                   toast.success("구매를 확정했어요");
                 }}
@@ -135,7 +145,10 @@ export function OrdersView() {
             <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
             <AlertDialogAction
               className="min-h-11"
-              onClick={() => toast.success("주문을 취소했어요")}
+              onClick={() => {
+                setOrders((prev) => prev.filter((order) => order.id !== cancelingId));
+                toast.success("주문을 취소했어요");
+              }}
             >
               주문 취소하기
             </AlertDialogAction>

@@ -19,7 +19,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 const NOTICE_ITEMS = [
   "본인 명의의 신용카드 및 체크카드만 등록할 수 있어요.",
-  "카드 정보는 안전하게 암호화되어 보관되니 안심하세요.",
+  "카드 정보는 결제 대행사가 보관하며 앱에는 남지 않아요.",
   "간편결제 카드는 최대 5개까지 등록할 수 있어요.",
 ];
 
@@ -67,7 +67,10 @@ export function PaymentMethodsView() {
       </main>
 
       <BottomActionBar>
-        <Button className="min-h-11">카드 등록하기</Button>
+        {/* 카드 등록(mypa_151)은 결제 대행사 위젯으로 갈지 확인 중이라 아직 잠가 둔다 */}
+        <Button className="min-h-11" disabled>
+          카드 등록하기
+        </Button>
       </BottomActionBar>
 
       <Drawer open={managingId !== null} onOpenChange={(open) => !open && setManagingId(null)}>
@@ -79,8 +82,9 @@ export function PaymentMethodsView() {
             <p className="px-2 pb-2 text-sm text-muted-foreground">
               {managing?.name} {managing?.masked}
             </p>
-            <ListRowButton title="별명 바꾸기" hideChevron />
-            <ListRowButton title="카드 지우기" hideChevron />
+            {/* 두 동작 모두 서버가 필요해 아직 잇지 않았다 */}
+            <ListRowButton title="별명 바꾸기" hideChevron disabled />
+            <ListRowButton title="카드 지우기" hideChevron disabled />
           </div>
         </DrawerContent>
       </Drawer>

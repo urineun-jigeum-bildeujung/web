@@ -26,7 +26,12 @@ const ROW_CLASS =
 function RowInner({ title, description, icon, trailing, hideChevron }: ListRowBaseProps) {
   return (
     <>
-      {icon && <span className="shrink-0 text-muted-foreground [&>svg]:size-5">{icon}</span>}
+      {/* 제목이 옆에 글자로 있으므로 아이콘은 장식으로 둔다 */}
+      {icon && (
+        <span aria-hidden className="shrink-0 text-muted-foreground [&>svg]:size-5">
+          {icon}
+        </span>
+      )}
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate text-sm font-medium text-foreground">{title}</span>
         {description && (
@@ -78,16 +83,16 @@ export function ListRowStatic({
   description,
   icon,
   trailing,
-  hideChevron,
-}: ListRowBaseProps) {
+}: Omit<ListRowBaseProps, "hideChevron">) {
   return (
     <div className={cn(ROW_CLASS, "hover:bg-transparent", className)}>
+      {/* 갈 곳이 없으므로 화살표를 달지 않는다. 달면 눌리는 줄로 보인다 */}
       <RowInner
         title={title}
         description={description}
         icon={icon}
         trailing={trailing}
-        hideChevron={hideChevron}
+        hideChevron
       />
     </div>
   );
