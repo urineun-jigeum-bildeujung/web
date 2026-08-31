@@ -18,8 +18,9 @@ type HealthStepProps = {
 
 export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProps) {
   // 적었거나 "해당 없음"을 골랐거나, 두 항목 모두 답이 있어야 넘어간다
-  const concernAnswered = Boolean(draft.concern) || draft.noConcern;
-  const allergyAnswered = Boolean(draft.allergy) || draft.noAllergy;
+  // 공백만 적은 것은 답한 것으로 세지 않는다
+  const concernAnswered = draft.concern.trim() !== "" || draft.noConcern;
+  const allergyAnswered = draft.allergy.trim() !== "" || draft.noAllergy;
 
   return (
     <>
