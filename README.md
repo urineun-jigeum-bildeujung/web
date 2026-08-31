@@ -93,6 +93,7 @@ cp .env.example .env.local
 | 클라이언트 상태 | zustand | 5.0.15 |
 | URL 상태 | nuqs | 2.10.1 |
 | 오류 경계 | react-error-boundary | 6.1.3 |
+| 토스트 | sonner | 2.0.8 |
 | 폼 | react-hook-form | 7.85.0 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 |
 | 스키마 검증 | zod | 4.4.3 |
