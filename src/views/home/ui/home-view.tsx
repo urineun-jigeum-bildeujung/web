@@ -50,6 +50,14 @@ const SCREEN_GROUPS = [
     ],
   },
   {
+    title: "결제",
+    items: [
+      { href: "/payment", label: "결제하기", hint: "paym_001" },
+      { href: "/payment/address", label: "배송지 설정", hint: "paym_011" },
+      { href: "/payment/done", label: "주문 완료", hint: "paym_002" },
+    ],
+  },
+  {
     title: "개발용",
     items: [{ href: "/dev", label: "공용 컴포넌트 갤러리", hint: "프로덕션에서는 열리지 않음" }],
   },
