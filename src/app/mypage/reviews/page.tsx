@@ -1,4 +1,4 @@
-// 나의 상품 후기 라우트. 경로는 임시이며 라우터 구조 확정 시 교체한다.
+// 나의 상품 후기 라우트.
 import { Suspense } from "react";
 
 import { MyReviewsView } from "@/views/my-reviews";

@@ -6,14 +6,15 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
 import { SupportView } from "./support-view";
 
-test("1:1 문의와 공지사항은 자리만 있고 아직 누를 수 없다", () => {
+test("1:1 문의와 공지사항이 각 화면으로 이어진다", () => {
   render(<SupportView />);
 
-  // 시안(mypa_071)에 행은 있으나 두 화면이 아직 그려지지 않았다
-  expect(screen.getByText("1:1 문의")).toBeDefined();
-  expect(screen.getByText("공지사항")).toBeDefined();
-  expect(screen.queryByRole("link", { name: /1:1 문의/ })).toBeNull();
-  expect(screen.queryByRole("link", { name: /공지사항/ })).toBeNull();
+  expect(screen.getByRole("link", { name: /1:1 문의/ }).getAttribute("href")).toBe(
+    "/mypage/support/inquiries",
+  );
+  expect(screen.getByRole("link", { name: /공지사항/ }).getAttribute("href")).toBe(
+    "/mypage/support/notices",
+  );
 });
 
 test("자주 묻는 질문은 접혀 있다가 눌러야 펼쳐진다", () => {

@@ -9,7 +9,7 @@
 
 ## 라우트
 
-`/mypage/reviews` — **경로는 임시다.** 페이지·라우터 구조는 다른 팀원이 작업 중이며 그 결과로 교체한다.
+`/mypage/reviews` — `src/app/mypage/reviews/page.tsx`. 작성 가능·작성 완료 탭은 `?tab=writable|written`으로 구분한다.
 
 ## 아직 없는 것
 

@@ -56,18 +56,19 @@ views/
 | --- | --- | --- |
 | `home` | `/` | 만들어 둔 화면으로 들어가는 임시 입구 (디자인 확정 후 교체) |
 | `dev-gallery` | `/dev` | 공용 컴포넌트 확인용 개발 화면. 프로덕션에서는 열리지 않는다 |
-| `onboarding` | `/onboarding` | 반려동물 프로필 등록 6단계 (경로는 임시) |
-| `mypage` | `/mypage` | 마이페이지 홈 (경로는 임시) |
+| `onboarding` | `/onboarding` | 반려동물 프로필 등록 6단계. 최초 서비스 소개와의 관계는 확인 필요 |
+| `mypage` | `/mypage` | 마이페이지 홈 |
 | `my-info` | `/mypage/info` | 내 정보와 배송지 목록 |
 | `edit-nickname` | `/mypage/info/nickname` | 닉네임 변경 |
 | `verify-phone` | `/mypage/info/phone` | 휴대폰 번호 인증 |
 | `edit-address` | `/mypage/address/new` | 배송지 추가·수정 |
 | `search-address` | `/mypage/address/search` | 주소 검색 |
 | `restock-alarm` | `/mypage/restock` | 재입고 알림 목록·선택 모드 |
+| `recently-viewed` | `/mypage/recently-viewed` | 최근 본 상품 목록 (자리 표시) |
 | `my-reviews` | `/mypage/reviews` | 나의 상품 후기 (탭) |
 | `payment-methods` | `/mypage/payment` | 간편결제 카드 관리 |
 | `orders` | `/mypage/orders` | 주문·배송 확인 |
-| `order-detail` | `/mypage/orders/[id]` | 주문 상세 |
+| `order-detail` | `/mypage/orders/[orderId]` | 주문 상세 |
 | `support` | `/mypage/support` | 고객지원 · FAQ |
 | `settings` | `/mypage/settings` | 설정 |
 | `pet-profile` | `/mypage/pets` | 반려동물 정보와 제품 관리 (탭) |
@@ -77,3 +78,21 @@ views/
 | `select-compare-product` | `/compare/select` | 비교할 상품 고르기 |
 | `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |
 | `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |
+| `mypage-notifications` | `/mypage/notifications` | 알림 목록 (자리 표시) |
+| `addresses` | `/mypage/address` | 배송지 관리 목록 (자리 표시) |
+| `order-claim` | `/mypage/orders/[orderId]/claim` | 취소·반품·교환 접수 (자리 표시) |
+| `review-write` | `/mypage/reviews/write` | 리뷰 작성 (자리 표시) |
+| `review-detail` | `/mypage/reviews/[reviewId]` | 리뷰 상세 (자리 표시) |
+| `support-inquiries` | `/mypage/support/inquiries` | 1:1 문의 내역 (자리 표시) |
+| `support-notices` | `/mypage/support/notices` | 공지사항 (자리 표시) |
+| `service` | `/mypage/service` | 서비스 안내 (자리 표시) |
+| `service-terms` | `/mypage/service/terms` | 서비스 이용약관 (자리 표시) |
+| `service-privacy` | `/mypage/service/privacy` | 개인정보 처리방침 (자리 표시) |
+| `deals` | `/deals` | 타임딜 목록 (자리 표시) |
+| `search` | `/search` | 검색 결과 (자리 표시) |
+| `recommendations` | `/recommendations` | 맞춤 추천 목록 (자리 표시) |
+| `login` | `/login` | 로그인 진입 (자리 표시) |
+| `signup` | `/signup` | 회원가입 (자리 표시) |
+| `likes` | `/likes` | 좋아요(찜) 목록 (자리 표시) |
+| `product-detail` | `/products/[productId]` | 상품 상세 (자리 표시) |
+| `product-reviews` | `/products/[productId]/reviews` | 상품 리뷰 목록 (자리 표시) |

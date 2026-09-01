@@ -3,6 +3,7 @@
 
 "use client";
 
+import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
 import { Button } from "@/shared/ui/button";
@@ -59,8 +60,8 @@ export function MyReviewsView() {
                   <p className="text-right text-xs text-muted-foreground">
                     후기 작성 {item.daysLeft}일 남음
                   </p>
-                  <Button variant="outline" className="min-h-11 w-full">
-                    후기 남기기
+                  <Button asChild variant="outline" className="min-h-11 w-full">
+                    <Link href={`/mypage/reviews/write?orderItemId=${item.id}`}>후기 남기기</Link>
                   </Button>
                 </article>
               ))
@@ -75,7 +76,11 @@ export function MyReviewsView() {
           <TabsContent value="written" className="flex flex-col gap-5 pt-4">
             {MOCK_WRITTEN.length > 0 ? (
               MOCK_WRITTEN.map((item) => (
-                <article key={item.id} className="flex flex-col gap-2">
+                <Link
+                  key={item.id}
+                  href={`/mypage/reviews/${item.id}`}
+                  className="flex flex-col gap-2 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
                   <p className="text-xs text-muted-foreground">리뷰 작성 {item.writtenAt}</p>
                   <div className="flex gap-3">
                     <span aria-hidden className="size-16 shrink-0 rounded-lg bg-muted" />
@@ -87,7 +92,7 @@ export function MyReviewsView() {
                       <p className="line-clamp-2 text-xs text-muted-foreground">{item.content}</p>
                     </div>
                   </div>
-                </article>
+                </Link>
               ))
             ) : (
               <EmptyState title="작성한 후기가 없어요" />
