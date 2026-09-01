@@ -67,9 +67,13 @@ views/
 | `my-reviews` | `/mypage/reviews` | 나의 상품 후기 (탭) |
 | `payment-methods` | `/mypage/payment` | 간편결제 카드 관리 |
 | `orders` | `/mypage/orders` | 주문·배송 확인 |
+| `order-detail` | `/mypage/orders/[id]` | 주문 상세 |
 | `support` | `/mypage/support` | 고객지원 · FAQ |
 | `settings` | `/mypage/settings` | 설정 |
 | `pet-profile` | `/mypage/pets` | 반려동물 정보와 제품 관리 (탭) |
 | `edit-pet` | `/mypage/pets/{basic,body,health}` | 아이 정보 항목별 수정 |
 | `add-pet` | `/mypage/pets/new` | 새 아이 등록 도입 |
+| `product-compare` | `/compare` | 상품 비교 |
+| `select-compare-product` | `/compare/select` | 비교할 상품 고르기 |
+| `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |
 | `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |

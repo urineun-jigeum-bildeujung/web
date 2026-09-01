@@ -50,6 +50,11 @@ const SCREEN_GROUPS = [
     ],
   },
   {
+    title: "장바구니",
+    // 옵션 변경과 삭제 확인은 같은 화면의 상태라 라우트를 나누지 않았다
+    items: [{ href: "/cart", label: "장바구니", hint: "cart_001" }],
+  },
+  {
     title: "결제",
     items: [
       { href: "/payment", label: "결제하기", hint: "paym_001" },

@@ -49,6 +49,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. 이동용(Link)과 실행용(Button) |
 | `setting-group/` | 목록 줄을 제목 아래 카드로 묶는다 |
 | `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
+| `detail-card/` | 제목 아래 항목-값 줄을 묶는 카드. 주문 상세·결제에서 쓴다 |
 | `price/` | 정가·할인가·할인율·단가 표기 |
 | `product-summary/` | 이미지와 상품명만 쓰는 짧은 표현 |
 | `single-input-screen/` | 한 가지만 묻고 하단 완료로 끝내는 화면 골격 |
@@ -56,6 +57,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `info-notice/` | 정책·주의사항을 불릿으로 알리는 안내 블록 |
 | `product-grid-card/` | 2열 격자용 상품 카드. 고르는 모드 지원 |
 | `rating/` | 별점 표시. 값은 스크린 리더용 문장으로 함께 읽힌다 |
+| `quantity-stepper/` | 수량 빼기·값·더하기. 값이 바뀌면 스크린 리더가 알린다 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 

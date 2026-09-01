@@ -25,6 +25,7 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { ListRowButton, ListRowLink } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
+import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
@@ -68,6 +69,7 @@ export function DevGalleryView() {
   const [gender, setGender] = useState<string>();
   const [size, setSize] = useState<string>("small");
   const [noAllergy, setNoAllergy] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   return (
     <div className="flex min-h-dvh flex-col border-x border-border">
@@ -135,6 +137,10 @@ export function DevGalleryView() {
         <Section title="Price">
           <Price amount={31200} originalAmount={38000} unitLabel="하루 급여" unitAmount={480} />
           <Price amount={10800} size="sm" />
+        </Section>
+
+        <Section title="QuantityStepper">
+          <QuantityStepper label="사료 수량" value={quantity} onChange={setQuantity} />
         </Section>
 
         <Section title="MatchScoreBadge">

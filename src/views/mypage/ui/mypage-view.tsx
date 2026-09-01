@@ -88,10 +88,14 @@ export function MypageView() {
         leading="none"
         right={
           <>
-            {/* 장바구니·알림 화면이 아직 없어 아이콘만 둔다 */}
-            <span aria-hidden className="flex size-11 items-center justify-center">
-              <IoCartOutline className="size-6" />
-            </span>
+            <Link
+              href="/cart"
+              aria-label="장바구니"
+              className="flex size-11 items-center justify-center"
+            >
+              <IoCartOutline aria-hidden className="size-6" />
+            </Link>
+            {/* 알림 화면은 아직 없어 아이콘만 둔다 */}
             <span aria-hidden className="flex size-11 items-center justify-center">
               <IoNotificationsOutline className="size-6" />
             </span>
