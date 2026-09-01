@@ -21,6 +21,7 @@ const ROUTES = [
   "/mypage/reviews",
   "/mypage/payment",
   "/mypage/orders",
+  "/mypage/orders/1",
   "/mypage/support",
   "/mypage/settings",
   "/compare",

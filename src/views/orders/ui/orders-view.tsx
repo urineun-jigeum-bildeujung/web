@@ -3,6 +3,7 @@
 
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -66,8 +67,7 @@ export function OrdersView() {
               </div>
 
               <div className="flex gap-2">
-                {/* 배송 조회와 주문 상세(mypa_161)는 아직 화면이 없다.
-                    눌러도 아무 일이 없으면 고장으로 읽히므로 잠가 둔다. */}
+                {/* 배송 조회는 아직 화면이 없다. 눌러도 아무 일이 없으면 고장으로 읽히므로 잠가 둔다. */}
                 {order.status === "shipping" && (
                   <Button variant="outline" className="min-h-11 flex-1" disabled>
                     배송 위치 보기
@@ -92,8 +92,8 @@ export function OrdersView() {
                     구매 확정하기
                   </Button>
                 )}
-                <Button variant="outline" className="min-h-11 flex-1" disabled>
-                  자세히 보기
+                <Button variant="outline" className="min-h-11 flex-1" asChild>
+                  <Link href={`/mypage/orders/${order.id}`}>자세히 보기</Link>
                 </Button>
               </div>
             </article>

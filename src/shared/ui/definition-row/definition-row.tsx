@@ -12,12 +12,15 @@ type DefinitionRowProps = {
   description?: ReactNode;
   /** 값이 없을 때 대신 보여줄 문구 */
   emptyText?: string;
+  /** 값을 오른쪽 끝에 붙인다. 금액처럼 자릿수를 견주는 값에 쓴다 */
+  alignEnd?: boolean;
 } & ComponentProps<"div">;
 
 export function DefinitionRow({
   term,
   description,
   emptyText = "등록 전",
+  alignEnd,
   className,
   ...props
 }: DefinitionRowProps) {
@@ -29,6 +32,7 @@ export function DefinitionRow({
       <dd
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
+          alignEnd && "text-right",
           isEmpty ? "text-muted-foreground" : "text-foreground",
         )}
       >
