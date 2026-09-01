@@ -1,10 +1,19 @@
 // 백엔드 REST API 공통 fetch 래퍼. base URL과 헤더 조립을 한 곳으로 모은다.
 
-// 백엔드 공통 에러 규격 확정 전의 최소 형태. 규격이 정해지면 응답 본문 파싱을 여기에 붙인다.
+// 실패 응답 규격: Spring 표준 ProblemDetail(RFC 9457). timestamp·traceId는 응답에 포함되지 않는다.
+export interface ProblemDetail {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    readonly problem?: ProblemDetail,
   ) {
     super(message);
     this.name = "ApiError";
@@ -26,6 +35,15 @@ function buildHeaders(headers: HeadersInit | undefined, hasBody: boolean): Heade
   return built;
 }
 
+// 게이트웨이 오류 등 ProblemDetail이 아닌 본문이 올 수 있어 파싱 실패는 undefined로 삼킨다.
+async function parseProblemDetail(response: Response): Promise<ProblemDetail | undefined> {
+  try {
+    return (await response.json()) as ProblemDetail;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function apiRequest<TResponse>(
   path: string,
   options: ApiRequestOptions = {},
@@ -40,7 +58,12 @@ export async function apiRequest<TResponse>(
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, `API 요청 실패 (${response.status} ${path})`);
+    const problem = await parseProblemDetail(response);
+    throw new ApiError(
+      response.status,
+      problem?.detail ?? problem?.title ?? `API 요청 실패 (${response.status} ${path})`,
+      problem,
+    );
   }
 
   if (response.status === 204) {

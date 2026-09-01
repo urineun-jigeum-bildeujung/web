@@ -30,13 +30,33 @@ describe("apiRequest", () => {
     expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
   });
 
-  it("실패 응답이면 상태 코드를 담은 ApiError를 던진다", async () => {
-    stubFetch(new Response(null, { status: 404 }));
+  it("실패 응답의 ProblemDetail을 파싱해 ApiError에 담는다", async () => {
+    const problem = {
+      type: "about:blank",
+      title: "Not Found",
+      status: 404,
+      detail: "상품을 찾을 수 없습니다",
+      instance: "/api/v1/products/999",
+    };
+    stubFetch(Response.json(problem, { status: 404 }));
 
     const request = apiRequest("/products/999");
 
     await expect(request).rejects.toBeInstanceOf(ApiError);
-    await expect(request).rejects.toMatchObject({ status: 404 });
+    await expect(request).rejects.toMatchObject({
+      status: 404,
+      message: "상품을 찾을 수 없습니다",
+      problem,
+    });
+  });
+
+  it("본문이 ProblemDetail이 아니어도 상태 코드를 담은 ApiError를 던진다", async () => {
+    stubFetch(new Response("Bad Gateway", { status: 502 }));
+
+    const request = apiRequest("/products/999");
+
+    await expect(request).rejects.toBeInstanceOf(ApiError);
+    await expect(request).rejects.toMatchObject({ status: 502, problem: undefined });
   });
 
   it("204 응답은 본문 파싱 없이 끝낸다", async () => {
