@@ -45,12 +45,17 @@ test("주문을 취소하면 그 주문이 목록에서 사라진다", () => {
   expect(screen.getAllByRole("article").length).toBe(before - 1);
 });
 
+test("자세히 보기는 그 주문의 상세로 간다", () => {
+  render(<OrdersView />);
+
+  const link = screen.getAllByRole("link", { name: "자세히 보기" })[0];
+  expect(link.getAttribute("href")).toBe("/mypage/orders/1");
+});
+
 test("갈 화면이 없는 버튼은 눌리지 않는다", () => {
   render(<OrdersView />);
 
-  // 주문 상세(mypa_161)와 배송 조회는 아직 만들지 않았다
-  for (const name of ["배송 위치 보기", "자세히 보기"]) {
-    const button = screen.getAllByRole("button", { name })[0] as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-  }
+  // 배송 조회는 시안에 없어 아직 만들지 않았다
+  const button = screen.getAllByRole("button", { name: "배송 위치 보기" })[0] as HTMLButtonElement;
+  expect(button.disabled).toBe(true);
 });
