@@ -1,63 +1,63 @@
-// 주문 상세. 주문정보·결제상세·배송지 정보를 카드로 나눠 보여준다.
-// 와이어프레임 기준(mypa_161)이라 디자인 확정 시 바뀔 수 있다.
+// 주문 완료. 언제 도착하는지 먼저 알리고 무엇을 얼마에 샀는지 남긴다.
+// 와이어프레임 기준(paym_002)이라 디자인 확정 시 바뀔 수 있다.
 
-import { OrderStatusBadge, type OrderStatus } from "@/entities/order";
+import Link from "next/link";
+import { IoClose } from "react-icons/io5";
+
+import { Button } from "@/shared/ui/button";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { DetailCard } from "@/shared/ui/detail-card/detail-card";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
-/** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다. */
-const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
-  "1": { orderNo: "20260829-1234567", status: "preparing" },
-  "2": { orderNo: "20260829-1234568", status: "shipping" },
-  "3": { orderNo: "20260829-1234569", status: "delivered" },
-  "4": { orderNo: "20260829-1234570", status: "confirmed" },
-};
-
+/** API 연동 전까지 화면 확인용 값 */
 const MOCK = {
-  orderNo: "20260829-1234567",
-  status: "shipping" as OrderStatus,
   productName: "상품명",
   option: "상품 옵션",
+  arriveAt: "모레(9/3)",
   paidAt: "26.08.28 15:43",
   total: 12345,
-  itemPrice: 14345,
+  itemPrice: 9345,
   shippingFee: 3000,
-  pointDiscount: 5000,
-  card: "신한카드 ****-****-****-1234",
+  payMethod: "토스페이",
   receiver: "천경진",
   phone: "010-1234-5678",
   address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
   request: "문 앞에 놓아주세요.",
 };
 
-export function OrderDetailView({ orderId }: { orderId?: string }) {
-  // 주문마다 다른 화면이 나와야 목록에서 무엇을 눌렀는지 알 수 있다.
-  const order = (orderId && MOCK_ORDERS[orderId]) || MOCK_ORDERS["1"];
-
+export function CheckoutDoneView() {
   return (
     <div className="flex min-h-dvh flex-col bg-muted/40">
-      <PageHeader title="자세히 보기" />
+      {/* 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 둔다 (paym_002) */}
+      <PageHeader
+        leading="none"
+        right={
+          <Link
+            href="/"
+            aria-label="닫기"
+            className="flex size-11 items-center justify-center text-foreground"
+          >
+            <IoClose aria-hidden className="size-6" />
+          </Link>
+        }
+      />
 
       <main className="flex flex-1 flex-col gap-3 px-4 pb-8">
-        <DetailCard title="주문정보">
-          <DefinitionRow term="주문번호" description={order.orderNo} alignEnd className="px-0" />
-          <div className="py-2">
-            <ProductSummary
-              name={MOCK.productName}
-              meta={MOCK.option}
-              nameTrailing={<OrderStatusBadge status={order.status} />}
-            />
-          </div>
-          <DefinitionRow
-            term="결제 금액"
-            description={<span className="font-bold">{formatWon(MOCK.total)}</span>}
-            alignEnd
-            className="px-0"
-          />
-        </DetailCard>
+        <div className="flex flex-col items-center gap-1 pb-2">
+          <h1 className="text-lg font-bold text-foreground">주문을 무사히 마쳤어요</h1>
+          <p className="text-sm text-muted-foreground">
+            상품이 출발하면 알림으로 가장 먼저 알려드릴게요
+          </p>
+        </div>
+
+        <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+          <ProductSummary name={MOCK.productName} meta={MOCK.option} />
+          <p className="text-center text-sm font-medium text-foreground">
+            {MOCK.arriveAt} 문 앞으로 도착할 예정이에요
+          </p>
+        </section>
 
         <DetailCard title="결제상세" titleTrailing={MOCK.paidAt}>
           <DefinitionRow
@@ -79,14 +79,8 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
             className="px-0"
           />
           <DefinitionRow
-            term="포인트 할인"
-            description={formatWon(MOCK.pointDiscount)}
-            alignEnd
-            className="px-0"
-          />
-          <DefinitionRow
             term={<span className="font-medium text-foreground">결제수단</span>}
-            description={MOCK.card}
+            description={MOCK.payMethod}
             alignEnd
             className="px-0"
           />
@@ -95,7 +89,6 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
         <DetailCard title="배송지 정보">
           <DefinitionRow term="받는 사람" description={MOCK.receiver} alignEnd className="px-0" />
           <DefinitionRow term="연락처" description={MOCK.phone} alignEnd className="px-0" />
-          {/* 주소와 요청사항은 길어서 한 줄에 견주지 않고 아래로 내린다. */}
           <div className="flex flex-col gap-1 py-2">
             <dt className="text-sm text-muted-foreground">배송지 주소</dt>
             <dd className="text-sm text-foreground">{MOCK.address}</dd>
@@ -105,6 +98,10 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
             <dd className="text-sm text-foreground">{MOCK.request}</dd>
           </div>
         </DetailCard>
+
+        <Button className="min-h-11 w-full" asChild>
+          <Link href="/">처음으로 가기</Link>
+        </Button>
       </main>
     </div>
   );

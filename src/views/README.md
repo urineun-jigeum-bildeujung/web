@@ -72,3 +72,4 @@ views/
 | `pet-profile` | `/mypage/pets` | 반려동물 정보와 제품 관리 (탭) |
 | `edit-pet` | `/mypage/pets/{basic,body,health}` | 아이 정보 항목별 수정 |
 | `add-pet` | `/mypage/pets/new` | 새 아이 등록 도입 |
+| `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |
