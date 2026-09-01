@@ -22,7 +22,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
         <nav className="flex flex-col gap-2">
           <Link
             href={`/products/${productId}/reviews`}
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             리뷰 보기
           </Link>

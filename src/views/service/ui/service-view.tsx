@@ -16,13 +16,13 @@ export function ServiceView() {
         <nav className="flex flex-col gap-2">
           <Link
             href="/mypage/service/terms"
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             서비스 이용약관
           </Link>
           <Link
             href="/mypage/service/privacy"
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             개인정보 처리방침
           </Link>
