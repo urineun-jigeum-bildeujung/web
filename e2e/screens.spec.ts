@@ -23,6 +23,8 @@ const ROUTES = [
   "/mypage/orders",
   "/mypage/support",
   "/mypage/settings",
+  "/compare",
+  "/compare/select",
   "/dev",
 ];
 

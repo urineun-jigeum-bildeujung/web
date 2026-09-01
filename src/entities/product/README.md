@@ -5,6 +5,8 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽힌다 |
+| `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |
+| `ui/compare-slot.tsx` | 비교할 자리 하나. 비어 있으면 담으라고 안내한다 (`comp_001`, `comp_001_empty`) |
 | `index.ts` | 공개 API |
 
 ## 아직 없는 것

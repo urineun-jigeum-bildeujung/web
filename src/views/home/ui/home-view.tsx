@@ -38,6 +38,13 @@ const SCREEN_GROUPS = [
     ],
   },
   {
+    title: "상품 비교",
+    items: [
+      { href: "/compare", label: "상품 비교", hint: "comp_001" },
+      { href: "/compare/select", label: "비교할 상품 고르기", hint: "comp_011" },
+    ],
+  },
+  {
     title: "개발용",
     items: [{ href: "/dev", label: "공용 컴포넌트 갤러리", hint: "프로덕션에서는 열리지 않음" }],
   },
