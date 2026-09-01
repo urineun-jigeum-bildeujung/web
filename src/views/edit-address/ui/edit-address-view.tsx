@@ -14,13 +14,17 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
 /** 이미 저장된 곳을 다시 열 때 채워 넣을 값. API 연동 전까지 화면 확인용이다 */
-const SAVED_PLACES: Record<string, { label: string; address: string; detail: string }> = {
+const SAVED_PLACES: Record<
+  string,
+  { label: string; receiver: string; address: string; detail: string }
+> = {
   home: {
     label: "집",
+    receiver: "전경진",
     address: "서울특별시 강남구 테헤란로 123",
     detail: "UI타워 4층 404호",
   },
-  office: { label: "회사", address: "", detail: "" },
+  office: { label: "회사", receiver: "", address: "", detail: "" },
 };
 
 export function EditAddressView() {
@@ -38,6 +42,7 @@ function EditAddressForm({ place }: { place: string | null }) {
   const saved = place ? SAVED_PLACES[place] : undefined;
 
   const [label, setLabel] = useState(saved?.label ?? "");
+  const [receiver, setReceiver] = useState(saved?.receiver ?? "");
   // 주소 자체는 검색 화면에서 고른다. 화면 간 전달 방식은
   // 라우터 구조가 정해진 뒤에 붙인다.
   const [address] = useState(saved?.address ?? "");
@@ -48,7 +53,7 @@ function EditAddressForm({ place }: { place: string | null }) {
   return (
     <SingleInputScreen
       question={saved ? `${saved.label} 주소를 고칠까요?` : "어디로 보내드릴까요?"}
-      submitDisabled={!label.trim() || !address.trim()}
+      submitDisabled={!label.trim() || !receiver.trim() || !address.trim()}
       onSubmit={() => router.back()}
     >
       <FormField
@@ -58,6 +63,13 @@ function EditAddressForm({ place }: { place: string | null }) {
         value={label}
         onChange={(event) => setLabel(event.target.value)}
         onClear={() => setLabel("")}
+      />
+
+      <FormField
+        label="받는 분 이름"
+        value={receiver}
+        onChange={(event) => setReceiver(event.target.value)}
+        onClear={() => setReceiver("")}
       />
 
       <div className="flex flex-col gap-1.5">
