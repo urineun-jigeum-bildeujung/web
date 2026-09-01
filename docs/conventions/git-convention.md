@@ -77,9 +77,11 @@ Windows에서 lint-staged가 `node_modules/.bin` 래퍼를 실행하는 태스�
 - `eslint`뿐 아니라 `prettier`도 같다. 특정 도구의 문제가 아니다
 - 17.3.0과 16.x 모두 같다. 버전을 낮춰도 해결되지 않는다
 - 같은 파일 목록을 셸에서 직접 돌리면 15초에 끝난다
-- 설정을 `node ./node_modules/eslint/bin/eslint.js --fix`처럼 `.bin`을 거치지 않게 바꾸면 lint-staged 안에서도 14.5초에 끝난다
+- lint-staged 설정을 `node ./node_modules/eslint/bin/eslint.js --fix`처럼 `.bin`을 거치지 않게 바꾸면 lint-staged 안에서도 14.5초에 끝난다
 - 파일 목록은 정상으로 넘어간다. `--debug` 로그의 `args: [ '--fix' ]`는 설정 문자열의 인자만 찍은 것이고 파일은 그 뒤에 붙는다. 인자를 파일로 받아 세어 확인했다
 - CI(Linux)에서는 pre-commit이 돌지 않아 드러나지 않는다
+
+훅이 `npx eslint`를 그대로 쓰는 것은 이 우회가 **lint-staged가 태스크를 spawn할 때만** 필요하기 때문이다. 셸에서 부르는 `npx eslint`는 멈추지 않는다 — `.ts` 아홉 개를 스테이징한 커밋이 23초에 끝난다. `node ./node_modules/<패키지>/bin/*.js`는 패키지 내부 구조에 기대는 경로여서, 필요하지 않은 자리에까지 쓸 이유가 없다.
 
 지금 방식은 stash 백업과 부분 스테이징 처리를 잃는다. 대신 무엇이 실행되는지 훅 파일에서 그대로 읽히고, 부분 스테이징은 훅이 먼저 걸러 알린다.
 
