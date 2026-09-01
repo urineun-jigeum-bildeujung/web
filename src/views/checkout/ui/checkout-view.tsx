@@ -75,7 +75,10 @@ export function CheckoutView() {
         <Section
           title="배송지 정보"
           action={
-            <Link href="/payment/address" className="text-xs text-muted-foreground underline">
+            <Link
+              href="/payment/address"
+              className="inline-flex min-h-11 items-center text-xs text-muted-foreground underline"
+            >
               수정하기
             </Link>
           }
@@ -131,6 +134,9 @@ export function CheckoutView() {
               alignEnd
               className="min-h-9 px-0 py-1"
             />
+            {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
+            금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
+            임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
             <DefinitionRow
               term="상품 옵션"
               description={formatWon(MOCK.itemPrice)}

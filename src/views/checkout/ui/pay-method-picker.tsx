@@ -41,7 +41,11 @@ export function PayMethodPicker({
         <div key={item.value} className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
             <RadioGroupItem id={`pay-${item.value}`} value={item.value} />
-            <Label htmlFor={`pay-${item.value}`} className="text-sm">
+            {/* 라디오 자체는 작아서 라벨까지가 누르는 자리다. 행 높이를 손가락에 맞춘다. */}
+            <Label
+              htmlFor={`pay-${item.value}`}
+              className="flex min-h-11 flex-1 items-center text-sm"
+            >
               {item.label}
             </Label>
           </div>

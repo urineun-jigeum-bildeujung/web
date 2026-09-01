@@ -105,7 +105,7 @@ export function CartView() {
                   setCheckedIds(checked ? items.map((item) => item.id) : [])
                 }
               />
-              <Label htmlFor="cart-all" className="text-sm">
+              <Label htmlFor="cart-all" className="flex min-h-11 flex-1 items-center text-sm">
                 전체선택
               </Label>
             </div>
@@ -172,6 +172,9 @@ export function CartView() {
                   alignEnd
                   className="min-h-9 px-0 py-1"
                 />
+                {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
+                금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
+                임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
                 <DefinitionRow
                   term="상품 옵션"
                   description={formatWon(itemTotal)}
