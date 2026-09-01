@@ -6,6 +6,7 @@
 | --- | --- |
 | `ui/order-detail-view.tsx` | 주문정보·결제상세·배송지 정보 세 카드를 조립한다 |
 | `ui/detail-card.tsx` | 제목을 안에 둔 카드. 지금은 이 화면만 써서 여기 둔다 |
+| `ui/order-detail-view.test.tsx` | 카드 구성과 주문별 내용이 갈리는지 본다 |
 | `index.ts` | 공개 API |
 
 ## 라우트

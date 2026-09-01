@@ -31,7 +31,7 @@ test("구매를 확정하면 목록이 바뀌어 같은 버튼이 다시 나오�
   fireEvent.click(screen.getAllByRole("button", { name: "구매 확정하기" })[0]);
   fireEvent.click(screen.getByRole("button", { name: "확정하고 포인트 받기" }));
 
-  // 상태를 바꾸지 않고 토스트만 띄우면 같은 주문을 계속 확정할 수 있었다
+  // 상태를 바꾸지 않고 토스트만 띄우면 같은 주문을 계속 확정할 수 있었다.
   expect(screen.queryAllByRole("button", { name: "구매 확정하기" }).length).toBe(before - 1);
 });
 
@@ -55,7 +55,7 @@ test("자세히 보기는 그 주문의 상세로 간다", () => {
 test("갈 화면이 없는 버튼은 눌리지 않는다", () => {
   render(<OrdersView />);
 
-  // 배송 조회는 시안에 없어 아직 만들지 않았다
+  // 배송 조회는 시안에 없어 아직 만들지 않았다.
   const button = screen.getAllByRole("button", { name: "배송 위치 보기" })[0] as HTMLButtonElement;
   expect(button.disabled).toBe(true);
 });

@@ -1,9 +1,13 @@
 // 비교할 상품 고르기. 최근 본 상품에서 하나를 골라 비교 자리에 담는다.
 // 와이어프레임 기준(comp_011, comp_011_선택, comp_011_searching)이라 디자인 확정 시 바뀔 수 있다.
+//
+// 고른 결과는 주소창에 담아 비교 화면으로 넘긴다. 새로고침·뒤로가기에서 남아야 하는 값이고,
+// 라우터 구조가 바뀌어도 "어느 자리에 무엇을 담았는가"라는 규약은 그대로 쓸 수 있다.
 
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoSearchOutline } from "react-icons/io5";
 
@@ -23,8 +27,15 @@ const MOCK_ITEMS = Array.from({ length: 6 }, (_, index) => ({
 
 export function SelectCompareProductView() {
   const router = useRouter();
+  // 어느 자리를 채우러 왔는지. 비교 화면이 넘겨 준다.
+  const [slot] = useQueryState("slot");
   const [keyword, setKeyword] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const confirm = () => {
+    if (!selectedId) return;
+    router.push(`/compare?slot=${slot ?? "0"}&product=${selectedId}`);
+  };
 
   const searching = keyword.trim() !== "";
   const items = MOCK_ITEMS.filter((item) => item.name.includes(keyword.trim()));
@@ -68,7 +79,7 @@ export function SelectCompareProductView() {
       </main>
 
       <BottomActionBar>
-        <Button className="min-h-11" disabled={!selectedId} onClick={() => router.back()}>
+        <Button className="min-h-11" disabled={!selectedId} onClick={confirm}>
           선택 완료
         </Button>
       </BottomActionBar>

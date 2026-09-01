@@ -5,6 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/product-compare-view.tsx` | 두 자리와 비교표를 조립한다. 한쪽이라도 비면 표를 감춘다 |
+| `ui/product-compare-view.test.tsx` | 자리가 비었을 때의 화면 변화를 본다 |
 | `index.ts` | 공개 API |
 
 ## 라우트

@@ -1,5 +1,6 @@
 // 상품 비교 테스트. 자리가 비면 무엇이 달라지는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { expect, test, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -9,13 +10,21 @@ vi.mock("next/navigation", () => ({
 
 import { ProductCompareView } from "./product-compare-view";
 
+function renderView(search = "") {
+  render(
+    <NuqsTestingAdapter searchParams={search}>
+      <ProductCompareView />
+    </NuqsTestingAdapter>,
+  );
+}
+
 test("두 자리가 차 있으면 비교표를 보여준다", () => {
-  render(<ProductCompareView />);
+  renderView();
   expect(screen.getByRole("table")).toBeDefined();
 });
 
 test("한 자리를 비우면 견줄 것이 없어 표가 사라진다", () => {
-  render(<ProductCompareView />);
+  renderView();
 
   fireEvent.click(screen.getAllByRole("button", { name: /비교에서 빼기/ })[0]);
 
@@ -25,7 +34,7 @@ test("한 자리를 비우면 견줄 것이 없어 표가 사라진다", () => {
 });
 
 test("하단 이동 줄에서 현재 화면을 알린다", () => {
-  render(<ProductCompareView />);
+  renderView();
 
   const current = screen.getByRole("link", { name: "상품비교" });
   expect(current.getAttribute("aria-current")).toBe("page");
