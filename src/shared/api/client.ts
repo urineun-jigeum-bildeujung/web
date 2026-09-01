@@ -24,7 +24,8 @@ interface ApiRequestOptions extends Omit<RequestInit, "body"> {
   body?: unknown;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1";
+// 변수를 빈 값으로 두는 경우까지 포함해 "비우면 /api/v1" 규칙을 지키기 위해 ??가 아니라 ||를 쓴다.
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/v1";
 
 // 모든 요청의 헤더는 여기서만 조립한다. 인증(JWT) 방식이 확정되면 이 함수에만 추가한다.
 function buildHeaders(headers: HeadersInit | undefined, hasBody: boolean): Headers {
