@@ -3,6 +3,7 @@
 
 "use client";
 
+import Image from "next/image";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
@@ -56,12 +57,23 @@ export function ProductReviewSheet({ review, onOpenChange, onEdit }: ProductRevi
         {review && (
           <div className="flex flex-col gap-4 px-4 pb-6">
             <div className="flex justify-center">
-              <span
-                aria-hidden
-                className="flex size-24 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-              >
-                <IoImageOutline className="size-10" />
-              </span>
+              {review.imageUrl ? (
+                <Image
+                  src={review.imageUrl}
+                  alt=""
+                  width={96}
+                  height={96}
+                  // 상품 이름이 시트 제목으로 읽히므로 이미지는 장식으로 둔다.
+                  className="size-24 rounded-lg object-cover"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="flex size-24 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                >
+                  <IoImageOutline className="size-10" />
+                </span>
+              )}
             </div>
 
             <PointList title="이런 점이 좋았어요" points={review.goodPoints} />

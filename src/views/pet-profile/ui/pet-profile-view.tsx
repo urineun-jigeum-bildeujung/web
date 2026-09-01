@@ -125,7 +125,7 @@ export function PetProfileView() {
             <IoImageOutline aria-hidden className="size-12 text-muted-foreground" />
             <Link
               href="/mypage/pets/basic"
-              className="absolute bottom-4 rounded-full bg-foreground/70 px-3 py-1.5 text-xs text-background"
+              className="absolute bottom-4 flex min-h-11 items-center rounded-full bg-foreground/70 px-4 text-xs text-background"
             >
               사진 변경
             </Link>

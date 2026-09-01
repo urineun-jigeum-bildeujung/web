@@ -34,3 +34,15 @@ test("해당 없음을 켜면 그 입력을 잠근다", () => {
   fireEvent.click(screen.getAllByRole("checkbox")[0]);
   expect(input.disabled).toBe(true);
 });
+
+test("해당 없음을 끄면 그 항목을 다시 받는다", () => {
+  render(<EditPetHealthView />);
+
+  // 해당 없음이 켜진 채로 값을 남겨 두면, 체크를 껐을 때 그 문구가
+  // 성분처럼 남고 답한 것으로 세진다.
+  const [, allergyCheck] = screen.getAllByRole("checkbox");
+  fireEvent.click(allergyCheck);
+
+  expect((screen.getByLabelText("피해야 할 알러지 성분") as HTMLInputElement).value).toBe("");
+  expect(submitButton().disabled).toBe(true);
+});

@@ -8,6 +8,7 @@
 | `ui/edit-pet-basic-view.tsx` | 사진·이름·견종·나이·성별·중성화 (`mypa_121`) |
 | `ui/edit-pet-body-view.tsx` | 체구·몸무게·체형 (`mypa_221`) |
 | `ui/edit-pet-health-view.tsx` | 염려질환·알러지 (`mypa_321`) |
+| `ui/edit-pet-health-view.test.tsx` | 무엇을 답으로 세는지, 해당 없음이 입력을 잠그는지 본다 |
 | `index.ts` | 공개 API |
 
 ## 온보딩과 무엇이 다른가
@@ -24,7 +25,7 @@
 
 ## 라우트
 
-```
+```text
 /mypage/pets/basic    mypa_121
 /mypage/pets/body     mypa_221
 /mypage/pets/health   mypa_321
