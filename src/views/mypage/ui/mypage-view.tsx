@@ -115,8 +115,12 @@ export function MypageView() {
             <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           </Link>
 
-          {/* 반려동물 프로필 영역. mypa_021 계열 화면을 아직 만들지 않아 자리만 잡아 둔다 */}
-          <div className="flex min-h-14 items-center gap-3 border-t border-border px-4 py-3">
+          {/* 반려동물 프로필 영역 */}
+          <Link
+            href="/mypage/pets"
+            aria-label="반려동물 프로필 관리"
+            className="flex min-h-14 items-center gap-3 border-t border-border px-4 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
             <span aria-hidden className="flex flex-1 items-center -space-x-2">
               {Array.from({ length: MOCK_USER.petCount }, (_, index) => (
                 <span key={index} className="size-9 rounded-full border-2 border-card bg-muted" />
@@ -126,7 +130,8 @@ export function MypageView() {
                 <IoAdd className="size-4" />
               </span>
             </span>
-          </div>
+            <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+          </Link>
         </section>
 
         {MENU_GROUPS.map((group) => (

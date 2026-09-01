@@ -69,3 +69,6 @@ views/
 | `orders` | `/mypage/orders` | 주문·배송 확인 |
 | `support` | `/mypage/support` | 고객지원 · FAQ |
 | `settings` | `/mypage/settings` | 설정 |
+| `pet-profile` | `/mypage/pets` | 반려동물 정보와 제품 관리 (탭) |
+| `edit-pet` | `/mypage/pets/{basic,body,health}` | 아이 정보 항목별 수정 |
+| `add-pet` | `/mypage/pets/new` | 새 아이 등록 도입 |
