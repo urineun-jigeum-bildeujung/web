@@ -1,6 +1,8 @@
 // 주문 상세. 주문정보·결제상세·배송지 정보를 카드로 나눠 보여준다.
 // 와이어프레임 기준(mypa_161)이라 디자인 확정 시 바뀔 수 있다.
 
+import Link from "next/link";
+
 import { OrderStatusBadge, type OrderStatus } from "@/entities/order";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { DetailCard } from "@/shared/ui/detail-card/detail-card";
@@ -105,6 +107,40 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
             <dd className="text-sm text-foreground">{MOCK.request}</dd>
           </div>
         </DetailCard>
+
+        {/* 취소·반품·교환·문의·리뷰작성은 아직 화면 스타일이 안 잡혀 있어 링크만 둔다 */}
+        <nav className="flex flex-col gap-2">
+          <Link
+            href={`/mypage/orders/${orderId ?? "1"}/claim?type=cancel`}
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            주문 취소
+          </Link>
+          <Link
+            href={`/mypage/orders/${orderId ?? "1"}/claim?type=return`}
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            반품
+          </Link>
+          <Link
+            href={`/mypage/orders/${orderId ?? "1"}/claim?type=exchange`}
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            교환
+          </Link>
+          <Link
+            href={`/mypage/reviews/write?orderItemId=${orderId ?? "1"}-1`}
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            리뷰 작성
+          </Link>
+          <Link
+            href="/mypage/support/inquiries"
+            className="text-sm text-primary underline underline-offset-4"
+          >
+            문의하기
+          </Link>
+        </nav>
       </main>
     </div>
   );

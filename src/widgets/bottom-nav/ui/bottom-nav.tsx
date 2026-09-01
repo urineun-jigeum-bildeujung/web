@@ -1,7 +1,5 @@
 // 화면 하단에 고정되는 전역 이동 줄. 홈·상품비교·좋아요·마이페이지를 오간다.
 // 와이어프레임 기준(comp_001, comp_001_empty)이라 디자인 확정 시 바뀔 수 있다.
-//
-// 좋아요는 아직 화면이 없다. 링크를 걸면 404가 되므로 그 전까지 표시만 한다.
 
 "use client";
 
@@ -22,7 +20,7 @@ type NavItem = {
 const ITEMS: NavItem[] = [
   { label: "홈", icon: <IoHomeOutline />, href: "/" },
   { label: "상품비교", icon: <IoBarChartOutline />, href: "/compare" },
-  { label: "좋아요", icon: <IoHeartOutline /> },
+  { label: "좋아요", icon: <IoHeartOutline />, href: "/likes" },
   { label: "마이페이지", icon: <IoPersonOutline />, href: "/mypage" },
 ];
 

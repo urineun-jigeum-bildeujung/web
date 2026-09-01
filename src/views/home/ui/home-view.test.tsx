@@ -1,6 +1,11 @@
 // 홈 화면 테스트. 만들어 둔 화면으로 가는 입구가 있는지 검증한다.
 import { render, screen } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  usePathname: () => "/",
+}));
 
 import { HomeView } from "./home-view";
 
@@ -17,7 +22,7 @@ test("다크 모드 토글 버튼이 렌더링된다", () => {
 test("만들어 둔 화면으로 가는 링크를 묶어서 보여준다", () => {
   render(<HomeView />);
 
-  for (const group of ["온보딩", "마이페이지", "개발용"]) {
+  for (const group of ["온보딩", "마이페이지", "쇼핑", "개발용"]) {
     expect(screen.getByRole("heading", { level: 2, name: group })).toBeDefined();
   }
 });
@@ -29,4 +34,5 @@ test("링크가 실제 라우트를 가리킨다", () => {
   expect(screen.getByRole("link", { name: /품종 선택/ }).getAttribute("href")).toBe(
     "/onboarding?step=breed",
   );
+  expect(screen.getByRole("link", { name: /장바구니/ }).getAttribute("href")).toBe("/cart");
 });

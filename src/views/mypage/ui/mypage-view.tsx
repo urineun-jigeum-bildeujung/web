@@ -12,17 +12,25 @@ import {
   IoPricetagOutline,
   IoReceiptOutline,
   IoSettingsOutline,
+  IoTimeOutline,
   IoWalletOutline,
 } from "react-icons/io5";
 
-import { ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
+import { ListRowLink } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
+import { BottomNav } from "@/widgets/bottom-nav";
 
 const MENU_GROUPS = [
   {
     title: "나의 쇼핑",
     items: [
+      {
+        href: "/mypage/recently-viewed",
+        title: "최근 본 상품",
+        description: "최근 확인한 상품",
+        icon: <IoTimeOutline />,
+      },
       {
         href: "/mypage/restock",
         title: "재입고 알림",
@@ -64,8 +72,9 @@ const MENU_GROUPS = [
         icon: <IoHeadsetOutline />,
       },
       {
+        href: "/mypage/service",
         title: "서비스 안내",
-        description: "서비스 안내",
+        description: "이용약관 · 개인정보처리방침",
         icon: <IoInformationCircleOutline />,
       },
       {
@@ -91,14 +100,17 @@ export function MypageView() {
             <Link
               href="/cart"
               aria-label="장바구니"
-              className="flex size-11 items-center justify-center"
+              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <IoCartOutline aria-hidden className="size-6" />
             </Link>
-            {/* 알림 화면은 아직 없어 아이콘만 둔다 */}
-            <span aria-hidden className="flex size-11 items-center justify-center">
-              <IoNotificationsOutline className="size-6" />
-            </span>
+            <Link
+              href="/mypage/notifications"
+              aria-label="알림"
+              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <IoNotificationsOutline aria-hidden className="size-6" />
+            </Link>
           </>
         }
       />
@@ -140,16 +152,14 @@ export function MypageView() {
 
         {MENU_GROUPS.map((group) => (
           <SettingGroup key={group.title} title={group.title}>
-            {group.items.map((item) =>
-              item.href ? (
-                <ListRowLink key={item.title} {...item} href={item.href} />
-              ) : (
-                <ListRowStatic key={item.title} {...item} />
-              ),
-            )}
+            {group.items.map((item) => (
+              <ListRowLink key={item.title} {...item} />
+            ))}
           </SettingGroup>
         ))}
       </main>
+
+      <BottomNav />
     </div>
   );
 }

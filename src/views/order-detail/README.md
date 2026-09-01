@@ -10,9 +10,7 @@
 
 ## 라우트
 
-`/mypage/orders/[id]` — `src/app/mypage/orders/[id]/page.tsx`
-
-**경로는 임시다.** 주문·배송 화면의 "자세히 보기"가 여기로 온다.
+`/mypage/orders/[orderId]` — `src/app/mypage/orders/[orderId]/page.tsx`. 주문·배송 화면의 "자세히 보기"가 여기로 온다.
 
 ## DetailCard는 shared로 옮겼다
 

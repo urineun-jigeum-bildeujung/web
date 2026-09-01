@@ -9,7 +9,7 @@
 
 ## 라우트
 
-`/mypage/address/search` — **경로는 임시다.** 페이지·라우터 구조는 다른 팀원이 작업 중이며 그 결과로 교체한다.
+`/mypage/address/search` — `src/app/mypage/address/search/page.tsx`
 
 ## 아직 없는 것
 
