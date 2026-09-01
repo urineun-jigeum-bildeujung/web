@@ -5,6 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/select-compare-product-view.tsx` | 검색과 격자 목록. 하나를 고르면 완료가 켜진다 |
+| `ui/select-compare-product-view.test.tsx` | 고르기 전후와 검색 중 상태를 본다 |
 | `index.ts` | 공개 API |
 
 ## 라우트

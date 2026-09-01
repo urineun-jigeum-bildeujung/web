@@ -27,7 +27,7 @@ test("어느 상품을 견주는지 읽힌다", () => {
 test("항목 이름이 그 줄의 머리글이 된다", () => {
   renderTable();
 
-  // scope=row라 스크린 리더가 값을 읽을 때 항목 이름을 함께 알린다
+  // scope=row라 스크린 리더가 값을 읽을 때 항목 이름을 함께 알린다.
   expect(screen.getByRole("rowheader", { name: "10g당 가격" })).toBeDefined();
   expect(screen.getByRole("rowheader", { name: "주요 영양 비율" })).toBeDefined();
 });

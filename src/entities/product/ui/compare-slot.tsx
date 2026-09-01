@@ -70,7 +70,10 @@ export function CompareSlot({ product, onRemove, onAdd, className }: CompareSlot
 
       <p className="text-center text-sm text-foreground">{product.name}</p>
       <p className="text-center text-sm font-bold text-foreground">{formatWon(product.price)}</p>
-      <Button className="min-h-11 w-full">장바구니 담기</Button>
+      {/* 장바구니 화면이 아직 없다. 누를 수 있게 두면 눌러도 아무 일이 없어 고장으로 읽힌다 */}
+      <Button className="min-h-11 w-full" disabled>
+        장바구니 담기
+      </Button>
     </div>
   );
 }

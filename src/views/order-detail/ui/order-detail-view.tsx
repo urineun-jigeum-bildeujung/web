@@ -9,7 +9,14 @@ import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
 import { DetailCard } from "./detail-card";
 
-/** API 연동 전까지 화면 확인용 값 */
+/** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다 */
+const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
+  "1": { orderNo: "20260829-1234567", status: "preparing" },
+  "2": { orderNo: "20260829-1234568", status: "shipping" },
+  "3": { orderNo: "20260829-1234569", status: "delivered" },
+  "4": { orderNo: "20260829-1234570", status: "confirmed" },
+};
+
 const MOCK = {
   orderNo: "20260829-1234567",
   status: "shipping" as OrderStatus,
@@ -27,19 +34,22 @@ const MOCK = {
   request: "문 앞에 놓아주세요.",
 };
 
-export function OrderDetailView() {
+export function OrderDetailView({ orderId }: { orderId?: string }) {
+  // 주문마다 다른 화면이 나와야 목록에서 무엇을 눌렀는지 알 수 있다.
+  const order = (orderId && MOCK_ORDERS[orderId]) || MOCK_ORDERS["1"];
+
   return (
     <div className="flex min-h-dvh flex-col bg-muted/40">
       <PageHeader title="자세히 보기" />
 
       <main className="flex flex-1 flex-col gap-3 px-4 pb-8">
         <DetailCard title="주문정보">
-          <DefinitionRow term="주문번호" description={MOCK.orderNo} alignEnd className="px-0" />
+          <DefinitionRow term="주문번호" description={order.orderNo} alignEnd className="px-0" />
           <div className="py-2">
             <ProductSummary
               name={MOCK.productName}
               meta={MOCK.option}
-              nameTrailing={<OrderStatusBadge status={MOCK.status} />}
+              nameTrailing={<OrderStatusBadge status={order.status} />}
             />
           </div>
           <DefinitionRow

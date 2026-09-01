@@ -4,6 +4,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoCartOutline, IoNotificationsOutline } from "react-icons/io5";
 
@@ -21,6 +22,16 @@ const MOCK_PRODUCTS: [CompareProduct, CompareProduct] = [
   { id: "1", name: "상품명", price: 45000 },
   { id: "2", name: "상품명", price: 52000 },
 ];
+
+/** 고르기 화면에서 담아 올 수 있는 상품 */
+const PICKABLE: Record<string, CompareProduct> = {
+  "1": { id: "1", name: "상품명", price: 45000 },
+  "2": { id: "2", name: "상품명", price: 52000 },
+  "3": { id: "3", name: "상품명", price: 38000 },
+  "4": { id: "4", name: "상품명", price: 61000 },
+  "5": { id: "5", name: "상품명", price: 47000 },
+  "6": { id: "6", name: "상품명", price: 55000 },
+};
 
 /** 시안 comp_001의 아홉 항목 */
 const MOCK_ROWS: CompareRow[] = [
@@ -55,12 +66,27 @@ const MOCK_ROWS: CompareRow[] = [
 
 export function ProductCompareView() {
   const router = useRouter();
+  // 고르기 화면이 주소창에 담아 온 값. 어느 자리에 무엇을 넣을지 알려 준다.
+  const [slot] = useQueryState("slot");
+  const [product] = useQueryState("product");
+
   // 서버 연동 전까지 담긴 상품을 화면이 든다. 빼면 그 자리가 비고 표가 사라진다.
-  const [slots, setSlots] =
-    useState<[CompareProduct | undefined, CompareProduct | undefined]>(MOCK_PRODUCTS);
+  const [slots, setSlots] = useState<[CompareProduct | undefined, CompareProduct | undefined]>(
+    () => {
+      const picked = product ? PICKABLE[product] : undefined;
+      if (!picked) return MOCK_PRODUCTS;
+
+      const next: [CompareProduct | undefined, CompareProduct | undefined] = [
+        MOCK_PRODUCTS[0],
+        MOCK_PRODUCTS[1],
+      ];
+      next[slot === "1" ? 1 : 0] = picked;
+      return next;
+    },
+  );
 
   const both = slots[0] && slots[1];
-  const goSelect = () => router.push("/compare/select");
+  const goSelect = (index: number) => router.push(`/compare/select?slot=${index}`);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -86,7 +112,7 @@ export function ProductCompareView() {
               key={product?.id ?? `empty-${index}`}
               product={product}
               className="flex-1"
-              onAdd={goSelect}
+              onAdd={() => goSelect(index)}
               onRemove={() =>
                 setSlots((prev) => {
                   const next: typeof prev = [prev[0], prev[1]];

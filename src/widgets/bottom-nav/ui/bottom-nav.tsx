@@ -1,7 +1,7 @@
 // 화면 하단에 고정되는 전역 이동 줄. 홈·상품비교·좋아요·마이페이지를 오간다.
 // 와이어프레임 기준(comp_001, comp_001_empty)이라 디자인 확정 시 바뀔 수 있다.
 //
-// 홈과 좋아요는 아직 화면이 없다. 링크를 걸면 404가 되므로 그 전까지 표시만 한다.
+// 좋아요는 아직 화면이 없다. 링크를 걸면 404가 되므로 그 전까지 표시만 한다.
 
 "use client";
 
@@ -20,11 +20,16 @@ type NavItem = {
 };
 
 const ITEMS: NavItem[] = [
-  { label: "홈", icon: <IoHomeOutline /> },
+  { label: "홈", icon: <IoHomeOutline />, href: "/" },
   { label: "상품비교", icon: <IoBarChartOutline />, href: "/compare" },
   { label: "좋아요", icon: <IoHeartOutline /> },
   { label: "마이페이지", icon: <IoPersonOutline />, href: "/mypage" },
 ];
+
+/** 루트는 정확히 같을 때만 현재 화면이다. startsWith로 보면 모든 경로가 걸린다 */
+function isCurrent(pathname: string, href: string) {
+  return href === "/" ? pathname === "/" : pathname.startsWith(href);
+}
 
 const ITEM_CLASS =
   "flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-xs [&>svg]:size-5";
@@ -38,7 +43,7 @@ export function BottomNav() {
       className="sticky bottom-0 flex border-t border-border bg-background"
     >
       {ITEMS.map((item) => {
-        const current = Boolean(item.href) && pathname.startsWith(item.href!);
+        const current = Boolean(item.href) && isCurrent(pathname, item.href!);
         const tone = current ? "text-foreground" : "text-muted-foreground";
 
         if (!item.href) {
