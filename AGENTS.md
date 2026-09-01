@@ -181,7 +181,7 @@
 | 린트 | eslint-plugin-check-file | 3.3.2 | 파일·폴더 kebab-case 강제 |
 | 린트 | eslint-plugin-jsx-a11y | 6.10.2 | 접근성 위반 검사. `eslint-config-next`의 6개를 recommended 전체로 확대 |
 | 개발 도구 | @tanstack/react-query-devtools | 5.101.4 | 캐시 상태 확인. 개발 빌드에만 포함 |
-| 훅 | husky / lint-staged | 9.1.7 / 17.3.0 | pre-commit 린트·포맷, prepare-commit-msg 이슈번호 삽입, commit-msg 형식 검사, pre-push 이력 보호 |
+| 훅 | husky | 9.1.7 | pre-commit 린트·포맷, prepare-commit-msg 이슈번호 삽입, commit-msg 형식 검사, pre-push 이력 보호. lint-staged는 Windows에서 멈춰 걷어냈다 (#53) |
 
 **`overrides`의 두 항목을 제거하지 마십시오.** `react-is`는 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다. `@swc/helpers`는 0.5.23으로 고정합니다. next가 `0.5.15`를 정확히 고정하고 `@vitejs/plugin-react-swc`가 끌어오는 `@swc/core`는 `>=0.5.17`을 optional peer로 요구해, 고정하지 않으면 중첩 설치가 생깁니다. 의존성 갱신 도구나 npm 구현체가 lockfile을 다시 쓸 때 그 중첩 엔트리를 지우면 `npm ci`가 깨집니다 (#29).
 

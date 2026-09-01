@@ -66,7 +66,23 @@ docs(#41): 문서별 문체 규칙 명문화
 
 `npm install` 시 husky가 Git 훅을 설치한다. 우회(`--no-verify`)하지 않는다.
 
-- **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다(lint-staged). lint 에러가 있으면 커밋이 막힌다.
+- **pre-commit** — 스테이징된 파일에 `eslint --fix`와 `prettier --write`를 돌린다. lint 에러가 있으면 커밋이 막힌다. 파일 일부만 스테이징한 상태로 커밋하면 멈춘다 — 포맷·린트가 파일 전체를 고치므로 스테이징하지 않은 변경까지 커밋에 섞이기 때문이다.
+
+#### lint-staged를 쓰지 않는 이유
+
+`.husky/pre-commit`이 `git diff --cached`로 파일 목록을 만들어 `eslint`·`prettier`에 직접 넘긴다. lint-staged는 걷어냈다 (#53).
+
+Windows에서 lint-staged가 `node_modules/.bin` 래퍼를 실행하는 태스크가 시작만 하고 끝나지 않는다. 10분을 기다려도 끝나지 않아 강제 종료하면 `lint-staged automatic backup` stash가 남는다. 확인한 것은 아래와 같다.
+
+- `eslint`뿐 아니라 `prettier`도 같다. 특정 도구의 문제가 아니다
+- 17.3.0과 16.x 모두 같다. 버전을 낮춰도 해결되지 않는다
+- 같은 파일 목록을 셸에서 직접 돌리면 15초에 끝난다
+- 설정을 `node ./node_modules/eslint/bin/eslint.js --fix`처럼 `.bin`을 거치지 않게 바꾸면 lint-staged 안에서도 14.5초에 끝난다
+- 파일 목록은 정상으로 넘어간다. `--debug` 로그의 `args: [ '--fix' ]`는 설정 문자열의 인자만 찍은 것이고 파일은 그 뒤에 붙는다. 인자를 파일로 받아 세어 확인했다
+- CI(Linux)에서는 pre-commit이 돌지 않아 드러나지 않는다
+
+지금 방식은 stash 백업과 부분 스테이징 처리를 잃는다. 대신 무엇이 실행되는지 훅 파일에서 그대로 읽히고, 부분 스테이징은 훅이 먼저 걸러 알린다.
+
 - **prepare-commit-msg** — 브랜치명의 `#이슈번호`를 메시지에 채운다. `chore: 내용`으로 쓰면 `chore(#24): 내용`이 된다. 아래는 건드리지 않는다.
   - Git이 메시지를 만드는 경우 — `merge`·`squash` source와 `commit` source(`-c`·`-C`·`--amend`)
   - `Merge`·`Revert`·`fixup!`·`squash!`·`amend!`로 시작하는 메시지

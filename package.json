@@ -64,21 +64,12 @@
     "eslint-plugin-tailwindcss": "^4.2.0",
     "husky": "^9.1.7",
     "jsdom": "^30.0.1",
-    "lint-staged": "^17.3.0",
     "prettier": "^3.9.6",
     "prettier-plugin-tailwindcss": "^0.8.1",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.10"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{css,json,jsonc,mjs,mts,yml,yaml}": "prettier --write",
-    ".prettierrc": "prettier --write"
   },
   "overrides": {
     "@swc/helpers": "0.5.23",
