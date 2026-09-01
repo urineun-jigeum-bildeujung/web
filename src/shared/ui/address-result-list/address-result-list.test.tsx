@@ -13,17 +13,22 @@ const RESULTS: AddressResult[] = [
   },
 ];
 
-test("우편번호와 도로명·지번·건물명을 보여준다", () => {
+test("우편번호·도로명·구주소를 항목 이름과 함께 보여준다", () => {
   render(<AddressResultList results={RESULTS} onSelect={() => {}} />);
 
+  // 값만 나열하면 어느 주소 형식인지 알 수 없어 시안(mypa_312_검색결과)이 이름을 붙였다
+  for (const term of ["우편번호", "도로명", "구주소"]) {
+    expect(screen.getByText(term)).toBeDefined();
+  }
   expect(screen.getByText("06133")).toBeDefined();
   expect(screen.getByText("서울특별시 강남구 테헤란로 123 (역삼동)")).toBeDefined();
   expect(screen.getByText("서울특별시 강남구 역삼동 848-23 아남빌딩")).toBeDefined();
-  expect(screen.getByText("아남빌딩")).toBeDefined();
 });
 
-test("건물명이 없으면 그 줄을 그리지 않는다", () => {
-  render(<AddressResultList results={[{ ...RESULTS[0], bdNm: undefined }]} onSelect={() => {}} />);
+test("건물명은 따로 보여주지 않는다", () => {
+  render(<AddressResultList results={RESULTS} onSelect={() => {}} />);
+
+  // 도로명 주소에 이미 들어 있어 시안도 줄을 나누지 않는다
   expect(screen.queryByText("건물명")).toBeNull();
 });
 
