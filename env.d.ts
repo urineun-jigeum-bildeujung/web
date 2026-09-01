@@ -5,6 +5,9 @@ namespace NodeJS {
 
     // PUBLIC — NEXT_PUBLIC_ 접두사가 붙은 값. 브라우저에 노출되므로 비밀값을 두지 않는다.
 
+    // 백엔드 API base URL. 비우면 same-origin /api/v1을 쓴다.
+    NEXT_PUBLIC_API_BASE_URL?: string;
+
     // DEMO — 선언 방식을 보여주는 예시. 이렇게 선언하면 process.env.DEMO를 타입 안전하게 읽을 수 있다.
     DEMO: string;
   }
