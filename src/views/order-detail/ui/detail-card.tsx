@@ -9,7 +9,7 @@ import { cn } from "@/shared/lib/utils";
 
 type DetailCardProps = {
   title: ReactNode;
-  /** 제목 오른쪽에 붙는 것. 결제 일시처럼 제목과 짝을 이루는 값 */
+  /** 제목 오른쪽에 붙는 것. 결제 일시처럼 제목과 짝을 이루는 값. */
   titleTrailing?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -22,7 +22,7 @@ export function DetailCard({ title, titleTrailing, children, className }: Detail
         <h2 className="text-base font-bold text-foreground">{title}</h2>
         {titleTrailing && <span className="text-xs text-muted-foreground">{titleTrailing}</span>}
       </div>
-      {/* DefinitionRow가 dt·dd를 쓰므로 목록으로 감싼다 */}
+      {/* DefinitionRow가 dt·dd를 쓰므로 목록으로 감싼다. */}
       <dl className="flex flex-col">{children}</dl>
     </section>
   );

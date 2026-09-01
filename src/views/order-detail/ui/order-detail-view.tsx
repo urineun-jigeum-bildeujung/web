@@ -9,7 +9,7 @@ import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
 import { DetailCard } from "./detail-card";
 
-/** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다 */
+/** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다. */
 const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
   "1": { orderNo: "20260829-1234567", status: "preparing" },
   "2": { orderNo: "20260829-1234568", status: "shipping" },
@@ -96,7 +96,7 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
         <DetailCard title="배송지 정보">
           <DefinitionRow term="받는 사람" description={MOCK.receiver} alignEnd className="px-0" />
           <DefinitionRow term="연락처" description={MOCK.phone} alignEnd className="px-0" />
-          {/* 주소와 요청사항은 길어서 한 줄에 견주지 않고 아래로 내린다 */}
+          {/* 주소와 요청사항은 길어서 한 줄에 견주지 않고 아래로 내린다. */}
           <div className="flex flex-col gap-1 py-2">
             <dt className="text-sm text-muted-foreground">배송지 주소</dt>
             <dd className="text-sm text-foreground">{MOCK.address}</dd>

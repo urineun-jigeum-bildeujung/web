@@ -17,13 +17,13 @@ import {
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { BottomNav } from "@/widgets/bottom-nav";
 
-/** API 연동 전까지 화면 확인용 값 */
+/** API 연동 전까지 화면 확인용 값. */
 const MOCK_PRODUCTS: [CompareProduct, CompareProduct] = [
   { id: "1", name: "상품명", price: 45000 },
   { id: "2", name: "상품명", price: 52000 },
 ];
 
-/** 고르기 화면에서 담아 올 수 있는 상품 */
+/** 고르기 화면에서 담아 올 수 있는 상품. */
 const PICKABLE: Record<string, CompareProduct> = {
   "1": { id: "1", name: "상품명", price: 45000 },
   "2": { id: "2", name: "상품명", price: 52000 },
@@ -33,7 +33,7 @@ const PICKABLE: Record<string, CompareProduct> = {
   "6": { id: "6", name: "상품명", price: 55000 },
 };
 
-/** 시안 comp_001의 아홉 항목 */
+/** 시안 comp_001의 아홉 항목. */
 const MOCK_ROWS: CompareRow[] = [
   { label: "10g당 가격", values: ["150원", "176원"] },
   { label: "주원료", values: ["생연어", "가수분해 오리고기"] },
@@ -94,7 +94,7 @@ export function ProductCompareView() {
         leading="none"
         right={
           <>
-            {/* 장바구니·알림 화면이 아직 없어 아이콘만 둔다 */}
+            {/* 장바구니·알림 화면이 아직 없어 아이콘만 둔다. */}
             <span aria-hidden className="flex size-11 items-center justify-center">
               <IoCartOutline className="size-6" />
             </span>
@@ -124,7 +124,7 @@ export function ProductCompareView() {
           ))}
         </div>
 
-        {/* 한쪽이라도 비면 견줄 것이 없다 */}
+        {/* 한쪽이라도 비면 견줄 것이 없다. */}
         {both && (
           <CompareTable
             productNames={[slots[0]!.name, slots[1]!.name]}

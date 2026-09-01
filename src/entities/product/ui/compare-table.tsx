@@ -9,14 +9,14 @@ import type { ComponentProps } from "react";
 import { cn } from "@/shared/lib/utils";
 
 export type CompareRow = {
-  /** 항목 이름. "10g당 가격", "주원료" 같은 것 */
+  /** 항목 이름. "10g당 가격", "주원료" 같은 것. */
   label: string;
-  /** 두 상품의 값. 줄이 나뉘면 배열로 준다 */
+  /** 두 상품의 값. 줄이 나뉘면 배열로 준다. */
   values: [string | string[], string | string[]];
 };
 
 type CompareTableProps = {
-  /** 표의 두 열이 각각 어느 상품인지. 스크린 리더가 읽는다 */
+  /** 표의 두 열이 각각 어느 상품인지. 스크린 리더가 읽는다. */
   productNames: [string, string];
   rows: CompareRow[];
 } & ComponentProps<"table">;
@@ -37,7 +37,7 @@ function Cell({ value }: { value: string | string[] }) {
 export function CompareTable({ productNames, rows, className, ...props }: CompareTableProps) {
   return (
     <table className={cn("w-full text-center text-sm", className)} {...props}>
-      {/* 열이 무엇인지 눈으로는 위쪽 상품 카드가 알려 준다. 여기서는 읽히기만 하면 된다 */}
+      {/* 열이 무엇인지 눈으로는 위쪽 상품 카드가 알려 준다. 여기서는 읽히기만 하면 된다. */}
       <caption className="sr-only">
         {productNames[0]}와 {productNames[1]} 비교
       </caption>
@@ -54,7 +54,7 @@ export function CompareTable({ productNames, rows, className, ...props }: Compar
             <td className="w-[35%] px-2 py-3 break-keep text-foreground">
               <Cell value={row.values[0]} />
             </td>
-            {/* break-keep이 없으면 "핵심 기 / 능성"처럼 낱말 가운데가 잘린다 */}
+            {/* break-keep이 없으면 "핵심 기 / 능성"처럼 낱말 가운데가 잘린다. */}
             <th
               scope="row"
               className="px-1 py-3 text-xs font-medium break-keep text-muted-foreground"
