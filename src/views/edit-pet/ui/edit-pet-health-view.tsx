@@ -11,7 +11,8 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { EditPetScreen } from "./edit-pet-screen";
 
 /** API 연동 전까지 화면 확인용 값 */
-const SAVED = { concern: "눈물자국", noConcern: false, allergy: "해당 사항 없음", noAllergy: true };
+// 해당 없음이 켜진 항목은 값을 비워 둔다. 체크를 끄면 다시 답을 받아야 한다.
+const SAVED = { concern: "눈물자국", noConcern: false, allergy: "", noAllergy: true };
 
 export function EditPetHealthView() {
   const [concern, setConcern] = useState(SAVED.concern);
