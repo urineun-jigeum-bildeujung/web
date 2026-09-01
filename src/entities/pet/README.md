@@ -5,6 +5,8 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/breed-picker.tsx` | 종별로 나눈 품종 선택 목록 |
+| `ui/pet-switcher.tsx` | 화면 아래 아이 고르기 줄. 마지막 칸은 새 아이 자리 (`mypa_021`) |
+| `ui/product-review-sheet.tsx` | 아이가 먹은 제품의 후기 시트 (`mypa_021_상품클릭시`) |
 | `model/breeds.ts` | 품종 목록, 성별·중성화·체구 선택지, 프로필 초안 타입 |
 | `index.ts` | 공개 API |
 

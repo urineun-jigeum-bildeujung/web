@@ -70,7 +70,8 @@ export function MyInfoView() {
             title="휴대폰 번호"
             trailing={<span className="text-sm text-muted-foreground">{MOCK.phone}</span>}
           />
-          <ListRowStatic
+          <ListRowLink
+            href="/mypage/pets"
             title="내 아이들"
             trailing={
               <span aria-hidden className="flex -space-x-2">
