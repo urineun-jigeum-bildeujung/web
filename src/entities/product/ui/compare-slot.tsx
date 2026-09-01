@@ -17,9 +17,9 @@ export type CompareProduct = {
 
 type CompareSlotProps = {
   product?: CompareProduct;
-  /** 상품을 뺀다. 비어 있는 자리에는 나오지 않는다 */
+  /** 상품을 뺀다. 비어 있는 자리에는 나오지 않는다. */
   onRemove?: () => void;
-  /** 빈 자리에서 상품을 고르러 간다 */
+  /** 빈 자리에서 상품을 고르러 간다. */
   onAdd?: () => void;
   className?: string;
 };
@@ -70,7 +70,7 @@ export function CompareSlot({ product, onRemove, onAdd, className }: CompareSlot
 
       <p className="text-center text-sm text-foreground">{product.name}</p>
       <p className="text-center text-sm font-bold text-foreground">{formatWon(product.price)}</p>
-      {/* 장바구니 화면이 아직 없다. 누를 수 있게 두면 눌러도 아무 일이 없어 고장으로 읽힌다 */}
+      {/* 장바구니 화면이 아직 없다. 누를 수 있게 두면 눌러도 아무 일이 없어 고장으로 읽힌다. */}
       <Button className="min-h-11 w-full" disabled>
         장바구니 담기
       </Button>

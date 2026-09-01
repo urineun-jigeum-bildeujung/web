@@ -18,7 +18,7 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 
-/** API 연동 전까지 화면 확인용 값 */
+/** API 연동 전까지 화면 확인용 값. */
 const MOCK_ITEMS = Array.from({ length: 6 }, (_, index) => ({
   id: String(index + 1),
   name: "상품명",
@@ -55,7 +55,7 @@ export function SelectCompareProductView() {
           onClear={() => setKeyword("")}
         />
 
-        {/* 검색 중에는 제목을 숨긴다. 최근 본 것이 아니라 검색 결과이기 때문이다 */}
+        {/* 검색 중에는 제목을 숨긴다. 최근 본 것이 아니라 검색 결과이기 때문이다. */}
         {!searching && <h2 className="text-base font-semibold text-foreground">최근 봤어요</h2>}
 
         {items.length > 0 ? (

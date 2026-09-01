@@ -15,7 +15,7 @@ import { cn } from "@/shared/lib/utils";
 type NavItem = {
   label: string;
   icon: ReactNode;
-  /** 갈 화면이 아직 없으면 비운다 */
+  /** 갈 화면이 아직 없으면 비운다. */
   href?: string;
 };
 
@@ -26,7 +26,7 @@ const ITEMS: NavItem[] = [
   { label: "마이페이지", icon: <IoPersonOutline />, href: "/mypage" },
 ];
 
-/** 루트는 정확히 같을 때만 현재 화면이다. startsWith로 보면 모든 경로가 걸린다 */
+/** 루트는 정확히 같을 때만 현재 화면이다. startsWith로 보면 모든 경로가 걸린다. */
 function isCurrent(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
