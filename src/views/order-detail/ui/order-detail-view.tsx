@@ -112,31 +112,31 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
         <nav className="flex flex-col gap-2">
           <Link
             href={`/mypage/orders/${orderId ?? "1"}/claim?type=cancel`}
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             주문 취소
           </Link>
           <Link
             href={`/mypage/orders/${orderId ?? "1"}/claim?type=return`}
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             반품
           </Link>
           <Link
             href={`/mypage/orders/${orderId ?? "1"}/claim?type=exchange`}
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             교환
           </Link>
           <Link
             href={`/mypage/reviews/write?orderItemId=${orderId ?? "1"}-1`}
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             리뷰 작성
           </Link>
           <Link
             href="/mypage/support/inquiries"
-            className="text-sm text-primary underline underline-offset-4"
+            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             문의하기
           </Link>
