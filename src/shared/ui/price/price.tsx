@@ -45,7 +45,8 @@ export function Price({
 
   return (
     <div className={cn("flex flex-col gap-0.5", className)} {...props}>
-      <div className="flex items-baseline gap-1.5">
+      {/* 금액 가운데서 줄이 바뀌면 "26,000 / 원"처럼 읽힌다. 좁으면 원가만 아래로 내린다. */}
+      <div className="flex flex-wrap items-baseline gap-x-1.5 whitespace-nowrap">
         {discountRate > 0 && (
           <span className={cn("font-bold text-destructive", SIZE_CLASS[size])}>
             {discountRate}%

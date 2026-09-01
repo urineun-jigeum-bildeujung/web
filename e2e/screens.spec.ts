@@ -32,6 +32,7 @@ const ROUTES = [
   "/mypage/settings",
   "/compare",
   "/compare/select",
+  "/cart",
   "/payment",
   "/payment/address",
   "/payment/done",
