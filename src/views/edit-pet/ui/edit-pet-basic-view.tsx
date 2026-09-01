@@ -6,6 +6,7 @@
 "use client";
 
 import { useState } from "react";
+import { IoChevronForward } from "react-icons/io5";
 
 import { GENDER_OPTIONS, NEUTERED_OPTIONS } from "@/entities/pet";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
@@ -46,10 +47,15 @@ export function EditPetBasicView() {
 
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">어떤 견종인지 알려주세요</p>
-        {/* 품종 고르기는 온보딩과 같은 하위 화면을 쓴다. 라우터 구조 확정 후 잇는다. */}
-        <p className="flex min-h-11 items-center rounded-lg border border-input px-3 text-sm text-muted-foreground">
-          {SAVED.breed}
-        </p>
+        {/* 목록이 길어 별도 화면에서 고른다. 그 화면으로 가는 길은 라우터 구조 확정 후 잇는다. */}
+        <button
+          type="button"
+          disabled
+          className="flex min-h-11 items-center justify-between rounded-lg border border-input px-3 text-sm disabled:opacity-100"
+        >
+          <span className="text-foreground">{SAVED.breed}</span>
+          <IoChevronForward aria-hidden className="size-4 text-muted-foreground" />
+        </button>
       </div>
 
       <div className="flex flex-col gap-1.5">

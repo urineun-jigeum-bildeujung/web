@@ -3,9 +3,9 @@
 
 "use client";
 
-import { IoImageOutline } from "react-icons/io5";
+import { IoClose, IoImageOutline } from "react-icons/io5";
 
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
+import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 
 export type PetProductReview = {
   productName: string;
@@ -17,7 +17,7 @@ export type PetProductReview = {
 type ProductReviewSheetProps = {
   review: PetProductReview | null;
   onOpenChange: (open: boolean) => void;
-  /** 후기를 고치러 간다. 없으면 그 줄을 그리지 않는다. */
+  /** 후기를 고치러 간다. 없으면 잠긴 채로 보인다 — 시안에 있는 줄이라 지우지 않는다. */
   onEdit?: () => void;
 };
 
@@ -41,10 +41,17 @@ export function ProductReviewSheet({ review, onOpenChange, onEdit }: ProductRevi
   return (
     <Drawer open={review !== null} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerHeader>
-          {/* 제목은 상품 이름이지만 화면에는 사진이 그 자리를 대신한다 */}
+        <DrawerHeader className="p-0">
+          {/* 제목은 상품 이름이지만 화면에는 사진이 그 자리를 대신한다. */}
           <DrawerTitle className="sr-only">{review?.productName} 후기</DrawerTitle>
         </DrawerHeader>
+
+        <DrawerClose
+          aria-label="닫기"
+          className="absolute top-2 right-2 flex size-11 items-center justify-center text-muted-foreground"
+        >
+          <IoClose aria-hidden className="size-5" />
+        </DrawerClose>
 
         {review && (
           <div className="flex flex-col gap-4 px-4 pb-6">
@@ -60,15 +67,15 @@ export function ProductReviewSheet({ review, onOpenChange, onEdit }: ProductRevi
             <PointList title="이런 점이 좋았어요" points={review.goodPoints} />
             <PointList title="이런 점은 조금 아쉬워요" points={review.badPoints} />
 
-            {onEdit && (
-              <button
-                type="button"
-                onClick={onEdit}
-                className="min-h-11 text-sm text-muted-foreground underline underline-offset-4"
-              >
-                수정하기
-              </button>
-            )}
+            {/* 후기 수정 화면이 아직 없다. 시안에 있는 줄이라 지우지 않고 잠가 둔다. */}
+            <button
+              type="button"
+              onClick={onEdit}
+              disabled={!onEdit}
+              className="min-h-11 text-sm text-muted-foreground underline underline-offset-4 disabled:opacity-50"
+            >
+              수정하기
+            </button>
           </div>
         )}
       </DrawerContent>
