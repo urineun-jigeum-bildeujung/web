@@ -20,6 +20,7 @@ const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
 
 const MOCK = {
   orderNo: "20260829-1234567",
+  orderItemId: "mock-item-1",
   status: "shipping" as OrderStatus,
   productName: "상품명",
   option: "상품 옵션",
@@ -129,7 +130,7 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
             교환
           </Link>
           <Link
-            href={`/mypage/reviews/write?orderItemId=${orderId ?? "1"}-1`}
+            href={`/mypage/reviews/write?orderItemId=${MOCK.orderItemId}`}
             className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             리뷰 작성

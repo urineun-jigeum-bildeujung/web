@@ -10,8 +10,8 @@ export function SupportInquiriesView() {
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-8">
         <p className="text-sm text-muted-foreground">
-          문의 내역과 상태를 보여준다. 새 문의 작성은 외부 페이지로 연결된다. 디자인 확정 전 자리
-          표시 화면입니다.
+          문의 내역과 상태를 보여준다. 새 문의 작성 방식은 연동 정책 확정 후 연결한다. 디자인 확정
+          전 자리 표시 화면입니다.
         </p>
       </main>
     </div>

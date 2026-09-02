@@ -1,6 +1,6 @@
 # support-inquiries
 
-문의 내역과 상태를 보여준다. 새 문의 작성은 외부 페이지로 연결된다.
+문의 내역과 상태를 보여준다. 새 문의 작성 방식은 연동 정책 확정 후 연결한다.
 
 - **라우트**: `/mypage/support/inquiries` — `src/app/mypage/support/inquiries/page.tsx`
 - **조립**: `shared/ui/page-header`
