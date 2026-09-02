@@ -1,7 +1,8 @@
-// apiRequest 공통 fetch 래퍼 단위 테스트. 헤더 조립·성공 파싱·실패 throw를 검증한다.
+// apiRequest 공통 fetch 래퍼 단위 테스트. 헤더 조립·성공 파싱·실패 throw·401 재발급을 검증한다.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiError, apiRequest } from "./client";
+import { clearTokens, getRefreshToken, saveTokens } from "./token-store";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -63,5 +64,85 @@ describe("apiRequest", () => {
     stubFetch(new Response(null, { status: 204 }));
 
     await expect(apiRequest("/notifications/read-all")).resolves.toBeUndefined();
+  });
+});
+
+describe("apiRequest 인증", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clearTokens();
+  });
+
+  function stubAuthFetch() {
+    // 만료 토큰이면 401, 재발급 경로면 새 토큰 쌍, 새 토큰이면 성공을 돌려주는 백엔드 흉내
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith("/auths/token/refresh")) {
+        return Response.json({ accessToken: "access-2", refreshToken: "refresh-2" });
+      }
+      const auth = new Headers(init?.headers).get("Authorization");
+      if (auth === "Bearer access-2") {
+        return Response.json({ ok: true });
+      }
+      return new Response(null, { status: 401 });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("accessToken이 있으면 Authorization Bearer 헤더를 붙인다", async () => {
+    saveTokens({ accessToken: "access-1", refreshToken: "refresh-1" });
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/users/me");
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer access-1");
+  });
+
+  it("401이면 재발급 뒤 새 토큰으로 원 요청을 한 번 다시 보낸다", async () => {
+    saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
+    const fetchMock = stubAuthFetch();
+
+    await expect(apiRequest("/users/me")).resolves.toEqual({ ok: true });
+
+    const refreshCall = fetchMock.mock.calls.find(([url]) =>
+      (url as string).endsWith("/auths/token/refresh"),
+    ) as [string, RequestInit];
+    expect(refreshCall[1].body).toBe(JSON.stringify({ refreshToken: "refresh-1" }));
+    expect(getRefreshToken()).toBe("refresh-2");
+  });
+
+  it("동시에 여러 요청이 401을 받아도 재발급은 한 번만 호출된다", async () => {
+    saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
+    const fetchMock = stubAuthFetch();
+
+    await Promise.all([apiRequest("/cart"), apiRequest("/orders"), apiRequest("/users/me")]);
+
+    const refreshCalls = fetchMock.mock.calls.filter(([url]) =>
+      (url as string).endsWith("/auths/token/refresh"),
+    );
+    expect(refreshCalls).toHaveLength(1);
+  });
+
+  it("재발급도 실패하면 토큰을 지우고 원래 401 에러를 던진다", async () => {
+    saveTokens({ accessToken: "expired", refreshToken: "rotated-old" });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const request = apiRequest("/users/me");
+
+    await expect(request).rejects.toBeInstanceOf(ApiError);
+    await expect(request).rejects.toMatchObject({ status: 401 });
+    expect(getRefreshToken()).toBeNull();
+    // 원 요청 1회 + 재발급 1회. 재발급 실패 후 원 요청을 다시 보내지 않는다.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("refreshToken이 없으면 재발급 시도 없이 401을 그대로 던진다", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiRequest("/users/me")).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
