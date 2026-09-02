@@ -52,7 +52,7 @@ const SCREEN_GROUPS = [
       { href: "/mypage/service/terms", label: "서비스 이용약관", hint: "IA_v0.6" },
       { href: "/mypage/service/privacy", label: "개인정보 처리방침", hint: "IA_v0.6" },
       { href: "/mypage/settings", label: "설정", hint: "mypa_081" },
-      { href: "/mypage/notifications", label: "알림", hint: "시안 없음" },
+      { href: "/mypage/notifications", label: "알림", hint: "noti_001" },
     ],
   },
   {
