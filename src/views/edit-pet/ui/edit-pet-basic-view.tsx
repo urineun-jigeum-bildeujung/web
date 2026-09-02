@@ -5,12 +5,12 @@
 
 "use client";
 
-import Link from "next/link";
 import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoChevronForward } from "react-icons/io5";
 
-import { GENDER_OPTIONS, NEUTERED_OPTIONS } from "@/entities/pet";
+import { BreedPickerStep, GENDER_OPTIONS, NEUTERED_OPTIONS } from "@/entities/pet";
+import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
@@ -28,14 +28,31 @@ const SAVED = {
 };
 
 export function EditPetBasicView() {
-  // 품종 선택 화면이 고른 값을 주소창으로 돌려준다. 없으면 저장된 값을 쓴다.
-  const [pickedBreed] = useQueryState("breed");
-  const breed = pickedBreed ?? SAVED.breed;
+  // 품종 고르기는 별도 라우트로 나가지 않는다. 나가면 이 화면이 언마운트되어
+  // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
+  const [picking, setPicking] = useQueryState("picking");
+  const [breed, setBreed] = useState(SAVED.breed);
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
   const [gender, setGender] = useState(SAVED.gender);
   const [neutered, setNeutered] = useState(SAVED.neutered);
+
+  if (picking === "breed") {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <PageHeader title="품종 선택" />
+        <BreedPickerStep
+          value={breed}
+          onConfirm={(next) => {
+            setBreed(next);
+            void setPicking(null);
+          }}
+          onCancel={() => void setPicking(null)}
+        />
+      </div>
+    );
+  }
 
   return (
     <EditPetScreen submitDisabled={!name.trim()}>
@@ -52,15 +69,16 @@ export function EditPetBasicView() {
 
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">어떤 견종인지 알려주세요</p>
-        {/* 목록이 길어 별도 화면에서 고른다 */}
-        <Link
-          href={`/mypage/pets/breed?value=${encodeURIComponent(breed)}`}
+        {/* 목록이 길어 별도 단계에서 고른다 */}
+        <button
+          type="button"
+          onClick={() => void setPicking("breed")}
           aria-label={`품종 고르기. 지금은 ${breed}`}
           className="flex min-h-11 items-center justify-between rounded-lg border border-input px-3 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className="text-foreground">{breed}</span>
           <IoChevronForward aria-hidden className="size-4 text-muted-foreground" />
-        </Link>
+        </button>
       </div>
 
       <div className="flex flex-col gap-1.5">

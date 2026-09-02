@@ -35,4 +35,6 @@
 
 ## 아직 없는 것
 
-저장된 값이 목 데이터다. 견종은 `/mypage/pets/breed`에서 고르고 `?breed=`·`?species=`로 돌아온다 — 상세는 [select-breed](../select-breed/README.md)를 본다.
+저장된 값이 목 데이터다.
+
+품종은 `?picking=breed`로 같은 화면 안에서 고른다. 별도 라우트로 나가면 이 화면이 언마운트되어 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩이 단계를 쿼리로 넘기는 것과 같은 이유다. 목록을 그리는 `BreedPickerStep`은 `entities/pet`에 있어 온보딩과 함께 쓴다.
