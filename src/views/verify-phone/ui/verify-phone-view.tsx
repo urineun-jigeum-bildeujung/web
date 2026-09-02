@@ -1,8 +1,9 @@
 // 휴대폰 번호 인증. 통신사를 고르고 번호를 받아 인증번호로 확인한다.
 // 와이어프레임 기준(mypa_212, 통신사선택, 번호입력, 인증, 완료)이라 디자인 확정 시 바뀔 수 있다.
 //
-// 인증 수단이 아직 정해지지 않았다. 화면과 흐름만 만들고 실제 발송은 붙이지 않는다.
-// 시안의 통신사 선택은 본인확인 서비스 형태인데, 그것은 사업자등록이 필요하고 건당 과금이다.
+// MVP에서는 목업으로 간다. 인증을 누르면 번호가 채워지고 실제 문자는 가지 않는다.
+// 문자 발송은 건당 과금이고 무료 지원은 사업자등록이 있어야 하는데 우리는 없다.
+// 화면과 흐름은 그대로 두라는 것이 PM 방침이다 — 기능 명세에는 남기고 구현만 덜어낸다.
 
 "use client";
 
@@ -15,6 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
 const CARRIERS = ["SKT", "KT", "LG U+", "SKT 알뜰폰", "KT 알뜰폰", "LG U+ 알뜰폰"];
+
+/** 문자가 가지 않으므로 받은 것처럼 채워 넣는 값. 시안(`mypa_212`)에 적힌 번호다. */
+const MOCK_CODE = "45621";
 
 export function VerifyPhoneView() {
   const router = useRouter();
@@ -58,7 +62,11 @@ export function VerifyPhoneView() {
           variant="outline"
           className="min-h-11 shrink-0"
           disabled={!canRequestCode}
-          onClick={() => setCodeSent(true)}
+          onClick={() => {
+            setCodeSent(true);
+            // 문자가 가지 않으니 받은 것처럼 채워 준다
+            setCode(MOCK_CODE);
+          }}
         >
           인증
         </Button>

@@ -230,3 +230,19 @@ test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다",
   await page.getByRole("button", { name: "이전 화면으로" }).click();
   await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toBeVisible();
 });
+
+// 문자 발송은 붙이지 않았다. 인증을 누르면 번호가 채워지는지 본다(#85).
+test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page }) => {
+  await page.goto("/mypage/info/phone", { waitUntil: "networkidle" });
+
+  await page.getByLabel("통신사").click();
+  await page.getByRole("option", { name: "KT", exact: true }).click();
+  await page.getByLabel("휴대폰 번호").fill("010-1234-5678");
+  await page.getByRole("button", { name: "인증" }).click();
+
+  await expect(page.getByLabel("인증 번호")).not.toHaveValue("");
+
+  await page.getByRole("button", { name: "확인" }).click();
+  await expect(page.getByText("인증이 완료됐어요.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "입력 완료" })).toBeEnabled();
+});
