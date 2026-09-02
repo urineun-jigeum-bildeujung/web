@@ -42,12 +42,15 @@ const MOCK_PRODUCTS = Array.from({ length: 4 }, (_, index) => ({
   badCount: 1,
 }));
 
-const MOCK_REVIEW: PetProductReview = {
-  id: "1",
-  productName: "상품명",
-  goodPoints: ["좋은 점 1", "좋은 점 2", "좋은 점 3"],
-  badPoints: ["아쉬운 점 1", "아쉬운 점 2", "아쉬운 점 3"],
-};
+/** 후기는 제품마다 다르다. 하나를 돌려쓰면 어느 것을 눌러도 같은 상세로 간다. */
+function mockReview(productId: string): PetProductReview {
+  return {
+    id: productId,
+    productName: "상품명",
+    goodPoints: ["좋은 점 1", "좋은 점 2", "좋은 점 3"],
+    badPoints: ["아쉬운 점 1", "아쉬운 점 2", "아쉬운 점 3"],
+  };
+}
 
 /** 요약 줄. 고칠 화면이 있으면 눌러서 넘어간다 */
 function SummaryRow({
@@ -170,7 +173,7 @@ export function PetProfileView() {
               <p className="text-xs text-muted-foreground">구매일 {product.boughtAt}</p>
               <button
                 type="button"
-                onClick={() => setReview(MOCK_REVIEW)}
+                onClick={() => setReview(mockReview(product.id))}
                 className="rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 <ProductSummary

@@ -74,7 +74,6 @@ views/
 | `pet-profile` | `/mypage/pets` | 반려동물 정보와 제품 관리 (탭) |
 | `edit-pet` | `/mypage/pets/{basic,body,health}` | 아이 정보 항목별 수정 |
 | `add-pet` | `/mypage/pets/new` | 새 아이 등록 도입 |
-| `select-breed` | `/mypage/pets/breed` | 품종 고르기 (정보 수정에서 들어감) |
 | `product-compare` | `/compare` | 상품 비교 |
 | `select-compare-product` | `/compare/select` | 비교할 상품 고르기 |
 | `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |

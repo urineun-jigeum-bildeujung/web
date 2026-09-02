@@ -8,7 +8,12 @@ import { IoClose } from "react-icons/io5";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
-import { EMPTY_PROFILE_DRAFT, type PetProfileDraft, type PetSpecies } from "@/entities/pet";
+import {
+  BreedPickerStep,
+  EMPTY_PROFILE_DRAFT,
+  type PetProfileDraft,
+  type PetSpecies,
+} from "@/entities/pet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,7 +27,6 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
 import { BasicStep } from "./steps/basic-step";
-import { BreedStep } from "./steps/breed-step";
 import { DetailStep } from "./steps/detail-step";
 import { DoneStep } from "./steps/done-step";
 import { HealthStep } from "./steps/health-step";
@@ -94,7 +98,7 @@ export function OnboardingView() {
       )}
 
       {step === "breed" && (
-        <BreedStep
+        <BreedPickerStep
           value={draft.breed}
           onConfirm={pickBreed}
           onCancel={() => void setStep("detail")}

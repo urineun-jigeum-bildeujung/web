@@ -24,7 +24,7 @@ const ROUTES = [
   "/mypage/pets/body",
   "/mypage/pets/health",
   "/mypage/pets/new",
-  "/mypage/pets/breed",
+  "/mypage/pets/basic?picking=breed",
   "/mypage/restock",
   "/mypage/recently-viewed",
   "/mypage/reviews",
@@ -188,4 +188,33 @@ test.describe("넓은 화면", () => {
     );
     expect(sheetWidth).toBe(screenWidth);
   });
+});
+
+// 화면을 오갈 때 입력하던 값이 남는지 본다. 별도 라우트로 나가면 언마운트로 날아간다.
+test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ page }) => {
+  await page.goto("/mypage/pets/basic", { waitUntil: "networkidle" });
+
+  const name = page.getByRole("textbox", { name: "아이의 이름을 알려주세요" });
+  await name.fill("보리");
+
+  await page.getByRole("button", { name: /품종 고르기/ }).click();
+  await page.getByRole("button", { name: "코리안 숏헤어 (코숏)" }).click();
+  await page.getByRole("button", { name: "선택 완료" }).click();
+
+  await expect(page.getByRole("button", { name: /코리안 숏헤어/ })).toBeVisible();
+  await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toHaveValue("보리");
+});
+
+test("아이 후기의 수정하기가 그 후기의 상세로 간다", async ({ page }) => {
+  await page.goto("/mypage/pets?tab=products", { waitUntil: "networkidle" });
+
+  // 두 번째 제품을 열어도 첫 후기로 가지 않아야 한다
+  await page
+    .getByRole("button", { name: /후기 보기|상품명/ })
+    .nth(1)
+    .click();
+  await expect(page.getByRole("link", { name: "수정하기" })).toHaveAttribute(
+    "href",
+    "/mypage/reviews/2",
+  );
 });
