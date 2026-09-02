@@ -218,3 +218,15 @@ test("아이 후기의 수정하기가 그 후기의 상세로 간다", async ({
     "/mypage/reviews/2",
   );
 });
+
+// 상단 뒤로가기가 화면을 벗어나면 안 된다. nuqs가 쿼리를 replace로 넣어 router.back()이 이 화면을 지나친다.
+test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다", async ({ page }) => {
+  await page.goto("/mypage/pets", { waitUntil: "networkidle" });
+  await page.goto("/mypage/pets/basic", { waitUntil: "networkidle" });
+
+  await page.getByRole("button", { name: /품종 고르기/ }).click();
+  await expect(page.getByRole("heading", { name: "품종 선택" })).toBeVisible();
+
+  await page.getByRole("button", { name: "이전 화면으로" }).click();
+  await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toBeVisible();
+});
