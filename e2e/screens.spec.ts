@@ -24,6 +24,7 @@ const ROUTES = [
   "/mypage/pets/body",
   "/mypage/pets/health",
   "/mypage/pets/new",
+  "/mypage/pets/breed",
   "/mypage/restock",
   "/mypage/recently-viewed",
   "/mypage/reviews",

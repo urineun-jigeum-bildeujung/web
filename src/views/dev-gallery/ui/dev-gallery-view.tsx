@@ -82,6 +82,7 @@ const COMPARE_ROWS = [
 ];
 
 const REVIEW: PetProductReview = {
+  id: "1",
   productName: "연어 사료 1.2kg",
   goodPoints: ["잘 먹어요", "변 상태가 좋아졌어요"],
   badPoints: ["알갱이가 조금 커요"],

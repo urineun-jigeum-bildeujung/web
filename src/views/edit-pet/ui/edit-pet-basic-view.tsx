@@ -5,6 +5,8 @@
 
 "use client";
 
+import Link from "next/link";
+import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoChevronForward } from "react-icons/io5";
 
@@ -26,6 +28,9 @@ const SAVED = {
 };
 
 export function EditPetBasicView() {
+  // 품종 선택 화면이 고른 값을 주소창으로 돌려준다. 없으면 저장된 값을 쓴다.
+  const [pickedBreed] = useQueryState("breed");
+  const breed = pickedBreed ?? SAVED.breed;
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
@@ -47,15 +52,15 @@ export function EditPetBasicView() {
 
       <div className="flex flex-col gap-1.5">
         <p className="text-sm font-medium text-foreground">어떤 견종인지 알려주세요</p>
-        {/* 목록이 길어 별도 화면에서 고른다. 그 화면으로 가는 길은 라우터 구조 확정 후 잇는다. */}
-        <button
-          type="button"
-          disabled
-          className="flex min-h-11 items-center justify-between rounded-lg border border-input px-3 text-sm disabled:opacity-100"
+        {/* 목록이 길어 별도 화면에서 고른다 */}
+        <Link
+          href={`/mypage/pets/breed?value=${encodeURIComponent(breed)}`}
+          aria-label={`품종 고르기. 지금은 ${breed}`}
+          className="flex min-h-11 items-center justify-between rounded-lg border border-input px-3 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <span className="text-foreground">{SAVED.breed}</span>
+          <span className="text-foreground">{breed}</span>
           <IoChevronForward aria-hidden className="size-4 text-muted-foreground" />
-        </button>
+        </Link>
       </div>
 
       <div className="flex flex-col gap-1.5">
