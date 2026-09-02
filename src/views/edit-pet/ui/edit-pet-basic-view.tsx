@@ -41,7 +41,10 @@ export function EditPetBasicView() {
   if (picking === "breed") {
     return (
       <div className="flex min-h-dvh flex-col">
-        <PageHeader title="품종 선택" />
+        {/* 상단 뒤로가기도 하단 "돌아가기"와 같은 곳으로 가야 한다.
+            기본 동작인 router.back()은 이 화면을 아예 벗어난다 — nuqs가 쿼리를
+            replace로 넣어 picking이 히스토리에 쌓이지 않기 때문이다. */}
+        <PageHeader title="품종 선택" onLeadingClick={() => void setPicking(null)} />
         <BreedPickerStep
           value={breed}
           onConfirm={(next) => {
