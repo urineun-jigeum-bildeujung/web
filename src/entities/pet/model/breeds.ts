@@ -111,3 +111,8 @@ export const EMPTY_PROFILE_DRAFT: PetProfileDraft = {
   allergy: "",
   noAllergy: false,
 };
+
+/** 고른 품종이 어느 종의 것인지 되찾는다. 종을 강아지로 고정하면 고양이 선택이 뒤집힌다 */
+export function findSpecies(breed: string): PetSpecies {
+  return PET_SPECIES.find((species) => BREEDS[species].includes(breed)) ?? "dog";
+}

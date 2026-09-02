@@ -43,6 +43,7 @@ const MOCK_PRODUCTS = Array.from({ length: 4 }, (_, index) => ({
 }));
 
 const MOCK_REVIEW: PetProductReview = {
+  id: "1",
   productName: "상품명",
   goodPoints: ["좋은 점 1", "좋은 점 2", "좋은 점 3"],
   badPoints: ["아쉬운 점 1", "아쉬운 점 2", "아쉬운 점 3"],

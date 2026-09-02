@@ -36,6 +36,7 @@ const SCREEN_GROUPS = [
       { href: "/mypage/pets/body", label: "아이 체형 수정", hint: "mypa_221" },
       { href: "/mypage/pets/health", label: "아이 건강 수정", hint: "mypa_321" },
       { href: "/mypage/pets/new", label: "새 아이 등록", hint: "mypa_021_등록" },
+      { href: "/mypage/pets/breed", label: "품종 고르기", hint: "onbo_013" },
       { href: "/mypage/restock", label: "재입고 알림", hint: "mypa_031" },
       { href: "/mypage/recently-viewed", label: "최근 본 상품", hint: "IA_v0.6" },
       { href: "/mypage/reviews", label: "나의 상품 후기", hint: "mypa_041" },

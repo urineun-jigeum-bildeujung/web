@@ -4,11 +4,14 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 
 import { Drawer, DrawerClose, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 
 export type PetProductReview = {
+  /** 리뷰 상세로 넘어갈 때 쓴다 */
+  id: string;
   productName: string;
   imageUrl?: string;
   goodPoints: string[];
@@ -18,8 +21,6 @@ export type PetProductReview = {
 type ProductReviewSheetProps = {
   review: PetProductReview | null;
   onOpenChange: (open: boolean) => void;
-  /** 후기를 고치러 간다. 없으면 잠긴 채로 보인다 — 시안에 있는 줄이라 지우지 않는다. */
-  onEdit?: () => void;
 };
 
 function PointList({ title, points }: { title: string; points: string[] }) {
@@ -38,7 +39,7 @@ function PointList({ title, points }: { title: string; points: string[] }) {
   );
 }
 
-export function ProductReviewSheet({ review, onOpenChange, onEdit }: ProductReviewSheetProps) {
+export function ProductReviewSheet({ review, onOpenChange }: ProductReviewSheetProps) {
   return (
     <Drawer open={review !== null} onOpenChange={onOpenChange}>
       <DrawerContent>
@@ -79,15 +80,13 @@ export function ProductReviewSheet({ review, onOpenChange, onEdit }: ProductRevi
             <PointList title="이런 점이 좋았어요" points={review.goodPoints} />
             <PointList title="이런 점은 조금 아쉬워요" points={review.badPoints} />
 
-            {/* 후기 수정 화면이 아직 없다. 시안에 있는 줄이라 지우지 않고 잠가 둔다. */}
-            <button
-              type="button"
-              onClick={onEdit}
-              disabled={!onEdit}
-              className="min-h-11 text-sm text-muted-foreground underline underline-offset-4 disabled:opacity-50"
+            {/* 고치는 것은 리뷰 상세에서 한다. 이동이므로 버튼이 아니라 링크다. */}
+            <Link
+              href={`/mypage/reviews/${review.id}`}
+              className="flex min-h-11 items-center justify-center text-sm text-muted-foreground underline underline-offset-4"
             >
               수정하기
-            </button>
+            </Link>
           </div>
         )}
       </DrawerContent>
