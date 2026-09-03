@@ -6,6 +6,7 @@
 
 "use client";
 
+import Image from "next/image";
 import { useEffect, useId, useMemo } from "react";
 import { IoAdd, IoClose } from "react-icons/io5";
 
@@ -35,14 +36,21 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
     <div className={cn("flex flex-wrap gap-2", className)}>
       {files.map((file, index) => (
         <div key={`${file.name}-${file.lastModified}`} className="relative">
-          {/* 미리보기라 next/image의 최적화가 필요 없고, 크기를 아는 blob 주소다 */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previews[index]} alt="" className="size-20 rounded-lg bg-muted object-cover" />
+          {/* blob: 주소는 next/image가 알아서 최적화를 건너뛴다. 설정할 것이 없다 */}
+          <Image
+            src={previews[index]}
+            alt={`첨부한 사진 ${index + 1}`}
+            width={80}
+            height={80}
+            className="size-20 rounded-lg bg-muted object-cover"
+          />
           <button
             type="button"
             aria-label={`${index + 1}번째 사진 빼기`}
             onClick={() => onChange(files.filter((_, at) => at !== index))}
-            className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full bg-foreground text-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            // 보이는 크기는 24px로 두되 누를 수 있는 자리는 44px로 넓힌다.
+            // 사진 위에 얹히는 자리라 동그라미를 키우면 사진을 가린다
+            className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full bg-foreground text-background after:absolute after:-inset-2.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <IoClose aria-hidden className="size-4" />
           </button>
@@ -54,10 +62,12 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
         <>
           <label
             htmlFor={inputId}
+            // 숫자만 읽히면 무엇을 하는 자리인지 알 수 없어 이름을 따로 준다
+            aria-label={`사진 추가 (${files.length}/${max})`}
             className="flex size-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-muted-foreground focus-within:ring-2 focus-within:ring-ring"
           >
             <IoAdd aria-hidden className="size-5" />
-            <span className="text-xs">
+            <span aria-hidden className="text-xs">
               {files.length}/{max}
             </span>
           </label>

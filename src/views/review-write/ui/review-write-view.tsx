@@ -167,7 +167,9 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
             <ChipSelect
               label={item.label}
               options={[...item.options]}
-              value={responses[item.key]}
+              // 처음부터 controlled로 잡는다. undefined로 시작하면 고르는 순간
+              // uncontrolled에서 controlled로 바뀌었다고 Radix가 경고한다
+              value={responses[item.key] ?? ""}
               onValueChange={(value) => setResponses((prev) => ({ ...prev, [item.key]: value }))}
             />
           </section>
