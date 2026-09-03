@@ -33,7 +33,9 @@ export function BodyTypeGuide() {
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="gap-3">
+        {/* 다섯 단계를 모두 담아 세로로 길다. 낮은 화면(가로 모바일)에서는
+            내용이 위아래로 잘리고 스크롤도 되지 않아 여기서 높이를 제한한다. */}
+        <DialogContent className="max-h-[85dvh] gap-3 overflow-y-auto">
           <DialogHeader className="gap-2">
             <DialogTitle className="text-left text-base">bcs란?</DialogTitle>
             <DialogDescription className="text-left text-sm">
