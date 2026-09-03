@@ -2,12 +2,20 @@
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "./token-store";
 
 // 실패 응답 규격: Spring 표준 ProblemDetail(RFC 9457). timestamp·traceId는 응답에 포함되지 않는다.
+// errorCode·fieldErrors는 백엔드 common-core GlobalExceptionHandler가 붙이는 확장 필드다.
+export interface ProblemFieldError {
+  field: string;
+  reason: string;
+}
+
 export interface ProblemDetail {
   type?: string;
   title?: string;
   status?: number;
   detail?: string;
   instance?: string;
+  errorCode?: string;
+  fieldErrors?: ProblemFieldError[];
 }
 
 export class ApiError extends Error {
