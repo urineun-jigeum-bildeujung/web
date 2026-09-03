@@ -43,7 +43,9 @@ export function ChipSelect({
   return (
     <RadioGroup
       aria-label={label}
-      value={value}
+      // 아직 안 고른 상태를 undefined로 넘기면 Radix가 uncontrolled로 보고,
+      // 고르는 순간 controlled로 바뀌었다고 경고한다. 빈 문자열은 "고른 것 없음"으로 읽힌다
+      value={value ?? ""}
       onValueChange={onValueChange}
       className={cn("grid gap-2", className)}
       style={{ gridTemplateColumns: `repeat(${perRow}, minmax(0, 1fr))` }}
