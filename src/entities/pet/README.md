@@ -9,7 +9,8 @@
 | `ui/breed-picker.tsx` | 종별로 나눈 품종 선택 목록 |
 | `ui/breed-picker-step.tsx` | 품종 고르기 화면. 온보딩과 정보 수정이 함께 쓴다 |
 | `ui/breed-picker-step.test.tsx` | 고른 값이 종과 함께 넘어가는지 본다 |
-| `ui/pet-switcher.tsx` | 화면 아래 아이 고르기 줄. 마지막 칸은 새 아이 자리 (`mypa_021`) |
+| `ui/pet-switcher.tsx` | 아이 고르기 줄. 마지막 칸은 새 아이 자리. `withNames`로 이름을 함께 보인다 |
+| `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`메인_상태 체크 바텀시트`) |
 | `ui/product-review-sheet.tsx` | 아이가 먹은 제품의 후기 시트 (`mypa_021_상품클릭시`) |
 | `model/breeds.ts` | 품종 목록, 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입 |
 | `index.ts` | 공개 API |

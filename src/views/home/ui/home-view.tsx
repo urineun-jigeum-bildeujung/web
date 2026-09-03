@@ -1,145 +1,392 @@
-// 홈 화면. 디자인 확정 전까지 만들어 둔 화면으로 들어가는 입구 역할을 한다.
-// 실제 메인 화면(시안의 메인)이 만들어지면 이 화면은 교체된다.
+// 메인 화면. 전체 탭은 골라주는 화면이고, 종류 탭은 상품 목록이다.
+// 와이어프레임 기준(메인, 메인_사료 탭, 메인_타임딜 없을 때)이라 디자인 확정 시 바뀔 수 있다.
+
+"use client";
 
 import Link from "next/link";
-import { IoChevronForward } from "react-icons/io5";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useState } from "react";
+import {
+  IoCartOutline,
+  IoHeartOutline,
+  IoNotificationsOutline,
+  IoSearchOutline,
+  IoTimeOutline,
+} from "react-icons/io5";
 
-import { ThemeToggle } from "@/features/toggle-theme";
+import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
+import { MatchScoreBadge } from "@/entities/product";
+import { Button } from "@/shared/ui/button";
+import { Countdown } from "@/shared/ui/countdown/countdown";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
+import { Rating } from "@/shared/ui/rating/rating";
+import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { BottomNav } from "@/widgets/bottom-nav";
 
-/** 만들어 둔 화면 목록. 새 화면을 만들면 여기에 추가한다 */
-const SCREEN_GROUPS = [
+const CATEGORIES = ["all", "food", "snack", "supplement"] as const;
+const CATEGORY_LABEL: Record<(typeof CATEGORIES)[number], string> = {
+  all: "전체",
+  food: "사료",
+  snack: "간식",
+  supplement: "영양제",
+};
+
+type Sort = { value: string; label: string; hint?: string };
+
+/** 시안 메인_사료 탭의 정렬 목록. 추천순이 기본이다 */
+const SORTS: Sort[] = [
+  { value: "recommend", label: "추천순", hint: "AI 추천 로직 · 기본" },
+  { value: "popular", label: "인기순", hint: "판매순" },
+  { value: "reviews", label: "리뷰 많은 순" },
+  { value: "rating-high", label: "리뷰 높은 순" },
+  { value: "rating-low", label: "리뷰 낮은 순" },
+];
+const SORT_VALUES = ["recommend", "popular", "reviews", "rating-high", "rating-low"] as const;
+
+/** API 연동 전까지 화면 확인용 값 */
+const MOCK_PETS = [
+  { id: "1", name: "소리" },
+  { id: "2", name: "냥이" },
+];
+
+const MOCK_PRODUCTS = Array.from({ length: 6 }, (_, index) => ({
+  id: String(index + 1),
+  name: index % 2 === 0 ? "그레인프리 연어 사료 2kg" : "저자극 덴탈껌 14개입",
+  price: index % 2 === 0 ? 31200 : 10800,
+  originalPrice: index % 2 === 0 ? 38000 : 13100,
+  dailyCost: index % 2 === 0 ? 1050 : 771,
+  dailyLabel: index % 2 === 0 ? "하루 예상 급여비" : "1개당",
+  rating: index % 2 === 0 ? 4.8 : 4.9,
+  reviewCount: index % 2 === 0 ? 108 : 203,
+  matchScore: 92 - index * 6,
+}));
+
+const MOCK_RECENT: FeedbackTarget[] = [
   {
-    title: "온보딩",
-    note: "단계는 주소창의 step 값으로 바로 열 수 있다",
-    items: [
-      { href: "/onboarding", label: "도입부", hint: "onbo_001" },
-      { href: "/onboarding?step=basic", label: "이름·성별·중성화", hint: "onbo_002" },
-      { href: "/onboarding?step=detail", label: "품종·나이·체구", hint: "onbo_003" },
-      { href: "/onboarding?step=breed", label: "품종 선택", hint: "onbo_013" },
-      { href: "/onboarding?step=health", label: "염려질환·알러지", hint: "onbo_004" },
-      { href: "/onboarding?step=done", label: "완료", hint: "onbo_005" },
-    ],
+    productId: "1",
+    productName: "저자극 덴탈껌 14개입",
+    sinceLabel: "구매 후 6일",
+    countLabel: "3번째 구매",
   },
   {
-    title: "마이페이지",
-    items: [
-      { href: "/mypage", label: "마이페이지 홈", hint: "mypa_001" },
-      { href: "/mypage/info", label: "내 정보", hint: "mypa_011" },
-      { href: "/mypage/info/nickname", label: "닉네임 변경", hint: "mypa_111" },
-      { href: "/mypage/info/phone", label: "휴대폰 인증", hint: "mypa_212" },
-      { href: "/mypage/address", label: "배송지 관리", hint: "IA_v0.6" },
-      { href: "/mypage/address/new", label: "배송지 추가", hint: "mypa_311" },
-      { href: "/mypage/address/search", label: "주소 검색", hint: "mypa_312" },
-      { href: "/mypage/pets", label: "반려동물 프로필", hint: "mypa_021" },
-      { href: "/mypage/pets/basic", label: "아이 정보 수정", hint: "mypa_121" },
-      { href: "/mypage/pets/body", label: "아이 체형 수정", hint: "mypa_221" },
-      { href: "/mypage/pets/health", label: "아이 건강 수정", hint: "mypa_321" },
-      { href: "/mypage/pets/new", label: "새 아이 등록", hint: "mypa_021_등록" },
-      { href: "/mypage/restock", label: "재입고 알림", hint: "mypa_031" },
-      { href: "/mypage/recently-viewed", label: "최근 본 상품", hint: "IA_v0.6" },
-      { href: "/mypage/reviews", label: "나의 상품 후기", hint: "mypa_041" },
-      { href: "/mypage/reviews/write", label: "리뷰 작성", hint: "IA_v0.6" },
-      { href: "/mypage/reviews/1", label: "리뷰 상세", hint: "IA_v0.6" },
-      { href: "/mypage/payment", label: "결제 수단 관리", hint: "mypa_051" },
-      { href: "/mypage/orders", label: "주문·배송 확인", hint: "mypa_061" },
-      { href: "/mypage/orders/1", label: "주문 상세", hint: "mypa_161" },
-      { href: "/mypage/orders/1/claim?type=cancel", label: "취소·반품·교환", hint: "IA_v0.6" },
-      { href: "/mypage/support", label: "고객지원", hint: "mypa_071" },
-      { href: "/mypage/support/inquiries", label: "1:1 문의", hint: "IA_v0.6" },
-      { href: "/mypage/support/notices", label: "공지사항", hint: "IA_v0.6" },
-      { href: "/mypage/service", label: "서비스 안내", hint: "IA_v0.6" },
-      { href: "/mypage/service/terms", label: "서비스 이용약관", hint: "IA_v0.6" },
-      { href: "/mypage/service/privacy", label: "개인정보 처리방침", hint: "IA_v0.6" },
-      { href: "/mypage/settings", label: "설정", hint: "mypa_081" },
-      { href: "/mypage/notifications", label: "알림", hint: "noti_001" },
-    ],
-  },
-  {
-    title: "쇼핑",
-    note: "IA 기준으로 만든 자리 표시. 아직 와이어프레임이 없다",
-    items: [
-      { href: "/login", label: "로그인", hint: "LOGN_001" },
-      { href: "/signup", label: "회원가입", hint: "SNIN_001" },
-      { href: "/likes", label: "좋아요", hint: "IA_v0.6" },
-      { href: "/deals", label: "타임딜", hint: "MAIN_011" },
-      { href: "/search", label: "검색", hint: "SRCH_001" },
-      { href: "/recommendations", label: "추천", hint: "RCMD_001" },
-      { href: "/products/1", label: "상품 상세", hint: "SRCH_111" },
-      { href: "/products/1/reviews", label: "상품 리뷰", hint: "IA_v0.6" },
-    ],
-  },
-  {
-    title: "상품 비교",
-    items: [
-      { href: "/compare", label: "상품 비교", hint: "comp_001" },
-      { href: "/compare/select", label: "비교할 상품 고르기", hint: "comp_011" },
-    ],
-  },
-  {
-    title: "장바구니",
-    // 옵션 변경과 삭제 확인은 같은 화면의 상태라 라우트를 나누지 않았다
-    items: [{ href: "/cart", label: "장바구니", hint: "cart_001" }],
-  },
-  {
-    title: "결제",
-    items: [
-      { href: "/payment", label: "결제하기", hint: "paym_001" },
-      { href: "/payment/address", label: "배송지 설정", hint: "paym_011" },
-      { href: "/payment/done", label: "주문 완료", hint: "paym_002" },
-    ],
-  },
-  {
-    title: "개발용",
-    items: [{ href: "/dev", label: "공용 컴포넌트 갤러리", hint: "프로덕션에서는 열리지 않음" }],
+    productId: "2",
+    productName: "그레인프리 연어 사료 2kg",
+    sinceLabel: "구매 후 12일",
+    countLabel: "2번째 구매",
   },
 ];
 
+/** 타임딜 종료 시각. 실제로는 서버가 준다 */
+const DEAL_ENDS_AT = new Date(Date.now() + 11 * 3600_000 + 28 * 60_000 + 43_000);
+
+function SectionTitle({ children, href }: { children: React.ReactNode; href?: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <h2 className="text-base font-bold text-foreground">{children}</h2>
+      {href && (
+        <Link
+          href={href}
+          className="flex min-h-11 items-center text-xs text-muted-foreground underline underline-offset-4"
+        >
+          더보기
+        </Link>
+      )}
+    </div>
+  );
+}
+
 export function HomeView() {
+  const [category, setCategory] = useQueryState(
+    "category",
+    parseAsStringLiteral(CATEGORIES).withDefault("all"),
+  );
+  const [sort, setSort] = useQueryState(
+    "sort",
+    parseAsStringLiteral(SORT_VALUES).withDefault("recommend"),
+  );
+  const [petId, setPetId] = useState(MOCK_PETS[0].id);
+  const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
+  const [dealOver, setDealOver] = useState(false);
+
+  const pet = MOCK_PETS.find((item) => item.id === petId) ?? MOCK_PETS[0];
+
   return (
     <div className="flex min-h-dvh flex-col">
-      <main className="flex flex-1 flex-col px-4 pb-12">
-        <div className="flex items-start justify-between gap-2 pt-6">
-          <div className="flex flex-col gap-1">
-            <p className="text-sm text-muted-foreground">소비량 예측형 스마트 구독 커머스</p>
-            <h1 className="text-3xl font-bold tracking-tight">골라주개냥</h1>
-            <p className="text-sm text-muted-foreground">
-              고민은 줄이고, 우리 애한테 맞게 골라주개냥
-            </p>
-          </div>
-          <ThemeToggle />
-        </div>
+      <header className="flex items-center justify-between px-4 py-2">
+        <p className="text-lg font-bold text-brand">골라주개냥</p>
+        <nav aria-label="바로 가기" className="flex items-center">
+          <Link
+            href="/search"
+            aria-label="검색"
+            className="flex size-11 items-center justify-center"
+          >
+            <IoSearchOutline aria-hidden className="size-6" />
+          </Link>
+          <Link
+            href="/mypage/notifications"
+            aria-label="알림"
+            className="flex size-11 items-center justify-center"
+          >
+            <IoNotificationsOutline aria-hidden className="size-6" />
+          </Link>
+          <Link
+            href="/cart"
+            aria-label="장바구니에 5개"
+            className="relative flex size-11 items-center justify-center"
+          >
+            <IoCartOutline aria-hidden className="size-6" />
+            <span
+              aria-hidden
+              className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-brand text-[10px] text-brand-foreground"
+            >
+              5
+            </span>
+          </Link>
+        </nav>
+      </header>
 
-        <p className="mt-4 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
-          디자인 확정 전이라 이 화면이 임시 입구입니다. 아래에서 만들어 둔 화면으로 들어갑니다.
-        </p>
+      {/* 종류를 고르는 줄. 탭처럼 보이지만 고르면 화면 구성이 통째로 바뀐다 */}
+      <div role="tablist" aria-label="상품 종류" className="flex gap-4 border-b border-border px-4">
+        {CATEGORIES.map((value) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={category === value}
+            onClick={() => void setCategory(value)}
+            className={
+              category === value
+                ? "min-h-11 border-b-2 border-brand text-sm font-medium text-brand"
+                : "min-h-11 border-b-2 border-transparent text-sm text-muted-foreground"
+            }
+          >
+            {CATEGORY_LABEL[value]}
+          </button>
+        ))}
+      </div>
 
-        <div className="mt-6 flex flex-col gap-6">
-          {SCREEN_GROUPS.map((group) => (
-            <section key={group.title} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-foreground">{group.title}</h2>
-              {group.note && <p className="text-xs text-muted-foreground">{group.note}</p>}
-
-              <ul className="overflow-hidden rounded-xl border border-border [&>*+*]:border-t [&>*+*]:border-border">
-                {group.items.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="flex min-h-12 items-center gap-2 px-3 py-2 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                    >
-                      <span className="flex-1 text-sm text-foreground">{item.label}</span>
-                      <span className="text-xs text-muted-foreground">{item.hint}</span>
-                      <IoChevronForward aria-hidden className="size-4 text-muted-foreground" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+      <main className="flex flex-1 flex-col gap-6 px-4 pt-4 pb-24">
+        {category === "all" ? (
+          <>
+            {/* 프로모션 배너 */}
+            <section aria-label="진행 중인 행사" className="flex flex-col gap-2">
+              <div className="relative flex aspect-2/1 flex-col justify-end rounded-xl bg-muted p-4">
+                <p className="text-sm font-bold text-foreground">가을맞이 사료 할인 프로모션</p>
+                <p className="text-xs text-muted-foreground">최대 15% 할인 · 9/30까지</p>
+                {/* 배너가 여럿임을 알리는 자리. 넘기는 것은 서버 데이터가 붙은 뒤에 잇는다 */}
+                <span aria-hidden className="absolute bottom-3 left-4 flex gap-1">
+                  <span className="size-1.5 rounded-full bg-foreground" />
+                  <span className="size-1.5 rounded-full bg-foreground/30" />
+                  <span className="size-1.5 rounded-full bg-foreground/30" />
+                </span>
+              </div>
             </section>
-          ))}
-        </div>
+
+            <PetSwitcher
+              pets={MOCK_PETS}
+              selectedId={petId}
+              onSelect={setPetId}
+              onAdd={() => {}}
+              withNames
+              className="px-0"
+            />
+
+            <section className="flex flex-col gap-3">
+              <SectionTitle href="/recommendations">
+                AI가 골라주는 {pet.name} 맞춤 상품
+              </SectionTitle>
+              <ScrollRow label={`${pet.name} 맞춤 상품`}>
+                {MOCK_PRODUCTS.slice(0, 4).map((product) => (
+                  <ScrollRowItem key={product.id}>
+                    <ProductGridCard
+                      href={`/products/${product.id}`}
+                      name={product.name}
+                      price={product.price}
+                      originalPrice={product.originalPrice}
+                      imageBadge={
+                        <MatchScoreBadge score={product.matchScore} petName={pet.name} size="sm" />
+                      }
+                      imageAction={
+                        <span
+                          aria-hidden
+                          className="flex size-11 items-center justify-center text-foreground"
+                        >
+                          <IoHeartOutline className="size-5" />
+                        </span>
+                      }
+                      meta={
+                        <>
+                          <p className="text-xs text-muted-foreground">
+                            {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
+                          </p>
+                          <Rating value={product.rating} showValue />
+                          <span className="sr-only">후기 {product.reviewCount}개</span>
+                        </>
+                      }
+                    />
+                  </ScrollRowItem>
+                ))}
+              </ScrollRow>
+            </section>
+
+            {/* 이 서비스가 근거를 모으는 자리 */}
+            <section className="flex flex-col gap-3">
+              <SectionTitle>최근에 구매한 상품, {pet.name}는 어때요?</SectionTitle>
+              <ScrollRow label="최근에 구매한 상품" itemWidth="80%">
+                {MOCK_RECENT.map((item) => (
+                  <ScrollRowItem key={item.productId}>
+                    <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
+                      <div className="flex items-center gap-3">
+                        <span aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {item.productName}
+                          </p>
+                          <p className="flex gap-1 text-xs">
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
+                              {item.sinceLabel}
+                            </span>
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
+                              {item.countLabel}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="min-h-11 w-full"
+                        onClick={() => setFeedback(item)}
+                      >
+                        {pet.name} 반응 남기기
+                      </Button>
+                    </div>
+                  </ScrollRowItem>
+                ))}
+              </ScrollRow>
+            </section>
+
+            <section className="flex flex-col gap-3">
+              <h2 className="text-base font-bold text-foreground">
+                매주 목요일 밤 12시 <span className="text-brand">타임딜 특가</span>
+              </h2>
+
+              {dealOver ? (
+                <EmptyState
+                  icon={<IoTimeOutline />}
+                  title="지금은 진행 중인 타임딜이 없어요"
+                  description="매주 목요일 밤 12시에 열려요."
+                  action={
+                    <Button variant="outline" asChild>
+                      <Link href="/deals">오늘의 타임딜 보기</Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <>
+                  <div className="flex flex-col gap-0.5">
+                    <Countdown endsAt={DEAL_ENDS_AT} fallback={null} />
+                    <p className="text-xs text-muted-foreground">종료까지 남은 시간</p>
+                  </div>
+
+                  <ScrollRow label="타임딜 상품">
+                    {MOCK_PRODUCTS.slice(0, 4).map((product) => (
+                      <ScrollRowItem key={product.id}>
+                        <ProductGridCard
+                          href={`/products/${product.id}`}
+                          name={product.name}
+                          price={product.price}
+                          originalPrice={product.originalPrice}
+                          meta={
+                            <>
+                              <p className="text-xs text-muted-foreground">
+                                {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}
+                                원
+                              </p>
+                              <Rating value={product.rating} showValue />
+                            </>
+                          }
+                        />
+                      </ScrollRowItem>
+                    ))}
+                  </ScrollRow>
+
+                  <Button variant="outline" className="min-h-11 w-full" asChild>
+                    <Link href="/deals">특가 더보기</Link>
+                  </Button>
+                </>
+              )}
+
+              {/* 화면 확인용. 서버가 주는 값으로 바뀐다 */}
+              <button
+                type="button"
+                onClick={() => setDealOver((prev) => !prev)}
+                className="min-h-11 text-xs text-muted-foreground underline underline-offset-4"
+              >
+                {dealOver ? "타임딜 있는 화면 보기" : "타임딜 없는 화면 보기"}
+              </button>
+            </section>
+          </>
+        ) : (
+          <>
+            <div className="flex justify-end">
+              <Select
+                value={sort}
+                onValueChange={(next) => void setSort(next as (typeof SORT_VALUES)[number])}
+              >
+                <SelectTrigger aria-label="정렬" className="min-h-11 w-auto border-0 shadow-none">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORTS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                      {item.hint && (
+                        <span className="ml-2 text-xs text-muted-foreground">{item.hint}</span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+              {MOCK_PRODUCTS.map((product) => (
+                <li key={product.id} className="flex">
+                  <ProductGridCard
+                    className="flex-1"
+                    href={`/products/${product.id}`}
+                    name={product.name}
+                    price={product.price}
+                    originalPrice={product.originalPrice}
+                    imageBadge={
+                      <MatchScoreBadge score={product.matchScore} petName={pet.name} size="sm" />
+                    }
+                    meta={
+                      <>
+                        <p className="text-xs text-muted-foreground">
+                          {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
+                        </p>
+                        <Rating value={product.rating} showValue />
+                        <span className="sr-only">후기 {product.reviewCount}개</span>
+                      </>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </main>
 
       <BottomNav />
+
+      <ProductFeedbackSheet
+        target={feedback}
+        petName={pet.name}
+        onOpenChange={(open) => !open && setFeedback(null)}
+      />
     </div>
   );
 }
