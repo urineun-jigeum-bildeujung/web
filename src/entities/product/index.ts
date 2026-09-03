@@ -2,3 +2,4 @@
 export { MatchScoreBadge } from "./ui/match-score-badge";
 export { CompareTable, type CompareRow } from "./ui/compare-table";
 export { CompareSlot, type CompareProduct } from "./ui/compare-slot";
+export { ProductOptionSheet, type OptionSheetProduct } from "./ui/product-option-sheet";
