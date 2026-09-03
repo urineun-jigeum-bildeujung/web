@@ -85,6 +85,17 @@ describe("ReviewWriteView", () => {
     expect(screen.getByText(/소리가 어땠는지/)).toBeDefined();
   });
 
+  it("화살표 키로 점수를 옮기면 그 별로 초점도 옮긴다", () => {
+    render(<ReviewWriteView orderItemId="oi1" />);
+
+    const third = screen.getByRole("radio", { name: "5점 만점에 3점" });
+    fireEvent.click(third);
+    fireEvent.keyDown(third, { key: "ArrowRight" });
+
+    // 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+  });
+
   it("사용 기간에는 숫자만 남는다", () => {
     render(<ReviewWriteView orderItemId="oi1" />);
 

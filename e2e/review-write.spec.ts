@@ -47,7 +47,8 @@ test("아이의 반응을 다 채워야 등록된다", async ({ page }) => {
 test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
   await page.goto(PATH);
 
-  const input = page.locator('input[type="file"]');
+  // CSS 셀렉터 대신 접근성 이름으로 찾는다. DOM이 바뀌어도 이름은 남는다
+  const input = page.getByLabel("사진 추가 (0/3)");
   await input.setInputFiles([
     { name: "a.png", mimeType: "image/png", buffer: PNG },
     { name: "b.png", mimeType: "image/png", buffer: PNG },
@@ -60,5 +61,5 @@ test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
 
   await page.getByRole("button", { name: "1번째 사진 빼기" }).click();
   await expect(page.getByRole("button", { name: /사진 빼기/ })).toHaveCount(2);
-  await expect(page.getByText("2/3")).toBeVisible();
+  await expect(page.getByLabel("사진 추가 (2/3)")).toBeAttached();
 });

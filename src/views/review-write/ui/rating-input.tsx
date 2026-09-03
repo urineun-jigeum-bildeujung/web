@@ -6,6 +6,7 @@
 
 "use client";
 
+import { useRef } from "react";
 import { IoStar, IoStarOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
@@ -20,6 +21,15 @@ type RatingInputProps = {
 };
 
 export function RatingInput({ value, onChange, label, max = 5, className }: RatingInputProps) {
+  const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+
+  /** 값을 바꾸고 그 별로 초점도 옮긴다. 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다 */
+  const move = (next: number) => {
+    const clamped = Math.min(max, Math.max(1, next));
+    onChange(clamped);
+    buttons.current[clamped - 1]?.focus();
+  };
+
   return (
     // 별 다섯 중 하나를 고르는 것이라 라디오로 만든다. 화살표 키로 옮겨 다닐 수 있다
     <div role="radiogroup" aria-label={label} className={cn("flex justify-center", className)}>
@@ -31,6 +41,9 @@ export function RatingInput({ value, onChange, label, max = 5, className }: Rati
         return (
           <button
             key={score}
+            ref={(node) => {
+              buttons.current[index] = node;
+            }}
             type="button"
             role="radio"
             aria-checked={score === value}
@@ -42,11 +55,11 @@ export function RatingInput({ value, onChange, label, max = 5, className }: Rati
             onKeyDown={(event) => {
               if (event.key === "ArrowRight" || event.key === "ArrowUp") {
                 event.preventDefault();
-                onChange(Math.min(max, value + 1));
+                move(value + 1);
               }
               if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
                 event.preventDefault();
-                onChange(Math.max(1, value - 1));
+                move(value - 1);
               }
             }}
             className="flex size-11 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
