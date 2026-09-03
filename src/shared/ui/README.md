@@ -26,7 +26,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `alert-dialog.tsx` | shadcn AlertDialog. 되돌릴 수 없는 행동 확인 |
 | `slider.tsx` | shadcn Slider |
 | `select.tsx` | shadcn Select |
-| `tabs.tsx` `accordion.tsx` `drawer.tsx` `tooltip.tsx` `switch.tsx` `sonner.tsx` | shadcn. 탭·아코디언·바텀시트·툴팁·스위치·토스트 |
+| `tabs.tsx` `accordion.tsx` `drawer.tsx` `tooltip.tsx` `switch.tsx` `sonner.tsx` `textarea.tsx` | shadcn. 탭·아코디언·바텀시트·툴팁·스위치·토스트·여러 줄 입력 |
 
 - `npx shadcn add <컴포넌트>`가 `components.json`의 alias에 따라 여기에 추가한다.
 - **임의로 수정하지 않는다.** 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
