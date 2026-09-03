@@ -32,6 +32,9 @@ describe("HomeView", () => {
     // 큐레이션 자리가 사라지고 정렬이 나온다
     expect(screen.queryByText(/AI가 골라주는/)).toBeNull();
     expect(screen.getByLabelText("정렬")).toBeDefined();
+
+    // 지금 어느 것을 보고 있는지 알린다
+    expect(screen.getByRole("button", { name: "사료" })).toHaveProperty("ariaCurrent", "page");
   });
 
   it("아이 이름이 화면에 보인다", () => {
@@ -50,6 +53,18 @@ describe("HomeView", () => {
 
     // 남긴 반응이 추천으로 되돌아간다는 것이 이 서비스의 약속이다
     expect(screen.getByText(/다음 추천 적합도에 반영할게요/)).toBeDefined();
+  });
+
+  it("반응을 고르면 아직 이르다는 표시가 풀린다", () => {
+    renderWith();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /반응 남기기/ })[0]);
+    const tooEarly = screen.getByLabelText(/아직 판단하기에는 일러요/);
+    fireEvent.click(tooEarly);
+    fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+
+    // 둘 다 켜지면 무엇을 답한 것인지 알 수 없다
+    expect(tooEarly).toHaveProperty("dataset.state", "unchecked");
   });
 
   it("아직 답할 수 없다는 것도 답으로 받는다", () => {

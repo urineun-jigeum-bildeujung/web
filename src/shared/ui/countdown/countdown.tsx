@@ -3,7 +3,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
@@ -12,6 +12,8 @@ type CountdownProps = {
   endsAt: Date;
   /** 다 지났을 때 대신 보여줄 것 */
   fallback?: React.ReactNode;
+  /** 다 지났을 때 알린다. 끝난 뒤 화면이 통째로 바뀌어야 하는 자리에서 쓴다 */
+  onEnd?: () => void;
   className?: string;
 };
 
@@ -26,15 +28,31 @@ function split(ms: number) {
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-export function Countdown({ endsAt, fallback, className }: CountdownProps) {
+export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps) {
   // 서버와 클라이언트의 시각이 달라 하이드레이션이 어긋난다. 처음에는 그리지 않고
   // 화면에 붙은 뒤부터 센다.
   const [left, setLeft] = useState<number | null>(null);
 
+  // 부르는 쪽이 인라인 함수를 넘기면 매 렌더마다 참조가 바뀐다.
+  // 그것을 의존성에 두면 1초마다 타이머를 다시 건다.
+  const onEndRef = useRef(onEnd);
   useEffect(() => {
-    const tick = () => setLeft(endsAt.getTime() - Date.now());
-    tick();
+    onEndRef.current = onEnd;
+  }, [onEnd]);
+
+  useEffect(() => {
+    const tick = () => {
+      const next = endsAt.getTime() - Date.now();
+      setLeft(next);
+      // 다 세고 나면 세는 것을 멈추고 부모에게 알린다.
+      // 알리지 않으면 시간이 지나도 옆에 붙은 목록과 문구가 그대로 남는다.
+      if (next <= 0) {
+        clearInterval(timer);
+        onEndRef.current?.();
+      }
+    };
     const timer = setInterval(tick, 1000);
+    tick();
     return () => clearInterval(timer);
   }, [endsAt]);
 

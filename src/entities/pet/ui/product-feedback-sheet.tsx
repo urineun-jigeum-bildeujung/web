@@ -127,7 +127,11 @@ export function ProductFeedbackSheet({
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onClick={() => setPicked(item.value)}
+                    onClick={() => {
+                      setPicked(item.value);
+                      // 둘 다 켜지면 무엇을 답한 것인지 알 수 없다
+                      setTooEarly(false);
+                    }}
                     className={cn(
                       "flex min-h-11 flex-col items-center gap-1 rounded-lg px-3 py-2 transition-colors",
                       "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
