@@ -13,7 +13,7 @@ export type FilterOption = { value: string; label: string };
 
 type FilterChipsProps = {
   label: string;
-  options: FilterOption[];
+  options: readonly FilterOption[];
   value: string;
   onValueChange: (value: string) => void;
 };

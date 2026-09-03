@@ -32,4 +32,16 @@ describe("RecommendationsView", () => {
     renderWith();
     expect(screen.getByText(/건강 고민을 바탕으로 추천해요/)).toBeDefined();
   });
+
+  it("고민을 바꾸면 목록도 바뀐다", () => {
+    const { unmount } = renderWith("?concern=joint");
+    const joint = screen.getAllByRole("listitem").map((el) => el.textContent);
+    unmount();
+
+    renderWith("?concern=dental");
+    const dental = screen.getAllByRole("listitem").map((el) => el.textContent);
+
+    // 칩을 눌러도 같은 목록이면 거른 것이 아니다
+    expect(joint).not.toEqual(dental);
+  });
 });

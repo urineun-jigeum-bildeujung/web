@@ -3,9 +3,11 @@
 
 "use client";
 
-import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import Link from "next/link";
+
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
-import { IoClose, IoHeart, IoHeartOutline } from "react-icons/io5";
+import { IoClose, IoHeart } from "react-icons/io5";
 
 import {
   AlertDialog,
@@ -30,7 +32,10 @@ const CATEGORIES = [
   { value: "food", label: "사료" },
   { value: "snack", label: "간식" },
   { value: "supplement", label: "영양제" },
-];
+] as const;
+
+/** 주소로 받을 수 있는 값. 목록에 없는 값이 오면 목록이 통째로 빈다 */
+const CATEGORY_VALUES = ["all", "food", "snack", "supplement"] as const;
 
 type Product = {
   id: string;
@@ -109,9 +114,11 @@ function CountBadge({ children }: { children: React.ReactNode }) {
 
 export function LikesView() {
   const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("liked"));
-  const [category, setCategory] = useQueryState("category", parseAsString.withDefault("all"));
+  const [category, setCategory] = useQueryState(
+    "category",
+    parseAsStringLiteral(CATEGORY_VALUES).withDefault("all"),
+  );
   const [items, setItems] = useState(MOCK);
-  const [unliked, setUnliked] = useState<string[]>([]);
   const [removing, setRemoving] = useState<Product | null>(null);
 
   const visible =
@@ -124,9 +131,6 @@ export function LikesView() {
     setRemoving(null);
   };
 
-  const toggleLike = (id: string) =>
-    setUnliked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
-
   const closeButton = (product: Product) => (
     <button
       type="button"
@@ -138,24 +142,18 @@ export function LikesView() {
     </button>
   );
 
-  const heartButton = (product: Product) => {
-    const liked = !unliked.includes(product.id);
-    return (
-      <button
-        type="button"
-        onClick={() => toggleLike(product.id)}
-        aria-pressed={liked}
-        aria-label={`${product.name} 찜하기`}
-        className="flex size-11 items-center justify-center text-foreground"
-      >
-        {liked ? (
-          <IoHeart aria-hidden className="size-5" />
-        ) : (
-          <IoHeartOutline aria-hidden className="size-5" />
-        )}
-      </button>
-    );
-  };
+  // 찜 탭의 하트는 푸는 자리다. 누르면 목록에서 빠지므로 다른 탭과 같이 확인을 거친다.
+  const heartButton = (product: Product) => (
+    <button
+      type="button"
+      onClick={() => setRemoving(product)}
+      aria-pressed
+      aria-label={`${product.name} 찜 풀기`}
+      className="flex size-11 items-center justify-center text-foreground"
+    >
+      <IoHeart aria-hidden className="size-5" />
+    </button>
+  );
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -183,7 +181,9 @@ export function LikesView() {
                   label="상품 종류 고르기"
                   options={CATEGORIES}
                   value={category}
-                  onValueChange={(next) => void setCategory(next)}
+                  onValueChange={(next) =>
+                    void setCategory(next as (typeof CATEGORY_VALUES)[number])
+                  }
                 />
               )}
 
@@ -217,10 +217,14 @@ export function LikesView() {
                         footer={
                           value === "often" ? (
                             <div className="flex gap-1 pt-1">
-                              <Button variant="outline" className="min-h-11 flex-1 text-xs">
-                                장바구니
+                              {/* 고른 상품을 함께 넘기지는 못한다. 화면 간 전달은 라우터 구조가
+                                  정해진 뒤에 붙인다 — 장바구니의 "결제하기"와 같은 수준이다 */}
+                              <Button variant="outline" className="min-h-11 flex-1 text-xs" asChild>
+                                <Link href="/cart">장바구니</Link>
                               </Button>
-                              <Button className="min-h-11 flex-1 text-xs">구매하기</Button>
+                              <Button className="min-h-11 flex-1 text-xs" asChild>
+                                <Link href="/payment">구매하기</Link>
+                              </Button>
                             </div>
                           ) : undefined
                         }

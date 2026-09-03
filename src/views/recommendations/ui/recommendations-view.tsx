@@ -3,7 +3,7 @@
 
 "use client";
 
-import { parseAsString, useQueryState } from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoHeart, IoHeartOutline } from "react-icons/io5";
 
@@ -25,12 +25,15 @@ const CONCERNS = [
   { value: "joint", label: "관절" },
   { value: "allergy", label: "알러지" },
   { value: "dental", label: "구강관리" },
-];
+] as const;
+
+/** 주소로 받을 수 있는 값. CONCERNS와 같은 순서로 둔다 */
+const CONCERN_VALUES = ["joint", "allergy", "dental"] as const;
 
 /** 시안에 "맞춤 추천"만 보인다. 나머지 기준은 PD 확인 뒤에 늘린다. */
 const SORTS = [{ value: "match", label: "맞춤 추천" }];
 
-const MOCK_PRODUCTS = Array.from({ length: 6 }, (_, index) => ({
+const MOCK_PRODUCTS = Array.from({ length: 9 }, (_, index) => ({
   id: String(index + 1),
   name: "그레인프리 연어 사료 2kg",
   price: 31200,
@@ -42,18 +45,22 @@ const MOCK_PRODUCTS = Array.from({ length: 6 }, (_, index) => ({
   reviewCount: 108,
   // 적합도는 AI가 주는 값이다. 단위가 정해지지 않아 0~100으로 둔다.
   matchScore: 92 - index * 7,
+  // 어떤 고민에 맞는 상품인지. 실제로는 AI가 골라 준다
+  concern: CONCERNS[index % CONCERNS.length].value,
 }));
 
 export function RecommendationsView() {
   const [petId, setPetId] = useQueryState("pet", parseAsString.withDefault(MOCK_PETS[0].id));
+  // 주소로 아무 값이나 올 수 있다. 목록에 없는 값이면 목록이 통째로 비므로 보기 안에서만 받는다.
   const [concern, setConcern] = useQueryState(
     "concern",
-    parseAsString.withDefault(CONCERNS[0].value),
+    parseAsStringLiteral(CONCERN_VALUES).withDefault("joint"),
   );
   const [sort, setSort] = useState(SORTS[0].value);
   const [liked, setLiked] = useState<string[]>([]);
 
   const pet = MOCK_PETS.find((item) => item.id === petId) ?? MOCK_PETS[0];
+  const products = MOCK_PRODUCTS.filter((product) => product.concern === concern);
 
   const toggleLike = (id: string) =>
     setLiked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
@@ -113,10 +120,10 @@ export function RecommendationsView() {
           label="건강 고민 고르기"
           options={CONCERNS}
           value={concern}
-          onValueChange={(next) => void setConcern(next)}
+          onValueChange={(next) => void setConcern(next as (typeof CONCERN_VALUES)[number])}
         />
 
-        {MOCK_PRODUCTS.length === 0 ? (
+        {products.length === 0 ? (
           <EmptyState
             title={`${pet.name}에게 맞는 상품을 아직 찾지 못했어요`}
             description="아이 정보를 채우면 더 잘 골라드릴 수 있어요."
@@ -124,7 +131,7 @@ export function RecommendationsView() {
           />
         ) : (
           <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
-            {MOCK_PRODUCTS.map((product) => (
+            {products.map((product) => (
               <li key={product.id} className="flex">
                 <ProductGridCard
                   className="flex-1"
