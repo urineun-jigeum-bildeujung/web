@@ -52,3 +52,9 @@ test("아이를 고르면 그 아이가 선택 상태가 된다", () => {
   expect(second.getAttribute("aria-checked")).toBe("true");
   expect(first.getAttribute("aria-checked")).toBe("false");
 });
+
+test("아이 제품을 후기 작성 여부로 거른다", () => {
+  // 목업 넷 중 둘만 후기를 남겼다
+  renderView("?tab=products&reviewed=todo");
+  expect(screen.getAllByRole("button", { name: /상품명/ })).toHaveLength(2);
+});

@@ -8,7 +8,6 @@
 | `ui/mypage-notifications-view.test.tsx` | 거르기가 목록을 줄이는지, 읽지 않음이 문장으로 읽히는지 본다 |
 | `ui/notification-row.tsx` | 목록 한 줄. 유형 뱃지·제목·날짜·본문 미리보기 |
 | `ui/notification-dialog.tsx` | 상세 모달 (`noti_001_공지`, `noti_001_알림`) |
-| `ui/notification-filter.tsx` | 전체·새 알림·확인한 알림 칩 |
 | `index.ts` | 공개 API |
 
 ## 라우트
@@ -21,9 +20,9 @@
 
 **상세는 모달이라 라우트를 나누지 않았다.** 화면 이동이 아니라 같은 화면의 상태다.
 
-## 칩을 따로 만든 이유
+## 거르는 칩
 
-`shared/ui`의 `ChipSelect`는 온보딩에서 보기를 고르는 큰 칩이라 폭을 균등하게 나눈다. 이 화면 시안은 글자 크기에 맞는 작은 칩이 왼쪽에 늘어서는 형태여서 `notification-filter.tsx`를 따로 두었다. 검색과 상품 상세 시안에도 같은 모양이 보이므로, 두 번째 화면에서 쓰게 되면 공용으로 올린다.
+`shared/ui/filter-chips`를 쓴다. 이 화면에서 만들었다가 아이 제품 관리·좋아요·맞춤 추천에서도 같은 모양이 나와 공용으로 올렸다 (#91).
 
 ## 모달에 Dialog를 쓴 이유
 
