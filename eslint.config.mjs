@@ -194,6 +194,18 @@ const eslintConfig = defineConfig([
     rules: {
       // 원시 img 금지. next/image를 쓴다. (design-convention 이미지 규칙)
       "@next/next/no-img-element": "error",
+      // 콘솔 출력 금지. 시큐어 코딩 가이드 SC-G-02(로그에 민감정보 평문 기록 금지).
+      // error·warn도 열지 않는다. 가이드가 레벨로 구분하지 않고 "DEBUG 레벨 로그에도
+      // 민감정보가 포함되지 않는가"를 묻는다. console.error(err)에 응답 객체가 통째로
+      // 들어가면 토큰이 찍히는데, 예외 경로라 오히려 눈에 덜 띈다.
+      // 오류는 react-error-boundary가 잡고 사용자에게는 sonner 토스트로 알린다.
+      // 임시 디버깅은 eslint-disable-next-line으로 열되, 그 한 줄이 리뷰에서 걸린다.
+      "no-console": "error",
+      // dangerouslySetInnerHTML 금지. 시큐어 코딩 가이드 SC-B-01(XSS).
+      // React가 기본으로 이스케이프하므로 우리 저장소의 XSS 통로는 사실상 이것 하나다.
+      // 가이드는 사용자 입력뿐 아니라 DB에서 온 리뷰·닉네임도 같게 다루라고 한다 —
+      // 서버가 준 HTML을 그대로 그리고 싶을 때 막히는 자리다.
+      "react/no-danger": "error",
       // 이중 단언 금지. (AGENTS.md 2.5)
       "no-restricted-syntax": [
         "error",
