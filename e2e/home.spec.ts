@@ -10,12 +10,18 @@ test("메인이 렌더링된다", async ({ page }) => {
 test("종류를 고르면 상품 목록으로 바뀐다", async ({ page }) => {
   await page.goto("/");
 
-  await page.getByRole("tab", { name: "사료" }).click();
+  await page.getByRole("button", { name: "사료", exact: true }).click();
   await expect(page).toHaveURL(/category=food/);
 
   // 큐레이션 자리가 사라지고 정렬이 나온다
   await expect(page.getByText(/AI가 골라주는/)).toBeHidden();
   await expect(page.getByLabel("정렬")).toBeVisible();
+
+  // 지금 어느 것을 보고 있는지 알린다
+  await expect(page.getByRole("button", { name: "사료", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
 });
 
 test("반응을 남기면 어디에 쓰이는지 알린다", async ({ page }) => {

@@ -4,6 +4,8 @@
 
 | 파일 | 설명 |
 | --- | --- |
+| `josa/josa.ts` | 이름 뒤 조사를 받침에 맞춰 고른다 |
+| `josa/josa.test.ts` | 받침 유무와 ㄹ 예외, 한글이 아닌 이름을 본다 |
 | `utils.ts` | `cn` — clsx와 tailwind-merge로 className을 병합한다 |
 | `utils.test.ts` | `cn` 단위 테스트 |
 

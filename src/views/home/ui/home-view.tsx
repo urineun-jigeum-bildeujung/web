@@ -15,6 +15,7 @@ import {
 } from "react-icons/io5";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
+import { withJosa } from "@/shared/lib/josa/josa";
 import { MatchScoreBadge } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
@@ -147,14 +148,14 @@ export function HomeView() {
         </nav>
       </header>
 
-      {/* 종류를 고르는 줄. 탭처럼 보이지만 고르면 화면 구성이 통째로 바뀐다 */}
-      <div role="tablist" aria-label="상품 종류" className="flex gap-4 border-b border-border px-4">
+      {/* 탭처럼 보이지만 탭 역할을 주지 않는다. 고르면 화면 구성이 통째로 바뀌고 주소도 달라져
+          연결할 패널이 없다. 지금 어느 것을 보고 있는지는 aria-current로 알린다. */}
+      <nav aria-label="상품 종류" className="flex gap-4 border-b border-border px-4">
         {CATEGORIES.map((value) => (
           <button
             key={value}
             type="button"
-            role="tab"
-            aria-selected={category === value}
+            aria-current={category === value ? "page" : undefined}
             onClick={() => void setCategory(value)}
             className={
               category === value
@@ -165,7 +166,7 @@ export function HomeView() {
             {CATEGORY_LABEL[value]}
           </button>
         ))}
-      </div>
+      </nav>
 
       <main className="flex flex-1 flex-col gap-6 px-4 pt-4 pb-24">
         {category === "all" ? (
@@ -233,7 +234,7 @@ export function HomeView() {
 
             {/* 이 서비스가 근거를 모으는 자리 */}
             <section className="flex flex-col gap-3">
-              <SectionTitle>최근에 구매한 상품, {pet.name}는 어때요?</SectionTitle>
+              <SectionTitle>최근에 구매한 상품, {withJosa(pet.name, "은/는")} 어때요?</SectionTitle>
               <ScrollRow label="최근에 구매한 상품" itemWidth="80%">
                 {MOCK_RECENT.map((item) => (
                   <ScrollRowItem key={item.productId}>
@@ -286,7 +287,7 @@ export function HomeView() {
               ) : (
                 <>
                   <div className="flex flex-col gap-0.5">
-                    <Countdown endsAt={DEAL_ENDS_AT} fallback={null} />
+                    <Countdown endsAt={DEAL_ENDS_AT} onEnd={() => setDealOver(true)} />
                     <p className="text-xs text-muted-foreground">종료까지 남은 시간</p>
                   </div>
 
