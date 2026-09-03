@@ -246,3 +246,20 @@ test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page
   await expect(page.getByText("인증이 완료됐어요.")).toBeVisible();
   await expect(page.getByRole("button", { name: "입력 완료" })).toBeEnabled();
 });
+
+// 다섯 단계를 담아 세로로 길다. 낮은 화면에서 잘리면 마지막 단계를 못 읽는다(#87).
+test("낮은 화면에서도 체형 안내를 끝까지 읽을 수 있다", async ({ page }) => {
+  await page.setViewportSize({ width: 740, height: 300 });
+  await page.goto("/onboarding?step=detail", { waitUntil: "networkidle" });
+
+  await page.getByText("소형", { exact: false }).first().click();
+  await page.getByRole("button", { name: "체형이 무엇인지 보기" }).click();
+
+  const dialog = page.locator("[data-slot=dialog-content]");
+  const box = await dialog.boundingBox();
+  expect(box!.y, "모달이 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
+
+  const last = page.getByText("살집 때문에 뼈가 안 만져지고 배가 나왔어요");
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+});
