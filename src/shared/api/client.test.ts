@@ -31,13 +31,15 @@ describe("apiRequest", () => {
     expect(new Headers(init.headers).get("Content-Type")).toBe("application/json");
   });
 
-  it("실패 응답의 ProblemDetail을 파싱해 ApiError에 담는다", async () => {
+  it("실패 응답의 ProblemDetail을 확장 필드까지 파싱해 ApiError에 담는다", async () => {
     const problem = {
       type: "about:blank",
-      title: "Not Found",
+      title: "PRODUCT_404_NOT_FOUND",
       status: 404,
       detail: "상품을 찾을 수 없습니다",
       instance: "/api/v1/products/999",
+      errorCode: "PRODUCT_404_NOT_FOUND",
+      fieldErrors: [{ field: "productId", reason: "존재하지 않는 상품입니다." }],
     };
     stubFetch(Response.json(problem, { status: 404 }));
 
