@@ -116,3 +116,12 @@ export const EMPTY_PROFILE_DRAFT: PetProfileDraft = {
 export function findSpecies(breed: string): PetSpecies {
   return PET_SPECIES.find((species) => BREEDS[species].includes(breed)) ?? "dog";
 }
+
+/** 체형 다섯 단계가 각각 무엇인지. 만져서 판단하는 기준이라 설명이 없으면 고를 수 없다. */
+export const BODY_TYPE_GUIDE: Record<(typeof BODY_TYPE_OPTIONS)[number], string> = {
+  "매우 마름": "뼈가 뚜렷하게 보이고 살집이 거의 없어요",
+  마름: "뼈가 쉽게 만져지고 허리가 쏙 들어갔어요",
+  보통: "뼈가 부드럽게 만져지는 건강한 체형이에요",
+  통통: "힘주어 만져야 뼈가 느껴지고 허리선이 없어요",
+  비만: "살집 때문에 뼈가 안 만져지고 배가 나왔어요",
+};

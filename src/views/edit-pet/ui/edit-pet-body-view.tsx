@@ -5,7 +5,12 @@
 
 import { useState } from "react";
 
-import { BODY_TYPE_OPTIONS, DEFAULT_BODY_TYPE_INDEX, SIZE_OPTIONS } from "@/entities/pet";
+import {
+  BODY_TYPE_OPTIONS,
+  BodyTypeGuide,
+  DEFAULT_BODY_TYPE_INDEX,
+  SIZE_OPTIONS,
+} from "@/entities/pet";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Slider } from "@/shared/ui/slider";
@@ -41,7 +46,11 @@ export function EditPetBodyView() {
       />
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-foreground">{SAVED.name}의 체형은 어떤 편인가요</p>
+        <div className="flex items-center gap-1">
+          <p className="text-sm font-medium text-foreground">{SAVED.name}의 체형은 어떤 편인가요</p>
+          {/* 만져서 판단하는 기준이라 무엇을 보고 고르는지 알려 준다 */}
+          <BodyTypeGuide />
+        </div>
         <Slider
           aria-label="체형"
           value={[bodyType]}
