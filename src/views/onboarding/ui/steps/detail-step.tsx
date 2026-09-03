@@ -5,7 +5,12 @@
 
 import { IoChevronForward } from "react-icons/io5";
 
-import { BODY_TYPE_OPTIONS, SIZE_OPTIONS, type PetProfileDraft } from "@/entities/pet";
+import {
+  BODY_TYPE_OPTIONS,
+  BodyTypeGuide,
+  SIZE_OPTIONS,
+  type PetProfileDraft,
+} from "@/entities/pet";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
@@ -108,11 +113,15 @@ export function DetailStep({
             </div>
 
             <div className="flex flex-col gap-3">
-              <p className="text-sm font-medium text-foreground">
-                {draft.name ? `${draft.name}의` : "아이의"} 체질은 어떤 편인가요
-              </p>
+              <div className="flex items-center gap-1">
+                <p className="text-sm font-medium text-foreground">
+                  {draft.name ? `${draft.name}의` : "아이의"} 체형은 어떤 편인가요
+                </p>
+                {/* 만져서 판단하는 기준이라 무엇을 보고 고르는지 알려 준다 */}
+                <BodyTypeGuide />
+              </div>
               <Slider
-                aria-label="체질"
+                aria-label="체형"
                 min={0}
                 max={BODY_TYPE_OPTIONS.length - 1}
                 step={1}
