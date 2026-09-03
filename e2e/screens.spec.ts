@@ -5,6 +5,8 @@ import { expect, test } from "@playwright/test";
 /** 홈에 걸어 둔 화면 목록과 같은 순서다 */
 const ROUTES = [
   "/",
+  "/?category=food",
+  "/dev/screens",
   "/onboarding",
   "/onboarding?step=basic",
   "/onboarding?step=detail",

@@ -1,6 +1,7 @@
 // pet 슬라이스 공개 API. 바깥에서는 이 파일로만 들어온다.
 export { BodyTypeGuide } from "./ui/body-type-guide";
 export { BreedPicker } from "./ui/breed-picker";
+export { ProductFeedbackSheet, FEEDBACKS, type FeedbackTarget } from "./ui/product-feedback-sheet";
 export { BreedPickerStep } from "./ui/breed-picker-step";
 export { PetSwitcher, type PetSummary } from "./ui/pet-switcher";
 export { ProductReviewSheet, type PetProductReview } from "./ui/product-review-sheet";
