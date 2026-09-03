@@ -8,10 +8,10 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { NotificationDialog } from "./notification-dialog";
-import { NotificationFilter } from "./notification-filter";
 import { NotificationRow, type NotificationItem } from "./notification-row";
 
 const FILTERS = ["all", "unread", "read"] as const;
@@ -80,7 +80,7 @@ export function MypageNotificationsView() {
 
       <main className="flex flex-1 flex-col">
         <div className="px-4 py-3">
-          <NotificationFilter
+          <FilterChips
             label="알림 거르기"
             options={FILTER_OPTIONS}
             value={filter}

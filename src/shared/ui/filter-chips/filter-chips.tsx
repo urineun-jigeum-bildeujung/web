@@ -1,30 +1,24 @@
-// 알림을 거르는 칩 줄. 하나만 고를 수 있어 시맨틱은 라디오다.
-// 와이어프레임 기준(noti_001)이라 디자인 확정 시 바뀔 수 있다.
+// 목록을 거르는 칩 줄. 하나만 고를 수 있어 시맨틱은 라디오다.
+// 와이어프레임 기준(noti_001, mypa_021, like_001_찜, reco_001)이라 디자인 확정 시 바뀔 수 있다.
 //
-// shared의 ChipSelect를 쓰지 않는다. 그것은 온보딩에서 보기를 고르는 큰 칩이라
-// 폭을 균등하게 나누는데, 여기 시안은 글자 크기에 맞는 작은 칩이 왼쪽에 늘어선다.
-// 검색·상품 상세에도 같은 모양이 보이므로 두 번째 화면에서 쓰게 되면 공용으로 올린다.
+// ChipSelect와 다르다. 그것은 온보딩에서 보기를 고르는 큰 칩이라 폭을 균등하게 나누는데,
+// 이쪽 시안은 글자 크기에 맞는 작은 칩이 왼쪽에 늘어선다.
 
 import { useId } from "react";
 
 import { cn } from "@/shared/lib/utils";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 
-type FilterOption = { value: string; label: string };
+export type FilterOption = { value: string; label: string };
 
-type NotificationFilterProps = {
+type FilterChipsProps = {
   label: string;
   options: FilterOption[];
   value: string;
   onValueChange: (value: string) => void;
 };
 
-export function NotificationFilter({
-  label,
-  options,
-  value,
-  onValueChange,
-}: NotificationFilterProps) {
+export function FilterChips({ label, options, value, onValueChange }: FilterChipsProps) {
   const id = useId();
 
   return (

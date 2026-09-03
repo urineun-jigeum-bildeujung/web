@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoChevronForward, IoImageOutline } from "react-icons/io5";
 
@@ -15,6 +15,7 @@ import {
   type PetProductReview,
   type PetSummary,
 } from "@/entities/pet";
+import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
@@ -40,7 +41,15 @@ const MOCK_PRODUCTS = Array.from({ length: 4 }, (_, index) => ({
   boughtAt: "26.08.28",
   goodCount: 3,
   badCount: 1,
+  // 후기를 남겼는지. 거르기의 기준이다
+  reviewed: index % 2 === 0,
 }));
+
+const PRODUCT_FILTERS = [
+  { value: "all", label: "전체" },
+  { value: "todo", label: "미입력" },
+  { value: "done", label: "입력" },
+];
 
 /** 후기는 제품마다 다르다. 하나를 돌려쓰면 어느 것을 눌러도 같은 상세로 간다. */
 function mockReview(productId: string): PetProductReview {
@@ -104,6 +113,16 @@ export function PetProfileView() {
   const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("profile"));
   const [selectedPetId, setSelectedPetId] = useState(MOCK_PETS[0].id);
   const [review, setReview] = useState<PetProductReview | null>(null);
+  const [productFilter, setProductFilter] = useQueryState(
+    "reviewed",
+    parseAsString.withDefault("all"),
+  );
+
+  const visibleProducts = MOCK_PRODUCTS.filter((product) => {
+    if (productFilter === "todo") return !product.reviewed;
+    if (productFilter === "done") return product.reviewed;
+    return true;
+  });
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -168,7 +187,15 @@ export function PetProfileView() {
         </TabsContent>
 
         <TabsContent value="products" className="flex flex-1 flex-col gap-4 px-4 pt-2">
-          {MOCK_PRODUCTS.map((product) => (
+          {/* 후기를 남기지 않은 제품을 골라내는 자리 (mypa_021 수정 요청) */}
+          <FilterChips
+            label="후기 작성 여부로 거르기"
+            options={PRODUCT_FILTERS}
+            value={productFilter}
+            onValueChange={(next) => void setProductFilter(next)}
+          />
+
+          {visibleProducts.map((product) => (
             <article key={product.id} className="flex flex-col gap-1">
               <p className="text-xs text-muted-foreground">구매일 {product.boughtAt}</p>
               <button
