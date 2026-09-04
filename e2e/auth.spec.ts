@@ -63,3 +63,23 @@ test("약관 단계를 지나 닉네임으로 갔다가 뒤로가기로 돌아�
   await expect(page).toHaveURL(/\/signup/);
   await expect(page.getByText("안전하게 약관에 동의해 주세요.")).toBeVisible();
 });
+
+test("약관 없이 주소로 닉네임 단계에 들어갈 수 없다", async ({ page }) => {
+  await page.goto("/signup?step=nickname");
+
+  // 그대로 두면 동의 없이 가입이 끝난다
+  await expect(
+    page.getByRole("checkbox", { name: "[필수] 서비스 이용약관 전체 동의" }),
+  ).toBeVisible();
+  await expect(page.getByText("닉네임을 적어주세요")).toBeHidden();
+});
+
+test("닉네임은 비어 있는 채로 시작한다", async ({ page }) => {
+  await page.goto("/signup");
+
+  await page.getByRole("checkbox", { name: "[필수] 서비스 이용약관 전체 동의" }).click();
+  await page.getByRole("button", { name: "다음으로" }).click();
+
+  await expect(page.getByLabel("닉네임")).toHaveValue("");
+  await expect(page.getByRole("button", { name: "다음으로" })).toBeDisabled();
+});

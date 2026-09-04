@@ -84,12 +84,26 @@ describe("SignupView", () => {
     ).toBe("/mypage/service/terms");
   });
 
-  it("닉네임 단계에서는 두 자 미만이면 넘어갈 수 없다", () => {
+  it("약관을 채우지 않고 주소로 닉네임 단계에 들어올 수 없다", () => {
     renderWith("?step=nickname");
 
-    const input = screen.getByLabelText("닉네임");
-    fireEvent.change(input, { target: { value: "가" } });
+    // 그대로 두면 동의 없이 가입이 끝난다. 약관부터 다시 보여준다
+    expect(screen.getByLabelText("[필수] 서비스 이용약관 전체 동의")).toBeDefined();
+    expect(screen.queryByText("닉네임을 적어주세요")).toBeNull();
+  });
 
+  it("닉네임 단계는 처음에 비어 있고 두 자 미만이면 넘어갈 수 없다", () => {
+    renderWith();
+
+    fireEvent.click(screen.getByLabelText("[필수] 서비스 이용약관 전체 동의"));
+    fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+
+    const input = screen.getByLabelText("닉네임") as HTMLInputElement;
+    // 가짜 값이 채워져 있으면 아무것도 하지 않아도 넘어가 이 단계가 무의미해진다
+    expect(input.value).toBe("");
     expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(input, { target: { value: "보리" } });
+    expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(false);
   });
 });

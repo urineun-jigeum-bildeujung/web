@@ -22,7 +22,7 @@
 
 **전체 동의는 묶음 단위다.** 필수 전체를 누르면 필수 셋만 켜지고 선택은 그대로다. 하나를 풀면 전체 동의도 함께 풀린다. 규칙은 `model/agreements.ts`에 순수 함수로 두어 테스트로 고정했다.
 
-**약관 본문은 이미 있는 화면으로 잇는다.** `/mypage/service/terms` · `/privacy`를 그대로 쓴다.
+**약관 본문은 이미 있는 화면으로 잇는다.** `/mypage/service/terms`와 `/mypage/service/privacy`를 그대로 쓴다.
 
 **단계에 `history: "push"`를 준다.** 뒤로가기로 이전 단계에 가야 한다. nuqs 기본값 replace로 두면 회원가입을 통째로 떠나 처음부터 다시 써야 한다(#105).
 

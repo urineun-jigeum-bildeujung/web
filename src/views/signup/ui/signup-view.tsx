@@ -37,13 +37,16 @@ export function SignupView() {
   );
 
   const [checked, setChecked] = useState<string[]>([]);
-  // 가입 경로에서 받은 닉네임이 미리 채워져 있는 상태다(시안 메모). 실제로는 서버가 준다
-  const [nickname, setNickname] = useState("훈련고양이 17");
+  // 시안은 가입 경로에서 받은 닉네임이 미리 채워진 상태를 그렸다. 그 경로가 아직 없어
+  // 가짜 값을 넣어 두면 아무것도 하지 않아도 다음으로 넘어가 이 단계가 무의미해진다
+  const [nickname, setNickname] = useState("");
 
   const toggleOne = (id: string, next: boolean) =>
     setChecked((prev) => (next ? [...prev, id] : prev.filter((entry) => entry !== id)));
 
-  if (step === "nickname") {
+  // 주소로 단계를 건너뛸 수 있다. 필수 약관 없이 닉네임 단계에 들어오면 그대로
+  // 가입이 끝나므로, 채우지 않았으면 약관부터 보여준다
+  if (step === "nickname" && canProceed(checked)) {
     return (
       <SingleInputScreen
         question="닉네임을 적어주세요"
