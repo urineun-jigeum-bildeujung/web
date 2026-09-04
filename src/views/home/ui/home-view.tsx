@@ -101,7 +101,9 @@ function SectionTitle({ children, href }: { children: React.ReactNode; href?: st
 export function HomeView() {
   const [category, setCategory] = useQueryState(
     "category",
-    parseAsStringLiteral(CATEGORIES).withDefault("all"),
+    // 전체 탭은 큐레이션, 종류 탭은 상품 목록으로 구성이 통째로 다르다.
+    // 같은 목록의 필터가 아니므로 뒤로가기로 되돌아올 수 있어야 한다
+    parseAsStringLiteral(CATEGORIES).withDefault("all").withOptions({ history: "push" }),
   );
   const [sort, setSort] = useQueryState(
     "sort",

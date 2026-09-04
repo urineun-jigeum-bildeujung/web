@@ -34,7 +34,11 @@ const MOCK_WRITTEN = Array.from({ length: 4 }, (_, index) => ({
 }));
 
 export function MyReviewsView() {
-  const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("writable"));
+  const [tab, setTab] = useQueryState(
+    "tab",
+    // 작성 가능·작성한이 서로 다른 목록이라 뒤로가기로 되돌아와야 한다
+    parseAsStringLiteral(TABS).withDefault("writable").withOptions({ history: "push" }),
+  );
 
   return (
     <div className="flex min-h-dvh flex-col">
