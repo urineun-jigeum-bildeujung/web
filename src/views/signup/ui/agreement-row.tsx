@@ -39,10 +39,13 @@ export function AgreementRow({
 
   return (
     <div className={cn("flex min-h-11 items-center gap-2", className)}>
+      {/* 보이는 크기는 16px로 두고 누를 수 있는 자리만 44px로 넓힌다.
+          네모를 키우면 시안과 달라지고, 줄마다 높이가 들쭉날쭉해진다 */}
       <Checkbox
         id={id}
         checked={checked}
         onCheckedChange={(next) => onCheckedChange(next === true)}
+        className="after:absolute after:-inset-3.5"
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
