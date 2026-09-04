@@ -39,7 +39,10 @@ export function OnboardingView() {
   // 입력값은 시안의 이탈 모달이 "저장되지 않아요"라고 알리므로 컴포넌트 상태로 든다.
   const [step, setStep] = useQueryState(
     "step",
-    parseAsStringLiteral(ONBOARDING_STEPS).withDefault("intro"),
+    // 기기 뒤로가기로 이전 단계에 가야 한다. 기본값 replace로 두면 이름·품종까지
+    // 입력하다 뒤로가기를 눌렀을 때 온보딩을 통째로 떠나 입력값이 사라진다.
+    // WebView 앱으로 감쌀 예정이라 기기 뒤로가기가 실제 사용 경로다
+    parseAsStringLiteral(ONBOARDING_STEPS).withDefault("intro").withOptions({ history: "push" }),
   );
   const [draft, setDraft] = useState<PetProfileDraft>(EMPTY_PROFILE_DRAFT);
   const [exitOpen, setExitOpen] = useState(false);

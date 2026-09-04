@@ -5,7 +5,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoChevronForward, IoImageOutline } from "react-icons/io5";
 
@@ -49,7 +49,10 @@ const PRODUCT_FILTERS = [
   { value: "all", label: "전체" },
   { value: "todo", label: "미입력" },
   { value: "done", label: "입력" },
-];
+] as const;
+
+/** 주소로 받을 수 있는 보기. 목록에 없는 값이 오면 걸러 낸 결과가 비어 화면이 사라진다 */
+const REVIEW_FILTERS = PRODUCT_FILTERS.map((item) => item.value);
 
 /** 후기는 제품마다 다르다. 하나를 돌려쓰면 어느 것을 눌러도 같은 상세로 간다. */
 function mockReview(productId: string): PetProductReview {
@@ -110,12 +113,18 @@ function Chips({ items }: { items: string[] }) {
 
 export function PetProfileView() {
   const router = useRouter();
-  const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("profile"));
+  const [tab, setTab] = useQueryState(
+    "tab",
+    // 프로필과 제품 관리는 서로 다른 화면이라 뒤로가기로 되돌아와야 한다
+    parseAsStringLiteral(TABS).withDefault("profile").withOptions({ history: "push" }),
+  );
   const [selectedPetId, setSelectedPetId] = useState(MOCK_PETS[0].id);
   const [review, setReview] = useState<PetProductReview | null>(null);
   const [productFilter, setProductFilter] = useQueryState(
     "reviewed",
-    parseAsString.withDefault("all"),
+    // 보기 안에서만 받는다. parseAsString은 검증하지 않아 주소로 아무 값이나 들어온다.
+    // 같은 목록을 좁히는 것이라 히스토리에는 쌓지 않는다(기본 replace)
+    parseAsStringLiteral(REVIEW_FILTERS).withDefault("all"),
   );
 
   const visibleProducts = MOCK_PRODUCTS.filter((product) => {
@@ -192,7 +201,7 @@ export function PetProfileView() {
             label="후기 작성 여부로 거르기"
             options={PRODUCT_FILTERS}
             value={productFilter}
-            onValueChange={(next) => void setProductFilter(next)}
+            onValueChange={(next) => void setProductFilter(next as (typeof REVIEW_FILTERS)[number])}
           />
 
           {visibleProducts.map((product) => (

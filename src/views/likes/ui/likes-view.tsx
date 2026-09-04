@@ -113,7 +113,12 @@ function CountBadge({ children }: { children: React.ReactNode }) {
 }
 
 export function LikesView() {
-  const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("liked"));
+  const [tab, setTab] = useQueryState(
+    "tab",
+    // 세 탭이 서로 다른 목록이라 뒤로가기로 되돌아올 수 있어야 한다.
+    // nuqs 기본값 replace는 히스토리에 쌓지 않아 화면을 통째로 떠난다
+    parseAsStringLiteral(TABS).withDefault("liked").withOptions({ history: "push" }),
+  );
   const [category, setCategory] = useQueryState(
     "category",
     parseAsStringLiteral(CATEGORY_VALUES).withDefault("all"),

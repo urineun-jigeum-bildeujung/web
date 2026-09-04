@@ -50,6 +50,8 @@ const MOCK_PRODUCTS = Array.from({ length: 9 }, (_, index) => ({
 }));
 
 export function RecommendationsView() {
+  // 아이 id는 서버에서 오는 값이라 보기를 미리 적을 수 없어 parseAsStringLiteral을 쓰지 못한다.
+  // 대신 아래에서 목록에 없는 id면 첫 아이로 되돌린다
   const [petId, setPetId] = useQueryState("pet", parseAsString.withDefault(MOCK_PETS[0].id));
   // 주소로 아무 값이나 올 수 있다. 목록에 없는 값이면 목록이 통째로 비므로 보기 안에서만 받는다.
   const [concern, setConcern] = useQueryState(
