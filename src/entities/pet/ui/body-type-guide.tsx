@@ -35,8 +35,9 @@ export function BodyTypeGuide() {
 
       <Drawer open={open} onOpenChange={setOpen}>
         {/* 다섯 단계를 모두 담아 세로로 길다. 낮은 화면(가로 모바일)에서는
-            내용이 위아래로 잘리고 스크롤도 되지 않아 여기서 높이를 제한한다. */}
-        <DrawerContent className="max-h-[85dvh] overflow-y-auto">
+            내용이 위아래로 잘리고 스크롤도 되지 않아 여기서 높이를 제한한다.
+            공용 Drawer가 mt-24(96px)를 주므로 그만큼 빼야 위쪽이 잘리지 않는다. */}
+        <DrawerContent className="max-h-[calc(100dvh-6rem)] overflow-y-auto">
           <DrawerHeader className="gap-2 px-4 pt-2 pb-0">
             <DrawerTitle className="text-left text-base">bcs란?</DrawerTitle>
             <DrawerDescription className="text-left text-sm">

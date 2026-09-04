@@ -180,7 +180,7 @@ export function DealsView() {
             <TabsTrigger
               key={value}
               value={value}
-              className="flex-none px-0 text-base after:bg-brand data-active:text-brand"
+              className="min-h-11 flex-none px-0 text-base after:bg-brand data-active:text-brand"
             >
               {label}
             </TabsTrigger>
