@@ -7,6 +7,7 @@
 "use client";
 
 import { useState } from "react";
+import { IoCheckmark } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -51,7 +52,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
             <TabsTrigger
               key={group.label}
               value={group.label}
-              className="flex-none px-0 text-sm after:bg-brand data-active:text-brand"
+              className="min-h-11 flex-none px-0 text-sm after:bg-brand data-active:text-brand"
             >
               {group.label}
             </TabsTrigger>
@@ -71,13 +72,15 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
                       aria-pressed={selected}
                       onClick={() => toggle(item)}
                       className={cn(
-                        "min-h-11 rounded-full border px-4 text-sm transition-colors",
+                        "flex min-h-11 items-center gap-1 rounded-full border px-4 text-sm transition-colors",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                         selected
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border bg-background text-foreground hover:bg-muted",
                       )}
                     >
+                      {/* 색만으로 고른 것을 알리지 않는다. 색을 구분하기 어려운 사람도 안다 */}
+                      {selected && <IoCheckmark aria-hidden className="size-4" />}
                       {item}
                     </button>
                   </li>

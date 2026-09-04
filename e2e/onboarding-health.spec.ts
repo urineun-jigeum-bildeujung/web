@@ -96,3 +96,29 @@ test("체형 안내가 시트로 뜬다", async ({ page }) => {
   await expect(sheet.getByRole("term")).toHaveCount(5);
   await expect(sheet.getByRole("term").first()).toHaveText("매우 마름");
 });
+
+// 갈래가 여섯이라 시트가 세로로 길다. 낮은 화면에서 위쪽이 잘리면 탭을 못 고른다.
+test("낮은 화면에서도 시트의 탭을 고를 수 있다", async ({ page }) => {
+  await page.setViewportSize({ width: 740, height: 300 });
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "걱정되는 질환" }).click();
+
+  const sheet = page.locator("[data-slot=drawer-content]");
+  const box = await sheet.boundingBox();
+  expect(box!.y, "시트가 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
+
+  await expect(page.getByRole("tab", { name: "관절" })).toBeInViewport();
+});
+
+test("고른 칩은 색 말고 체크로도 알린다", async ({ page }) => {
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "걱정되는 질환" }).click();
+  const chip = page.getByRole("button", { name: "슬개골 탈구" });
+  await expect(chip.locator("svg")).toHaveCount(0);
+
+  await chip.click();
+  // 색을 구분하기 어려운 사람도 고른 것을 알아야 한다
+  await expect(chip.locator("svg")).toHaveCount(1);
+});
