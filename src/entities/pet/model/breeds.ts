@@ -88,9 +88,11 @@ export type PetProfileDraft = {
   size: string;
   weight: string;
   bodyTypeIndex: number;
-  concern: string;
+  /** 고른 건강 관심사. 여러 개를 고를 수 있어 배열이다 */
+  concern: string[];
   noConcern: boolean;
-  allergy: string;
+  /** 고른 알러지 성분 */
+  allergy: string[];
   noAllergy: boolean;
 };
 
@@ -106,9 +108,9 @@ export const EMPTY_PROFILE_DRAFT: PetProfileDraft = {
   size: "",
   weight: "",
   bodyTypeIndex: DEFAULT_BODY_TYPE_INDEX,
-  concern: "",
+  concern: [],
   noConcern: false,
-  allergy: "",
+  allergy: [],
   noAllergy: false,
 };
 
