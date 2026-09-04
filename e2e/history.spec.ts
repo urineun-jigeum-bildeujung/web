@@ -64,3 +64,13 @@ test("필터는 히스토리에 쌓이지 않는다", async ({ page }) => {
   await page.goBack();
   await expect(page).not.toHaveURL(/tab=products/);
 });
+
+test("주소에 없는 아이 id가 와도 화면이 한 아이를 가리킨다", async ({ page }) => {
+  await page.goto("/recommendations?pet=unknown");
+
+  // 목록에 없는 id면 첫 아이로 되돌린다. 고르는 자리도 같은 아이를 가리켜야 한다
+  await expect(page.getByRole("combobox", { name: "어느 아이의 추천을 볼지" })).toContainText(
+    "코코",
+  );
+  await expect(page.getByText(/코코/).first()).toBeVisible();
+});
