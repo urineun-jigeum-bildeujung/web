@@ -20,7 +20,7 @@ export function RecentKeywordChip({ keyword, onSearch, onRemove }: RecentKeyword
       <button
         type="button"
         onClick={() => onSearch(keyword)}
-        className="min-h-9 rounded-l-full py-1.5 pr-1 pl-3 text-sm text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="min-h-11 rounded-l-full py-1.5 pr-1 pl-3 text-sm whitespace-nowrap text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         {keyword}
       </button>
@@ -28,7 +28,7 @@ export function RecentKeywordChip({ keyword, onSearch, onRemove }: RecentKeyword
         type="button"
         aria-label={`${keyword} 검색 기록 지우기`}
         onClick={() => onRemove(keyword)}
-        className="flex min-h-9 items-center rounded-r-full py-1.5 pr-3 pl-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-r-full py-1.5 pr-3 pl-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         <IoClose aria-hidden className="size-4" />
       </button>
