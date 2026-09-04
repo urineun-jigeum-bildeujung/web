@@ -62,8 +62,10 @@ export function SearchView() {
     if (!trimmed) return;
 
     setRecent((prev) => [trimmed, ...prev.filter((item) => item !== trimmed)]);
-    // 검색 결과 화면 시안이 아직 없다. 종류별 목록으로 보내 막다른 길을 만들지 않는다
-    router.push("/?category=food");
+    // 검색 결과 화면 시안이 아직 없다. 어느 종류인지 알 수 없는 말을 특정 카테고리로
+    // 보내면 엉뚱한 목록이 뜨므로, 지금은 기록만 남기고 입력을 비운다.
+    // 시안이 나오면 이 자리에서 결과 화면으로 보낸다
+    setKeyword("");
   };
 
   return (
@@ -102,7 +104,7 @@ export function SearchView() {
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="상품을 검색해보세요"
-            className="rounded-full px-10"
+            className="h-11 rounded-full px-10"
           />
           {typing && (
             <button
@@ -112,7 +114,7 @@ export function SearchView() {
                 setKeyword("");
                 inputRef.current?.focus();
               }}
-              className="absolute top-1/2 right-1 flex size-9 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="absolute top-1/2 right-1 flex size-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <IoCloseCircle aria-hidden className="size-5" />
             </button>
@@ -139,7 +141,7 @@ export function SearchView() {
                   <button
                     type="button"
                     onClick={() => setRecent([])}
-                    className="min-h-9 px-1 text-xs text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    className="flex min-h-11 min-w-11 items-center justify-center px-1 text-xs text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     전체삭제
                   </button>
@@ -177,7 +179,7 @@ export function SearchView() {
                   <li key={category.value}>
                     <Link
                       href={`/?category=${category.value}`}
-                      className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                      className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-sm text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                     >
                       <span aria-hidden>{category.emoji}</span>
                       {category.label}
