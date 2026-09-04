@@ -20,3 +20,5 @@ export {
   type PetProfileDraft,
   type PetSpecies,
 } from "./model/breeds";
+export { HealthPickerSheet } from "./ui/health-picker-sheet";
+export { ALLERGY_GROUPS, CONCERN_GROUPS, type HealthGroup } from "./model/health";

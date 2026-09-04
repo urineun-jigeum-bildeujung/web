@@ -252,6 +252,7 @@ test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page
 });
 
 // 다섯 단계를 담아 세로로 길다. 낮은 화면에서 잘리면 마지막 단계를 못 읽는다(#87).
+// 시안 메모대로 다이얼로그에서 액션시트로 옮겼고(#109), 잘림 문제는 그대로 봐야 한다.
 test("낮은 화면에서도 체형 안내를 끝까지 읽을 수 있다", async ({ page }) => {
   await page.setViewportSize({ width: 740, height: 300 });
   await page.goto("/onboarding?step=detail", { waitUntil: "networkidle" });
@@ -259,9 +260,9 @@ test("낮은 화면에서도 체형 안내를 끝까지 읽을 수 있다", asyn
   await page.getByText("소형", { exact: false }).first().click();
   await page.getByRole("button", { name: "체형이 무엇인지 보기" }).click();
 
-  const dialog = page.locator("[data-slot=dialog-content]");
-  const box = await dialog.boundingBox();
-  expect(box!.y, "모달이 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
+  const sheet = page.locator("[data-slot=drawer-content]");
+  const box = await sheet.boundingBox();
+  expect(box!.y, "시트가 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
 
   const last = page.getByText("살집 때문에 뼈가 안 만져지고 배가 나왔어요");
   await last.scrollIntoViewIfNeeded();
