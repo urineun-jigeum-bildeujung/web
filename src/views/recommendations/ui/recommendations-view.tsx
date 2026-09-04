@@ -75,7 +75,8 @@ export function RecommendationsView() {
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
             {/* 아이를 바꾸면 추천도 바뀐다. 이름이 문장 안에 있어 고르는 자리로 보이게 둔다 */}
-            <Select value={petId} onValueChange={(next) => void setPetId(next)}>
+            {/* 주소에 없는 id가 와도 본문과 같은 아이를 가리키도록 정규화한 값을 쓴다 */}
+            <Select value={pet.id} onValueChange={(next) => void setPetId(next)}>
               <SelectTrigger
                 aria-label="어느 아이의 추천을 볼지"
                 className="size-auto min-h-11 rounded-full border-foreground bg-foreground px-3 text-sm font-medium text-background"
