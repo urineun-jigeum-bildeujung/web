@@ -65,6 +65,34 @@ URL에 두면 두 가지가 따라온다.
 
 `NuqsAdapter`는 `shared/providers/app-providers.tsx`에 있다. 어댑터 없이 `useQueryState`를 쓰면 런타임에 터진다.
 
+### 화면 구성이 바뀌는 값이면 `history: "push"`
+
+`useQueryState`의 기본값은 `history: "replace"`다. **주소는 바뀌지만 히스토리에 쌓이지 않아, 탭을 옮긴 뒤 뒤로가기를 누르면 이전 탭이 아니라 화면을 통째로 떠난다.**
+
+| 값의 성격 | 설정 | 예 |
+|---|---|---|
+| 화면 구성이나 단계가 바뀌는 값 | `history: "push"` | 탭, 온보딩 단계, 메인의 종류 |
+| 같은 목록을 좁히는 값 | 기본값 그대로 | 필터, 정렬 |
+
+```tsx
+parseAsStringLiteral(TABS).withDefault("liked").withOptions({ history: "push" })
+```
+
+**필터·정렬까지 쌓으면 안 된다.** 조건을 여러 번 바꾼 뒤 뒤로가기를 누르면 그만큼 눌러야 화면을 떠나게 된다.
+
+온보딩이 특히 중요하다. 이름·품종까지 입력하다 뒤로가기를 누르면 입력값이 통째로 사라졌다. **WebView 앱으로 감쌀 예정이라 기기 뒤로가기 버튼이 실제 사용 경로다.**
+
+### 주소로 받는 값은 `parseAsStringLiteral`로 보기를 제한한다
+
+`parseAsString`은 값을 검증하지 않는다. `?category=legacy` 같은 값이 오면 걸러 낸 결과가 비어 **목록이 통째로 사라진다.** 보기가 정해진 값은 리터럴로 받는다.
+
+```tsx
+const TABS = ["liked", "recent", "often"] as const;
+useQueryState("tab", parseAsStringLiteral(TABS).withDefault("liked"));
+```
+
+보기를 미리 적을 수 없는 값(아이 id처럼 서버에서 오는 것)은 `parseAsString`을 쓰되, **읽는 쪽에서 목록에 없으면 기본값으로 되돌린다.** 어느 쪽인지 주석으로 남긴다.
+
 ### 서버가 다시 조회해야 하는 값이면 `shallow: false`
 
 `useQueryState`의 기본값은 `shallow: true`다. **URL만 바뀌고 서버는 그 사실을 모른다.** 위의 "서버 컴포넌트로 유지할 수 있다"는 이 옵션을 켰을 때 성립한다.
