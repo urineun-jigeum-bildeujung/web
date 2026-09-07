@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IoChevronBack, IoCloseCircle, IoSearchOutline } from "react-icons/io5";
 
 import { BottomNav } from "@/widgets/bottom-nav";
@@ -17,6 +17,13 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Input } from "@/shared/ui/input";
 
 import { RecentKeywordChip } from "./recent-keyword-chip";
+import {
+  getRecent,
+  getRecentOnServer,
+  pushRecent,
+  setRecent,
+  subscribeRecent,
+} from "../model/recent-keywords";
 import { SuggestionItem } from "./suggestion-item";
 
 const CATEGORIES = [
@@ -37,14 +44,13 @@ const SUGGESTIONS = [
   "양치 껌",
 ];
 
-const INITIAL_RECENT = ["저자극 덴탈껌", "중소형견 사료", "사료", "고양이 화장실 모래", "양치 껌"];
-
 export function SearchView() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [keyword, setKeyword] = useState("");
-  const [recent, setRecent] = useState<string[]>(INITIAL_RECENT);
+  // 저장소는 React 밖의 것이라 효과로 되읽지 않고 여기서 구독한다
+  const recent = useSyncExternalStore(subscribeRecent, getRecent, getRecentOnServer);
 
   // 검색하러 온 화면이라 바로 칠 수 있어야 한다
   useEffect(() => {
@@ -61,7 +67,7 @@ export function SearchView() {
     const trimmed = word.trim();
     if (!trimmed) return;
 
-    setRecent((prev) => [trimmed, ...prev.filter((item) => item !== trimmed)]);
+    setRecent(pushRecent(recent, trimmed));
     // 종류 목록이 아니라 검색 결과 화면으로 보낸다. 어느 종류인지 알 수 없는 말을
     // 특정 카테고리로 보내면 "양치 껌"을 검색해도 사료 목록이 뜬다
     router.push(`/search/result?q=${encodeURIComponent(trimmed)}`);
@@ -154,9 +160,7 @@ export function SearchView() {
                       <RecentKeywordChip
                         keyword={item}
                         onSearch={search}
-                        onRemove={(word) =>
-                          setRecent((prev) => prev.filter((entry) => entry !== word))
-                        }
+                        onRemove={(word) => setRecent(recent.filter((entry) => entry !== word))}
                       />
                     </li>
                   ))}

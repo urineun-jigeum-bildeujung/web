@@ -41,6 +41,7 @@ const MOCK_RESULTS = [
     dailyCost: 1050,
     rating: 4.8,
     reviewCount: 108,
+    salesCount: 1240,
     matchScore: 92,
   },
   {
@@ -51,6 +52,7 @@ const MOCK_RESULTS = [
     dailyCost: 1050,
     rating: 4.5,
     reviewCount: 108,
+    salesCount: 860,
     matchScore: 86,
   },
   {
@@ -61,6 +63,7 @@ const MOCK_RESULTS = [
     dailyCost: 1060,
     rating: 4.8,
     reviewCount: 508,
+    salesCount: 3100,
     matchScore: 74,
   },
   {
@@ -70,6 +73,7 @@ const MOCK_RESULTS = [
     dailyCost: 1060,
     rating: 4.6,
     reviewCount: 109,
+    salesCount: 420,
     matchScore: 68,
   },
   // 시안은 사료 검색 결과지만, 목록이 사료뿐이면 다른 말로 검색했을 때 늘 비어 보인다
@@ -81,6 +85,7 @@ const MOCK_RESULTS = [
     dailyCost: 771,
     rating: 4.9,
     reviewCount: 203,
+    salesCount: 2050,
     matchScore: 88,
   },
   {
@@ -90,9 +95,12 @@ const MOCK_RESULTS = [
     dailyCost: 620,
     rating: 4.4,
     reviewCount: 62,
+    salesCount: 180,
     matchScore: 61,
   },
 ];
+
+type Product = (typeof MOCK_RESULTS)[number];
 
 /** 검색어에 걸리는지 본다. 서버 연동 전까지 화면 안에서 거른다 */
 function match(name: string, keyword: string) {
@@ -100,6 +108,15 @@ function match(name: string, keyword: string) {
   if (words.length === 0) return true;
   return words.some((word) => name.toLowerCase().includes(word.toLowerCase()));
 }
+
+/** 목업 정렬 규칙. 연동하면 서버가 정렬해 주므로 이 자리는 통째로 사라진다 */
+const COMPARE: Record<(typeof SORTS)[number], (a: Product, b: Product) => number> = {
+  recommend: (a, b) => b.matchScore - a.matchScore,
+  popular: (a, b) => b.salesCount - a.salesCount,
+  "price-low": (a, b) => a.price - b.price,
+  "price-high": (a, b) => b.price - a.price,
+  reviews: (a, b) => b.reviewCount - a.reviewCount,
+};
 
 export function SearchResultView() {
   const router = useRouter();
@@ -112,7 +129,12 @@ export function SearchResultView() {
     parseAsStringLiteral(SORTS).withDefault("recommend"),
   );
 
-  const results = MOCK_RESULTS.filter((product) => match(product.name, keyword));
+  // 실제로는 검색어와 정렬을 요청 파라미터로 넘겨 서버가 걸러 준다.
+  // 목업 단계라 화면에서 거르고 정렬한다 — sort를 손에 쥐고 아무것도 하지 않으면
+  // 정렬이 죽은 UI가 된다
+  const results = MOCK_RESULTS.filter((product) => match(product.name, keyword)).sort(
+    COMPARE[sort],
+  );
 
   return (
     <div className="flex min-h-dvh flex-col pb-16">
