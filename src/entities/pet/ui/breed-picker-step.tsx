@@ -16,15 +16,17 @@ import { BreedPicker } from "./breed-picker";
 
 type BreedPickerStepProps = {
   value: string;
+  /** 저장된 종. "기타"는 양쪽 목록에 다 있어 이름만으로는 가를 수 없다 */
+  species?: PetSpecies;
   onConfirm: (breed: string, species: PetSpecies) => void;
   onCancel: () => void;
 };
 
-export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepProps) {
+export function BreedPickerStep({ value, species, onConfirm, onCancel }: BreedPickerStepProps) {
   // 고른 값을 바로 반영하지 않고 "선택 완료"를 누를 때 넘긴다.
   // 시안에 돌아가기·선택 완료 두 버튼이 있어 취소가 가능해야 한다.
   const [picked, setPicked] = useState<{ breed: string; species: PetSpecies } | null>(
-    value ? { breed: value, species: findSpecies(value) } : null,
+    value ? { breed: value, species: findSpecies(value, species) } : null,
   );
 
   return (
