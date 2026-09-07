@@ -14,6 +14,7 @@
 | `ui/product-review-sheet.tsx` | 아이가 먹은 제품의 후기 시트 (`mypa_021_상품클릭시`) |
 | `model/breeds.ts` | 품종 목록, 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입 |
 | `ui/health-picker-sheet.tsx` | 건강 관심사·알러지 성분을 탭으로 나눠 고르는 시트 (`onbo_004_바텀`) |
+| `ui/health-picker-field.tsx` | 그 시트를 여는 자리. 고른 것을 칩으로 되보인다 (`onbo_004`·`mypa_321`) |
 | `model/health.ts` | 질환·성분 목록. **더미이며 기획 확정 후 교체** |
 | `index.ts` | 공개 API |
 

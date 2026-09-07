@@ -128,3 +128,29 @@ test("고른 칩은 색 말고 체크로도 알린다", async ({ page }) => {
   await expect(chip).toHaveAttribute("aria-pressed", "true");
   await expect(chip.locator("svg")).toHaveCount(1);
 });
+
+// 온보딩에서 고른 값을 마이페이지에서 고친다. 한쪽만 자유 입력이면
+// 같은 질환이 여러 표기로 쌓여 추천에 쓸 수 없다.
+test("마이페이지 건강 정보도 같은 시트로 고른다", async ({ page }) => {
+  await page.goto("/mypage/pets/health");
+
+  const picker = page.getByRole("button", { name: "걱정되는 질환" });
+  await expect(picker).toContainText("슬개골 탈구");
+
+  await picker.click();
+  await expect(page.getByRole("tab", { name: "관절" })).toBeVisible();
+
+  await page.getByRole("button", { name: "관절염" }).click();
+  await page.getByRole("button", { name: "선택 완료" }).click();
+
+  await expect(picker).toContainText("관절염");
+});
+
+test("해당 없음을 켠 자리는 해당 사항 없음으로 바뀐다", async ({ page }) => {
+  await page.goto("/mypage/pets/health");
+
+  // 알러지는 저장된 값이 해당 없음이다
+  const allergy = page.getByRole("button", { name: "피해야 할 성분" });
+  await expect(allergy).toBeDisabled();
+  await expect(allergy).toContainText("해당 사항 없음");
+});
