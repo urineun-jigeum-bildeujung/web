@@ -52,7 +52,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
             <TabsTrigger
               key={group.label}
               value={group.label}
-              className="min-h-11 flex-none px-0 text-sm after:bg-brand data-active:text-brand"
+              className="min-h-11 min-w-11 flex-none px-0 text-sm after:bg-brand data-active:text-brand"
             >
               {group.label}
             </TabsTrigger>

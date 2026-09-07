@@ -82,10 +82,13 @@ test("체형 안내가 시트로 뜬다", async ({ page }) => {
   await page.goto("/onboarding?step=detail");
 
   // 체구를 골라야 몸무게·체형 항목이 나타난다(시안 onbo_003_체구선택후)
+  // ChipSelect는 라디오를 sr-only로 숨기고 레이블을 누르게 한다. 라디오를 직접
+  // 누르면 레이블이 포인터를 가로채므로, 누르는 것은 레이블이고 확인은 role로 한다
   await page
     .getByRole("radiogroup", { name: "아이의 체구" })
     .getByText("소형견", { exact: true })
     .click();
+  await expect(page.getByRole("radio", { name: "소형견" })).toBeChecked();
 
   await page.getByRole("button", { name: "체형이 무엇인지 보기" }).click();
 
@@ -104,7 +107,7 @@ test("낮은 화면에서도 시트의 탭을 고를 수 있다", async ({ page 
 
   await page.getByRole("button", { name: "걱정되는 질환" }).click();
 
-  const sheet = page.locator("[data-slot=drawer-content]");
+  const sheet = page.getByRole("dialog", { name: "걱정되는 질환" });
   const box = await sheet.boundingBox();
   expect(box!.y, "시트가 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
 
@@ -116,9 +119,12 @@ test("고른 칩은 색 말고 체크로도 알린다", async ({ page }) => {
 
   await page.getByRole("button", { name: "걱정되는 질환" }).click();
   const chip = page.getByRole("button", { name: "슬개골 탈구" });
+  await expect(chip).toHaveAttribute("aria-pressed", "false");
   await expect(chip.locator("svg")).toHaveCount(0);
 
   await chip.click();
-  // 색을 구분하기 어려운 사람도 고른 것을 알아야 한다
+  // 색을 구분하기 어려운 사람도 고른 것을 알아야 한다. aria-pressed만으로는
+  // 눈으로 보는 표시가 사라져도 통과하므로 아이콘이 붙는 것까지 함께 본다
+  await expect(chip).toHaveAttribute("aria-pressed", "true");
   await expect(chip.locator("svg")).toHaveCount(1);
 });
