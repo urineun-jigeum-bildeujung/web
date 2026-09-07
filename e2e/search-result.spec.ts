@@ -43,3 +43,35 @@ test("정렬을 바꿔도 뒤로가기 한 번에 검색 화면으로 간다", a
   await page.goBack();
   await expect(page).toHaveURL(/\/search$/);
 });
+
+// 정렬을 골라도 순서가 그대로면 죽은 UI다.
+test("정렬을 고르면 목록 순서가 바뀐다", async ({ page }) => {
+  await page.goto("/search/result?q=사료");
+
+  const names = () => page.getByRole("listitem").locator("p").first();
+
+  await page.getByLabel("정렬").click();
+  await page.getByRole("option", { name: "낮은 가격순" }).click();
+  await expect(names()).toHaveText("퍼피 성장기 사료 1kg");
+
+  await page.getByLabel("정렬").click();
+  await page.getByRole("option", { name: "높은 가격순" }).click();
+  await expect(names()).toHaveText("중소형견 소포장 사료 1kg");
+});
+
+// 검색하면 결과 화면으로 떠나므로, 돌아왔을 때 방금 검색한 말이 없으면
+// 최근 검색어가 사실상 동작하지 않는다.
+test("검색한 말이 돌아와도 최근 검색어에 남는다", async ({ page }) => {
+  await page.goto("/search");
+
+  await page.getByLabel("상품 검색").fill("무곡물");
+  await page.getByLabel("상품 검색").press("Enter");
+  await expect(page).toHaveURL(/\/search\/result/);
+
+  await page.getByRole("button", { name: /검색어 고치기/ }).click();
+
+  const recent = page.getByRole("button", { name: "무곡물", exact: true });
+  await expect(recent).toBeVisible();
+  // 맨 앞으로 올라온다
+  await expect(page.getByRole("listitem").first()).toContainText("무곡물");
+});

@@ -1,6 +1,8 @@
 // 최근 검색어를 지울 수 있는지, 글자를 넣으면 추천어가 자리를 넘겨받는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { resetRecentCache } from "../model/recent-keywords";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -11,6 +13,12 @@ vi.mock("next/navigation", () => ({
 import { SearchView } from "./search-view";
 
 describe("SearchView", () => {
+  // 최근 검색어를 기기에 남기므로 앞 테스트가 뒤 테스트로 새어 나간다
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetRecentCache();
+  });
+
   it("들어오면 최근 검색어와 카테고리를 보인다", () => {
     render(<SearchView />);
 
