@@ -69,17 +69,16 @@ describe("SearchView", () => {
     expect(chips[0].textContent).toContain("중소형견 관절 영양제");
   });
 
-  it("검색하면 입력이 비고 최근 검색어로 돌아온다", () => {
+  it("검색하면 그 말로 검색 결과 화면에 간다", () => {
     render(<SearchView />);
 
-    const input = screen.getByLabelText("상품 검색") as HTMLInputElement;
-    fireEvent.change(input, { target: { value: "관절" } });
+    fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "관절" } });
     fireEvent.click(screen.getByRole("button", { name: "중소형견 관절 영양제" }));
 
-    // 검색 결과 화면이 아직 없다. 엉뚱한 목록으로 보내는 대신 기록만 남긴다
-    expect(input.value).toBe("");
-    expect(screen.getByText("최근 검색어")).toBeDefined();
-    expect(push).not.toHaveBeenCalled();
+    // 띄어쓰기가 든 말이라 그대로 붙이면 주소가 깨진다
+    expect(push).toHaveBeenCalledWith(
+      "/search/result?q=%EC%A4%91%EC%86%8C%ED%98%95%EA%B2%AC%20%EA%B4%80%EC%A0%88%20%EC%98%81%EC%96%91%EC%A0%9C",
+    );
   });
 
   it("최근 검색어를 다시 눌러도 목록에 하나만 남는다", () => {
