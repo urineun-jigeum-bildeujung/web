@@ -79,21 +79,21 @@ views/
 | `select-compare-product` | `/compare/select` | 비교할 상품 고르기 |
 | `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |
 | `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |
-| `mypage-notifications` | `/mypage/notifications` | 알림 목록 (자리 표시) |
+| `mypage-notifications` | `/mypage/notifications` | 알림 목록. 공지와 배송 알림을 걸러 보고 눌러 상세를 연다 |
 | `addresses` | `/mypage/address` | 배송지 관리 목록 (자리 표시) |
 | `order-claim` | `/mypage/orders/[orderId]/claim` | 취소·반품·교환 접수 (자리 표시) |
-| `review-write` | `/mypage/reviews/write` | 리뷰 작성 (자리 표시) |
+| `review-write` | `/mypage/reviews/write` | 리뷰 작성. 별점과 함께 아이의 실제 반응을 받는다 |
 | `review-detail` | `/mypage/reviews/[reviewId]` | 리뷰 상세 (자리 표시) |
 | `support-inquiries` | `/mypage/support/inquiries` | 1:1 문의 내역 (자리 표시) |
 | `support-notices` | `/mypage/support/notices` | 공지사항 (자리 표시) |
 | `service` | `/mypage/service` | 서비스 안내 (자리 표시) |
 | `service-terms` | `/mypage/service/terms` | 서비스 이용약관 (자리 표시) |
 | `service-privacy` | `/mypage/service/privacy` | 개인정보 처리방침 (자리 표시) |
-| `deals` | `/deals` | 타임딜 목록 (자리 표시) |
-| `search` | `/search` | 검색 결과 (자리 표시) |
-| `recommendations` | `/recommendations` | 맞춤 추천 목록 (자리 표시) |
-| `login` | `/login` | 로그인 진입 (자리 표시) |
-| `signup` | `/signup` | 회원가입 (자리 표시) |
-| `likes` | `/likes` | 좋아요(찜) 목록 (자리 표시) |
+| `deals` | `/deals` | 타임딜. 진행 중과 오픈 예정을 탭으로 나눈다 |
+| `search` | `/search` | 검색 입력. 최근 검색어와 카테고리로 시작하고 글자를 넣으면 추천어를 보인다. 결과 화면은 시안 대기 |
+| `recommendations` | `/recommendations` | 고른 아이의 건강 고민에 맞는 상품 목록 |
+| `login` | `/login` | 로그인. 아이디·비밀번호와 소셜 두 갈래(카카오·구글) |
+| `signup` | `/signup` | 회원가입. 약관 동의와 닉네임을 차례로 받는다 |
+| `likes` | `/likes` | 찜한 상품·최근에 본 상품·자주 산 상품 (탭) |
 | `product-detail` | `/products/[productId]` | 상품 상세 (자리 표시) |
 | `product-reviews` | `/products/[productId]/reviews` | 상품 리뷰 목록 (자리 표시) |
