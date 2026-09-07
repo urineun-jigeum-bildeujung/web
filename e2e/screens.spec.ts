@@ -203,7 +203,7 @@ test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ 
   await name.fill("보리");
 
   await page.getByRole("button", { name: /품종 고르기/ }).click();
-  await page.getByRole("button", { name: "코리안 숏헤어 (코숏)" }).click();
+  await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
   await page.getByRole("button", { name: "선택 완료" }).click();
 
   await expect(page.getByRole("button", { name: /코리안 숏헤어/ })).toBeVisible();

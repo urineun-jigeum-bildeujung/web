@@ -82,6 +82,7 @@ export function OnboardingView() {
       {step === "breed" && (
         <BreedPickerStep
           value={draft.breed}
+          species={draft.species}
           onConfirm={pickBreed}
           onCancel={() => void setStep("detail")}
         />

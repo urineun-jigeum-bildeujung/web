@@ -9,7 +9,7 @@ import { useQueryState } from "nuqs";
 import { useState } from "react";
 import { IoChevronForward } from "react-icons/io5";
 
-import { BreedPickerStep, GENDER_OPTIONS, NEUTERED_OPTIONS } from "@/entities/pet";
+import { BreedPickerStep, GENDER_OPTIONS, NEUTERED_OPTIONS, type PetSpecies } from "@/entities/pet";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
@@ -18,9 +18,11 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { EditPetScreen } from "./edit-pet-screen";
 
 /** API 연동 전까지 화면 확인용 값 */
+// 종을 함께 든다. "기타"는 양쪽 품종 목록에 다 있어 이름만으로는 가를 수 없다.
 const SAVED = {
   name: "코코",
-  breed: "믹스견 (기타)",
+  species: "dog" as PetSpecies,
+  breed: "믹스견",
   age: "4세",
   birthday: "",
   gender: "",
@@ -32,6 +34,7 @@ export function EditPetBasicView() {
   // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
   const [picking, setPicking] = useQueryState("picking");
   const [breed, setBreed] = useState(SAVED.breed);
+  const [species, setSpecies] = useState(SAVED.species);
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
@@ -47,8 +50,10 @@ export function EditPetBasicView() {
         <PageHeader title="품종 선택" onLeadingClick={() => void setPicking(null)} />
         <BreedPickerStep
           value={breed}
-          onConfirm={(next) => {
+          species={species}
+          onConfirm={(next, nextSpecies) => {
             setBreed(next);
+            setSpecies(nextSpecies);
             void setPicking(null);
           }}
           onCancel={() => void setPicking(null)}
