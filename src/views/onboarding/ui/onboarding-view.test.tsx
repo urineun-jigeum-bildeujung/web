@@ -24,12 +24,14 @@ test("기본은 도입부를 보여준다", () => {
   expect(screen.getByRole("heading", { name: "딱 1분만 아이에 대해 알려주세요" })).toBeDefined();
 });
 
-// 확정본 도입부에는 버튼이 하나뿐이다. 섹션 메모도 "건너뛰기, 닫기 버튼 삭제"다
+// 확정본 도입부에는 버튼이 하나뿐이다. 섹션 메모도 "건너뛰기, 닫기 버튼 삭제"다.
+// 이름을 짚어 없는지만 보면 다른 이름의 이탈 버튼이 생겨도 통과하므로 개수를 센다
 test("도입부에는 프로필 입력하기 하나만 있다", () => {
   renderAt("");
 
-  expect(screen.getByRole("button", { name: "프로필 입력하기" })).toBeDefined();
-  expect(screen.queryByRole("button", { name: "건너뛰기" })).toBeNull();
+  const buttons = screen.getAllByRole("button");
+  expect(buttons).toHaveLength(1);
+  expect(buttons[0].textContent).toBe("프로필 입력하기");
 });
 
 test("첫 입력 단계는 세 항목이 다 차야 다음으로 넘어갈 수 있다", () => {
@@ -73,12 +75,19 @@ test("도입부에는 진행 표시가 없다", () => {
   expect(screen.queryByRole("progressbar")).toBeNull();
 });
 
-// 화면 안에서 온보딩을 떠나는 길이 없다. 이탈 확인 모달도 함께 사라졌다
-test("온보딩을 떠나는 길이 화면에 없다", () => {
-  renderAt("?step=basic");
+// 확정본에는 건너뛰기도 닫기도 없다. 모달만 보면 다른 이탈 경로가 생겨도 통과하므로
+// 머리말 버튼과 링크까지 함께 본다
+test("입력 단계에는 온보딩을 떠나는 버튼도 링크도 없다", () => {
+  const { container } = renderAt("?step=basic");
 
+  // 이탈 확인 모달을 여는 곳이 없어 모달도 함께 사라졌다
   expect(screen.queryByRole("alertdialog")).toBeNull();
   expect(screen.queryByText("프로필 작성을 그만둘까요?")).toBeNull();
+
+  // 머리말에는 진행 표시만 남는다
+  expect(container.querySelector("header")?.querySelectorAll("button")).toHaveLength(0);
+  // 다른 화면으로 새는 링크도 없다
+  expect(container.querySelectorAll("a")).toHaveLength(0);
 });
 
 test("체구를 고르기 전에는 몸무게·체질 항목이 없다", () => {
