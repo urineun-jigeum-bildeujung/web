@@ -48,6 +48,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
             onChange={(concern) => onChange({ concern })}
             placeholder="신경 쓰이는 곳을 골라주세요"
             disabled={draft.noConcern}
+            disabledPlaceholder="해당 사항 없음"
           />
           <CheckboxRow
             label="해당 사항이 없어요"
@@ -70,7 +71,10 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
             onChange={(allergy) => onChange({ allergy })}
             placeholder="피해야 할 성분을 골라주세요"
             disabled={draft.noAllergy}
+            disabledPlaceholder="해당 사항 없음"
           />
+          {/* 시안(onbo_004·mypa_321)이 알러지 쪽에만 예시를 남긴다 */}
+          <p className="text-xs text-muted-foreground">ex) 복숭아, 닭, 연어, 밀가루 등</p>
           <CheckboxRow
             label="해당 사항이 없어요"
             checked={draft.noAllergy}
