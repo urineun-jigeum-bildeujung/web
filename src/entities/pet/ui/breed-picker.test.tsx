@@ -1,5 +1,5 @@
 // 품종 선택 테스트. 종별 묶음과 선택 전달을 검증한다.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 
 import { BreedPicker } from "./breed-picker";
@@ -26,9 +26,18 @@ test("고른 품종을 aria-pressed로 알린다", () => {
   expect(screen.getByRole("button", { name: "비글" }).getAttribute("aria-pressed")).toBe("false");
 });
 
-// "기타"가 강아지·고양이 양쪽에 있다. 이름만으로는 가를 수 없다
-test("기타는 양쪽 묶음에 다 있다", () => {
-  render(<BreedPicker onChange={() => {}} />);
+// "기타"가 강아지·고양이 양쪽에 있다. 개수만 세면 둘 다 한쪽에 있어도 통과하므로
+// 묶음 안으로 좁혀서 본다
+test("기타가 종별 묶음에 하나씩 있고 누르면 그 종을 넘긴다", () => {
+  const onChange = vi.fn();
+  render(<BreedPicker onChange={onChange} />);
 
-  expect(screen.getAllByRole("button", { name: "기타" })).toHaveLength(2);
+  const dog = within(screen.getByRole("region", { name: "강아지" }));
+  const cat = within(screen.getByRole("region", { name: "고양이" }));
+
+  fireEvent.click(dog.getByRole("button", { name: "기타" }));
+  expect(onChange).toHaveBeenLastCalledWith("기타", "dog");
+
+  fireEvent.click(cat.getByRole("button", { name: "기타" }));
+  expect(onChange).toHaveBeenLastCalledWith("기타", "cat");
 });
