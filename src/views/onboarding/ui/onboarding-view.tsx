@@ -1,10 +1,12 @@
 // 온보딩 프로필 등록 화면. 단계 이동과 입력값 보관을 맡고 각 단계를 갈아 끼운다.
 // 와이어프레임 기준(onbo_001~onbo_005)이라 디자인 확정 시 바뀔 수 있다.
+//
+// 화면 안에서 온보딩을 떠나는 길은 두지 않는다. 확정본에 건너뛰기도 닫기도 없다.
+// 회원가입 직후 반드시 거치는 단계라는 뜻으로 읽힌다.
 
 "use client";
 
 import { useRouter } from "next/navigation";
-import { IoClose } from "react-icons/io5";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
@@ -14,15 +16,6 @@ import {
   type PetProfileDraft,
   type PetSpecies,
 } from "@/entities/pet";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
@@ -45,7 +38,6 @@ export function OnboardingView() {
     parseAsStringLiteral(ONBOARDING_STEPS).withDefault("intro").withOptions({ history: "push" }),
   );
   const [draft, setDraft] = useState<PetProfileDraft>(EMPTY_PROFILE_DRAFT);
-  const [exitOpen, setExitOpen] = useState(false);
 
   const patch = (next: Partial<PetProfileDraft>) => setDraft((prev) => ({ ...prev, ...next }));
   const progress = getStepProgress(step);
@@ -59,27 +51,14 @@ export function OnboardingView() {
     <div className="flex min-h-dvh flex-col">
       {/* 도입부와 완료 화면에는 상단 바가 없다 */}
       {step !== "intro" && step !== "done" && (
-        // 시안은 진행 표시가 왼쪽, 닫기가 오른쪽이다.
-        // left를 주면 기본 leading 버튼이 대체되므로 닫기는 right에 둔다.
+        // 확정본 머리말에는 진행 표시만 있다. 닫기 버튼은 두지 않는다
         <PageHeader
           leading="none"
           left={progress ? <StepProgress {...progress} className="w-32" /> : undefined}
-          right={
-            <button
-              type="button"
-              aria-label="닫기"
-              onClick={() => setExitOpen(true)}
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <IoClose aria-hidden className="size-6" />
-            </button>
-          }
         />
       )}
 
-      {step === "intro" && (
-        <IntroStep onStart={() => void setStep("basic")} onSkip={() => router.push("/")} />
-      )}
+      {step === "intro" && <IntroStep onStart={() => void setStep("basic")} />}
 
       {step === "basic" && (
         <BasicStep
@@ -124,21 +103,6 @@ export function OnboardingView() {
           onGoRecommendation={() => router.push("/")}
         />
       )}
-
-      <AlertDialog open={exitOpen} onOpenChange={setExitOpen}>
-        <AlertDialogContent>
-          <AlertDialogTitle>프로필 작성을 그만둘까요?</AlertDialogTitle>
-          <AlertDialogDescription>
-            지금까지 알려주신 내용은 저장되지 않아요. 나중에 다시 작성할 수 있어요.
-          </AlertDialogDescription>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">취소</AlertDialogCancel>
-            <AlertDialogAction className="min-h-11" onClick={() => router.push("/")}>
-              그만두기
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
