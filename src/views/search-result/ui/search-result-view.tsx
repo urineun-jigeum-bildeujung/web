@@ -98,6 +98,17 @@ const MOCK_RESULTS = [
     salesCount: 180,
     matchScore: 61,
   },
+  // 영양 정보가 등록되지 않아 적합도를 재지 못한 상품. 가장 싸지만 최하단으로 간다
+  {
+    id: "7",
+    name: "실속형 대용량 사료 5kg",
+    price: 18900,
+    dailyCost: 540,
+    rating: 4.2,
+    reviewCount: 31,
+    salesCount: 640,
+    matchScore: null,
+  },
 ];
 
 type Product = (typeof MOCK_RESULTS)[number];
@@ -111,7 +122,8 @@ function match(name: string, keyword: string) {
 
 /** 목업 정렬 규칙. 연동하면 서버가 정렬해 주므로 이 자리는 통째로 사라진다 */
 const COMPARE: Record<(typeof SORTS)[number], (a: Product, b: Product) => number> = {
-  recommend: (a, b) => b.matchScore - a.matchScore,
+  // 재지 못한 것은 아래 정렬에서 이미 최하단으로 빠져 여기서는 0으로 둔다
+  recommend: (a, b) => (b.matchScore ?? 0) - (a.matchScore ?? 0),
   popular: (a, b) => b.salesCount - a.salesCount,
   "price-low": (a, b) => a.price - b.price,
   "price-high": (a, b) => b.price - a.price,
@@ -132,9 +144,12 @@ export function SearchResultView() {
   // 실제로는 검색어와 정렬을 요청 파라미터로 넘겨 서버가 걸러 준다.
   // 목업 단계라 화면에서 거르고 정렬한다 — sort를 손에 쥐고 아무것도 하지 않으면
   // 정렬이 죽은 UI가 된다
-  const results = MOCK_RESULTS.filter((product) => match(product.name, keyword)).sort(
-    COMPARE[sort],
-  );
+  const results = MOCK_RESULTS.filter((product) => match(product.name, keyword)).sort((a, b) => {
+    // 적합도를 재지 못한 상품은 어떤 정렬에서도 마지막이다. 점수를 모르는 상품이
+    // 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다
+    const unknown = Number(a.matchScore === null) - Number(b.matchScore === null);
+    return unknown !== 0 ? unknown : COMPARE[sort](a, b);
+  });
 
   return (
     <div className="flex min-h-dvh flex-col pb-16">

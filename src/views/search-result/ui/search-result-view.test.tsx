@@ -43,6 +43,19 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search");
   });
 
+  // 점수를 모르는 상품이 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다
+  it("적합도를 재지 못한 상품은 가장 싸도 마지막에 온다", () => {
+    renderWith("?q=사료&sort=price-low");
+
+    const items = screen.getAllByRole("listitem");
+    const last = items[items.length - 1];
+
+    expect(last.textContent).toContain("실속형 대용량 사료 5kg");
+    expect(last.textContent).toContain("정보 확인 중");
+    // 18,900원이라 퍼피(21,000원)보다 싸지만 위로 오지 않는다
+    expect(items[0].textContent).not.toContain("실속형");
+  });
+
   it("주소에 없는 정렬이 와도 목록이 비지 않는다", () => {
     // parseAsString이면 검증 없이 통과해 목록이 통째로 빈다
     renderWith("?q=사료&sort=아무거나");
