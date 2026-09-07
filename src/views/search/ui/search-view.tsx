@@ -62,10 +62,9 @@ export function SearchView() {
     if (!trimmed) return;
 
     setRecent((prev) => [trimmed, ...prev.filter((item) => item !== trimmed)]);
-    // 검색 결과 화면 시안이 아직 없다. 어느 종류인지 알 수 없는 말을 특정 카테고리로
-    // 보내면 엉뚱한 목록이 뜨므로, 지금은 기록만 남기고 입력을 비운다.
-    // 시안이 나오면 이 자리에서 결과 화면으로 보낸다
-    setKeyword("");
+    // 종류 목록이 아니라 검색 결과 화면으로 보낸다. 어느 종류인지 알 수 없는 말을
+    // 특정 카테고리로 보내면 "양치 껌"을 검색해도 사료 목록이 뜬다
+    router.push(`/search/result?q=${encodeURIComponent(trimmed)}`);
   };
 
   return (
