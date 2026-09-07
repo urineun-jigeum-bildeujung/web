@@ -75,3 +75,16 @@ test("검색한 말이 돌아와도 최근 검색어에 남는다", async ({ pag
   // 맨 앞으로 올라온다
   await expect(page.getByRole("listitem").first()).toContainText("무곡물");
 });
+
+// 재 봤더니 안 맞는 것과 아직 재지 않은 것은 다른 이야기다.
+// 점수를 모르는 상품이 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다.
+test("적합도를 재지 못한 상품은 가장 싸도 마지막에 온다", async ({ page }) => {
+  await page.goto("/search/result?q=사료&sort=price-low");
+
+  const cards = page.getByRole("listitem");
+  await expect(cards.last()).toContainText("실속형 대용량 사료 5kg");
+  await expect(cards.last()).toContainText("정보 확인 중");
+
+  // 18,900원이라 첫 카드(21,000원)보다 싸지만 위로 오지 않는다
+  await expect(cards.first()).toContainText("퍼피 성장기 사료 1kg");
+});

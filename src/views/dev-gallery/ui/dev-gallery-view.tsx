@@ -205,6 +205,7 @@ export function DevGalleryView() {
             <MatchScoreBadge score={92} petName="코코" />
             <MatchScoreBadge score={71} petName="코코" />
             <MatchScoreBadge score={45} petName="코코" />
+            <MatchScoreBadge score={null} petName="코코" />
           </div>
         </Section>
 
