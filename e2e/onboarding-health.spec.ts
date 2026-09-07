@@ -8,11 +8,11 @@ test("갈래를 옮기면 그 갈래의 항목이 나온다", async ({ page }) =
 
   await page.getByRole("button", { name: "걱정되는 질환" }).click();
 
-  // 관절 탭이 먼저 열린다
+  // 관절·뼈 탭이 먼저 열린다
   await expect(page.getByRole("button", { name: "슬개골 탈구" })).toBeVisible();
 
-  await page.getByRole("tab", { name: "체중" }).click();
-  await expect(page.getByRole("button", { name: "비만" })).toBeVisible();
+  await page.getByRole("tab", { name: "체중·대사" }).click();
+  await expect(page.getByRole("button", { name: "과체중·비만" })).toBeVisible();
   // 앞 갈래의 항목은 사라진다
   await expect(page.getByRole("button", { name: "슬개골 탈구" })).toBeHidden();
 });
@@ -36,12 +36,12 @@ test("갈래를 넘나들며 고른 것이 함께 남는다", async ({ page }) =
   await page.getByRole("button", { name: "걱정되는 질환" }).click();
   await page.getByRole("button", { name: "슬개골 탈구" }).click();
   await page.getByRole("tab", { name: "구강 관리" }).click();
-  await page.getByRole("button", { name: "치석" }).click();
+  await page.getByRole("button", { name: "치석·플라그" }).click();
   await page.getByRole("button", { name: "선택 완료" }).click();
 
   const picker = page.getByRole("button", { name: "걱정되는 질환" });
   await expect(picker).toContainText("슬개골 탈구");
-  await expect(picker).toContainText("치석");
+  await expect(picker).toContainText("치석·플라그");
 });
 
 test("알러지는 성분 갈래로 나뉜다", async ({ page }) => {
@@ -50,7 +50,7 @@ test("알러지는 성분 갈래로 나뉜다", async ({ page }) => {
   await page.getByRole("button", { name: "피해야 할 성분" }).click();
 
   await expect(page.getByRole("tab", { name: "육류" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "관절" })).toHaveCount(0);
+  await expect(page.getByRole("tab", { name: "관절·뼈" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "닭고기" })).toBeVisible();
 });
 
@@ -111,7 +111,7 @@ test("낮은 화면에서도 시트의 탭을 고를 수 있다", async ({ page 
   const box = await sheet.boundingBox();
   expect(box!.y, "시트가 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
 
-  await expect(page.getByRole("tab", { name: "관절" })).toBeInViewport();
+  await expect(page.getByRole("tab", { name: "관절·뼈" })).toBeInViewport();
 });
 
 test("고른 칩은 색 말고 체크로도 알린다", async ({ page }) => {
@@ -138,7 +138,7 @@ test("마이페이지 건강 정보도 같은 시트로 고른다", async ({ pag
   await expect(picker).toContainText("슬개골 탈구");
 
   await picker.click();
-  await expect(page.getByRole("tab", { name: "관절" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "관절·뼈" })).toBeVisible();
 
   await page.getByRole("button", { name: "관절염" }).click();
   await page.getByRole("button", { name: "선택 완료" }).click();
@@ -153,4 +153,61 @@ test("해당 없음을 켠 자리는 해당 사항 없음으로 바뀐다", asyn
   const allergy = page.getByRole("button", { name: "피해야 할 성분" });
   await expect(allergy).toBeDisabled();
   await expect(allergy).toContainText("해당 사항 없음");
+});
+
+// 질환 갈래가 종별로 다르다. 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면
+// 추천 근거가 거짓이 된다.
+//
+// 입력값이 컴포넌트 상태라 goto로 단계를 건너뛰면 종이 기본값으로 되돌아간다.
+// 화면 안에서 단계를 옮겨야 실제 흐름을 본다.
+async function goToHealthAsCat(page: import("@playwright/test").Page) {
+  await page.goto("/onboarding?step=detail");
+
+  await page.getByRole("button", { name: /품종/ }).first().click();
+  await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
+  await page.getByRole("button", { name: "선택 완료" }).click();
+
+  // 체구와 몸무게를 채워야 다음으로 넘어간다
+  await page
+    .getByRole("radiogroup", { name: "아이의 체구" })
+    .getByText("소형견", { exact: true })
+    .click();
+  await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
+  await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
+}
+
+test("고양이를 고르면 고양이 갈래가 뜬다", async ({ page }) => {
+  await goToHealthAsCat(page);
+
+  await page.getByRole("button", { name: "걱정되는 질환" }).click();
+
+  await expect(page.getByRole("tab", { name: "스트레스 행동" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "관절·뼈" })).toHaveCount(0);
+});
+
+test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
+  await page.goto("/onboarding?step=health");
+
+  // 기본은 강아지다. 강아지 질환을 하나 고른다
+  await page.getByRole("button", { name: "걱정되는 질환" }).click();
+  await page.getByRole("button", { name: "슬개골 탈구" }).click();
+  await page.getByRole("button", { name: "선택 완료" }).click();
+  await expect(page.getByRole("button", { name: "걱정되는 질환" })).toContainText("슬개골 탈구");
+
+  // 이전으로 돌아가 품종을 고양이로 바꾼다
+  await page.getByRole("button", { name: "이전" }).click();
+  await page.getByRole("button", { name: /품종/ }).first().click();
+  await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
+  await page.getByRole("button", { name: "선택 완료" }).click();
+
+  await page
+    .getByRole("radiogroup", { name: "아이의 체구" })
+    .getByText("소형견", { exact: true })
+    .click();
+  await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
+  await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
+
+  await expect(page.getByRole("button", { name: "걱정되는 질환" })).not.toContainText(
+    "슬개골 탈구",
+  );
 });

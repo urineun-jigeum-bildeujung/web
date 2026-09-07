@@ -43,7 +43,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
           </p>
           <HealthPickerField
             title="걱정되는 질환"
-            groups={CONCERN_GROUPS}
+            groups={CONCERN_GROUPS[draft.species]}
             value={draft.concern}
             onChange={(concern) => onChange({ concern })}
             placeholder="신경 쓰이는 곳을 골라주세요"

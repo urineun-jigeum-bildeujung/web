@@ -69,6 +69,6 @@ describe("고르는 자리", () => {
 
     // 알러지 쪽 시트라 성분 계열 탭이 뜬다
     expect(screen.getByRole("tab", { name: "육류" })).toBeDefined();
-    expect(screen.queryByRole("tab", { name: "관절" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "관절·뼈" })).toBeNull();
   });
 });

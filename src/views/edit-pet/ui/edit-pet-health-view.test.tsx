@@ -63,7 +63,9 @@ test("누르면 그 갈래의 시트가 열린다", () => {
 
   fireEvent.click(picker("걱정되는 질환"));
 
-  // 질환 쪽 시트라 관절 계열 탭이 뜬다
-  expect(screen.getByRole("tab", { name: "관절" })).toBeDefined();
+  // 강아지 프로필이라 강아지 갈래가 뜬다
+  expect(screen.getByRole("tab", { name: "관절·뼈" })).toBeDefined();
+  // 고양이 갈래는 없다
+  expect(screen.queryByRole("tab", { name: "스트레스 행동" })).toBeNull();
   expect(screen.queryByRole("tab", { name: "육류" })).toBeNull();
 });

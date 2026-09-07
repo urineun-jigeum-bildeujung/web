@@ -8,12 +8,14 @@
 
 import { useState } from "react";
 
-import { ALLERGY_GROUPS, CONCERN_GROUPS, HealthPickerField } from "@/entities/pet";
+import { ALLERGY_GROUPS, CONCERN_GROUPS, HealthPickerField, type PetSpecies } from "@/entities/pet";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 
 import { EditPetScreen } from "./edit-pet-screen";
 
 type SavedHealth = {
+  /** 질환 갈래가 종별로 달라 함께 든다 */
+  species: PetSpecies;
   concern: string[];
   noConcern: boolean;
   allergy: string[];
@@ -23,6 +25,7 @@ type SavedHealth = {
 /** API 연동 전까지 화면 확인용 값 */
 // 해당 없음이 켜진 항목은 값을 비워 둔다. 체크를 끄면 다시 답을 받아야 한다.
 const SAVED: SavedHealth = {
+  species: "dog",
   concern: ["슬개골 탈구"],
   noConcern: false,
   allergy: [],
@@ -49,7 +52,7 @@ export function EditPetHealthView() {
         </p>
         <HealthPickerField
           title="걱정되는 질환"
-          groups={CONCERN_GROUPS}
+          groups={CONCERN_GROUPS[SAVED.species]}
           value={concern}
           onChange={setConcern}
           placeholder="신경 쓰이는 곳을 골라주세요"
