@@ -102,10 +102,11 @@ const OVERLAYS = [
     name: "결제수단 바텀시트",
   },
   {
-    route: "/onboarding?step=basic",
-    open: /닫기|그만|나가/,
+    // 온보딩 이탈 확인창이 사라져(#115) 확인창은 여기서 본다
+    route: "/mypage/orders",
+    open: /^주문 취소$/,
     slot: "alert-dialog-overlay",
-    name: "온보딩 이탈 확인창",
+    name: "주문 취소 확인창",
   },
 ];
 
