@@ -43,7 +43,10 @@ export function OnboardingView() {
   const progress = getStepProgress(step);
 
   const pickBreed = (breed: string, species: PetSpecies) => {
-    patch({ breed, species });
+    // 종이 바뀌면 앞서 고른 질환은 그 종의 갈래에 없는 것이 된다.
+    // 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면 추천 근거가 거짓이 된다
+    const speciesChanged = species !== draft.species;
+    patch({ breed, species, ...(speciesChanged && { concern: [] }) });
     void setStep("detail");
   };
 
