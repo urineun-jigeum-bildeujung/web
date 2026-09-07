@@ -24,10 +24,12 @@ test("기본은 도입부를 보여준다", () => {
   expect(screen.getByRole("heading", { name: "딱 1분만 아이에 대해 알려주세요" })).toBeDefined();
 });
 
-test("건너뛰기를 누르면 홈으로 보낸다", () => {
+// 확정본 도입부에는 버튼이 하나뿐이다. 섹션 메모도 "건너뛰기, 닫기 버튼 삭제"다
+test("도입부에는 프로필 입력하기 하나만 있다", () => {
   renderAt("");
-  fireEvent.click(screen.getByRole("button", { name: "건너뛰기" }));
-  expect(push).toHaveBeenCalledWith("/");
+
+  expect(screen.getByRole("button", { name: "프로필 입력하기" })).toBeDefined();
+  expect(screen.queryByRole("button", { name: "건너뛰기" })).toBeNull();
 });
 
 test("첫 입력 단계는 세 항목이 다 차야 다음으로 넘어갈 수 있다", () => {
@@ -59,11 +61,11 @@ test("건강 단계는 해당 없음 체크만으로도 넘어갈 수 있다", (
   expect((next as HTMLButtonElement).disabled).toBe(false);
 });
 
-test("입력 단계에는 닫기 버튼과 진행 표시가 있다", () => {
+test("입력 단계 머리말에는 진행 표시만 있다", () => {
   renderAt("?step=detail");
 
-  expect(screen.getByRole("button", { name: "닫기" })).toBeDefined();
   expect(screen.getByRole("progressbar", { name: "전체 3단계 중 2단계" })).toBeDefined();
+  expect(screen.queryByRole("button", { name: "닫기" })).toBeNull();
 });
 
 test("도입부에는 진행 표시가 없다", () => {
@@ -71,12 +73,12 @@ test("도입부에는 진행 표시가 없다", () => {
   expect(screen.queryByRole("progressbar")).toBeNull();
 });
 
-test("닫기를 누르면 이탈 확인 모달이 뜬다", () => {
+// 화면 안에서 온보딩을 떠나는 길이 없다. 이탈 확인 모달도 함께 사라졌다
+test("온보딩을 떠나는 길이 화면에 없다", () => {
   renderAt("?step=basic");
 
-  fireEvent.click(screen.getByRole("button", { name: "닫기" }));
-  expect(screen.getByRole("alertdialog")).toBeDefined();
-  expect(screen.getByText("프로필 작성을 그만둘까요?")).toBeDefined();
+  expect(screen.queryByRole("alertdialog")).toBeNull();
+  expect(screen.queryByText("프로필 작성을 그만둘까요?")).toBeNull();
 });
 
 test("체구를 고르기 전에는 몸무게·체질 항목이 없다", () => {

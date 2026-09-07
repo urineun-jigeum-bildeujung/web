@@ -1,15 +1,17 @@
-// 온보딩 도입부. 프로필 입력을 시작하거나 건너뛴다.
+// 온보딩 도입부. 프로필 입력을 시작한다.
 // 와이어프레임 기준(onbo_001)이라 디자인 확정 시 바뀔 수 있다.
+//
+// 건너뛰기 버튼은 두지 않는다. 확정본에 버튼이 하나뿐이고 섹션 메모도
+// "건너뛰기, 닫기 버튼 삭제"라고 적고 있다.
 
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 
 type IntroStepProps = {
   onStart: () => void;
-  onSkip: () => void;
 };
 
-export function IntroStep({ onStart, onSkip }: IntroStepProps) {
+export function IntroStep({ onStart }: IntroStepProps) {
   return (
     <>
       <main className="flex flex-1 flex-col gap-6 px-4 pt-8">
@@ -25,9 +27,6 @@ export function IntroStep({ onStart, onSkip }: IntroStepProps) {
       </main>
 
       <BottomActionBar>
-        <Button variant="outline" className="min-h-11" onClick={onSkip}>
-          건너뛰기
-        </Button>
         <Button className="min-h-11" onClick={onStart}>
           프로필 입력하기
         </Button>
