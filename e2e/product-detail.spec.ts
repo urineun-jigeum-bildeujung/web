@@ -45,13 +45,16 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
 });
 
 // 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
-// 아무것도 아니므로 값 옆에 구간 이름이 함께 읽혀야 한다.
+// 아무것도 아니므로 값 옆에 구간 이름이 눈에 보여야 한다.
+// 숨은 글자로 두면 화면 낭독기에만 닿고 색약 사용자에게는 색이 유일한 단서로 남는다.
 test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
   await page.goto(PATH);
 
   const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
-  await expect(nutrients.getByText("단백질 적정", { exact: false })).toBeAttached();
-  await expect(nutrients.getByText("지방 과다", { exact: false })).toBeAttached();
+  await expect(nutrients.getByText("28% 적정")).toBeVisible();
+  await expect(nutrients.getByText("12% 과다")).toBeVisible();
+  // 절대 기준치가 없는 성분에는 구간 이름을 붙이지 않는다
+  await expect(nutrients.getByText("3%", { exact: true })).toBeVisible();
 });
 
 test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
@@ -65,4 +68,32 @@ test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
     "aria-pressed",
     "true",
   );
+});
+
+// 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
+test("공유를 누르면 현재 주소가 클립보드에 담긴다", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "공유하기" }).click();
+  await expect(page.getByText("링크를 복사했어요")).toBeVisible();
+
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain("/products/1");
+});
+
+// 값이 양 끝에 붙는 성분(지방 86%)에서 배지가 화면 밖으로 밀려 글자가 잘렸다.
+test("영양 배지가 화면 밖으로 넘치지 않는다", async ({ page }) => {
+  await page.goto(PATH);
+
+  const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
+  const area = (await nutrients.boundingBox())!;
+
+  for (const label of ["28% 적정", "12% 과다", "5% 적정", "3%"]) {
+    const badge = (await nutrients.getByText(label, { exact: true }).boundingBox())!;
+    expect(badge.x, `${label} 배지가 왼쪽으로 넘쳤다`).toBeGreaterThanOrEqual(area.x);
+    expect(badge.x + badge.width, `${label} 배지가 오른쪽으로 넘쳤다`).toBeLessThanOrEqual(
+      area.x + area.width,
+    );
+  }
 });

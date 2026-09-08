@@ -2,7 +2,10 @@
 // 와이어프레임 기준(상품상세 영양 성분 분석)이라 디자인 확정 시 바뀔 수 있다.
 //
 // 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
-// 아무 정보가 아니므로, 값 옆에 구간 이름을 글자로 함께 붙인다.
+// 아무 정보가 아니므로, 값 배지에 구간 이름을 눈에 보이게 함께 적는다.
+//
+// 숨은 글자로만 두면 화면 낭독기 사용자에게만 닿는다. 화면은 보이지만 색을 가리기
+// 어려운 사람에게는 여전히 색이 유일한 단서가 된다 (#131 리뷰).
 //
 // 절대 기준치가 없는 성분(오메가3)은 구간을 재지 않는다. 눈금을 붙이면 가운데가
 // 적정으로 읽혀 없는 판정을 만들어낸다.
@@ -18,7 +21,7 @@ type NutrientBarProps = {
 const LEVEL_CLASS = {
   low: { dot: "bg-brand", chip: "bg-brand text-brand-foreground" },
   proper: { dot: "bg-success", chip: "bg-success text-success-foreground" },
-  high: { dot: "bg-destructive", chip: "bg-destructive text-white" },
+  high: { dot: "bg-destructive", chip: "bg-destructive text-destructive-foreground" },
   // 잰 것이 아니라 자리만 표시한다. 판정 색을 쓰면 좋고 나쁨으로 읽힌다
   unknown: { dot: "bg-muted-foreground", chip: "bg-muted-foreground text-background" },
 } as const;
@@ -38,6 +41,19 @@ const LEVEL_LABEL = {
   unknown: "기준 없음",
 } as const;
 
+/**
+ * 배지를 값 위 어디에 붙일지.
+ *
+ * 늘 가운데에 맞추면 양 끝 값에서 배지가 화면 밖으로 밀려 글자가 잘린다.
+ * 끝에서는 배지를 안쪽으로 당겨 붙인다 — 점은 제 자리에 남으므로 값의 위치는
+ * 그대로 읽힌다.
+ */
+function badgeShift(position: number) {
+  if (position <= 0.15) return "translate-x-0";
+  if (position >= 0.85) return "-translate-x-full";
+  return "-translate-x-1/2";
+}
+
 export function NutrientBar({ nutrient }: NutrientBarProps) {
   const level = getNutrientLevel(nutrient);
   const { properRange } = nutrient;
@@ -51,14 +67,15 @@ export function NutrientBar({ nutrient }: NutrientBarProps) {
       <div className="relative pt-6">
         <span
           className={cn(
-            "absolute top-0 -translate-x-1/2 rounded-full px-2 py-0.5 text-xs font-bold",
+            "absolute top-0 rounded-full px-2 py-0.5 text-xs font-bold whitespace-nowrap",
+            badgeShift(nutrient.position),
             LEVEL_CLASS[level].chip,
           )}
           style={{ left: percent }}
         >
-          {/* 색이 곧 판정이라, 색을 보지 못해도 같은 것을 알 수 있게 함께 읽힌다 */}
-          <span className="sr-only">{`${nutrient.name} ${LEVEL_LABEL[level]} `}</span>
-          {nutrient.valueLabel}
+          {/* 색이 곧 판정이라 구간 이름을 눈에 보이게 붙인다. 재지 않은 성분은
+              막대 아래에 그 사실을 적으므로 여기서 되풀이하지 않는다 */}
+          {properRange ? `${nutrient.valueLabel} ${LEVEL_LABEL[level]}` : nutrient.valueLabel}
         </span>
 
         <div className="relative h-1.5 w-full rounded-full bg-muted">
