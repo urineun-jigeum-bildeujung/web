@@ -107,7 +107,16 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             <button
               type="button"
               aria-label="공유하기"
-              onClick={() => toast.success("링크를 복사했어요")}
+              // 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
+              // 안전한 문맥이 아니면 clipboard가 아예 없으므로 실패도 알린다
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(window.location.href);
+                  toast.success("링크를 복사했어요");
+                } catch {
+                  toast.error("링크를 복사하지 못했어요");
+                }
+              }}
               className="flex size-11 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <IoShareOutline aria-hidden className="size-6" />

@@ -9,6 +9,7 @@
   --color-brand-foreground: var(--brand-foreground);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-kakao: var(--kakao);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -60,9 +61,12 @@
   --brand-foreground: oklch(1 0 0);
 
   /* 값이 기준 안에 들어왔다는 표시. destructive의 짝인데 shadcn 기본 팔레트에는
-     없어서 함께 둔다. 시안(상품상세 영양 성분 분석)의 초록에서 뽑은 임시값이다. */
+     없어서 함께 둔다. 시안(상품상세 영양 성분 분석)의 초록에서 뽑은 임시값이다.
+
+     바탕 위에 올리는 글자색은 흰색이 아니라 어두운 색이다. 이 초록에 흰 글자를
+     얹으면 대비가 3.26:1로 작은 글씨 기준(4.5:1)에 못 미친다. 어두운 글자면 6.07:1이다. */
   --success: oklch(0.63 0.17 149);
-  --success-foreground: oklch(1 0 0);
+  --success-foreground: oklch(0.145 0 0);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
@@ -83,6 +87,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -109,7 +114,7 @@
 
   /* 임시 색이라 어두운 화면에서도 같은 값을 쓴다. */
   --success: oklch(0.63 0.17 149);
-  --success-foreground: oklch(1 0 0);
+  --success-foreground: oklch(0.145 0 0);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
@@ -130,6 +135,9 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  /* 어두운 화면의 destructive는 라이트보다 밝다. 흰 글자를 얹으면 2.89:1까지
+     떨어져 작은 글씨를 읽기 어렵다. 어두운 글자면 6.84:1이다. */
+  --destructive-foreground: oklch(0.145 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
