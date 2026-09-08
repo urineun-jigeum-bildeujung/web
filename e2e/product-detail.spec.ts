@@ -78,8 +78,9 @@ test("공유를 누르면 현재 주소가 클립보드에 담긴다", async ({ 
   await page.getByRole("button", { name: "공유하기" }).click();
   await expect(page.getByText("링크를 복사했어요")).toBeVisible();
 
+  // 경로 일부만 보면 호스트나 쿼리가 달라도 통과한다. 주소 전체를 견준다
   const copied = await page.evaluate(() => navigator.clipboard.readText());
-  expect(copied).toContain("/products/1");
+  expect(copied).toBe(page.url());
 });
 
 // 값이 양 끝에 붙는 성분(지방 86%)에서 배지가 화면 밖으로 밀려 글자가 잘렸다.
