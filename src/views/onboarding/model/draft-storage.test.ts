@@ -75,6 +75,45 @@ describe("깨진 값", () => {
     expect(loaded.noConcern).toBe(false);
   });
 
+  // 체형은 배열 인덱스로 쓰인다. 범위를 벗어나면 설명이 undefined가 된다
+  it.each([-1, 1.5, 5, 99, "2", null])("체형 인덱스가 %s면 기본값으로 둔다", (bodyTypeIndex) => {
+    window.localStorage.setItem(KEY, JSON.stringify({ bodyTypeIndex }));
+
+    expect(getDraft().bodyTypeIndex).toBe(EMPTY_PROFILE_DRAFT.bodyTypeIndex);
+  });
+
+  it.each([0, 2, 4])("체형 인덱스가 %s면 그대로 둔다", (bodyTypeIndex) => {
+    window.localStorage.setItem(KEY, JSON.stringify({ bodyTypeIndex }));
+    resetDraftCache();
+
+    expect(getDraft().bodyTypeIndex).toBe(bodyTypeIndex);
+  });
+
+  // 보기가 정해진 칸도 아무 문자열이나 들어오면 안 된다
+  it("보기에 없는 값은 안 고른 것으로 둔다", () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ gender: "중성", neutered: "몰라요", size: "초대형견" }),
+    );
+
+    const loaded = getDraft();
+    expect(loaded.gender).toBe("");
+    expect(loaded.neutered).toBe("");
+    expect(loaded.size).toBe("");
+  });
+
+  it("보기에 있는 값은 그대로 둔다", () => {
+    window.localStorage.setItem(
+      KEY,
+      JSON.stringify({ gender: "female", neutered: "yes", size: "small" }),
+    );
+
+    const loaded = getDraft();
+    expect(loaded.gender).toBe("female");
+    expect(loaded.neutered).toBe("yes");
+    expect(loaded.size).toBe("small");
+  });
+
   it("모르는 칸은 옮기지 않는다", () => {
     window.localStorage.setItem(KEY, JSON.stringify({ name: "코코", 없는칸: "값" }));
 
