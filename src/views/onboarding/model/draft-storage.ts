@@ -11,7 +11,15 @@
 // 저장소는 React 밖의 것이라 `useSyncExternalStore`로 잇는다. 효과 안에서
 // setState로 되읽으면 React Compiler가 연쇄 렌더로 잡는다.
 
-import { EMPTY_PROFILE_DRAFT, PET_SPECIES, type PetProfileDraft } from "@/entities/pet";
+import {
+  BODY_TYPE_OPTIONS,
+  EMPTY_PROFILE_DRAFT,
+  GENDER_OPTIONS,
+  NEUTERED_OPTIONS,
+  PET_SPECIES,
+  SIZE_OPTIONS,
+  type PetProfileDraft,
+} from "@/entities/pet";
 
 const KEY = "onboarding-draft";
 
@@ -23,6 +31,20 @@ const listeners = new Set<() => void>();
 
 function isStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string");
+}
+
+/** 보기가 정해진 칸. 목록에 없는 값이면 안 고른 것으로 둔다 */
+function oneOf(value: unknown, options: readonly { value: string }[]) {
+  return options.some((option) => option.value === value) ? (value as string) : "";
+}
+
+/** 체형은 배열 인덱스로 쓰인다. -1이나 1.5가 들어오면 설명이 undefined가 된다 */
+function isBodyTypeIndex(value: unknown): value is number {
+  return (
+    Number.isInteger(value) &&
+    (value as number) >= 0 &&
+    (value as number) < BODY_TYPE_OPTIONS.length
+  );
 }
 
 /**
@@ -41,18 +63,17 @@ function normalize(raw: unknown): PetProfileDraft {
   return {
     photo: null,
     name: text("name"),
-    gender: text("gender"),
-    neutered: text("neutered"),
+    gender: oneOf(saved.gender, GENDER_OPTIONS),
+    neutered: oneOf(saved.neutered, NEUTERED_OPTIONS),
     species: PET_SPECIES.find((item) => item === saved.species) ?? EMPTY_PROFILE_DRAFT.species,
     breed: text("breed"),
     age: text("age"),
     birthday: text("birthday"),
-    size: text("size"),
+    size: oneOf(saved.size, SIZE_OPTIONS),
     weight: text("weight"),
-    bodyTypeIndex:
-      typeof saved.bodyTypeIndex === "number"
-        ? saved.bodyTypeIndex
-        : EMPTY_PROFILE_DRAFT.bodyTypeIndex,
+    bodyTypeIndex: isBodyTypeIndex(saved.bodyTypeIndex)
+      ? saved.bodyTypeIndex
+      : EMPTY_PROFILE_DRAFT.bodyTypeIndex,
     concern: isStringArray(saved.concern) ? saved.concern : [],
     noConcern: saved.noConcern === true,
     allergy: isStringArray(saved.allergy) ? saved.allergy : [],
