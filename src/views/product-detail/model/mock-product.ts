@@ -23,6 +23,8 @@ export type Nutrient = {
 
 export type PetMatch = {
   petId: string;
+  /** 근거 문장에 이름이 박히므로 적합도와 같은 자리에 둔다 */
+  petName: string;
   /** 0~100. 영양 정보가 없어 재지 못했으면 null */
   score: number | null;
   /** "말티즈 · 8세 · 4kg" */
@@ -45,11 +47,6 @@ export type RelatedProduct = {
   rating: number;
   reviewCount: number;
 };
-
-export const MOCK_PETS = [
-  { id: "1", name: "소리" },
-  { id: "2", name: "냥이" },
-];
 
 export const MOCK_PRODUCT = {
   name: "면역 지원 영양제 90정",
@@ -122,6 +119,7 @@ export const RELATED_PRODUCTS: RelatedProduct[] = [
 export const PET_MATCHES: PetMatch[] = [
   {
     petId: "1",
+    petName: "소리",
     score: 92,
     profileLabel: "말티즈 · 8세 · 4kg",
     reasons: [
@@ -140,6 +138,7 @@ export const PET_MATCHES: PetMatch[] = [
   },
   {
     petId: "2",
+    petName: "냥이",
     score: null,
     profileLabel: "코리안 숏헤어 · 3세 · 4.2kg",
     reasons: [{ tone: "caution", text: "고양이 급여 기준이 등록되지 않아 아직 재지 못했어요" }],
@@ -148,3 +147,12 @@ export const PET_MATCHES: PetMatch[] = [
     summary: null,
   },
 ];
+
+/**
+ * 아이 고르기 목록. 적합도에서 파생시킨다.
+ *
+ * 목록을 따로 두면 두 벌이 어긋날 수 있다. 적합도가 없는 아이를 고르면 이름은
+ * 그 아이인데 근거는 다른 아이 것이 붙어, 근거 문장에 박힌 이름과 화면의 이름이
+ * 달라진다. 적합도 근거는 이 서비스가 내세우는 값이라 조용히 틀리면 안 된다.
+ */
+export const MOCK_PETS = PET_MATCHES.map(({ petId, petName }) => ({ id: petId, name: petName }));

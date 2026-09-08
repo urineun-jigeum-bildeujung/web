@@ -92,7 +92,7 @@ export function NutrientBar({ nutrient }: NutrientBarProps) {
           <span
             aria-hidden
             className={cn(
-              "absolute top-1/2 left-0 size-3.5 -translate-1/2 rounded-full",
+              "absolute top-1/2 size-3.5 -translate-1/2 rounded-full",
               LEVEL_CLASS[level].dot,
             )}
             style={{ left: percent }}

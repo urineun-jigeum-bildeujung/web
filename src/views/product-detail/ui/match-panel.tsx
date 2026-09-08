@@ -18,15 +18,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/ui/se
 import type { PetMatch } from "../model/mock-product";
 
 type MatchPanelProps = {
+  /** 고를 수 있는 아이들. 지금 보고 있는 아이는 match가 정한다 */
   pets: { id: string; name: string }[];
-  petId: string;
   onPetChange: (petId: string) => void;
   match: PetMatch;
 };
 
-export function MatchPanel({ pets, petId, onPetChange, match }: MatchPanelProps) {
-  const pet = pets.find((item) => item.id === petId);
+export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
   const level = getMatchLevel(match.score);
+  // 이름은 적합도에서 가져온다. 목록에서 따로 찾으면 둘이 어긋났을 때
+  // 이 아이 이름 아래 다른 아이의 근거가 붙는다
+  const { petId, petName } = match;
 
   return (
     <section aria-labelledby="match-heading" className="flex flex-col gap-3 px-4 py-5">
@@ -36,7 +38,7 @@ export function MatchPanel({ pets, petId, onPetChange, match }: MatchPanelProps)
           className="min-h-11 w-auto gap-2 rounded-full border-0 bg-muted px-4 text-sm text-muted-foreground"
         >
           <IoPaw aria-hidden className="size-4" />
-          {pet?.name} 기준으로 보고 있어요
+          {petName} 기준으로 보고 있어요
         </SelectTrigger>
         {/* 기본값(item-aligned)은 고른 항목을 트리거 위에 겹쳐 놓아, 트리거가
             화면 아래쪽에 있으면 나머지 항목이 화면 밖으로 밀린다 */}
@@ -66,8 +68,8 @@ export function MatchPanel({ pets, petId, onPetChange, match }: MatchPanelProps)
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 id="match-heading" className="text-base font-bold text-foreground">
             {match.score === null
-              ? `${pet?.name} 기준으로는 아직 재지 못했어요`
-              : `${pet?.name}와 ${level.label}`}
+              ? `${petName} 기준으로는 아직 재지 못했어요`
+              : `${petName}와 ${level.label}`}
           </h2>
           <p className="text-xs text-muted-foreground">({match.profileLabel} 기준)</p>
           <p className="sr-only">
