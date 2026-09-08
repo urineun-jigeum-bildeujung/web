@@ -20,9 +20,23 @@
 - TanStack Query를 쓰는 로직은 반드시 `use-query-*.ts` 형태의 훅으로 감싼다. 컴포넌트에서 `useQuery`를 직접 호출하지 않는다. ESLint가 `@tanstack/react-query` import를 `api` 세그먼트와 `shared` 밖에서 막고, `zustand` import도 `model` 세그먼트와 `shared`로 제한한다.
 - 컴포넌트 안에서 `useForm`/`useState`/`useEffect` 기반 로직이 3줄 이상이면 커스텀 훅으로 분리한다.
 
-### `useEffect` 단일 상태 보정
+### 효과 안에서 `setState`를 부르지 않는다
 
-선택값이 탭·권한·옵션 변경으로 더 이상 유효하지 않아 기본값으로 되돌릴 때만, 해당 줄에서 lint를 끈다.
+React Compiler lint가 막는다.
+
+```
+Calling setState synchronously within an effect can trigger cascading renders
+```
+
+**막힌다고 lint를 끄는 것이 첫 수단이 아니다.** 하려는 일이 셋 중 무엇인지 먼저 가른다.
+
+| 하려는 것 | 방법 |
+| --- | --- |
+| 값이 더 이상 유효하지 않아 기본값으로 되돌리기 | 그 줄에서 lint를 끈다 |
+| 열 때마다 안쪽 상태를 지금 값에서 시작하기 | `key`로 통째로 다시 그린다 |
+| 저장소·구독처럼 React 밖의 것을 읽기 | `useSyncExternalStore` |
+
+**1. 기본값으로 되돌리기** — 선택값이 탭·권한·옵션 변경으로 목록에서 사라졌을 때만이다.
 
 ```tsx
 useEffect(() => {
@@ -32,6 +46,53 @@ useEffect(() => {
   }
 }, [value, options]);
 ```
+
+**2. 열 때마다 지금 값에서 시작하기** — 시트·모달처럼 열릴 때 바깥 값을 받아 안에서 고치는 것이다. 효과로 되돌리면 앞서 고른 것이 **한 번 그려진 뒤에** 바뀌어 깜빡인다.
+
+```tsx
+{open && <SheetBody key={title} {...body} />}
+```
+
+실제 예는 `entities/pet/ui/health-picker-sheet.tsx`다.
+
+**3. React 밖의 것 읽기** — `localStorage`·구독 같은 것이다. 세 가지를 함께 지킨다.
+
+```ts
+let cache: T | null = null;
+const listeners = new Set<() => void>();
+
+export function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => void listeners.delete(listener);
+}
+
+/** 읽을 때마다 새 객체를 만들면 무한히 다시 그린다 */
+export function get(): T {
+  cache ??= load();
+  return cache;
+}
+
+/** 프리렌더에는 저장소가 없다. 첫 그림이 어긋나지 않게 기본값을 준다 */
+export function getOnServer(): T {
+  return EMPTY;
+}
+```
+
+```tsx
+const value = useSyncExternalStore(subscribe, get, getOnServer);
+```
+
+**저장된 값은 한 칸씩 확인해 옮긴다.** 통째로 펼치면 손으로 고친 값이나 옛 형식이 그대로 들어와 나중에 엉뚱한 곳에서 깨진다. 특히 **보기가 정해진 칸과 배열 인덱스**를 조심한다 — 인덱스가 범위를 벗어나면 그 자리를 읽는 곳에서 `undefined`가 나온다.
+
+```ts
+function oneOf(value: unknown, options: readonly { value: string }[]) {
+  return options.some((option) => option.value === value) ? (value as string) : "";
+}
+```
+
+**직렬화되지 않는 값은 빼고 저장한다.** `File`이 섞이면 저장이 통째로 실패한다.
+
+실제 예는 `views/search/model/recent-keywords.ts`와 `views/onboarding/model/draft-storage.ts`다. 테스트에서 서로 물들지 않도록 캐시를 비우는 함수를 함께 내보낸다.
 
 ### React Compiler
 
