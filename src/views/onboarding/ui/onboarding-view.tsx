@@ -8,16 +8,18 @@
 
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useState } from "react";
+import { useSyncExternalStore } from "react";
 
-import {
-  BreedPickerStep,
-  EMPTY_PROFILE_DRAFT,
-  type PetProfileDraft,
-  type PetSpecies,
-} from "@/entities/pet";
+import { BreedPickerStep, type PetProfileDraft, type PetSpecies } from "@/entities/pet";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
+import {
+  clearDraft,
+  getDraft,
+  getDraftOnServer,
+  setDraft,
+  subscribeDraft,
+} from "../model/draft-storage";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
 import { BasicStep } from "./steps/basic-step";
 import { DetailStep } from "./steps/detail-step";
@@ -29,7 +31,6 @@ export function OnboardingView() {
   const router = useRouter();
 
   // 단계는 새로고침·뒤로가기에서 살아남아야 하므로 URL에 둔다.
-  // 입력값은 시안의 이탈 모달이 "저장되지 않아요"라고 알리므로 컴포넌트 상태로 든다.
   const [step, setStep] = useQueryState(
     "step",
     // 기기 뒤로가기로 이전 단계에 가야 한다. 기본값 replace로 두면 이름·품종까지
@@ -37,9 +38,11 @@ export function OnboardingView() {
     // WebView 앱으로 감쌀 예정이라 기기 뒤로가기가 실제 사용 경로다
     parseAsStringLiteral(ONBOARDING_STEPS).withDefault("intro").withOptions({ history: "push" }),
   );
-  const [draft, setDraft] = useState<PetProfileDraft>(EMPTY_PROFILE_DRAFT);
+  // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면
+  // `?step=health`로 새로고침했을 때 고양이 보호자가 강아지 갈래를 만난다
+  const draft = useSyncExternalStore(subscribeDraft, getDraft, getDraftOnServer);
 
-  const patch = (next: Partial<PetProfileDraft>) => setDraft((prev) => ({ ...prev, ...next }));
+  const patch = (next: Partial<PetProfileDraft>) => setDraft({ ...draft, ...next });
   const progress = getStepProgress(step);
 
   const pickBreed = (breed: string, species: PetSpecies) => {
@@ -103,8 +106,16 @@ export function OnboardingView() {
       {step === "done" && (
         <DoneStep
           petName={draft.name}
-          onGoHome={() => router.push("/")}
-          onGoRecommendation={() => router.push("/")}
+          // 등록을 마쳤으니 남겨 둔 초안을 지운다. 남기면 다음에 들어올 때
+          // 앞 사람의 값이 채워져 보인다
+          onGoHome={() => {
+            clearDraft();
+            router.push("/");
+          }}
+          onGoRecommendation={() => {
+            clearDraft();
+            router.push("/");
+          }}
         />
       )}
     </div>

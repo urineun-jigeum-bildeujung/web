@@ -4,12 +4,16 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { resetDraftCache } from "../model/draft-storage";
 import { OnboardingView } from "./onboarding-view";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 
 beforeEach(() => {
+  // 초안을 기기에 남기므로 앞 테스트가 뒤 테스트로 새어 나간다
+  window.localStorage.clear();
+  resetDraftCache();
   push.mockClear();
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();

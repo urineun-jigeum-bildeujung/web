@@ -211,3 +211,24 @@ test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
     "슬개골 탈구",
   );
 });
+
+// 단계만 URL에 있고 입력값이 컴포넌트 상태라, 전에는 새로고침하면 종이
+// 기본값으로 돌아가 고양이 보호자가 강아지 갈래를 만났다.
+test("새로고침해도 고른 종이 남는다", async ({ page }) => {
+  await goToHealthAsCat(page);
+
+  await page.reload();
+
+  await page.getByRole("button", { name: "걱정되는 질환" }).click();
+  await expect(page.getByRole("tab", { name: "스트레스 행동" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "관절·뼈" })).toHaveCount(0);
+});
+
+test("새로고침해도 입력하던 이름이 남는다", async ({ page }) => {
+  await page.goto("/onboarding?step=basic");
+
+  await page.getByLabel("아이의 이름을 알려주세요").fill("보리");
+  await page.reload();
+
+  await expect(page.getByLabel("아이의 이름을 알려주세요")).toHaveValue("보리");
+});
