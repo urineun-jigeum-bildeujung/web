@@ -65,9 +65,13 @@ export function ProductInfoPanel({ match, petName }: ProductInfoPanelProps) {
 
             <div className="mt-4 flex flex-col gap-1 rounded-lg border border-border p-4">
               <p className="text-xs text-muted-foreground">기능성 성분 — {match.functions}</p>
-              <p className="text-sm font-bold text-foreground">
-                종합 {match.score}점 — {match.summary}
-              </p>
+              {/* 성분은 있는데 종합 점수를 못 받는 경우가 있다. 그대로 그리면
+                  "종합 점 — "처럼 글자가 빠진 문장이 남는다 */}
+              {match.score !== null && match.summary && (
+                <p className="text-sm font-bold text-foreground">
+                  종합 {match.score}점 — {match.summary}
+                </p>
+              )}
             </div>
           </>
         )}

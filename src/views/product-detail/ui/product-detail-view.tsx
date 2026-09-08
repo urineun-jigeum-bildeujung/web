@@ -53,7 +53,8 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   const [petId, setPetId] = useState(MOCK_PETS[0].id);
   const [liked, setLiked] = useState(false);
 
-  const pet = MOCK_PETS.find((item) => item.id === petId);
+  // 이름도 여기서 함께 온다. 아이 목록에서 따로 찾으면 폴백이 걸렸을 때
+  // 이름과 근거가 서로 다른 아이 것이 된다
   const match = PET_MATCHES.find((item) => item.petId === petId) ?? PET_MATCHES[0];
 
   return (
@@ -151,7 +152,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
 
         <div className="h-2 bg-muted" />
 
-        <MatchPanel pets={MOCK_PETS} petId={petId} onPetChange={setPetId} match={match} />
+        <MatchPanel pets={MOCK_PETS} onPetChange={setPetId} match={match} />
 
         <div className="h-2 bg-muted" />
 
@@ -162,8 +163,10 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%">
             {RELATED_PRODUCTS.map((product) => (
               <ScrollRowItem key={product.id}>
+                {/* 목데이터가 이 상품 하나뿐이라 어느 카드를 눌러도 같은 화면이
+                    나온다. 링크를 살려 두면 화면이 거짓말을 하므로 상품별 데이터가
+                    붙을 때까지 누를 수 없게 둔다 */}
                 <ProductGridCard
-                  href={`/products/${product.id}`}
                   name={product.name}
                   price={product.price}
                   originalPrice={product.originalPrice}
@@ -204,7 +207,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </TabsList>
 
           <TabsContent value="info">
-            <ProductInfoPanel match={match} petName={pet?.name} />
+            <ProductInfoPanel match={match} petName={match.petName} />
           </TabsContent>
 
           {/* 리뷰와 문의는 목록 화면이 따로 있다. 여기서는 들어가는 길만 낸다 */}
