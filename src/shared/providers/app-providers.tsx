@@ -4,6 +4,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { shouldRetryQuery } from "@/shared/api/client";
 import { Toaster } from "@/shared/ui/sonner";
 import { Tooltip } from "radix-ui";
 import { useState } from "react";
@@ -17,7 +18,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           queries: {
             // SSR에서 서버가 이미 받아온 데이터를 클라이언트가 즉시 다시 요청하지 않도록 한다.
             staleTime: 60 * 1000,
-            retry: 1,
+            // 4xx는 다시 보내도 같은 답이라 재시도하지 않는다. 5xx·네트워크 오류만 1회.
+            retry: shouldRetryQuery,
           },
         },
       }),
