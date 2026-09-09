@@ -1,7 +1,13 @@
 // apiRequest 공통 fetch 래퍼 단위 테스트. 헤더 조립·성공 파싱·실패 throw·401 재발급을 검증한다.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError, apiRequest } from "./client";
+import {
+  ApiError,
+  apiRequest,
+  buildQueryString,
+  isValidationError,
+  shouldRetryQuery,
+} from "./client";
 import { clearTokens, getRefreshToken, saveTokens } from "./token-store";
 
 function stubFetch(response: Response) {
@@ -67,6 +73,78 @@ describe("apiRequest", () => {
 
     await expect(apiRequest("/notifications/read-all")).resolves.toBeUndefined();
   });
+
+  it("query 옵션은 undefined·null을 빼고 배열은 같은 키를 반복해 쿼리 스트링을 만든다", async () => {
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/products", {
+      query: {
+        category: "FOOD",
+        petId: 10,
+        sort: undefined,
+        page: null,
+        healthConcerns: ["관절", "피부"],
+      },
+    });
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe(
+      "/api/v1/products?category=FOOD&petId=10&healthConcerns=%EA%B4%80%EC%A0%88&healthConcerns=%ED%94%BC%EB%B6%80",
+    );
+  });
+
+  it("FormData 본문은 직렬화하지 않고 Content-Type도 붙이지 않는다", async () => {
+    const fetchMock = stubFetch(Response.json({ imageUrl: "https://s3/a.jpg" }));
+    const form = new FormData();
+    form.append("purpose", "REVIEW");
+
+    await apiRequest("/files/images", { method: "POST", body: form });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.body).toBe(form);
+    expect(new Headers(init.headers).has("Content-Type")).toBe(false);
+  });
+});
+
+describe("buildQueryString", () => {
+  it("값이 하나도 없으면 빈 문자열이다", () => {
+    expect(buildQueryString(undefined)).toBe("");
+    expect(buildQueryString({ a: undefined, b: null })).toBe("");
+  });
+
+  it("boolean·number도 문자열로 넣는다", () => {
+    expect(buildQueryString({ personalized: true, page: 0 })).toBe("?personalized=true&page=0");
+  });
+});
+
+describe("isValidationError", () => {
+  it("400이고 fieldErrors가 있을 때만 참이다", () => {
+    const validation = new ApiError(400, "요청 값이 유효하지 않습니다.", {
+      errorCode: "COMMON_400",
+      fieldErrors: [{ field: "email", reason: "올바른 이메일 형식이 아닙니다." }],
+    });
+    const business = new ApiError(400, "잔액 부족", {
+      errorCode: "PAYMENT_400_INSUFFICIENT_BALANCE",
+    });
+
+    expect(isValidationError(validation)).toBe(true);
+    expect(isValidationError(business)).toBe(false);
+    expect(isValidationError(new Error("network"))).toBe(false);
+  });
+});
+
+describe("shouldRetryQuery", () => {
+  it("4xx는 재시도하지 않는다", () => {
+    expect(shouldRetryQuery(0, new ApiError(401, "unauthorized"))).toBe(false);
+    expect(shouldRetryQuery(0, new ApiError(404, "not found"))).toBe(false);
+    expect(shouldRetryQuery(0, new ApiError(429, "too many"))).toBe(false);
+  });
+
+  it("5xx와 네트워크 오류는 한 번만 재시도한다", () => {
+    expect(shouldRetryQuery(0, new ApiError(502, "bad gateway"))).toBe(true);
+    expect(shouldRetryQuery(0, new TypeError("Failed to fetch"))).toBe(true);
+    expect(shouldRetryQuery(1, new ApiError(502, "bad gateway"))).toBe(false);
+  });
 });
 
 describe("apiRequest 인증", () => {
@@ -101,6 +179,26 @@ describe("apiRequest 인증", () => {
     expect(new Headers(init.headers).get("Authorization")).toBe("Bearer access-1");
   });
 
+  it("auth: false면 토큰이 있어도 Authorization을 붙이지 않는다", async () => {
+    saveTokens({ accessToken: "access-1", refreshToken: "refresh-1" });
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/products", { auth: false });
+
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(new Headers(init.headers).has("Authorization")).toBe(false);
+  });
+
+  it("auth: false 요청이 401을 받아도 재발급하지 않는다", async () => {
+    saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(apiRequest("/products", { auth: false })).rejects.toMatchObject({ status: 401 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getRefreshToken()).toBe("refresh-1");
+  });
+
   it("401이면 재발급 뒤 새 토큰으로 원 요청을 한 번 다시 보낸다", async () => {
     saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
     const fetchMock = stubAuthFetch();
@@ -112,6 +210,19 @@ describe("apiRequest 인증", () => {
     ) as [string, RequestInit];
     expect(refreshCall[1].body).toBe(JSON.stringify({ refreshToken: "refresh-1" }));
     expect(getRefreshToken()).toBe("refresh-2");
+  });
+
+  it("재발급 요청에는 만료된 accessToken을 Authorization으로 붙이지 않는다", async () => {
+    // 게이트웨이가 JWT를 먼저 검증하므로 만료 토큰이 붙으면 재발급 자체가 401로 끊긴다.
+    saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
+    const fetchMock = stubAuthFetch();
+
+    await apiRequest("/users/me");
+
+    const refreshCall = fetchMock.mock.calls.find(([url]) =>
+      (url as string).endsWith("/auths/token/refresh"),
+    ) as [string, RequestInit];
+    expect(new Headers(refreshCall[1].headers).has("Authorization")).toBe(false);
   });
 
   it("동시에 여러 요청이 401을 받아도 재발급은 한 번만 호출된다", async () => {
