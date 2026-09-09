@@ -258,4 +258,20 @@ describe("apiRequest 인증", () => {
     await expect(apiRequest("/users/me")).rejects.toMatchObject({ status: 401 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it("refreshToken 없이 401을 겪은 뒤 로그인하면 다음 401에서 재발급을 다시 시도한다", async () => {
+    // 토큰 없이 끝난 재발급 Promise가 남아 있으면 이후 재발급이 영영 건너뛰어진다 (리뷰 지적).
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(apiRequest("/users/me")).rejects.toMatchObject({ status: 401 });
+
+    saveTokens({ accessToken: "expired", refreshToken: "refresh-1" });
+    const authFetch = stubAuthFetch();
+
+    await expect(apiRequest("/users/me")).resolves.toEqual({ ok: true });
+    const refreshCalls = authFetch.mock.calls.filter(([url]) =>
+      (url as string).endsWith("/auths/token/refresh"),
+    );
+    expect(refreshCalls).toHaveLength(1);
+  });
 });
