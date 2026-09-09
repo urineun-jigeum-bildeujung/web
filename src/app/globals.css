@@ -30,6 +30,10 @@
   --color-bg-ai: var(--bg-ai);
   --color-bg-ai-weak: var(--bg-ai-weak);
   --color-bg-accent: var(--bg-accent);
+  --color-bg-default-strong: var(--bg-default-strong);
+  --color-bg-control-disabled: var(--bg-control-disabled);
+  --color-text-body-info-default: var(--text-body-info-default);
+  --color-text-body-info-strong: var(--text-body-info-strong);
   --color-text-body-default: var(--text-body-default);
   --color-text-body-inverse: var(--text-body-inverse);
   --color-text-body-static-black: var(--text-body-static-black);
@@ -67,6 +71,9 @@
   --color-icon-fill-default: var(--icon-fill-default);
   --color-icon-fill-inverse: var(--icon-fill-inverse);
   --color-icon-fill-static-white: var(--icon-fill-static-white);
+  --color-icon-fill-static-black: var(--icon-fill-static-black);
+  --color-icon-fill-disable: var(--icon-fill-disable);
+  --color-icon-fill-rating: var(--icon-fill-rating);
   --color-icon-fill-secondary: var(--icon-fill-secondary);
   --color-icon-fill-tertiary: var(--icon-fill-tertiary);
   --color-icon-stroke-default: var(--icon-stroke-default);
@@ -126,94 +133,98 @@
      shadcn 슬롯과 --brand·--success는 값을 직접 복사하지 않고 이 변수들을
      var()로 참조한다 — Figma 값이 바뀌면 여기 한 곳만 고치면 된다. */
   --bg-default: oklch(1 0 0);
-  --bg-weak: oklch(0.979 0.002 247.8);
-  --bg-secondary: oklch(0.967 0.002 247.8);
-  --bg-tertiary: oklch(0.952 0.003 264.5);
-  --bg-disable: oklch(0.901 0.007 277.2);
-  --bg-primary: oklch(0.307 0.017 255.6);
-  --bg-primary-strong: oklch(0.225 0.009 255.6);
-  --bg-brand: oklch(0.69 0.205 39.9);
-  --bg-brand-weak: oklch(0.971 0.02 65.1);
-  --bg-brand-strong: oklch(0.627 0.203 36.9);
-  --bg-danger: oklch(0.629 0.257 27.9);
-  --bg-danger-weak: oklch(0.967 0.016 17.4);
-  --bg-info: oklch(0.611 0.213 256.6);
-  --bg-info-weak: oklch(0.97 0.014 254.6);
-  --bg-positive: oklch(0.667 0.145 162.4);
-  --bg-positive-weak: oklch(0.973 0.017 178.3);
-  --bg-ai: oklch(0.624 0.201 292.8);
-  --bg-ai-weak: oklch(0.969 0.016 293.8);
+  --bg-weak: oklch(0.97865 0.001709 247.839);
+  --bg-secondary: oklch(0.966673 0.001714 247.839);
+  --bg-tertiary: oklch(0.951933 0.002885 264.542);
+  --bg-disable: oklch(0.901274 0.006863 277.154);
+  --bg-default-strong: oklch(0.63553 0.014671 262.358);
+  --bg-control-disabled: oklch(0.767594 0.011543 274.847);
+  --bg-primary: oklch(0.306721 0.016703 255.647);
+  --bg-primary-strong: oklch(0.225026 0.009018 255.605);
+  --bg-brand: oklch(0.690433 0.205394 39.89);
+  --bg-brand-weak: oklch(0.970573 0.019526 65.149);
+  --bg-brand-strong: oklch(0.626978 0.203157 36.927);
+  --bg-danger: oklch(0.628571 0.256834 27.888);
+  --bg-danger-weak: oklch(0.966944 0.016239 17.438);
+  --bg-info: oklch(0.611005 0.213108 256.558);
+  --bg-info-weak: oklch(0.97048 0.014182 254.604);
+  --bg-positive: oklch(0.66667 0.145239 162.45);
+  --bg-positive-weak: oklch(0.972889 0.016612 178.285);
+  --bg-ai: oklch(0.623643 0.200978 292.805);
+  --bg-ai-weak: oklch(0.969143 0.016059 293.756);
   /* shadcn --accent(컴포넌트 내부 hover 배경)와 이름은 비슷하지만 의미가 달라
      슬롯을 공유하지 않는다. 새 소식 등을 강조할 때 쓰는 노란색이다. */
-  --bg-accent: oklch(0.704 0.145 82.1);
+  --bg-accent: oklch(0.704078 0.145039 82.126);
 
-  /* Figma 03. semantic > text/*. text/body/success_default·success_strong은
-     제외했다 — 값이 blue 계열이라 bg/info·border/info와 같은 계열인데 이름만
-     success다. postive처럼 단순 오타인지, PD팀 확인 후 반영한다. */
-  --text-body-default: oklch(0.191 0 0);
+  /* Figma 03. semantic > text/*. text/body/success_*는 PD팀 확인 후
+     text/body/info_*로 이름이 바뀌었다. */
+  --text-body-info-default: oklch(0.686499 0.16771 255.196);
+  --text-body-info-strong: oklch(0.517516 0.1933 258.201);
+  --text-body-default: oklch(0.191251 0 0);
   --text-body-inverse: oklch(1 0 0);
-  --text-body-static-black: oklch(0.191 0 0);
+  --text-body-static-black: oklch(0.191251 0 0);
   --text-body-static-white: oklch(1 0 0);
-  --text-body-secondary: oklch(0.478 0.027 266.6);
-  --text-body-tertiary: oklch(0.636 0.015 262.4);
-  --text-body-unselect: oklch(0.768 0.012 274.8);
-  --text-body-brand-default: oklch(0.69 0.205 39.9);
-  --text-body-brand-strong: oklch(0.504 0.178 34.5);
-  --text-body-danger-default: oklch(0.629 0.257 27.9);
-  --text-body-danger-strong: oklch(0.566 0.232 29.2);
-  --text-body-positive-default: oklch(0.667 0.145 162.4);
-  --text-body-positive-strong: oklch(0.504 0.098 172.1);
-  --text-body-ai-default: oklch(0.695 0.177 293.5);
-  --text-body-ai-strong: oklch(0.536 0.193 291.4);
-  --text-label-default: oklch(0.191 0 0);
+  --text-body-secondary: oklch(0.478182 0.027277 266.648);
+  --text-body-tertiary: oklch(0.63553 0.014671 262.358);
+  --text-body-unselect: oklch(0.767594 0.011543 274.847);
+  --text-body-brand-default: oklch(0.690433 0.205394 39.89);
+  --text-body-brand-strong: oklch(0.503944 0.177566 34.529);
+  --text-body-danger-default: oklch(0.628571 0.256834 27.888);
+  --text-body-danger-strong: oklch(0.565537 0.23207 29.234);
+  --text-body-positive-default: oklch(0.66667 0.145239 162.45);
+  --text-body-positive-strong: oklch(0.504071 0.097654 172.085);
+  --text-body-ai-default: oklch(0.695424 0.177304 293.521);
+  --text-body-ai-strong: oklch(0.53588 0.193367 291.394);
+  --text-label-default: oklch(0.191251 0 0);
   --text-label-inverse: oklch(1 0 0);
   --text-label-static-white: oklch(1 0 0);
-  --text-label-static-black: oklch(0.191 0 0);
-  --text-label-brand: oklch(0.69 0.205 39.9);
-  --text-label-disable: oklch(0.768 0.012 274.8);
+  --text-label-static-black: oklch(0.191251 0 0);
+  --text-label-brand: oklch(0.690433 0.205394 39.89);
+  --text-label-disable: oklch(0.767594 0.011543 274.847);
 
   /* Figma 03. semantic > border/*. */
-  --border-default: oklch(0.901 0.007 277.2);
-  --border-secondary: oklch(0.636 0.015 262.4);
-  --border-strong: oklch(0.191 0 0);
-  --border-brand-weak: oklch(0.855 0.091 54.8);
-  --border-brand: oklch(0.69 0.205 39.9);
-  --border-danger-weak: oklch(0.902 0.051 19.6);
-  --border-danger: oklch(0.629 0.257 27.9);
-  --border-info-weak: oklch(0.899 0.049 250.3);
-  --border-info: oklch(0.611 0.213 256.6);
-  --border-positive-weak: oklch(0.891 0.072 168.2);
-  --border-positive: oklch(0.667 0.145 162.4);
-  --border-ai-weak: oklch(0.906 0.053 298.6);
-  --border-ai: oklch(0.624 0.201 292.8);
+  --border-default: oklch(0.901274 0.006863 277.154);
+  --border-secondary: oklch(0.63553 0.014671 262.358);
+  --border-strong: oklch(0.191251 0 0);
+  --border-brand-weak: oklch(0.855382 0.091408 54.838);
+  --border-brand: oklch(0.690433 0.205394 39.89);
+  --border-danger-weak: oklch(0.902041 0.050823 19.634);
+  --border-danger: oklch(0.628571 0.256834 27.888);
+  --border-info-weak: oklch(0.89923 0.049252 250.251);
+  --border-info: oklch(0.611005 0.213108 256.558);
+  --border-positive-weak: oklch(0.890624 0.072481 168.21);
+  --border-positive: oklch(0.66667 0.145239 162.45);
+  --border-ai-weak: oklch(0.905884 0.052635 298.579);
+  --border-ai: oklch(0.623643 0.200978 292.805);
 
-  /* Figma 03. semantic > icon/*. icon/fill/static_black은 제외했다 — 값이
-     icon/fill/default와 완전히 같아 static이 아니다. 짝인
-     icon/stroke/static_black은 라이트·다크 모두 고정값이라 정상이다. PD팀
-     확인 후 반영한다. */
-  --icon-fill-default: oklch(0.307 0.017 255.6);
+  /* Figma 03. semantic > icon/*. icon/fill/static_black은 PD팀이 색상 오류를
+     확인하고 라이트·다크 모두 같은 값(natural/light/800)으로 고정했다. */
+  --icon-fill-static-black: oklch(0.306721 0.016703 255.647);
+  --icon-fill-default: oklch(0.306721 0.016703 255.647);
   --icon-fill-inverse: oklch(1 0 0);
   --icon-fill-static-white: oklch(1 0 0);
-  --icon-fill-secondary: oklch(0.478 0.027 266.6);
-  --icon-fill-tertiary: oklch(0.768 0.012 274.8);
-  --icon-stroke-default: oklch(0.191 0 0);
+  --icon-fill-secondary: oklch(0.478182 0.027277 266.648);
+  --icon-fill-tertiary: oklch(0.767594 0.011543 274.847);
+  --icon-fill-disable: oklch(0.951933 0.002885 264.542);
+  --icon-fill-rating: oklch(0.897341 0.160661 94.733);
+  --icon-stroke-default: oklch(0.191251 0 0);
   --icon-stroke-inverse: oklch(1 0 0);
   --icon-stroke-static-white: oklch(1 0 0);
-  --icon-stroke-static-black: oklch(0.191 0 0);
-  --icon-stroke-secondary: oklch(0.307 0.017 255.6);
-  --icon-stroke-tertiary: oklch(0.636 0.015 262.4);
-  --icon-stroke-disable: oklch(0.868 0.008 278.6);
-  --icon-stroke-danger: oklch(0.629 0.257 27.9);
-  --icon-stroke-positive: oklch(0.667 0.145 162.4);
+  --icon-stroke-static-black: oklch(0.191251 0 0);
+  --icon-stroke-secondary: oklch(0.306721 0.016703 255.647);
+  --icon-stroke-tertiary: oklch(0.63553 0.014671 262.358);
+  --icon-stroke-disable: oklch(0.867841 0.008283 278.619);
+  --icon-stroke-danger: oklch(0.628571 0.256834 27.888);
+  --icon-stroke-positive: oklch(0.66667 0.145239 162.45);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
-  /* bg/brand. 바탕 위 글자는 흰색이 아니라 어두운 색이다. 흰 글자는 대비 3.01:1로
-     작은 글씨 기준(4.5:1)에 못 미친다. 어두운 글자면 6.12:1이다. */
+  /* bg/brand. 흰 글자 대비는 3.01:1이다. 14px 일반 글자의 WCAG AA 기준인
+     4.5:1에는 못 미치지만, PD팀이 현재 조합을 유지하기로 했다. */
   --brand: var(--bg-brand);
-  --brand-foreground: var(--text-label-static-black);
+  --brand-foreground: var(--text-label-static-white);
 
   /* bg/positive. destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다.
      바탕 위 글자는 흰색이 아니라 어두운 색이다. 흰 글자는 대비 2.83:1로 기준
@@ -243,10 +254,11 @@
   --muted-foreground: var(--text-body-secondary);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  /* bg/danger. shadcn 기본값보다 채도가 훨씬 높아, 흰 글자는 대비 3.99:1로 기준
-     미달이다. 어두운 글자(다크 모드와 동일하게)면 4.62:1이다. */
+  /* bg/danger. 흰 글자 대비는 3.99:1로 14px 일반 글자의 WCAG AA 기준인
+     4.5:1에는 못 미친다. 다크 모드(2.76:1)는 PD팀이 색상 값을 조정하기로 했다 —
+     업데이트 히스토리에서 bg/danger 다크 값 변경을 확인해 반영한다. */
   --destructive: var(--bg-danger);
-  --destructive-foreground: var(--text-label-static-black);
+  --destructive-foreground: var(--text-label-static-white);
   /* border/default. --input은 대응하는 Figma 토큰이 따로 없어 손대지 않는다. */
   --border: var(--border-default);
   --input: oklch(0.922 0 0);
@@ -268,84 +280,93 @@
 }
 
 .dark {
-  --bg-default: oklch(0.191 0 0);
-  --bg-weak: oklch(0.241 0.006 286);
-  --bg-secondary: oklch(0.313 0.006 271.2);
-  --bg-tertiary: oklch(0.386 0.004 264.5);
-  --bg-disable: oklch(0.475 0.005 271.3);
-  --bg-primary: oklch(0.86 0.013 266.7);
-  --bg-primary-strong: oklch(0.906 0.013 262.4);
-  --bg-brand: oklch(0.621 0.181 40.1);
-  --bg-brand-weak: oklch(0.232 0.036 36.7);
-  --bg-brand-strong: oklch(0.691 0.155 45.3);
-  --bg-danger: oklch(0.707 0.134 22.1);
-  --bg-danger-weak: oklch(0.237 0.032 13.3);
-  --bg-info: oklch(0.714 0.115 251.1);
-  --bg-info-weak: oklch(0.234 0.03 261.3);
-  --bg-positive: oklch(0.602 0.129 163.1);
-  --bg-positive-weak: oklch(0.228 0.022 175.6);
-  --bg-ai: oklch(0.74 0.11 296.9);
-  --bg-ai-weak: oklch(0.238 0.031 292.5);
-  --bg-accent: oklch(0.635 0.13 83.4);
+  --bg-default: oklch(0.191251 0 0);
+  --bg-weak: oklch(0.240535 0.005662 285.966);
+  --bg-secondary: oklch(0.313318 0.005505 271.239);
+  --bg-tertiary: oklch(0.386419 0.003621 264.52);
+  --bg-disable: oklch(0.474899 0.004951 271.311);
+  --bg-default-strong: oklch(0.747676 0.011914 269.513);
+  --bg-control-disabled: oklch(0.690037 0.010439 273.296);
+  --bg-primary: oklch(0.860259 0.013161 266.688);
+  --bg-primary-strong: oklch(0.905507 0.013404 262.377);
+  --bg-brand: oklch(0.620888 0.18096 40.07);
+  --bg-brand-weak: oklch(0.23192 0.036158 36.731);
+  --bg-brand-strong: oklch(0.691221 0.15522 45.345);
+  --bg-danger: oklch(0.706719 0.133843 22.133);
+  --bg-danger-weak: oklch(0.236895 0.032392 13.323);
+  --bg-info: oklch(0.713618 0.114801 251.138);
+  --bg-info-weak: oklch(0.234245 0.029644 261.337);
+  --bg-positive: oklch(0.60151 0.129312 163.062);
+  --bg-positive-weak: oklch(0.228411 0.0221 175.563);
+  --bg-ai: oklch(0.740263 0.109927 296.938);
+  --bg-ai-weak: oklch(0.237619 0.030541 292.516);
+  --bg-accent: oklch(0.634734 0.129766 83.364);
 
+  --text-body-info-default: oklch(0.619696 0.14673 255.052);
+  --text-body-info-strong: oklch(0.808251 0.082195 246.713);
   --text-body-default: oklch(1 0 0);
-  --text-body-inverse: oklch(0.191 0 0);
-  --text-body-static-black: oklch(0.191 0 0);
+  --text-body-inverse: oklch(0.191251 0 0);
+  --text-body-static-black: oklch(0.191251 0 0);
   --text-body-static-white: oklch(1 0 0);
-  --text-body-secondary: oklch(0.811 0.013 271.3);
-  --text-body-tertiary: oklch(0.748 0.012 269.5);
-  --text-body-unselect: oklch(0.69 0.01 273.3);
-  --text-body-brand-default: oklch(0.621 0.181 40.1);
-  --text-body-brand-strong: oklch(0.77 0.123 50);
-  --text-body-danger-default: oklch(0.707 0.134 22.1);
-  --text-body-danger-strong: oklch(0.805 0.088 22.7);
-  --text-body-positive-default: oklch(0.602 0.129 163.1);
-  --text-body-positive-strong: oklch(0.725 0.134 163.9);
-  --text-body-ai-default: oklch(0.626 0.156 293.6);
-  --text-body-ai-strong: oklch(0.863 0.058 300.8);
+  --text-body-secondary: oklch(0.811279 0.013014 271.255);
+  --text-body-tertiary: oklch(0.747676 0.011914 269.513);
+  --text-body-unselect: oklch(0.690037 0.010439 273.296);
+  --text-body-brand-default: oklch(0.620888 0.18096 40.07);
+  --text-body-brand-strong: oklch(0.770158 0.123162 50.026);
+  --text-body-danger-default: oklch(0.706719 0.133843 22.133);
+  --text-body-danger-strong: oklch(0.804658 0.088061 22.652);
+  --text-body-positive-default: oklch(0.60151 0.129312 163.062);
+  --text-body-positive-strong: oklch(0.724668 0.134147 163.879);
+  --text-body-ai-default: oklch(0.626343 0.155852 293.568);
+  --text-body-ai-strong: oklch(0.863427 0.057951 300.773);
   --text-label-default: oklch(1 0 0);
-  --text-label-inverse: oklch(0.191 0 0);
+  --text-label-inverse: oklch(0.191251 0 0);
   --text-label-static-white: oklch(1 0 0);
-  --text-label-static-black: oklch(0.191 0 0);
-  --text-label-brand: oklch(0.621 0.181 40.1);
-  --text-label-disable: oklch(0.69 0.01 273.3);
+  --text-label-static-black: oklch(0.191251 0 0);
+  --text-label-brand: oklch(0.620888 0.18096 40.07);
+  --text-label-disable: oklch(0.690037 0.010439 273.296);
 
-  --border-default: oklch(0.475 0.005 271.3);
-  --border-secondary: oklch(0.748 0.012 269.5);
+  --border-default: oklch(0.474899 0.004951 271.311);
+  --border-secondary: oklch(0.747676 0.011914 269.513);
   --border-strong: oklch(1 0 0);
-  --border-brand-weak: oklch(0.35 0.077 42.4);
-  --border-brand: oklch(0.621 0.181 40.1);
-  --border-danger-weak: oklch(0.352 0.072 20.2);
-  --border-danger: oklch(0.707 0.134 22.1);
-  --border-info-weak: oklch(0.355 0.061 253.8);
-  --border-info: oklch(0.714 0.115 251.1);
-  --border-positive-weak: oklch(0.344 0.062 167.1);
-  --border-positive: oklch(0.602 0.129 163.1);
-  --border-ai-weak: oklch(0.357 0.065 295);
-  --border-ai: oklch(0.74 0.11 296.9);
+  --border-brand-weak: oklch(0.349988 0.077086 42.36);
+  --border-brand: oklch(0.620888 0.18096 40.07);
+  --border-danger-weak: oklch(0.352205 0.072041 20.173);
+  --border-danger: oklch(0.706719 0.133843 22.133);
+  --border-info-weak: oklch(0.354669 0.061102 253.825);
+  --border-info: oklch(0.713618 0.114801 251.138);
+  --border-positive-weak: oklch(0.343622 0.06234 167.103);
+  --border-positive: oklch(0.60151 0.129312 163.062);
+  --border-ai-weak: oklch(0.357442 0.065348 294.987);
+  --border-ai: oklch(0.740263 0.109927 296.938);
 
-  --icon-fill-default: oklch(0.86 0.013 266.7);
-  --icon-fill-inverse: oklch(0.191 0 0);
+  /* 라이트와 같은 값. natural/light/800으로 고정돼 모드 무관이다. */
+  --icon-fill-static-black: oklch(0.306721 0.016703 255.647);
+  --icon-fill-default: oklch(0.860259 0.013161 266.688);
+  --icon-fill-inverse: oklch(0.191251 0 0);
   --icon-fill-static-white: oklch(1 0 0);
-  --icon-fill-secondary: oklch(0.811 0.013 271.3);
-  --icon-fill-tertiary: oklch(0.69 0.01 273.3);
+  --icon-fill-secondary: oklch(0.811279 0.013014 271.255);
+  --icon-fill-tertiary: oklch(0.690037 0.010439 273.296);
+  --icon-fill-disable: oklch(0.386419 0.003621 264.52);
+  --icon-fill-rating: oklch(0.803893 0.138968 94.299);
   --icon-stroke-default: oklch(1 0 0);
-  --icon-stroke-inverse: oklch(0.191 0 0);
+  --icon-stroke-inverse: oklch(0.191251 0 0);
   --icon-stroke-static-white: oklch(1 0 0);
-  --icon-stroke-static-black: oklch(0.191 0 0);
-  --icon-stroke-secondary: oklch(0.86 0.013 266.7);
-  --icon-stroke-tertiary: oklch(0.748 0.012 269.5);
-  --icon-stroke-disable: oklch(0.584 0.009 278.5);
-  --icon-stroke-danger: oklch(0.707 0.134 22.1);
-  --icon-stroke-positive: oklch(0.602 0.129 163.1);
+  --icon-stroke-static-black: oklch(0.191251 0 0);
+  --icon-stroke-secondary: oklch(0.860259 0.013161 266.688);
+  --icon-stroke-tertiary: oklch(0.747676 0.011914 269.513);
+  --icon-stroke-disable: oklch(0.58402 0.009161 278.526);
+  --icon-stroke-danger: oklch(0.706719 0.133843 22.133);
+  --icon-stroke-positive: oklch(0.60151 0.129312 163.062);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
   --brand: var(--bg-brand);
-  /* 라이트와 같은 어두운 글자를 쓴다. 대비 4.70:1로 기준을 겨우 넘는다. */
-  --brand-foreground: var(--text-label-static-black);
+  /* text/label/static_white는 모드 무관 고정값이라 다크에서도 흰색이다.
+     PD팀 결정에 따라 Figma 바인딩대로 흰색을 유지한다. */
+  --brand-foreground: var(--text-label-static-white);
 
   --success: var(--bg-positive);
   --success-foreground: var(--text-label-static-black);
@@ -365,9 +386,9 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: var(--bg-danger);
-  /* 어두운 화면의 destructive는 라이트보다 밝다. 흰 글자를 얹으면 2.76:1까지
-     떨어져 작은 글씨를 읽기 어렵다. 어두운 글자면 6.66:1이다. */
-  --destructive-foreground: var(--text-label-static-black);
+  /* text/label/static_white는 모드 무관 고정값이라 다크에서도 흰색이다.
+     현재 Figma 값은 #e87c7a이며, PD팀 변경 후 새 값을 반영한다. */
+  --destructive-foreground: var(--text-label-static-white);
   --border: var(--border-default);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
