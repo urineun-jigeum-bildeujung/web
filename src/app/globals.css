@@ -64,6 +64,20 @@
   --color-border-positive: var(--border-positive);
   --color-border-ai-weak: var(--border-ai-weak);
   --color-border-ai: var(--border-ai);
+  --color-icon-fill-default: var(--icon-fill-default);
+  --color-icon-fill-inverse: var(--icon-fill-inverse);
+  --color-icon-fill-static-white: var(--icon-fill-static-white);
+  --color-icon-fill-secondary: var(--icon-fill-secondary);
+  --color-icon-fill-tertiary: var(--icon-fill-tertiary);
+  --color-icon-stroke-default: var(--icon-stroke-default);
+  --color-icon-stroke-inverse: var(--icon-stroke-inverse);
+  --color-icon-stroke-static-white: var(--icon-stroke-static-white);
+  --color-icon-stroke-static-black: var(--icon-stroke-static-black);
+  --color-icon-stroke-secondary: var(--icon-stroke-secondary);
+  --color-icon-stroke-tertiary: var(--icon-stroke-tertiary);
+  --color-icon-stroke-disable: var(--icon-stroke-disable);
+  --color-icon-stroke-danger: var(--icon-stroke-danger);
+  --color-icon-stroke-positive: var(--icon-stroke-positive);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -172,6 +186,25 @@
   --border-positive: oklch(0.667 0.145 162.4);
   --border-ai-weak: oklch(0.906 0.053 298.6);
   --border-ai: oklch(0.624 0.201 292.8);
+
+  /* Figma 03. semantic > icon/*. icon/fill/static_black은 제외했다 — 값이
+     icon/fill/default와 완전히 같아 static이 아니다. 짝인
+     icon/stroke/static_black은 라이트·다크 모두 고정값이라 정상이다. PD팀
+     확인 후 반영한다. */
+  --icon-fill-default: oklch(0.307 0.017 255.6);
+  --icon-fill-inverse: oklch(1 0 0);
+  --icon-fill-static-white: oklch(1 0 0);
+  --icon-fill-secondary: oklch(0.478 0.027 266.6);
+  --icon-fill-tertiary: oklch(0.768 0.012 274.8);
+  --icon-stroke-default: oklch(0.191 0 0);
+  --icon-stroke-inverse: oklch(1 0 0);
+  --icon-stroke-static-white: oklch(1 0 0);
+  --icon-stroke-static-black: oklch(0.191 0 0);
+  --icon-stroke-secondary: oklch(0.307 0.017 255.6);
+  --icon-stroke-tertiary: oklch(0.636 0.015 262.4);
+  --icon-stroke-disable: oklch(0.868 0.008 278.6);
+  --icon-stroke-danger: oklch(0.629 0.257 27.9);
+  --icon-stroke-positive: oklch(0.667 0.145 162.4);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
@@ -290,6 +323,21 @@
   --border-positive: oklch(0.602 0.129 163.1);
   --border-ai-weak: oklch(0.357 0.065 295);
   --border-ai: oklch(0.74 0.11 296.9);
+
+  --icon-fill-default: oklch(0.86 0.013 266.7);
+  --icon-fill-inverse: oklch(0.191 0 0);
+  --icon-fill-static-white: oklch(1 0 0);
+  --icon-fill-secondary: oklch(0.811 0.013 271.3);
+  --icon-fill-tertiary: oklch(0.69 0.01 273.3);
+  --icon-stroke-default: oklch(1 0 0);
+  --icon-stroke-inverse: oklch(0.191 0 0);
+  --icon-stroke-static-white: oklch(1 0 0);
+  --icon-stroke-static-black: oklch(0.191 0 0);
+  --icon-stroke-secondary: oklch(0.86 0.013 266.7);
+  --icon-stroke-tertiary: oklch(0.748 0.012 269.5);
+  --icon-stroke-disable: oklch(0.584 0.009 278.5);
+  --icon-stroke-danger: oklch(0.707 0.134 22.1);
+  --icon-stroke-positive: oklch(0.602 0.129 163.1);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
