@@ -109,7 +109,7 @@ React Compiler가 켜져 있다(`next.config.ts`의 `reactCompiler: true`). `use
 - optional 값 제거는 `filter(Boolean)`이 아니라 `filter((v) => v !== undefined)`를 쓴다.
 - 새 도메인은 `all`을 최상위 루트로, 재사용 하위 루트는 `{resource}All()` 형태로 명명한다.
 
-> `shared/config/query-keys.ts`는 아직 없다. 첫 API 연동을 하는 사람이 이 규칙대로 만든다.
+- 응답을 바꾸는 파라미터(아이 `petId`·정렬·상태 등)는 전부 키에 넣는다. 빠뜨리면 조건이 달라도 같은 캐시를 돌려준다.
 
 ## 타입
 
