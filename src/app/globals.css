@@ -11,6 +11,25 @@
   --color-success-foreground: var(--success-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-kakao: var(--kakao);
+  --color-bg-default: var(--bg-default);
+  --color-bg-weak: var(--bg-weak);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-bg-disable: var(--bg-disable);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-primary-strong: var(--bg-primary-strong);
+  --color-bg-brand: var(--bg-brand);
+  --color-bg-brand-weak: var(--bg-brand-weak);
+  --color-bg-brand-strong: var(--bg-brand-strong);
+  --color-bg-danger: var(--bg-danger);
+  --color-bg-danger-weak: var(--bg-danger-weak);
+  --color-bg-info: var(--bg-info);
+  --color-bg-info-weak: var(--bg-info-weak);
+  --color-bg-positive: var(--bg-positive);
+  --color-bg-positive-weak: var(--bg-positive-weak);
+  --color-bg-ai: var(--bg-ai);
+  --color-bg-ai-weak: var(--bg-ai-weak);
+  --color-bg-accent: var(--bg-accent);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -55,42 +74,72 @@
 }
 
 :root {
-  /* 시안의 주황은 브랜드 컬러가 아니라 임시값이다. 디자인팀이 색을 확정하면
-     이 두 줄만 갈아끼우면 되도록 쓰는 자리마다 흩지 않고 여기에 모아 둔다.
-
-     바탕 위에 올리는 글자는 흰색이 아니라 어두운 색이다. 이 주황에 흰 글자를
-     얹으면 대비가 3.11:1로 작은 글씨 기준(4.5:1)에 못 미친다. 어두운 글자면 6.37:1이다. */
-  --brand: oklch(0.68 0.19 41);
-  --brand-foreground: oklch(0.145 0 0);
-
-  /* 값이 기준 안에 들어왔다는 표시. destructive의 짝인데 shadcn 기본 팔레트에는
-     없어서 함께 둔다. 시안(상품상세 영양 성분 분석)의 초록에서 뽑은 임시값이다.
-
-     바탕 위에 올리는 글자색은 흰색이 아니라 어두운 색이다. 이 초록에 흰 글자를
-     얹으면 대비가 3.26:1로 작은 글씨 기준(4.5:1)에 못 미친다. 어두운 글자면 6.07:1이다. */
-  --success: oklch(0.63 0.17 149);
-  --success-foreground: oklch(0.145 0 0);
+  /* Figma `골라주개냥 Design System` > 03. semantic > bg/* 원본 값이다. 아래
+     shadcn 슬롯과 --brand·--success는 값을 직접 복사하지 않고 이 변수들을
+     var()로 참조한다 — Figma 값이 바뀌면 여기 한 곳만 고치면 된다. */
+  --bg-default: oklch(1 0 0);
+  --bg-weak: oklch(0.979 0.002 247.8);
+  --bg-secondary: oklch(0.967 0.002 247.8);
+  --bg-tertiary: oklch(0.952 0.003 264.5);
+  --bg-disable: oklch(0.901 0.007 277.2);
+  --bg-primary: oklch(0.307 0.017 255.6);
+  --bg-primary-strong: oklch(0.225 0.009 255.6);
+  --bg-brand: oklch(0.69 0.205 39.9);
+  --bg-brand-weak: oklch(0.971 0.02 65.1);
+  --bg-brand-strong: oklch(0.627 0.203 36.9);
+  --bg-danger: oklch(0.629 0.257 27.9);
+  --bg-danger-weak: oklch(0.967 0.016 17.4);
+  --bg-info: oklch(0.611 0.213 256.6);
+  --bg-info-weak: oklch(0.97 0.014 254.6);
+  --bg-positive: oklch(0.667 0.145 162.4);
+  --bg-positive-weak: oklch(0.973 0.017 178.3);
+  --bg-ai: oklch(0.624 0.201 292.8);
+  --bg-ai-weak: oklch(0.969 0.016 293.8);
+  /* shadcn --accent(컴포넌트 내부 hover 배경)와 이름은 비슷하지만 의미가 달라
+     슬롯을 공유하지 않는다. 새 소식 등을 강조할 때 쓰는 노란색이다. */
+  --bg-accent: oklch(0.704 0.145 82.1);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
-  --background: oklch(1 0 0);
+  /* bg/brand. 바탕 위 글자는 흰색이 아니라 어두운 색이다. 흰 글자는 대비 3.01:1로
+     작은 글씨 기준(4.5:1)에 못 미친다. 어두운 글자면 6.12:1이다. */
+  --brand: var(--bg-brand);
+  --brand-foreground: oklch(0.145 0 0);
+
+  /* bg/positive. destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다.
+     바탕 위 글자는 흰색이 아니라 어두운 색이다. 흰 글자는 대비 2.83:1로 기준
+     미달이다. 어두운 글자면 6.5:1이다. */
+  --success: var(--bg-positive);
+  --success-foreground: oklch(0.145 0 0);
+
+  /* bg/default. card/popover도 Figma에서 같은 변수를 참조한다 — 카드도 배경과
+     같은 흰색이고, 구분은 테두리·그림자로 한다. */
+  --background: var(--bg-default);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: var(--bg-default);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: var(--bg-default);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* bg/primary_strong. shadcn 기본값과 밝기 관계(라이트에서 어둡고 다크에서
+     밝은 반전)가 같아 그대로 참조한다. */
+  --primary: var(--bg-primary-strong);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  /* bg/secondary */
+  --secondary: var(--bg-secondary);
   --secondary-foreground: oklch(0.205 0 0);
+  /* muted는 손대지 않는다. bg/tertiary로 바꾸면 이 muted-foreground와의 대비가
+     4.35:1에서 3.00:1로 떨어져 기준 미달이 된다. text 시맨틱 토큰을 반영하는
+     커밋에서 짝을 다시 정한다. */
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(1 0 0);
+  /* bg/danger. shadcn 기본값보다 채도가 훨씬 높아, 흰 글자는 대비 3.99:1로 기준
+     미달이다. 어두운 글자(다크 모드와 동일하게)면 4.62:1이다. */
+  --destructive: var(--bg-danger);
+  --destructive-foreground: oklch(0.145 0 0);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -111,35 +160,54 @@
 }
 
 .dark {
-  /* 임시 색이라 어두운 화면에서도 같은 값을 쓴다. 확정되면 함께 정한다. */
-  --brand: oklch(0.68 0.19 41);
-  --brand-foreground: oklch(0.145 0 0);
-
-  /* 임시 색이라 어두운 화면에서도 같은 값을 쓴다. */
-  --success: oklch(0.63 0.17 149);
-  --success-foreground: oklch(0.145 0 0);
+  --bg-default: oklch(0.191 0 0);
+  --bg-weak: oklch(0.241 0.006 286);
+  --bg-secondary: oklch(0.313 0.006 271.2);
+  --bg-tertiary: oklch(0.386 0.004 264.5);
+  --bg-disable: oklch(0.475 0.005 271.3);
+  --bg-primary: oklch(0.86 0.013 266.7);
+  --bg-primary-strong: oklch(0.906 0.013 262.4);
+  --bg-brand: oklch(0.621 0.181 40.1);
+  --bg-brand-weak: oklch(0.232 0.036 36.7);
+  --bg-brand-strong: oklch(0.691 0.155 45.3);
+  --bg-danger: oklch(0.707 0.134 22.1);
+  --bg-danger-weak: oklch(0.237 0.032 13.3);
+  --bg-info: oklch(0.714 0.115 251.1);
+  --bg-info-weak: oklch(0.234 0.03 261.3);
+  --bg-positive: oklch(0.602 0.129 163.1);
+  --bg-positive-weak: oklch(0.228 0.022 175.6);
+  --bg-ai: oklch(0.74 0.11 296.9);
+  --bg-ai-weak: oklch(0.238 0.031 292.5);
+  --bg-accent: oklch(0.635 0.13 83.4);
 
   /* 소셜 로그인 버튼 바탕. 카카오가 규정한 색이라 우리 팔레트와 무관하게 고정이다.
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
-  --background: oklch(0.145 0 0);
+  --brand: var(--bg-brand);
+  /* 라이트와 같은 어두운 글자를 쓴다. 대비 4.70:1로 기준을 겨우 넘는다. */
+  --brand-foreground: oklch(0.145 0 0);
+
+  --success: var(--bg-positive);
+  --success-foreground: oklch(0.145 0 0);
+
+  --background: var(--bg-default);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: var(--bg-default);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: var(--bg-default);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
+  --primary: var(--bg-primary-strong);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: var(--bg-secondary);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  /* 어두운 화면의 destructive는 라이트보다 밝다. 흰 글자를 얹으면 2.89:1까지
-     떨어져 작은 글씨를 읽기 어렵다. 어두운 글자면 6.84:1이다. */
+  --destructive: var(--bg-danger);
+  /* 어두운 화면의 destructive는 라이트보다 밝다. 흰 글자를 얹으면 2.76:1까지
+     떨어져 작은 글씨를 읽기 어렵다. 어두운 글자면 6.66:1이다. */
   --destructive-foreground: oklch(0.145 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
