@@ -1,7 +1,7 @@
 // 백엔드 REST API 공통 fetch 래퍼. base URL·헤더·쿼리 조립과 401 재발급 처리를 한 곳으로 모은다.
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "./token-store";
 
-// 실패 응답 규격: Spring 표준 ProblemDetail(RFC 7807). timestamp·traceId는 응답에 포함되지 않는다.
+// 실패 응답 규격: Spring 표준 ProblemDetail(RFC 9457, 구 RFC 7807). timestamp·traceId는 응답에 포함되지 않는다.
 // errorCode·fieldErrors는 백엔드 common-core GlobalExceptionHandler가 붙이는 확장 필드다.
 export interface ProblemFieldError {
   field: string;
@@ -145,28 +145,40 @@ let refreshPromise: Promise<boolean> | null = null;
 // 백엔드가 재발급에 rotation을 적용하므로, 같은 refreshToken으로 두 번 재발급하면
 // 탈취로 간주돼 전 세션이 로그아웃된다. 동시 401은 반드시 하나의 재발급 호출을 공유한다.
 // 게이트웨이가 JWT를 먼저 검증하므로 만료된 accessToken을 재발급 요청에 붙이지 않는다(auth: false).
+// refreshToken이 없으면 await 없이 동기로 끝나므로, 안쪽 finally로 초기화하면 대입보다 먼저 실행돼
+// 끝난 Promise가 refreshPromise에 남는다. 그러면 나중에 로그인해도 다음 401이 재발급을 건너뛴다.
+// 대입 뒤에 같은 Promise인지 확인하고 비운다.
+async function performRefresh(): Promise<boolean> {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    return false;
+  }
+  try {
+    const response = await requestOnce(REFRESH_PATH, {
+      method: "POST",
+      body: { refreshToken },
+      auth: false,
+    });
+    saveTokens(await parseResponse<TokenPair>(response, REFRESH_PATH));
+    return true;
+  } catch {
+    clearTokens();
+    return false;
+  }
+}
+
 function refreshTokens(): Promise<boolean> {
-  refreshPromise ??= (async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      return false;
-    }
-    try {
-      const response = await requestOnce(REFRESH_PATH, {
-        method: "POST",
-        body: { refreshToken },
-        auth: false,
-      });
-      saveTokens(await parseResponse<TokenPair>(response, REFRESH_PATH));
-      return true;
-    } catch {
-      clearTokens();
-      return false;
-    } finally {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  const pending = performRefresh();
+  refreshPromise = pending;
+  void pending.finally(() => {
+    if (refreshPromise === pending) {
       refreshPromise = null;
     }
-  })();
-  return refreshPromise;
+  });
+  return pending;
 }
 
 export async function apiRequest<TResponse>(
