@@ -76,7 +76,6 @@ views/
 | `edit-pet` | `/mypage/pets/{basic,body,health}` | 아이 정보 항목별 수정 |
 | `add-pet` | `/mypage/pets/new` | 새 아이 등록 도입 |
 | `product-compare` | `/compare` | 상품 비교 |
-| `select-compare-product` | `/compare/select` | 비교할 상품 고르기 |
 | `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |
 | `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |
 | `mypage-notifications` | `/mypage/notifications` | 알림 목록. 공지와 배송 알림을 걸러 보고 눌러 상세를 연다 |

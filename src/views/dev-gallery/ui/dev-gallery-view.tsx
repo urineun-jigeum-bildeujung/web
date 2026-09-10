@@ -246,7 +246,7 @@ export function DevGalleryView() {
         <Section title="CompareSlot">
           <div className="grid grid-cols-2 gap-3">
             <CompareSlot
-              product={{ id: "1", name: "연어 사료 1.2kg", price: 37400 }}
+              product={{ id: "1", name: "연어 사료 1.2kg", price: 37400, kind: "food" }}
               onRemove={() => {}}
             />
             {/* 빈 자리. 여기서 상품을 고르러 간다 */}

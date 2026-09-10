@@ -1,5 +1,9 @@
-// 상품 비교. 두 자리에 담은 사료를 항목별로 견준다.
-// 와이어프레임 기준(comp_001, comp_001_empty)이라 디자인 확정 시 바뀔 수 있다.
+// 상품 비교. 두 자리에 담은 상품을 항목별로 견준다.
+// 와이어프레임 기준(comp_001, comp_001_에러, comp_001_empty)이라 디자인 확정 시 바뀔 수 있다.
+//
+// 종류가 다르면 표를 그리지 않는다. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라,
+// 나란히 놓으면 숫자가 큰 쪽이 나빠 보이는 착시가 생긴다. 근거 있는 판단을 내주겠다는
+// 서비스가 비교하면 안 되는 것을 비교해 주는 것이 더 나쁘다.
 
 "use client";
 
@@ -17,21 +21,22 @@ import {
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { BottomNav } from "@/widgets/bottom-nav";
 
-/** API 연동 전까지 화면 확인용 값. */
-const MOCK_PRODUCTS: [CompareProduct, CompareProduct] = [
-  { id: "1", name: "상품명", price: 45000 },
-  { id: "2", name: "상품명", price: 52000 },
-];
-
-/** 고르기 화면에서 담아 올 수 있는 상품. */
+/**
+ * 고르기 화면에서 담아 올 수 있는 상품. 검색 결과 목록과 같은 id·이름을 쓴다.
+ * 목업 단계라 양쪽에 값을 두고, API가 붙으면 둘 다 사라진다.
+ */
 const PICKABLE: Record<string, CompareProduct> = {
-  "1": { id: "1", name: "상품명", price: 45000 },
-  "2": { id: "2", name: "상품명", price: 52000 },
-  "3": { id: "3", name: "상품명", price: 38000 },
-  "4": { id: "4", name: "상품명", price: 61000 },
-  "5": { id: "5", name: "상품명", price: 47000 },
-  "6": { id: "6", name: "상품명", price: 55000 },
+  "1": { id: "1", name: "중소형견 소포장 사료 1kg", price: 31500, kind: "food" },
+  "2": { id: "2", name: "노령견 저지방 소화케어 사료 1kg", price: 27200, kind: "food" },
+  "3": { id: "3", name: "알레르기 케어 무곡물 사료 1kg", price: 26100, kind: "food" },
+  "4": { id: "4", name: "퍼피 성장기 사료 1kg", price: 21000, kind: "food" },
+  "5": { id: "5", name: "저자극 덴탈껌 14개입", price: 10800, kind: "snack" },
+  "6": { id: "6", name: "고양이 화장실 모래 6L", price: 14900, kind: "supply" },
+  "7": { id: "7", name: "실속형 대용량 사료 5kg", price: 18900, kind: "food" },
 };
+
+/** API 연동 전까지 화면 확인용 값. 시안 comp_001이 사료 둘을 견준다 */
+const MOCK_PRODUCTS: [CompareProduct, CompareProduct] = [PICKABLE["1"], PICKABLE["2"]];
 
 /** 시안 comp_001의 아홉 항목. */
 const MOCK_ROWS: CompareRow[] = [
@@ -66,7 +71,7 @@ const MOCK_ROWS: CompareRow[] = [
 
 export function ProductCompareView() {
   const router = useRouter();
-  // 고르기 화면이 주소창에 담아 온 값. 어느 자리에 무엇을 넣을지 알려 준다.
+  // 검색에서 고른 상품이 주소창에 담겨 온다. 어느 자리에 무엇을 넣을지 알려 준다.
   const [slot] = useQueryState("slot");
   const [product] = useQueryState("product");
 
@@ -85,8 +90,12 @@ export function ProductCompareView() {
     },
   );
 
-  const both = slots[0] && slots[1];
-  const goSelect = (index: number) => router.push(`/compare/select?slot=${index}`);
+  const [first, second] = slots;
+  const both = first && second;
+  const sameKind = both && first.kind === second.kind;
+
+  // 고르는 일은 검색 화면이 맡는다. 어느 자리를 채우러 왔는지는 주소창이 들고 간다.
+  const goSelect = (index: number) => router.push(`/search?slot=${index}`);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -125,13 +134,22 @@ export function ProductCompareView() {
         </div>
 
         {/* 한쪽이라도 비면 견줄 것이 없다. */}
-        {both && (
-          <CompareTable
-            productNames={[slots[0]!.name, slots[1]!.name]}
-            rows={MOCK_ROWS}
-            className="border-t border-border"
-          />
-        )}
+        {both &&
+          (sameKind ? (
+            <CompareTable
+              productNames={[first.name, second.name]}
+              rows={MOCK_ROWS}
+              className="border-t border-border"
+            />
+          ) : (
+            // 시안(comp_001_에러). 표와 맞춤 분석이 통째로 빠지고 이 안내만 남는다
+            <div className="flex gap-2 rounded-lg bg-muted p-4">
+              <span className="shrink-0 text-sm font-bold text-foreground">안내</span>
+              <p className="text-sm text-muted-foreground">
+                정확한 결과를 위해 건식은 건식끼리, 간식은 간식끼리 골라주세요
+              </p>
+            </div>
+          ))}
       </main>
 
       <BottomNav />

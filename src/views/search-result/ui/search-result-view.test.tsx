@@ -43,6 +43,24 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search");
   });
 
+  // 비교 화면이 자리를 채우러 보낸 경우. 고르면 상세가 아니라 비교로 돌아간다
+  it("비교할 자리를 채우러 왔으면 카드가 비교 화면으로 간다", () => {
+    renderWith("?q=퍼피&slot=1");
+
+    expect(screen.getByRole("link", { name: /퍼피 성장기 사료/ }).getAttribute("href")).toBe(
+      "/compare?slot=1&product=4",
+    );
+    expect(screen.getByText("고르면 비교 화면으로 담아 드릴게요")).toBeDefined();
+  });
+
+  it("자리를 들고 검색어를 고치러 가도 자리를 잃지 않는다", () => {
+    renderWith("?q=사료&slot=0");
+
+    fireEvent.click(screen.getByRole("button", { name: /검색어 고치기/ }));
+
+    expect(push).toHaveBeenCalledWith("/search?slot=0");
+  });
+
   // 점수를 모르는 상품이 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다
   it("적합도를 재지 못한 상품은 가장 싸도 마지막에 온다", () => {
     renderWith("?q=사료&sort=price-low");

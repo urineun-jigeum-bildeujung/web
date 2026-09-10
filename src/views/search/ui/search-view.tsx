@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IoChevronBack, IoCloseCircle, IoSearchOutline } from "react-icons/io5";
 
@@ -48,6 +49,8 @@ export function SearchView() {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 비교 화면이 자리를 채우러 보냈으면 그 자리 번호가 담겨 온다. 결과 화면까지 들고 간다
+  const [slot] = useQueryState("slot");
   const [keyword, setKeyword] = useState("");
   // 저장소는 React 밖의 것이라 효과로 되읽지 않고 여기서 구독한다
   const recent = useSyncExternalStore(subscribeRecent, getRecent, getRecentOnServer);
@@ -70,7 +73,8 @@ export function SearchView() {
     setRecent(pushRecent(recent, trimmed));
     // 종류 목록이 아니라 검색 결과 화면으로 보낸다. 어느 종류인지 알 수 없는 말을
     // 특정 카테고리로 보내면 "양치 껌"을 검색해도 사료 목록이 뜬다
-    router.push(`/search/result?q=${encodeURIComponent(trimmed)}`);
+    const forSlot = slot ? `&slot=${encodeURIComponent(slot)}` : "";
+    router.push(`/search/result?q=${encodeURIComponent(trimmed)}${forSlot}`);
   };
 
   return (
@@ -128,6 +132,11 @@ export function SearchView() {
       </header>
 
       <main className="flex flex-1 flex-col">
+        {/* 그냥 검색하러 온 것과 비교할 상품을 고르러 온 것은 고른 뒤 가는 곳이 다르다 */}
+        {slot !== null && (
+          <p className="px-4 pt-2 text-sm text-muted-foreground">비교할 상품을 검색해 주세요</p>
+        )}
+
         {typing ? (
           // 글자를 넣으면 최근 검색어 대신 추천어가 자리를 넘겨받는다
           <ul aria-label="추천 검색어">
