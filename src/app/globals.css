@@ -220,9 +220,11 @@
   --brand: var(--bg-brand);
   --brand-foreground: var(--text-label-static-white);
 
-  /* destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다. */
+  /* destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다. 흰 글자는
+     라이트 모드 대비 2.83:1로 PD팀 기준(3:1) 미달이지만, brand·danger와 같은
+     이유로 우선 Figma 바인딩(흰색)을 따른다. */
   --success: var(--bg-positive);
-  --success-foreground: var(--text-label-static-black);
+  --success-foreground: var(--text-label-static-white);
 
   --background: var(--bg-default);
   --foreground: var(--text-body-default);
@@ -230,7 +232,9 @@
   --card-foreground: var(--text-body-default);
   --popover: var(--bg-default);
   --popover-foreground: var(--text-body-default);
-  --primary: var(--bg-primary-strong);
+  /* button/bg/primary(기본 상태)가 bg/primary를 참조한다. bg/primary_strong은
+     button/bg/primary_pressed(눌림 상태)가 쓴다. */
+  --primary: var(--bg-primary);
   --primary-foreground: var(--text-label-inverse);
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
@@ -243,9 +247,8 @@
      danger 다크 색상은 PD팀 변경 대기 중이다. */
   --destructive: var(--bg-danger);
   --destructive-foreground: var(--text-label-static-white);
-  /* --input은 대응하는 Figma 토큰이 따로 없어 손대지 않는다. */
   --border: var(--border-default);
-  --input: oklch(0.922 0 0);
+  --input: var(--border-default);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
@@ -350,7 +353,7 @@
   --brand-foreground: var(--text-label-static-white);
 
   --success: var(--bg-positive);
-  --success-foreground: var(--text-label-static-black);
+  --success-foreground: var(--text-label-static-white);
 
   --background: var(--bg-default);
   --foreground: var(--text-body-default);
@@ -358,7 +361,7 @@
   --card-foreground: var(--text-body-default);
   --popover: var(--bg-default);
   --popover-foreground: var(--text-body-default);
-  --primary: var(--bg-primary-strong);
+  --primary: var(--bg-primary);
   --primary-foreground: var(--text-label-inverse);
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
@@ -370,7 +373,7 @@
   /* 현재 Figma 바인딩을 유지한다. danger 다크 색상은 PD팀 변경 대기 중이다. */
   --destructive-foreground: var(--text-label-static-white);
   --border: var(--border-default);
-  --input: oklch(1 0 0 / 15%);
+  --input: var(--border-default);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
