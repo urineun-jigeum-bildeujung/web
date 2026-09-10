@@ -1,4 +1,4 @@
-// 배송지 추가·수정. 이름과 주소, 요청사항을 받는다.
+// 배송지 추가·수정. 이름과 받는 사람, 주소, 요청사항을 받는다.
 // 와이어프레임 기준(mypa_311_미입력, mypa_311)이라 디자인 확정 시 바뀔 수 있다.
 
 "use client";
@@ -16,15 +16,16 @@ import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-
 /** 이미 저장된 곳을 다시 열 때 채워 넣을 값. API 연동 전까지 화면 확인용이다 */
 const SAVED_PLACES: Record<
   string,
-  { label: string; receiver: string; address: string; detail: string }
+  { label: string; receiver: string; phone: string; address: string; detail: string }
 > = {
   home: {
     label: "집",
     receiver: "전경진",
+    phone: "010-1234-5678",
     address: "서울특별시 강남구 테헤란로 123",
     detail: "UI타워 4층 404호",
   },
-  office: { label: "회사", receiver: "", address: "", detail: "" },
+  office: { label: "회사", receiver: "", phone: "", address: "", detail: "" },
 };
 
 export function EditAddressView() {
@@ -43,6 +44,7 @@ function EditAddressForm({ place }: { place: string | null }) {
 
   const [label, setLabel] = useState(saved?.label ?? "");
   const [receiver, setReceiver] = useState(saved?.receiver ?? "");
+  const [phone, setPhone] = useState(saved?.phone ?? "");
   // 주소 자체는 검색 화면에서 고른다. 화면 간 전달 방식은
   // 라우터 구조가 정해진 뒤에 붙인다.
   const [address] = useState(saved?.address ?? "");
@@ -53,7 +55,7 @@ function EditAddressForm({ place }: { place: string | null }) {
   return (
     <SingleInputScreen
       question={saved ? `${saved.label} 주소를 고칠까요?` : "어디로 보내드릴까요?"}
-      submitDisabled={!label.trim() || !receiver.trim() || !address.trim()}
+      submitDisabled={!label.trim() || !receiver.trim() || !phone.trim() || !address.trim()}
       onSubmit={() => router.back()}
     >
       <FormField
@@ -70,6 +72,16 @@ function EditAddressForm({ place }: { place: string | null }) {
         value={receiver}
         onChange={(event) => setReceiver(event.target.value)}
         onClear={() => setReceiver("")}
+      />
+
+      {/* 기사가 부재 시 연락할 곳이다. 받는 사람이 나와 다른 경우가 배송지를 따로 만드는 이유라
+          가입 때 받은 번호로 대신할 수 없다 (mypa_311 "연락처 추가") */}
+      <FormField
+        label="연락처"
+        inputMode="numeric"
+        value={phone}
+        onChange={(event) => setPhone(event.target.value)}
+        onClear={() => setPhone("")}
       />
 
       <div className="flex flex-col gap-1.5">
