@@ -34,6 +34,22 @@ test("이미 저장된 곳을 열면 그 값이 채워진다", () => {
   expect(input.value).toBe("집");
 });
 
+// 시안 mypa_311에 "연락처 추가" 메모가 붙었다. 기사가 부재 시 연락할 곳이다
+test("저장된 곳을 열면 연락처도 함께 채워진다", () => {
+  renderAt("?place=home");
+
+  const phone = screen.getByLabelText("연락처") as HTMLInputElement;
+  expect(phone.value).toBe("010-1234-5678");
+});
+
+test("연락처가 비면 입력 완료가 꺼져 있다", () => {
+  renderAt("?place=office");
+
+  // 회사는 이름만 저장돼 있어 연락처가 비어 있다
+  expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("");
+  expect(screen.getByRole("button", { name: "입력 완료" }).hasAttribute("disabled")).toBe(true);
+});
+
 test("저장된 적 없는 곳이면 새 배송지로 다룬다", () => {
   const input = renderAt("?place=unknown");
 
