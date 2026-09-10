@@ -13,6 +13,10 @@ import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 
 /** API 연동 전까지 화면 확인용 값 */
 const MOCK = {
+  /** 문의할 때 사용자가 대는 유일한 식별자다. 실제 값은 결제 승인 응답이 준다 */
+  orderNo: "20260829-1234567",
+  /** 주문 상세로 가는 식별자. 주문번호와 같은 값인지는 API 계약이 정해져야 안다 */
+  orderId: "1",
   productName: "상품명",
   option: "상품 옵션",
   arriveAt: "모레(9/3)",
@@ -53,6 +57,12 @@ export function CheckoutDoneView() {
         </div>
 
         <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4">
+          <DefinitionRow
+            term="주문번호"
+            description={MOCK.orderNo}
+            alignEnd
+            className="min-h-0 border-b border-border px-0 pb-3"
+          />
           <ProductSummary name={MOCK.productName} meta={MOCK.option} />
           <p className="text-center text-sm font-medium text-foreground">
             {MOCK.arriveAt} 문 앞으로 도착할 예정이에요
@@ -102,9 +112,16 @@ export function CheckoutDoneView() {
           </div>
         </DetailCard>
 
-        <Button className="min-h-11 w-full" asChild>
-          <Link href="/">처음으로 가기</Link>
-        </Button>
+        {/* 시안(paym_002)이 둘을 나란히 둔다. 방금 한 주문을 바로 확인할 수 있어야
+            주문 내역을 다시 찾아 들어가지 않는다 */}
+        <div className="flex gap-2">
+          <Button variant="outline" className="min-h-11 flex-1" asChild>
+            <Link href={`/mypage/orders/${MOCK.orderId}`}>주문 상세 보기</Link>
+          </Button>
+          <Button className="min-h-11 flex-1" asChild>
+            <Link href="/">홈으로 가기</Link>
+          </Button>
+        </div>
       </main>
     </div>
   );
