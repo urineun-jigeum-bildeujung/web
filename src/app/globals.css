@@ -129,9 +129,7 @@
 }
 
 :root {
-  /* Figma `골라주개냥 Design System` > 03. semantic > bg/* 원본 값이다. 아래
-     shadcn 슬롯과 --brand·--success는 값을 직접 복사하지 않고 이 변수들을
-     var()로 참조한다 — Figma 값이 바뀌면 여기 한 곳만 고치면 된다. */
+  /* Figma 03. semantic > bg/* */
   --bg-default: oklch(1 0 0);
   --bg-weak: oklch(0.97865 0.001709 247.839);
   --bg-secondary: oklch(0.966673 0.001714 247.839);
@@ -152,12 +150,9 @@
   --bg-positive-weak: oklch(0.972889 0.016612 178.285);
   --bg-ai: oklch(0.623643 0.200978 292.805);
   --bg-ai-weak: oklch(0.969143 0.016059 293.756);
-  /* shadcn --accent(컴포넌트 내부 hover 배경)와 이름은 비슷하지만 의미가 달라
-     슬롯을 공유하지 않는다. 새 소식 등을 강조할 때 쓰는 노란색이다. */
   --bg-accent: oklch(0.704078 0.145039 82.126);
 
-  /* Figma 03. semantic > text/*. text/body/success_*는 PD팀 확인 후
-     text/body/info_*로 이름이 바뀌었다. */
+  /* Figma 03. semantic > text/* */
   --text-body-info-default: oklch(0.686499 0.16771 255.196);
   --text-body-info-strong: oklch(0.517516 0.1933 258.201);
   --text-body-default: oklch(0.191251 0 0);
@@ -182,7 +177,7 @@
   --text-label-brand: oklch(0.690433 0.205394 39.89);
   --text-label-disable: oklch(0.767594 0.011543 274.847);
 
-  /* Figma 03. semantic > border/*. */
+  /* Figma 03. semantic > border/* */
   --border-default: oklch(0.901274 0.006863 277.154);
   --border-secondary: oklch(0.63553 0.014671 262.358);
   --border-strong: oklch(0.191251 0 0);
@@ -197,8 +192,7 @@
   --border-ai-weak: oklch(0.905884 0.052635 298.579);
   --border-ai: oklch(0.623643 0.200978 292.805);
 
-  /* Figma 03. semantic > icon/*. icon/fill/static_black은 PD팀이 색상 오류를
-     확인하고 라이트·다크 모두 같은 값(natural/light/800)으로 고정했다. */
+  /* Figma 03. semantic > icon/* */
   --icon-fill-static-black: oklch(0.306721 0.016703 255.647);
   --icon-fill-default: oklch(0.306721 0.016703 255.647);
   --icon-fill-inverse: oklch(1 0 0);
@@ -221,45 +215,36 @@
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
-  /* bg/brand. 흰 글자 대비는 3.01:1이다. 14px 일반 글자의 WCAG AA 기준인
-     4.5:1에는 못 미치지만, PD팀이 현재 조합을 유지하기로 했다. */
+  /* WCAG AA 기준(4.5:1) 미달이지만 PD팀 결정에 따라 Figma 바인딩(흰색)을
+     유지한다. */
   --brand: var(--bg-brand);
   --brand-foreground: var(--text-label-static-white);
 
-  /* bg/positive. destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다.
-     바탕 위 글자는 흰색이 아니라 어두운 색이다. 흰 글자는 대비 2.83:1로 기준
-     미달이다. 어두운 글자면 6.5:1이다. */
+  /* destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다. */
   --success: var(--bg-positive);
   --success-foreground: var(--text-label-static-black);
 
-  /* bg/default. card/popover도 Figma에서 같은 변수를 참조한다 — 카드도 배경과
-     같은 흰색이고, 구분은 테두리·그림자로 한다. */
   --background: var(--bg-default);
   --foreground: var(--text-body-default);
   --card: var(--bg-default);
   --card-foreground: var(--text-body-default);
   --popover: var(--bg-default);
   --popover-foreground: var(--text-body-default);
-  /* bg/primary_strong. shadcn 기본값과 밝기 관계(라이트에서 어둡고 다크에서
-     밝은 반전)가 같아 그대로 참조한다. */
   --primary: var(--bg-primary-strong);
   --primary-foreground: var(--text-label-inverse);
-  /* bg/secondary */
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
-  /* bg/tertiary + text/body/secondary. text/body/tertiary와 짝지으면 대비가
-     2.98:1로 기준 미달이라, 한 단계 진한 secondary 텍스트와 짝지었다
-     (라이트 5.74:1, 다크 5.42:1). */
+  /* text/body/tertiary와 짝지으면 대비 기준 미달이라, bg/tertiary와 대비가
+     확보되는 text/body/secondary를 짝으로 사용한다. */
   --muted: var(--bg-tertiary);
   --muted-foreground: var(--text-body-secondary);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
-  /* bg/danger. 흰 글자 대비는 3.99:1로 14px 일반 글자의 WCAG AA 기준인
-     4.5:1에는 못 미친다. 다크 모드(2.76:1)는 PD팀이 색상 값을 조정하기로 했다 —
-     업데이트 히스토리에서 bg/danger 다크 값 변경을 확인해 반영한다. */
+  /* WCAG AA 기준 미달이지만 PD팀 결정에 따라 Figma 바인딩(흰색)을 유지한다.
+     danger 다크 색상은 PD팀 변경 대기 중이다. */
   --destructive: var(--bg-danger);
   --destructive-foreground: var(--text-label-static-white);
-  /* border/default. --input은 대응하는 Figma 토큰이 따로 없어 손대지 않는다. */
+  /* --input은 대응하는 Figma 토큰이 따로 없어 손대지 않는다. */
   --border: var(--border-default);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -340,7 +325,6 @@
   --border-ai-weak: oklch(0.357442 0.065348 294.987);
   --border-ai: oklch(0.740263 0.109927 296.938);
 
-  /* 라이트와 같은 값. natural/light/800으로 고정돼 모드 무관이다. */
   --icon-fill-static-black: oklch(0.306721 0.016703 255.647);
   --icon-fill-default: oklch(0.860259 0.013161 266.688);
   --icon-fill-inverse: oklch(0.191251 0 0);
@@ -364,8 +348,6 @@
   --kakao: oklch(0.86 0.17 96);
 
   --brand: var(--bg-brand);
-  /* text/label/static_white는 모드 무관 고정값이라 다크에서도 흰색이다.
-     PD팀 결정에 따라 Figma 바인딩대로 흰색을 유지한다. */
   --brand-foreground: var(--text-label-static-white);
 
   --success: var(--bg-positive);
@@ -386,8 +368,7 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: var(--bg-danger);
-  /* text/label/static_white는 모드 무관 고정값이라 다크에서도 흰색이다.
-     현재 Figma 값은 #e87c7a이며, PD팀 변경 후 새 값을 반영한다. */
+  /* 현재 Figma 바인딩을 유지한다. danger 다크 색상은 PD팀 변경 대기 중이다. */
   --destructive-foreground: var(--text-label-static-white);
   --border: var(--border-default);
   --input: oklch(1 0 0 / 15%);
