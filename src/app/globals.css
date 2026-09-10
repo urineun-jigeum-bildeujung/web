@@ -234,10 +234,9 @@
   --primary-foreground: var(--text-label-inverse);
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
-  /* text/body/tertiary와 짝지으면 대비 기준 미달이라, bg/tertiary와 대비가
-     확보되는 text/body/secondary를 짝으로 사용한다. */
-  --muted: var(--bg-tertiary);
-  --muted-foreground: var(--text-body-secondary);
+  /* Figma bg/tertiary와 짝인 글자 토큰이 미확정이라 shadcn 기본값을 유지한다. */
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   /* WCAG AA 기준 미달이지만 PD팀 결정에 따라 Figma 바인딩(흰색)을 유지한다.
@@ -363,8 +362,8 @@
   --primary-foreground: var(--text-label-inverse);
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
-  --muted: var(--bg-tertiary);
-  --muted-foreground: var(--text-body-secondary);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: var(--bg-danger);
