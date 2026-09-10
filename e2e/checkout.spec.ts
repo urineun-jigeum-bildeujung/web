@@ -8,7 +8,7 @@ const REQUIRED = [
 ];
 
 // 결제는 되돌릴 수 없다. 동의 없이 눌리면 무엇에 동의했는지 모르는 채로 돈이 나간다.
-test("필수 약관에 동의해야 결제할 수 있다", async ({ page }) => {
+test("필수 약관에 동의하면 결제하고 완료 화면으로 넘어간다", async ({ page }) => {
   await page.goto("/payment");
 
   const pay = page.getByRole("button", { name: "결제하기" });
@@ -20,6 +20,11 @@ test("필수 약관에 동의해야 결제할 수 있다", async ({ page }) => {
 
   // 선택 항목은 켜지 않아도 결제로 넘어간다
   await expect(pay).toBeEnabled();
+
+  // 버튼이 켜지는 데서 멈추면 결제 뒤에 어디로 가는지가 검증에서 빠진다
+  await pay.click();
+  await expect(page).toHaveURL(/\/payment\/done$/);
+  await expect(page.getByRole("heading", { name: "주문을 무사히 마쳤어요" })).toBeVisible();
 });
 
 test("전체 동의 한 번으로 네 줄이 켜진다", async ({ page }) => {

@@ -12,6 +12,7 @@ import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
+import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
@@ -147,8 +148,11 @@ export function CheckoutView() {
             {/* 직접 입력을 고른 뒤에만 칸이 열린다(paym_001_직접입력) */}
             {request === REQUEST_DIRECT && (
               <div className="flex flex-col gap-1">
+                <Label htmlFor="direct-request" className="sr-only">
+                  배송 요청사항 직접 입력
+                </Label>
                 <Textarea
-                  aria-label="배송 요청사항 직접 입력"
+                  id="direct-request"
                   placeholder={`배송 요청사항을 작성해주세요 (최대 ${REQUEST_MAX}자)`}
                   maxLength={REQUEST_MAX}
                   value={directRequest}
