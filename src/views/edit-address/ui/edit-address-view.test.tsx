@@ -3,7 +3,7 @@
 // 대상이 바뀌는 경우(집 → 회사)는 여기서 확인하지 못한다.
 // NuqsTestingAdapter가 searchParams를 처음 한 번만 읽어, 다시 렌더해도 값이 바뀌지 않는다.
 // 그 경우는 화면 쪽에서 key로 폼을 새로 세워 막는다.
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { expect, test, vi } from "vitest";
 
@@ -42,12 +42,17 @@ test("저장된 곳을 열면 연락처도 함께 채워진다", () => {
   expect(phone.value).toBe("010-1234-5678");
 });
 
-test("연락처가 비면 입력 완료가 꺼져 있다", () => {
-  renderAt("?place=office");
+// 다른 칸이 함께 비어 있으면 연락처 조건을 지워도 테스트가 통과해 회귀를 놓친다.
+// 전부 채워진 곳에서 연락처만 비워야 그 조건 하나를 겨눌 수 있다
+test("다 채워진 배송지에서 연락처만 비우면 입력 완료가 꺼진다", () => {
+  renderAt("?place=home");
 
-  // 회사는 이름만 저장돼 있어 연락처가 비어 있다
-  expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("");
-  expect(screen.getByRole("button", { name: "입력 완료" }).hasAttribute("disabled")).toBe(true);
+  const submit = screen.getByRole("button", { name: "입력 완료" });
+  expect(submit.hasAttribute("disabled")).toBe(false);
+
+  fireEvent.change(screen.getByLabelText("연락처"), { target: { value: "" } });
+
+  expect(submit.hasAttribute("disabled")).toBe(true);
 });
 
 test("저장된 적 없는 곳이면 새 배송지로 다룬다", () => {
