@@ -72,10 +72,7 @@ const SCREEN_GROUPS = [
   },
   {
     title: "상품 비교",
-    items: [
-      { href: "/compare", label: "상품 비교", hint: "comp_001" },
-      { href: "/compare/select", label: "비교할 상품 고르기", hint: "comp_011" },
-    ],
+    items: [{ href: "/compare", label: "상품 비교", hint: "comp_001" }],
   },
   {
     title: "장바구니",

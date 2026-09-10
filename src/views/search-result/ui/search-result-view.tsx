@@ -134,6 +134,9 @@ export function SearchResultView() {
   const router = useRouter();
 
   const [keyword] = useQueryState("q", parseAsString.withDefault(""));
+  // 비교 화면이 자리를 채우러 보냈으면 그 자리 번호가 담겨 온다.
+  // 그때는 카드가 상세가 아니라 비교 화면으로 되돌아간다
+  const [slot] = useQueryState("slot");
   // 정렬은 같은 목록을 좁히는 것이라 히스토리에 쌓지 않는다.
   // 쌓으면 뒤로가기를 여러 번 눌러야 화면을 떠난다
   const [sort, setSort] = useQueryState(
@@ -167,7 +170,7 @@ export function SearchResultView() {
         {/* 입력창처럼 보이지만 버튼이다. 여기서 고쳐 치는 게 아니라 검색 화면으로 되돌아간다 */}
         <button
           type="button"
-          onClick={() => router.push("/search")}
+          onClick={() => router.push(slot ? `/search?slot=${encodeURIComponent(slot)}` : "/search")}
           className="flex min-h-11 flex-1 items-center gap-2 rounded-full bg-muted px-3 text-left transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <IoSearchOutline aria-hidden className="size-5 shrink-0 text-muted-foreground" />
@@ -178,6 +181,10 @@ export function SearchResultView() {
 
       <main className="flex flex-1 flex-col gap-3 px-4 pt-2 pb-4">
         <h1 className="text-base font-bold text-foreground">검색 결과</h1>
+
+        {slot !== null && (
+          <p className="text-sm text-muted-foreground">고르면 비교 화면으로 담아 드릴게요</p>
+        )}
 
         {results.length === 0 ? (
           <EmptyState title="검색 결과가 없어요" description="다른 말로 다시 찾아보세요." />
@@ -206,7 +213,11 @@ export function SearchResultView() {
               {results.map((product) => (
                 <li key={product.id}>
                   <ProductGridCard
-                    href={`/products/${product.id}`}
+                    href={
+                      slot === null
+                        ? `/products/${product.id}`
+                        : `/compare?slot=${encodeURIComponent(slot)}&product=${product.id}`
+                    }
                     name={product.name}
                     price={product.price}
                     originalPrice={product.originalPrice}

@@ -33,6 +33,22 @@ test("한 자리를 비우면 견줄 것이 없어 표가 사라진다", () => {
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
 });
 
+// 시안 comp_001_에러. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라 견줄 수 없다
+test("종류가 다른 둘을 담으면 표 대신 안내가 나온다", () => {
+  // 자리 1에 간식(저자극 덴탈껌)을 담는다. 자리 0은 사료다
+  renderView("?slot=1&product=5");
+
+  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.getByText(/건식은 건식끼리/)).toBeDefined();
+});
+
+test("같은 종류끼리는 표가 그대로 보인다", () => {
+  renderView("?slot=1&product=3");
+
+  expect(screen.getByRole("table")).toBeDefined();
+  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
+});
+
 test("하단 이동 줄에서 현재 화면을 알린다", () => {
   renderView();
 

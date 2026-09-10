@@ -8,10 +8,15 @@ import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import { formatWon } from "@/shared/ui/price/price";
 
+/** 비교가 성립하는 단위. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라 나란히 놓을 수 없다.
+ *  실제 분류 체계는 #123에서 API 계약을 기다리는 중이라 화면이 성립할 최소 집합만 둔다 */
+export type ProductKind = "food" | "snack" | "supplement" | "supply";
+
 export type CompareProduct = {
   id: string;
   name: string;
   price: number;
+  kind: ProductKind;
   imageUrl?: string;
 };
 

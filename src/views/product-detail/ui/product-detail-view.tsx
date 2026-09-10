@@ -130,8 +130,9 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               originalAmount={MOCK_PRODUCT.originalPrice}
               size="lg"
             />
+            {/* 보고 있던 상품을 첫 자리에 담고 비교로 간다. 두 번째 자리는 거기서 채운다 */}
             <Button asChild variant="default" className="min-h-11 shrink-0">
-              <Link href="/compare/select">비교하기</Link>
+              <Link href={`/compare?slot=0&product=${productId}`}>비교하기</Link>
             </Button>
           </div>
 

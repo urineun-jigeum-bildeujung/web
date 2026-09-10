@@ -1,5 +1,6 @@
 // 최근 검색어를 지울 수 있는지, 글자를 넣으면 추천어가 자리를 넘겨받는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetRecentCache } from "../model/recent-keywords";
@@ -12,6 +13,14 @@ vi.mock("next/navigation", () => ({
 
 import { SearchView } from "./search-view";
 
+function renderView(search = "") {
+  return render(
+    <NuqsTestingAdapter searchParams={search}>
+      <SearchView />
+    </NuqsTestingAdapter>,
+  );
+}
+
 describe("SearchView", () => {
   // 최근 검색어를 기기에 남기므로 앞 테스트가 뒤 테스트로 새어 나간다
   beforeEach(() => {
@@ -20,14 +29,14 @@ describe("SearchView", () => {
   });
 
   it("들어오면 최근 검색어와 카테고리를 보인다", () => {
-    render(<SearchView />);
+    renderView();
 
     expect(screen.getByText("최근 검색어")).toBeDefined();
     expect(screen.getByText("카테고리로 둘러보기")).toBeDefined();
   });
 
   it("최근 검색어를 하나씩 지운다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.click(screen.getByLabelText("양치 껌 검색 기록 지우기"));
 
@@ -37,7 +46,7 @@ describe("SearchView", () => {
   });
 
   it("전체삭제를 누르면 비었다고 알린다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.click(screen.getByRole("button", { name: "전체삭제" }));
 
@@ -47,7 +56,7 @@ describe("SearchView", () => {
   });
 
   it("글자를 넣으면 최근 검색어 대신 추천어가 나온다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "중소형" } });
 
@@ -57,7 +66,7 @@ describe("SearchView", () => {
   });
 
   it("추천어에서 입력한 부분만 강조한다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "중소형" } });
 
@@ -68,7 +77,7 @@ describe("SearchView", () => {
   });
 
   it("추천어를 고르면 최근 검색어 맨 앞에 남는다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "관절" } });
     fireEvent.click(screen.getByRole("button", { name: "중소형견 관절 영양제" }));
@@ -78,7 +87,7 @@ describe("SearchView", () => {
   });
 
   it("검색하면 그 말로 검색 결과 화면에 간다", () => {
-    render(<SearchView />);
+    renderView();
 
     fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "관절" } });
     fireEvent.click(screen.getByRole("button", { name: "중소형견 관절 영양제" }));
@@ -89,8 +98,22 @@ describe("SearchView", () => {
     );
   });
 
+  // 비교 화면이 자리를 채우러 보낸 경우. 고른 뒤 갈 곳이 달라 맥락을 알린다
+  it("비교할 자리를 채우러 왔으면 그 자리를 결과 화면까지 들고 간다", () => {
+    renderView("?slot=1");
+
+    expect(screen.getByText("비교할 상품을 검색해 주세요")).toBeDefined();
+
+    fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "덴탈껌" } });
+    fireEvent.click(screen.getByRole("button", { name: "저자극 덴탈껌" }));
+
+    expect(push).toHaveBeenCalledWith(
+      "/search/result?q=%EC%A0%80%EC%9E%90%EA%B7%B9%20%EB%8D%B4%ED%83%88%EA%BB%8C&slot=1",
+    );
+  });
+
   it("최근 검색어를 다시 눌러도 목록에 하나만 남는다", () => {
-    render(<SearchView />);
+    renderView();
 
     // 목록 세 번째에 있던 말을 다시 검색한다
     fireEvent.click(screen.getByRole("button", { name: "사료" }));
