@@ -4,8 +4,8 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/mypage-notifications-view.tsx` | 알림 목록과 거르기 (`noti_001`) |
-| `ui/mypage-notifications-view.test.tsx` | 거르기가 목록을 줄이는지, 읽지 않음이 문장으로 읽히는지 본다 |
+| `ui/mypage-notifications-view.tsx` | 알림 목록 (`noti_001`) |
+| `ui/mypage-notifications-view.test.tsx` | 목록이 다 보이는지, 읽지 않음이 문장으로 읽히는지 본다 |
 | `ui/notification-row.tsx` | 목록 한 줄. 유형 뱃지·제목·날짜·본문 미리보기 |
 | `ui/notification-dialog.tsx` | 상세 모달 (`noti_001_공지`, `noti_001_알림`) |
 | `index.ts` | 공개 API |
@@ -16,13 +16,13 @@
 /mypage/notifications  알림 목록
 ```
 
-거르기는 `?filter=all|unread|read`로 주소에 남는다. 목록에서 상세로 갔다 돌아와도 조건이 유지되어야 한다.
-
 **상세는 모달이라 라우트를 나누지 않았다.** 화면 이동이 아니라 같은 화면의 상태다.
 
-## 거르는 칩
+## 거르기를 뺐다
 
-`shared/ui/filter-chips`를 쓴다. 이 화면에서 만들었다가 아이 제품 관리·좋아요·맞춤 추천에서도 같은 모양이 나와 공용으로 올렸다 (#91).
+전체·새 알림·확인한 알림으로 거르는 칩이 있었으나 2026-09-09 시안 수정에서 빠졌다. `notice` 섹션에 "필터칩 삭제" 메모가 붙었다 (#137). 함께 쓰던 `?filter` 쿼리도 없앴고, `useQueryState`가 사라져 라우트의 `Suspense`도 걷었다.
+
+`shared/ui/filter-chips`는 아이 제품 관리·좋아요·맞춤 추천이 계속 쓰므로 남는다.
 
 ## 모달에 Dialog를 쓴 이유
 

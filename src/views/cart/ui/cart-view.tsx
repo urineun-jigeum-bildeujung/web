@@ -1,5 +1,8 @@
 // 장바구니. 담아 둔 상품을 고르고 수량을 바꾸거나 빼고 결제로 넘어간다.
-// 와이어프레임 기준(cart_001, cart_001_옵션변경, cart_001_삭제하기)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(cart_001, cart_001_삭제하기)이라 디자인 확정 시 바뀔 수 있다.
+//
+// 옵션변경은 2026-09-09 시안 수정에서 빠졌다. `cart_001_옵션변경` 프레임이 삭제되고
+// 섹션에 "페이지 삭제 및 옵션변경 버튼 삭제" 메모가 붙었다 (#137).
 
 "use client";
 
@@ -19,13 +22,11 @@ import {
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price, formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 
 type CartItem = {
   id: string;
@@ -57,15 +58,12 @@ const MOCK_ITEMS: CartItem[] = [
   },
 ];
 
-const OPTIONS = ["상품 옵션 1", "상품 옵션 2", "상품 옵션 3"];
 const SHIPPING_FEE = 3000;
 
 export function CartView() {
   const [items, setItems] = useState(MOCK_ITEMS);
   const [checkedIds, setCheckedIds] = useState(MOCK_ITEMS.map((item) => item.id));
-  const [optionTarget, setOptionTarget] = useState<CartItem | null>(null);
   const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
-  const [pickedOption, setPickedOption] = useState(OPTIONS[0]);
 
   const allChecked = items.length > 0 && checkedIds.length === items.length;
   const checkedItems = items.filter((item) => checkedIds.includes(item.id));
@@ -142,23 +140,11 @@ export function CartView() {
 
                   <div className="flex items-center justify-between gap-2">
                     <Price amount={item.price} originalAmount={item.originalPrice} />
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        className="min-h-11"
-                        onClick={() => {
-                          setOptionTarget(item);
-                          setPickedOption(item.option);
-                        }}
-                      >
-                        옵션변경
-                      </Button>
-                      <QuantityStepper
-                        label={item.name + " 수량"}
-                        value={item.quantity}
-                        onChange={(next) => setQuantity(item.id, next)}
-                      />
-                    </div>
+                    <QuantityStepper
+                      label={item.name + " 수량"}
+                      value={item.quantity}
+                      onChange={(next) => setQuantity(item.id, next)}
+                    />
                   </div>
                 </li>
               ))}
@@ -203,58 +189,6 @@ export function CartView() {
           </>
         )}
       </main>
-
-      {/* 옵션 바꾸기 */}
-      <Drawer open={optionTarget !== null} onOpenChange={(open) => !open && setOptionTarget(null)}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle className="text-left">{optionTarget?.name}</DrawerTitle>
-          </DrawerHeader>
-          <div className="flex flex-col gap-4 px-4 pb-6">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="cart-option" className="text-sm text-muted-foreground">
-                상품 옵션
-              </Label>
-              <Select value={pickedOption} onValueChange={setPickedOption}>
-                <SelectTrigger id="cart-option" className="min-h-11 w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="min-h-11 flex-1"
-                onClick={() => setOptionTarget(null)}
-              >
-                닫기
-              </Button>
-              <Button
-                className="min-h-11 flex-1"
-                onClick={() => {
-                  if (optionTarget) {
-                    setItems((prev) =>
-                      prev.map((item) =>
-                        item.id === optionTarget.id ? { ...item, option: pickedOption } : item,
-                      ),
-                    );
-                  }
-                  setOptionTarget(null);
-                }}
-              >
-                옵션 바꾸기
-              </Button>
-            </div>
-          </div>
-        </DrawerContent>
-      </Drawer>
 
       {/* 빼기는 되돌릴 수 없어 확인 창으로 막는다 */}
       <AlertDialog
