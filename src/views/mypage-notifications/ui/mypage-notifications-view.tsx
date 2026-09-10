@@ -4,23 +4,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
-import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { NotificationDialog } from "./notification-dialog";
 import { NotificationRow, type NotificationItem } from "./notification-row";
-
-const FILTERS = ["all", "unread", "read"] as const;
-
-const FILTER_OPTIONS = [
-  { value: "all", label: "전체" },
-  { value: "unread", label: "새 알림" },
-  { value: "read", label: "확인한 알림" },
-];
 
 const NOTICE_BODY =
   "보호자님들의 편리한 쇼핑을 위해 결제 시스템이 개편될 예정입니다. 기존보다 결제 단계가 축소되어 카드를 한 번만 등록해 두면 1초 만에 주문을 완료할 수 있습니다.\n(적용 예정일: 9월 중순)";
@@ -55,18 +45,8 @@ const MOCK_ITEMS: NotificationItem[] = [
 
 export function MypageNotificationsView() {
   const router = useRouter();
-  const [filter, setFilter] = useQueryState(
-    "filter",
-    parseAsStringLiteral(FILTERS).withDefault("all"),
-  );
   const [items, setItems] = useState(MOCK_ITEMS);
   const [opened, setOpened] = useState<NotificationItem | null>(null);
-
-  const visible = items.filter((item) => {
-    if (filter === "unread") return item.unread;
-    if (filter === "read") return !item.unread;
-    return true;
-  });
 
   const open = (item: NotificationItem) => {
     setOpened(item);
@@ -79,24 +59,15 @@ export function MypageNotificationsView() {
       <PageHeader title="알림" />
 
       <main className="flex flex-1 flex-col">
-        <div className="px-4 py-3">
-          <FilterChips
-            label="알림 거르기"
-            options={FILTER_OPTIONS}
-            value={filter}
-            onValueChange={(next) => void setFilter(next as (typeof FILTERS)[number])}
-          />
-        </div>
-
-        {visible.length === 0 ? (
+        {items.length === 0 ? (
           <EmptyState
-            title={filter === "unread" ? "새 알림이 없어요" : "확인한 알림이 없어요"}
+            title="아직 알림이 없어요"
             description="새로운 소식이 오면 여기에서 알려드릴게요."
             className="flex-1"
           />
         ) : (
           <ul className="flex flex-col">
-            {visible.map((item) => (
+            {items.map((item) => (
               <li key={item.id} className="border-t border-border first:border-t-0">
                 <NotificationRow item={item} onSelect={() => open(item)} />
               </li>
