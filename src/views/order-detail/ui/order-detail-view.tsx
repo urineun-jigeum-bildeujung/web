@@ -1,5 +1,5 @@
 // 주문 상세. 주문정보·결제상세·배송지 정보를 카드로 나눠 보여준다.
-// 와이어프레임 기준(mypa_161)이라 디자인 확정 시 바뀔 수 있다.
+// 와이어프레임 기준(mypa_161, mypa_161_배송완료)이라 디자인 확정 시 바뀔 수 있다.
 
 import Link from "next/link";
 
@@ -9,6 +9,8 @@ import { DetailCard } from "@/shared/ui/detail-card/detail-card";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
+
+import { ClaimActions } from "./claim-actions";
 
 /** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다. */
 const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
@@ -60,6 +62,9 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
             alignEnd
             className="px-0"
           />
+          {/* 배송이 끝나야 반품·교환을 접수할 수 있다(mypa_161_배송완료). 배송 전에는
+              주문 취소가 맞는 길이라 이 자리에 두지 않는다 */}
+          {order.status === "delivered" && <ClaimActions />}
         </DetailCard>
 
         <DetailCard title="결제상세" titleTrailing={MOCK.paidAt}>
@@ -109,25 +114,14 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
           </div>
         </DetailCard>
 
-        {/* 취소·반품·교환·문의·리뷰작성은 아직 화면 스타일이 안 잡혀 있어 링크만 둔다 */}
+        {/* 반품·교환은 시안이 나와 주문정보 카드의 확인창으로 옮겼다(#139).
+            나머지는 아직 화면 스타일이 안 잡혀 있어 링크만 둔다 */}
         <nav className="flex flex-col gap-2">
           <Link
             href={`/mypage/orders/${orderId ?? "1"}/claim?type=cancel`}
             className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
           >
             주문 취소
-          </Link>
-          <Link
-            href={`/mypage/orders/${orderId ?? "1"}/claim?type=return`}
-            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
-          >
-            반품
-          </Link>
-          <Link
-            href={`/mypage/orders/${orderId ?? "1"}/claim?type=exchange`}
-            className="flex min-h-11 items-center text-sm text-primary underline underline-offset-4"
-          >
-            교환
           </Link>
           <Link
             href={`/mypage/reviews/write?orderItemId=${MOCK.orderItemId}`}
