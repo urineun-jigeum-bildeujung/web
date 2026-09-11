@@ -1,13 +1,24 @@
 # 디자인 컨벤션
 
-> **디자인 토큰은 확정 전이다.** `src/app/globals.css`는 현재 shadcn 기본 neutral 팔레트 상태다. 디자인팀의 Design Tokens 명세(Phase 2 산출물)가 오면 `@theme` 매핑을 교체한다. 그전까지 색을 임의로 정하지 않는다.
-
 ## 토큰
 
 - **HEX·rgb를 하드코딩하지 않는다.** 시맨틱 토큰을 쓴다 (`bg-background`, `text-foreground`, `bg-primary`, `text-muted-foreground`, `border-border` 등).
 - 토큰은 `src/app/globals.css`의 `@theme inline` 블록과 `:root` / `.dark`에서 관리한다.
 - **Tailwind v4에는 설정 파일이 없다.** `tailwind.config.js`를 만들지 않는다. v3 예제를 그대로 옮기면 동작하지 않는다.
 - 새 토큰이 필요하면 임의로 클래스를 만들지 말고 `@theme`에 먼저 추가한다.
+- **공용 시맨틱 색상 토큰은 Figma `골라주개냥 Design System`의 `03. semantic` 컬렉션이 원본이다.**
+  `--bg-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
+  CSS 변수 형식인 `-`로 바꾼 이름이다
+  (예: `bg/primary_strong` → `--bg-primary-strong`).
+- shadcn이 내부적으로 쓰는 고정 슬롯(`--primary`, `--secondary`, `--destructive`,
+  `--background`, `--card`, `--popover` 등)은 값을 중복해서 넣지 않고, 개념이
+  대응되는 시맨틱 변수를 `var()`로 참조한다.
+- shadcn의 `--accent`처럼 Figma 토큰과 이름만 같고 의미가 다른 슬롯은 기존 용도를
+  유지한다. `--muted`는 대응되는 Figma 배경 토큰이 있지만 함께 사용할 글자 토큰이
+  확정되지 않아, PD팀 확인 전까지 shadcn 기본값을 유지한다.
+- 전체 토큰 목록은 이 문서에 나열하지 않는다. 코드에 반영된 목록과 값은
+  `globals.css`에서, 디자인 원본은 Figma에서 확인한다. 토큰이 추가·변경될 때마다
+  목록을 중복 관리하면 문서와 구현이 어긋날 수 있다.
 
 ## 다크 모드
 
