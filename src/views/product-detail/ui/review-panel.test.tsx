@@ -63,6 +63,32 @@ describe("ReviewPanel", () => {
     expect(first.textContent).toContain("밤이맘");
   });
 
+  // 조건을 직접 고르는 수동 필터. 자동(맞춤보기 토글)과 함께 걸린다
+  it("주소에 실린 조건대로 후기가 걸러진다", () => {
+    renderPanel("?reviewFilter=species:cat");
+
+    expect(screen.getByText("코리안 숏헤어 · 3세 · 4.2kg")).toBeDefined();
+    expect(screen.queryByText("말티즈 · 8세 · 4kg")).toBeNull();
+  });
+
+  it("조건이 걸려 있으면 지우는 길이 보인다", () => {
+    renderPanel("?reviewFilter=species:cat");
+
+    expect(screen.getByRole("button", { name: "필터 지우기" })).toBeDefined();
+  });
+
+  it("아무 조건도 없으면 지우기가 나오지 않는다", () => {
+    renderPanel();
+
+    expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
+  });
+
+  it("망가진 조건이 실려 와도 후기가 사라지지 않는다", () => {
+    renderPanel("?reviewFilter=species:hamster|age:abc-def");
+
+    expect(screen.getAllByRole("article").length).toBe(5);
+  });
+
   it("추천순은 도움돼요가 많은 후기가 맨 위에 온다", () => {
     renderPanel();
 

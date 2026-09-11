@@ -21,6 +21,15 @@ import {
   REVIEW_SORT_LABEL,
   type ReviewSort,
 } from "../model/mock-reviews";
+import {
+  DEFAULT_FILTER,
+  applyFilter,
+  isDefault,
+  parseFilter,
+  serializeFilter,
+  type ReviewFilter,
+} from "../model/review-filter";
+import { ReviewFilterSheet } from "./review-filter-sheet";
 
 /** 목업 정렬 규칙. 연동하면 서버가 정렬해 주므로 이 자리는 통째로 사라진다 */
 const COMPARE: Record<
@@ -60,15 +69,21 @@ export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPane
     "reviewMatch",
     parseAsStringLiteral(MATCH_STATES).withDefault("off"),
   );
+  // 조건이 여섯이라 키를 하나씩 두면 주소가 길어진다. 한 칸에 묶어 싣는다.
+  // 형식이 자유로워 literal로 막을 수 없는 대신 parseFilter가 값을 검증한다
+  const [filterParam, setFilterParam] = useQueryState("reviewFilter", { defaultValue: "" });
 
   const on = matchOnly === "on";
   const breed = breedOf(petProfileLabel);
+  const filter = parseFilter(filterParam);
+
+  const applyReviewFilter = (next: ReviewFilter) =>
+    void setFilterParam(isDefault(next) ? "" : serializeFilter(next));
 
   // 실제로는 조건을 요청 파라미터로 넘겨 서버가 걸러 준다.
   // 목업 단계라 화면에서 거르고 정렬한다
-  const reviews = MOCK_REVIEWS.filter((review) => !on || breedOf(review.petProfile) === breed).sort(
-    COMPARE[sort],
-  );
+  const matched = MOCK_REVIEWS.filter((review) => !on || breedOf(review.petProfile) === breed);
+  const reviews = applyFilter(matched, filter).sort(COMPARE[sort]);
 
   return (
     <div className="flex flex-col">
@@ -81,17 +96,12 @@ export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPane
 
       {/* 조건을 직접 고르는 바텀시트와 리뷰 사진 줄은 #149·#151에서 이 자리에 붙는다 */}
       <div className="flex flex-col gap-3 border-b border-border p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Switch
-              id="review-match"
-              checked={on}
-              onCheckedChange={(next) => void setMatchOnly(next ? "on" : "off")}
-            />
-            <Label htmlFor="review-match" className="text-sm text-foreground">
-              내 반려동물 맞춤보기
-            </Label>
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <ReviewFilterSheet
+            filter={filter}
+            onApply={applyReviewFilter}
+            countOf={(next) => applyFilter(matched, next).length}
+          />
 
           <Select value={sort} onValueChange={(next) => void setSort(next as ReviewSort)}>
             <SelectTrigger aria-label="리뷰 정렬" className="min-h-11 w-auto border-0 shadow-none">
@@ -105,6 +115,29 @@ export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPane
               ))}
             </SelectContent>
           </Select>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="review-match"
+              checked={on}
+              onCheckedChange={(next) => void setMatchOnly(next ? "on" : "off")}
+            />
+            <Label htmlFor="review-match" className="text-sm text-foreground">
+              내 반려동물 맞춤보기
+            </Label>
+          </div>
+
+          {!isDefault(filter) && (
+            <button
+              type="button"
+              onClick={() => applyReviewFilter(DEFAULT_FILTER)}
+              className="flex min-h-11 items-center text-xs text-muted-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              필터 지우기
+            </button>
+          )}
         </div>
 
         {on && (
