@@ -10,6 +10,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `model/mock-product.ts` | 상품·아이별 적합도·영양 성분·함께 보면 좋은 상품 목데이터와 그 타입 |
+| `model/mock-inquiries.ts` | 상품 문의 목데이터와 답변 상태 |
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
@@ -20,6 +21,8 @@
 | `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·맞춤보기 토글·정렬·후기 목록 |
 | `ui/review-panel.test.tsx` | 맞춤보기가 품종으로 거르는지, 정렬이 순서를 바꾸는지 |
 | `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭 |
+| `ui/qna-panel.tsx` | Q&A 탭. 문의 버튼 둘과 답변 상태가 붙은 목록 |
+| `ui/qna-panel.test.tsx` | 답변 상태 구분, 작성자 가림, 문의 둘이 다른 곳으로 가는지 |
 | `ui/nutrient-bar.tsx` | 영양 성분 하나가 부족–적정–과다 중 어디인지 |
 | `ui/nutrient-bar.test.tsx` | 구간 경계 판정과 글자 표기 |
 | `index.ts` | 공개 API |
