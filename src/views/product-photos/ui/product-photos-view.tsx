@@ -41,14 +41,17 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
 
   const opened = review !== null && review >= 0 && review < PHOTO_REVIEWS.length;
 
+  // 사진을 여는 것은 화면 구성이 통째로 바뀌는 전환이다. nuqs 기본인 replace로 두면
+  // 격자 주소가 히스토리에 남지 않아, 뒤로가기가 격자를 건너뛰고 상품 상세로 나간다
   const open = (ref: PhotoRef) => {
-    void setReview(ref.reviewIndex);
-    void setPhoto(ref.photoIndex);
+    void setReview(ref.reviewIndex, { history: "push" });
+    void setPhoto(ref.photoIndex, { history: "push" });
   };
 
+  // 닫기는 되돌아가는 것이라 새 기록을 만들지 않는다
   const close = () => {
-    void setReview(null);
-    void setPhoto(null);
+    void setReview(null, { history: "replace" });
+    void setPhoto(null, { history: "replace" });
   };
 
   return (
