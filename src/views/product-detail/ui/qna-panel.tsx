@@ -14,9 +14,14 @@ import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 
-import { INQUIRY_STATUS_LABEL, MOCK_INQUIRIES } from "../model/mock-inquiries";
+import { INQUIRY_STATUS_LABEL, type Inquiry } from "../model/mock-inquiries";
 
-export function QnaPanel() {
+type QnaPanelProps = {
+  /** 이 상품에 올라온 문의. 서버가 걸러 준 것을 그대로 그린다 */
+  inquiries: Inquiry[];
+};
+
+export function QnaPanel({ inquiries }: QnaPanelProps) {
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-3 p-4">
@@ -40,9 +45,9 @@ export function QnaPanel() {
         </Link>
       </div>
 
-      {MOCK_INQUIRIES.length > 0 ? (
+      {inquiries.length > 0 ? (
         <ul className="flex flex-col divide-y divide-border border-t border-border">
-          {MOCK_INQUIRIES.map((inquiry) => (
+          {inquiries.map((inquiry) => (
             <li key={inquiry.id} className="flex flex-col gap-1 p-4">
               {/* 답변을 기다리는 중인지가 먼저 읽혀야 한다. 같은 질문을 또 올리지 않도록 */}
               <span
