@@ -11,26 +11,28 @@
   --color-success-foreground: var(--success-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-kakao: var(--kakao);
-  --color-bg-default: var(--bg-default);
-  --color-bg-weak: var(--bg-weak);
-  --color-bg-secondary: var(--bg-secondary);
-  --color-bg-tertiary: var(--bg-tertiary);
-  --color-bg-disable: var(--bg-disable);
-  --color-bg-primary: var(--bg-primary);
-  --color-bg-primary-strong: var(--bg-primary-strong);
-  --color-bg-brand: var(--bg-brand);
-  --color-bg-brand-weak: var(--bg-brand-weak);
-  --color-bg-brand-strong: var(--bg-brand-strong);
-  --color-bg-danger: var(--bg-danger);
-  --color-bg-danger-weak: var(--bg-danger-weak);
-  --color-bg-info: var(--bg-info);
-  --color-bg-info-weak: var(--bg-info-weak);
-  --color-bg-positive: var(--bg-positive);
-  --color-bg-positive-weak: var(--bg-positive-weak);
-  --color-bg-ai: var(--bg-ai);
-  --color-bg-ai-weak: var(--bg-ai-weak);
-  --color-bg-accent: var(--bg-accent);
-  --color-bg-default-strong: var(--bg-default-strong);
+  --color-surface-default: var(--surface-default);
+  --color-surface-default-sheet: var(--surface-default-sheet);
+  --color-surface-weak: var(--surface-weak);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-surface-disable: var(--surface-disable);
+  --color-surface-default-strong: var(--surface-default-strong);
+  --color-surface-primary: var(--surface-primary);
+  --color-surface-primary-strong: var(--surface-primary-strong);
+  --color-surface-dimmed: var(--surface-dimmed);
+  --color-surface-brand: var(--surface-brand);
+  --color-surface-brand-weak: var(--surface-brand-weak);
+  --color-surface-brand-strong: var(--surface-brand-strong);
+  --color-surface-danger: var(--surface-danger);
+  --color-surface-danger-weak: var(--surface-danger-weak);
+  --color-surface-info: var(--surface-info);
+  --color-surface-info-weak: var(--surface-info-weak);
+  --color-surface-positive: var(--surface-positive);
+  --color-surface-positive-weak: var(--surface-positive-weak);
+  --color-surface-ai: var(--surface-ai);
+  --color-surface-ai-weak: var(--surface-ai-weak);
+  --color-surface-accent: var(--surface-accent);
   --color-text-body-info-default: var(--text-body-info-default);
   --color-text-body-info-strong: var(--text-body-info-strong);
   --color-text-body-default: var(--text-body-default);
@@ -72,9 +74,19 @@
   --color-icon-fill-static-white: var(--icon-fill-static-white);
   --color-icon-fill-static-black: var(--icon-fill-static-black);
   --color-icon-fill-disable: var(--icon-fill-disable);
-  --color-icon-fill-rating: var(--icon-fill-rating);
+  --color-icon-fill-accent: var(--icon-fill-accent);
   --color-icon-fill-secondary: var(--icon-fill-secondary);
   --color-icon-fill-tertiary: var(--icon-fill-tertiary);
+  --color-icon-fill-light-green: var(--icon-fill-light-green);
+  --color-icon-fill-green: var(--icon-fill-green);
+  --color-icon-fill-light-red: var(--icon-fill-light-red);
+  --color-icon-fill-red: var(--icon-fill-red);
+  --color-icon-fill-light-blue: var(--icon-fill-light-blue);
+  --color-icon-fill-blue: var(--icon-fill-blue);
+  --color-icon-fill-light-brand: var(--icon-fill-light-brand);
+  --color-icon-fill-brand: var(--icon-fill-brand);
+  --color-icon-fill-light-purple: var(--icon-fill-light-purple);
+  --color-icon-fill-purple: var(--icon-fill-purple);
   --color-icon-stroke-default: var(--icon-stroke-default);
   --color-icon-stroke-inverse: var(--icon-stroke-inverse);
   --color-icon-stroke-static-white: var(--icon-stroke-static-white);
@@ -128,27 +140,30 @@
 }
 
 :root {
-  /* Figma 03. semantic > bg/* */
-  --bg-default: oklch(1 0 0);
-  --bg-weak: oklch(0.966673 0.001714 247.839);
-  --bg-secondary: oklch(0.951933 0.002885 264.542);
-  --bg-tertiary: oklch(0.901274 0.006863 277.154);
-  --bg-disable: oklch(0.867841 0.008283 278.619);
-  --bg-default-strong: oklch(0.63553 0.014671 262.358);
-  --bg-primary: oklch(0.306721 0.016703 255.647);
-  --bg-primary-strong: oklch(0.225026 0.009018 255.605);
-  --bg-brand: oklch(0.690433 0.205394 39.89);
-  --bg-brand-weak: oklch(0.970573 0.019526 65.149);
-  --bg-brand-strong: oklch(0.626978 0.203157 36.927);
-  --bg-danger: oklch(0.628571 0.256834 27.888);
-  --bg-danger-weak: oklch(0.966944 0.016239 17.438);
-  --bg-info: oklch(0.611005 0.213108 256.558);
-  --bg-info-weak: oklch(0.97048 0.014182 254.604);
-  --bg-positive: oklch(0.649754 0.141295 162.575);
-  --bg-positive-weak: oklch(0.972889 0.016612 178.285);
-  --bg-ai: oklch(0.623643 0.200978 292.805);
-  --bg-ai-weak: oklch(0.969143 0.016059 293.756);
-  --bg-accent: oklch(0.704078 0.145039 82.126);
+  /* Figma 03. semantic > surface/* (구 bg/*, PD팀이 리네임) */
+  --surface-default: oklch(1 0 0);
+  --surface-default-sheet: oklch(1 0 0);
+  --surface-weak: oklch(0.966673 0.001714 247.839);
+  --surface-secondary: oklch(0.951933 0.002885 264.542);
+  --surface-tertiary: oklch(0.901274 0.006863 277.154);
+  --surface-disable: oklch(0.867841 0.008283 278.619);
+  --surface-default-strong: oklch(0.63553 0.014671 262.358);
+  --surface-primary: oklch(0.306721 0.016703 255.647);
+  --surface-primary-strong: oklch(0.225026 0.009018 255.605);
+  /* natural/black 70% 합성. 불투명 색으로 바꾸지 않는다 */
+  --surface-dimmed: oklch(0.191251 0 0 / 70%);
+  --surface-brand: oklch(0.690433 0.205394 39.89);
+  --surface-brand-weak: oklch(0.970573 0.019526 65.149);
+  --surface-brand-strong: oklch(0.626978 0.203157 36.927);
+  --surface-danger: oklch(0.628571 0.256834 27.888);
+  --surface-danger-weak: oklch(0.966944 0.016239 17.438);
+  --surface-info: oklch(0.611005 0.213108 256.558);
+  --surface-info-weak: oklch(0.97048 0.014182 254.604);
+  --surface-positive: oklch(0.649754 0.141295 162.575);
+  --surface-positive-weak: oklch(0.972889 0.016612 178.285);
+  --surface-ai: oklch(0.623643 0.200978 292.805);
+  --surface-ai-weak: oklch(0.969143 0.016059 293.756);
+  --surface-accent: oklch(0.704078 0.145039 82.126);
 
   /* Figma 03. semantic > text/* */
   --text-body-info-default: oklch(0.686499 0.16771 255.196);
@@ -198,7 +213,17 @@
   --icon-fill-secondary: oklch(0.478182 0.027277 266.648);
   --icon-fill-tertiary: oklch(0.767594 0.011543 274.847);
   --icon-fill-disable: oklch(0.951933 0.002885 264.542);
-  --icon-fill-rating: oklch(0.897341 0.160661 94.733);
+  --icon-fill-accent: oklch(0.897341 0.160661 94.733);
+  --icon-fill-light-green: oklch(0.890624 0.072481 168.21);
+  --icon-fill-green: oklch(0.649754 0.141295 162.575);
+  --icon-fill-light-red: oklch(0.838005 0.089225 20.817);
+  --icon-fill-red: oklch(0.628571 0.256834 27.888);
+  --icon-fill-light-blue: oklch(0.838399 0.083802 249.386);
+  --icon-fill-blue: oklch(0.611005 0.213108 256.558);
+  --icon-fill-light-brand: oklch(0.796938 0.129141 50.032);
+  --icon-fill-brand: oklch(0.690433 0.205394 39.89);
+  --icon-fill-light-purple: oklch(0.844666 0.090745 300.215);
+  --icon-fill-purple: oklch(0.695424 0.177304 293.521);
   --icon-stroke-default: oklch(0.191251 0 0);
   --icon-stroke-inverse: oklch(1 0 0);
   --icon-stroke-static-white: oklch(1 0 0);
@@ -216,28 +241,28 @@
   /* WCAG 비율 공식으로는 4.5:1 미달이지만, PD팀이 APCA 기준으로 재평가해
      흰 글자 유지에 문제없다고 확인했다. Lighthouse는 APCA가 아닌 WCAG 비율로
      검사하므로 접근성 감사에서는 이 조합이 미달로 잡힐 수 있다. */
-  --brand: var(--bg-brand);
+  --brand: var(--surface-brand);
   --brand-foreground: var(--text-label-static-white);
 
   /* destructive의 짝인데 shadcn 기본 팔레트에는 없어서 함께 둔다. PD팀이
      배경값을 조정했고(라이트 모드 대비 2.83:1→3.03:1), 남은 격차도 APCA
      기준으로 문제없다고 확인했다. */
-  --success: var(--bg-positive);
+  --success: var(--surface-positive);
   --success-foreground: var(--text-label-static-white);
 
-  --background: var(--bg-default);
+  --background: var(--surface-default);
   --foreground: var(--text-body-default);
-  --card: var(--bg-default);
+  --card: var(--surface-default);
   --card-foreground: var(--text-body-default);
-  --popover: var(--bg-default);
+  --popover: var(--surface-default);
   --popover-foreground: var(--text-body-default);
-  /* button/bg/primary(기본 상태)가 bg/primary를 참조한다. bg/primary_strong은
+  /* button/bg/primary(기본 상태)가 surface/primary를 참조한다. surface/primary_strong은
      button/bg/primary_pressed(눌림 상태)가 쓴다. */
-  --primary: var(--bg-primary);
+  --primary: var(--surface-primary);
   --primary-foreground: var(--text-label-inverse);
-  --secondary: var(--bg-secondary);
+  --secondary: var(--surface-secondary);
   --secondary-foreground: var(--text-label-default);
-  /* bg/tertiary와 역할이 비슷해 보이지만 Figma·PD팀이 지정한 대응이 아니라서
+  /* surface/tertiary와 역할이 비슷해 보이지만 Figma·PD팀이 지정한 대응이 아니라서
      전역으로 연결하지 않는다. design-convention.md "토큰" 절 참고. */
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -245,7 +270,7 @@
   --accent-foreground: oklch(0.205 0 0);
   /* WCAG 비율 공식으로는 미달이지만 PD팀이 APCA 기준으로 재평가해 문제없다고
      확인했다. danger 다크 배경값도 함께 조정했다(대비 2.76:1→3.90:1). */
-  --destructive: var(--bg-danger);
+  --destructive: var(--surface-danger);
   --destructive-foreground: var(--text-label-static-white);
   --border: var(--border-default);
   --input: var(--border-default);
@@ -267,26 +292,29 @@
 }
 
 .dark {
-  --bg-default: oklch(0.191251 0 0);
-  --bg-weak: oklch(0.313318 0.005505 271.239);
-  --bg-secondary: oklch(0.386419 0.003621 264.52);
-  --bg-tertiary: oklch(0.474899 0.004951 271.311);
-  --bg-disable: oklch(0.58402 0.009161 278.526);
-  --bg-default-strong: oklch(0.747676 0.011914 269.513);
-  --bg-primary: oklch(0.860259 0.013161 266.688);
-  --bg-primary-strong: oklch(0.905507 0.013404 262.377);
-  --bg-brand: oklch(0.620888 0.18096 40.07);
-  --bg-brand-weak: oklch(0.23192 0.036158 36.731);
-  --bg-brand-strong: oklch(0.691221 0.15522 45.345);
-  --bg-danger: oklch(0.623717 0.172986 22.367);
-  --bg-danger-weak: oklch(0.236895 0.032392 13.323);
-  --bg-info: oklch(0.713618 0.114801 251.138);
-  --bg-info-weak: oklch(0.234245 0.029644 261.337);
-  --bg-positive: oklch(0.60151 0.129312 163.062);
-  --bg-positive-weak: oklch(0.228411 0.0221 175.563);
-  --bg-ai: oklch(0.740263 0.109927 296.938);
-  --bg-ai-weak: oklch(0.237619 0.030541 292.516);
-  --bg-accent: oklch(0.634734 0.129766 83.364);
+  --surface-default: oklch(0.191251 0 0);
+  --surface-default-sheet: oklch(0.313318 0.005505 271.239);
+  --surface-weak: oklch(0.313318 0.005505 271.239);
+  --surface-secondary: oklch(0.386419 0.003621 264.52);
+  --surface-tertiary: oklch(0.474899 0.004951 271.311);
+  --surface-disable: oklch(0.58402 0.009161 278.526);
+  --surface-default-strong: oklch(0.747676 0.011914 269.513);
+  --surface-primary: oklch(0.860259 0.013161 266.688);
+  --surface-primary-strong: oklch(0.905507 0.013404 262.377);
+  /* natural/black 50% 합성. 불투명 색으로 바꾸지 않는다 */
+  --surface-dimmed: oklch(0.191251 0 0 / 50%);
+  --surface-brand: oklch(0.620888 0.18096 40.07);
+  --surface-brand-weak: oklch(0.23192 0.036158 36.731);
+  --surface-brand-strong: oklch(0.691221 0.15522 45.345);
+  --surface-danger: oklch(0.623717 0.172986 22.367);
+  --surface-danger-weak: oklch(0.236895 0.032392 13.323);
+  --surface-info: oklch(0.713618 0.114801 251.138);
+  --surface-info-weak: oklch(0.234245 0.029644 261.337);
+  --surface-positive: oklch(0.60151 0.129312 163.062);
+  --surface-positive-weak: oklch(0.228411 0.0221 175.563);
+  --surface-ai: oklch(0.740263 0.109927 296.938);
+  --surface-ai-weak: oklch(0.237619 0.030541 292.516);
+  --surface-accent: oklch(0.634734 0.129766 83.364);
 
   --text-body-info-default: oklch(0.619696 0.14673 255.052);
   --text-body-info-strong: oklch(0.808251 0.082195 246.713);
@@ -333,7 +361,17 @@
   --icon-fill-secondary: oklch(0.811279 0.013014 271.255);
   --icon-fill-tertiary: oklch(0.690037 0.010439 273.296);
   --icon-fill-disable: oklch(0.386419 0.003621 264.52);
-  --icon-fill-rating: oklch(0.803893 0.138968 94.299);
+  --icon-fill-accent: oklch(0.803893 0.138968 94.299);
+  --icon-fill-light-green: oklch(0.343622 0.06234 167.103);
+  --icon-fill-green: oklch(0.60151 0.129312 163.062);
+  --icon-fill-light-red: oklch(0.429401 0.101649 20.698);
+  --icon-fill-red: oklch(0.692918 0.197147 22.461);
+  --icon-fill-light-blue: oklch(0.429756 0.08639 254.379);
+  --icon-fill-blue: oklch(0.619696 0.14673 255.052);
+  --icon-fill-light-brand: oklch(0.427497 0.107633 42.24);
+  --icon-fill-brand: oklch(0.620889 0.18096 40.07);
+  --icon-fill-light-purple: oklch(0.435537 0.091162 294.65);
+  --icon-fill-purple: oklch(0.626343 0.155852 293.568);
   --icon-stroke-default: oklch(1 0 0);
   --icon-stroke-inverse: oklch(0.191251 0 0);
   --icon-stroke-static-white: oklch(1 0 0);
@@ -348,27 +386,27 @@
      구글은 흰 바탕이라 별도 값이 필요 없다. */
   --kakao: oklch(0.86 0.17 96);
 
-  --brand: var(--bg-brand);
+  --brand: var(--surface-brand);
   --brand-foreground: var(--text-label-static-white);
 
-  --success: var(--bg-positive);
+  --success: var(--surface-positive);
   --success-foreground: var(--text-label-static-white);
 
-  --background: var(--bg-default);
+  --background: var(--surface-default);
   --foreground: var(--text-body-default);
-  --card: var(--bg-default);
+  --card: var(--surface-default);
   --card-foreground: var(--text-body-default);
-  --popover: var(--bg-default);
+  --popover: var(--surface-default);
   --popover-foreground: var(--text-body-default);
-  --primary: var(--bg-primary);
+  --primary: var(--surface-primary);
   --primary-foreground: var(--text-label-inverse);
-  --secondary: var(--bg-secondary);
+  --secondary: var(--surface-secondary);
   --secondary-foreground: var(--text-label-default);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
-  --destructive: var(--bg-danger);
+  --destructive: var(--surface-danger);
   /* WCAG 비율로는 미달이지만 PD팀이 APCA 기준으로 재평가해 문제없다고
      확인했다. danger 다크 배경값도 함께 조정했다(대비 2.76:1→3.90:1). */
   --destructive-foreground: var(--text-label-static-white);
