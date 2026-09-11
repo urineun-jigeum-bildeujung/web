@@ -7,17 +7,18 @@
 - **Tailwind v4에는 설정 파일이 없다.** `tailwind.config.js`를 만들지 않는다. v3 예제를 그대로 옮기면 동작하지 않는다.
 - 새 토큰이 필요하면 임의로 클래스를 만들지 말고 `@theme`에 먼저 추가한다.
 - **공용 시맨틱 색상 토큰은 Figma `골라주개냥 Design System`의 `03. semantic` 컬렉션이 원본이다.**
-  `--bg-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
+  `--surface-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
   CSS 변수 형식인 `-`로 바꾼 이름이다
-  (예: `bg/primary_strong` → `--bg-primary-strong`).
+  (예: `surface/primary_strong` → `--surface-primary-strong`). 배경 계열은
+  원래 `bg/*`였으나 PD팀이 `surface/*`로 리네임해 코드도 함께 바꿨다.
 - shadcn이 내부적으로 쓰는 고정 슬롯(`--primary`, `--secondary`, `--destructive`,
   `--background`, `--card`, `--popover` 등)은 값을 중복해서 넣지 않고, 개념이
   대응되는 시맨틱 변수를 `var()`로 참조한다.
 - shadcn의 `--accent`처럼 Figma 토큰과 이름만 같고 의미가 다른 슬롯은 기존 용도를
-  유지한다. `--muted`·`--muted-foreground`도 마찬가지다 — `bg/tertiary`와
+  유지한다. `--muted`·`--muted-foreground`도 마찬가지다 — `surface/tertiary`와
   겉보기 역할이 비슷해 보이지만 Figma나 PD팀이 실제로 지정한 대응은 아니라서,
   전역으로 연결하지 않고 shadcn 기본값을 유지한다.
-- Figma에서 `bg/tertiary`를 직접 지정한 화면은 그 컴포넌트에 토큰을 바로 쓴다.
+- Figma에서 `surface/tertiary`를 직접 지정한 화면은 그 컴포넌트에 토큰을 바로 쓴다.
   그 위 글자는 Figma 컴포넌트에 지정된 값을 우선하고, 없으면 `text/body/default`·
   `text/body/secondary`·`text/body/static_black` 중 라이트·다크 대비를 확인해
   고른다. 기존 `bg-muted`·`text-muted-foreground` 사용처는 이 결정과 무관하므로
