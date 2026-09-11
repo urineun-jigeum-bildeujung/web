@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { MOCK_PETS, MOCK_PRODUCT, PET_MATCHES, RELATED_PRODUCTS } from "../model/mock-product";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
+import { QnaPanel } from "./qna-panel";
 import { ReviewPanel } from "./review-panel";
 
 const TABS = ["info", "review", "qna"] as const;
@@ -223,13 +224,8 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             />
           </TabsContent>
 
-          <TabsContent value="qna" className="flex flex-col gap-3 px-4 py-5">
-            <p className="text-sm text-muted-foreground">
-              아직 등록된 문의가 없어요. 궁금한 점은 고객센터로 남겨주세요.
-            </p>
-            <Button asChild variant="outline" className="min-h-11">
-              <Link href="/mypage/support">문의하기</Link>
-            </Button>
+          <TabsContent value="qna">
+            <QnaPanel />
           </TabsContent>
         </Tabs>
       </main>
