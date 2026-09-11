@@ -16,6 +16,10 @@
 - shadcn의 `--accent`처럼 Figma 토큰과 이름만 같고 의미가 다른 슬롯은 기존 용도를
   유지한다. `--muted`는 대응되는 Figma 배경 토큰이 있지만 함께 사용할 글자 토큰이
   확정되지 않아, PD팀 확인 전까지 shadcn 기본값을 유지한다.
+- `--brand-foreground`·`--success-foreground`·`--destructive-foreground`의 흰
+  글자는 WCAG 비율 공식(4.5:1)으로는 미달이지만, PD팀이 APCA 기준으로 재평가해
+  유지하기로 했다. Lighthouse는 APCA가 아닌 WCAG 비율로 대비를 검사하므로,
+  접근성 감사에서 이 조합이 미달로 잡힐 수 있다는 점을 알고 있어야 한다.
 - 전체 토큰 목록은 이 문서에 나열하지 않는다. 코드에 반영된 목록과 값은
   `globals.css`에서, 디자인 원본은 Figma에서 확인한다. 토큰이 추가·변경될 때마다
   목록을 중복 관리하면 문서와 구현이 어긋날 수 있다.

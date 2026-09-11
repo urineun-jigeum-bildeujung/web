@@ -20,6 +20,9 @@
 ### 변경
 
 - 목록 화면들이 목데이터 상수를 직접 보던 것을 조회 결과로 받도록 바꿨다. 상수는 늘 차 있어 "후기가 없어요" 같은 빈 상태가 화면에서 한 번도 닿지 않았고, 테스트도 그 자리를 덮지 못했다. 나의 후기·간편결제 카드·사진 리뷰 모음이 대상이다 (#159)
+- PD팀이 갱신한 회색조 배경 스케일(`bg/weak`·`bg/secondary`·`bg/tertiary`·`bg/disable`)과 positive 계열, danger 다크 모드 값을 반영했다. danger 다크 대비는 2.76:1→3.90:1로, positive 라이트 대비는 2.83:1→3.03:1로 개선됐다 (#136)
+- `bg/control_disabled`가 다른 disable 계열 토큰과 값이 겹쳐 Figma에서 정리돼, `--bg-control-disabled`를 코드에서도 제거했다 (#136)
+- brand·success·destructive의 흰 글자 대비를 PD팀이 APCA 기준으로 재평가해 유지하기로 확인했다. WCAG 비율 공식 기준으로는 여전히 미달이라 Lighthouse 감사에서는 미달로 잡힐 수 있다 (#136)
 
 ### 추가
 
