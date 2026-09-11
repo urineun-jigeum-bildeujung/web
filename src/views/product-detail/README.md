@@ -3,18 +3,21 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`). 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch`
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬과 맞춤보기는 `reviewSort` · `reviewMatch`. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
 - **참고**: 와이어프레임 기준(`상품상세`). 시안의 섹션 라벨이 아직 `수정 진행 예정`이다. 상품·적합도·영양 분석은 전부 목데이터고 API 계약(#123) 확정 전 미연동
 
 | 파일 | 설명 |
 | --- | --- |
 | `model/mock-product.ts` | 상품·아이별 적합도·영양 성분·함께 보면 좋은 상품 목데이터와 그 타입 |
+| `model/mock-reviews.ts` | 리뷰 목데이터와 정렬 목록 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
 | `ui/product-detail-view.test.tsx` | 적합도 자리·지켜볼 점·탭 전환 |
 | `ui/match-panel.tsx` | 적합도 블록. 아이 고르기, 점수, 근거 세 줄 |
 | `ui/product-info-panel.tsx` | 상품 정보 탭. 상세 설명 표·영양 분석·상품 설명 자리·제공고시 |
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지 |
+| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·맞춤보기 토글·정렬·후기 목록 |
+| `ui/review-panel.test.tsx` | 맞춤보기가 품종으로 거르는지, 정렬이 순서를 바꾸는지 |
 | `ui/nutrient-bar.tsx` | 영양 성분 하나가 부족–적정–과다 중 어디인지 |
 | `ui/nutrient-bar.test.tsx` | 구간 경계 판정과 글자 표기 |
 | `index.ts` | 공개 API |

@@ -41,5 +41,6 @@ entities/
 | [pet](pet/README.md) | 반려동물. 품종 목록과 프로필 선택지 |
 | [order](order/README.md) | 주문. 상태 뱃지 |
 | [product](product/README.md) | 상품 표현. 지금은 적합도 배지만 있다 |
+| [review](review/README.md) | 상품 후기. 작성자의 아이 프로필과 사용 기간을 함께 보인다 |
 
 구독은 백엔드 API 계약이 정해지면 만든다.

@@ -29,6 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { MOCK_PETS, MOCK_PRODUCT, PET_MATCHES, RELATED_PRODUCTS } from "../model/mock-product";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
+import { ReviewPanel } from "./review-panel";
 
 const TABS = ["info", "review", "qna"] as const;
 
@@ -96,12 +97,14 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               </h1>
               <span className="flex items-center gap-2">
                 <Rating value={MOCK_PRODUCT.rating} showValue />
-                <Link
-                  href={`/products/${productId}/reviews`}
-                  className="text-sm text-muted-foreground underline underline-offset-4"
+                {/* 리뷰는 이 화면의 탭이다. 다른 화면으로 보내지 않고 탭만 바꾼다 */}
+                <button
+                  type="button"
+                  onClick={() => void setTab("review")}
+                  className="text-sm text-muted-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   후기 {MOCK_PRODUCT.reviewCount}
-                </Link>
+                </button>
               </span>
             </div>
 
@@ -211,17 +214,12 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
             <ProductInfoPanel match={match} petName={match.petName} />
           </TabsContent>
 
-          {/* 리뷰와 문의는 목록 화면이 따로 있다. 여기서는 들어가는 길만 낸다 */}
-          <TabsContent value="review" className="flex flex-col gap-3 px-4 py-5">
-            <span className="flex items-center gap-2">
-              <Rating value={MOCK_PRODUCT.rating} showValue size="md" />
-              <span className="text-sm text-muted-foreground">
-                후기 {MOCK_PRODUCT.reviewCount}개
-              </span>
-            </span>
-            <Button asChild variant="outline" className="min-h-11">
-              <Link href={`/products/${productId}/reviews`}>리뷰 전체 보기</Link>
-            </Button>
+          <TabsContent value="review">
+            <ReviewPanel
+              rating={MOCK_PRODUCT.rating}
+              reviewCount={MOCK_PRODUCT.reviewCount}
+              petProfileLabel={match.profileLabel}
+            />
           </TabsContent>
 
           <TabsContent value="qna" className="flex flex-col gap-3 px-4 py-5">
