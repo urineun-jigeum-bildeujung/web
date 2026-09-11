@@ -107,7 +107,7 @@ export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }:
             </h3>
             <Link
               href={`/products/${productId}/photos`}
-              className="flex min-h-11 items-center text-xs text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex min-h-11 min-w-11 items-center justify-center text-xs text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               전체보기
             </Link>
