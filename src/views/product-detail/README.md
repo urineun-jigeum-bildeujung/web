@@ -10,7 +10,6 @@
 | 파일 | 설명 |
 | --- | --- |
 | `model/mock-product.ts` | 상품·아이별 적합도·영양 성분·함께 보면 좋은 상품 목데이터와 그 타입 |
-| `model/mock-reviews.ts` | 리뷰 목데이터와 정렬 목록 |
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |

@@ -54,6 +54,7 @@ const ROUTES = [
   "/mypage/pets?tab=products&reviewed=todo",
   "/compare",
   "/products/1",
+  "/products/1/photos",
   "/cart",
   "/payment",
   "/payment/address",

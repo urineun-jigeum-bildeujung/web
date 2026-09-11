@@ -1,7 +1,7 @@
 // 필터 규칙 테스트. 구간 해석과 주소 왕복, 잘못된 주소를 견디는지 본다.
 import { describe, expect, it } from "vitest";
 
-import { MOCK_REVIEWS } from "./mock-reviews";
+import { MOCK_REVIEWS } from "@/entities/review";
 import {
   DEFAULT_FILTER,
   ageLabel,

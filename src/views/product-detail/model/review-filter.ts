@@ -4,7 +4,7 @@
 // 시안이 슬라이더 아래에 "8세 이상 (노령견)"처럼 뜻을 함께 적는다. 숫자만 보이면
 // 무엇을 고른 것인지 알기 어려워서다. 그 문구를 만드는 자리가 이 파일이다.
 
-import type { MockReview } from "./mock-reviews";
+import type { MockReview } from "@/entities/review";
 
 /** 슬라이더 양 끝. 오른쪽 끝은 "그 이상"을 뜻한다 */
 export const PERIOD_RANGE = [1, 9] as const;
