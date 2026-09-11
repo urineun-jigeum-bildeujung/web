@@ -12,7 +12,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-kakao: var(--kakao);
   --color-surface-default: var(--surface-default);
-  --color-surface-default-sheet: var(--surface-default-sheet);
+  --color-surface-default-react: var(--surface-default-react);
   --color-surface-weak: var(--surface-weak);
   --color-surface-secondary: var(--surface-secondary);
   --color-surface-tertiary: var(--surface-tertiary);
@@ -142,7 +142,7 @@
 :root {
   /* Figma 03. semantic > surface/* (구 bg/*, PD팀이 리네임) */
   --surface-default: oklch(1 0 0);
-  --surface-default-sheet: oklch(1 0 0);
+  --surface-default-react: oklch(1 0 0);
   --surface-weak: oklch(0.966673 0.001714 247.839);
   --surface-secondary: oklch(0.951933 0.002885 264.542);
   --surface-tertiary: oklch(0.901274 0.006863 277.154);
@@ -293,7 +293,7 @@
 
 .dark {
   --surface-default: oklch(0.191251 0 0);
-  --surface-default-sheet: oklch(0.313318 0.005505 271.239);
+  --surface-default-react: oklch(0.313318 0.005505 271.239);
   --surface-weak: oklch(0.313318 0.005505 271.239);
   --surface-secondary: oklch(0.386419 0.003621 264.52);
   --surface-tertiary: oklch(0.474899 0.004951 271.311);
