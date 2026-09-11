@@ -30,7 +30,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
 | `/deals` | 타임딜 목록 | 공개 후보 | `status` 계약 미확정 | 스캐폴딩 |
 | `/recommendations` | 맞춤 추천 | 인증 필요 후보 | 추천 기준 `petId` 전달 방식 미확정 | 화면 유형 확인 필요 |
-| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`(상품 정보·리뷰·Q&A), `reviewSort`, `reviewMatch` | 스캐폴딩 |
+| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
 | `/likes` | 좋아요 목록 | 인증 필요 후보 | 없음 | 스캐폴딩 |
 
@@ -100,8 +100,11 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 상품 비교 | `product` | 고른 상품 ID |
 | 클레임 접수 | `type` | `cancel`, `return`, `exchange` |
 | 리뷰 작성 | `orderItemId` | 리뷰를 작성할 구매 항목의 임시 식별자 |
+| 상품 상세 | `tab` | `info`, `review`, `qna` |
+| 상품 상세 | `reviewSort` | `recommend`, `recent`, `rating-high`, `rating-low` |
+| 상품 상세 | `reviewMatch` | `on`, `off` — 고른 아이와 같은 품종의 후기만 |
 
-검색·추천·리뷰 필터·타임딜 상태·주문 상태 쿼리는 백엔드 API와 PM·PD 정책 확정 후 이 표에 추가한다.
+검색·추천·타임딜 상태·주문 상태 쿼리는 백엔드 API와 PM·PD 정책 확정 후 이 표에 추가한다.
 
 ## 라우트가 아닌 상태
 

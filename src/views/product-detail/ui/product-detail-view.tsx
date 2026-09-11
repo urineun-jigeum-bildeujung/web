@@ -101,7 +101,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                 <button
                   type="button"
                   onClick={() => void setTab("review")}
-                  className="text-sm text-muted-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="flex min-h-11 min-w-11 items-center text-sm text-muted-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   후기 {MOCK_PRODUCT.reviewCount}
                 </button>

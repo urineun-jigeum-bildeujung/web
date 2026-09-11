@@ -33,6 +33,8 @@ const COMPARE: Record<
   "rating-low": (a, b) => a.rating - b.rating,
 };
 
+const MATCH_STATES = ["on", "off"] as const;
+
 /** "말티즈 · 8세 · 4kg"에서 품종만 뗀다 */
 function breedOf(profileLabel: string) {
   return profileLabel.split("·")[0].trim();
@@ -52,9 +54,12 @@ export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPane
     "reviewSort",
     parseAsStringLiteral(REVIEW_SORTS).withDefault("recommend"),
   );
-  const [matchOnly, setMatchOnly] = useQueryState("reviewMatch", {
-    defaultValue: "off",
-  });
+  // 보기가 둘뿐이라 검증하는 파서를 쓴다. 그냥 문자열로 두면 ?reviewMatch=asdf가
+  // 주소에 남은 채 꺼진 것처럼 동작한다
+  const [matchOnly, setMatchOnly] = useQueryState(
+    "reviewMatch",
+    parseAsStringLiteral(MATCH_STATES).withDefault("off"),
+  );
 
   const on = matchOnly === "on";
   const breed = breedOf(petProfileLabel);
