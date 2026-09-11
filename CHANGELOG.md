@@ -23,6 +23,7 @@
 - PD팀이 갱신한 회색조 배경 스케일(`bg/weak`·`bg/secondary`·`bg/tertiary`·`bg/disable`)과 positive 계열, danger 다크 모드 값을 반영했다. danger 다크 대비는 2.76:1→3.90:1로, positive 라이트 대비는 2.83:1→3.03:1로 개선됐다 (#136)
 - `bg/control_disabled`가 다른 disable 계열 토큰과 값이 겹쳐 Figma에서 정리돼, `--bg-control-disabled`를 코드에서도 제거했다 (#136)
 - brand·success·destructive의 흰 글자 대비를 PD팀이 APCA 기준으로 재평가해 유지하기로 확인했다. WCAG 비율 공식 기준으로는 여전히 미달이라 Lighthouse 감사에서는 미달로 잡힐 수 있다 (#136)
+- `--muted`·`--muted-foreground`는 `bg/tertiary`와 역할이 비슷해 보였을 뿐 Figma·PD팀이 실제로 지정한 대응이 아니었음을 확인해, 전역 연결 없이 shadcn 기본값을 유지하기로 정리했다. `bg/tertiary`를 직접 쓰는 화면은 그 토큰을 바로 쓰고 글자는 용도에 따라 고른다 (#136)
 
 ### 추가
 

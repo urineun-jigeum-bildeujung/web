@@ -237,7 +237,8 @@
   --primary-foreground: var(--text-label-inverse);
   --secondary: var(--bg-secondary);
   --secondary-foreground: var(--text-label-default);
-  /* Figma bg/tertiary와 짝인 글자 토큰이 미확정이라 shadcn 기본값을 유지한다. */
+  /* bg/tertiary와 역할이 비슷해 보이지만 Figma·PD팀이 지정한 대응이 아니라서
+     전역으로 연결하지 않는다. design-convention.md "토큰" 절 참고. */
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
   --accent: oklch(0.97 0 0);
