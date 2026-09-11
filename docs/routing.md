@@ -30,8 +30,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
 | `/deals` | 타임딜 목록 | 공개 후보 | `status` 계약 미확정 | 스캐폴딩 |
 | `/recommendations` | 맞춤 추천 | 인증 필요 후보 | 추천 기준 `petId` 전달 방식 미확정 | 화면 유형 확인 필요 |
-| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId` | 스캐폴딩 |
-| `/products/[productId]/reviews` | 상품 리뷰 | 공개 후보 | `productId`, 프로필·필터·정렬 쿼리 계약 미확정 | 스캐폴딩 |
+| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`(상품 정보·리뷰·Q&A), `reviewSort`, `reviewMatch` | 스캐폴딩 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
 | `/likes` | 좋아요 목록 | 인증 필요 후보 | 없음 | 스캐폴딩 |
 
