@@ -17,22 +17,22 @@ import { InfoNotice } from "@/shared/ui/info-notice/info-notice";
 import { ListRowButton } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
+import type { PaymentCard } from "../model/mock-cards";
+
 const NOTICE_ITEMS = [
   "본인 명의의 신용카드 및 체크카드만 등록할 수 있어요.",
   "카드 정보는 결제 대행사가 보관하며 앱에는 남지 않아요.",
   "간편결제 카드는 최대 5개까지 등록할 수 있어요.",
 ];
 
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_CARDS = [
-  { id: "1", issuer: "KB", name: "KB국민카드", masked: "****-****-****-1234" },
-  { id: "2", issuer: "KB", name: "엄마카드", masked: "****-****-****-1234" },
-  { id: "3", issuer: "KB", name: "내 카드", masked: "****-****-****-1234" },
-];
+type PaymentMethodsViewProps = {
+  /** 등록된 간편결제 카드 */
+  cards: PaymentCard[];
+};
 
-export function PaymentMethodsView() {
+export function PaymentMethodsView({ cards }: PaymentMethodsViewProps) {
   const [managingId, setManagingId] = useState<string | null>(null);
-  const managing = MOCK_CARDS.find((card) => card.id === managingId);
+  const managing = cards.find((card) => card.id === managingId);
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -41,9 +41,9 @@ export function PaymentMethodsView() {
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
         <InfoNotice items={NOTICE_ITEMS} />
 
-        {MOCK_CARDS.length > 0 ? (
+        {cards.length > 0 ? (
           <div className="overflow-hidden rounded-xl border border-border [&>*+*]:border-t [&>*+*]:border-border">
-            {MOCK_CARDS.map((card) => (
+            {cards.map((card) => (
               <ListRowButton
                 key={card.id}
                 // 시안은 카드사 로고 자리다. 이미지가 붙기 전까지 약칭을 보인다.

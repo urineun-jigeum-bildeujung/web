@@ -13,27 +13,18 @@ import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 import { Rating } from "@/shared/ui/rating/rating";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
+import type { WritableReview, WrittenReview } from "../model/mock-reviews";
+
 const TABS = ["writable", "written"] as const;
 
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_WRITABLE = Array.from({ length: 4 }, (_, index) => ({
-  id: String(index),
-  name: "상품명",
-  option: "상품 옵션",
-  purchasedAt: "26.08.28",
-  daysLeft: 30,
-}));
+type MyReviewsViewProps = {
+  /** 아직 후기를 안 쓴 구매 항목 */
+  writable: WritableReview[];
+  /** 이미 쓴 후기 */
+  written: WrittenReview[];
+};
 
-const MOCK_WRITTEN = Array.from({ length: 4 }, (_, index) => ({
-  id: String(index),
-  name: "상품명",
-  writtenAt: "26.08.28",
-  rating: 4,
-  content:
-    "후기 더미 - 입맛 까다로운 우리 아이도 잔여 없이 그릇을 싹싹 비울 만큼 기호성이 정말 좋아요! 잘...",
-}));
-
-export function MyReviewsView() {
+export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
   const [tab, setTab] = useQueryState(
     "tab",
     // 작성 가능·작성한이 서로 다른 목록이라 뒤로가기로 되돌아와야 한다
@@ -56,8 +47,8 @@ export function MyReviewsView() {
           </TabsList>
 
           <TabsContent value="writable" className="flex flex-col gap-5 pt-4">
-            {MOCK_WRITABLE.length > 0 ? (
-              MOCK_WRITABLE.map((item) => (
+            {writable.length > 0 ? (
+              writable.map((item) => (
                 <article key={item.id} className="flex flex-col gap-2">
                   <p className="text-xs text-muted-foreground">구매 확정 {item.purchasedAt}</p>
                   <ProductSummary name={item.name} meta={item.option} />
@@ -78,8 +69,8 @@ export function MyReviewsView() {
           </TabsContent>
 
           <TabsContent value="written" className="flex flex-col gap-5 pt-4">
-            {MOCK_WRITTEN.length > 0 ? (
-              MOCK_WRITTEN.map((item) => (
+            {written.length > 0 ? (
+              written.map((item) => (
                 <Link
                   key={item.id}
                   href={`/mypage/reviews/${item.id}`}

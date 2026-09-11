@@ -9,12 +9,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/products/1/photos",
 }));
 
+import { PHOTO_REVIEWS } from "@/entities/review";
+
 import { ProductPhotosView } from "./product-photos-view";
 
-function renderView(search = "") {
+function renderView(search = "", reviews = PHOTO_REVIEWS) {
   render(
     <NuqsTestingAdapter searchParams={search}>
-      <ProductPhotosView productId="1" />
+      <ProductPhotosView productId="1" reviews={reviews} />
     </NuqsTestingAdapter>,
   );
 }
@@ -75,5 +77,13 @@ describe("ProductPhotosView", () => {
     fireEvent.click(screen.getByRole("button", { name: "닫기" }));
 
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  // 사진이 한 장도 없는 상품에서는 격자 대신 그 사실을 알려야 한다(#159)
+  it("사진 후기가 없으면 그 사실을 알린다", () => {
+    renderView("", []);
+
+    expect(screen.getByText("아직 사진 후기가 없어요")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /크게 보기/ })).toBeNull();
   });
 });

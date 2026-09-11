@@ -4,6 +4,7 @@
 
 - **라우트**: `/products/[productId]/photos` — `src/app/products/[productId]/photos/page.tsx`
 - **조립**: `entities/review`(`ReviewCard`·목데이터) · `shared/ui`의 `page-header` · `empty-state` · `bottom-action-bar` · `button`
+- **입력**: 사진이 달린 후기를 `reviews`로 받는다. 화면이 목데이터 상수를 직접 보면 목록이 늘 차 있어 빈 상태가 닿지 않는다(#159)
 - **상태**: 보고 있는 사진은 URL 쿼리 `review`(후기 번호) · `photo`(그 후기의 몇 번째). 사진 한 장을 가리킬 주소가 있어야 공유되고 뒤로가기로 격자에 돌아온다
 - **참고**: 와이어프레임 기준(`상품 상세_사진 리뷰 모음 화면`·`_리뷰 탭`). 사진은 받을 곳이 없어 자리만 잡는다
 

@@ -5,6 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/payment-methods-view.tsx` | 간편결제 카드 관리 |
+| `model/mock-cards.ts` | 간편결제 카드 목데이터와 그 타입 |
 | `index.ts` | 공개 API |
 
 ## 라우트

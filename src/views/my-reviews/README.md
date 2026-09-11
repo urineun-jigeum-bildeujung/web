@@ -5,6 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/my-reviews-view.tsx` | 나의 상품 후기 |
+| `model/mock-reviews.ts` | 작성 가능·작성한 후기 목데이터와 그 타입 |
 | `index.ts` | 공개 API |
 
 ## 라우트
