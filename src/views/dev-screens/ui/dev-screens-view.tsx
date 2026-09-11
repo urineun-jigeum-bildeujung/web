@@ -67,6 +67,7 @@ const SCREEN_GROUPS = [
       { href: "/search", label: "검색", hint: "SRCH_001" },
       { href: "/recommendations", label: "추천", hint: "RCMD_001" },
       { href: "/products/1", label: "상품 상세", hint: "SRCH_111" },
+      { href: "/products/1/photos", label: "사진 리뷰 전체보기", hint: "상품 상세_사진 리뷰 모음" },
     ],
   },
   {

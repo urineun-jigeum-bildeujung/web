@@ -1,9 +1,12 @@
-// 리뷰 탭이 그릴 값. API 계약이 정해지기 전까지 쓰는 목데이터다.
+// 리뷰 목데이터. API 계약이 정해지기 전까지 쓴다.
+//
+// 상품 상세의 리뷰 탭과 사진 모음 화면이 같은 리뷰를 본다. 뷰마다 한 벌씩 두면
+// 사진을 눌러 들어간 화면에 다른 후기가 뜬다.
 //
 // 시안(상품 상세_리뷰 탭)이 사진 있는 후기와 없는 후기를 섞어 두었다. 한 벌로만 두면
 // 사진 줄이 없는 카드의 간격을 확인할 수 없어 그대로 따른다.
 
-import type { Review } from "@/entities/review";
+import type { Review } from "../ui/review-card";
 
 /**
  * 거를 때 쓰는 값. 실제로는 서버가 조건을 받아 걸러 주므로 화면까지 오지 않는다.
@@ -128,3 +131,9 @@ export const MOCK_REVIEWS: MockReview[] = [
     repeatCount: 0,
   },
 ];
+
+/** 사진이 달린 후기만. 사진 모음 화면이 이 목록을 펼쳐 그린다 */
+export const PHOTO_REVIEWS = MOCK_REVIEWS.filter((review) => review.photoCount > 0);
+
+/** 사진 전체 장수. 시안의 "사진이 있는 리뷰 88장" 자리다 */
+export const PHOTO_TOTAL = PHOTO_REVIEWS.reduce((sum, review) => sum + review.photoCount, 0);

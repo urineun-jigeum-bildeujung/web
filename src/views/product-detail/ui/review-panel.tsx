@@ -6,21 +6,25 @@
 
 "use client";
 
+import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { IoImageOutline } from "react-icons/io5";
 
-import { ReviewCard } from "@/entities/review";
+import {
+  MOCK_REVIEWS,
+  PHOTO_REVIEWS,
+  PHOTO_TOTAL,
+  REVIEW_SORTS,
+  REVIEW_SORT_LABEL,
+  ReviewCard,
+  type ReviewSort,
+} from "@/entities/review";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Label } from "@/shared/ui/label";
 import { Rating } from "@/shared/ui/rating/rating";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Switch } from "@/shared/ui/switch";
 
-import {
-  MOCK_REVIEWS,
-  REVIEW_SORTS,
-  REVIEW_SORT_LABEL,
-  type ReviewSort,
-} from "../model/mock-reviews";
 import {
   DEFAULT_FILTER,
   applyFilter,
@@ -50,13 +54,14 @@ function breedOf(profileLabel: string) {
 }
 
 type ReviewPanelProps = {
+  productId: string;
   rating: number;
   reviewCount: number;
   /** 지금 고른 아이. 맞춤보기를 켜면 이 아이와 같은 품종의 후기만 남는다 */
   petProfileLabel: string;
 };
 
-export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPanelProps) {
+export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }: ReviewPanelProps) {
   // 정렬과 맞춤보기는 같은 목록을 좁히는 것이라 히스토리에 쌓지 않는다.
   // 쌓으면 뒤로가기를 여러 번 눌러야 화면을 떠난다
   const [sort, setSort] = useQueryState(
@@ -94,7 +99,39 @@ export function ReviewPanel({ rating, reviewCount, petProfileLabel }: ReviewPane
 
       <div className="h-2 bg-muted" />
 
-      {/* 조건을 직접 고르는 바텀시트와 리뷰 사진 줄은 #149·#151에서 이 자리에 붙는다 */}
+      {PHOTO_TOTAL > 0 && (
+        <section aria-labelledby="review-photos" className="flex flex-col gap-3 p-4">
+          <div className="flex items-center justify-between">
+            <h3 id="review-photos" className="text-sm font-medium text-foreground">
+              리뷰 사진
+            </h3>
+            <Link
+              href={`/products/${productId}/photos`}
+              className="flex min-h-11 items-center text-xs text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              전체보기
+            </Link>
+          </div>
+
+          {/* 앞의 넉 장만 미리 보인다. 나머지는 전체보기에서 격자로 본다 */}
+          <ul className="flex gap-2">
+            {PHOTO_REVIEWS.slice(0, 4).map((review) => (
+              <li key={review.id} className="flex-1">
+                <Link
+                  href={`/products/${productId}/photos`}
+                  aria-label={`${review.nickname}의 후기 사진 보기`}
+                  className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
+                  <IoImageOutline aria-hidden className="size-6 text-muted-foreground" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <div className="h-2 bg-muted" />
+
       <div className="flex flex-col gap-3 border-b border-border p-4">
         <div className="flex items-center justify-between gap-2">
           <ReviewFilterSheet

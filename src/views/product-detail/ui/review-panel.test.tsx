@@ -13,7 +13,12 @@ import { ReviewPanel } from "./review-panel";
 function renderPanel(search = "") {
   render(
     <NuqsTestingAdapter searchParams={search}>
-      <ReviewPanel rating={4.8} reviewCount={108} petProfileLabel="말티즈 · 8세 · 4kg" />
+      <ReviewPanel
+        productId="1"
+        rating={4.8}
+        reviewCount={108}
+        petProfileLabel="말티즈 · 8세 · 4kg"
+      />
     </NuqsTestingAdapter>,
   );
 }

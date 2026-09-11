@@ -216,6 +216,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
 
           <TabsContent value="review">
             <ReviewPanel
+              productId={productId}
               rating={MOCK_PRODUCT.rating}
               reviewCount={MOCK_PRODUCT.reviewCount}
               petProfileLabel={match.profileLabel}

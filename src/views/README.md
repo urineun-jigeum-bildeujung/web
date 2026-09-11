@@ -96,3 +96,4 @@ views/
 | `signup` | `/signup` | 회원가입. 약관 동의와 닉네임을 차례로 받는다 |
 | `likes` | `/likes` | 찜한 상품·최근에 본 상품·자주 산 상품 (탭) |
 | `product-detail` | `/products/[productId]` | 상품 상세. 적합도와 근거를 가격 바로 아래 둔다 |
+| `product-photos` | `/products/[productId]/photos` | 사진 리뷰 전체보기 |

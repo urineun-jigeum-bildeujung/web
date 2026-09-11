@@ -31,6 +31,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/deals` | 타임딜 목록 | 공개 후보 | `status` 계약 미확정 | 스캐폴딩 |
 | `/recommendations` | 맞춤 추천 | 인증 필요 후보 | 추천 기준 `petId` 전달 방식 미확정 | 화면 유형 확인 필요 |
 | `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch`, `reviewFilter` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
+| `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `review`, `photo` | 구현됨 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
 | `/likes` | 좋아요 목록 | 인증 필요 후보 | 없음 | 스캐폴딩 |
 
@@ -103,6 +104,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 상품 상세 | `tab` | `info`, `review`, `qna` |
 | 상품 상세 | `reviewSort` | `recommend`, `recent`, `rating-high`, `rating-low` |
 | 상품 상세 | `reviewMatch` | `on`, `off` — 고른 아이와 같은 품종의 후기만 |
+| 사진 리뷰 | `review`, `photo` | 보고 있는 후기 번호와 그 후기의 몇 번째 사진 |
 | 상품 상세 | `reviewFilter` | `period:3-9\|species:dog` 꼴. 기본값과 다른 조건만 싣고, 값은 `parseFilter`가 검증한다 |
 
 검색·추천·타임딜 상태·주문 상태 쿼리는 백엔드 API와 PM·PD 정책 확정 후 이 표에 추가한다.
