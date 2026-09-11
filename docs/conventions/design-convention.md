@@ -14,8 +14,14 @@
   `--background`, `--card`, `--popover` 등)은 값을 중복해서 넣지 않고, 개념이
   대응되는 시맨틱 변수를 `var()`로 참조한다.
 - shadcn의 `--accent`처럼 Figma 토큰과 이름만 같고 의미가 다른 슬롯은 기존 용도를
-  유지한다. `--muted`는 대응되는 Figma 배경 토큰이 있지만 함께 사용할 글자 토큰이
-  확정되지 않아, PD팀 확인 전까지 shadcn 기본값을 유지한다.
+  유지한다. `--muted`·`--muted-foreground`도 마찬가지다 — `bg/tertiary`와
+  겉보기 역할이 비슷해 보이지만 Figma나 PD팀이 실제로 지정한 대응은 아니라서,
+  전역으로 연결하지 않고 shadcn 기본값을 유지한다.
+- Figma에서 `bg/tertiary`를 직접 지정한 화면은 그 컴포넌트에 토큰을 바로 쓴다.
+  그 위 글자는 Figma 컴포넌트에 지정된 값을 우선하고, 없으면 `text/body/default`·
+  `text/body/secondary`·`text/body/static_black` 중 라이트·다크 대비를 확인해
+  고른다. 기존 `bg-muted`·`text-muted-foreground` 사용처는 이 결정과 무관하므로
+  건드리지 않는다.
 - `--brand-foreground`·`--success-foreground`·`--destructive-foreground`의 흰
   글자는 WCAG 비율 공식(4.5:1)으로는 미달이지만, PD팀이 APCA 기준으로 재평가해
   유지하기로 했다. Lighthouse는 APCA가 아닌 WCAG 비율로 대비를 검사하므로,
