@@ -5,12 +5,13 @@ import { expect, test, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
+import { MOCK_WRITABLE, MOCK_WRITTEN } from "../model/mock-reviews";
 import { MyReviewsView } from "./my-reviews-view";
 
-function renderAt(search: string) {
+function renderAt(search: string, { writable = MOCK_WRITABLE, written = MOCK_WRITTEN } = {}) {
   return render(
     <NuqsTestingAdapter searchParams={search}>
-      <MyReviewsView />
+      <MyReviewsView writable={writable} written={written} />
     </NuqsTestingAdapter>,
   );
 }
@@ -40,4 +41,17 @@ test("작성한 리뷰를 누르면 상세로 이어진다", () => {
 
   const links = screen.getAllByRole("link", { name: /상품명/ });
   expect(links[0].getAttribute("href")).toBe("/mypage/reviews/0");
+});
+
+// 목록이 늘 차 있어 빈 상태가 화면에서 도달하지 않았다. 조회 결과를 받도록 바꿔 덮는다(#159)
+test("쓸 수 있는 후기가 없으면 그 사실을 알린다", () => {
+  renderAt("", { writable: [] });
+
+  expect(screen.getByText("작성할 수 있는 후기가 없어요")).toBeDefined();
+});
+
+test("쓴 후기가 없으면 그 사실을 알린다", () => {
+  renderAt("?tab=written", { written: [] });
+
+  expect(screen.getByText("작성한 후기가 없어요")).toBeDefined();
 });

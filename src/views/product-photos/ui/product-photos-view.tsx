@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { IoImageOutline } from "react-icons/io5";
 
-import { PHOTO_REVIEWS, PHOTO_TOTAL } from "@/entities/review";
+import type { MockReview } from "@/entities/review";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
@@ -23,15 +23,22 @@ type PhotoRef = {
   photoIndex: number;
 };
 
-const PHOTOS: PhotoRef[] = PHOTO_REVIEWS.flatMap((review, reviewIndex) =>
-  Array.from({ length: review.photoCount }, (_, photoIndex) => ({ reviewIndex, photoIndex })),
-);
+/** 후기 목록을 사진 낱장으로 펼친다 */
+function spread(reviews: MockReview[]): PhotoRef[] {
+  return reviews.flatMap((review, reviewIndex) =>
+    Array.from({ length: review.photoCount }, (_, photoIndex) => ({ reviewIndex, photoIndex })),
+  );
+}
 
 type ProductPhotosViewProps = {
   productId: string;
+  /** 사진이 달린 후기. 서버가 걸러 준 것을 그대로 펼친다 */
+  reviews: MockReview[];
 };
 
-export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
+export function ProductPhotosView({ productId, reviews }: ProductPhotosViewProps) {
+  const photos = spread(reviews);
+  const total = reviews.reduce((sum, review) => sum + review.photoCount, 0);
   const router = useRouter();
 
   // 사진 한 장을 가리킬 주소가 있어야 공유되고, 뒤로가기로 격자에 돌아온다.
@@ -39,7 +46,7 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
   const [review, setReview] = useQueryState("review", parseAsInteger);
   const [photo, setPhoto] = useQueryState("photo", parseAsInteger.withDefault(0));
 
-  const opened = review !== null && review >= 0 && review < PHOTO_REVIEWS.length;
+  const opened = review !== null && review >= 0 && review < reviews.length;
 
   // 사진을 여는 것은 화면 구성이 통째로 바뀌는 전환이다. nuqs 기본인 replace로 두면
   // 격자 주소가 히스토리에 남지 않아, 뒤로가기가 격자를 건너뛰고 상품 상세로 나간다
@@ -59,16 +66,16 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
       <PageHeader title="사진 리뷰 전체보기" />
 
       <main className="flex flex-1 flex-col">
-        {PHOTOS.length > 0 ? (
+        {photos.length > 0 ? (
           <>
             <p className="px-4 py-3 text-sm text-muted-foreground">
-              사진이 있는 리뷰 <span className="font-bold text-foreground">{PHOTO_TOTAL}장</span>
+              사진이 있는 리뷰 <span className="font-bold text-foreground">{total}장</span>
             </p>
 
             {/* 시안은 여백 없는 3열이다. 사진을 최대한 크게 보여주려는 것이다 */}
             <ul className="grid grid-cols-3 gap-0.5">
-              {PHOTOS.map((ref) => {
-                const owner = PHOTO_REVIEWS[ref.reviewIndex];
+              {photos.map((ref) => {
+                const owner = reviews[ref.reviewIndex];
                 return (
                   <li key={`${ref.reviewIndex}-${ref.photoIndex}`}>
                     <button
@@ -95,7 +102,7 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
 
       {opened && (
         <PhotoViewer
-          review={PHOTO_REVIEWS[review]}
+          review={reviews[review]}
           photoIndex={photo}
           onPhotoChange={(next) => void setPhoto(next)}
           onClose={close}
