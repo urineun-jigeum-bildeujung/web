@@ -26,6 +26,7 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
+import { MOCK_INQUIRIES } from "../model/mock-inquiries";
 import { MOCK_PETS, MOCK_PRODUCT, PET_MATCHES, RELATED_PRODUCTS } from "../model/mock-product";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
@@ -225,7 +226,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </TabsContent>
 
           <TabsContent value="qna">
-            <QnaPanel />
+            <QnaPanel inquiries={MOCK_INQUIRIES} />
           </TabsContent>
         </Tabs>
       </main>
