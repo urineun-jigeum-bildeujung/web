@@ -15,6 +15,7 @@
 - 401이면 재발급(`/auths/token/refresh`) 후 원 요청을 1회 재시도한다. 재발급은 rotation 정책(중복 호출 시 탈취 간주) 때문에 동시 401에서도 한 번만 호출된다(single-flight). 게이트웨이가 JWT를 먼저 검증하므로 재발급 요청에는 만료된 accessToken을 붙이지 않는다. 재발급까지 실패하면 토큰을 지우고 401을 그대로 던진다 — 로그인 이동·캐시 비우기 같은 앱 정책은 `subscribeTokensCleared`로 구독한 쪽이 처리한다.
 - `query` 옵션은 undefined·null을 빼고 배열은 같은 키를 반복해 쿼리 스트링을 만든다. `FormData` 본문은 직렬화하지 않고 Content-Type도 붙이지 않는다(이미지 업로드용).
 - `shouldRetryQuery`는 `AppProviders`의 QueryClient 기본 retry다. 4xx는 재시도하지 않고 5xx·네트워크 오류만 1회 재시도한다.
-- 웹뷰에서도 토큰은 웹이 보관하고 재발급도 웹만 한다. 네이티브는 딥링크로 받은 토큰을 웹 콜백 URL로 넘기기만 한다. 소셜 로그인 콜백 화면은 로그인 디자인 확정 뒤 별도 슬라이스에서 만든다.
+- 소셜 로그인은 백엔드가 `/auth/callback?code=`로 일회용 code만 넘기고, 프론트가 `POST /auths/token/exchange`에 `{ code }`를 보내 accessToken·refreshToken·isNewUser·nickname을 받는다(토큰이 없는 상태라 `auth: false`). code는 1회용이고 60초 뒤 만료된다. 콜백 화면과 교환 함수·훅은 로그인 디자인 확정 뒤 별도 슬라이스에서 만든다.
+- 웹뷰에서도 토큰은 웹이 보관하고 재발급도 웹만 한다. 네이티브는 딥링크로 받은 code를 웹 콜백 URL로 넘기기만 한다.
 - 슬라이스별 요청 함수와 쿼리 훅은 각 슬라이스의 `api/` 세그먼트에 둔다. 이 폴더는 그것들이 공통으로 쓰는 클라이언트와 에러 규격만 담는다.
 - 백엔드 공통 에러 응답 포맷이 정해지면 사용자 노출 문구 규칙은 [app-message-convention](../../../docs/conventions/app-message-convention.md)을 따른다.

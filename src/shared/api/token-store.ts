@@ -1,8 +1,10 @@
 // 인증 토큰 보관소. accessToken은 메모리, refreshToken은 localStorage에 둔다.
 
 // refreshToken은 새로고침에도 남아야 해 localStorage를 쓴다. httpOnly 쿠키는 백엔드가
-// WebView 구글 로그인 차단 정책으로 리다이렉트 쿼리 방식을 확정하면서 제외됐다.
-// 웹뷰에서도 토큰은 웹이 보관하고 재발급도 웹만 한다. 네이티브는 딥링크를 웹뷰 URL로 넘기기만 한다.
+// WebView 구글 로그인 차단 정책으로 리다이렉트 방식을 확정하면서 제외됐다.
+// 리다이렉트로 오는 것은 토큰이 아니라 일회용 code다(`/auth/callback?code=`). 프론트가 그 code를
+// `POST /auths/token/exchange`로 교환해 받은 토큰 쌍을 saveTokens에 넣는다.
+// 웹뷰에서도 토큰은 웹이 보관하고 재발급도 웹만 한다. 네이티브는 딥링크로 받은 code를 웹뷰 URL로 넘기기만 한다.
 const REFRESH_TOKEN_KEY = "gollaju.refreshToken";
 
 let accessToken: string | null = null;
