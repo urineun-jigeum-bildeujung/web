@@ -24,7 +24,7 @@
 - `bg/control_disabled`가 다른 disable 계열 토큰과 값이 겹쳐 Figma에서 정리돼, `--bg-control-disabled`를 코드에서도 제거했다 (#136)
 - brand·success·destructive의 흰 글자 대비를 PD팀이 APCA 기준으로 재평가해 유지하기로 확인했다. WCAG 비율 공식 기준으로는 여전히 미달이라 Lighthouse 감사에서는 미달로 잡힐 수 있다 (#136)
 - `--muted`·`--muted-foreground`는 `bg/tertiary`와 역할이 비슷해 보였을 뿐 Figma·PD팀이 실제로 지정한 대응이 아니었음을 확인해, 전역 연결 없이 shadcn 기본값을 유지하기로 정리했다. `bg/tertiary`를 직접 쓰는 화면은 그 토큰을 바로 쓰고 글자는 용도에 따라 고른다 (#136)
-- Figma가 배경 카테고리 이름을 `bg/*`에서 `surface/*`로 바꿔 CSS 변수도 함께 리네임했다. `surface/default_sheet`·`surface/dimmed`(투명도 보존)를 새로 반영하고, `icon/fill/rating`을 `icon/fill/accent`로 리네임했으며, `icon/fill`에 색상 계열 10개(연한/진한 초록·빨강·파랑·브랜드·보라)를 추가해 공용 시맨틱 토큰이 총 85개가 됐다 (#136)
+- Figma가 배경 카테고리 이름을 `bg/*`에서 `surface/*`로 바꿔 CSS 변수도 함께 리네임했다. `surface/default_react`·`surface/dimmed`(투명도 보존)를 새로 반영하고, `icon/fill/rating`을 `icon/fill/accent`로 리네임했으며, `icon/fill`에 색상 계열 10개(연한/진한 초록·빨강·파랑·브랜드·보라)를 추가해 공용 시맨틱 토큰이 총 85개가 됐다 (#136)
 
 ### 추가
 
