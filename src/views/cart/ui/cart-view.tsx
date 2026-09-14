@@ -1,15 +1,19 @@
 // 장바구니. 담아 둔 상품을 고르고 수량을 바꾸거나 빼고 결제로 넘어간다.
-// 와이어프레임 기준(cart_001, cart_001_삭제하기)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(cart_001, cart_001_선택, cart_001_삭제하기).
 //
 // 옵션변경은 2026-09-09 시안 수정에서 빠졌다. `cart_001_옵션변경` 프레임이 삭제되고
 // 섹션에 "페이지 삭제 및 옵션변경 버튼 삭제" 메모가 붙었다 (#137).
+//
+// 상품 옵션 줄도 UI 시안에서 사라졌다. 와이어프레임은 이름 아래 옵션을 적었는데
+// 시안은 이름 한 줄만 두고 말줄임한다 (#172).
 
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { IoClose, IoImageOutline } from "react-icons/io5";
 
+import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,46 +27,24 @@ import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
-import { Label } from "@/shared/ui/label";
+import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
-import { Price, formatWon } from "@/shared/ui/price/price";
+import { formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
-type CartItem = {
-  id: string;
-  name: string;
-  option: string;
-  price: number;
-  originalPrice?: number;
-  quantity: number;
-};
-
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_ITEMS: CartItem[] = [
-  { id: "1", name: "상품명", option: "상품 옵션 1", price: 45000, quantity: 1 },
-  {
-    id: "2",
-    name: "상품명",
-    option: "상품 옵션 2",
-    price: 26000,
-    originalPrice: 52000,
-    quantity: 1,
-  },
-  {
-    id: "3",
-    name: "상품명",
-    option: "상품 옵션 1",
-    price: 19000,
-    originalPrice: 38000,
-    quantity: 1,
-  },
-];
+import type { CartItem } from "../api/cart";
 
 const SHIPPING_FEE = 3000;
 
-export function CartView() {
-  const [items, setItems] = useState(MOCK_ITEMS);
-  const [checkedIds, setCheckedIds] = useState(MOCK_ITEMS.map((item) => item.id));
+type CartViewProps = {
+  /** 담아 둔 상품. 서버가 준 것을 그대로 그린다 */
+  items: CartItem[];
+};
+
+export function CartView({ items: initialItems }: CartViewProps) {
+  const [items, setItems] = useState(initialItems);
+  // 시안은 아무것도 고르지 않은 상태(0/3)로 시작한다
+  const [checkedIds, setCheckedIds] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
 
   const allChecked = items.length > 0 && checkedIds.length === items.length;
@@ -95,93 +77,114 @@ export function CartView() {
           />
         ) : (
           <>
-            <div className="flex items-center gap-2 px-4 py-3">
+            <div className="flex items-center gap-2 px-5 py-3">
               <Checkbox
                 id="cart-all"
+                className="size-6 rounded-md"
                 checked={allChecked}
                 onCheckedChange={(checked) =>
                   setCheckedIds(checked ? items.map((item) => item.id) : [])
                 }
               />
-              <Label htmlFor="cart-all" className="flex min-h-11 flex-1 items-center text-sm">
-                전체선택
-              </Label>
+              {/* 시안이 고른 개수를 함께 보여준다. 몇 개를 담았고 몇 개를 고르는 중인지 한눈에 든다.
+                  shadcn Label을 쓰지 않는 이유는 그 기본값(text-sm·leading-none)이
+                  타이포 토큰과 같은 자리를 다투는데 tailwind-merge가 커스텀 토큰을 몰라 안 걷히기 때문이다 */}
+              <label htmlFor="cart-all" className="text-body-medium-16 text-foreground select-none">
+                전체선택 ({checkedIds.length}/{items.length})
+              </label>
             </div>
 
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-2">
               {items.map((item) => (
-                <li key={item.id} className="flex flex-col gap-3 border-t border-border p-4">
-                  <div className="flex items-start gap-3">
+                <li key={item.id} className="flex items-center gap-2 px-5 py-3">
+                  {/* 시안은 체크박스를 목록 왼쪽이 아니라 사진 위에 얹는다.
+                      사진과 이름이 붙어 있어야 무엇을 고르는지가 바로 읽힌다 */}
+                  <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-surface-disable">
                     <Checkbox
+                      className="absolute top-1 left-1 z-10 size-4 rounded-sm"
                       checked={checkedIds.includes(item.id)}
                       onCheckedChange={() => toggle(item.id)}
-                      aria-label={item.name + " 고르기"}
-                      className="mt-1"
+                      aria-label={`${item.name} 고르기`}
                     />
-                    <span
-                      aria-hidden
-                      className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
-                    >
-                      <IoImageOutline className="size-7" />
-                    </span>
-                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                      <span className="text-sm font-medium text-foreground">{item.name}</span>
-                      <span className="text-xs text-muted-foreground">{item.option}</span>
-                    </span>
-                    <button
-                      type="button"
-                      aria-label={item.name + " 빼기"}
-                      onClick={() => setRemoveTarget(item)}
-                      className="flex size-11 shrink-0 items-center justify-center text-muted-foreground"
-                    >
-                      <IoClose aria-hidden className="size-5" />
-                    </button>
+                    {item.imageUrl && (
+                      <Image
+                        src={item.imageUrl}
+                        alt=""
+                        width={80}
+                        height={80}
+                        className="size-full object-cover"
+                      />
+                    )}
                   </div>
 
-                  <div className="flex items-center justify-between gap-2">
-                    <Price amount={item.price} originalAmount={item.originalPrice} />
-                    <QuantityStepper
-                      label={item.name + " 수량"}
-                      value={item.quantity}
-                      onChange={(next) => setQuantity(item.id, next)}
-                    />
+                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 self-stretch">
+                    <div className="flex items-start justify-between gap-1">
+                      {/* 시안이 한 줄로 자른다. 목록에서는 무엇인지 알아볼 만큼만 보이면 된다 */}
+                      <p className="truncate text-title-bold-16 text-foreground">{item.name}</p>
+                      <button
+                        type="button"
+                        aria-label={`${item.name} 빼기`}
+                        onClick={() => setRemoveTarget(item)}
+                        className="shrink-0 text-icon-stroke-tertiary"
+                      >
+                        <Icon name="cancel" />
+                      </button>
+                    </div>
+
+                    <div className="flex items-end justify-between gap-2">
+                      {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
+                      <p className="text-foreground">
+                        <span className="text-title-bold-16">
+                          {item.price.toLocaleString("ko-KR")}
+                        </span>
+                        <span className="text-body-medium-16">원</span>
+                      </p>
+                      <QuantityStepper
+                        label={`${item.name} 수량`}
+                        value={item.quantity}
+                        onChange={(next) => setQuantity(item.id, next)}
+                      />
+                    </div>
                   </div>
                 </li>
               ))}
             </ul>
 
-            <section className="mt-2 flex flex-col border-t border-border p-4">
-              <dl className="flex flex-col">
-                <DefinitionRow
-                  term={<span className="font-medium text-foreground">결제금액</span>}
-                  description={<span className="text-base font-bold">{formatWon(total)}</span>}
-                  alignEnd
-                  className="min-h-9 px-0 py-1"
-                />
-                {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
-                금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
-                임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
-                <DefinitionRow
-                  term="상품 옵션"
-                  description={formatWon(itemTotal)}
-                  alignEnd
-                  className="min-h-9 px-0 py-1"
-                />
-                <DefinitionRow
-                  term="배송비"
-                  description={formatWon(itemTotal === 0 ? 0 : SHIPPING_FEE)}
-                  alignEnd
-                  className="min-h-9 px-0 py-1"
-                />
-              </dl>
+            <section className="mt-auto flex flex-col gap-3 p-5">
+              {/* 시안은 고른 것이 없으면 금액 줄을 아예 보여주지 않는다.
+                  0원만 늘어놓아도 알려주는 것이 없고, 고르라는 신호가 흐려진다 */}
+              {checkedItems.length > 0 && (
+                <dl className="flex flex-col border-t border-border pt-4">
+                  <DefinitionRow
+                    term={<span className="text-body-medium-16 text-foreground">결제금액</span>}
+                    description={
+                      <span className="text-title-bold-16 text-foreground">{formatWon(total)}</span>
+                    }
+                    alignEnd
+                    className="min-h-9 px-0 py-1"
+                  />
+                  <DefinitionRow
+                    term="판매가격"
+                    description={formatWon(itemTotal)}
+                    alignEnd
+                    className="min-h-9 px-0 py-1"
+                  />
+                  <DefinitionRow
+                    term="배송비"
+                    description={formatWon(SHIPPING_FEE)}
+                    alignEnd
+                    className="min-h-9 px-0 py-1"
+                  />
+                </dl>
+              )}
 
               {/* 고른 것이 없으면 결제로 넘어갈 수 없다 */}
               {checkedItems.length > 0 ? (
-                <Button className="mt-3 min-h-11 w-full" asChild>
+                <Button asChild className={cn("h-11 w-full rounded-lg", "text-label-bold-16")}>
                   <Link href="/payment">결제하기</Link>
                 </Button>
               ) : (
-                <Button className="mt-3 min-h-11 w-full" disabled>
+                <Button disabled className={cn("h-11 w-full rounded-lg", "text-label-bold-16")}>
                   결제하기
                 </Button>
               )}
@@ -196,10 +199,12 @@ export function CartView() {
         onOpenChange={(open) => !open && setRemoveTarget(null)}
       >
         <AlertDialogContent>
+          {/* 시안(cart_001_삭제하기)은 제목과 설명에 같은 문구를 넣어 두었다. 더미로 보여
+              기존 문구를 유지하고 PD팀에 확인을 요청했다 */}
           <AlertDialogTitle>장바구니에서 이 상품을 뺄까요?</AlertDialogTitle>
           <AlertDialogDescription>나중에 언제든지 다시 담을 수 있어요</AlertDialogDescription>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">취소</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
             <AlertDialogAction
               className="min-h-11"
               onClick={() => removeTarget && remove(removeTarget.id)}
