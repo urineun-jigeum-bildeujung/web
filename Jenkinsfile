@@ -11,10 +11,11 @@ pipeline {
         disableConcurrentBuilds()
     }
 
-    // sever와 동일하게 Kubernetes 동적 agent Pod. gradle 컨테이너는 필요 없음 —
-    // npm build는 Dockerfile의 builder 스테이지 안에서 kaniko가 직접 수행한다
-    // (모노레포 7서비스처럼 무거운 빌드가 아니라 굳이 kaniko 밖에서 미리 빌드해둘
-    // 이유가 없음).
+    // sever와 동일하게 Kubernetes 동적 agent Pod. npm ci + npm run build를 kaniko
+    // 안에서 통째로 돌리면 패키지 852개 설치 + 빌드 스냅샷 오버헤드로 ephemeral-storage
+    // 3Gi를 초과해 파드가 Evicted됨(2026-09-14 실제 web-ci 첫 빌드에서 재현 — sever의
+    // gradle bootJar를 kaniko 밖으로 뺀 것과 동일한 문제/해법). node 컨테이너에서
+    // standalone 산출물을 미리 만들어두고, kaniko는 그 결과물(약 80MB)만 COPY한다.
     agent {
         kubernetes {
             yaml """
@@ -23,6 +24,21 @@ kind: Pod
 spec:
   serviceAccountName: jenkins-kaniko
   containers:
+    - name: node
+      image: node:22-alpine
+      command:
+        - sleep
+      args:
+        - 99d
+      resources:
+        requests:
+          cpu: 100m
+          memory: 512Mi
+          ephemeral-storage: 512Mi
+        limits:
+          cpu: "2"
+          memory: 2Gi
+          ephemeral-storage: 2Gi
     - name: kaniko
       image: gcr.io/kaniko-project/executor:debug
       command:
@@ -32,11 +48,11 @@ spec:
         requests:
           cpu: 50m
           memory: 128Mi
-          ephemeral-storage: 512Mi
+          ephemeral-storage: 256Mi
         limits:
-          cpu: "2"
-          memory: 2Gi
-          ephemeral-storage: 3Gi
+          cpu: "1"
+          memory: 1Gi
+          ephemeral-storage: 1Gi
     - name: trivy
       image: aquasec/trivy:0.74.0
       command:
@@ -107,6 +123,17 @@ spec:
                     isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
 
                     echo "실배포 여부: ${isRealDeploy}"
+                }
+            }
+        }
+
+        stage('Build App') {
+            steps {
+                container('node') {
+                    sh """
+                        npm ci
+                        npm run build
+                    """
                 }
             }
         }

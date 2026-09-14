@@ -1,5 +1,4 @@
 node_modules
-.next
 .git
 .env*
 *.md
@@ -10,3 +9,10 @@ test-results
 coverage
 .vscode
 .husky
+
+# .next 산출물 중 standalone/static만 필요 (build cache/server 등 나머지는 불필요하게 큼)
+.next/**
+!.next/standalone
+!.next/standalone/**
+!.next/static
+!.next/static/**
