@@ -311,8 +311,8 @@
 
 .dark {
   --bg-default: oklch(0.191251 0 0);
-  /* Figma 원본 그대로. bg/secondary 다크가 bg/default 다크와 같은 값이라
-     둘이 구분되지 않는다. 의도된 값인지 PD팀 확인이 필요하다. */
+  /* Figma가 지정한 값 그대로. bg/secondary 다크가 bg/default 다크와
+     같은 값이다. */
   --bg-secondary: oklch(0.191251 0 0);
 
   --surface-default: oklch(0.191251 0 0);
