@@ -1,11 +1,10 @@
 // 수량을 하나씩 올리고 내린다. 가운데 숫자는 읽기만 한다.
-// 와이어프레임 기준(cart_001)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안(cart_001) 기준이다. 칸 하나가 32×32(`button/m`)이고 좌우 끝만 둥글다.
 
 "use client";
 
-import { IoAdd, IoRemove } from "react-icons/io5";
-
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type QuantityStepperProps = {
   value: number;
@@ -17,7 +16,10 @@ type QuantityStepperProps = {
   className?: string;
 };
 
-const BUTTON = "flex size-11 items-center justify-center text-foreground disabled:opacity-40";
+// 시안이 칸 세 개를 하나의 테두리로 묶고 사이를 선으로 나눈다.
+// 그래서 테두리를 바깥 div가 아니라 각 칸이 나눠 갖는다 — 가운데 칸은 좌우 선이 없다.
+const CELL = "flex size-8 items-center justify-center border-y border-border";
+const BUTTON = cn(CELL, "text-icon-stroke-secondary disabled:text-icon-stroke-disable");
 
 export function QuantityStepper({
   value,
@@ -28,23 +30,29 @@ export function QuantityStepper({
   className,
 }: QuantityStepperProps) {
   return (
-    <div
-      className={cn("flex items-center rounded-lg border border-border", className)}
-      role="group"
-      aria-label={label}
-    >
+    <div className={cn("flex items-center", className)} role="group" aria-label={label}>
       <button
         type="button"
         aria-label={`${label} 하나 줄이기`}
         disabled={value <= min}
         onClick={() => onChange(value - 1)}
-        className={BUTTON}
+        className={cn(BUTTON, "rounded-l-md border-l")}
       >
-        <IoRemove aria-hidden className="size-4" />
+        <Icon name="minus" className="size-4" />
       </button>
 
       {/* 값이 바뀌면 스크린 리더가 알리도록 live 영역으로 둔다 */}
-      <span aria-live="polite" className="min-w-8 text-center text-sm text-foreground">
+      {/* 시안은 칸 사이를 테두리가 아니라 가운데 12px짜리 짧은 선으로 나눈다.
+          칸에 좌우 테두리를 주면 위아래 끝까지 이어져 다른 모양이 된다 */}
+      <span
+        aria-live="polite"
+        className={cn(
+          CELL,
+          "relative text-label-medium-14 text-foreground",
+          "before:absolute before:left-0 before:h-3 before:w-px before:bg-border",
+          "after:absolute after:right-0 after:h-3 after:w-px after:bg-border",
+        )}
+      >
         {value}
       </span>
 
@@ -53,9 +61,9 @@ export function QuantityStepper({
         aria-label={`${label} 하나 늘리기`}
         disabled={value >= max}
         onClick={() => onChange(value + 1)}
-        className={BUTTON}
+        className={cn(BUTTON, "rounded-r-md border-r")}
       >
-        <IoAdd aria-hidden className="size-4" />
+        <Icon name="plus" className="size-4" />
       </button>
     </div>
   );
