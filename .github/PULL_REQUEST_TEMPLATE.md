@@ -34,6 +34,6 @@ Closes #
 - [ ] FSD 의존 방향 준수 (상위 → 하위 단방향, 같은 레이어 간 참조 없음)
 - [ ] 서버/클라이언트 컴포넌트 경계 확인 (`use client`를 필요한 최하위에만 부착)
 - [ ] HEX 하드코딩 없이 시맨틱 토큰 사용 (`bg-primary`, `text-muted-foreground` 등)
-- [ ] 터치 UX 준수 (최소 탭 44×44, hover 의존 없음, 색상 단독 정보전달 없음)
+- [ ] 터치 UX 준수 (탭 크기는 시안 값, 시안에 없으면 44×44 / hover 의존 없음 / 색상 단독 정보전달 없음)
 - [ ] 이미지는 `next/image` + width·height(또는 fill), 의미 있는 alt
 - [ ] 새 소스 파일에 한 줄 역할 주석 (`src/shared/ui/`의 shadcn 생성 파일은 제외)

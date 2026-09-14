@@ -88,7 +88,7 @@
 Lighthouse 접근성 95점이 목표다. `eslint-plugin-jsx-a11y` 규칙 31개가 저장 시점에 검사하지만 린트가 못 잡는 것들이 있다.
 
 - **누르는 것은 `button`, 이동하는 것은 `a`/`Link`다.** `div`에 `onClick`을 달지 않는다
-- 터치 대상은 최소 44×44다
+- 터치 대상 크기는 시안이 지정한 값을 따른다. 시안에 없으면 44×44가 기본이다 ([design-convention](./design-convention.md)의 "터치 UX")
 - 색만으로 정보를 전달하지 않는다. 품절·할인·선택 여부는 텍스트나 아이콘을 함께 쓴다
 - 토글 버튼은 `aria-pressed`, 열고 닫는 것은 `aria-expanded`를 준다
 - 아이콘만 있는 버튼에는 `aria-label`을 준다
