@@ -81,7 +81,8 @@ cp .env.example .env.local
 | CSS | Tailwind CSS | 4.3.3 |
 | UI 컴포넌트 | shadcn/ui | 4.17.0 |
 | 프리미티브 | radix-ui | 1.6.7 |
-| 아이콘 (메인) | react-icons | 5.7.0 |
+| 아이콘 (메인) | `shared/ui/icon` (Figma 43종) | — |
+| 아이콘 (보충) | react-icons | 5.7.0 |
 | 아이콘 (shadcn 내부) | lucide-react | 1.31.0 |
 | 애니메이션 | motion | 13.1.0 |
 
@@ -113,7 +114,7 @@ cp .env.example .env.local
 - **`package.json`의 `overrides`를 제거하지 마십시오.** `react-is`를 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링이 깨집니다. `@swc/helpers`는 0.5.23으로 고정합니다. 고정하지 않으면 중첩 설치가 생기고, 의존성 갱신기가 그 엔트리를 지우면서 CI의 `npm ci`가 깨집니다.
 - **Tailwind v4에는 설정 파일이 없습니다.** `tailwind.config.js`를 만들지 마십시오. 설정은 `src/app/globals.css`의 `@theme` 지시어로 합니다.
 - **Radix UI는 단일 패키지입니다.** `@radix-ui/react-*` 개별 패키지를 설치하지 마십시오.
-- **shadcn CLI는 react-icons를 지원하지 않습니다.** `components.json`의 `iconLibrary`는 `lucide`로 유지하고, 화면에 직접 배치하는 아이콘만 react-icons를 씁니다.
+- **shadcn CLI는 react-icons를 지원하지 않습니다.** `components.json`의 `iconLibrary`는 `lucide`로 유지하고, 화면에 직접 배치하는 아이콘은 `shared/ui/icon`의 `Icon`을 씁니다. 세트에 없는 글리프만 react-icons로 보충합니다.
 
 ---
 

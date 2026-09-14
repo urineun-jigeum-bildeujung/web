@@ -160,7 +160,7 @@
 | CSS | tailwindcss | 4.3.3 | 유틸리티 기반 스타일링 |
 | UI | shadcn | 4.17.0 | 접근성 내장 컴포넌트 (CLI로 복사) |
 | 프리미티브 | radix-ui | 1.6.7 | shadcn 기반. 단일 패키지 |
-| 아이콘 | react-icons | 5.7.0 | **메인 아이콘 세트** |
+| 아이콘 | react-icons | 5.7.0 | `shared/ui/icon`에 없는 글리프를 보충할 때만 |
 | 아이콘 | lucide-react | 1.31.0 | shadcn 생성 컴포넌트 내부 전용 |
 | 애니메이션 | motion | 13.1.0 | 애니메이션 |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
@@ -265,7 +265,8 @@ Provider는 트리에서 가능한 한 깊은 곳에 두십시오. `src/shared/p
 
 ### 5.3 아이콘 규칙
 
-- 화면에 직접 배치하는 아이콘은 **react-icons**를 사용합니다.
+- 화면에 직접 배치하는 아이콘은 **`shared/ui/icon`의 `Icon`**을 사용합니다. Figma 디자인 시스템 `icon` 페이지 43종이 그대로 들어 있습니다.
+- 세트에 없는 글리프만 react-icons로 보충하고, 그 파일 헤더 주석에 어떤 아이콘이 왜 세트 밖인지 남깁니다. PD팀에 추가를 요청할 근거가 됩니다.
 - `components.json`의 `iconLibrary`는 `lucide`로 유지합니다. shadcn CLI는 react-icons 매핑을 지원하지 않아(지원 목록은 lucide·phosphor·hugeicons·radix), 값을 바꾸면 CLI가 인식하지 못합니다.
 - `src/shared/ui/` 하위 shadcn 생성 파일 안의 lucide import는 그대로 두십시오. 손으로 react-icons로 바꾸면 내장된 접근성 속성이 조용히 깨질 수 있습니다.
 
