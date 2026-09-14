@@ -1,12 +1,23 @@
 // 루트 레이아웃. 폰트 변수와 전역 스타일을 걸고 AppProviders로 감싼다.
 
 import type { Metadata } from "next";
-import { Geist_Mono, Noto_Sans } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/shared/lib/utils";
 import { AppProviders } from "@/shared/providers/app-providers";
 
-const notoSans = Noto_Sans({ subsets: ["latin"], variable: "--font-sans" });
+// Figma 타이포 토큰이 전부 typo/pretendard를 참조한다. Google Fonts에 없어 파일을 직접 들고 있다.
+// weight 셋만 받는 이유는 토큰이 400(label/regular_13)·500(medium)·700(bold)만 쓰기 때문이다.
+// 통짜 대신 subset(한글 상용 2350자)이라 세 벌을 합쳐도 787KB다.
+const pretendard = localFont({
+  src: [
+    { path: "./fonts/Pretendard-Regular.subset.woff2", weight: "400" },
+    { path: "./fonts/Pretendard-Medium.subset.woff2", weight: "500" },
+    { path: "./fonts/Pretendard-Bold.subset.woff2", weight: "700" },
+  ],
+  variable: "--font-sans",
+});
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -25,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={cn("h-full", "antialiased", geistMono.variable, "font-sans", notoSans.variable)}
+      className={cn("h-full", "antialiased", geistMono.variable, "font-sans", pretendard.variable)}
     >
       <body className="min-h-full">
         {/* 지금은 모바일 시안만 있어 화면 폭을 여기서 한 번에 제한한다.
