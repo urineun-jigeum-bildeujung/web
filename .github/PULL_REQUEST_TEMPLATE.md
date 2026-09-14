@@ -26,6 +26,8 @@ Closes #
 - [ ] `CHANGELOG.md`의 오늘 날짜 절에 이번 작업 기록 (기록할 가치가 없으면 사유 명시)
 - [ ] PR 제목이 `유형(#이슈번호): 내용` 형식 (라벨과 릴리스 노트 분류가 여기서 자동으로 결정된다)
 - [ ] `npm run typecheck` 통과
+- [ ] `npm run format:check` 통과
+- [ ] `npm run lint` 통과
 - [ ] `npm run test` 통과
 - [ ] 새 순수 함수·훅 로직에 colocated 테스트 동반 (해당 없으면 사유 명시)
 - [ ] `npm run build` 통과 (또는 단순 UI/CSS 조정이라 생략 — 사유 명시)
