@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
+  // Docker 이미지에 node_modules 전체 대신 실행에 필요한 파일만 추려서 담기 위함
+  // (.next/standalone). infra 레포 sever의 Dockerfile과 동일한 목적.
+  output: "standalone",
   // dev 서버는 기본적으로 localhost 외의 출처에서 오는 개발용 자산 요청을 403으로 막는다.
   // WebView 앱(mobile 저장소)이 에뮬레이터에서 붙으려면 이 주소를 허용해야 한다.
   // 막히면 JS 청크가 403이 되어 하이드레이션이 조용히 실패한다.
