@@ -66,7 +66,12 @@ export function PageHeader({
 
       {/* 제목이 없어도 가운데 칸을 비워 둔다. sr-only는 position:absolute라
           그리드 배치에서 빠지고, 그러면 오른쪽 슬롯이 가운데 칸으로 올라온다. */}
-      {title ? <h1 className="truncate text-base font-bold text-foreground">{title}</h1> : <span />}
+      {title ? (
+        // 시안의 공용 header가 title/bold_18을 쓴다 (#172)
+        <h1 className="truncate text-title-bold-18 text-foreground">{title}</h1>
+      ) : (
+        <span />
+      )}
 
       <div className="flex items-center justify-end gap-1">{right}</div>
     </header>
