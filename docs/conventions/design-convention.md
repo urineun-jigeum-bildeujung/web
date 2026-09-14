@@ -7,7 +7,7 @@
 - **Tailwind v4에는 설정 파일이 없다.** `tailwind.config.js`를 만들지 않는다. v3 예제를 그대로 옮기면 동작하지 않는다.
 - 새 토큰이 필요하면 임의로 클래스를 만들지 말고 `@theme`에 먼저 추가한다.
 - **공용 시맨틱 색상 토큰은 Figma `골라주개냥 Design System`의 `03. semantic` 컬렉션이 원본이다.**
-  `--surface-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
+  `--bg-*`·`--surface-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
   CSS 변수 형식인 `-`로 바꾼 이름이다
   (예: `surface/primary_strong` → `--surface-primary-strong`). 기존의 `bg/*`를
   `surface/*`(컴포넌트 표면)로 옮기고, `bg/*`는 화면 프레임 배경 전용으로 새로

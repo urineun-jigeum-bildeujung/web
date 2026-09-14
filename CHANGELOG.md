@@ -14,6 +14,12 @@
 ### 변경
 
 - 소셜 로그인 복귀 방식이 토큰을 쿼리로 넘기던 것에서 일회용 code를 넘기고 프론트가 교환하는 것으로 바뀐 것을 인증 설명에 반영했다. 토큰 보관소 주석과 API 클라이언트 문서가 구 방식을 전제로 남아 있어, 콜백 화면을 만들 때 쿼리에서 토큰을 읽게 될 수 있었다. 라우팅 문서에는 `/auth/callback?code=`를 예정 라우트로 올리고 신규 회원이면 `/signup`, 아니면 `/`로 보내는 분기를 적었다 (#154)
+- `bg/*`(화면 프레임 배경)와 `surface/*`(컴포넌트 표면)가 리네임이 아니라 별개 카테고리로 분리된 것임을 PD팀에게 재확인해, `docs/conventions/design-convention.md`와 `globals.css` 주석의 잘못된 설명을 정정했다 (#136)
+- `--bg-default`·`--bg-secondary`를 새로 반영하고 `--background`를 `surface/default`가 아니라 `bg/default`에 연결했다. `bg/secondary` 다크 값은 `bg/default` 다크와 같은데, 이는 Figma가 지정한 값 그대로다 (#136)
+- Figma `04. component`의 `card/bg`가 `surface/default`가 아니라 `surface/default_react`를 참조하는 것을 확인해 `--card`를 재연결했다. `dialog`·`sheet` 컴포넌트도 같은 `card/bg`를 쓰므로 `dialog.tsx`·`alert-dialog.tsx`·`drawer.tsx`를 `bg-popover`·`text-popover-foreground`에서 `bg-card`·`text-card-foreground`로 바꿨다. `dropdown`(`select.tsx`)은 `surface/default`를 직접 참조해 `bg-popover`를 그대로 유지했다 (#136)
+- `surface/default_sheet`가 `surface/default_react`로, `surface/dimmed`가 `surface/overlay_dimmed`로 다시 리네임된 것을 반영하고, 흰색 기반의 신규 토큰 `surface/overlay_static`을 추가했다 (#136)
+
+---
 
 ## 2026-09-11
 
@@ -25,17 +31,6 @@
 - brand·success·destructive의 흰 글자 대비를 PD팀이 APCA 기준으로 재평가해 유지하기로 확인했다. WCAG 비율 공식 기준으로는 여전히 미달이라 Lighthouse 감사에서는 미달로 잡힐 수 있다 (#136)
 - `--muted`·`--muted-foreground`는 `bg/tertiary`와 역할이 비슷해 보였을 뿐 Figma·PD팀이 실제로 지정한 대응이 아니었음을 확인해, 전역 연결 없이 shadcn 기본값을 유지하기로 정리했다. `bg/tertiary`를 직접 쓰는 화면은 그 토큰을 바로 쓰고 글자는 용도에 따라 고른다 (#136)
 - Figma가 기존 `bg/*`를 `surface/*`(컴포넌트 표면)로 옮기고, `bg/*`는 화면 프레임 배경 전용으로 새로 분리했다. `surface/dimmed`(투명도 보존)를 새로 반영하고, `icon/fill/rating`을 `icon/fill/accent`로 리네임했으며, `icon/fill`에 색상 계열 10개(연한/진한 초록·빨강·파랑·브랜드·보라)를 추가해 공용 시맨틱 토큰이 총 85개가 됐다 (#136)
-
----
-
-## 2026-09-14
-
-### 변경
-
-- `bg/*`(화면 프레임 배경)와 `surface/*`(컴포넌트 표면)가 리네임이 아니라 별개 카테고리로 분리된 것임을 PD팀에게 재확인해, `docs/conventions/design-convention.md`와 `globals.css` 주석의 잘못된 설명을 정정했다 (#136)
-- `--bg-default`·`--bg-secondary`를 새로 반영하고 `--background`를 `surface/default`가 아니라 `bg/default`에 연결했다. `bg/secondary` 다크 값은 `bg/default` 다크와 같은데, 이는 Figma가 지정한 값 그대로다 (#136)
-- Figma `04. component`의 `card/bg`가 `surface/default`가 아니라 `surface/default_react`를 참조하는 것을 확인해 `--card`를 재연결했다. `dialog`·`sheet` 컴포넌트도 같은 `card/bg`를 쓰므로 `dialog.tsx`·`alert-dialog.tsx`·`drawer.tsx`를 `bg-popover`·`text-popover-foreground`에서 `bg-card`·`text-card-foreground`로 바꿨다. `dropdown`(`select.tsx`)은 `surface/default`를 직접 참조해 `bg-popover`를 그대로 유지했다 (#136)
-- `surface/default_sheet`가 `surface/default_react`로, `surface/dimmed`가 `surface/overlay_dimmed`로 다시 리네임된 것을 반영하고, 흰색 기반의 신규 토큰 `surface/overlay_static`을 추가했다 (#136)
 
 ### 추가
 
