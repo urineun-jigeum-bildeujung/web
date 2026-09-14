@@ -157,4 +157,7 @@ Lighthouse 접근성 **95점 이상**이 목표다. 국내 경쟁 3사가 75~89�
 - 버튼·링크에 접근 가능한 이름이 있다 (아이콘만 있는 버튼 주의).
 - 시맨틱 태그를 쓴다. 클릭 가능한 `div` 대신 `button`을 쓴다.
 - 폼 입력에 label이 연결되어 있다.
-- 텍스트 대비가 충분하다.
+- 텍스트 대비가 충분하다. 예외: `--brand-foreground`·`--success-foreground`·
+  `--destructive-foreground`는 WCAG 비율로는 미달이지만 PD팀이 APCA 기준으로
+  재평가해 유지하기로 했다 ("토큰" 절 참고). Lighthouse 감사에서는 이 세 조합이
+  미달로 잡힐 수 있다.
