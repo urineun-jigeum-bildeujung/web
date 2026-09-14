@@ -19,6 +19,7 @@
 - Figma `04. component`의 `card/bg`가 `surface/default`가 아니라 `surface/default_react`를 참조하는 것을 확인해 `--card`를 재연결했다. `dialog`·`sheet` 컴포넌트도 같은 `card/bg`를 쓰므로 `dialog.tsx`·`alert-dialog.tsx`·`drawer.tsx`를 `bg-popover`·`text-popover-foreground`에서 `bg-card`·`text-card-foreground`로 바꿨다. `dropdown`(`select.tsx`)은 `surface/default`를 직접 참조해 `bg-popover`를 그대로 유지했다 (#136)
 - `surface/default_sheet`가 `surface/default_react`로, `surface/dimmed`가 `surface/overlay_dimmed`로 다시 리네임된 것을 반영하고, 흰색 기반의 신규 토큰 `surface/overlay_static`을 추가했다 (#136)
 - 본문 폰트를 `Noto_Sans`에서 **Pretendard**로 바꿨다. Figma 타이포 토큰이 모두 `typo/pretendard`를 참조하는데 기존 폰트는 latin subset이라 한글 글리프가 없어, 화면의 한글이 보는 사람의 OS에 따라 다른 모양으로 그려지고 있었다. Google Fonts에 없는 폰트라 `next/font/local`로 self-host하고, weight는 토큰이 실제로 쓰는 400·500·700 세 벌만 subset으로 받았다(합계 787KB). CDN에서 불러오지 않은 것은 `next/font`가 만들어 주는 `size-adjust` fallback을 써야 폰트 교체 순간에 레이아웃이 밀리지 않기 때문이다. 이로써 AGENTS.md 6절의 "한글 본문 폰트" 보류가 풀렸다 (#162)
+- 폰트 교체에 맞춰 `font-semibold`(600) 14곳을 `font-bold`로 바꿨다. 디자인 시스템의 Text Style이 `regular`(400)·`medium`(500)·`bold`(700) 셋뿐이라 600은 애초에 없는 굵기이고, CSS 폰트 매칭 규칙상 500을 넘는 요청은 더 굵은 쪽을 먼저 찾으므로 600은 이미 700으로 그려지고 있었다. 각 자리가 시안상 어떤 Text Style인지는 화면별 UI 적용 작업에서 다시 잡는다 (#162)
 
 ---
 
