@@ -1,10 +1,12 @@
 "use client";
 // 앱 전역 Provider를 한곳에서 조립한다. layout은 이 컴포넌트 하나만 감싼다.
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { shouldRetryQuery } from "@/shared/api/client";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { Toaster } from "@/shared/ui/sonner";
 import { Tooltip } from "radix-ui";
 import { useState } from "react";
@@ -14,6 +16,18 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
+        // 변경 실패는 사용자가 방금 누른 행동이 안 먹힌 것이라 반드시 알려야 한다.
+        //
+        // 이 처리를 defaultOptions.mutations.onError가 아니라 MutationCache에 두는 이유가 있다.
+        // defaultOptions 쪽은 호출부가 onError를 주면 통째로 덮여 알림이 조용히 사라진다.
+        // 캐시 단위는 호출부 핸들러와 함께 항상 실행된다.
+        //
+        // 조회(QueryCache) 실패는 여기서 다루지 않는다. 목록이 비면 빈 상태를,
+        // 화면이 깨지면 ErrorBoundary를 보여주는 편이 낫고, 배경 refetch까지 토스트를
+        // 띄우면 사용자가 하지도 않은 일로 알림이 뜬다. 알림이 필요한 조회는 호출부가 정한다.
+        mutationCache: new MutationCache({
+          onError: (error) => toastAppError(toAppMessageCode(error), error),
+        }),
         defaultOptions: {
           queries: {
             // SSR에서 서버가 이미 받아온 데이터를 클라이언트가 즉시 다시 요청하지 않도록 한다.
