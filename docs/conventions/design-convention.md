@@ -28,6 +28,10 @@
   글자는 WCAG 비율 공식(4.5:1)으로는 미달이지만, PD팀이 APCA 기준으로 재평가해
   유지하기로 했다. Lighthouse는 APCA가 아닌 WCAG 비율로 대비를 검사하므로,
   접근성 감사에서 이 조합이 미달로 잡힐 수 있다는 점을 알고 있어야 한다.
+- **모서리와 그림자도 Figma 값이다.** `rounded-sm·md·lg·xl·2xl`은 `radius/4·6·8·12·16`(px)에
+  명시값으로 고정돼 있고, `rounded-full`이 `radius/full`이다. `shadow-xs·sm·md·lg·xl`은
+  foundation의 `shadow_xs·s·m·l·xl` 다섯 단계(각 두 겹)다. 시안의 `radius/8`은 `rounded-lg`,
+  `shadow_s`는 `shadow-sm`으로 옮긴다. 임의 값 `rounded-[8px]`·`shadow-[...]`를 쓰지 않는다 (#169).
 - 전체 토큰 목록은 이 문서에 나열하지 않는다. 코드에 반영된 목록과 값은
   `globals.css`에서, 디자인 원본은 Figma에서 확인한다. 토큰이 추가·변경될 때마다
   목록을 중복 관리하면 문서와 구현이 어긋날 수 있다.

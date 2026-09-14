@@ -217,13 +217,34 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  /* Figma radius/4·6·8·12·16. shadcn 기본은 --radius 하나에서 배율로 파생하는데
+     그러면 어느 단계도 시안 값과 맞지 않아 명시값으로 고정한다. 3xl·4xl은 시안에
+     없어 Tailwind 기본값을 둔다. radius/full은 rounded-full(9999px) 그대로다. */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.375rem; /* 6px */
+  --radius-lg: 0.5rem; /* 8px */
+  --radius-xl: 0.75rem; /* 12px */
+  --radius-2xl: 1rem; /* 16px */
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+  /* Figma foundation > shadow. 다섯 단계가 각각 두 겹이고 색은 surface/primary
+     라이트값(#2A3038)에 투명도만 다르다. Figma 이름 shadow_s·m·l은 Tailwind
+     관례대로 sm·md·lg에 대응시킨다. 다크 모드 값은 시안에 없어 같은 값을 쓴다. */
+  --shadow-xs:
+    0 2px 14px 0 oklch(0.306721 0.016703 255.647 / 5%),
+    0 2px 20px 0 oklch(0.306721 0.016703 255.647 / 5%);
+  --shadow-sm:
+    0 2px 12px 1px oklch(0.306721 0.016703 255.647 / 9%),
+    0 4px 30px 1px oklch(0.306721 0.016703 255.647 / 6%);
+  --shadow-md:
+    0 5px 20px -2px oklch(0.306721 0.016703 255.647 / 12%),
+    0 7px 40px -1px oklch(0.306721 0.016703 255.647 / 12%);
+  --shadow-lg:
+    0 6px 18px -1px oklch(0.306721 0.016703 255.647 / 20%),
+    0 8px 40px 0 oklch(0.306721 0.016703 255.647 / 20%);
+  --shadow-xl:
+    0 8px 20px 0 oklch(0.306721 0.016703 255.647 / 20%),
+    0 10px 30px 4px oklch(0.306721 0.016703 255.647 / 20%);
 }
 
 :root {
@@ -382,7 +403,8 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  /* shadcn 파일 한 곳이 var(--radius)를 직접 쓴다. 시안 기본 모서리 radius/8과 같게 둔다 */
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
