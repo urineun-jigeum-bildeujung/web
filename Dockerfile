@@ -9,6 +9,13 @@ ENV NODE_ENV=production
 
 RUN addgroup -S appgroup && adduser -S --ingroup appgroup -H appuser
 
+# 런타임은 node server.js만 실행하면 돼서 npm/npx/corepack/yarn이 전혀 필요 없다.
+# node:22-alpine이 기본 포함하는 npm CLI 내부 의존성(tar 등)에서 trivy CRITICAL이
+# 걸려서(2026-09-14 실제로 겪음) 아예 통째로 지운다 — 안 쓰는 도구라 지워도
+# server.js 실행에는 영향 없다.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-v*
+
 COPY --chown=appuser:appgroup .next/standalone ./
 COPY --chown=appuser:appgroup .next/static ./.next/static
 COPY --chown=appuser:appgroup public ./public

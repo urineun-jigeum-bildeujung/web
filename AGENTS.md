@@ -153,7 +153,7 @@
 
 | 구분 | 패키지 | 버전 | 역할 |
 | --- | --- | --- | --- |
-| 프레임워크 | next | 16.3.0 | App Router 기반 SSR·라우팅 |
+| 프레임워크 | next | 16.3.5 | App Router 기반 SSR·라우팅 |
 | 런타임 | react / react-dom | 19.2.8 | UI 렌더링 |
 | 언어 | typescript | 5.9.3 | 타입 안정성 |
 | 컴파일러 | babel-plugin-react-compiler | 1.0.0 | 자동 메모이제이션 |
