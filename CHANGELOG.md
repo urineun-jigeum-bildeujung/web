@@ -35,6 +35,7 @@
 
 - Dockerfile을 추가하고 `next.config.ts`에 `output: "standalone"`을 켰다. CI(코드 품질 검증)만 있고 배포 파이프라인은 없던 상태에서, sever 레포와 같은 방식(Jenkins·kaniko·ECR·GitOps)으로 컨테이너 배포를 연결하기 위한 첫 단계다. 로컬에서 이미지 빌드와 기동을 확인했다 (#178)
 - Jenkinsfile을 추가했다. GitHub Actions가 이미 코드 품질을 검증하므로 이 파이프라인은 빌드·Trivy CRITICAL 스캔·ECR push·GitOps 갱신만 맡는다. sever와 달리 서비스가 하나뿐이라 다중 서비스 분기 없이 단순한 구조다 (#178)
+- 첫 web-ci 빌드가 kaniko ephemeral-storage 3Gi 초과로 Evicted됐다. Dockerfile 안에서 npm ci(패키지 852개) + build를 kaniko가 통째로 떠안은 게 원인이라, node 컨테이너에서 standalone 산출물(약 80MB)을 미리 만들고 kaniko는 결과물만 COPY하도록 Dockerfile·Jenkinsfile을 고쳤다 (#178)
 
 ---
 
