@@ -8,6 +8,8 @@
 | `client.test.ts` | `apiRequest` 단위 테스트 |
 | `token-store.ts` | 인증 토큰 보관소 — accessToken 메모리, refreshToken localStorage. `hasSession`·`subscribeTokensCleared` 포함 |
 | `token-store.test.ts` | 토큰 보관소 단위 테스트 |
+| `error-message.ts` | 실패 응답을 문구 코드로 옮긴다(`toAppMessageCode`) — `errorCode` 매핑, 없으면 상태 코드 기준 |
+| `error-message.test.ts` | 매핑·fallback·네트워크 실패 구분 단위 테스트 |
 
 - base URL은 `NEXT_PUBLIC_API_BASE_URL`을 읽고, 없으면 `/api/v1`을 쓴다.
 - 성공 응답은 리소스를 그대로 반환하고, 실패 응답은 Spring 표준 ProblemDetail(RFC 9457)을 파싱해 `ApiError.problem`에 담는다. timestamp·traceId는 응답에 없다(traceId는 백엔드 로깅 전용).

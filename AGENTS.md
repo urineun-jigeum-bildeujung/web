@@ -32,7 +32,7 @@
 | [design-convention](./docs/conventions/design-convention.md) | 토큰·cn·모바일 우선·shadcn·아이콘 |
 | [component-convention](./docs/conventions/component-convention.md) | 컴포넌트 배치·공용화 기준·Props·상태·접근성 |
 | [library-convention](./docs/conventions/library-convention.md) | 라이브러리 도입 전 확인 순서·조사 항목·설치 위치 |
-| [app-message-convention](./docs/conventions/app-message-convention.md) | 사용자 문구 (**도입 예정, 현재 미적용**) |
+| [app-message-convention](./docs/conventions/app-message-convention.md) | 사용자 문구·실패 처리 네 층·백엔드 에러 대응 |
 | [validation-convention](./docs/conventions/validation-convention.md) | 검증 순서·실패 보고 |
 | [git-convention](./docs/conventions/git-convention.md) | 커밋·브랜치·PR |
 
@@ -315,7 +315,6 @@ React Compiler가 활성화되어 있습니다(`next.config.ts`의 `reactCompile
 | 항목 | 현재 상태 | 해제 조건 |
 | --- | --- | --- |
 | 테마 토글 | 메인 페이지에 데모 버튼(`features/toggle-theme`)만 있습니다. 선택이 저장되지 않아 새로고침하면 라이트로 돌아갑니다. | 디자인 확정 후 정식 테마 도구(next-themes 등) 결정 |
-| 앱 메시지 체계 | `APP_MESSAGE`·`FORM_MESSAGE`·Toast 미도입. 규칙만 문서로 존재합니다. | 공통 Error 핸들러와 Toast 도입 시점 |
 | API 계약 | 미확정. | 백엔드 팀 Swagger 명세 공유 후 |
 
 ---
