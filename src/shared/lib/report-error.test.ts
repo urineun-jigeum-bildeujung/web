@@ -47,12 +47,15 @@ describe("reportError", () => {
     expect(spy).toHaveBeenCalledWith("[unknown]", "ApiError status=500 code=none");
   });
 
-  it("일반 Error는 이름과 메시지만 남긴다", () => {
+  // message에 무엇이 담길지 우리가 정하지 못한다. 라이브러리가 요청 URL을 넣기도 하고,
+  // JSON 파싱 실패는 본문 조각을 그대로 실어 보낸다
+  it("일반 Error는 이름만 남기고 message는 버린다", () => {
     const spy = spyConsole();
 
-    reportError("route error", new TypeError("Failed to fetch"));
+    reportError("route error", new TypeError("Failed to fetch https://api.test/u?token=abc123"));
 
-    expect(spy).toHaveBeenCalledWith("[route error]", "TypeError: Failed to fetch");
+    expect(spy).toHaveBeenCalledWith("[route error]", "TypeError");
+    expect(spy.mock.calls[0]?.join(" ")).not.toContain("token=abc123");
   });
 
   it("Error가 아닌 것도 형태만 남기고 넘어간다", () => {

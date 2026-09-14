@@ -7,8 +7,11 @@
 import Link from "next/link";
 import { useEffect } from "react";
 
+import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { reportError } from "@/shared/lib/report-error";
 import { Button } from "@/shared/ui/button";
+
+const MESSAGE = APP_MESSAGE[APP_MESSAGE_CODE.common.routeError];
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
   // 사용자에게는 고정 문구만 보이고 원인은 reportError로만 남긴다.
@@ -19,8 +22,8 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   return (
     <div role="alert" className="flex flex-1 flex-col items-center justify-center gap-4 px-6 py-16">
       <div className="flex flex-col items-center gap-1 text-center">
-        <p className="text-label-bold-16 text-foreground">화면을 불러오지 못했어요</p>
-        <p className="text-body-regular-14 text-muted-foreground">잠시 후 다시 시도해 주세요.</p>
+        <p className="text-label-bold-16 text-foreground">{MESSAGE.title}</p>
+        <p className="text-body-regular-14 text-muted-foreground">{MESSAGE.description}</p>
       </div>
 
       <div className="flex gap-2">

@@ -11,7 +11,10 @@
 
 import { useEffect } from "react";
 
+import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { reportError } from "@/shared/lib/report-error";
+
+const MESSAGE = APP_MESSAGE[APP_MESSAGE_CODE.common.appError];
 
 export default function GlobalError({ error }: { error: Error }) {
   useEffect(() => {
@@ -19,7 +22,8 @@ export default function GlobalError({ error }: { error: Error }) {
   }, [error]);
 
   return (
-    <html lang="ko">
+    // color-scheme을 선언해야 light-dark()가 동작한다. 토큰을 못 쓰는 자리라 값은 직접 적는다
+    <html lang="ko" style={{ colorScheme: "light dark" }}>
       <body
         style={{
           margin: 0,
@@ -32,13 +36,15 @@ export default function GlobalError({ error }: { error: Error }) {
           padding: 24,
           textAlign: "center",
           fontFamily: "system-ui, sans-serif",
-          color: "#141414",
-          background: "#ffffff",
+          color: "light-dark(#141414, #ffffff)",
+          background: "light-dark(#ffffff, #141414)",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>문제가 생겼어요</p>
-          <p style={{ margin: 0, fontSize: 14, color: "#565d6d" }}>잠시 후 다시 열어 주세요.</p>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{MESSAGE.title}</p>
+          <p style={{ margin: 0, fontSize: 14, color: "light-dark(#565d6d, #bec1ca)" }}>
+            {MESSAGE.description}
+          </p>
         </div>
 
         {/* reset()은 루트를 다시 그리는데, 레이아웃이 깨진 원인이 남아 있으면 같은 화면으로 돌아온다.
@@ -50,8 +56,9 @@ export default function GlobalError({ error }: { error: Error }) {
             minHeight: 44,
             padding: "0 20px",
             borderRadius: 8,
-            border: "1px solid #dddee3",
-            background: "#ffffff",
+            border: "1px solid light-dark(#dddee3, #5b5c5f)",
+            background: "light-dark(#ffffff, #141414)",
+            color: "inherit",
             fontSize: 14,
             fontWeight: 500,
             cursor: "pointer",
