@@ -123,7 +123,7 @@ export function MypageView() {
           >
             <span aria-hidden className="size-10 shrink-0 rounded-full bg-muted" />
             <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-semibold text-foreground">
+              <span className="truncate text-sm font-bold text-foreground">
                 {MOCK_USER.nickname}
               </span>
               <span className="truncate text-xs text-muted-foreground">{MOCK_USER.email}</span>

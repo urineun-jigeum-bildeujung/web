@@ -87,7 +87,7 @@ export function MyInfoView() {
         </section>
 
         <section className="flex flex-col gap-2">
-          <h2 className="text-base font-semibold text-foreground">배송 받을 곳</h2>
+          <h2 className="text-base font-bold text-foreground">배송 받을 곳</h2>
 
           {MOCK.addresses.map((item) => (
             <Link

@@ -63,7 +63,7 @@ export function MatchScoreBadge({
           : `${subject} ${level.label}. 적합도 ${score}점`}
       </span>
       {score !== null && (
-        <span aria-hidden className="font-semibold">
+        <span aria-hidden className="font-bold">
           {score}
         </span>
       )}

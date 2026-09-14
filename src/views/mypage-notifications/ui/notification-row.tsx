@@ -40,7 +40,7 @@ export function NotificationRow({ item, onSelect }: NotificationRowProps) {
         <span className="shrink-0 rounded-full bg-foreground px-2 py-0.5 text-xs text-background">
           {NOTIFICATION_KIND_LABEL[item.kind]}
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-foreground">
+        <span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">
           {item.title}
           {/* 점만으로는 무엇인지 알 수 없어 읽히는 문장을 함께 둔다 */}
           {item.unread && (
