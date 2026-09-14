@@ -18,6 +18,8 @@
 
 ### 변경
 
+- 모서리 토큰을 배율 파생에서 명시값으로 바꿨다. shadcn 기본은 `--radius` 하나에서 `rounded-sm·md·lg·xl·2xl`을 0.6·0.8·1·1.4·1.8배로 만들어 어느 단계도 Figma `radius/4·6·8·12·16`과 맞지 않았고, 화면마다 `rounded-[8px]` 같은 임의 값을 적게 되던 것을 4·6·8·12·16px로 고정했다. 와이어프레임 기준 화면의 모서리가 1~2px 달라지지만, UI 시안을 적용할 때 화면 단위로 다시 손대므로 여기서 맞추지 않는다 (#169)
+- Figma foundation의 그림자 다섯 단계(`shadow_xs·s·m·l·xl`)를 `shadow-xs·sm·md·lg·xl`로 넣었다. 각 두 겹이고 색은 `surface/primary` 라이트값에 투명도만 다르다. 다크 모드 값은 시안에 없어 같은 값을 쓴다 (#169)
 - 소셜 로그인 복귀 방식이 토큰을 쿼리로 넘기던 것에서 일회용 code를 넘기고 프론트가 교환하는 것으로 바뀐 것을 인증 설명에 반영했다. 토큰 보관소 주석과 API 클라이언트 문서가 구 방식을 전제로 남아 있어, 콜백 화면을 만들 때 쿼리에서 토큰을 읽게 될 수 있었다. 라우팅 문서에는 `/auth/callback?code=`를 예정 라우트로 올리고 신규 회원이면 `/signup`, 아니면 `/`로 보내는 분기를 적었다 (#154)
 - `bg/*`(화면 프레임 배경)와 `surface/*`(컴포넌트 표면)가 리네임이 아니라 별개 카테고리로 분리된 것임을 PD팀에게 재확인해, `docs/conventions/design-convention.md`와 `globals.css` 주석의 잘못된 설명을 정정했다 (#136)
 - `--bg-default`·`--bg-secondary`를 새로 반영하고 `--background`를 `surface/default`가 아니라 `bg/default`에 연결했다. `bg/secondary` 다크 값은 `bg/default` 다크와 같은데, 이는 Figma가 지정한 값 그대로다 (#136)
