@@ -9,7 +9,7 @@ shadcn 컴포넌트와 공용 프리미티브. 비즈니스 의미가 없는 UI�
 | | 위치 | prettier | ESLint (tailwind·a11y) | lucide import |
 | --- | --- | --- | --- | --- |
 | shadcn 생성물 | `shared/ui/*.tsx` | 제외 | 제외 | 허용 |
-| 우리 컴포넌트 | `shared/ui/<name>/` | 적용 | 적용 | 금지 (react-icons를 쓴다) |
+| 우리 컴포넌트 | `shared/ui/<name>/` | 적용 | 적용 | 금지 (`Icon`을 쓴다) |
 
 shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타일이라 포맷하면 `add` 할 때마다 diff가 되살아나고, 내장된 접근성 처리를 우리가 판단할 수 없기 때문이다.
 
@@ -37,6 +37,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 | 폴더 | 설명 |
 | --- | --- |
+| `icon/` | 디자인 시스템 아이콘 43종. `name`으로 고르고 색은 글자색, 크기는 `size-*`. `icon-shapes.ts`는 Figma에서 스크립트로 만든 파일이라 손으로 고치지 않는다 |
 | `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기 기본 버튼 |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동 |

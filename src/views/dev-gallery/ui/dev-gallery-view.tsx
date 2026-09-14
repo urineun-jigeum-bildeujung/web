@@ -37,6 +37,8 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
+import { Icon } from "@/shared/ui/icon/icon";
+import { ICON_NAMES } from "@/shared/ui/icon/icon-shapes";
 
 const GENDER = [
   { value: "male", label: "남자아이" },
@@ -145,6 +147,23 @@ export function DevGalleryView() {
       />
 
       <main className="flex-1">
+        <Section title="Icon">
+          <p className="text-xs text-muted-foreground">
+            Figma icon 페이지 43종. 색은 글자색, 크기는 size-*로 정한다
+          </p>
+          <ul className="grid grid-cols-4 gap-2">
+            {ICON_NAMES.map((name) => (
+              <li
+                key={name}
+                className="flex flex-col items-center gap-1 rounded-lg border border-border p-2"
+              >
+                <Icon name={name} className="text-icon-fill-secondary" />
+                <span className="text-[10px] text-muted-foreground">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
         <Section title="StepProgress">
           <StepProgress total={4} current={2} />
         </Section>
