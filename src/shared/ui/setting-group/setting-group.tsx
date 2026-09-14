@@ -14,7 +14,7 @@ type SettingGroupProps = {
 export function SettingGroup({ title, children, className, ...props }: SettingGroupProps) {
   return (
     <section className={cn("flex flex-col gap-2", className)} {...props}>
-      {title && <h2 className="px-4 text-sm font-semibold text-muted-foreground">{title}</h2>}
+      {title && <h2 className="px-4 text-sm font-bold text-muted-foreground">{title}</h2>}
       {/* 줄 사이 구분선은 첫 줄을 뺀 나머지에만 넣는다 */}
       <div className="overflow-hidden rounded-xl border border-border bg-card [&>*+*]:border-t [&>*+*]:border-border">
         {children}

@@ -115,7 +115,7 @@ export function DevScreensView() {
         <div className="mt-6 flex flex-col gap-6">
           {SCREEN_GROUPS.map((group) => (
             <section key={group.title} className="flex flex-col gap-2">
-              <h2 className="text-sm font-semibold text-foreground">{group.title}</h2>
+              <h2 className="text-sm font-bold text-foreground">{group.title}</h2>
               {group.note && <p className="text-xs text-muted-foreground">{group.note}</p>}
 
               <ul className="overflow-hidden rounded-xl border border-border [&>*+*]:border-t [&>*+*]:border-border">

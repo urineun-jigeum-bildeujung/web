@@ -102,7 +102,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
 
         <main className="flex flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
           <IoCheckmarkCircle aria-hidden className="size-12 text-brand" />
-          <h1 className="text-base font-semibold text-foreground">소중한 리뷰 감사해요!</h1>
+          <h1 className="text-base font-bold text-foreground">소중한 리뷰 감사해요!</h1>
           <p className="text-sm text-balance text-muted-foreground">
             {pet ? `${withJosa(pet.name, "이/가")} 어땠는지 남겨주신 후기가` : "남겨주신 후기가"}
             <br />

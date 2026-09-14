@@ -133,7 +133,7 @@ export function DetailStep({
                 {BODY_TYPE_OPTIONS.map((label, index) => (
                   <span
                     key={label}
-                    className={index === draft.bodyTypeIndex ? "font-semibold text-foreground" : ""}
+                    className={index === draft.bodyTypeIndex ? "font-bold text-foreground" : ""}
                   >
                     {label}
                   </span>

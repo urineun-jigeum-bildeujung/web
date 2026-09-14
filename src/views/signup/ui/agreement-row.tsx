@@ -54,7 +54,7 @@ export function AgreementRow({
           htmlFor={id}
           className={cn(
             "cursor-pointer text-sm text-foreground",
-            master ? "font-semibold" : "font-normal",
+            master ? "font-bold" : "font-normal",
           )}
         >
           {label}

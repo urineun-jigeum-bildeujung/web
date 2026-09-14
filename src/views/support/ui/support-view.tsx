@@ -56,7 +56,7 @@ export function SupportView() {
         </section>
 
         <section className="flex flex-col gap-2 px-4">
-          <h2 className="text-base font-semibold text-foreground">많이 묻는 질문</h2>
+          <h2 className="text-base font-bold text-foreground">많이 묻는 질문</h2>
           <Accordion type="single" collapsible className="w-full">
             {FAQS.map((faq, index) => (
               <AccordionItem key={faq.question} value={`faq-${index}`}>

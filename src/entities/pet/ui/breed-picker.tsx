@@ -19,7 +19,7 @@ export function BreedPicker({ value, onChange, className }: BreedPickerProps) {
         // 같은 이름의 품종이 양쪽에 있다("기타"). 묶음에 이름을 붙여
         // 스크린 리더가 어느 종의 목록인지 알 수 있게 한다
         <section key={species} aria-labelledby={`breed-${species}`} className="flex flex-col gap-3">
-          <h2 id={`breed-${species}`} className="text-base font-semibold text-foreground">
+          <h2 id={`breed-${species}`} className="text-base font-bold text-foreground">
             {SPECIES_LABEL[species]}
           </h2>
           <div className="flex flex-wrap gap-2">
