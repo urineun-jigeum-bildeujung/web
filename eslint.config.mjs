@@ -25,7 +25,7 @@ const RESTRICT_ZUSTAND = {
 const RESTRICT_LUCIDE = {
   group: ["lucide-react", "lucide-react/*"],
   message:
-    "화면에 직접 배치하는 아이콘은 react-icons를 쓰십시오. lucide는 shared/ui의 shadcn 파일 전용입니다. (design-convention)",
+    "화면에 직접 배치하는 아이콘은 shared/ui/icon의 Icon을 쓰십시오. lucide는 shared/ui의 shadcn 파일 전용입니다. (design-convention)",
 };
 
 const eslintConfig = defineConfig([

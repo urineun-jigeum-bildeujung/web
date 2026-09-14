@@ -132,7 +132,9 @@
 
 ## 아이콘
 
-- 화면에 직접 배치하는 아이콘은 **react-icons**를 쓴다. lucide보다 종류가 많아 메인으로 채택했다.
+- 화면에 직접 배치하는 아이콘은 **`shared/ui/icon`의 `Icon`**을 쓴다. Figma `골라주개냥 Design System` > `icon` 페이지의 43종을 스크립트로 옮긴 것이라 시안과 글리프가 같다. 색은 글자색(`text-icon-fill-*`), 크기는 `size-*`로 정한다.
+- 세트에 없는 글리프만 react-icons로 보충한다. 그 파일 헤더에 어떤 아이콘이 왜 세트 밖인지 남기고, 반복되면 PD팀에 추가를 요청한다.
+- `icon-shapes.ts`는 생성 파일이다. 시안이 바뀌면 Figma MCP로 다시 내려받아 만들지, 손으로 고치지 않는다.
 - `components.json`의 `iconLibrary`는 **`lucide`로 유지한다.** shadcn CLI가 지원하는 값은 lucide·phosphor·hugeicons·radix뿐이라 `react-icons`로 바꾸면 CLI가 인식하지 못한다.
 - `src/shared/ui/` 안의 lucide import는 그대로 둔다. 손으로 바꾸면 위의 소유권 규칙에 걸린다. ESLint가 `shared/ui` 밖의 `lucide-react` import를 막는다.
 - 의미를 전달하는 아이콘에는 접근성 이름을 준다. 장식용이면 `aria-hidden`을 준다.
