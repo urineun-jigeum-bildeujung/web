@@ -15,6 +15,7 @@ test("모든 구역이 렌더링된다", () => {
   render(<DevGalleryView />);
 
   for (const title of [
+    "Icon",
     "StepProgress",
     "AvatarUploader",
     "FormField",
