@@ -20,7 +20,8 @@
   --color-surface-default-strong: var(--surface-default-strong);
   --color-surface-primary: var(--surface-primary);
   --color-surface-primary-strong: var(--surface-primary-strong);
-  --color-surface-dimmed: var(--surface-dimmed);
+  --color-surface-overlay-dimmed: var(--surface-overlay-dimmed);
+  --color-surface-overlay-static: var(--surface-overlay-static);
   --color-surface-brand: var(--surface-brand);
   --color-surface-brand-weak: var(--surface-brand-weak);
   --color-surface-brand-strong: var(--surface-brand-strong);
@@ -151,7 +152,9 @@
   --surface-primary: oklch(0.306721 0.016703 255.647);
   --surface-primary-strong: oklch(0.225026 0.009018 255.605);
   /* natural/black 70% 합성. 불투명 색으로 바꾸지 않는다 */
-  --surface-dimmed: oklch(0.191251 0 0 / 70%);
+  --surface-overlay-dimmed: oklch(0.191251 0 0 / 70%);
+  /* natural/white 70% 합성. 불투명 색으로 바꾸지 않는다 */
+  --surface-overlay-static: oklch(1 0 0 / 70%);
   --surface-brand: oklch(0.690433 0.205394 39.89);
   --surface-brand-weak: oklch(0.970573 0.019526 65.149);
   --surface-brand-strong: oklch(0.626978 0.203157 36.927);
@@ -302,7 +305,9 @@
   --surface-primary: oklch(0.860259 0.013161 266.688);
   --surface-primary-strong: oklch(0.905507 0.013404 262.377);
   /* natural/black 50% 합성. 불투명 색으로 바꾸지 않는다 */
-  --surface-dimmed: oklch(0.191251 0 0 / 50%);
+  --surface-overlay-dimmed: oklch(0.191251 0 0 / 50%);
+  /* natural/white 50% 합성. 불투명 색으로 바꾸지 않는다 */
+  --surface-overlay-static: oklch(1 0 0 / 50%);
   --surface-brand: oklch(0.620888 0.18096 40.07);
   --surface-brand-weak: oklch(0.23192 0.036158 36.731);
   --surface-brand-strong: oklch(0.691221 0.15522 45.345);
