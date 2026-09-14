@@ -102,6 +102,36 @@ function BoomTrigger() {
   );
 }
 
+/** Figma Text Style에서 옮긴 타이포 토큰. spec은 "크기 / 행간 / 굵기"를 px와 weight로 적은 것이다.
+ *  Tailwind는 소스를 훑어 클래스를 만들므로 이름을 문자열 그대로 둬야 한다. 조합해서 만들면 빠진다. */
+const TYPO_TOKENS = [
+  { token: "text-title-bold-28", spec: "28 / 42 / 700" },
+  { token: "text-title-bold-24", spec: "24 / 38 / 700" },
+  { token: "text-title-bold-22", spec: "22 / 36 / 700" },
+  { token: "text-title-bold-20", spec: "20 / 32 / 700" },
+  { token: "text-title-bold-18", spec: "18 / 28 / 700" },
+  { token: "text-title-bold-16", spec: "16 / 24 / 700" },
+  { token: "text-body-medium-18", spec: "18 / 28 / 500" },
+  { token: "text-body-medium-16", spec: "16 / 24 / 500" },
+  { token: "text-body-medium-14", spec: "14 / 22 / 500" },
+  { token: "text-body-regular-18", spec: "18 / 28 / 400" },
+  { token: "text-body-regular-16", spec: "16 / 24 / 400" },
+  { token: "text-body-regular-14", spec: "14 / 22 / 400" },
+  { token: "text-body-regular-13", spec: "13 / 20 / 400" },
+  { token: "text-caption-regular-13", spec: "13 / 20 / 400" },
+  { token: "text-caption-regular-12", spec: "12 / 18 / 400" },
+  { token: "text-label-bold-16", spec: "16 / 24 / 700" },
+  { token: "text-label-bold-14", spec: "14 / 22 / 700" },
+  { token: "text-label-bold-12", spec: "12 / 18 / 700" },
+  { token: "text-label-bold-11", spec: "11 / 18 / 700" },
+  { token: "text-label-medium-14", spec: "14 / 22 / 500" },
+  { token: "text-label-medium-12", spec: "12 / 18 / 500" },
+  { token: "text-label-medium-11", spec: "11 / 18 / 500" },
+  { token: "text-label-regular-16", spec: "16 / 24 / 400" },
+  { token: "text-label-regular-14", spec: "14 / 22 / 400" },
+  { token: "text-label-regular-13", spec: "13 / 20 / 400" },
+] as const;
+
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-2 border-t border-border px-4 py-5">
@@ -159,6 +189,21 @@ export function DevGalleryView() {
               >
                 <Icon name={name} className="text-icon-fill-secondary" />
                 <span className="text-[10px] text-muted-foreground">{name}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
+        {/* 타이포 토큰은 컴포넌트가 아니라 값이지만 여기 둔다. 이름만 보고
+            고르기 어렵고, 셋이 같은 토큰을 쓰려면 눈으로 비교할 자리가 필요하다 (#167). */}
+        <Section title="Typography">
+          <ul className="flex flex-col gap-3">
+            {TYPO_TOKENS.map(({ token, spec }) => (
+              <li key={token} className="flex flex-col gap-0.5">
+                <span className="text-[10px] text-muted-foreground">
+                  {token} · {spec}
+                </span>
+                <span className={token}>다람쥐 헌 쳇바퀴에 타고파 Sphinx 0123</span>
               </li>
             ))}
           </ul>
