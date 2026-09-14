@@ -32,6 +32,18 @@
   `globals.css`에서, 디자인 원본은 Figma에서 확인한다. 토큰이 추가·변경될 때마다
   목록을 중복 관리하면 문서와 구현이 어긋날 수 있다.
 
+## 폰트
+
+- **본문 폰트는 Pretendard다.** Figma 타이포 토큰이 모두 `typo/pretendard`를 참조한다.
+- Google Fonts에 없어 `next/font/local`로 self-host한다. 파일은
+  `src/app/fonts/`에 있고 weight는 **400·500·700 세 벌뿐**이다. Figma 타이포 토큰이
+  쓰는 값이 그 셋이라서다. 다른 두께가 필요하면 토큰부터 확인한다.
+- 통짜가 아니라 **subset(한글 상용 2350자)** 이다. 세 벌을 합쳐 787KB이고, 통짜
+  variable 한 장은 2MB다. **CDN에서 불러오지 않는다** — `next/font`가 만들어 주는
+  `size-adjust` fallback을 못 써 폰트가 바뀌는 순간 레이아웃이 밀린다.
+- `--font-sans` 변수 이름은 유지한다. `@theme inline` 매핑과 `font-sans`
+  유틸리티가 그 이름에 걸려 있다 (#162).
+
 ## 다크 모드
 
 - `.dark` 클래스 기반이다(`@custom-variant dark`). 라이트에서만 확인하고 끝내지 않는다.
