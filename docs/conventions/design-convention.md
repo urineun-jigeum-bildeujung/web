@@ -44,6 +44,24 @@
 - `--font-sans` 변수 이름은 유지한다. `@theme inline` 매핑과 `font-sans`
   유틸리티가 그 이름에 걸려 있다 (#162).
 
+## 타이포
+
+- **글자 크기·행간·굵기를 따로 적지 않는다.** Figma Text Style을 옮긴 토큰 한 벌이
+  셋을 함께 건다 — `text-label-bold-14` 하나면 14px · 행간 22 · weight 700이다.
+  `text-sm font-bold leading-[22px]`처럼 쪼개 쓰지 않는다 (#167).
+- 계열은 넷이다. **`title`**(제목, bold만) · **`body`**(본문) · **`caption`**(부가 설명) ·
+  **`label`**(버튼·배지·항목 이름). 시안이 지정한 계열을 그대로 쓴다. 크기가 같아도
+  계열이 다르면 다른 토큰이다.
+- **굵기는 400·500·700 셋뿐이다.** 디자인 시스템에 semibold(600)가 없고 Pretendard도
+  그 셋만 싣고 있다. `font-semibold`를 쓰면 브라우저가 700으로 올려 그리므로
+  의도한 굵기가 나오지 않는다.
+- Figma는 px로 주지만 코드에는 **rem으로 환산**해 넣는다. px로 고정하면 사용자가
+  브라우저 기본 글자 크기를 키워도 화면이 따라 커지지 않는다.
+- `body/*`는 Figma 쪽 이름이 `refular`지만 **코드에는 `regular`로 넣는다.** 정의표의
+  샘플 글자가 `body/regular_18`로 적혀 있어 스타일 이름만 오타로 보고 맞춘 것이다.
+- 전체 목록은 `/dev` 갤러리의 Typography 절에서 실제 렌더로 비교한다. 값의 원본은
+  Figma `골라주개냥 Design System`의 `foundation > typography`다.
+
 ## 다크 모드
 
 - `.dark` 클래스 기반이다(`@custom-variant dark`). 라이트에서만 확인하고 끝내지 않는다.
