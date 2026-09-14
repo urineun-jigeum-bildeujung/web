@@ -20,7 +20,10 @@ function summarize(error: unknown): string {
     return `ApiError status=${error.status} code=${error.problem?.errorCode ?? "none"}`;
   }
   if (error instanceof Error) {
-    return `${error.name}: ${error.message}`;
+    // message는 남기지 않는다. 무엇이 담길지 우리가 정하지 못해서다 —
+    // 라이브러리가 요청 URL을 넣기도 하고, JSON 파싱 실패는 본문 조각을 그대로 실어 보낸다.
+    // 원인을 좁힐 때는 브라우저가 이미 스택과 함께 원본을 보여준다.
+    return error.name;
   }
   return `Unknown: ${typeof error}`;
 }

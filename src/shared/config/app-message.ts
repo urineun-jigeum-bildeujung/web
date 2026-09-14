@@ -51,6 +51,15 @@ export const APP_MESSAGE = {
     title: "연결 실패",
     description: "네트워크 상태를 확인해 주세요.",
   },
+  // 아래 둘은 토스트가 아니라 화면을 대신 채운다. 그래도 문구는 같은 곳에서 관리한다
+  "common.routeError": {
+    title: "화면을 불러오지 못했어요",
+    description: "잠시 후 다시 시도해 주세요.",
+  },
+  "common.appError": {
+    title: "문제가 생겼어요",
+    description: "잠시 후 다시 열어 주세요.",
+  },
 
   "auth.signInFailed": {
     title: "로그인 실패",
@@ -96,6 +105,8 @@ export const APP_MESSAGE_CODE = {
     conflict: "common.conflict",
     serverError: "common.serverError",
     networkError: "common.networkError",
+    routeError: "common.routeError",
+    appError: "common.appError",
   },
   auth: {
     signInFailed: "auth.signInFailed",
