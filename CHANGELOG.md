@@ -25,6 +25,9 @@
 - `surface/default_sheet`가 `surface/default_react`로, `surface/dimmed`가 `surface/overlay_dimmed`로 다시 리네임된 것을 반영하고, 흰색 기반의 신규 토큰 `surface/overlay_static`을 추가했다 (#136)
 - 본문 폰트를 `Noto_Sans`에서 **Pretendard**로 바꿨다. Figma 타이포 토큰이 모두 `typo/pretendard`를 참조하는데 기존 폰트는 latin subset이라 한글 글리프가 없어, 화면의 한글이 보는 사람의 OS에 따라 다른 모양으로 그려지고 있었다. Google Fonts에 없는 폰트라 `next/font/local`로 self-host하고, weight는 토큰이 실제로 쓰는 400·500·700 세 벌만 subset으로 받았다(합계 787KB). CDN에서 불러오지 않은 것은 `next/font`가 만들어 주는 `size-adjust` fallback을 써야 폰트 교체 순간에 레이아웃이 밀리지 않기 때문이다. 이로써 AGENTS.md 6절의 "한글 본문 폰트" 보류가 풀렸다 (#162)
 - 폰트 교체에 맞춰 `font-semibold`(600) 14곳을 `font-bold`로 바꿨다. 디자인 시스템의 Text Style이 `regular`(400)·`medium`(500)·`bold`(700) 셋뿐이라 600은 애초에 없는 굵기이고, CSS 폰트 매칭 규칙상 500을 넘는 요청은 더 굵은 쪽을 먼저 찾으므로 600은 이미 700으로 그려지고 있었다. 각 자리가 시안상 어떤 Text Style인지는 화면별 UI 적용 작업에서 다시 잡는다 (#162)
+- Figma `골라주개냥 Design System`의 Text Style **25종**을 타이포 토큰으로 반영했다. 색상과 달리 타이포는 크기·행간·굵기가 한 벌로 묶여야 의미가 있어, Tailwind v4의 `--text-*` 하위 속성으로 셋을 함께 걸었다 — `text-label-bold-14` 하나면 14px·행간 22·weight 700이다. 계열은 `title`·`body`·`caption`·`label` 넷이고, Figma가 px로 주는 값은 rem으로 환산해 넣었다. px로 고정하면 사용자가 브라우저 기본 글자 크기를 키워도 화면이 따라 커지지 않기 때문이다 (#167)
+- `body/*`의 Figma 이름이 `refular`지만 코드에는 `regular`로 넣었다. 정의표의 샘플 글자가 `body/regular_18`로 적혀 있어 스타일 이름만 오타로 봤다. `label/regular_13`·`_14`·`_16` 셋은 정의표에 없고 변수도 안 물려 있어 PD팀에 확인을 요청했고, 행간을 각각 20·22·24로 고치고 변수를 연결해 주어 함께 반영했다 (#167)
+- 개발용 갤러리(`/dev`)에 Typography 절을 더해 25종을 실제 렌더로 비교할 수 있게 했다. Tailwind는 소스에 쓰인 클래스만 만들어 내므로, 토큰을 정의만 하고 아무 데서도 쓰지 않으면 제대로 걸렸는지 확인할 방법이 없다 (#167)
 
 ---
 
