@@ -11,6 +11,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-kakao: var(--kakao);
+  --color-bg-default: var(--bg-default);
+  --color-bg-secondary: var(--bg-secondary);
   --color-surface-default: var(--surface-default);
   --color-surface-default-react: var(--surface-default-react);
   --color-surface-weak: var(--surface-weak);
@@ -141,6 +143,11 @@
 }
 
 :root {
+  /* Figma 03. semantic > bg/* — 화면 프레임 배경 전용. surface/*(컴포넌트 표면)와는
+     별개 카테고리다. */
+  --bg-default: oklch(1 0 0);
+  --bg-secondary: oklch(0.966673 0.001714 247.839);
+
   /* Figma 03. semantic > surface/*
      기존의 bg/*를 surface/*(컴포넌트 표면)로 옮기고, bg/*는 화면 프레임
      배경 전용으로 새로 분리했다. */
@@ -255,7 +262,9 @@
   --success: var(--surface-positive);
   --success-foreground: var(--text-label-static-white);
 
-  --background: var(--surface-default);
+  /* bg/default는 화면 프레임 배경 전용 토큰. 컴포넌트 표면인 surface/default와
+     다른 카테고리라 --background에는 이쪽을 참조한다. */
+  --background: var(--bg-default);
   --foreground: var(--text-body-default);
   /* Figma 04. component의 card/bg가 surface/default가 아니라
      surface/default_react를 참조한다. dialog·sheet도 같은 card/bg를 쓴다. */
@@ -301,6 +310,11 @@
 }
 
 .dark {
+  --bg-default: oklch(0.191251 0 0);
+  /* Figma 원본 그대로. bg/secondary 다크가 bg/default 다크와 같은 값이라
+     둘이 구분되지 않는다. 의도된 값인지 PD팀 확인이 필요하다. */
+  --bg-secondary: oklch(0.191251 0 0);
+
   --surface-default: oklch(0.191251 0 0);
   --surface-default-react: oklch(0.313318 0.005505 271.239);
   --surface-weak: oklch(0.313318 0.005505 271.239);
@@ -403,7 +417,7 @@
   --success: var(--surface-positive);
   --success-foreground: var(--text-label-static-white);
 
-  --background: var(--surface-default);
+  --background: var(--bg-default);
   --foreground: var(--text-body-default);
   --card: var(--surface-default-react);
   --card-foreground: var(--text-body-default);
