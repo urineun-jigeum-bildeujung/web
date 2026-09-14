@@ -104,6 +104,90 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+
+  /* 타이포 — Figma Design System의 Text Style을 옮긴 것이다 (#167).
+     크기·행간·굵기가 한 벌로 묶여 있어 `text-label-bold-14` 하나면 셋이 함께 걸린다.
+     Figma는 px로 주지만 rem으로 환산해 넣는다. px로 고정하면 사용자가 브라우저
+     기본 글자 크기를 키워도 화면이 따라 커지지 않는다.
+     `body/*`는 Figma 쪽 이름이 `refular`인데 정의표 샘플 글자는 `regular`라 오타로 보고 고쳐 넣었다. */
+  --text-title-bold-16: 1rem;
+  --text-title-bold-16--line-height: 1.5rem;
+  --text-title-bold-16--font-weight: 700;
+  --text-title-bold-18: 1.125rem;
+  --text-title-bold-18--line-height: 1.75rem;
+  --text-title-bold-18--font-weight: 700;
+  --text-title-bold-20: 1.25rem;
+  --text-title-bold-20--line-height: 2rem;
+  --text-title-bold-20--font-weight: 700;
+  --text-title-bold-22: 1.375rem;
+  --text-title-bold-22--line-height: 2.25rem;
+  --text-title-bold-22--font-weight: 700;
+  --text-title-bold-24: 1.5rem;
+  --text-title-bold-24--line-height: 2.375rem;
+  --text-title-bold-24--font-weight: 700;
+  --text-title-bold-28: 1.75rem;
+  --text-title-bold-28--line-height: 2.625rem;
+  --text-title-bold-28--font-weight: 700;
+
+  --text-body-medium-14: 0.875rem;
+  --text-body-medium-14--line-height: 1.375rem;
+  --text-body-medium-14--font-weight: 500;
+  --text-body-medium-16: 1rem;
+  --text-body-medium-16--line-height: 1.5rem;
+  --text-body-medium-16--font-weight: 500;
+  --text-body-medium-18: 1.125rem;
+  --text-body-medium-18--line-height: 1.75rem;
+  --text-body-medium-18--font-weight: 500;
+  --text-body-regular-13: 0.8125rem;
+  --text-body-regular-13--line-height: 1.25rem;
+  --text-body-regular-13--font-weight: 400;
+  --text-body-regular-14: 0.875rem;
+  --text-body-regular-14--line-height: 1.375rem;
+  --text-body-regular-14--font-weight: 400;
+  --text-body-regular-16: 1rem;
+  --text-body-regular-16--line-height: 1.5rem;
+  --text-body-regular-16--font-weight: 400;
+  --text-body-regular-18: 1.125rem;
+  --text-body-regular-18--line-height: 1.75rem;
+  --text-body-regular-18--font-weight: 400;
+
+  --text-caption-regular-12: 0.75rem;
+  --text-caption-regular-12--line-height: 1.125rem;
+  --text-caption-regular-12--font-weight: 400;
+  --text-caption-regular-13: 0.8125rem;
+  --text-caption-regular-13--line-height: 1.25rem;
+  --text-caption-regular-13--font-weight: 400;
+
+  --text-label-bold-11: 0.6875rem;
+  --text-label-bold-11--line-height: 1.125rem;
+  --text-label-bold-11--font-weight: 700;
+  --text-label-bold-12: 0.75rem;
+  --text-label-bold-12--line-height: 1.125rem;
+  --text-label-bold-12--font-weight: 700;
+  --text-label-bold-14: 0.875rem;
+  --text-label-bold-14--line-height: 1.375rem;
+  --text-label-bold-14--font-weight: 700;
+  --text-label-bold-16: 1rem;
+  --text-label-bold-16--line-height: 1.5rem;
+  --text-label-bold-16--font-weight: 700;
+  --text-label-medium-11: 0.6875rem;
+  --text-label-medium-11--line-height: 1.125rem;
+  --text-label-medium-11--font-weight: 500;
+  --text-label-medium-12: 0.75rem;
+  --text-label-medium-12--line-height: 1.125rem;
+  --text-label-medium-12--font-weight: 500;
+  --text-label-medium-14: 0.875rem;
+  --text-label-medium-14--line-height: 1.375rem;
+  --text-label-medium-14--font-weight: 500;
+  --text-label-regular-13: 0.8125rem;
+  --text-label-regular-13--line-height: 1.25rem;
+  --text-label-regular-13--font-weight: 400;
+  --text-label-regular-14: 0.875rem;
+  --text-label-regular-14--line-height: 1.375rem;
+  --text-label-regular-14--font-weight: 400;
+  --text-label-regular-16: 1rem;
+  --text-label-regular-16--line-height: 1.5rem;
+  --text-label-regular-16--font-weight: 400;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
