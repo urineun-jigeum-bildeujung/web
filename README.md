@@ -69,7 +69,7 @@ cp .env.example .env.local
 
 | 구분 | 패키지 | 버전 |
 | --- | --- | --- |
-| 프레임워크 | Next.js (App Router) | 16.3.0 |
+| 프레임워크 | Next.js (App Router) | 16.3.5 |
 | 런타임 | React | 19.2.8 |
 | 언어 | TypeScript | 5.9.3 |
 | 컴파일러 | babel-plugin-react-compiler | 1.0.0 |

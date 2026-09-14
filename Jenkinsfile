@@ -108,6 +108,7 @@ spec:
 
     environment {
         IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
+        GITOPS_VALUE_REPO_PUBLIC = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
     }
 
     stages {
@@ -186,19 +187,20 @@ spec:
             }
             steps {
                 script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'gitops-value-push',
-                        usernameVariable: 'GIT_USER',
-                        passwordVariable: 'GIT_TOKEN'
-                    )]) {
-                        sh """
-                            rm -rf gitops-value-checkout
-                            git clone https://\${GIT_USER}:\${GIT_TOKEN}@github.com/urineun-jigeum-bildeujung/gitops-value.git gitops-value-checkout
-                        """
-                    }
+                    // gitops-value는 public 레포라 clone 자체엔 인증이 필요 없음 — clone
+                    // 단계에서 자격증명을 URL에 담지 않는다(CodeRabbit 리뷰로 발견, 2026-09-14).
+                    // git remote에 토큰을 박아두면 워크스페이스에 .git/config 형태로 남는데,
+                    // push 시점에만 URL 인자로 넘기면 원격 설정에는 남지 않는다.
+                    sh """
+                        rm -rf gitops-value-checkout
+                        git clone ${env.GITOPS_VALUE_REPO_PUBLIC} gitops-value-checkout
+                    """
 
+                    // yq 바이너리를 고정 버전으로 받되, 공급망 변조 방지를 위해 mikefarah/yq가
+                    // 배포한 체크섬과 대조 후 실행한다 (CodeRabbit 리뷰로 발견, 2026-09-14).
                     sh '''
                         curl -sL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /tmp/yq
+                        echo "a2c097180dd884a8d50c956ee16a9cec070f30a7947cf4ebf87d5f36213e9ed7  /tmp/yq" | sha256sum -c -
                         chmod +x /tmp/yq
                     '''
 
@@ -212,8 +214,15 @@ spec:
                             git config user.name 'jenkins-ci'
                             git add values/
                             git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy web @ ${imageTag}'
-                            git push
                         """
+
+                        withCredentials([usernamePassword(
+                            credentialsId: 'gitops-value-push',
+                            usernameVariable: 'GIT_USER',
+                            passwordVariable: 'GIT_TOKEN'
+                        )]) {
+                            sh "git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/urineun-jigeum-bildeujung/gitops-value.git HEAD:main"
+                        }
                     }
                 }
             }
