@@ -257,8 +257,12 @@
 
   --background: var(--surface-default);
   --foreground: var(--text-body-default);
-  --card: var(--surface-default);
+  /* Figma 04. component의 card/bg가 surface/default가 아니라
+     surface/default_react를 참조한다. dialog·sheet도 같은 card/bg를 쓴다. */
+  --card: var(--surface-default-react);
   --card-foreground: var(--text-body-default);
+  /* dropdown 컴포넌트가 surface/default를 직접 참조한다. dialog·sheet(card/bg)와
+     값이 달라 --card와 분리해서 유지한다. */
   --popover: var(--surface-default);
   --popover-foreground: var(--text-body-default);
   /* button/bg/primary(기본 상태)가 surface/primary를 참조한다. surface/primary_strong은
@@ -401,7 +405,7 @@
 
   --background: var(--surface-default);
   --foreground: var(--text-body-default);
-  --card: var(--surface-default);
+  --card: var(--surface-default-react);
   --card-foreground: var(--text-body-default);
   --popover: var(--surface-default);
   --popover-foreground: var(--text-body-default);
