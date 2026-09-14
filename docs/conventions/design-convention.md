@@ -9,8 +9,9 @@
 - **공용 시맨틱 색상 토큰은 Figma `골라주개냥 Design System`의 `03. semantic` 컬렉션이 원본이다.**
   `--surface-*`·`--text-*`·`--border-*`·`--icon-*`는 Figma 토큰 경로의 `/`와 `_`를
   CSS 변수 형식인 `-`로 바꾼 이름이다
-  (예: `surface/primary_strong` → `--surface-primary-strong`). 배경 계열은
-  원래 `bg/*`였으나 PD팀이 `surface/*`로 리네임해 코드도 함께 바꿨다.
+  (예: `surface/primary_strong` → `--surface-primary-strong`). 기존의 `bg/*`를
+  `surface/*`(컴포넌트 표면)로 옮기고, `bg/*`는 화면 프레임 배경 전용으로 새로
+  분리했다.
 - shadcn이 내부적으로 쓰는 고정 슬롯(`--primary`, `--secondary`, `--destructive`,
   `--background`, `--card`, `--popover` 등)은 값을 중복해서 넣지 않고, 개념이
   대응되는 시맨틱 변수를 `var()`로 참조한다.
