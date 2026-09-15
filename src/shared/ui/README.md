@@ -50,7 +50,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / strong)으로 뜻에 따라 색을 고른다 |
 | `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
-| `list-row/` | 아이콘 28 + 제목 + 설명 + 화살표 28 한 줄(44px). 이동용(Link)과 실행용(Button). 좌우 여백은 카드가 맡는다 |
+| `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. `size` md(44 · 아이콘 28 · 화살표 28, 마이페이지 홈)와 sm(40 · 24 · 24, 설정). 이동용(Link)·실행용(Button)·정적(Static) |
 | `setting-group/` | 목록 줄을 제목과 함께 흰 카드(모서리 12)로 묶는다 |
 | `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
 | `countdown/` | 남은 시간을 시:분:초로 세어 내린다. 서버·클라이언트 시각 차를 피해 붙은 뒤부터 센다 |
