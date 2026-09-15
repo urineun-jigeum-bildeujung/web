@@ -3,6 +3,9 @@ namespace NodeJS {
   interface ProcessEnv {
     // PRIVATE — 서버에서만 읽는 값. 브라우저 번들에 포함되지 않는다.
 
+    // 행정안전부 도로명주소 검색 API 승인키. Route Handler에서만 읽는다.
+    JUSO_CONFM_KEY?: string;
+
     // PUBLIC — NEXT_PUBLIC_ 접두사가 붙은 값. 브라우저에 노출되므로 비밀값을 두지 않는다.
 
     // 백엔드 API base URL. 비우면 same-origin /api/v1을 쓴다.
