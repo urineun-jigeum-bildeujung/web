@@ -6,7 +6,9 @@
 | --- | --- |
 | `ui/search-address-view.tsx` | 주소 검색 |
 | `ui/search-address-view.test.tsx` | 검색 조건, 페이지 넘기기, 고른 주소를 어떻게 넘기는지 |
-| `api/address-search.ts` | 주소를 찾아오는 자리. 지금은 목이고 페이지도 여기서 자른다 |
+| `api/address-search.ts` | 행안부 주소를 `/api/juso`를 거쳐 가져온다 |
+| `api/address-search.test.ts` | 무엇을 보내고 돌아온 것을 어떻게 다루는지 |
+| `api/use-query-address-search.ts` | 조회 훅. 화면은 `useQuery`를 직접 부르지 않는다 |
 | `index.ts` | 공개 API |
 
 ## 페이지네이션
@@ -39,27 +41,32 @@
 
 디자인팀이 화면 커스텀을 요청했다. `react-daum-postcode`는 다음이 만든 UI를 통째로 띄워 커스텀이 안 된다. 상세는 [library-convention](../../../docs/conventions/library-convention.md)의 "겪은 사례" 표를 본다.
 
-## 아직 없는 것
+## 행정안전부 API
 
-행정안전부 도로명주소 API 연동. 지금은 목 데이터이고, 프론트엔드가 직접 붙이기로 백엔드팀과 합의했다(2026-09-15).
+프론트엔드가 직접 붙였다. 백엔드팀이 "계획은 있었지만 밀렸으니 직접 해주시면 따르겠다"고 회신했다(2026-09-15).
 
-붙일 때 알아야 할 것을 실측해 두었다.
+**승인키를 브라우저로 내보내지 않으려고 Route Handler(`src/app/api/juso/route.ts`)를 거친다.** 행안부는 CORS를 열어 두어 직접 불러도 되지만 그러면 `confmKey`가 클라이언트 번들에 박힌다.
 
 | 항목 | 값 |
 | --- | --- |
 | 엔드포인트 | `https://business.juso.go.kr/addrlink/addrLinkApi.do` |
 | 파라미터 | `confmKey` · `keyword` · `currentPage` · `countPerPage` · `resultType=json` |
-| 승인키 | `.env.local`의 `JUSO_CONFM_KEY`. **`NEXT_PUBLIC_`을 붙이지 않는다** — 붙이면 브라우저 번들에 박힌다 |
-| 호출 위치 | Route Handler. CORS는 열려 있지만 직접 부르면 키가 노출된다 |
+| 승인키 | `.env.local`의 `JUSO_CONFM_KEY`. **`NEXT_PUBLIC_`을 붙이지 않는다** |
 
-**실패를 HTTP 200에 담아 보낸다.** `res.ok`로는 못 거르고 `results.common.errorCode`를 봐야 한다.
+**실패를 HTTP 200에 담아 보낸다.** `res.ok`로는 못 거르고 `results.common.errorCode`를 봐야 한다. Route Handler가 그것을 우리 `ProblemDetail`로 옮겨, 화면이 `toAppMessageCode`를 그대로 쓴다.
 
-| errorCode | 뜻 |
-| --- | --- |
-| `0` | 정상 |
-| `E0001` | 승인되지 않은 KEY |
-| `E0006` | 검색어가 너무 광범위함 (`서울` 등) |
-| `E0008` | 검색어 두 글자 이상 필요 |
-| `E0009` | 문자와 숫자를 같이 넣어야 함 |
+| 행안부 | HTTP | 우리 errorCode |
+| --- | --- | --- |
+| `E0001` 승인 안 된 키 | 500 | `JUSO_500_INVALID_KEY` |
+| `E0006` 검색어가 너무 넓음 (`서울`) | 400 | `JUSO_400_KEYWORD_TOO_BROAD` |
+| `E0008` 두 글자 미만 | 400 | `JUSO_400_KEYWORD_TOO_SHORT` |
+| `E0009` 문자와 숫자를 같이 | 400 | `JUSO_400_KEYWORD_INVALID` |
+| 그 밖 | 502 | `JUSO_502_UPSTREAM` |
 
-`countPerPage`는 100까지 받는다. 우리는 4를 넘긴다(위 페이지네이션 절).
+**쪽 보정은 반만 해 준다.** `0`·음수·숫자가 아닌 값은 1로 바꿔 주지만 **마지막 쪽을 넘는 값은 그대로 받아 결과 0건을 준다** — `page=999`에 `totalCount=1`이면서 빈 목록이다(2026-09-15 실측). 그 경우만 조회 함수가 마지막 쪽을 다시 받아온다.
+
+응답 필드는 24개지만 Route Handler가 화면이 쓰는 넷(`zipNo`·`roadAddr`·`jibunAddr`·`bdNm`)만 추려 보낸다.
+
+## 아직 없는 것
+
+배송지 저장·조회 API. 백엔드 작업 대기 중이라 `/mypage/address/new`의 제출은 아직 아무것도 보내지 않는다.
