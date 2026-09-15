@@ -82,10 +82,58 @@ test("저장된 곳을 열어 새 주소를 고르면 그것이 저장된 값을
   expect(screen.queryByText("서울특별시 강남구 테헤란로 123")).toBeNull();
 });
 
-// 주소를 고르지 않으면 넘길 값이 없다
-test("주소가 비어 있으면 입력 완료가 꺼진다", () => {
+// 주소를 고르지 않으면 넘길 값이 없다.
+//
+// 다른 칸까지 비워 두면 주소 조건을 지워도 다른 조건 때문에 통과해 회귀를 놓친다.
+// 나머지를 채운 뒤 주소만 비워야 그 조건 하나를 겨눌 수 있다 (CodeRabbit 리뷰, #187)
+test("다른 칸을 다 채워도 주소가 비어 있으면 입력 완료가 꺼진다", () => {
   renderAt("");
 
+  const submit = screen.getByRole("button", { name: "입력 완료" });
+
+  for (const [label, value] of [
+    ["배송지 이름", "집"],
+    ["받는 분 이름", "전경진"],
+    ["연락처", "010-1234-5678"],
+  ]) {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  }
+
+  // 주소만 비어 있다
   expect(screen.getByText("주소 검색")).toBeDefined();
-  expect(screen.getByRole("button", { name: "입력 완료" }).hasAttribute("disabled")).toBe(true);
+  expect(submit.hasAttribute("disabled")).toBe(true);
+});
+
+// 위 테스트가 주소 조건만 겨누는지 뒤집어 확인한다
+test("주소까지 채우면 입력 완료가 켜진다", () => {
+  renderAt(
+    "?roadAddr=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C+%EA%B0%95%EB%82%A8%EA%B5%AC+%ED%85%8C%ED%97%A4%EB%9E%80%EB%A1%9C+123",
+  );
+
+  const submit = screen.getByRole("button", { name: "입력 완료" });
+
+  for (const [label, value] of [
+    ["배송지 이름", "집"],
+    ["받는 분 이름", "전경진"],
+    ["연락처", "010-1234-5678"],
+  ]) {
+    fireEvent.change(screen.getByLabelText(label), { target: { value } });
+  }
+
+  expect(submit.hasAttribute("disabled")).toBe(false);
+});
+
+// 고치던 대상을 들고 검색하러 가야 돌아올 때 그 배송지로 복귀한다
+test("고치는 중이면 검색 링크가 place를 들고 간다", () => {
+  renderAt("?place=home");
+
+  const link = screen.getByRole("link", { name: /주소/ }) as HTMLAnchorElement;
+  expect(link.getAttribute("href")).toBe("/mypage/address/search?place=home");
+});
+
+test("새 배송지면 검색 링크에 place가 없다", () => {
+  renderAt("");
+
+  const link = screen.getByRole("link", { name: /주소/ }) as HTMLAnchorElement;
+  expect(link.getAttribute("href")).toBe("/mypage/address/search");
 });

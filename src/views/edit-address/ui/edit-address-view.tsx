@@ -100,8 +100,14 @@ function EditAddressForm({ place }: { place: string | null }) {
         <p className="text-title-bold-16 text-foreground">받을 곳 주소</p>
         {/* 주소는 직접 적지 않고 검색 화면에서 고른다. 그래서 입력칸이 아니라 링크다.
             시안이 오른쪽에 돋보기를 놓아 누르면 찾으러 간다는 것을 보인다 */}
+        {/* 고칠 대상(place)을 들고 간다. 안 그러면 검색에서 돌아올 때 "집 수정"이
+            "새 배송지"로 바뀌어 먼저 적어 둔 값이 사라진다 (CodeRabbit 리뷰, #187) */}
         <Link
-          href="/mypage/address/search"
+          href={
+            place
+              ? `/mypage/address/search?place=${encodeURIComponent(place)}`
+              : "/mypage/address/search"
+          }
           className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-input px-3 text-body-medium-14 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className={address ? "truncate text-foreground" : "text-text-body-tertiary"}>

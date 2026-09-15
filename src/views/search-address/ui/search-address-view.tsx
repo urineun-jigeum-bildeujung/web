@@ -9,6 +9,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
@@ -40,6 +41,8 @@ const MIN_KEYWORD_LENGTH = 2;
 
 export function SearchAddressView() {
   const router = useRouter();
+  // 어느 배송지를 고치던 중인지. 배송지 화면이 실어 보내고 우리가 그대로 돌려준다
+  const [place] = useQueryState("place");
   const [keyword, setKeyword] = useState("");
   const [result, setResult] = useState<AddressSearchResult | null>(null);
   const [page, setPage] = useState(1);
@@ -69,6 +72,10 @@ export function SearchAddressView() {
     // 우편번호도 함께 넘긴다. 배송지 화면은 도로명만 보여주지만(시안) 저장할 때 둘 다 필요하다 —
     // 백엔드가 `zipNo → zipCode`, `roadAddr → address`로 받기로 했다 (2026-09-15 회신).
     const query = new URLSearchParams({ zipNo: selected.zipNo, roadAddr: selected.roadAddr });
+    // 고치던 대상을 되돌려준다. 빠뜨리면 배송지 화면이 새 배송지로 다시 서서 먼저 적어 둔 값이 날아간다
+    if (place) {
+      query.set("place", place);
+    }
     router.push(`/mypage/address/new?${query}`);
   };
 
