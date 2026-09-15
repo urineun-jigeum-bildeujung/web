@@ -49,8 +49,10 @@ function EditAddressForm({ place }: { place: string | null }) {
   const router = useRouter();
   const saved = place ? SAVED_PLACES[place] : undefined;
 
-  // 검색 화면이 실어 보낸 주소. 시안이 도로명만 보여줘서 그것만 받는다.
-  // 우편번호를 함께 실어야 할지는 백엔드가 `address` 컬럼을 어떻게 나눌지 정해지면 결정한다.
+  // 검색 화면이 실어 보낸 주소. 시안이 도로명만 보여줘서 화면에 쓰는 것도 그것뿐이다.
+  // 우편번호(`zipNo`)는 읽지 않고 주소창에 그대로 둔다 — 저장 API가 생기면 그때 폼이 읽어
+  // `zipNo → zipCode`, `roadAddr → address`로 보낸다(백엔드 회신 2026-09-15). 지금 상태로 받아 두면
+  // 아무도 쓰지 않는 값이 되고, 빼 버리면 사용자가 고른 우편번호를 다시 검색해야 얻는다.
   const [roadAddr] = useQueryState("roadAddr");
 
   const [label, setLabel] = useState(saved?.label ?? "");
