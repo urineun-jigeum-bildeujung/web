@@ -3,7 +3,7 @@
 회원가입. 약관 동의와 닉네임을 차례로 받는다.
 
 - **라우트**: `/signup` — `src/app/signup/page.tsx`
-- **조립**: `shared/ui`의 `page-header` · `bottom-action-bar` · `button` · `checkbox` · `icon` · `form-field` · `single-input-screen`
+- **조립**: `shared/ui`의 `page-header` · `bottom-action-bar` · `button` · `checkbox-row` · `icon` · `form-field` · `single-input-screen`
 - **상태**: 단계는 URL 쿼리 `step`(`terms` · `nickname`). 체크한 약관과 닉네임은 화면 안 상태
 - **참고**: UI 시안 기준(sign_001 약관 동의 `1117-5438`·`1117-5503`, 닉네임 `1117-5567`·`1117-5582`)
 
@@ -18,7 +18,7 @@
 
 ## 짚어둘 것
 
-**체크는 원이다.** 전체 동의 줄은 24px, 항목은 16px이고 고르면 `surface-brand`로 찬다. shadcn Checkbox는 골랐을 때만 표시를 그리므로 표시는 숨기고 체크 아이콘을 뒤에 따로 둔다 — `checkbox-row`와 같은 방식이다. 보이는 크기는 시안대로 두고 누르는 자리만 44px로 넓혔다.
+**줄은 공용 `checkbox-row`다.** `agreement-row`는 그 위에 약관 규칙만 얹는다. 전체 동의 줄은 `size="m"`(24px), 항목은 `size="s"`(16px)이고 `tone="brand"`라 고르면 `surface-brand`로 찬다. 보이는 크기는 시안대로 두고 누르는 자리만 44px로 넓혔다.
 
 **한 줄에 동작이 둘이라 영역을 나눈다.** 왼쪽 체크와 오른쪽 화살표(약관 본문)가 서로 다른 일을 한다. 설명 문구는 `htmlFor` 밖에 두어 눌러도 체크가 토글되지 않는다. 실수로 동의가 풀리면 다시 채워야 한다.
 

@@ -89,7 +89,7 @@ export function LoginView() {
             label="자동로그인"
             checked={autoLogin}
             onCheckedChange={setAutoLogin}
-            className="[&>label]:text-body-regular-14"
+            labelClassName="text-body-regular-14"
           />
 
           {/* 시안의 button/xl. 비활성은 흐려지지 않고 회색으로 채워진다 */}

@@ -47,7 +47,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
 | `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
-| `checkbox-row/` | 체크박스 + 레이블 한 줄 |
+| `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
 | `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. 이동용(Link)과 실행용(Button) |
 | `setting-group/` | 목록 줄을 제목 아래 카드로 묶는다 |
