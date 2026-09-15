@@ -1,21 +1,12 @@
-// 마이페이지 홈. 프로필과 메뉴 묶음을 보여준다.
-// 와이어프레임 기준(mypa_001)이라 디자인 확정 시 바뀔 수 있다.
+// 마이페이지 홈. 프로필 카드와 메뉴 묶음을 보여준다.
+// UI 시안 기준(mypa_001, 1474-23129)이다.
+//
+// 시안에서 "최근 본 상품" 메뉴가 빠졌다. 화면(/mypage/recently-viewed)은 남기고 진입점만 뺀다.
+// 머리말의 로고 자리는 시안이 "로고" 자리 표시라 서비스 이름을 글자로 둔다.
 
 import Link from "next/link";
-import {
-  IoAdd,
-  IoCartOutline,
-  IoChevronForward,
-  IoHeadsetOutline,
-  IoInformationCircleOutline,
-  IoNotificationsOutline,
-  IoPricetagOutline,
-  IoReceiptOutline,
-  IoSettingsOutline,
-  IoTimeOutline,
-  IoWalletOutline,
-} from "react-icons/io5";
 
+import { Icon } from "@/shared/ui/icon/icon";
 import { ListRowLink } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
@@ -26,22 +17,16 @@ const MENU_GROUPS = [
     title: "나의 쇼핑",
     items: [
       {
-        href: "/mypage/recently-viewed",
-        title: "최근 본 상품",
-        description: "최근 확인한 상품",
-        icon: <IoTimeOutline />,
-      },
-      {
         href: "/mypage/restock",
         title: "재입고 알림",
         description: "품절 상품 재입고 알림",
-        icon: <IoPricetagOutline />,
+        icon: <Icon name="bell" />,
       },
       {
         href: "/mypage/reviews",
         title: "나의 상품 후기",
         description: "작성 가능한 리뷰 · 나의 후기",
-        icon: <IoReceiptOutline />,
+        icon: <Icon name="review" />,
       },
     ],
   },
@@ -52,13 +37,13 @@ const MENU_GROUPS = [
         href: "/mypage/payment",
         title: "결제 수단 관리",
         description: "간편결제 등록 · 관리",
-        icon: <IoWalletOutline />,
+        icon: <Icon name="card" />,
       },
       {
         href: "/mypage/orders",
         title: "주문·배송 확인",
         description: "주문 · 배송 현황",
-        icon: <IoCartOutline />,
+        icon: <Icon name="delivery" />,
       },
     ],
   },
@@ -69,84 +54,96 @@ const MENU_GROUPS = [
         href: "/mypage/support",
         title: "고객센터",
         description: "1:1 문의 · 고객지원",
-        icon: <IoHeadsetOutline />,
+        icon: <Icon name="customer" />,
       },
       {
         href: "/mypage/service",
         title: "서비스 안내",
-        description: "이용약관 · 개인정보처리방침",
-        icon: <IoInformationCircleOutline />,
+        description: "서비스 안내",
+        icon: <Icon name="notice" />,
       },
       {
         href: "/mypage/settings",
         title: "설정",
         description: "서비스 설정",
-        icon: <IoSettingsOutline />,
+        icon: <Icon name="setting" />,
       },
     ],
   },
 ];
 
 /** API 연동 전까지 화면 확인용 값 */
-const MOCK_USER = { nickname: "청주 불주먹", email: "cjsrudwls12@naver.com", petCount: 3 };
+const MOCK_USER = {
+  nickname: "졸린고양이 17",
+  email: "cjsrudwls12@naver.com",
+  pets: [
+    { id: "1", name: "코코" },
+    { id: "2", name: "보리" },
+  ],
+};
+
+const HEADER_ICON =
+  "flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 export function MypageView() {
   return (
-    <div className="flex min-h-dvh flex-col bg-muted/40">
+    <div className="flex min-h-dvh flex-col bg-bg-secondary">
       <PageHeader
-        leading="none"
+        left={<span className="px-2 text-title-bold-18 text-foreground">골라주개냥</span>}
         right={
           <>
-            <Link
-              href="/cart"
-              aria-label="장바구니"
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <IoCartOutline aria-hidden className="size-6" />
+            <Link href="/mypage/notifications" aria-label="알림" className={HEADER_ICON}>
+              <Icon name="bell" className="size-7" />
             </Link>
-            <Link
-              href="/mypage/notifications"
-              aria-label="알림"
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <IoNotificationsOutline aria-hidden className="size-6" />
+            <Link href="/cart" aria-label="장바구니" className={HEADER_ICON}>
+              <Icon name="cart" className="size-7" />
             </Link>
           </>
         }
+        className="bg-transparent"
       />
 
-      <main className="flex flex-1 flex-col gap-4 px-4 pb-8">
-        <section className="overflow-hidden rounded-xl border border-border bg-card">
-          <Link
-            href="/mypage/info"
-            className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <span aria-hidden className="size-10 shrink-0 rounded-full bg-muted" />
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-sm font-bold text-foreground">
-                {MOCK_USER.nickname}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">{MOCK_USER.email}</span>
-            </span>
-            <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
-          </Link>
+      <main className="flex flex-1 flex-col gap-3 px-5 pt-3 pb-8">
+        {/* 프로필 카드. 위는 내 정보로, 아래 아이 줄은 아이 관리로 간다 */}
+        <section className="flex flex-col gap-3 rounded-xl bg-card px-3 py-4 text-card-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <p className="truncate text-title-bold-16 text-foreground">{MOCK_USER.nickname}</p>
+              <p className="truncate text-body-regular-13 text-text-body-tertiary">
+                {MOCK_USER.email}
+              </p>
+            </div>
+            <Link
+              href="/mypage/info"
+              aria-label="내 정보"
+              className="flex size-12 shrink-0 items-center justify-center rounded-full text-icon-stroke-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Icon name="right" className="size-8" />
+            </Link>
+          </div>
 
-          {/* 반려동물 프로필 영역 */}
+          <span aria-hidden className="h-px w-full bg-border-default" />
+
           <Link
             href="/mypage/pets"
             aria-label="반려동물 프로필 관리"
-            className="flex min-h-14 items-center gap-3 border-t border-border px-4 py-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="flex h-10.5 items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <span aria-hidden className="flex flex-1 items-center -space-x-2">
-              {Array.from({ length: MOCK_USER.petCount }, (_, index) => (
-                <span key={index} className="size-9 rounded-full border-2 border-card bg-muted" />
-              ))}
-              {/* 시안의 아이 추가 자리. 점선 원으로 아직 비어 있음을 보인다 */}
-              <span className="flex size-9 items-center justify-center rounded-full border-2 border-dashed border-border bg-card text-muted-foreground">
-                <IoAdd className="size-4" />
-              </span>
+            {MOCK_USER.pets.map((pet) => (
+              <span
+                key={pet.id}
+                aria-hidden
+                title={pet.name}
+                className="size-10.5 shrink-0 rounded-full bg-surface-disable"
+              />
+            ))}
+            {/* 아이를 더 들이는 자리. 점선 원으로 비어 있음을 보인다 */}
+            <span
+              aria-hidden
+              className="flex size-10.5 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-icon-fill-tertiary text-icon-fill-tertiary"
+            >
+              <Icon name="plus" className="size-6" />
             </span>
-            <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
           </Link>
         </section>
 

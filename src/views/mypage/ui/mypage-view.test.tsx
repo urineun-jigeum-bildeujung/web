@@ -23,9 +23,8 @@ test("각 메뉴가 제 경로로 이어진다", () => {
   expect(screen.getByRole("link", { name: /재입고 알림/ }).getAttribute("href")).toBe(
     "/mypage/restock",
   );
-  expect(screen.getByRole("link", { name: /최근 본 상품/ }).getAttribute("href")).toBe(
-    "/mypage/recently-viewed",
-  );
+  // 시안에서 빠진 메뉴. 화면은 남아 있지만 여기서 들어가지 않는다
+  expect(screen.queryByRole("link", { name: /최근 본 상품/ })).toBeNull();
   expect(screen.getByRole("link", { name: /결제 수단 관리/ }).getAttribute("href")).toBe(
     "/mypage/payment",
   );
