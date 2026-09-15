@@ -1,8 +1,11 @@
 // 아이 고르기 줄. 마지막 칸은 새 아이를 들이는 자리다.
-// UI 시안 기준(mypa_021 내 아이 관리의 avator 줄, 리뷰 작성 1884-29325의 프로필 선택)이다.
+// UI 시안 기준(mypa_021 내 아이 관리의 avator 줄, 리뷰 작성 1884-29325의 프로필 선택,
+// 메인 홈화면 1758-68897)이다.
 //
-// 두 모양이 있다. 기본은 48px 원이 같은 크기로 늘어서고 고른 아이만 브랜드색 테두리가 붙는다.
-// `hero`는 고른 아이만 90px로 크게 보인다.
+// 세 모양이 있다. `default`(리뷰 작성)는 48px 원이 같은 크기로 늘어서고 고른 아이만
+// 브랜드색 테두리 링이 원 밖에 붙는다. `main`(메인 홈화면)은 60px 원이 늘어서고 고른
+// 아이만 원 안쪽에 브랜드색 테두리가 붙는다 — 같은 "고른 아이 표시"도 화면마다 다르게
+// 그려져 있어 그대로 옮긴다. `hero`(마이페이지 아이 관리)는 고른 아이만 90px로 커진다.
 
 "use client";
 
@@ -25,8 +28,9 @@ type PetSwitcherProps = {
   onAdd?: () => void;
   /** 원 아래에 이름을 함께 보인다. 메인처럼 처음 보는 화면에서는 이름이 있어야 고를 수 있다 */
   withNames?: boolean;
-  /** `hero`는 고른 아이 90px, 나머지 48px. 아이 관리 화면의 줄이다 */
-  variant?: "default" | "hero";
+  /** `default`는 48px(리뷰 작성), `main`은 60px(메인 홈화면), `hero`는 고른 아이만
+   * 90px·나머지 48px(마이페이지 아이 관리)다 */
+  variant?: "default" | "hero" | "main";
   className?: string;
 };
 
@@ -40,17 +44,24 @@ export function PetSwitcher({
   className,
 }: PetSwitcherProps) {
   const hero = variant === "hero";
-  // hero는 고른 아이만 90px로 크고 나머지는 48px이다. 기본은 전부 48px이다
-  const circleSize = (selected: boolean) => (hero && selected ? "size-22.5" : "size-12");
+  const main = variant === "main";
+
+  const circleSize = (selected: boolean) => {
+    if (hero) return selected ? "size-22.5" : "size-12";
+    if (main) return "size-15";
+    // 리뷰 작성 기준. hero도 고르지 않은 아이는 같은 48px이다
+    return "size-12";
+  };
 
   return (
     <div
       role="radiogroup"
       aria-label="아이 고르기"
       className={cn(
-        "flex gap-3 px-4 py-3",
+        "flex items-center gap-3 px-4 py-3",
         // 크기가 다른 원을 아래 선에 맞춘다
-        hero ? "items-end gap-4 px-5 py-0" : "items-center",
+        hero && "items-end gap-4 px-5 py-0",
+        main && "gap-4 px-5 py-0",
         className,
       )}
     >
@@ -72,22 +83,35 @@ export function PetSwitcher({
             <span
               aria-hidden
               className={cn(
-                "flex shrink-0 items-center justify-center rounded-full bg-surface-disable",
+                "flex shrink-0 items-center justify-center rounded-full",
                 circleSize(selected),
-                // hero는 크기로 고른 것을 알린다. 기본은 시안대로 1px 브랜드 테두리를 원 밖에 두른다
-                !hero &&
-                  selected &&
-                  "ring-1 ring-border-brand ring-offset-1 ring-offset-background",
+                main
+                  ? // 메인은 60px 전체 중 원 안쪽에 1px 테두리+2px 여백을 둔다
+                    cn("border p-0.5", selected ? "border-brand" : "border-transparent")
+                  : cn(
+                      "bg-surface-disable",
+                      // hero는 크기로 고른 것을 알린다. 기본은 시안대로 1px 브랜드 테두리를 원 밖에 두른다
+                      !hero &&
+                        selected &&
+                        "ring-1 ring-border-brand ring-offset-1 ring-offset-background",
+                    ),
               )}
             >
-              {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 회색 원만 남는다 */}
-              <span className="relative size-full overflow-hidden rounded-full">
+              {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 회색 원만 남는다.
+                  시안(메인 1758-68897)은 사진 없으면 색+이름을 원 안에 넣지만, 그 색이
+                  서버 값일 가능성이 커 API 확정 전까지는 보류한다 */}
+              <span
+                className={cn(
+                  "relative size-full overflow-hidden rounded-full",
+                  main && "bg-surface-disable",
+                )}
+              >
                 {pet.photoUrl && (
                   <Image
                     src={pet.photoUrl}
                     alt=""
                     fill
-                    sizes={hero && selected ? "90px" : "48px"}
+                    sizes={hero && selected ? "90px" : main ? "56px" : "48px"}
                     className="object-cover"
                   />
                 )}
@@ -120,13 +144,13 @@ export function PetSwitcher({
             aria-hidden
             className={cn(
               "flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-current",
-              "size-12",
+              main ? "size-15" : "size-12",
             )}
           >
             <Icon name="plus" className="size-7" />
           </span>
           {withNames && (
-            <span aria-hidden className="text-xs">
+            <span aria-hidden className="text-label-bold-12">
               추가
             </span>
           )}
