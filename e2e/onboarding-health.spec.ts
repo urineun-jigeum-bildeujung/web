@@ -65,7 +65,7 @@ test("해당 없음을 켜면 고를 수 없다", async ({ page }) => {
 test("두 항목을 다 답해야 다음으로 넘어간다", async ({ page }) => {
   await page.goto(PATH);
 
-  const next = page.getByRole("button", { name: "다음 단계 작성하기" });
+  const next = page.getByRole("button", { name: "작성 완료" });
   await expect(next).toBeDisabled();
 
   await page.getByRole("button", { name: "걱정되는 질환" }).click();
@@ -86,9 +86,9 @@ test("체형 안내가 시트로 뜬다", async ({ page }) => {
   // 누르면 레이블이 포인터를 가로채므로, 누르는 것은 레이블이고 확인은 role로 한다
   await page
     .getByRole("radiogroup", { name: "아이의 체구" })
-    .getByText("소형견", { exact: true })
+    .getByText("소형", { exact: true })
     .click();
-  await expect(page.getByRole("radio", { name: "소형견" })).toBeChecked();
+  await expect(page.getByRole("radio", { name: "소형" })).toBeChecked();
 
   await page.getByRole("button", { name: "체형이 무엇인지 보기" }).click();
 
@@ -146,13 +146,14 @@ test("마이페이지 건강 정보도 같은 시트로 고른다", async ({ pag
   await expect(picker).toContainText("관절염");
 });
 
-test("해당 없음을 켠 자리는 해당 사항 없음으로 바뀐다", async ({ page }) => {
+test("해당 없음을 켠 자리는 잠기고 비워진다", async ({ page }) => {
   await page.goto("/mypage/pets/health");
 
-  // 알러지는 저장된 값이 해당 없음이다
+  // 알러지는 저장된 값이 해당 없음이다. 시안(onbo_004)은 잠긴 자리를 회색으로 비워 두고
+  // 아래 "해당 사항이 없어요"가 켜진 것으로 알린다
   const allergy = page.getByRole("button", { name: "피해야 할 성분" });
   await expect(allergy).toBeDisabled();
-  await expect(allergy).toContainText("해당 사항 없음");
+  await expect(allergy).toHaveText("");
 });
 
 // 질환 갈래가 종별로 다르다. 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면
@@ -164,16 +165,18 @@ async function goToHealthAsCat(page: import("@playwright/test").Page) {
   await page.goto("/onboarding?step=detail");
 
   await page.getByRole("button", { name: /품종/ }).first().click();
+  // 줄을 누르면 바로 확정된다(시안 onbo_011)
   await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
-  await page.getByRole("button", { name: "선택 완료" }).click();
 
   // 체구와 몸무게를 채워야 다음으로 넘어간다
   await page
     .getByRole("radiogroup", { name: "아이의 체구" })
-    .getByText("소형견", { exact: true })
+    .getByText("소형", { exact: true })
     .click();
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
+  // nuqs가 URL을 잠깐 뒤에 바꾼다. 바로 새로고침하면 아직 detail이라 건강 단계가 아니다
+  await page.waitForURL(/step=health/);
 }
 
 test("고양이를 고르면 고양이 갈래가 뜬다", async ({ page }) => {
@@ -197,12 +200,12 @@ test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
   // 이전으로 돌아가 품종을 고양이로 바꾼다
   await page.getByRole("button", { name: "이전" }).click();
   await page.getByRole("button", { name: /품종/ }).first().click();
+  // 줄을 누르면 바로 확정된다(시안 onbo_011)
   await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
-  await page.getByRole("button", { name: "선택 완료" }).click();
 
   await page
     .getByRole("radiogroup", { name: "아이의 체구" })
-    .getByText("소형견", { exact: true })
+    .getByText("소형", { exact: true })
     .click();
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
