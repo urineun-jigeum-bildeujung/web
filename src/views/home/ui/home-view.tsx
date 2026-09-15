@@ -348,7 +348,10 @@ export function HomeView() {
                 value={sort}
                 onValueChange={(next) => void setSort(next as (typeof SORT_VALUES)[number])}
               >
-                <SelectTrigger aria-label="정렬" className="min-h-11 w-auto border-0 shadow-none">
+                <SelectTrigger
+                  aria-label="정렬"
+                  className="min-h-11 w-auto border-0 text-label-bold-14 shadow-none"
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -364,7 +367,7 @@ export function HomeView() {
               </Select>
             </div>
 
-            <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+            <ul className="grid grid-cols-2 gap-3">
               {MOCK_PRODUCTS.map((product) => (
                 <li key={product.id} className="flex">
                   <ProductGridCard
