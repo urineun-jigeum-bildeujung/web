@@ -173,7 +173,7 @@ export function DevGalleryView() {
       <main className="flex-1">
         <Section title="Icon">
           <p className="text-xs text-muted-foreground">
-            Figma icon 페이지 43종. 색은 글자색, 크기는 size-*로 정한다
+            Figma icon 페이지 {ICON_NAMES.length}종. 색은 글자색, 크기는 size-*로 정한다
           </p>
           <ul className="grid grid-cols-4 gap-2">
             {ICON_NAMES.map((name) => (
