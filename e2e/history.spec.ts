@@ -54,7 +54,7 @@ test("필터는 히스토리에 쌓이지 않는다", async ({ page }) => {
   await page.goto("/mypage/pets?tab=products");
 
   // 칩은 라디오를 숨기고 레이블을 누르게 되어 있다
-  const filters = page.getByRole("radiogroup", { name: "후기 작성 여부로 거르기" });
+  const filters = page.getByRole("radiogroup", { name: "반응 입력 여부로 거르기" });
   await filters.getByText("미입력", { exact: true }).click();
   await expect(page).toHaveURL(/reviewed=todo/);
   await filters.getByText("입력", { exact: true }).click();

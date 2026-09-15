@@ -25,7 +25,6 @@ const ROUTES = [
   "/mypage/pets/basic",
   "/mypage/pets/body",
   "/mypage/pets/health",
-  "/mypage/pets/new",
   "/mypage/pets/basic?picking=breed",
   "/mypage/restock",
   "/mypage/recently-viewed",
@@ -207,20 +206,6 @@ test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ 
 
   await expect(page.getByRole("button", { name: /코리안 숏헤어/ })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toHaveValue("보리");
-});
-
-test("아이 후기의 수정하기가 그 후기의 상세로 간다", async ({ page }) => {
-  await page.goto("/mypage/pets?tab=products", { waitUntil: "networkidle" });
-
-  // 두 번째 제품을 열어도 첫 후기로 가지 않아야 한다
-  await page
-    .getByRole("button", { name: /후기 보기|상품명/ })
-    .nth(1)
-    .click();
-  await expect(page.getByRole("link", { name: "수정하기" })).toHaveAttribute(
-    "href",
-    "/mypage/reviews/2",
-  );
 });
 
 // 상단 뒤로가기가 화면을 벗어나면 안 된다. nuqs가 쿼리를 replace로 넣어 router.back()이 이 화면을 지나친다.
