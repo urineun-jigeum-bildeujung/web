@@ -12,6 +12,8 @@ type BreedPickerProps = {
   query: string;
   /** 지금 골라 둔 품종. 목록에서 표시만 하고 고르는 것은 막지 않는다 */
   current?: string;
+  /** 골라 둔 품종의 종. "기타"는 양쪽 목록에 다 있어 이름만으로는 어느 줄인지 가를 수 없다 */
+  currentSpecies?: PetSpecies;
   /** 줄을 누르면 바로 확정된다. 시안에 확인 버튼이 없다 */
   onPick: (breed: string, species: PetSpecies) => void;
   className?: string;
@@ -59,7 +61,13 @@ function Row({ breed, species, current, showSpecies, onPick }: RowProps) {
   );
 }
 
-export function BreedPicker({ query, current, onPick, className }: BreedPickerProps) {
+export function BreedPicker({
+  query,
+  current,
+  currentSpecies,
+  onPick,
+  className,
+}: BreedPickerProps) {
   const keyword = normalize(query);
 
   if (keyword) {
@@ -84,7 +92,7 @@ export function BreedPicker({ query, current, onPick, className }: BreedPickerPr
             key={`${species}-${breed}`}
             breed={breed}
             species={species}
-            current={current === breed}
+            current={current === breed && currentSpecies === species}
             showSpecies={isShared(breed)}
             onPick={onPick}
           />
@@ -111,7 +119,7 @@ export function BreedPicker({ query, current, onPick, className }: BreedPickerPr
                 key={breed}
                 breed={breed}
                 species={species}
-                current={current === breed}
+                current={current === breed && currentSpecies === species}
                 showSpecies={false}
                 onPick={onPick}
               />

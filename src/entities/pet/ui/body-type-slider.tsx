@@ -1,18 +1,20 @@
-// 체형(BCS) 다섯 단계 중 하나를 고르는 슬라이더와 눈금 문구.
-// UI 시안 기준(onbo_003_체구선택후)이다. 온보딩과 아이 체형 수정이 함께 쓴다.
+// 체형(BCS) 다섯 단계를 고르는 슬라이더. 손잡이를 끌거나 눌러 값을 옮긴다.
+// UI 시안 기준(onbo_003_체구선택후, section_bcs)이다.
 //
 // 트랙이 통째로 진한 색이고 점선 눈금이 다섯 칸을 가르며, 손잡이는 고른 칸의 한가운데에 선다.
-// shadcn Slider 파일을 고치는 대신 data-slot 선택자로 호출부에서 모양을 덮는다.
+// 공용 Slider는 손잡이에 aria-valuetext를 넣을 길이 없어 Radix 조각을 직접 조립한다.
+// 눈금 문구는 aria-hidden이라 스크린 리더에는 손잡이 값이 "보통"처럼 읽혀야 한다.
 
 "use client";
 
+import { Slider as SliderPrimitive } from "radix-ui";
+
 import { cn } from "@/shared/lib/utils";
-import { Slider } from "@/shared/ui/slider";
 
 import { BODY_TYPE_OPTIONS } from "../model/breeds";
 
 type BodyTypeSliderProps = {
-  /** 0부터 센 단계. `BODY_TYPE_OPTIONS`의 인덱스다 */
+  /** BODY_TYPE_OPTIONS의 인덱스 */
   value: number;
   onValueChange: (next: number) => void;
   className?: string;
@@ -34,21 +36,26 @@ export function BodyTypeSlider({ value, onValueChange, className }: BodyTypeSlid
             <span key={label} className="border-r border-dashed border-border" />
           ))}
         </div>
-        <Slider
-          aria-label="체형"
+        <SliderPrimitive.Root
           min={0}
           max={BODY_TYPE_OPTIONS.length - 1}
           step={1}
           value={[value]}
           onValueChange={([next]) => onValueChange(next)}
-          className={cn(
-            "absolute top-0 left-[calc(10%-1rem)] h-8 w-[calc(80%+2rem)]",
-            "[&_[data-slot=slider-range]]:bg-transparent [&_[data-slot=slider-track]]:bg-transparent",
-            "[&_[data-slot=slider-thumb]]:size-8 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-surface-tertiary",
-            // 손잡이 가운데 흰 점
-            "[&_[data-slot=slider-thumb]]:before:absolute [&_[data-slot=slider-thumb]]:before:inset-0 [&_[data-slot=slider-thumb]]:before:m-auto [&_[data-slot=slider-thumb]]:before:size-3.5 [&_[data-slot=slider-thumb]]:before:rounded-full [&_[data-slot=slider-thumb]]:before:bg-icon-fill-static-white",
-          )}
-        />
+          className="absolute top-0 left-[calc(10%-1rem)] flex h-8 w-[calc(80%+2rem)] touch-none items-center select-none"
+        >
+          <SliderPrimitive.Track className="relative h-4 grow" />
+          <SliderPrimitive.Thumb
+            aria-label="체형"
+            aria-valuetext={BODY_TYPE_OPTIONS[value]}
+            className={cn(
+              "relative block size-8 shrink-0 rounded-full bg-surface-tertiary ring-ring/50 transition-[color,box-shadow] select-none",
+              "hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3",
+              // 손잡이 가운데 흰 점
+              "before:absolute before:inset-0 before:m-auto before:size-3.5 before:rounded-full before:bg-icon-fill-static-white",
+            )}
+          />
+        </SliderPrimitive.Root>
       </div>
       {/* 손잡이 위치만으로는 어떤 값인지 알 수 없어 눈금 문구를 함께 둔다 */}
       <div

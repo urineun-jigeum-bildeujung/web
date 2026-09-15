@@ -17,13 +17,15 @@ import { BreedPicker } from "./breed-picker";
 type BreedPickerStepProps = {
   /** 지금 골라 둔 품종. 목록에서 표시한다 */
   value: string;
+  /** 골라 둔 품종의 종. 같은 이름("기타")이 양쪽에 있어 함께 받아야 한 줄만 표시한다 */
+  species: PetSpecies;
   /** 줄을 누르면 품종과 그 종을 함께 넘긴다. 시안에 확인 버튼이 없어 바로 확정이다 */
   onConfirm: (breed: string, species: PetSpecies) => void;
   /** 머리말의 뒤로가기 */
   onCancel: () => void;
 };
 
-export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepProps) {
+export function BreedPickerStep({ value, species, onConfirm, onCancel }: BreedPickerStepProps) {
   const [query, setQuery] = useState("");
 
   return (
@@ -43,7 +45,7 @@ export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepP
       </div>
 
       <main className="flex-1 overflow-y-auto pt-5 pb-4">
-        <BreedPicker query={query} current={value} onPick={onConfirm} />
+        <BreedPicker query={query} current={value} currentSpecies={species} onPick={onConfirm} />
       </main>
     </>
   );
