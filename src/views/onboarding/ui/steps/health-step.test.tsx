@@ -16,7 +16,7 @@ function renderWith(patch: Partial<typeof EMPTY_PROFILE_DRAFT>, onChange = vi.fn
     />,
   );
   return {
-    next: screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement,
+    next: screen.getByRole("button", { name: "작성 완료" }) as HTMLButtonElement,
     onChange,
   };
 }
@@ -47,11 +47,13 @@ describe("고르는 자리", () => {
     expect(screen.getByText("관절염")).toBeDefined();
   });
 
-  test("해당 없음을 켜면 고를 수 없다", () => {
-    renderWith({ noConcern: true });
+  test("해당 없음을 켜면 고를 수 없고 고른 것도 보이지 않는다", () => {
+    renderWith({ noConcern: true, concern: ["슬개골 탈구"] });
 
     const picker = screen.getByRole("button", { name: "걱정되는 질환" }) as HTMLButtonElement;
     expect(picker.disabled).toBe(true);
+    // 답이 아니라고 표시한 상태라 배지를 비운다
+    expect(screen.queryByText("슬개골 탈구")).toBeNull();
   });
 
   test("해당 없음을 켜면 고른 것이 비워진다", () => {
