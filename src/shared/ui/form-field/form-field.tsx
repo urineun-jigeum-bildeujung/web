@@ -1,12 +1,11 @@
 // 폼 한 항목. 레이블과 입력, 그 아래 예시 문구를 묶고 접근성 연결을 대신한다.
-// 와이어프레임 기준(onbo_002~004, mypa_111, mypa_311, mypa_312)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(onbo_002~004의 input)이다.
 
 "use client";
 
 import { useId, type ComponentProps, type ReactNode } from "react";
-import { IoCloseCircle } from "react-icons/io5";
-
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 
@@ -36,12 +35,13 @@ export function FormField({
 }: FormFieldProps) {
   const id = useId();
   const descriptionId = `${id}-description`;
+  const filled = value !== undefined && value !== "";
   // 비활성 상태에서는 지우기도 막는다. 안 그러면 못 고치는 값을 지울 수 있다.
-  const canClear = Boolean(onClear) && !disabled && value !== undefined && value !== "";
+  const canClear = Boolean(onClear) && !disabled && filled;
 
   return (
-    <div className={cn("flex flex-col gap-1.5", className)}>
-      <Label htmlFor={id} className="text-sm font-medium">
+    <div className={cn("flex flex-col gap-3", className)}>
+      <Label htmlFor={id} className="text-title-bold-16">
         {label}
       </Label>
 
@@ -49,7 +49,7 @@ export function FormField({
         {leading && (
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-muted-foreground"
+            className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-icon-stroke-tertiary"
           >
             {leading}
           </span>
@@ -61,8 +61,13 @@ export function FormField({
           aria-describedby={error || hint ? descriptionId : undefined}
           aria-invalid={error ? true : undefined}
           // shadcn Input의 기본 높이는 32px이라 모바일 터치 기준에 못 미친다.
-          // 파일을 고치는 대신 호출부에서 덮는다.
-          className={cn("min-h-11", leading && "pl-10", canClear && "pr-11")}
+          // 파일을 고치는 대신 호출부에서 덮는다. 값이 차면 시안대로 테두리가 진해진다
+          className={cn(
+            "min-h-11 px-3 text-body-medium-14 placeholder:text-text-body-tertiary",
+            filled && "border-border-secondary",
+            leading && "pl-10",
+            canClear && "pr-11",
+          )}
           {...props}
         />
         {canClear && (
@@ -70,9 +75,9 @@ export function FormField({
             type="button"
             aria-label="입력 지우기"
             onClick={onClear}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-icon-stroke-tertiary hover:text-foreground"
           >
-            <IoCloseCircle aria-hidden className="size-5" />
+            <Icon name="cancel" />
           </button>
         )}
       </div>
@@ -80,7 +85,10 @@ export function FormField({
       {(error || hint) && (
         <p
           id={descriptionId}
-          className={cn("text-xs", error ? "text-destructive" : "text-muted-foreground")}
+          className={cn(
+            "text-caption-regular-12",
+            error ? "text-destructive" : "text-text-body-tertiary",
+          )}
         >
           {error ?? hint}
         </p>

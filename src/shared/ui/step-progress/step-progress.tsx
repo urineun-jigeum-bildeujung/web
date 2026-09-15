@@ -1,5 +1,5 @@
-// 여러 단계로 나뉜 입력 화면의 진행 정도를 상단에 칸으로 보여준다.
-// 와이어프레임 기준(onbo_002~onbo_004)이라 디자인 확정 시 바뀔 수 있다.
+// 여러 단계로 나뉜 입력 화면의 진행 정도를 상단에 알약 모양 칸으로 보여준다.
+// UI 시안 기준(onbo_002~onbo_004)이다.
 
 import type { ComponentProps } from "react";
 
@@ -29,8 +29,8 @@ export function StepProgress({ total, current, className, ...props }: StepProgre
           key={index}
           aria-hidden
           className={cn(
-            "h-1 flex-1 rounded-full transition-colors",
-            index < current ? "bg-primary" : "bg-muted",
+            "h-2 w-20 rounded-full transition-colors",
+            index < current ? "bg-primary" : "bg-surface-disable",
           )}
         />
       ))}

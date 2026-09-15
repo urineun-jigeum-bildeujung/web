@@ -27,6 +27,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `slider.tsx` | shadcn Slider |
 | `select.tsx` | shadcn Select |
 | `tabs.tsx` `accordion.tsx` `drawer.tsx` `tooltip.tsx` `switch.tsx` `sonner.tsx` `textarea.tsx` | shadcn. 탭·아코디언·바텀시트·툴팁·스위치·토스트·여러 줄 입력 |
+| `popover.tsx` | shadcn Popover. 눌러서 여닫는 말풍선. hover 툴팁이 안 되는 터치 화면의 설명에 쓴다 |
 
 - `npx shadcn add <컴포넌트>`가 `components.json`의 alias에 따라 여기에 추가한다.
 - **임의로 수정하지 않는다.** 내장된 접근성(ARIA·포커스 관리·키보드 인터랙션)이 조용히 깨질 수 있다. 수정이 필요하면 리뷰를 거친다.
@@ -65,4 +66,4 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
-**현재 PD팀 Figma는 와이어프레임 단계다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 그 사실과 근거 화면 ID를 남긴다.
+**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`는 UI 시안(온보딩)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
