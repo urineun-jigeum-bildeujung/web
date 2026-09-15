@@ -26,8 +26,16 @@ const MOCK = {
       isDefault: true,
       address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
       icon: "home" as const,
+      iconClassName: "text-icon-fill-brand",
     },
-    { id: "office", label: "회사", isDefault: false, address: "", icon: "building" as const },
+    {
+      id: "office",
+      label: "회사",
+      isDefault: false,
+      address: "",
+      icon: "building" as const,
+      iconClassName: "text-icon-fill-light-blue",
+    },
     {
       id: "studio",
       label: "자취방",
@@ -44,7 +52,7 @@ function InfoRow({ label, value, href }: { label: string; value: ReactNode; href
       <span className="text-body-medium-16 text-foreground">{label}</span>
       <span className="flex min-w-0 flex-1 items-center justify-end gap-1">
         <span className="truncate text-body-medium-14 text-text-body-secondary">{value}</span>
-        {href && <Icon name="right" className="size-7 shrink-0 text-icon-stroke-default" />}
+        {href && <Icon name="right" className="size-7 shrink-0 text-icon-stroke-tertiary" />}
       </span>
     </>
   );
@@ -96,7 +104,7 @@ export function MyInfoView() {
                 >
                   <span className="flex items-center gap-2">
                     {item.icon && (
-                      <Icon name={item.icon} className="size-7 text-icon-fill-default" />
+                      <Icon name={item.icon} className={cn("size-7", item.iconClassName)} />
                     )}
                     <span className="text-title-bold-16 text-foreground">{item.label}</span>
                     {item.isDefault && <Badge tone="strong">기본 배송지</Badge>}
@@ -110,7 +118,7 @@ export function MyInfoView() {
                     >
                       {item.address || "상품을 배송받을 주소를 입력해 주세요."}
                     </span>
-                    <Icon name="right" className="size-7 shrink-0 text-icon-stroke-default" />
+                    <Icon name="right" className="size-7 shrink-0 text-icon-stroke-tertiary" />
                   </span>
                 </Link>
               </div>
@@ -122,7 +130,7 @@ export function MyInfoView() {
                 className="flex h-8 items-center gap-1.5 rounded-md px-2 text-label-medium-14 text-text-label-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 장소 추가하기
-                <Icon name="plus" />
+                <Icon name="plus" className="text-icon-fill-secondary" />
               </Link>
             </div>
           </div>
