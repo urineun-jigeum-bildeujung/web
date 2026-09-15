@@ -1,5 +1,9 @@
 // 배송지 추가·수정. 이름과 받는 사람, 주소, 요청사항을 받는다.
-// 와이어프레임 기준(mypa_311_미입력, mypa_311)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_311_미입력, mypa_311).
+//
+// 주소는 이 화면에서 직접 입력하지 않고 검색 화면에서 고른다. 고른 값은 주소창에 실려 돌아온다 —
+// 새로고침이나 뒤로가기에서 살아남아야 해서다 (AGENTS.md 5.1). 컴포넌트 상태로 들면
+// 검색 화면으로 넘어가는 순간 사라진다.
 
 "use client";
 
@@ -7,10 +11,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useState } from "react";
-import { IoChevronForward } from "react-icons/io5";
 
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { FormField } from "@/shared/ui/form-field/form-field";
+import { Icon } from "@/shared/ui/icon/icon";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
 /** 이미 저장된 곳을 다시 열 때 채워 넣을 값. API 연동 전까지 화면 확인용이다 */
@@ -35,6 +39,9 @@ export function EditAddressView() {
   // App Router는 같은 경로에서 쿼리만 바뀌면 컴포넌트를 그대로 둔다.
   // 그러면 고칠 대상이 집에서 회사로 바뀌어도 입력값이 앞의 것으로 남는다.
   // key를 바꿔 대상이 달라질 때마다 폼을 새로 세운다.
+  //
+  // 고른 주소(roadAddr)는 key에 넣지 않는다. 넣으면 검색에서 돌아올 때마다 폼이 다시 서서
+  // 먼저 적어둔 이름·연락처가 지워진다.
   return <EditAddressForm key={place ?? "new"} place={place} />;
 }
 
@@ -42,15 +49,19 @@ function EditAddressForm({ place }: { place: string | null }) {
   const router = useRouter();
   const saved = place ? SAVED_PLACES[place] : undefined;
 
+  // 검색 화면이 실어 보낸 주소. 시안이 도로명만 보여줘서 그것만 받는다.
+  // 우편번호를 함께 실어야 할지는 백엔드가 `address` 컬럼을 어떻게 나눌지 정해지면 결정한다.
+  const [roadAddr] = useQueryState("roadAddr");
+
   const [label, setLabel] = useState(saved?.label ?? "");
   const [receiver, setReceiver] = useState(saved?.receiver ?? "");
   const [phone, setPhone] = useState(saved?.phone ?? "");
-  // 주소 자체는 검색 화면에서 고른다. 화면 간 전달 방식은
-  // 라우터 구조가 정해진 뒤에 붙인다.
-  const [address] = useState(saved?.address ?? "");
   const [detail, setDetail] = useState(saved?.detail ?? "");
   const [request, setRequest] = useState("");
   const [isDefault, setIsDefault] = useState(false);
+
+  // 고르고 온 주소가 이미 저장된 값을 덮는다. 고치러 들어와 새로 골랐다는 뜻이다.
+  const address = roadAddr ?? saved?.address ?? "";
 
   return (
     <SingleInputScreen
@@ -58,10 +69,10 @@ function EditAddressForm({ place }: { place: string | null }) {
       submitDisabled={!label.trim() || !receiver.trim() || !phone.trim() || !address.trim()}
       onSubmit={() => router.back()}
     >
+      {/* 시안은 예시를 별도 줄이 아니라 placeholder로 넣는다 */}
       <FormField
         label="배송지 이름"
-        hint="ex) 집, 회사"
-        placeholder="집"
+        placeholder="ex) 집, 회사"
         value={label}
         onChange={(event) => setLabel(event.target.value)}
         onClear={() => setLabel("")}
@@ -84,22 +95,24 @@ function EditAddressForm({ place }: { place: string | null }) {
         onClear={() => setPhone("")}
       />
 
-      <div className="flex flex-col gap-1.5">
-        <p className="text-sm font-medium text-foreground">받을 곳 주소</p>
-        {/* 주소는 검색 화면에서 고른다 */}
+      {/* 시안은 라벨 하나 아래 주소 줄과 상세주소 줄을 묶는다 */}
+      <div className="flex flex-col gap-3">
+        <p className="text-title-bold-16 text-foreground">받을 곳 주소</p>
+        {/* 주소는 직접 적지 않고 검색 화면에서 고른다. 그래서 입력칸이 아니라 링크다.
+            시안이 오른쪽에 돋보기를 놓아 누르면 찾으러 간다는 것을 보인다 */}
         <Link
           href="/mypage/address/search"
-          className="flex min-h-11 items-center justify-between rounded-lg border border-input px-3 text-sm transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-input px-3 text-body-medium-14 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <span className={address ? "text-foreground" : "text-muted-foreground"}>
+          <span className={address ? "truncate text-foreground" : "text-text-body-tertiary"}>
             {address || "주소 검색"}
           </span>
-          <IoChevronForward aria-hidden className="size-4 text-muted-foreground" />
+          <Icon name="search" label="주소 검색" className="size-5 text-icon-stroke-tertiary" />
         </Link>
         <FormField
           label="상세 주소"
           className="[&>label]:sr-only"
-          placeholder="상세주소를 입력해 주세요"
+          placeholder="상세주소를 입력해주세요"
           value={detail}
           onChange={(event) => setDetail(event.target.value)}
         />
@@ -107,7 +120,7 @@ function EditAddressForm({ place }: { place: string | null }) {
 
       <FormField
         label="배송 요청사항"
-        placeholder="요청사항을 적어주세요"
+        placeholder="요청사항을 적어주세요."
         value={request}
         onChange={(event) => setRequest(event.target.value)}
         onClear={() => setRequest("")}
