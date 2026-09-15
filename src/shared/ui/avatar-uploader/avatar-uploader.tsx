@@ -22,6 +22,8 @@ type AvatarUploaderProps = {
   label?: string;
   /** 사진이 없을 때 원 안에 보일 그림. 기본은 카메라다 */
   placeholder?: ReactNode;
+  /** 원의 크기. 온보딩은 80px(md), 정보 수정은 96px(lg)이다 */
+  size?: "md" | "lg";
   className?: string;
 };
 
@@ -30,6 +32,7 @@ export function AvatarUploader({
   defaultImageUrl,
   label = "반려동물 사진 등록",
   placeholder = <IoCameraOutline aria-hidden className="size-8 text-icon-fill-tertiary" />,
+  size = "md",
   className,
 }: AvatarUploaderProps) {
   const inputId = useId();
@@ -56,7 +59,10 @@ export function AvatarUploader({
     <div className={cn("flex flex-col items-center gap-2", className)}>
       <label
         htmlFor={inputId}
-        className="relative flex size-20 cursor-pointer items-center justify-center rounded-full bg-surface-disable transition-colors hover:bg-surface-tertiary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
+        className={cn(
+          "relative flex cursor-pointer items-center justify-center rounded-full bg-surface-disable transition-colors hover:bg-surface-tertiary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+          size === "lg" ? "size-24" : "size-20",
+        )}
       >
         <span className="sr-only">{label}</span>
         {shownUrl ? (

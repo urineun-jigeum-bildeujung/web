@@ -47,13 +47,14 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
 | `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
+| `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger)으로 뜻에 따라 색을 고른다 |
 | `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
 | `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. 이동용(Link)과 실행용(Button) |
 | `setting-group/` | 목록 줄을 제목 아래 카드로 묶는다 |
 | `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
 | `countdown/` | 남은 시간을 시:분:초로 세어 내린다. 서버·클라이언트 시각 차를 피해 붙은 뒤부터 센다 |
-| `filter-chips/` | 목록을 거르는 작은 칩 줄. 하나만 고를 수 있어 시맨틱은 라디오 |
+| `filter-chips/` | 목록을 거르는 36px 알약 칩 줄. 하나만 고를 수 있어 시맨틱은 라디오 |
 | `scroll-row/` | 손으로 밀어 넘기는 가로 목록. 캐러셀이 아니라 저절로 넘어가지 않는다 |
 | `detail-card/` | 제목 아래 항목-값 줄을 묶는 카드. 주문 상세·결제에서 쓴다 |
 | `price/` | 정가·할인가·할인율·단가 표기 |
@@ -67,4 +68,4 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
-**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`·`bottom-sheet`는 UI 시안(온보딩)에, `page-header`·`single-input-screen`은 UI 시안(로그인·회원가입)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
+**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`·`bottom-sheet`는 UI 시안(온보딩)에, `page-header`·`single-input-screen`은 UI 시안(로그인·회원가입)에, `filter-chips`·`badge`는 UI 시안(아이 관리)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
