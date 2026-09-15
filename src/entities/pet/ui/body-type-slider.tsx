@@ -22,15 +22,6 @@ export function BodyTypeSlider({ value, onValueChange, className }: BodyTypeSlid
   return (
     <div className={cn("flex flex-col gap-2", className)}>
       <div className="relative">
-        {/* 눈금은 손잡이 아래 깔려야 하므로 슬라이더보다 먼저 그린다 */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-1/2 grid h-4 -translate-y-1/2 grid-cols-5"
-        >
-          {BODY_TYPE_OPTIONS.slice(0, -1).map((label) => (
-            <span key={label} className="border-r border-dashed border-border" />
-          ))}
-        </div>
         <Slider
           aria-label="체형"
           min={0}
@@ -44,8 +35,19 @@ export function BodyTypeSlider({ value, onValueChange, className }: BodyTypeSlid
             "[&_[data-slot=slider-thumb]]:size-8 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-surface-tertiary",
             // 손잡이 가운데 흰 점
             "[&_[data-slot=slider-thumb]]:before:absolute [&_[data-slot=slider-thumb]]:before:inset-0 [&_[data-slot=slider-thumb]]:before:m-auto [&_[data-slot=slider-thumb]]:before:size-3.5 [&_[data-slot=slider-thumb]]:before:rounded-full [&_[data-slot=slider-thumb]]:before:bg-icon-fill-static-white",
+            // 눈금(아래 overlay)보다 손잡이가 위에 오게 한다
+            "[&_[data-slot=slider-thumb]]:z-10",
           )}
         />
+        {/* 시안의 점선 눈금. 트랙이 자기 배경으로 덮어 버리므로 트랙 위, 손잡이 아래에 그린다 */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-1/2 grid h-4 -translate-y-1/2 grid-cols-5"
+        >
+          {BODY_TYPE_OPTIONS.slice(0, -1).map((label) => (
+            <span key={label} className="border-r border-dashed border-border" />
+          ))}
+        </div>
       </div>
       {/* 손잡이 위치만으로는 어떤 값인지 알 수 없어 눈금 문구를 함께 둔다 */}
       <div
