@@ -105,30 +105,35 @@ export function MypageView() {
       />
 
       <main className="flex flex-1 flex-col gap-3 px-5 pt-3 pb-8">
-        {/* 프로필 카드. 위는 내 정보로, 아래 아이 줄은 아이 관리로 간다 */}
-        <section className="flex flex-col gap-3 rounded-xl bg-card px-3 py-4 text-card-foreground">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <p className="truncate text-title-bold-16 text-foreground">{MOCK_USER.nickname}</p>
-              <p className="truncate text-body-regular-13 text-text-body-tertiary">
+        {/* 프로필 카드. 윗줄 전체가 내 정보로, 아래 아이 줄이 아이 관리로 간다.
+            좌우 여백은 줄이 가져야 호버 배경이 카드 끝까지 닿는다 */}
+        <section className="flex flex-col gap-3 overflow-hidden rounded-xl bg-card py-4 text-card-foreground">
+          <Link
+            href="/mypage/info"
+            className="flex items-center justify-between gap-2 px-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="truncate text-title-bold-16 text-foreground">
+                {MOCK_USER.nickname}
+              </span>
+              <span className="truncate text-body-regular-13 text-text-body-tertiary">
                 {MOCK_USER.email}
-              </p>
-            </div>
-            <Link
-              href="/mypage/info"
-              aria-label="내 정보"
-              className="flex size-12 shrink-0 items-center justify-center rounded-full text-icon-fill-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="flex size-12 shrink-0 items-center justify-center text-icon-fill-default"
             >
               <Icon name="right" className="size-8" />
-            </Link>
-          </div>
+            </span>
+          </Link>
 
-          <span aria-hidden className="h-px w-full bg-border-default" />
+          <span aria-hidden className="mx-3 h-px bg-border-default" />
 
           <Link
             href="/mypage/pets"
             aria-label="반려동물 프로필 관리"
-            className="flex h-10.5 items-center gap-3 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="flex h-10.5 items-center gap-3 px-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {MOCK_USER.pets.map((pet) => (
               <span

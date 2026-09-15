@@ -1,7 +1,7 @@
 // 아이콘·제목·보조설명·화살표로 이루어진 목록 한 줄. 눌러서 다른 화면으로 가는 항목에 쓴다.
 // UI 시안 기준(mypa_001의 메뉴 줄)이다. 높이 44, 아이콘 28, 제목 title/bold_16, 화살표 28.
 //
-// 좌우 여백은 두지 않는다. 카드(SettingGroup)나 화면이 여백을 맡아야 시안의 12px 안쪽 여백이 맞는다.
+// 좌우 여백(12px)은 줄이 갖는다. 카드가 여백을 가지면 호버 배경이 카드 끝까지 닿지 않는다.
 
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
@@ -23,7 +23,7 @@ type ListRowBaseProps = {
 };
 
 const ROW_CLASS =
-  "flex min-h-11 w-full items-center gap-2 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+  "flex min-h-11 w-full items-center gap-2 px-3 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 function RowInner({ title, description, icon, trailing, hideChevron }: ListRowBaseProps) {
   return (
