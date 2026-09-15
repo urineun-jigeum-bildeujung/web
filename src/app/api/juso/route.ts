@@ -10,6 +10,9 @@ import type { ProblemDetail } from "@/shared/api/client";
 
 const JUSO_ENDPOINT = "https://business.juso.go.kr/addrlink/addrLinkApi.do";
 
+/** 외부 서버를 기다리는 한계. 넘으면 fetch가 스스로 끊는다 */
+const FETCH_TIMEOUT_MS = 5_000;
+
 /** 행안부 응답 중 우리가 쓰는 것만. 필드는 24개지만 화면에 그리는 것은 넷이다 */
 type JusoResponse = {
   results: {
@@ -47,6 +50,36 @@ const PROBLEM_BY_JUSO_CODE: Record<string, { status: number; errorCode: string }
   E0009: { status: 400, errorCode: "JUSO_400_KEYWORD_INVALID" },
 };
 
+/**
+ * 행안부 응답이 우리가 아는 모양인지 본다.
+ *
+ * 2xx라고 해서 JSON이라는 보장도, `results.common`이 있다는 보장도 없다.
+ * 점검 안내 페이지나 프록시가 끼어든 HTML이 200으로 올 수 있다.
+ */
+function isJusoResponse(body: unknown): body is JusoResponse {
+  if (typeof body !== "object" || body === null) {
+    return false;
+  }
+  const results = (body as { results?: unknown }).results;
+  if (typeof results !== "object" || results === null) {
+    return false;
+  }
+  const { common, juso } = results as { common?: unknown; juso?: unknown };
+  if (typeof common !== "object" || common === null) {
+    return false;
+  }
+  const { errorCode, totalCount, currentPage } = common as Record<string, unknown>;
+
+  return (
+    typeof errorCode === "string" &&
+    // 실패 응답은 juso가 null이다. 그것도 계약에 맞는 값이라 받는다
+    (juso === null || Array.isArray(juso)) &&
+    // 숫자로 오지 않으면 뒤에서 NaN이 되어 쪽 계산이 통째로 무너진다
+    Number.isFinite(Number(totalCount)) &&
+    Number.isFinite(Number(currentPage))
+  );
+}
+
 function problemResponse(status: number, errorCode: string, detail: string) {
   const problem: ProblemDetail = { status, errorCode, detail, title: errorCode };
   return Response.json(problem, { status });
@@ -70,19 +103,31 @@ export async function GET(request: Request) {
     resultType: "json",
   });
 
-  let response: Response;
+  let body: unknown;
   try {
-    response = await fetch(`${JUSO_ENDPOINT}?${query}`);
+    // 시간 제한이 없으면 행안부가 연결만 해 두고 답하지 않을 때 이 핸들러가 런타임 기본 제한까지 붙잡힌다.
+    // 그런 요청이 쌓이면 주소 검색 전체가 느려진다
+    const response = await fetch(`${JUSO_ENDPOINT}?${query}`, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+
+    if (!response.ok) {
+      return problemResponse(502, "JUSO_502_UPSTREAM", "주소 검색 서버가 응답하지 않았습니다.");
+    }
+
+    // 파싱도 이 안에 둔다. 2xx로 JSON이 아닌 것이 오면 여기서 던지는데,
+    // 밖에 두면 핸들러가 그대로 터져 500이 나간다
+    body = await response.json();
   } catch {
-    // 행안부에 닿지도 못했다. 원인 문자열은 남기지 않는다 — 요청 URL에 키가 들어 있다
+    // 행안부에 닿지 못했거나, 답이 우리가 읽을 수 없는 것이었다.
+    // 원인 문자열은 남기지 않는다 — 요청 URL에 승인키가 들어 있다
     return problemResponse(502, "JUSO_502_UPSTREAM", "주소 검색 서버에 연결하지 못했습니다.");
   }
 
-  if (!response.ok) {
-    return problemResponse(502, "JUSO_502_UPSTREAM", "주소 검색 서버가 응답하지 않았습니다.");
+  if (!isJusoResponse(body)) {
+    return problemResponse(502, "JUSO_502_UPSTREAM", "주소 검색 서버가 뜻밖의 답을 보냈습니다.");
   }
 
-  const body = (await response.json()) as JusoResponse;
   const { common, juso } = body.results;
 
   if (common.errorCode !== "0") {

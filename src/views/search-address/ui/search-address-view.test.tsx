@@ -70,6 +70,7 @@ beforeEach(() => {
       : undefined,
     error: null,
     isSearching: false,
+    isRefreshing: false,
   }));
 });
 
@@ -115,10 +116,16 @@ test("검색어가 한 글자면 검색 버튼이 꺼져 있다", () => {
 });
 
 test("찾는 동안 뼈대를 보여준다", () => {
-  useQueryAddressSearch.mockReturnValue({ result: undefined, error: null, isSearching: true });
+  useQueryAddressSearch.mockReturnValue({
+    result: undefined,
+    error: null,
+    isSearching: true,
+    isRefreshing: false,
+  });
   renderAt("?query=테헤란로");
 
-  expect(screen.getByLabelText("주소를 찾는 중")).toBeDefined();
+  // 화면을 보지 않는 사람에게도 찾는 중이라고 말로 닿아야 한다
+  expect(screen.getByRole("status").textContent).toContain("주소를 찾는 중");
   // 뼈대도 목록으로 그리므로 결과 글자가 없는지로 본다
   expect(screen.queryByText(ITEMS[0].roadAddr)).toBeNull();
 });
@@ -244,6 +251,7 @@ test("맞는 주소가 없으면 비었다고 알린다", () => {
     result: { items: [], totalCount: 0, page: 1 },
     error: null,
     isSearching: false,
+    isRefreshing: false,
   });
   renderAt("?query=없는주소");
 
@@ -257,10 +265,12 @@ test("검색어가 너무 넓으면 그렇게 알려 준다", () => {
     result: undefined,
     error: new ApiError(400, "too broad", { errorCode: "JUSO_400_KEYWORD_TOO_BROAD" }),
     isSearching: false,
+    isRefreshing: false,
   });
   renderAt("?query=서울시");
 
-  expect(screen.getByText("검색어가 너무 넓어요")).toBeDefined();
+  // 오류도 스크린 리더에 바로 닿아야 한다
+  expect(screen.getByRole("alert").textContent).toContain("검색어가 너무 넓어요");
 });
 
 test("숫자만 넣으면 그렇게 알려 준다", () => {
@@ -268,8 +278,26 @@ test("숫자만 넣으면 그렇게 알려 준다", () => {
     result: undefined,
     error: new ApiError(400, "invalid", { errorCode: "JUSO_400_KEYWORD_INVALID" }),
     isSearching: false,
+    isRefreshing: false,
   });
   renderAt("?query=123");
 
   expect(screen.getByText("검색어를 다시 확인해 주세요")).toBeDefined();
+});
+
+// 쪽을 넘길 때 목록을 지우고 뼈대를 띄우면 넘길 때마다 화면이 들썩인다.
+// 앞 결과를 그대로 두되 아직 오는 중임을 흐리게 보여 준다
+test("새 쪽을 기다리는 동안 앞 결과를 지우지 않는다", () => {
+  useQueryAddressSearch.mockReturnValue({
+    result: { items: ITEMS.slice(0, ADDRESS_PAGE_SIZE), totalCount: 9, page: 1 },
+    error: null,
+    isSearching: false,
+    isRefreshing: true,
+  });
+  renderAt("?query=테헤란로&page=2");
+
+  // 뼈대가 아니라 앞 결과가 그대로 있다
+  expect(screen.queryByRole("status")).toBeNull();
+  expect(screen.getByText(ITEMS[0].roadAddr)).toBeDefined();
+  expect(screen.getByRole("list").getAttribute("aria-busy")).toBe("true");
 });

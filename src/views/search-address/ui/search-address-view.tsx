@@ -65,7 +65,7 @@ export function SearchAddressView() {
   const canSearch = keyword.trim().length >= MIN_KEYWORD_LENGTH;
 
   // 주소창의 값으로 찾는다. 그래야 새로고침해도 같은 화면이 나온다
-  const { result, error, isSearching } = useQueryAddressSearch(query, page);
+  const { result, error, isSearching, isRefreshing } = useQueryAddressSearch(query, page);
   const lastPage = result ? Math.max(1, Math.ceil(result.totalCount / ADDRESS_PAGE_SIZE)) : 1;
   // 주소창의 쪽이 범위를 벗어나면 조회 쪽에서 보정해 돌려준다. 화면은 보정된 값을 쓴다
   const safePage = result?.page ?? 1;
@@ -154,17 +154,33 @@ export function SearchAddressView() {
         </dl>
       )}
 
-      {isSearching && <AddressResultSkeleton />}
+      {/* 뼈대는 눈으로만 읽히는 표시다. 스크린 리더에는 찾는 중이라고 말로 알린다 */}
+      {isSearching && (
+        <div role="status" aria-live="polite">
+          <span className="sr-only">주소를 찾는 중</span>
+          <div aria-hidden>
+            <AddressResultSkeleton />
+          </div>
+        </div>
+      )}
 
-      {/* 실패하면 무엇이 잘못됐는지 알려 준다. 검색어 문제면 고쳐서 다시 찾을 수 있다 */}
-      {error && <EmptyState {...APP_MESSAGE[toAppMessageCode(error)]} />}
+      {/* 실패하면 무엇이 잘못됐는지 알려 준다. 검색어 문제면 고쳐서 다시 찾을 수 있다.
+          화면을 보지 않는 사람에게도 바로 닿도록 alert로 띄운다 */}
+      {error && <EmptyState role="alert" {...APP_MESSAGE[toAppMessageCode(error)]} />}
 
       {!isSearching &&
         !error &&
         result &&
         (result.items.length > 0 ? (
           <>
-            <AddressResultList results={result.items} onSelect={setSelected} />
+            {/* 쪽을 넘기는 동안 앞 결과를 그대로 두되, 아직 오는 중임을 흐리게 보여 준다.
+                목록을 지우고 뼈대를 띄우면 넘길 때마다 화면이 들썩인다 */}
+            <AddressResultList
+              results={result.items}
+              onSelect={setSelected}
+              aria-busy={isRefreshing}
+              className={cn(isRefreshing && "opacity-60 transition-opacity")}
+            />
             <Pagination
               page={safePage}
               lastPage={lastPage}
@@ -243,7 +259,7 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
  */
 function AddressResultSkeleton() {
   return (
-    <ul aria-label="주소를 찾는 중" className="flex flex-col gap-4">
+    <ul className="flex flex-col gap-4">
       {Array.from({ length: ADDRESS_PAGE_SIZE }, (_, index) => (
         <li key={index} className="flex flex-col gap-2 border-b border-border pb-4">
           <Skeleton className="h-5 w-40" />
