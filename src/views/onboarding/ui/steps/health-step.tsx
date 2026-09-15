@@ -31,7 +31,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
 
   return (
     <>
-      <main className="flex flex-1 flex-col gap-5 pb-6">
+      <main className="flex flex-1 flex-col gap-5 pt-5 pb-6">
         <h1 className="px-5 text-title-bold-20 text-foreground">꼼꼼하게 건강을 챙겨줄게요</h1>
 
         <div className="flex flex-col gap-5 px-5">
