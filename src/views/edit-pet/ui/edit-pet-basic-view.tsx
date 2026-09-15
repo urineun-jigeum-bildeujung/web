@@ -10,10 +10,10 @@ import { useState } from "react";
 import { IoChevronForward } from "react-icons/io5";
 
 import { BreedPickerStep, GENDER_OPTIONS, NEUTERED_OPTIONS, type PetSpecies } from "@/entities/pet";
-import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
+import { Icon } from "@/shared/ui/icon/icon";
 
 import { EditPetScreen } from "./edit-pet-screen";
 
@@ -34,7 +34,8 @@ export function EditPetBasicView() {
   // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
   const [picking, setPicking] = useQueryState("picking");
   const [breed, setBreed] = useState(SAVED.breed);
-  const [species, setSpecies] = useState(SAVED.species);
+  // 품종과 함께 저장 API로 보낼 값. 화면에서는 읽지 않는다
+  const [, setSpecies] = useState(SAVED.species);
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
@@ -44,13 +45,11 @@ export function EditPetBasicView() {
   if (picking === "breed") {
     return (
       <div className="flex min-h-dvh flex-col">
-        {/* 상단 뒤로가기도 하단 "돌아가기"와 같은 곳으로 가야 한다.
-            기본 동작인 router.back()은 이 화면을 아예 벗어난다 — nuqs가 쿼리를
+        {/* 머리말의 뒤로가기(onCancel)는 이 화면으로 돌아와야 한다.
+            router.back()은 이 화면을 아예 벗어난다 — nuqs가 쿼리를
             replace로 넣어 picking이 히스토리에 쌓이지 않기 때문이다. */}
-        <PageHeader title="품종 선택" onLeadingClick={() => void setPicking(null)} />
         <BreedPickerStep
           value={breed}
-          species={species}
           onConfirm={(next, nextSpecies) => {
             setBreed(next);
             setSpecies(nextSpecies);
@@ -65,7 +64,11 @@ export function EditPetBasicView() {
   return (
     <EditPetScreen submitDisabled={!name.trim()}>
       <div className="flex justify-center">
-        <AvatarUploader label="아이 사진" onFileChange={() => {}} />
+        <AvatarUploader
+          label="아이 사진"
+          placeholder={<Icon name="dog" className="size-12 text-icon-fill-tertiary" />}
+          onFileChange={() => {}}
+        />
       </div>
 
       <FormField

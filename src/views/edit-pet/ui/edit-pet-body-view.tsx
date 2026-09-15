@@ -6,14 +6,13 @@
 import { useState } from "react";
 
 import {
-  BODY_TYPE_OPTIONS,
   BodyTypeGuide,
+  BodyTypeSlider,
   DEFAULT_BODY_TYPE_INDEX,
   SIZE_OPTIONS,
 } from "@/entities/pet";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
-import { Slider } from "@/shared/ui/slider";
 
 import { EditPetScreen } from "./edit-pet-screen";
 
@@ -51,25 +50,7 @@ export function EditPetBodyView() {
           {/* 만져서 판단하는 기준이라 무엇을 보고 고르는지 알려 준다 */}
           <BodyTypeGuide />
         </div>
-        <Slider
-          aria-label="체형"
-          value={[bodyType]}
-          onValueChange={([next]) => setBodyType(next)}
-          max={BODY_TYPE_OPTIONS.length - 1}
-          step={1}
-        />
-        <div className="flex justify-between text-xs">
-          {BODY_TYPE_OPTIONS.map((label, index) => (
-            <span
-              key={label}
-              className={
-                index === bodyType ? "font-medium text-foreground" : "text-muted-foreground"
-              }
-            >
-              {label}
-            </span>
-          ))}
-        </div>
+        <BodyTypeSlider value={bodyType} onValueChange={setBodyType} />
       </div>
     </EditPetScreen>
   );

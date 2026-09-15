@@ -86,12 +86,15 @@ export const NEUTERED_OPTIONS = [
   { value: "no", label: "안 했어요" },
 ] as const;
 
-/** 시안은 견종 기준 문구다. 고양이는 체급 표현이 다를 수 있어 확인이 필요하다 */
+/** UI 시안(onbo_003)에서 종을 가리지 않는 문구로 확정됐다 */
 export const SIZE_OPTIONS = [
-  { value: "small", label: "소형견", description: "10kg 미만" },
-  { value: "medium", label: "중형견", description: "10kg ~ 25kg" },
-  { value: "large", label: "대형견", description: "25kg 이상" },
+  { value: "small", label: "소형" },
+  { value: "medium", label: "중형" },
+  { value: "large", label: "대형" },
 ] as const;
+
+/** 체구를 무엇으로 가르는지. 시안(onbo_003_체구툴팁)의 물음표를 누르면 보인다 */
+export const SIZE_GUIDE = ["소형은 10kg 미만", "중형은 10~25kg", "대형은 25kg 이상이에요"] as const;
 
 /** 시안 onbo_003_체구선택후의 슬라이더 5단계 */
 export const BODY_TYPE_OPTIONS = ["매우 마름", "마름", "보통", "통통", "비만"] as const;

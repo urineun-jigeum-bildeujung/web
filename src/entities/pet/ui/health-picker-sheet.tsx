@@ -1,5 +1,5 @@
 // 건강 관심사·알러지 성분을 탭으로 나눠 고르는 바텀시트.
-// 와이어프레임 기준(onbo_004_바텀)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(onbo_004_바텀)이다.
 //
 // 질환과 알러지가 같은 모양이라 목록만 갈아끼워 쓴다. 자유 입력을 대신하는 자리다 —
 // 보호자마다 다르게 적으면 같은 질환이 여러 표기로 쌓여 추천에 쓸 수 없다.
@@ -7,11 +7,10 @@
 "use client";
 
 import { useState } from "react";
-import { IoCheckmark } from "react-icons/io5";
-
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import type { HealthGroup } from "../model/health";
@@ -37,22 +36,22 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
     setPicked((prev) => (prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]));
 
   return (
-    <div className="flex flex-col gap-4 px-4 pt-2 pb-6">
+    <div className="flex flex-col gap-3 px-5 pt-2 pb-4">
       <DrawerHeader className="p-0">
-        <DrawerTitle className="text-left text-base">{title}</DrawerTitle>
+        <DrawerTitle className="text-left text-title-bold-18">{title}</DrawerTitle>
       </DrawerHeader>
 
-      <Tabs defaultValue={groups[0]?.label} className="gap-3">
+      <Tabs defaultValue={groups[0]?.label} className="gap-4">
         {/* 갈래가 여섯이라 좁은 화면에서는 가로로 밀어 본다 */}
         <TabsList
           variant="line"
-          className="h-auto w-full [scrollbar-width:none] justify-start gap-4 overflow-x-auto border-b border-border pb-2 [&::-webkit-scrollbar]:hidden"
+          className="h-10 w-full [scrollbar-width:none] justify-start gap-0 overflow-x-auto p-0 [&::-webkit-scrollbar]:hidden"
         >
           {groups.map((group) => (
             <TabsTrigger
               key={group.label}
               value={group.label}
-              className="min-h-11 min-w-11 flex-none px-0 text-sm after:bg-brand data-active:text-brand"
+              className="h-8 min-w-11 flex-none px-2 text-label-medium-14 text-text-body-tertiary after:bottom-0 after:h-px data-active:font-bold data-active:text-foreground"
             >
               {group.label}
             </TabsTrigger>
@@ -62,7 +61,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
         {groups.map((group) => (
           <TabsContent key={group.label} value={group.label}>
             {/* 여러 개를 고를 수 있어 라디오가 아니라 눌림 상태를 쓴다 */}
-            <ul className="flex flex-wrap gap-2">
+            <ul className="flex flex-wrap gap-3">
               {group.items.map((item) => {
                 const selected = picked.includes(item);
                 return (
@@ -71,16 +70,17 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => toggle(item)}
+                      // 시안의 칩은 36px인데 탭 영역 기준(44px)을 지키려고 조금 더 높다
                       className={cn(
-                        "flex min-h-11 items-center gap-1 rounded-full border px-4 text-sm transition-colors",
+                        "flex min-h-11 items-center gap-1 rounded-full border px-3 text-label-medium-14 transition-colors",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                         selected
                           ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-background text-foreground hover:bg-muted",
+                          : "border-border-secondary bg-background text-foreground hover:bg-muted",
                       )}
                     >
                       {/* 색만으로 고른 것을 알리지 않는다. 색을 구분하기 어려운 사람도 안다 */}
-                      {selected && <IoCheckmark aria-hidden className="size-4" />}
+                      {selected && <Icon name="check" className="size-4" />}
                       {item}
                     </button>
                   </li>
@@ -91,7 +91,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
         ))}
       </Tabs>
 
-      <Button className="min-h-12" onClick={() => onConfirm(picked)}>
+      <Button className="h-11 text-label-bold-14" onClick={() => onConfirm(picked)}>
         선택 완료
       </Button>
     </div>

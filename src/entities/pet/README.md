@@ -4,11 +4,15 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/body-type-guide.tsx` | 체형(BCS)이 무엇인지 알려주는 물음표와 설명 모달 (`onbo_003_bcs툴팁`) |
+| `ui/body-type-guide.tsx` | 체형(BCS)이 무엇인지 알려주는 물음표와 설명 시트 (`onbo_003_bcs툴팁`) |
+| `ui/body-type-icon.tsx` | 체형 다섯 단계의 강아지 실루엣. 시안 자산을 currentColor로 옮겼다 |
+| `ui/body-type-slider.tsx` | 체형을 고르는 슬라이더와 눈금 문구 (`onbo_003_체구선택후`). 온보딩·체형 수정이 함께 쓴다 |
+| `ui/size-guide.tsx` | 체구를 몇 kg으로 가르는지 보이는 물음표 말풍선 (`onbo_003_체구툴팁`) |
 | `ui/body-type-guide.test.tsx` | 다섯 단계가 이름만이 아니라 설명까지 읽히는지 본다 |
-| `ui/breed-picker.tsx` | 종별로 나눈 품종 선택 목록 |
-| `ui/breed-picker-step.tsx` | 품종 고르기 화면. 온보딩과 정보 수정이 함께 쓴다 |
-| `ui/breed-picker-step.test.tsx` | 고른 값이 종과 함께 넘어가는지 본다 |
+| `ui/breed-picker.tsx` | 품종 목록. 검색 전에는 종별 전체, 검색 중에는 걸러진 것 (`onbo_011_품종선택`) |
+| `ui/breed-picker.test.tsx` | 종별 묶음·검색·기타 구분 |
+| `ui/breed-picker-step.tsx` | 품종 고르기 화면. 머리말·검색창·목록. 줄을 누르면 바로 확정. 온보딩과 정보 수정이 함께 쓴다 |
+| `ui/breed-picker-step.test.tsx` | 검색이 목록을 거르고 줄을 누르면 종과 함께 넘어가는지 본다 |
 | `ui/pet-switcher.tsx` | 아이 고르기 줄. 마지막 칸은 새 아이 자리. `withNames`로 이름을 함께 보인다 |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`메인_상태 체크 바텀시트`) |
 | `ui/product-review-sheet.tsx` | 아이가 먹은 제품의 후기 시트 (`mypa_021_상품클릭시`) |
@@ -26,7 +30,7 @@
 
 `PetProfileSelector`(아바타로 반려동물 전환)는 마이페이지 작업에서 만든다.
 
-**시안 기준 주의** — 체구 선택지가 견종 기준 문구(소형견·중형견·대형견)다. 고양이는 표현이 달라야 할 수 있어 PD팀 확인이 필요하다.
+**체구 문구는 UI 시안에서 소형·중형·대형으로 확정됐다.** 와이어프레임의 견종 기준 문구(소형견 등)는 쓰지 않는다. 몇 kg으로 가르는지는 `SIZE_GUIDE`에 있고 `SizeGuide` 말풍선이 보인다.
 
 **품종은 기능명세서 v0.4의 `데이터 구조`가 정본이다.** 시안이 아니다. 강아지 35 · 고양이 23이고 표기까지 그대로 맞춘다 — 표기가 다르면 서버가 내려주는 값과 대조가 안 된다.
 
