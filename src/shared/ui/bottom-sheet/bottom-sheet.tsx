@@ -17,10 +17,18 @@ type BottomSheetProps = {
   onOpenChange: (open: boolean) => void;
   /** 손잡이 아래에 들어갈 내용. 제목은 `DrawerTitle`로 넣어야 스크린 리더가 시트 이름을 읽는다 */
   children: ReactNode;
+  /** 위쪽 손잡이. 시안에 손잡이가 없는 카드에서 끈다 (mypa_061_구매확정). 꺼도 끌어내려 닫는 것은 그대로다 */
+  showHandle?: boolean;
   className?: string;
 };
 
-export function BottomSheet({ open, onOpenChange, children, className }: BottomSheetProps) {
+export function BottomSheet({
+  open,
+  onOpenChange,
+  children,
+  showHandle = true,
+  className,
+}: BottomSheetProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerPortal>
@@ -37,9 +45,11 @@ export function BottomSheet({ open, onOpenChange, children, className }: BottomS
           )}
         >
           {/* 시안의 손잡이. 40px 영역 가운데 5px 막대 */}
-          <div aria-hidden className="flex h-10 shrink-0 items-center justify-center">
-            <span className="h-1.25 w-15 rounded-full bg-icon-fill-tertiary" />
-          </div>
+          {showHandle && (
+            <div aria-hidden className="flex h-10 shrink-0 items-center justify-center">
+              <span className="h-1.25 w-15 rounded-full bg-icon-fill-tertiary" />
+            </div>
+          )}
           {children}
         </DrawerPrimitive.Content>
       </DrawerPortal>
