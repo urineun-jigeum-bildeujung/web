@@ -41,6 +41,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `icon/` | 디자인 시스템 아이콘 43종. `name`으로 고르고 색은 글자색, 크기는 `size-*`. `icon-shapes.ts`는 Figma에서 스크립트로 만든 파일이라 손으로 고치지 않는다 |
 | `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기 기본 버튼 |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
+| `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣는다 |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동 |
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼 |
@@ -66,4 +67,4 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
-**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`는 UI 시안(온보딩)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
+**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`·`bottom-sheet`는 UI 시안(온보딩)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
