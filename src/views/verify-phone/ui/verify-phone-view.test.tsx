@@ -14,7 +14,7 @@ test("처음에는 인증번호 입력란이 없다", () => {
 test("통신사와 번호가 있어야 인증 요청을 할 수 있다", () => {
   render(<VerifyPhoneView />);
 
-  const request = screen.getByRole("button", { name: "인증" });
+  const request = screen.getByRole("button", { name: "인증 번호 받기" });
   expect((request as HTMLButtonElement).disabled).toBe(true);
 
   // 번호만 채우면 아직 통신사가 없어 눌리지 않는다

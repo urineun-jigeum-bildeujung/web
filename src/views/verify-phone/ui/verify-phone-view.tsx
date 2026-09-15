@@ -1,5 +1,5 @@
 // 휴대폰 번호 인증. 통신사를 고르고 번호를 받아 인증번호로 확인한다.
-// 와이어프레임 기준(mypa_212, 통신사선택, 번호입력, 인증, 완료)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_212 다섯 장, 1500-38228~1500-38659)이다.
 //
 // MVP에서는 목업으로 간다. 인증을 누르면 번호가 채워지고 실제 문자는 가지 않는다.
 // 문자 발송은 건당 과금이고 무료 지원은 사업자등록이 있어야 하는데 우리는 없다.
@@ -10,6 +10,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppSuccess } from "@/shared/lib/app-toast";
 import { Button } from "@/shared/ui/button";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -18,7 +20,10 @@ import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-
 const CARRIERS = ["SKT", "KT", "LG U+", "SKT 알뜰폰", "KT 알뜰폰", "LG U+ 알뜰폰"];
 
 /** 문자가 가지 않으므로 받은 것처럼 채워 넣는 값. 시안(`mypa_212`)에 적힌 번호다. */
-const MOCK_CODE = "45621";
+const MOCK_CODE = "987654";
+
+/** 입력칸 안 오른쪽의 32px 검정 칩. 시안의 action_button */
+const CHIP_CLASS = "h-8 rounded-md px-2 text-label-medium-14";
 
 export function VerifyPhoneView() {
   const router = useRouter();
@@ -37,61 +42,66 @@ export function VerifyPhoneView() {
       onSubmit={() => router.back()}
     >
       <Select value={carrier} onValueChange={setCarrier}>
-        <SelectTrigger className="min-h-11 w-full" aria-label="통신사">
+        {/* 시안의 입력칸과 같은 44px 상자. 값이 차면 선이 진해진다 */}
+        <SelectTrigger
+          aria-label="통신사"
+          className="min-h-11 w-full rounded-lg border-border-secondary px-3 text-body-medium-14 data-placeholder:border-border-default data-placeholder:text-text-body-tertiary"
+        >
           <SelectValue placeholder="통신사 선택" />
         </SelectTrigger>
         <SelectContent>
           {CARRIERS.map((item) => (
-            <SelectItem key={item} value={item}>
+            <SelectItem key={item} value={item} className="min-h-10 text-body-medium-14">
               {item}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
-      <div className="flex items-start gap-2">
-        <FormField
-          label="휴대폰 번호"
-          className="flex-1 [&>label]:sr-only"
-          placeholder="010-1234-5678"
-          inputMode="numeric"
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-        />
-        <Button
-          variant="outline"
-          className="min-h-11 shrink-0"
-          disabled={!canRequestCode}
-          onClick={() => {
-            setCodeSent(true);
-            // 문자가 가지 않으니 받은 것처럼 채워 준다
-            setCode(MOCK_CODE);
-          }}
-        >
-          인증
-        </Button>
-      </div>
+      <FormField
+        label="휴대폰 번호"
+        className="[&>label]:sr-only"
+        placeholder="010-1234-5678"
+        inputMode="numeric"
+        value={phone}
+        onChange={(event) => setPhone(event.target.value)}
+        trailing={
+          <Button
+            aria-label="인증 번호 받기"
+            className={CHIP_CLASS}
+            disabled={!canRequestCode}
+            onClick={() => {
+              setCodeSent(true);
+              // 문자가 가지 않으니 받은 것처럼 채워 주고, 보낸 것처럼 알린다
+              setCode(MOCK_CODE);
+              toastAppSuccess(APP_MESSAGE_CODE.member.verificationCodeSent);
+            }}
+          >
+            인증
+          </Button>
+        }
+      />
 
       {codeSent && (
-        <div className="flex flex-col gap-1.5">
-          <p className="text-sm font-medium text-foreground">인증 번호를 입력해주세요</p>
-          <div className="flex items-start gap-2">
-            <FormField
-              label="인증 번호"
-              className="flex-1 [&>label]:sr-only"
-              inputMode="numeric"
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-            />
-            <Button
-              className="min-h-11 shrink-0"
-              disabled={code.length < 4 || verified}
-              onClick={() => setVerified(true)}
-            >
-              확인
-            </Button>
-          </div>
-          {verified && <p className="text-xs text-muted-foreground">인증이 완료됐어요.</p>}
+        <div className="flex flex-col gap-4 pt-2">
+          <h2 className="text-title-bold-20 text-foreground">인증 번호를 입력해주세요</h2>
+          <FormField
+            label="인증 번호"
+            className="[&>label]:sr-only"
+            inputMode="numeric"
+            value={code}
+            onChange={(event) => setCode(event.target.value)}
+            trailing={
+              <Button
+                aria-label="인증 번호 확인"
+                className={CHIP_CLASS}
+                disabled={code.length < 4 || verified}
+                onClick={() => setVerified(true)}
+              >
+                인증
+              </Button>
+            }
+          />
         </div>
       )}
     </SingleInputScreen>
