@@ -229,7 +229,7 @@ test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page
   await page.getByLabel("휴대폰 번호").fill("010-1234-5678");
   await page.getByRole("button", { name: "인증 번호 받기" }).click();
 
-  await expect(page.getByLabel("인증 번호")).not.toHaveValue("");
+  await expect(page.getByRole("textbox", { name: "인증 번호", exact: true })).not.toHaveValue("");
 
   await page.getByRole("button", { name: "인증 번호 확인" }).click();
   await expect(page.getByRole("button", { name: "입력 완료" })).toBeEnabled();
