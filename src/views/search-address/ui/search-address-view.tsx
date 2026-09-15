@@ -18,38 +18,15 @@ import {
 } from "@/shared/ui/address-result-list/address-result-list";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
-/**
- * API 연동 전까지 화면 확인용 값. 건물명이 없는 결과도 섞어 둔다.
- * 지어낸 값이 아니라 행안부 API가 실제로 내려준 응답을 옮겼다 — 나중에 진짜 응답으로 바꿔도 화면이 그대로다.
- */
-const MOCK_RESULTS: AddressResult[] = [
-  {
-    zipNo: "06133",
-    roadAddr: "서울특별시 강남구 테헤란로 123 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 648-23 여삼빌딩",
-    bdNm: "여삼빌딩",
-  },
-  {
-    zipNo: "06234",
-    roadAddr: "서울특별시 강남구 테헤란로 152 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 737 강남파이낸스센터",
-    bdNm: "강남파이낸스센터",
-  },
-  {
-    zipNo: "06236",
-    roadAddr: "서울특별시 강남구 테헤란로 419 (삼성동)",
-    jibunAddr: "서울특별시 강남구 삼성동 168-26",
-  },
-  {
-    zipNo: "06158",
-    roadAddr: "서울특별시 강남구 테헤란로 501 (삼성동)",
-    jibunAddr: "서울특별시 강남구 삼성동 143-40 브이플렉스",
-    bdNm: "브이플렉스",
-  },
-];
+import {
+  ADDRESS_PAGE_SIZE,
+  searchAddresses,
+  type AddressSearchResult,
+} from "../api/address-search";
 
 /** 검색어를 어떻게 넣는지 보여주는 예시 (mypa_312_입력전) */
 const SEARCH_EXAMPLES = [
@@ -64,19 +41,24 @@ const MIN_KEYWORD_LENGTH = 2;
 export function SearchAddressView() {
   const router = useRouter();
   const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState<AddressResult[] | null>(null);
+  const [result, setResult] = useState<AddressSearchResult | null>(null);
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<AddressResult | null>(null);
 
   const canSearch = keyword.trim().length >= MIN_KEYWORD_LENGTH;
+  const lastPage = result ? Math.max(1, Math.ceil(result.totalCount / ADDRESS_PAGE_SIZE)) : 1;
 
-  const search = () => {
+  const runSearch = (nextPage: number) => {
     if (!canSearch) {
       return;
     }
-    setResults(MOCK_RESULTS);
-    // 검색어를 바꿔 다시 찾으면 앞서 고른 것이 남아 있으면 안 된다
+    setResult(searchAddresses(keyword.trim(), nextPage));
+    setPage(nextPage);
+    // 목록이 바뀌면 앞서 고른 것이 화면에서 사라진다. 남겨 두면 안 보이는 주소로 넘어간다
     setSelected(null);
   };
+
+  const search = () => runSearch(1);
 
   // 시안은 검색어만 넣어도 `입력 완료`를 활성으로 그렸지만, 주소를 고르지 않으면 넘길 값이 없다.
   // 골랐을 때만 활성으로 둔다 (#187).
@@ -119,7 +101,7 @@ export function SearchAddressView() {
       </div>
 
       {/* 어떻게 찾아야 하는지 알려주는 예시. 검색 전에만 보인다 (mypa_312_입력전) */}
-      {results === null && (
+      {result === null && (
         <dl className="flex flex-col gap-5">
           {SEARCH_EXAMPLES.map((item) => (
             <div key={item.label} className="flex gap-2">
@@ -130,9 +112,12 @@ export function SearchAddressView() {
         </dl>
       )}
 
-      {results !== null &&
-        (results.length > 0 ? (
-          <AddressResultList results={results} onSelect={setSelected} />
+      {result !== null &&
+        (result.items.length > 0 ? (
+          <>
+            <AddressResultList results={result.items} onSelect={setSelected} />
+            <Pagination page={page} lastPage={lastPage} onChange={runSearch} />
+          </>
         ) : (
           <EmptyState
             title="검색 결과가 없어요"
@@ -140,5 +125,59 @@ export function SearchAddressView() {
           />
         ))}
     </SingleInputScreen>
+  );
+}
+
+type PaginationProps = {
+  page: number;
+  lastPage: number;
+  onChange: (page: number) => void;
+};
+
+/**
+ * 목록 바로 아래 페이지 넘기는 줄.
+ *
+ * PD팀이 한 페이지 4개에 넘기는 버튼을 바로 아래 두기로 정했다(2026-09-15). 393×852에서
+ * 스크롤이 생기지 않는 수다. 쪽 번호를 늘어놓지 않는 것은 `역삼동`처럼 흔한 검색어가
+ * 4,747건까지 나와 쪽이 천 개가 넘기 때문이다 — 몇 쪽인지 보여 주고 검색어를 좁히게 한다.
+ */
+function Pagination({ page, lastPage, onChange }: PaginationProps) {
+  // 한 쪽뿐이면 넘길 곳이 없다
+  if (lastPage <= 1) {
+    return null;
+  }
+
+  return (
+    // mt-auto로 아래에 붙인다. 목록 바로 밑에 두면 마지막 쪽처럼 결과가 적을 때 버튼이 위로 튀어
+    // 방금 누르던 자리에서 사라진다(9건 기준 345px). 순서는 목록 다음 그대로다
+    <nav
+      aria-label="검색 결과 페이지"
+      className="mt-auto flex items-center justify-center gap-2 pt-2"
+    >
+      <Button
+        variant="ghost"
+        aria-label="이전 페이지"
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        className="size-8 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
+      >
+        <Icon name="left" className="size-5" />
+      </Button>
+
+      <p aria-live="polite" className="min-w-16 text-center text-label-bold-14 text-foreground">
+        {page}
+        <span className="text-text-body-tertiary"> / {lastPage}</span>
+      </p>
+
+      <Button
+        variant="ghost"
+        aria-label="다음 페이지"
+        disabled={page >= lastPage}
+        onClick={() => onChange(page + 1)}
+        className="size-8 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
+      >
+        <Icon name="right" className="size-5" />
+      </Button>
+    </nav>
   );
 }

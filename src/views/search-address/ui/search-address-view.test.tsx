@@ -6,6 +6,7 @@ const push = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 
+import { ADDRESS_PAGE_SIZE } from "../api/address-search";
 import { SearchAddressView } from "./search-address-view";
 
 beforeEach(() => push.mockClear());
@@ -81,4 +82,53 @@ test("다시 검색하면 앞서 고른 것이 풀린다", () => {
   expect((screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement).disabled).toBe(
     true,
   );
+});
+
+// PD팀이 한 페이지 4개로 정했다(2026-09-15). 393×852에서 스크롤이 생기지 않는 수다
+test("한 페이지에 주소를 4개까지 보여준다", () => {
+  render(<SearchAddressView />);
+
+  searchFor("테헤란로");
+
+  expect(screen.getAllByRole("listitem")).toHaveLength(ADDRESS_PAGE_SIZE);
+  expect(screen.getByLabelText("검색 결과 페이지")).toBeDefined();
+});
+
+test("다음·이전으로 페이지를 넘기고 양 끝에서 막힌다", () => {
+  render(<SearchAddressView />);
+
+  searchFor("테헤란로");
+
+  const prev = () => screen.getByRole("button", { name: "이전 페이지" }) as HTMLButtonElement;
+  const next = () => screen.getByRole("button", { name: "다음 페이지" }) as HTMLButtonElement;
+
+  // 첫 쪽에서는 뒤로 갈 곳이 없다
+  expect(prev().disabled).toBe(true);
+  expect(screen.getByText("서울특별시 강남구 테헤란로 123 (역삼동)")).toBeDefined();
+
+  fireEvent.click(next());
+  expect(prev().disabled).toBe(false);
+  expect(screen.queryByText("서울특별시 강남구 테헤란로 123 (역삼동)")).toBeNull();
+
+  fireEvent.click(next());
+  // 목이 9건이라 4·4·1로 나뉜다. 마지막 쪽에서는 더 갈 곳이 없다
+  expect(next().disabled).toBe(true);
+  expect(screen.getAllByRole("listitem")).toHaveLength(1);
+
+  fireEvent.click(prev());
+  expect(next().disabled).toBe(false);
+});
+
+// 페이지를 넘기면 고른 항목이 화면에서 사라진다. 남겨 두면 보이지 않는 주소로 넘어간다
+test("페이지를 넘기면 앞서 고른 것이 풀린다", () => {
+  render(<SearchAddressView />);
+
+  searchFor("테헤란로");
+  fireEvent.click(screen.getByText("서울특별시 강남구 테헤란로 123 (역삼동)"));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  expect(submit().disabled).toBe(false);
+
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+  expect(submit().disabled).toBe(true);
 });
