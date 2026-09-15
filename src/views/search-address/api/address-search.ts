@@ -17,6 +17,11 @@ export type AddressSearchResult = {
   items: AddressResult[];
   /** 검색어에 걸린 전체 개수. 행안부 응답의 `common.totalCount`에 해당한다 */
   totalCount: number;
+  /**
+   * 실제로 보여 준 쪽. 요청한 쪽이 범위를 벗어나면 보정된 값이 온다.
+   * 행안부 응답의 `common.currentPage`에 해당한다.
+   */
+  page: number;
 };
 
 /**
@@ -93,10 +98,17 @@ export function searchAddresses(keyword: string, page: number): AddressSearchRes
     [item.roadAddr, item.jibunAddr, item.bdNm].some((field) => field?.includes(needle)),
   );
 
-  const start = (page - 1) * ADDRESS_PAGE_SIZE;
+  // 쪽은 주소창에서 오므로 아무 값이나 들어온다. 보정하지 않으면 `0`은 빈 목록을,
+  // 음수는 엉뚱한 구간을, `999`는 결과가 있는데도 빈 화면을 만든다.
+  // 소수점과 `NaN`도 주소창으로 들어올 수 있어 정수로 끊는다
+  const lastPage = Math.max(1, Math.ceil(matched.length / ADDRESS_PAGE_SIZE));
+  const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), lastPage);
+
+  const start = (safePage - 1) * ADDRESS_PAGE_SIZE;
 
   return {
     items: matched.slice(start, start + ADDRESS_PAGE_SIZE),
     totalCount: matched.length,
+    page: safePage,
   };
 }

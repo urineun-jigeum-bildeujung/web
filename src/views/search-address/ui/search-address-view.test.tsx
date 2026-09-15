@@ -1,4 +1,8 @@
-// 주소 검색 테스트. 검색 전후 상태, 선택 조건, 고른 주소를 어떻게 넘기는지 검증한다.
+// 주소 검색 테스트. 검색 전후 상태, 선택 조건, 쪽 넘기기, 고른 주소를 어떻게 넘기는지 검증한다.
+//
+// 뒤로가기로 주소창이 바뀌는 경우는 여기서 확인하지 못한다.
+// NuqsTestingAdapter의 searchParams는 처음 한 번만 읽혀, 다시 렌더해도 값이 바뀌지 않는다.
+// 그 경우는 화면 쪽에서 렌더 중에 앞 값과 견주어 입력칸을 맞춘다.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
@@ -193,4 +197,19 @@ test("맞는 주소가 없으면 비었다고 알린다", () => {
 
   expect(screen.getByText("검색 결과가 없어요")).toBeDefined();
   expect(screen.queryByLabelText("검색 결과 페이지")).toBeNull();
+});
+
+// 주소창에는 아무 값이나 들어올 수 있다. 보정하지 않으면 결과가 있는데도 빈 화면이 나온다
+test.each([
+  ["0쪽", "?query=테헤란로&page=0"],
+  ["음수", "?query=테헤란로&page=-3"],
+  ["범위 밖", "?query=테헤란로&page=999"],
+  ["소수점", "?query=테헤란로&page=0.5"],
+  ["숫자가 아님", "?query=테헤란로&page=abc"],
+])("쪽이 %s이면 있는 쪽으로 보정한다", (_label, search) => {
+  renderAt(search);
+
+  expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
+  const shown = screen.getByLabelText("검색 결과 페이지").textContent ?? "";
+  expect(shown).toMatch(/[13] \/ 3/);
 });
