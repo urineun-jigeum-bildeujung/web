@@ -56,7 +56,7 @@ export function ProductGridCard({
     <>
       <div
         className={cn(
-          "relative flex aspect-4/3 items-center justify-center overflow-hidden rounded-lg bg-muted",
+          "relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-muted",
           selectable && selected && "ring-2 ring-primary",
         )}
       >
@@ -76,7 +76,7 @@ export function ProductGridCard({
         )}
         {imageBadge && <div className="absolute bottom-2 left-2">{imageBadge}</div>}
       </div>
-      <p className="truncate text-sm font-medium text-foreground">{name}</p>
+      <p className="truncate text-body-medium-14 text-foreground">{name}</p>
       {option && <p className="truncate text-xs text-muted-foreground">{option}</p>}
       <Price amount={price} originalAmount={originalPrice} size="sm" />
       {meta}
@@ -91,7 +91,7 @@ export function ProductGridCard({
         aria-pressed={selected}
         onClick={onSelect}
         className={cn(
-          "flex flex-col gap-1 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          "flex flex-col gap-2 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           className,
         )}
       >
@@ -101,11 +101,11 @@ export function ProductGridCard({
   }
 
   return (
-    <div className={cn("relative flex flex-col gap-1", className)}>
+    <div className={cn("relative flex flex-col gap-2", className)}>
       {href ? (
         <Link
           href={href}
-          className="flex flex-col gap-1 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex flex-col gap-2 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           {body}
         </Link>
