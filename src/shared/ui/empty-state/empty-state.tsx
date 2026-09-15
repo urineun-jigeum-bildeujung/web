@@ -1,5 +1,6 @@
 // 목록이 비었을 때 무엇이 없는지와 다음에 할 일을 보여준다.
-// IA 기준(타임딜·배송지·검색 결과)과 PRD 예외 케이스(맞는 리뷰·상품 없음, 피드백 데이터 없음)이며 시안은 아직 없다.
+// IA 기준(타임딜·배송지·검색 결과)과 PRD 예외 케이스(맞는 리뷰·상품 없음, 피드백 데이터 없음)다.
+// 제목·본문 타이포는 메인 타임딜 빈 상태 시안 기준이고, 나머지 화면은 아직 시안이 없다.
 
 import type { ComponentProps, ReactNode } from "react";
 
@@ -37,8 +38,10 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <p className="text-base font-bold text-foreground">{title}</p>
-      {description && <p className="text-sm text-balance text-muted-foreground">{description}</p>}
+      <p className="text-title-bold-18 text-foreground">{title}</p>
+      {description && (
+        <p className="text-body-medium-14 text-balance text-text-body-secondary">{description}</p>
+      )}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );

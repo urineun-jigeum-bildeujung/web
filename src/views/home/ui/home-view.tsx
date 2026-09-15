@@ -275,26 +275,40 @@ export function HomeView() {
             </section>
 
             <section className="flex flex-col gap-3">
-              <h2 className="text-base font-bold text-foreground">
-                매주 목요일 밤 12시 <span className="text-brand">타임딜 특가</span>
+              <h2 className="text-title-bold-20 text-foreground">
+                {dealOver ? (
+                  "오늘의 타임딜"
+                ) : (
+                  <>
+                    매주 목요일 밤 12시 <span className="text-brand">타임딜 특가</span>
+                  </>
+                )}
               </h2>
 
               {dealOver ? (
                 <EmptyState
                   icon={<Icon name="clock" />}
                   title="지금은 진행 중인 타임딜이 없어요"
-                  description="매주 목요일 밤 12시에 열려요."
+                  description="매주 목요일 밤 12시에 새로운 특가가 열려요"
+                  className="rounded-xl border border-dashed border-border px-0 py-4"
                   action={
-                    <Button variant="outline" asChild>
-                      <Link href="/deals">오늘의 타임딜 보기</Link>
-                    </Button>
+                    <button
+                      type="button"
+                      // 알림 신청 API가 아직 없어 자리만 만들어 둔다
+                      onClick={() => {}}
+                      className="min-h-11 px-2.5 text-body-medium-14 text-brand"
+                    >
+                      오픈 알림 받기
+                    </button>
                   }
                 />
               ) : (
                 <>
                   <div className="flex flex-col gap-0.5">
                     <Countdown endsAt={DEAL_ENDS_AT} onEnd={() => setDealOver(true)} />
-                    <p className="text-xs text-muted-foreground">종료까지 남은 시간</p>
+                    <p className="text-body-regular-14 text-text-body-secondary">
+                      종료까지 남은 시간
+                    </p>
                   </div>
 
                   <ScrollRow label="타임딜 상품">
@@ -311,7 +325,7 @@ export function HomeView() {
                     ))}
                   </ScrollRow>
 
-                  <Button variant="outline" className="min-h-11 w-full" asChild>
+                  <Button variant="outline" className="min-h-11 w-full text-label-bold-16" asChild>
                     <Link href="/deals">특가 더보기</Link>
                   </Button>
                 </>
