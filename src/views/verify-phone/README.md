@@ -1,15 +1,17 @@
 # views/verify-phone
 
-휴대폰 번호 인증 화면. 와이어프레임 `mypa_212 계열 5장`에 대응한다.
+휴대폰 번호 인증. 통신사를 고르고 번호를 받아 인증번호로 확인한다.
+
+- **라우트**: `/mypage/info/phone` — `src/app/mypage/info/phone/page.tsx`
+- **조립**: `shared/ui`의 `single-input-screen` · `select` · `form-field`(`trailing` 칩) · `button`, `shared/lib/app-toast`
+- **상태**: 통신사·번호·인증번호·완료 여부는 화면 안 상태
+- **참고**: UI 시안 기준(`mypa_212` 다섯 장, `1500-38228`~`1500-38659`)
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/verify-phone-view.tsx` | 휴대폰 번호 인증 |
+| `ui/verify-phone-view.test.tsx` | 단계별 노출과 완료 조건 |
 | `index.ts` | 공개 API |
-
-## 라우트
-
-`/mypage/info/phone` — `src/app/mypage/info/phone/page.tsx`
 
 ## MVP에서는 목업으로 간다
 
@@ -19,7 +21,11 @@
 
 화면과 흐름은 그대로 둔다. 이커머스에서 전화번호 인증이 중요해 보이는 자리라 디자인에서 빼면 리스크가 크다는 판단이다. 기능 명세에는 남기고 구현만 덜어냈다.
 
-채워 넣는 값은 시안(`mypa_212`)에 적힌 번호를 그대로 쓴다. 실제 발송을 붙일 때는 `MOCK_CODE`를 지우고 그 자리에 요청을 넣으면 된다.
+채워 넣는 값은 시안(`mypa_212`)에 적힌 번호를 그대로 쓴다. 인증을 누르면 "인증 번호 전송" 토스트를 띄워 보낸 것처럼 알린다. 실제 발송을 붙일 때는 `MOCK_CODE`를 지우고 그 자리에 요청을 넣으면 된다.
+
+## 짚어둘 것
+
+**"인증" 칩은 입력칸 안에 있다.** 시안의 32px 검정 칩이고 `FormField`의 `trailing`으로 놓는다. 번호 칸과 인증번호 칸의 칩이 둘 다 "인증"이라 스크린 리더용 이름은 "인증 번호 받기"·"인증 번호 확인"으로 나눴다.
 
 ## 아직 없는 것
 

@@ -1,5 +1,5 @@
 // 닉네임 변경. 한 항목만 받아 저장한다.
-// 와이어프레임 기준(mypa_111, mypa_111_입력중)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_111, 1482-28361·1482-28634)이다.
 
 "use client";
 
@@ -9,7 +9,7 @@ import { useState } from "react";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
-const CURRENT_NICKNAME = "청주 불주먹";
+const CURRENT_NICKNAME = "졸린고양이 17";
 
 export function EditNicknameView() {
   const router = useRouter();
@@ -23,6 +23,7 @@ export function EditNicknameView() {
     >
       <FormField
         label="닉네임"
+        variant="underline"
         className="[&>label]:sr-only"
         value={nickname}
         onChange={(event) => setNickname(event.target.value)}
