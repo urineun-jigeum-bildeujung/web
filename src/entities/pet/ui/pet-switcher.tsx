@@ -1,7 +1,7 @@
 // 아이 고르기 줄. 마지막 칸은 새 아이를 들이는 자리다.
 // UI 시안 기준(mypa_021 내 아이 관리의 avator 줄)이다. 메인의 줄은 아직 와이어프레임 기준이다.
 //
-// 두 모양이 있다. 기본은 같은 크기의 원이 늘어서고, `hero`는 고른 아이만 96px로 크게 보인다.
+// 두 모양이 있다. 기본은 같은 크기의 원이 늘어서고, `hero`는 고른 아이만 90px로 크게 보인다.
 
 "use client";
 
@@ -22,7 +22,7 @@ type PetSwitcherProps = {
   onAdd?: () => void;
   /** 원 아래에 이름을 함께 보인다. 메인처럼 처음 보는 화면에서는 이름이 있어야 고를 수 있다 */
   withNames?: boolean;
-  /** `hero`는 고른 아이 96px, 나머지 48px. 아이 관리 화면의 줄이다 */
+  /** `hero`는 고른 아이 90px, 나머지 48px. 아이 관리 화면의 줄이다 */
   variant?: "default" | "hero";
   className?: string;
 };
@@ -37,8 +37,9 @@ export function PetSwitcher({
   className,
 }: PetSwitcherProps) {
   const hero = variant === "hero";
-  // hero는 고른 아이만 크고 나머지는 작다. 기본은 전부 44px이다
-  const circleSize = (selected: boolean) => (hero ? (selected ? "size-24" : "size-12") : "size-11");
+  // hero는 고른 아이만 90px로 크고 나머지는 48px이다. 기본은 전부 44px이다
+  const circleSize = (selected: boolean) =>
+    hero ? (selected ? "size-22.5" : "size-12") : "size-11";
 
   return (
     <div
@@ -69,13 +70,17 @@ export function PetSwitcher({
             <span
               aria-hidden
               className={cn(
-                "shrink-0 rounded-full bg-surface-disable bg-cover bg-center",
+                "flex shrink-0 items-center justify-center rounded-full bg-surface-disable",
                 circleSize(selected),
                 // hero는 크기로 고른 것을 알린다. 기본은 테두리로 알린다 — 색만으로는 알 수 없다
                 !hero && selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
               )}
-              style={pet.photoUrl ? { backgroundImage: `url(${pet.photoUrl})` } : undefined}
-            />
+            >
+              <span
+                className="size-full rounded-full bg-cover bg-center"
+                style={pet.photoUrl ? { backgroundImage: `url(${pet.photoUrl})` } : undefined}
+              />
+            </span>
             {withNames && (
               <span
                 aria-hidden
