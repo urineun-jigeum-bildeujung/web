@@ -8,7 +8,6 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
-import { withJosa } from "@/shared/lib/josa/josa";
 import { MatchScoreBadge } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
@@ -242,15 +241,15 @@ export function HomeView() {
 
             {/* 이 서비스가 근거를 모으는 자리 */}
             <section className="flex flex-col gap-3">
-              <SectionTitle>최근에 구매한 상품, {withJosa(pet.name, "은/는")} 어때요?</SectionTitle>
+              <SectionTitle>최근에 구매한 상품, 아이는 어때요?</SectionTitle>
               <ScrollRow label="최근에 구매한 상품" itemWidth="80%">
                 {MOCK_RECENT.map((item) => (
                   <ScrollRowItem key={item.productId}>
-                    <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
+                    <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
                       <div className="flex items-center gap-3">
-                        <span aria-hidden className="size-12 shrink-0 rounded-lg bg-muted" />
+                        <span aria-hidden className="size-15 shrink-0 rounded-lg bg-muted" />
                         <div className="flex min-w-0 flex-col gap-1">
-                          <p className="truncate text-sm font-medium text-foreground">
+                          <p className="truncate text-label-bold-14 text-foreground">
                             {item.productName}
                           </p>
                           <p className="flex gap-1 text-xs">
@@ -264,11 +263,10 @@ export function HomeView() {
                         </div>
                       </div>
                       <Button
-                        variant="outline"
-                        className="min-h-11 w-full"
+                        className="min-h-11 w-full bg-brand text-brand-foreground hover:bg-brand/90"
                         onClick={() => setFeedback(item)}
                       >
-                        {pet.name} 반응 남기기
+                        우리 아이 반응 남기기
                       </Button>
                     </div>
                   </ScrollRowItem>
