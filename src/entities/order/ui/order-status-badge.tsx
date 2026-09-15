@@ -1,5 +1,5 @@
 // 주문 상태를 뱃지로 보여준다.
-// 와이어프레임 기준(mypa_061)이며 상태 값은 IA 주문/배송 내역을 따른다.
+// UI 시안 기준(mypa_061, 287:8543)이며 상태 값은 IA 주문/배송 내역을 따른다.
 
 import type { ComponentProps } from "react";
 
@@ -16,15 +16,6 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   confirmed: "구매확정",
 };
 
-/** 진행 중인 것과 끝난 것을 눈으로 가른다. 색만으로 구분하지 않도록 문구가 항상 함께 나온다 */
-const TONE: Record<OrderStatus, string> = {
-  paid: "bg-secondary text-secondary-foreground",
-  preparing: "bg-secondary text-secondary-foreground",
-  shipping: "bg-primary text-primary-foreground",
-  delivered: "bg-muted text-muted-foreground",
-  confirmed: "bg-muted text-muted-foreground",
-};
-
 type OrderStatusBadgeProps = {
   status: OrderStatus;
 } & ComponentProps<"span">;
@@ -32,9 +23,9 @@ type OrderStatusBadgeProps = {
 export function OrderStatusBadge({ status, className, ...props }: OrderStatusBadgeProps) {
   return (
     <span
+      // 시안은 다섯 상태를 모두 같은 색으로 둔다. 어느 단계인지는 색이 아니라 문구가 알린다
       className={cn(
-        "inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium",
-        TONE[status],
+        "inline-flex items-center rounded-sm bg-surface-tertiary px-2 py-1 text-label-medium-12 text-foreground",
         className,
       )}
       {...props}
