@@ -46,7 +46,7 @@ function RowInner({ title, description, icon, trailing, hideChevron }: ListRowBa
       {!hideChevron && (
         // 시안의 화살표는 28px이고 누르는 자리는 44px이다
         <span aria-hidden className="flex size-11 shrink-0 items-center justify-center">
-          <Icon name="right" className="size-7 text-icon-stroke-default" />
+          <Icon name="right" className="size-7 text-icon-fill-default" />
         </span>
       )}
     </>

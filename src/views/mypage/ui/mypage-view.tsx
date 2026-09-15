@@ -3,6 +3,7 @@
 //
 // 시안에서 "최근 본 상품" 메뉴가 빠졌다. 화면(/mypage/recently-viewed)은 남기고 진입점만 뺀다.
 // 머리말의 로고 자리는 시안이 "로고" 자리 표시라 서비스 이름을 글자로 둔다.
+// 메뉴 아이콘은 항목마다 색이 다르다(시안 자산의 채움색을 icon/fill 토큰으로 옮겼다).
 
 import Link from "next/link";
 
@@ -20,13 +21,13 @@ const MENU_GROUPS = [
         href: "/mypage/restock",
         title: "재입고 알림",
         description: "품절 상품 재입고 알림",
-        icon: <Icon name="bell" />,
+        icon: <Icon name="tag" className="text-icon-fill-red" />,
       },
       {
         href: "/mypage/reviews",
         title: "나의 상품 후기",
         description: "작성 가능한 리뷰 · 나의 후기",
-        icon: <Icon name="review" />,
+        icon: <Icon name="review" className="text-icon-fill-accent" />,
       },
     ],
   },
@@ -37,13 +38,13 @@ const MENU_GROUPS = [
         href: "/mypage/payment",
         title: "결제 수단 관리",
         description: "간편결제 등록 · 관리",
-        icon: <Icon name="card" />,
+        icon: <Icon name="card" className="text-icon-fill-blue" />,
       },
       {
         href: "/mypage/orders",
         title: "주문·배송 확인",
         description: "주문 · 배송 현황",
-        icon: <Icon name="delivery" />,
+        icon: <Icon name="delivery" className="text-icon-fill-blue" />,
       },
     ],
   },
@@ -54,19 +55,19 @@ const MENU_GROUPS = [
         href: "/mypage/support",
         title: "고객센터",
         description: "1:1 문의 · 고객지원",
-        icon: <Icon name="customer" />,
+        icon: <Icon name="customer" className="text-icon-fill-green" />,
       },
       {
         href: "/mypage/service",
         title: "서비스 안내",
         description: "서비스 안내",
-        icon: <Icon name="notice" />,
+        icon: <Icon name="info" className="text-icon-fill-green" />,
       },
       {
         href: "/mypage/settings",
         title: "설정",
         description: "서비스 설정",
-        icon: <Icon name="setting" />,
+        icon: <Icon name="setting" className="text-icon-fill-green" />,
       },
     ],
   },
@@ -83,7 +84,7 @@ const MOCK_USER = {
 };
 
 const HEADER_ICON =
-  "flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+  "flex size-11 items-center justify-center rounded-md text-icon-stroke-tertiary transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 export function MypageView() {
   return (
@@ -116,7 +117,7 @@ export function MypageView() {
             <Link
               href="/mypage/info"
               aria-label="내 정보"
-              className="flex size-12 shrink-0 items-center justify-center rounded-full text-icon-stroke-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex size-12 shrink-0 items-center justify-center rounded-full text-icon-fill-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <Icon name="right" className="size-8" />
             </Link>
