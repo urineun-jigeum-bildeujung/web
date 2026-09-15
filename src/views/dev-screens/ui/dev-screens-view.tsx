@@ -17,7 +17,7 @@ const SCREEN_GROUPS = [
       { href: "/onboarding", label: "도입부", hint: "onbo_001" },
       { href: "/onboarding?step=basic", label: "이름·성별·중성화", hint: "onbo_002" },
       { href: "/onboarding?step=detail", label: "품종·나이·체구", hint: "onbo_003" },
-      { href: "/onboarding?step=breed", label: "품종 선택", hint: "onbo_013" },
+      { href: "/onboarding?step=breed", label: "품종 선택", hint: "onbo_011" },
       { href: "/onboarding?step=health", label: "염려질환·알러지", hint: "onbo_004" },
       { href: "/onboarding?step=done", label: "완료", hint: "onbo_005" },
     ],
