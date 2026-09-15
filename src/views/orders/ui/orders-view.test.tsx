@@ -21,7 +21,7 @@ test("구매 확정을 누르면 확인 시트가 열린다", () => {
 
   fireEvent.click(screen.getAllByRole("button", { name: "구매 확정하기" })[0]);
   expect(screen.getByText("무사히 잘 도착했나요?")).toBeDefined();
-  expect(screen.getByRole("button", { name: "확정하고 포인트 받기" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "확정하기" })).toBeDefined();
 });
 
 test("구매를 확정하면 목록이 바뀌어 같은 버튼이 다시 나오지 않는다", () => {
@@ -29,7 +29,7 @@ test("구매를 확정하면 목록이 바뀌어 같은 버튼이 다시 나오�
   const before = screen.getAllByRole("button", { name: "구매 확정하기" }).length;
 
   fireEvent.click(screen.getAllByRole("button", { name: "구매 확정하기" })[0]);
-  fireEvent.click(screen.getByRole("button", { name: "확정하고 포인트 받기" }));
+  fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
 
   // 상태를 바꾸지 않고 토스트만 띄우면 같은 주문을 계속 확정할 수 있었다.
   expect(screen.queryAllByRole("button", { name: "구매 확정하기" }).length).toBe(before - 1);
@@ -52,10 +52,23 @@ test("자세히 보기는 그 주문의 상세로 간다", () => {
   expect(link.getAttribute("href")).toBe("/mypage/orders/1");
 });
 
-test("갈 화면이 없는 버튼은 눌리지 않는다", () => {
+// 시안은 이 버튼을 활성으로 그렸는데 택배사 연동이 아직 없다. 잠가 두면 고장으로 읽힌다.
+test("배송 위치 보기를 누르면 준비중임을 알린다", () => {
   render(<OrdersView />);
 
-  // 배송 조회는 시안에 없어 아직 만들지 않았다.
-  const button = screen.getAllByRole("button", { name: "배송 위치 보기" })[0] as HTMLButtonElement;
-  expect(button.disabled).toBe(true);
+  const button = screen.getByRole("button", { name: "배송 위치 보기" }) as HTMLButtonElement;
+  expect(button.disabled).toBe(false);
+
+  fireEvent.click(button);
+  expect(screen.getByText("배송 조회 준비 중")).toBeDefined();
+});
+
+test("주문 상태는 색이 아니라 문구로 구분된다", () => {
+  render(<OrdersView />);
+
+  // 시안이 다섯 상태를 같은 색으로 두므로 문구가 없으면 어느 단계인지 알 길이 없다
+  expect(screen.getByText("배송준비중")).toBeDefined();
+  expect(screen.getByText("배송중")).toBeDefined();
+  expect(screen.getByText("배송완료")).toBeDefined();
+  expect(screen.getByText("구매확정")).toBeDefined();
 });
