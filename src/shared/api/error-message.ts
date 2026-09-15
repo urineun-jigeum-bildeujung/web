@@ -33,6 +33,12 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
 
   PRODUCT_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
+
+  // 백엔드가 아니라 우리 Route Handler(`/api/juso`)가 붙이는 코드다. 행정안전부 응답을 옮긴 것이라
+  // `JUSO_` 접두사로 출처를 구분한다. 나머지(키 오류·두 글자 미만)는 기본 문구가 알맞다 —
+  // 전자는 사용자가 할 일이 없는 우리 설정 문제이고, 후자는 화면이 이미 막고 있다.
+  JUSO_400_KEYWORD_TOO_BROAD: APP_MESSAGE_CODE.address.keywordTooBroad,
+  JUSO_400_KEYWORD_INVALID: APP_MESSAGE_CODE.address.keywordInvalid,
 };
 
 /** 상태 코드만으로 고르는 기본 문구. 모르는 errorCode가 여기로 떨어진다 */
