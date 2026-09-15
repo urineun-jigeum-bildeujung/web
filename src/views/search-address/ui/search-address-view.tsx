@@ -10,7 +10,7 @@
 
 import { useRouter } from "next/navigation";
 import { parseAsInteger, useQueryState } from "nuqs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 import {
@@ -54,10 +54,28 @@ export function SearchAddressView() {
   const [keyword, setKeyword] = useState(query);
   const [selected, setSelected] = useState<AddressResult | null>(null);
 
+  // 뒤로가기로 주소창의 찾은 말이 바뀌면 입력칸도 따라가야 한다. 안 그러면 결과와 입력칸이 어긋난다.
+  // 렌더 중에 앞 값과 견주는 것이 React가 권하는 방식이다 — effect로 하면 한 번 어긋난 채 그려진다
+  const [lastQuery, setLastQuery] = useState(query);
+  if (query !== lastQuery) {
+    setLastQuery(query);
+    setKeyword(query);
+  }
+
   const canSearch = keyword.trim().length >= MIN_KEYWORD_LENGTH;
   // 주소창의 값에서 결과를 만든다. 그래야 새로고침해도 같은 화면이 나온다
   const result: AddressSearchResult | null = query ? searchAddresses(query, page) : null;
   const lastPage = result ? Math.max(1, Math.ceil(result.totalCount / ADDRESS_PAGE_SIZE)) : 1;
+  // 주소창의 쪽이 범위를 벗어나면 조회 쪽에서 보정해 돌려준다. 화면은 보정된 값을 쓴다
+  const safePage = result?.page ?? 1;
+
+  // 보정이 일어났으면 주소창도 맞춰 둔다. 사용자가 누른 적 없는 이동이라 history를 쌓지 않는다
+  useEffect(() => {
+    if (result && safePage !== page) {
+      void setPage(safePage, { history: "replace" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- result는 매 렌더 새 객체라 넣으면 무한 루프다
+  }, [safePage, page, setPage]);
 
   // 쪽을 넘기거나 다시 찾으면 고른 것이 화면에서 사라진다. 그대로 두면 안 보이는 주소로 넘어간다.
   // 상태를 지우는 대신 지금 목록에 있는지로 판단해 effect 없이 끝낸다
@@ -139,7 +157,11 @@ export function SearchAddressView() {
         (result.items.length > 0 ? (
           <>
             <AddressResultList results={result.items} onSelect={setSelected} />
-            <Pagination page={page} lastPage={lastPage} onChange={(next) => void setPage(next)} />
+            <Pagination
+              page={safePage}
+              lastPage={lastPage}
+              onChange={(next) => void setPage(next)}
+            />
           </>
         ) : (
           <EmptyState
