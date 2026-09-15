@@ -7,6 +7,7 @@
 | `ui/body-type-guide.tsx` | 체형(BCS)이 무엇인지 알려주는 물음표와 설명 시트 (`onbo_003_bcs툴팁`) |
 | `ui/body-type-icon.tsx` | 체형 다섯 단계의 강아지 실루엣. 시안 자산을 currentColor로 옮겼다 |
 | `ui/body-type-slider.tsx` | 체형을 고르는 슬라이더와 눈금 문구 (`onbo_003_체구선택후`). 온보딩·체형 수정이 함께 쓴다 |
+| `ui/body-type-slider.test.tsx` | 손잡이 값이 숫자가 아니라 체형 이름으로 읽히는지 본다 |
 | `ui/size-guide.tsx` | 체구를 몇 kg으로 가르는지 보이는 물음표 말풍선 (`onbo_003_체구툴팁`) |
 | `ui/body-type-guide.test.tsx` | 다섯 단계가 이름만이 아니라 설명까지 읽히는지 본다 |
 | `ui/breed-picker.tsx` | 품종 목록. 검색 전에는 종별 전체, 검색 중에는 걸러진 것 (`onbo_011_품종선택`) |

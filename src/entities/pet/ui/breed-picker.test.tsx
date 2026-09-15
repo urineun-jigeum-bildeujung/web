@@ -42,10 +42,17 @@ test("들어맞는 것이 없으면 그렇다고 알린다", () => {
 });
 
 test("고른 품종을 aria-current로 알린다", () => {
-  render(<BreedPicker query="" current="말티즈" onPick={() => {}} />);
+  render(<BreedPicker query="" current="말티즈" currentSpecies="dog" onPick={() => {}} />);
 
   expect(screen.getByRole("button", { name: "말티즈" }).getAttribute("aria-current")).toBe("true");
   expect(screen.getByRole("button", { name: "비글" }).getAttribute("aria-current")).toBeNull();
+});
+
+test("양쪽에 다 있는 이름은 고른 종의 줄만 현재로 표시한다", () => {
+  render(<BreedPicker query="" current="기타" currentSpecies="cat" onPick={() => {}} />);
+
+  const rows = screen.getAllByRole("button", { name: "기타" });
+  expect(rows.map((row) => row.getAttribute("aria-current"))).toEqual([null, "true"]);
 });
 
 // "기타"가 강아지·고양이 양쪽에 있다. 개수만 세면 둘 다 한쪽에 있어도 통과하므로

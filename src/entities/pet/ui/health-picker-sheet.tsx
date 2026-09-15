@@ -11,6 +11,7 @@ import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import type { HealthGroup } from "../model/health";
@@ -72,13 +73,15 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
                       onClick={() => toggle(item)}
                       // 시안의 칩은 36px이다. 탭 영역(44px)은 보이지 않는 테두리로 넓힌다
                       className={cn(
-                        "relative flex h-9 items-center rounded-full border px-3 text-label-medium-14 transition-colors after:absolute after:-inset-1",
+                        "relative flex h-9 items-center gap-1 rounded-full border px-3 text-label-medium-14 transition-colors after:absolute after:-inset-1",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                         selected
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border-secondary bg-background text-foreground hover:bg-muted",
                       )}
                     >
+                      {/* 시안에는 없지만 색만으로 고른 것을 알리지 않는다. 색을 구분하기 어려운 사람도 안다 */}
+                      {selected && <Icon name="check" className="size-4" />}
                       {item}
                     </button>
                   </li>

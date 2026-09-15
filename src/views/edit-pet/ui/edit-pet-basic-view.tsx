@@ -34,8 +34,8 @@ export function EditPetBasicView() {
   // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
   const [picking, setPicking] = useQueryState("picking");
   const [breed, setBreed] = useState(SAVED.breed);
-  // 품종과 함께 저장 API로 보낼 값. 화면에서는 읽지 않는다
-  const [, setSpecies] = useState(SAVED.species);
+  // 품종과 함께 저장 API로 보낼 값. 화면에서는 품종 목록의 현재 줄을 가릴 때만 쓴다
+  const [species, setSpecies] = useState(SAVED.species);
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
@@ -50,6 +50,7 @@ export function EditPetBasicView() {
             replace로 넣어 picking이 히스토리에 쌓이지 않기 때문이다. */}
         <BreedPickerStep
           value={breed}
+          species={species}
           onConfirm={(next, nextSpecies) => {
             setBreed(next);
             setSpecies(nextSpecies);
