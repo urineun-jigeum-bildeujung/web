@@ -7,13 +7,8 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/shared/ui/drawer";
+import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
+import { DrawerDescription, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 import { Icon } from "@/shared/ui/icon/icon";
 
 import { BODY_TYPE_GUIDE, BODY_TYPE_OPTIONS } from "../model/breeds";
@@ -34,38 +29,30 @@ export function BodyTypeGuide() {
         <Icon name="question" />
       </button>
 
-      <Drawer open={open} onOpenChange={setOpen}>
-        {/* 다섯 단계를 모두 담아 세로로 길다. 낮은 화면(가로 모바일)에서는
-            내용이 위아래로 잘리고 스크롤도 되지 않아 여기서 높이를 제한한다.
-            공용 Drawer가 mt-24(96px)를 주므로 그만큼 빼야 위쪽이 잘리지 않는다. */}
-        <DrawerContent className="max-h-[calc(100dvh-6rem)] overflow-y-auto">
-          <DrawerHeader className="gap-1 px-5 pt-2 pb-0">
-            <DrawerTitle className="text-left text-title-bold-18">bcs란?</DrawerTitle>
-            <DrawerDescription className="text-left text-body-medium-14 text-text-body-secondary">
-              반려동물의 갈비뼈와 허리 굴곡을 만져서 눈대중으로 비만도를 평가하는 5단계 체형
-              지수입니다.
-            </DrawerDescription>
-          </DrawerHeader>
+      <BottomSheet open={open} onOpenChange={setOpen}>
+        <DrawerHeader className="gap-1 px-5 py-0">
+          <DrawerTitle className="text-left text-title-bold-18">bcs란?</DrawerTitle>
+          <DrawerDescription className="text-left text-body-medium-14 text-text-body-secondary">
+            반려동물의 갈비뼈와 허리 굴곡을 만져서 눈대중으로 비만도를 평가하는 5단계 체형
+            지수입니다.
+          </DrawerDescription>
+        </DrawerHeader>
 
-          <dl className="flex flex-col gap-3 px-5 pt-3 pb-4">
-            {BODY_TYPE_OPTIONS.map((label) => (
-              <div key={label} className="flex items-start gap-2">
-                {/* 어떤 몸매인지 그림으로도 알린다 */}
-                <BodyTypeIcon
-                  type={label}
-                  className="size-11.5 shrink-0 text-icon-fill-secondary"
-                />
-                <div className="flex flex-col gap-1.5 py-0.5">
-                  <dt className="text-label-bold-14 text-foreground">{label}</dt>
-                  <dd className="text-caption-regular-13 font-medium text-text-body-secondary">
-                    {BODY_TYPE_GUIDE[label]}
-                  </dd>
-                </div>
+        <dl className="flex flex-col gap-3 px-5 pt-3 pb-4">
+          {BODY_TYPE_OPTIONS.map((label) => (
+            <div key={label} className="flex items-start gap-2">
+              {/* 어떤 몸매인지 그림으로도 알린다 */}
+              <BodyTypeIcon type={label} className="size-11.5 shrink-0 text-icon-fill-secondary" />
+              <div className="flex flex-col gap-1.5 py-0.5">
+                <dt className="text-label-bold-14 text-foreground">{label}</dt>
+                <dd className="text-caption-regular-13 font-medium text-text-body-secondary">
+                  {BODY_TYPE_GUIDE[label]}
+                </dd>
               </div>
-            ))}
-          </dl>
-        </DrawerContent>
-      </Drawer>
+            </div>
+          ))}
+        </dl>
+      </BottomSheet>
     </>
   );
 }

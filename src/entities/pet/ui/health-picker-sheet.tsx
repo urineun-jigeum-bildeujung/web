@@ -9,8 +9,8 @@
 import { useState } from "react";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
-import { Icon } from "@/shared/ui/icon/icon";
+import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
+import { DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import type { HealthGroup } from "../model/health";
@@ -36,7 +36,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
     setPicked((prev) => (prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]));
 
   return (
-    <div className="flex flex-col gap-3 px-5 pt-2 pb-4">
+    <div className="flex flex-col gap-3 px-5 pb-4">
       <DrawerHeader className="p-0">
         <DrawerTitle className="text-left text-title-bold-18">{title}</DrawerTitle>
       </DrawerHeader>
@@ -70,17 +70,15 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
                       type="button"
                       aria-pressed={selected}
                       onClick={() => toggle(item)}
-                      // 시안의 칩은 36px인데 탭 영역 기준(44px)을 지키려고 조금 더 높다
+                      // 시안의 칩은 36px이다. 탭 영역(44px)은 보이지 않는 테두리로 넓힌다
                       className={cn(
-                        "flex min-h-11 items-center gap-1 rounded-full border px-3 text-label-medium-14 transition-colors",
+                        "relative flex h-9 items-center rounded-full border px-3 text-label-medium-14 transition-colors after:absolute after:-inset-1",
                         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                         selected
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border-secondary bg-background text-foreground hover:bg-muted",
                       )}
                     >
-                      {/* 색만으로 고른 것을 알리지 않는다. 색을 구분하기 어려운 사람도 안다 */}
-                      {selected && <Icon name="check" className="size-4" />}
                       {item}
                     </button>
                   </li>
@@ -100,12 +98,10 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
 
 export function HealthPickerSheet({ open, onOpenChange, ...body }: HealthPickerSheetProps) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
-      <DrawerContent>
-        {/* 열 때마다 통째로 새로 그려 지금 값에서 시작한다.
-            효과로 되돌리면 앞서 고른 것이 한 번 그려진 뒤에 바뀐다 */}
-        {open && <SheetBody key={body.title} {...body} />}
-      </DrawerContent>
-    </Drawer>
+    <BottomSheet open={open} onOpenChange={onOpenChange}>
+      {/* 열 때마다 통째로 새로 그려 지금 값에서 시작한다.
+          효과로 되돌리면 앞서 고른 것이 한 번 그려진 뒤에 바뀐다 */}
+      {open && <SheetBody key={body.title} {...body} />}
+    </BottomSheet>
   );
 }
