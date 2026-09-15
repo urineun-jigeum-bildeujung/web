@@ -1,13 +1,13 @@
 // 화면 상단 머리말. 왼쪽·가운데·오른쪽 세 자리를 열어 두고 뒤로가기와 닫기를 기본으로 제공한다.
-// 와이어프레임 기준(onbo_002, mypa_011, mypa_031)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(공용 header, sign_001 회원가입)이다. 높이 48에 제목은 title/bold_18이다.
 
 "use client";
 
 import { useRouter } from "next/navigation";
 import type { ComponentProps, ReactNode } from "react";
-import { IoChevronBack, IoClose } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type PageHeaderProps = {
   /** 가운데 제목. 없으면 자리만 비운다 */
@@ -37,14 +37,13 @@ export function PageHeader({
   ...props
 }: PageHeaderProps) {
   const router = useRouter();
-  const Icon = leading === "close" ? IoClose : IoChevronBack;
 
   return (
     <header
       // 좌우 슬롯 폭이 달라도 제목이 화면 중앙에 오도록 3열 그리드로 잡는다.
       // justify-between으로 두면 오른쪽에 버튼을 더할 때마다 제목이 밀린다.
       className={cn(
-        "grid h-14 grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] items-center gap-2 px-2",
+        "grid h-12 grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] items-center gap-2 px-2",
         className,
       )}
       {...props}
@@ -57,9 +56,10 @@ export function PageHeader({
               type="button"
               aria-label={LEADING_LABEL[leading]}
               onClick={onLeadingClick ?? (() => router.back())}
+              // 시안의 아이콘은 24px이고 누르는 자리는 44px로 넓힌다
               className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              <Icon aria-hidden className="size-6" />
+              <Icon name={leading === "close" ? "cancel" : "left"} />
             </button>
           ))}
       </div>

@@ -1,5 +1,8 @@
 // 폼 한 항목. 레이블과 입력, 그 아래 예시 문구를 묶고 접근성 연결을 대신한다.
-// UI 시안 기준(onbo_002~004의 input)이다.
+// UI 시안 기준(onbo_002~004의 input, sign_001 로그인·닉네임)이다.
+//
+// 입력칸은 두 모양이다. 기본은 테두리 상자(onbo_002, 로그인)이고, `underline`은
+// 밑줄 하나(sign_001 닉네임)다. 값이 차면 둘 다 선이 진해진다.
 
 "use client";
 
@@ -20,6 +23,8 @@ type FormFieldProps = {
   onClear?: () => void;
   /** 입력칸 왼쪽 안에 놓는 아이콘. 검색창의 돋보기처럼 무엇을 넣는 칸인지 보일 때 쓴다 */
   leading?: ReactNode;
+  /** 입력칸 모양. 테두리 상자가 기본이고 `underline`은 밑줄 하나다 */
+  variant?: "outline" | "underline";
 } & Omit<ComponentProps<typeof Input>, "id" | "aria-describedby" | "aria-invalid">;
 
 export function FormField({
@@ -28,6 +33,7 @@ export function FormField({
   error,
   onClear,
   leading,
+  variant = "outline",
   className,
   value,
   disabled,
@@ -61,9 +67,12 @@ export function FormField({
           aria-describedby={error || hint ? descriptionId : undefined}
           aria-invalid={error ? true : undefined}
           // shadcn Input의 기본 높이는 32px이라 모바일 터치 기준에 못 미친다.
-          // 파일을 고치는 대신 호출부에서 덮는다. 값이 차면 시안대로 테두리가 진해진다
+          // 파일을 고치는 대신 호출부에서 덮는다. 값이 차면 시안대로 선이 진해진다
           className={cn(
             "min-h-11 px-3 text-body-medium-14 placeholder:text-text-body-tertiary",
+            // 밑줄형은 상자의 모서리·테두리·포커스 링을 지우고 아래 선만 남긴다
+            variant === "underline" &&
+              "rounded-none border-0 border-b border-border-default bg-transparent focus-visible:border-ring focus-visible:ring-0 dark:bg-transparent",
             filled && "border-border-secondary",
             leading && "pl-10",
             canClear && "pr-11",
