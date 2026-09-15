@@ -166,3 +166,31 @@ test("새 배송지면 place를 붙이지 않는다", () => {
   const url = new URL(push.mock.calls[0][0], "http://localhost");
   expect(url.searchParams.has("place")).toBe(false);
 });
+
+// 찾은 말과 쪽이 주소창에 남아야 새로고침·뒤로가기에서 살아남는다 (AGENTS.md 5.1)
+test("주소창의 검색어와 쪽으로 화면을 복원한다", () => {
+  renderAt("?query=테헤란로&page=2");
+
+  // 입력칸에 찾은 말이 되돌아오고, 2쪽 결과가 그려진다
+  expect((screen.getByLabelText("주소 검색어") as HTMLInputElement).value).toBe("테헤란로");
+  // 쪽 표시는 숫자와 "/ 전체"가 다른 요소라 getByText로는 잡히지 않는다
+  expect(screen.getByLabelText("검색 결과 페이지").textContent).toContain("2 / 3");
+  expect(screen.getAllByRole("listitem")).toHaveLength(ADDRESS_PAGE_SIZE);
+});
+
+test("검색어가 없으면 결과 대신 예시를 보여준다", () => {
+  renderAt("?page=2");
+
+  expect(screen.getByText("예) 연희동 42-18")).toBeDefined();
+  expect(screen.queryByLabelText("검색 결과 페이지")).toBeNull();
+});
+
+// 목이 검색어를 거르므로 맞는 것이 없으면 빈 화면에 닿는다
+test("맞는 주소가 없으면 비었다고 알린다", () => {
+  renderAt();
+
+  searchFor("도산대로");
+
+  expect(screen.getByText("검색 결과가 없어요")).toBeDefined();
+  expect(screen.queryByLabelText("검색 결과 페이지")).toBeNull();
+});

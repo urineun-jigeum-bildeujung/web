@@ -9,7 +9,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
+import { parseAsInteger, useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
@@ -43,35 +43,47 @@ export function SearchAddressView() {
   const router = useRouter();
   // 어느 배송지를 고치던 중인지. 배송지 화면이 실어 보내고 우리가 그대로 돌려준다
   const [place] = useQueryState("place");
-  const [keyword, setKeyword] = useState("");
-  const [result, setResult] = useState<AddressSearchResult | null>(null);
-  const [page, setPage] = useState(1);
+  // 찾은 말과 몇 쪽인지는 주소창에 둔다. 새로고침과 뒤로가기에서 살아남아야 하는 값이다 (AGENTS.md 5.1).
+  // 쪽은 화면 구성이 바뀌므로 history를 쌓아 뒤로가기가 앞 쪽으로 돌아가게 한다
+  const [query, setQuery] = useQueryState("query", { defaultValue: "" });
+  const [page, setPage] = useQueryState(
+    "page",
+    parseAsInteger.withDefault(1).withOptions({ history: "push" }),
+  );
+  // 입력 중인 값은 아직 찾은 것이 아니라 화면에만 둔다. 처음 값은 주소창에서 가져온다
+  const [keyword, setKeyword] = useState(query);
   const [selected, setSelected] = useState<AddressResult | null>(null);
 
   const canSearch = keyword.trim().length >= MIN_KEYWORD_LENGTH;
+  // 주소창의 값에서 결과를 만든다. 그래야 새로고침해도 같은 화면이 나온다
+  const result: AddressSearchResult | null = query ? searchAddresses(query, page) : null;
   const lastPage = result ? Math.max(1, Math.ceil(result.totalCount / ADDRESS_PAGE_SIZE)) : 1;
 
-  const runSearch = (nextPage: number) => {
+  // 쪽을 넘기거나 다시 찾으면 고른 것이 화면에서 사라진다. 그대로 두면 안 보이는 주소로 넘어간다.
+  // 상태를 지우는 대신 지금 목록에 있는지로 판단해 effect 없이 끝낸다
+  const selectedInPage =
+    selected && result?.items.some((item) => item.roadAddr === selected.roadAddr) ? selected : null;
+
+  const search = () => {
     if (!canSearch) {
       return;
     }
-    setResult(searchAddresses(keyword.trim(), nextPage));
-    setPage(nextPage);
-    // 목록이 바뀌면 앞서 고른 것이 화면에서 사라진다. 남겨 두면 안 보이는 주소로 넘어간다
-    setSelected(null);
+    void setQuery(keyword.trim());
+    void setPage(1);
   };
-
-  const search = () => runSearch(1);
 
   // 시안은 검색어만 넣어도 `입력 완료`를 활성으로 그렸지만, 주소를 고르지 않으면 넘길 값이 없다.
   // 골랐을 때만 활성으로 둔다 (#187).
   const submit = () => {
-    if (!selected) {
+    if (!selectedInPage) {
       return;
     }
     // 우편번호도 함께 넘긴다. 배송지 화면은 도로명만 보여주지만(시안) 저장할 때 둘 다 필요하다 —
     // 백엔드가 `zipNo → zipCode`, `roadAddr → address`로 받기로 했다 (2026-09-15 회신).
-    const query = new URLSearchParams({ zipNo: selected.zipNo, roadAddr: selected.roadAddr });
+    const query = new URLSearchParams({
+      zipNo: selectedInPage.zipNo,
+      roadAddr: selectedInPage.roadAddr,
+    });
     // 고치던 대상을 되돌려준다. 빠뜨리면 배송지 화면이 새 배송지로 다시 서서 먼저 적어 둔 값이 날아간다
     if (place) {
       query.set("place", place);
@@ -80,9 +92,13 @@ export function SearchAddressView() {
   };
 
   return (
-    <SingleInputScreen question="주소를 입력해주세요" submitDisabled={!selected} onSubmit={submit}>
+    <SingleInputScreen
+      question="주소를 입력해주세요"
+      submitDisabled={!selectedInPage}
+      onSubmit={submit}
+    >
       {/* 시안은 테두리 상자가 아니라 밑줄 한 줄이고 검색 버튼이 그 줄 안에 들어간다 */}
-      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+      <div className="flex items-center gap-2 border-b border-border px-3">
         <label htmlFor="address-keyword" className="sr-only">
           주소 검색어
         </label>
@@ -92,7 +108,7 @@ export function SearchAddressView() {
           placeholder="예) 테헤란로 123"
           onChange={(event) => setKeyword(event.target.value)}
           onKeyDown={(event) => event.key === "Enter" && search()}
-          className="h-7 flex-1 border-0 px-0 text-body-medium-16 shadow-none placeholder:text-text-body-tertiary focus-visible:ring-0"
+          className="h-11 flex-1 border-0 px-0 text-body-medium-16 shadow-none placeholder:text-text-body-tertiary focus-visible:ring-0"
         />
         {/* 시안 button/s — 28px에 label/bold_14. 비활성은 흐려지지 않고 회색으로 채워진다 */}
         <Button
@@ -123,7 +139,7 @@ export function SearchAddressView() {
         (result.items.length > 0 ? (
           <>
             <AddressResultList results={result.items} onSelect={setSelected} />
-            <Pagination page={page} lastPage={lastPage} onChange={runSearch} />
+            <Pagination page={page} lastPage={lastPage} onChange={(next) => void setPage(next)} />
           </>
         ) : (
           <EmptyState
@@ -166,7 +182,7 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
         aria-label="이전 페이지"
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
-        className="size-8 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
+        className="size-11 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
       >
         <Icon name="left" className="size-5" />
       </Button>
@@ -181,7 +197,7 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
         aria-label="다음 페이지"
         disabled={page >= lastPage}
         onClick={() => onChange(page + 1)}
-        className="size-8 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
+        className="size-11 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
       >
         <Icon name="right" className="size-5" />
       </Button>

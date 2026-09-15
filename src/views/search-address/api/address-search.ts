@@ -86,13 +86,17 @@ const MOCK_RESULTS: AddressResult[] = [
  * API가 생기면 이 안이 Route Handler 호출로 바뀐다. 호출부는 바뀌지 않는다.
  */
 export function searchAddresses(keyword: string, page: number): AddressSearchResult {
-  // 목이라 검색어로 거르지 않는다. 진짜 API는 검색어에 맞는 것만 내려준다
-  void keyword;
+  // 검색어를 무시하면 무엇을 찾아도 같은 결과가 나와, 결과 없는 화면이 화면에서 도달하지 않는다.
+  // 진짜 API처럼 거른다 — 정확한 규칙은 아니지만 "찾은 말에 따라 달라진다"는 성질은 같다
+  const needle = keyword.trim();
+  const matched = MOCK_RESULTS.filter((item) =>
+    [item.roadAddr, item.jibunAddr, item.bdNm].some((field) => field?.includes(needle)),
+  );
 
   const start = (page - 1) * ADDRESS_PAGE_SIZE;
 
   return {
-    items: MOCK_RESULTS.slice(start, start + ADDRESS_PAGE_SIZE),
-    totalCount: MOCK_RESULTS.length,
+    items: matched.slice(start, start + ADDRESS_PAGE_SIZE),
+    totalCount: matched.length,
   };
 }
