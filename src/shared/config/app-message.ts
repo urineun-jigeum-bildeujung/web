@@ -93,6 +93,12 @@ export const APP_MESSAGE = {
     description: "수량을 줄이거나 다른 상품을 골라 주세요.",
   },
 
+  // 택배사 연동 전이라 아직 갈 곳이 없다. 버튼을 잠가 두면 고장으로 읽히므로 왜 지금은 안 되는지 알린다
+  "order.deliveryTrackingPreparing": {
+    title: "배송 조회 준비 중",
+    description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
+  },
+
   // 행정안전부 도로명주소 API가 거절하는 경우다. 무엇을 고쳐야 하는지 알려 줘야 다시 찾을 수 있다
   "address.keywordTooBroad": {
     title: "검색어가 너무 넓어요",
@@ -135,6 +141,9 @@ export const APP_MESSAGE_CODE = {
   product: {
     notFound: "product.notFound",
     outOfStock: "product.outOfStock",
+  },
+  order: {
+    deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
   },
   address: {
     keywordTooBroad: "address.keywordTooBroad",
