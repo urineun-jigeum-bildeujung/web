@@ -13,10 +13,11 @@ import {
 } from "react-icons/io5";
 
 import { ORDER_STATUSES, OrderStatusBadge } from "@/entities/order";
-import { PetSwitcher, ProductReviewSheet, type PetProductReview } from "@/entities/pet";
+import { PetSwitcher } from "@/entities/pet";
 import { CompareSlot, CompareTable, MatchScoreBadge } from "@/entities/product";
 import { AddressResultList } from "@/shared/ui/address-result-list/address-result-list";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
+import { Badge } from "@/shared/ui/badge/badge";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
@@ -83,13 +84,6 @@ const COMPARE_ROWS = [
   },
 ];
 
-const REVIEW: PetProductReview = {
-  id: "1",
-  productName: "연어 사료 1.2kg",
-  goodPoints: ["잘 먹어요", "변 상태가 좋아졌어요"],
-  badPoints: ["알갱이가 조금 커요"],
-};
-
 // 서버 렌더 중에 던지면 페이지 전체가 500이 되므로 눌렀을 때만 터뜨린다.
 function BoomTrigger() {
   const [boom, setBoom] = useState(false);
@@ -150,7 +144,6 @@ export function DevGalleryView() {
   const [quantity, setQuantity] = useState(1);
   const [pickedProduct, setPickedProduct] = useState("1");
   const [pickedPet, setPickedPet] = useState("1");
-  const [review, setReview] = useState<PetProductReview | null>(null);
 
   return (
     <div className="flex min-h-dvh flex-col border-x border-border">
@@ -237,6 +230,14 @@ export function DevGalleryView() {
             onValueChange={setGender}
           />
           <ChipSelect label="아이의 체구" options={SIZE} value={size} onValueChange={setSize} />
+        </Section>
+
+        <Section title="Badge">
+          <div className="flex gap-2">
+            <Badge>구매 후 6일</Badge>
+            <Badge tone="positive">3번째 구매</Badge>
+            <Badge tone="danger">복숭아</Badge>
+          </div>
         </Section>
 
         <Section title="CheckboxRow">
@@ -381,13 +382,6 @@ export function DevGalleryView() {
             onSelect={setPickedPet}
             onAdd={() => {}}
           />
-        </Section>
-
-        <Section title="ProductReviewSheet">
-          <Button variant="outline" onClick={() => setReview(REVIEW)}>
-            후기 시트 열기
-          </Button>
-          <ProductReviewSheet review={review} onOpenChange={(open) => !open && setReview(null)} />
         </Section>
 
         <Section title="InfoNotice">
