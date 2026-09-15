@@ -6,8 +6,6 @@
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
-// 시안 아이콘 세트에 시계 아이콘이 없어 이 하나만 react-icons를 쓴다
-import { IoTimeOutline } from "react-icons/io5";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
 import { withJosa } from "@/shared/lib/josa/josa";
@@ -81,11 +79,11 @@ const DEAL_ENDS_AT = new Date(Date.now() + 11 * 3600_000 + 28 * 60_000 + 43_000)
 function SectionTitle({ children, href }: { children: React.ReactNode; href?: string }) {
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-base font-bold text-foreground">{children}</h2>
+      <h2 className="text-title-bold-20 text-foreground">{children}</h2>
       {href && (
         <Link
           href={href}
-          className="flex min-h-11 items-center text-xs text-muted-foreground underline underline-offset-4"
+          className="flex min-h-11 items-center text-label-medium-14 text-text-body-tertiary"
         >
           더보기
         </Link>
@@ -171,16 +169,17 @@ export function HomeView() {
       <main className="flex flex-1 flex-col gap-6 px-4 pt-4 pb-24">
         {category === "all" ? (
           <>
-            {/* 프로모션 배너 */}
-            <section aria-label="진행 중인 행사" className="flex flex-col gap-2">
-              <div className="relative flex aspect-2/1 flex-col justify-end rounded-xl bg-muted p-4">
-                <p className="text-sm font-bold text-foreground">가을맞이 사료 할인 프로모션</p>
-                <p className="text-xs text-muted-foreground">최대 15% 할인 · 9/30까지</p>
+            {/* 프로모션 배너. 시안은 문구 없이 사진 배너 하나다 — 홍보 문구는 이미지 안에 들어간다 */}
+            <section aria-label="진행 중인 행사">
+              <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
                 {/* 배너가 여럿임을 알리는 자리. 넘기는 것은 서버 데이터가 붙은 뒤에 잇는다 */}
-                <span aria-hidden className="absolute bottom-3 left-4 flex gap-1">
+                <span
+                  aria-hidden
+                  className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1"
+                >
                   <span className="size-1.5 rounded-full bg-foreground" />
-                  <span className="size-1.5 rounded-full bg-foreground/30" />
-                  <span className="size-1.5 rounded-full bg-foreground/30" />
+                  <span className="size-1.5 rounded-full bg-background ring-1 ring-border" />
+                  <span className="size-1.5 rounded-full bg-background ring-1 ring-border" />
                 </span>
               </div>
             </section>
@@ -191,7 +190,7 @@ export function HomeView() {
               onSelect={setPetId}
               onAdd={() => {}}
               withNames
-              className="px-0"
+              className="gap-4 p-0"
             />
 
             <section className="flex flex-col gap-3">
@@ -275,7 +274,7 @@ export function HomeView() {
 
               {dealOver ? (
                 <EmptyState
-                  icon={<IoTimeOutline />}
+                  icon={<Icon name="clock" />}
                   title="지금은 진행 중인 타임딜이 없어요"
                   description="매주 목요일 밤 12시에 열려요."
                   action={
