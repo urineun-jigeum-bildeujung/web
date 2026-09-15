@@ -6,8 +6,8 @@ import { Icon } from "./icon";
 import { ICON_NAMES } from "./icon-shapes";
 
 test("Figma 아이콘 페이지의 이름을 전부 그린다", () => {
-  // 시안 44종 중 count 배지가 붙는 cart_noti는 아이콘이 아니라 조합이라 뺐다
-  expect(ICON_NAMES).toHaveLength(43);
+  // count 배지가 붙는 cart_noti는 아이콘이 아니라 조합이라 뺐다
+  expect(ICON_NAMES).toHaveLength(46);
 
   for (const name of ICON_NAMES) {
     const { container, unmount } = render(<Icon name={name} />);
