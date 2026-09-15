@@ -59,6 +59,8 @@ npm run dev
 cp .env.example .env.local
 ```
 
+**주소 검색을 쓰려면 `JUSO_CONFM_KEY`를 채워야 합니다.** [juso.go.kr](https://business.juso.go.kr)에서 **도로명주소 검색 API**로 신청합니다(팝업·영문·좌표·상세주소 API는 키가 따로입니다). 개발단계는 자동승인이라 바로 나옵니다. 비워 두면 배송지 입력의 주소 검색이 서버 오류로 뜹니다.
+
 ---
 
 ## 기술 스택
