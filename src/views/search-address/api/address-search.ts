@@ -1,12 +1,12 @@
-// 주소를 찾아오는 자리. 행정안전부 API를 붙이기 전까지 목을 돌려준다.
+// 주소를 찾아온다. 행정안전부 도로명주소 API를 우리 Route Handler(`/api/juso`)를 거쳐 부른다.
 //
-// 화면이 이 함수만 보게 해 두면, API가 붙을 때 이 안이 fetch 호출로 바뀌고 화면 코드는 그대로 둘 수 있다.
-// 페이지를 화면에서 자르지 않고 여기서 자르는 것도 같은 이유다 — 행안부 API가 `currentPage`·`countPerPage`를
-// 받아 서버에서 잘라 주므로, 지금부터 그 모양으로 맞춰 둔다.
+// 직접 부르지 않는 이유는 승인키 하나다. 행안부는 CORS를 열어 두었지만 브라우저에서 부르면
+// `confmKey`가 클라이언트 번들에 박힌다. 서버에서만 읽는다.
 //
-// 붙일 때 알아야 할 것은 이 슬라이스의 README에 적어 두었다. 승인키는 `.env.local`의 `JUSO_CONFM_KEY`이고
-// 브라우저로 나가면 안 되므로 Route Handler를 거친다.
+// 페이지를 화면이 아니라 여기서 다루는 이유는 행안부가 `currentPage`·`countPerPage`로
+// 서버에서 잘라 주기 때문이다. 화면은 몇 쪽인지만 넘기고 자를 일이 없다.
 
+import { ApiError, type ProblemDetail } from "@/shared/api/client";
 import type { AddressResult } from "@/shared/ui/address-result-list/address-result-list";
 
 /** 한 페이지에 보여줄 개수. PD팀이 393×852에서 스크롤 없이 들어가는 수로 4개를 정했다 (2026-09-15) */
@@ -17,98 +17,50 @@ export type AddressSearchResult = {
   items: AddressResult[];
   /** 검색어에 걸린 전체 개수. 행안부 응답의 `common.totalCount`에 해당한다 */
   totalCount: number;
-  /**
-   * 실제로 보여 준 쪽. 요청한 쪽이 범위를 벗어나면 보정된 값이 온다.
-   * 행안부 응답의 `common.currentPage`에 해당한다.
-   */
+  /** 실제로 보여 준 쪽. 요청한 쪽이 범위를 벗어나면 보정된 값이 온다 */
   page: number;
 };
 
-/**
- * API 연동 전까지 화면 확인용.
- * 지어낸 값이 아니라 행안부 API가 `테헤란로`로 실제 내려준 응답을 옮겼다.
- */
-const MOCK_RESULTS: AddressResult[] = [
-  {
-    zipNo: "06133",
-    roadAddr: "서울특별시 강남구 테헤란로 123 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 648-23 여삼빌딩",
-    bdNm: "여삼빌딩",
-  },
-  {
-    zipNo: "06134",
-    roadAddr: "서울특별시 강남구 테헤란로 101 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 821 이즈타워",
-    bdNm: "이즈타워",
-  },
-  {
-    zipNo: "06134",
-    roadAddr: "서울특별시 강남구 테헤란로 103 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 822 인춘재단빌딩",
-    bdNm: "인춘재단빌딩",
-  },
-  // 건물명이 없는 결과도 온다. 세 줄 구성이 흐트러지지 않는지 이걸로 본다
-  {
-    zipNo: "06134",
-    roadAddr: "서울특별시 강남구 테헤란로 105 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 822-1",
-  },
-  {
-    zipNo: "06134",
-    roadAddr: "서울특별시 강남구 테헤란로 107 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 822-2 메디타워",
-    bdNm: "메디타워",
-  },
-  {
-    zipNo: "06232",
-    roadAddr: "서울특별시 강남구 테헤란로 108 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 825-17 영림빌딩",
-    bdNm: "영림빌딩",
-  },
-  {
-    zipNo: "06134",
-    roadAddr: "서울특별시 강남구 테헤란로 109 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 822-4 강남제일빌딩",
-    bdNm: "강남제일빌딩",
-  },
-  {
-    zipNo: "06232",
-    roadAddr: "서울특별시 강남구 테헤란로 110 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 825-18 켐브리지 강남빌딩",
-    bdNm: "켐브리지 강남빌딩",
-  },
-  {
-    zipNo: "06232",
-    roadAddr: "서울특별시 강남구 테헤란로 110-2 (역삼동)",
-    jibunAddr: "서울특별시 강남구 역삼동 804 가로판매대",
-    bdNm: "가로판매대",
-  },
-];
+/** Route Handler가 돌려주는 모양 */
+type JusoRouteResponse = {
+  items: AddressResult[];
+  totalCount: number;
+  currentPage: number;
+};
+
+async function requestPage(keyword: string, page: number): Promise<JusoRouteResponse> {
+  const query = new URLSearchParams({
+    keyword,
+    currentPage: String(page),
+    countPerPage: String(ADDRESS_PAGE_SIZE),
+  });
+
+  const response = await fetch(`/api/juso?${query}`);
+
+  if (!response.ok) {
+    // Route Handler가 실패를 ProblemDetail로 옮겨 준다. `toAppMessageCode`가 알아듣는 형태다
+    const problem = (await response.json().catch(() => undefined)) as ProblemDetail | undefined;
+    throw new ApiError(response.status, problem?.detail ?? "주소 검색 실패", problem);
+  }
+
+  return (await response.json()) as JusoRouteResponse;
+}
 
 /**
  * 주소를 찾는다. `page`는 1부터 센다.
  *
- * API가 생기면 이 안이 Route Handler 호출로 바뀐다. 호출부는 바뀌지 않는다.
+ * 행안부는 0·음수·숫자가 아닌 쪽을 1로 보정해 주지만 **마지막 쪽을 넘는 값은 보정하지 않는다** —
+ * `page=999`에 `totalCount=1`이면서 결과 0건을 준다(2026-09-15 실측). 그 경우에만 마지막 쪽을 다시 받는다.
  */
-export function searchAddresses(keyword: string, page: number): AddressSearchResult {
-  // 검색어를 무시하면 무엇을 찾아도 같은 결과가 나와, 결과 없는 화면이 화면에서 도달하지 않는다.
-  // 진짜 API처럼 거른다 — 정확한 규칙은 아니지만 "찾은 말에 따라 달라진다"는 성질은 같다
-  const needle = keyword.trim();
-  const matched = MOCK_RESULTS.filter((item) =>
-    [item.roadAddr, item.jibunAddr, item.bdNm].some((field) => field?.includes(needle)),
-  );
+export async function searchAddresses(keyword: string, page: number): Promise<AddressSearchResult> {
+  const first = await requestPage(keyword, page);
+  const lastPage = Math.max(1, Math.ceil(first.totalCount / ADDRESS_PAGE_SIZE));
 
-  // 쪽은 주소창에서 오므로 아무 값이나 들어온다. 보정하지 않으면 `0`은 빈 목록을,
-  // 음수는 엉뚱한 구간을, `999`는 결과가 있는데도 빈 화면을 만든다.
-  // 소수점과 `NaN`도 주소창으로 들어올 수 있어 정수로 끊는다
-  const lastPage = Math.max(1, Math.ceil(matched.length / ADDRESS_PAGE_SIZE));
-  const safePage = Math.min(Math.max(Math.trunc(page) || 1, 1), lastPage);
+  if (first.items.length > 0 || first.totalCount === 0 || first.currentPage <= lastPage) {
+    return { items: first.items, totalCount: first.totalCount, page: first.currentPage };
+  }
 
-  const start = (safePage - 1) * ADDRESS_PAGE_SIZE;
-
-  return {
-    items: matched.slice(start, start + ADDRESS_PAGE_SIZE),
-    totalCount: matched.length,
-    page: safePage,
-  };
+  // 찾은 것이 있는데 이 쪽에는 없다. 주소창에 마지막 쪽을 넘는 값이 들어온 경우다
+  const corrected = await requestPage(keyword, lastPage);
+  return { items: corrected.items, totalCount: corrected.totalCount, page: lastPage };
 }

@@ -79,7 +79,8 @@ const petKeys = {
 const addressKeys = {
   all: ["address"] as const,
   list: () => [...addressKeys.all, "list"] as const,
-  search: (keyword: string) => [...addressKeys.all, "search", keyword] as const,
+  // 쪽이 바뀌면 응답이 달라지므로 키에 함께 넣는다. 빠뜨리면 1쪽 결과가 2쪽에 그대로 보인다
+  search: (keyword: string, page: number) => [...addressKeys.all, "search", keyword, page] as const,
 };
 
 const reviewKeys = {
