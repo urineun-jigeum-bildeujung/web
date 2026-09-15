@@ -394,6 +394,7 @@ export function HomeView() {
         target={feedback}
         petName={pet.name}
         onOpenChange={(open) => !open && setFeedback(null)}
+        variant="full"
       />
     </div>
   );
