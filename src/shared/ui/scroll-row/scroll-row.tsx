@@ -23,7 +23,7 @@ export function ScrollRow({ label, children, itemWidth, className, ...props }: S
       // 목록 자체에 tabIndex를 주지 않는다. 칸 안이 모두 링크나 버튼이라
       // Tab으로 넘어가면 브라우저가 그 자리로 알아서 스크롤한다.
       className={cn(
-        "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-1",
+        "-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto scroll-smooth px-4 pb-1",
         "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         className,
