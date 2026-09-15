@@ -18,4 +18,7 @@ test("tone에 따라 배경이 갈린다", () => {
 
   rerender(<Badge tone="danger">복숭아</Badge>);
   expect(screen.getByText("복숭아").className).toContain("bg-surface-danger-weak");
+
+  rerender(<Badge tone="strong">기본 배송지</Badge>);
+  expect(screen.getByText("기본 배송지").className).toContain("bg-primary");
 });

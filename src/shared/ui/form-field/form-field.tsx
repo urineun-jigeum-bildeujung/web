@@ -23,6 +23,9 @@ type FormFieldProps = {
   onClear?: () => void;
   /** 입력칸 왼쪽 안에 놓는 아이콘. 검색창의 돋보기처럼 무엇을 넣는 칸인지 보일 때 쓴다 */
   leading?: ReactNode;
+  /** 입력칸 오른쪽 안에 놓는 것. 휴대폰 인증의 "인증" 칩처럼 그 칸에서 바로 하는 동작이다.
+   *  지우기 버튼과 같은 자리라 이것이 있으면 지우기는 그리지 않는다 */
+  trailing?: ReactNode;
   /** 입력칸 모양. 테두리 상자가 기본이고 `underline`은 밑줄 하나다 */
   variant?: "outline" | "underline";
 } & Omit<ComponentProps<typeof Input>, "id" | "aria-describedby" | "aria-invalid">;
@@ -33,6 +36,7 @@ export function FormField({
   error,
   onClear,
   leading,
+  trailing,
   variant = "outline",
   className,
   value,
@@ -43,7 +47,7 @@ export function FormField({
   const descriptionId = `${id}-description`;
   const filled = value !== undefined && value !== "";
   // 비활성 상태에서는 지우기도 막는다. 안 그러면 못 고치는 값을 지울 수 있다.
-  const canClear = Boolean(onClear) && !disabled && filled;
+  const canClear = Boolean(onClear) && !disabled && filled && !trailing;
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
@@ -76,9 +80,13 @@ export function FormField({
             filled && "border-border-secondary",
             leading && "pl-10",
             canClear && "pr-11",
+            trailing && "pr-16",
           )}
           {...props}
         />
+        {trailing && (
+          <span className="absolute inset-y-0 right-3 flex items-center">{trailing}</span>
+        )}
         {canClear && (
           <button
             type="button"

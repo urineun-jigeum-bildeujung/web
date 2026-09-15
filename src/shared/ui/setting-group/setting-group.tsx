@@ -1,5 +1,5 @@
 // 목록 줄 여러 개를 제목 아래 카드로 묶는다. 마이페이지 메뉴가 이 단위로 나뉜다.
-// 와이어프레임 기준(mypa_001 "나의 쇼핑"·"혜택과 결제"·"고객지원")이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_001 "나의 쇼핑"·"혜택과 결제"·"고객지원")이다. 흰 카드, 모서리 12, 안쪽 12/16.
 
 import type { ComponentProps, ReactNode } from "react";
 
@@ -13,12 +13,16 @@ type SettingGroupProps = {
 
 export function SettingGroup({ title, children, className, ...props }: SettingGroupProps) {
   return (
-    <section className={cn("flex flex-col gap-2", className)} {...props}>
-      {title && <h2 className="px-4 text-sm font-bold text-muted-foreground">{title}</h2>}
-      {/* 줄 사이 구분선은 첫 줄을 뺀 나머지에만 넣는다 */}
-      <div className="overflow-hidden rounded-xl border border-border bg-card [&>*+*]:border-t [&>*+*]:border-border">
-        {children}
-      </div>
+    <section
+      className={cn(
+        "flex flex-col gap-4 rounded-xl bg-card px-3 py-4 text-card-foreground",
+        className,
+      )}
+      {...props}
+    >
+      {title && <h2 className="text-title-bold-16 text-foreground">{title}</h2>}
+      {/* 시안은 줄 사이에 선이 없고 12px 간격이다 */}
+      <div className="flex flex-col gap-3">{children}</div>
     </section>
   );
 }

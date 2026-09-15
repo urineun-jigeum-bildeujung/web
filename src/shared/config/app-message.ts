@@ -78,6 +78,11 @@ export const APP_MESSAGE = {
     title: "사용 중인 닉네임",
     description: "다른 닉네임을 입력해 주세요.",
   },
+  // 휴대폰 인증 번호를 보냈을 때. 시안(mypa_212)의 스낵바 자리다
+  "member.verificationCodeSent": {
+    title: "인증 번호 전송",
+    description: "문자로 받은 번호를 입력해 주세요.",
+  },
 
   "product.notFound": {
     title: "상품 없음",
@@ -115,6 +120,7 @@ export const APP_MESSAGE_CODE = {
     agreementRequired: "member.agreementRequired",
     alreadySignedUp: "member.alreadySignedUp",
     nicknameTaken: "member.nicknameTaken",
+    verificationCodeSent: "member.verificationCodeSent",
   },
   product: {
     notFound: "product.notFound",

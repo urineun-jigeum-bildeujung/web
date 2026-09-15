@@ -1,17 +1,19 @@
 // 아이콘·제목·보조설명·화살표로 이루어진 목록 한 줄. 눌러서 다른 화면으로 가는 항목에 쓴다.
-// 와이어프레임 기준(mypa_001 아홉 항목, mypa_011)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_001의 메뉴 줄)이다. 높이 44, 아이콘 28, 제목 title/bold_16, 화살표 28.
+//
+// 좌우 여백은 두지 않는다. 카드(SettingGroup)나 화면이 여백을 맡아야 시안의 12px 안쪽 여백이 맞는다.
 
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
-import { IoChevronForward } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type ListRowBaseProps = {
   title: ReactNode;
   /** 제목 아래 작게 붙는 설명 */
   description?: ReactNode;
-  /** 왼쪽 아이콘 */
+  /** 왼쪽 아이콘. 28px로 그린다 */
   icon?: ReactNode;
   /** 오른쪽에 화살표 대신 넣을 것. 값 표시나 뱃지 */
   trailing?: ReactNode;
@@ -21,26 +23,31 @@ type ListRowBaseProps = {
 };
 
 const ROW_CLASS =
-  "flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+  "flex min-h-11 w-full items-center gap-2 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
 function RowInner({ title, description, icon, trailing, hideChevron }: ListRowBaseProps) {
   return (
     <>
       {/* 제목이 옆에 글자로 있으므로 아이콘은 장식으로 둔다 */}
       {icon && (
-        <span aria-hidden className="shrink-0 text-muted-foreground [&>svg]:size-5">
+        <span aria-hidden className="shrink-0 text-icon-fill-default [&>svg]:size-7">
           {icon}
         </span>
       )}
-      <span className="flex min-w-0 flex-1 flex-col">
-        <span className="truncate text-sm font-medium text-foreground">{title}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-title-bold-16 text-foreground">{title}</span>
         {description && (
-          <span className="truncate text-xs text-muted-foreground">{description}</span>
+          <span className="truncate text-caption-regular-12 text-text-body-secondary">
+            {description}
+          </span>
         )}
       </span>
       {trailing}
       {!hideChevron && (
-        <IoChevronForward aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+        // 시안의 화살표는 28px이고 누르는 자리는 44px이다
+        <span aria-hidden className="flex size-11 shrink-0 items-center justify-center">
+          <Icon name="right" className="size-7 text-icon-stroke-default" />
+        </span>
       )}
     </>
   );
