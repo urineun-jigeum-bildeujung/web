@@ -146,6 +146,7 @@ export function DevGalleryView() {
   const [gender, setGender] = useState<string>();
   const [size, setSize] = useState<string>("small");
   const [noAllergy, setNoAllergy] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [pickedProduct, setPickedProduct] = useState("1");
   const [pickedPet, setPickedPet] = useState("1");
@@ -243,6 +244,26 @@ export function DevGalleryView() {
             label="해당 사항이 없어요"
             checked={noAllergy}
             onCheckedChange={setNoAllergy}
+          />
+          {/* 약관 동의 줄 변형. 작은 원, 브랜드색 체크, 레이블 밖 설명, 오른쪽 슬롯 */}
+          <CheckboxRow
+            size="s"
+            tone="brand"
+            label="개인정보 수집 및 이용 동의"
+            labelClassName="text-body-medium-14 text-foreground"
+            description="(아이의 건강 데이터 활용을 위해 꼭 필요해요)"
+            trailing={
+              <button
+                type="button"
+                aria-label="개인정보 수집 및 이용 동의 본문 보기"
+                className="relative flex size-6 shrink-0 items-center justify-center rounded-md text-icon-stroke-default after:absolute after:-inset-2.5 hover:bg-muted"
+              >
+                <Icon name="right" />
+              </button>
+            }
+            className="min-h-8 gap-1"
+            checked={agreed}
+            onCheckedChange={setAgreed}
           />
         </Section>
 
