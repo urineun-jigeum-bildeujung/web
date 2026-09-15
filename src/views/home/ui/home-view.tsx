@@ -245,7 +245,7 @@ export function HomeView() {
               <ScrollRow label="최근에 구매한 상품" itemWidth="80%">
                 {MOCK_RECENT.map((item) => (
                   <ScrollRowItem key={item.productId}>
-                    <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
+                    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
                       <div className="flex items-center gap-3">
                         <span aria-hidden className="size-15 shrink-0 rounded-lg bg-muted" />
                         <div className="flex min-w-0 flex-col gap-1">
