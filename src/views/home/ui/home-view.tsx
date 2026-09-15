@@ -6,13 +6,8 @@
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
-import {
-  IoCartOutline,
-  IoHeartOutline,
-  IoNotificationsOutline,
-  IoSearchOutline,
-  IoTimeOutline,
-} from "react-icons/io5";
+// 시안 아이콘 세트에 시계 아이콘이 없어 이 하나만 react-icons를 쓴다
+import { IoTimeOutline } from "react-icons/io5";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
 import { withJosa } from "@/shared/lib/josa/josa";
@@ -20,6 +15,7 @@ import { MatchScoreBadge } from "@/entities/product";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Icon } from "@/shared/ui/icon/icon";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Rating } from "@/shared/ui/rating/rating";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
@@ -117,29 +113,30 @@ export function HomeView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between px-4 py-2">
-        <p className="text-lg font-bold text-brand">골라주개냥</p>
-        <nav aria-label="바로 가기" className="flex items-center">
+      {/* 시안 header/type=logo. 실제 로고 이미지 자산이 아직 없어 글자를 그대로 둔다 */}
+      <header className="flex h-12 items-center justify-between px-5">
+        <p className="text-title-bold-18 text-brand">골라주개냥</p>
+        <nav aria-label="바로 가기" className="flex items-center gap-1">
           <Link
             href="/search"
             aria-label="검색"
             className="flex size-11 items-center justify-center"
           >
-            <IoSearchOutline aria-hidden className="size-6" />
+            <Icon name="search" className="size-6" />
           </Link>
           <Link
             href="/mypage/notifications"
             aria-label="알림"
             className="flex size-11 items-center justify-center"
           >
-            <IoNotificationsOutline aria-hidden className="size-6" />
+            <Icon name="bell_noti" className="size-6" />
           </Link>
           <Link
             href="/cart"
             aria-label="장바구니에 5개"
             className="relative flex size-11 items-center justify-center"
           >
-            <IoCartOutline aria-hidden className="size-6" />
+            <Icon name="cart" className="size-6" />
             <span
               aria-hidden
               className="absolute top-1.5 right-1.5 flex size-4 items-center justify-center rounded-full bg-brand text-[10px] text-brand-foreground"
@@ -151,8 +148,9 @@ export function HomeView() {
       </header>
 
       {/* 탭처럼 보이지만 탭 역할을 주지 않는다. 고르면 화면 구성이 통째로 바뀌고 주소도 달라져
-          연결할 패널이 없다. 지금 어느 것을 보고 있는지는 aria-current로 알린다. */}
-      <nav aria-label="상품 종류" className="flex gap-4 border-b border-border px-4">
+          연결할 패널이 없다. 지금 어느 것을 보고 있는지는 aria-current로 알린다.
+          시안 tap_item: 활성은 label-bold-14 + 검정 밑줄, 비활성은 label-medium-14 + 회색 */}
+      <nav aria-label="상품 종류" className="flex px-5">
         {CATEGORIES.map((value) => (
           <button
             key={value}
@@ -161,8 +159,8 @@ export function HomeView() {
             onClick={() => void setCategory(value)}
             className={
               category === value
-                ? "min-h-11 border-b-2 border-brand text-sm font-medium text-brand"
-                : "min-h-11 border-b-2 border-transparent text-sm text-muted-foreground"
+                ? "min-h-11 border-b border-border-strong px-2 text-label-bold-14 text-text-label-default"
+                : "min-h-11 border-b border-transparent px-2 text-label-medium-14 text-text-body-tertiary"
             }
           >
             {CATEGORY_LABEL[value]}
@@ -216,7 +214,7 @@ export function HomeView() {
                           aria-hidden
                           className="flex size-11 items-center justify-center text-foreground"
                         >
-                          <IoHeartOutline className="size-5" />
+                          <Icon name="heart_stroke" className="size-5" />
                         </span>
                       }
                       meta={
