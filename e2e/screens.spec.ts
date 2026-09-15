@@ -202,8 +202,8 @@ test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ 
   await name.fill("보리");
 
   await page.getByRole("button", { name: /품종 고르기/ }).click();
+  // 줄을 누르면 바로 확정된다(시안 onbo_011)
   await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
-  await page.getByRole("button", { name: "선택 완료" }).click();
 
   await expect(page.getByRole("button", { name: /코리안 숏헤어/ })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toHaveValue("보리");
@@ -229,7 +229,7 @@ test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다",
   await page.goto("/mypage/pets/basic", { waitUntil: "networkidle" });
 
   await page.getByRole("button", { name: /품종 고르기/ }).click();
-  await expect(page.getByRole("heading", { name: "품종 선택" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "품종선택" })).toBeVisible();
 
   await page.getByRole("button", { name: "이전 화면으로" }).click();
   await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toBeVisible();
