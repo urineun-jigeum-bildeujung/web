@@ -1,5 +1,5 @@
 // 보기 중 하나만 고르는 칩 묶음. 성별·중성화 여부처럼 답이 배타적인 항목에 쓴다.
-// 와이어프레임 기준(onbo_002 성별·중성화, onbo_003 체구)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(onbo_002 성별·중성화, onbo_003 체구)이다.
 //
 // 겉모습은 버튼이지만 라디오로 만든다. 배타적 선택이라 스크린 리더가
 // "3개 중 1번째"로 읽어야 하고, 화살표 키로 옮겨 다닐 수 있어야 한다.
@@ -14,7 +14,7 @@ import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 type ChipOption = {
   value: string;
   label: string;
-  /** 레이블 아래 작게 붙는 보충 설명. 체구의 "10kg 미만" 같은 것 */
+  /** 레이블 아래 작게 붙는 보충 설명 */
   description?: string;
 };
 
@@ -61,19 +61,20 @@ export function ChipSelect({
             <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
             <label
               htmlFor={itemId}
+              // 시안의 칩은 40px인데 탭 영역 기준(44px)을 지키려고 조금 더 높다
               className={cn(
-                "flex min-h-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border px-3 py-2 text-center transition-colors",
+                "flex min-h-11 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border px-3 py-2 text-center text-label-medium-14 transition-colors",
                 "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
                 selected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-muted",
               )}
             >
-              <span className="text-sm font-medium">{option.label}</span>
+              <span>{option.label}</span>
               {option.description && (
                 <span
                   className={cn(
-                    "text-xs",
+                    "text-xs font-normal",
                     selected ? "text-primary-foreground/80" : "text-muted-foreground",
                   )}
                 >
