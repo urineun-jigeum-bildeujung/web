@@ -12,6 +12,8 @@ import { useRouter } from "next/navigation";
 import { parseAsInteger, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
 import { cn } from "@/shared/lib/utils";
 import {
   AddressResultList,
@@ -22,12 +24,10 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
+import { Skeleton } from "@/shared/ui/skeleton";
 
-import {
-  ADDRESS_PAGE_SIZE,
-  searchAddresses,
-  type AddressSearchResult,
-} from "../api/address-search";
+import { ADDRESS_PAGE_SIZE } from "../api/address-search";
+import { useQueryAddressSearch } from "../api/use-query-address-search";
 
 /** 검색어를 어떻게 넣는지 보여주는 예시 (mypa_312_입력전) */
 const SEARCH_EXAMPLES = [
@@ -63,8 +63,9 @@ export function SearchAddressView() {
   }
 
   const canSearch = keyword.trim().length >= MIN_KEYWORD_LENGTH;
-  // 주소창의 값에서 결과를 만든다. 그래야 새로고침해도 같은 화면이 나온다
-  const result: AddressSearchResult | null = query ? searchAddresses(query, page) : null;
+
+  // 주소창의 값으로 찾는다. 그래야 새로고침해도 같은 화면이 나온다
+  const { result, error, isSearching } = useQueryAddressSearch(query, page);
   const lastPage = result ? Math.max(1, Math.ceil(result.totalCount / ADDRESS_PAGE_SIZE)) : 1;
   // 주소창의 쪽이 범위를 벗어나면 조회 쪽에서 보정해 돌려준다. 화면은 보정된 값을 쓴다
   const safePage = result?.page ?? 1;
@@ -142,7 +143,7 @@ export function SearchAddressView() {
       </div>
 
       {/* 어떻게 찾아야 하는지 알려주는 예시. 검색 전에만 보인다 (mypa_312_입력전) */}
-      {result === null && (
+      {query.length === 0 && (
         <dl className="flex flex-col gap-5">
           {SEARCH_EXAMPLES.map((item) => (
             <div key={item.label} className="flex gap-2">
@@ -153,7 +154,14 @@ export function SearchAddressView() {
         </dl>
       )}
 
-      {result !== null &&
+      {isSearching && <AddressResultSkeleton />}
+
+      {/* 실패하면 무엇이 잘못됐는지 알려 준다. 검색어 문제면 고쳐서 다시 찾을 수 있다 */}
+      {error && <EmptyState {...APP_MESSAGE[toAppMessageCode(error)]} />}
+
+      {!isSearching &&
+        !error &&
+        result &&
         (result.items.length > 0 ? (
           <>
             <AddressResultList results={result.items} onSelect={setSelected} />
@@ -224,5 +232,25 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
         <Icon name="right" className="size-5" />
       </Button>
     </nav>
+  );
+}
+
+/**
+ * 찾는 동안 자리를 잡아 두는 뼈대.
+ *
+ * 빈 화면을 두면 결과가 도착할 때 아래 버튼까지 밀려 올라간다. 시안에 로딩 화면이 따로 없어
+ * 결과 한 칸과 같은 모양으로 네 칸을 잡아 둔다 — PD팀에 공용 로딩 시안을 요청해 두었다.
+ */
+function AddressResultSkeleton() {
+  return (
+    <ul aria-label="주소를 찾는 중" className="flex flex-col gap-4">
+      {Array.from({ length: ADDRESS_PAGE_SIZE }, (_, index) => (
+        <li key={index} className="flex flex-col gap-2 border-b border-border pb-4">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-5 w-4/5" />
+        </li>
+      ))}
+    </ul>
   );
 }
