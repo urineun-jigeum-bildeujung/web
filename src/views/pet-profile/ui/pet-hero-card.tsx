@@ -2,6 +2,7 @@
 // UI 시안 기준(mypa_021 내 아이 관리, 1514-44230)이다.
 //
 // 아래 모서리는 시안이 radius/20인데 토큰(#169)에 20이 없어 16을 쓴다.
+// 시안의 backdrop blur 4px은 흐린 사진 복사본 + 마스크로 낸다.
 
 import Image from "next/image";
 import Link from "next/link";
@@ -61,24 +62,36 @@ export function PetHeroCard({ profile }: PetHeroCardProps) {
       className="relative mx-5 h-110.25 overflow-hidden rounded-t-lg rounded-b-2xl bg-surface-disable"
     >
       {profile.photoUrl ? (
-        <Image
-          src={profile.photoUrl}
-          alt=""
-          fill
-          sizes="353px"
-          priority
-          className="object-cover object-top"
-        />
+        <>
+          <Image
+            src={profile.photoUrl}
+            alt=""
+            fill
+            sizes="353px"
+            priority
+            className="object-cover object-top"
+          />
+          {/* 같은 사진을 흐리게 한 장 더 얹고 마스크로 위로 갈수록 지운다. backdrop-filter는
+              Chrome에서 마스크를 따르지 않아 블러 경계가 선으로 보이므로 사진 자체를 흐린다 */}
+          <Image
+            aria-hidden
+            src={profile.photoUrl}
+            alt=""
+            fill
+            sizes="353px"
+            className="mask-t-from-25% mask-t-to-50% object-cover object-top blur-xs"
+          />
+        </>
       ) : (
         <span aria-hidden className="flex h-full items-center justify-center">
           <Icon name="dog" className="size-20 text-icon-fill-tertiary" />
         </span>
       )}
 
-      {/* 아래 절반을 어둡게 깔아 흰 글자가 사진 위에서도 읽히게 한다 */}
+      {/* 아래 절반을 어둡게 깔아 흰 글자가 사진 위에서도 읽히게 한다. 위로 갈수록 투명해진다 */}
       <div
         aria-hidden
-        className="absolute inset-x-0 bottom-0 h-54 bg-linear-to-b from-transparent to-text-body-static-black backdrop-blur-xs"
+        className="absolute inset-x-0 bottom-0 h-54 bg-linear-to-b from-transparent to-text-body-static-black"
       />
 
       <div className="absolute inset-x-4 bottom-5 flex flex-col gap-4">
