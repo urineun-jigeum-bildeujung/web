@@ -61,3 +61,31 @@ test("저장된 적 없는 곳이면 새 배송지로 다룬다", () => {
   expect(screen.getByRole("heading", { name: "어디로 보내드릴까요?" })).toBeDefined();
   expect(input.value).toBe("");
 });
+
+// 검색 화면이 주소창에 실어 보낸 값이다. 이게 안 되면 주소를 골라도 폼이 비어 있다
+test("검색 화면에서 고른 주소가 주소 줄에 들어온다", () => {
+  renderAt(
+    "?roadAddr=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C+%EA%B0%95%EB%82%A8%EA%B5%AC+%ED%85%8C%ED%97%A4%EB%9E%80%EB%A1%9C+123",
+  );
+
+  expect(screen.getByText("서울특별시 강남구 테헤란로 123")).toBeDefined();
+  expect(screen.queryByText("주소 검색")).toBeNull();
+});
+
+// 고치러 들어와 새로 골랐으면 저장된 주소가 아니라 방금 고른 것이 보여야 한다
+test("저장된 곳을 열어 새 주소를 고르면 그것이 저장된 값을 덮는다", () => {
+  renderAt(
+    "?place=home&roadAddr=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C+%EB%A7%88%ED%8F%AC%EA%B5%AC+%EC%96%91%ED%99%94%EB%A1%9C+45",
+  );
+
+  expect(screen.getByText("서울특별시 마포구 양화로 45")).toBeDefined();
+  expect(screen.queryByText("서울특별시 강남구 테헤란로 123")).toBeNull();
+});
+
+// 주소를 고르지 않으면 넘길 값이 없다
+test("주소가 비어 있으면 입력 완료가 꺼진다", () => {
+  renderAt("");
+
+  expect(screen.getByText("주소 검색")).toBeDefined();
+  expect(screen.getByRole("button", { name: "입력 완료" }).hasAttribute("disabled")).toBe(true);
+});

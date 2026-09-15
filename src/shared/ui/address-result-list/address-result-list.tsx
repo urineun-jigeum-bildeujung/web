@@ -18,30 +18,35 @@ type AddressResultListProps = {
   className?: string;
 };
 
+/** 시안이 보여주는 세 줄. 건물명은 도로명에 이미 들어 있어 따로 적지 않는다 */
+const ROWS = [
+  { term: "우편번호", of: (result: AddressResult) => result.zipNo },
+  { term: "도로명", of: (result: AddressResult) => result.roadAddr },
+  { term: "구주소", of: (result: AddressResult) => result.jibunAddr },
+];
+
 export function AddressResultList({ results, onSelect, className }: AddressResultListProps) {
   return (
-    <ul className={cn("flex flex-col", className)}>
+    // 시안은 항목 사이를 16px 띄우고 그 가운데에 선을 긋는다
+    <ul className={cn("flex flex-col gap-4", className)}>
       {/* 같은 건물의 여러 호수처럼 표시값이 겹치는 결과가 올 수 있어 순번을 함께 쓴다 */}
       {results.map((result, index) => (
         <li key={`${index}-${result.zipNo}-${result.roadAddr}`} className="border-b border-border">
+          {/* 시안에 눌린 상태 배경이 없다. 모바일이 기준이라 hover 대신 초점 표시만 남긴다 */}
           <button
             type="button"
             onClick={() => onSelect(result)}
-            className="flex w-full flex-col gap-1 px-2 py-3 text-left transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="flex w-full flex-col gap-2 pb-4 text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {/* 시안은 세 항목만 보여준다. 건물명은 도로명에 이미 들어 있다 */}
-            <span className="flex gap-2 text-sm">
-              <span className="w-14 shrink-0 font-medium text-foreground">우편번호</span>
-              <span className="text-muted-foreground">{result.zipNo}</span>
-            </span>
-            <span className="flex gap-2 text-sm">
-              <span className="w-14 shrink-0 font-medium text-foreground">도로명</span>
-              <span className="text-muted-foreground">{result.roadAddr}</span>
-            </span>
-            <span className="flex gap-2 text-sm">
-              <span className="w-14 shrink-0 font-medium text-foreground">구주소</span>
-              <span className="text-muted-foreground">{result.jibunAddr}</span>
-            </span>
+            {ROWS.map((row) => (
+              <span key={row.term} className="flex gap-2">
+                {/* 라벨 너비를 고정하지 않는다. 시안이 값을 라벨 바로 뒤에 붙인다 */}
+                <span className="shrink-0 text-label-bold-14 text-foreground">{row.term}</span>
+                <span className="text-body-regular-14 text-text-body-tertiary">
+                  {row.of(result)}
+                </span>
+              </span>
+            ))}
           </button>
         </li>
       ))}
