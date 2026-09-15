@@ -5,6 +5,8 @@
 
 "use client";
 
+import Image from "next/image";
+
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 
@@ -76,10 +78,18 @@ export function PetSwitcher({
                 !hero && selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
               )}
             >
-              <span
-                className="size-full rounded-full bg-cover bg-center"
-                style={pet.photoUrl ? { backgroundImage: `url(${pet.photoUrl})` } : undefined}
-              />
+              {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 회색 원만 남는다 */}
+              <span className="relative size-full overflow-hidden rounded-full">
+                {pet.photoUrl && (
+                  <Image
+                    src={pet.photoUrl}
+                    alt=""
+                    fill
+                    sizes={hero ? (selected ? "90px" : "48px") : "44px"}
+                    className="object-cover"
+                  />
+                )}
+              </span>
             </span>
             {withNames && (
               <span
