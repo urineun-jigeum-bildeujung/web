@@ -69,7 +69,7 @@ describe("SignupView", () => {
     renderWith();
 
     // 시안이 "체크에 영향 없는 터치 영역"으로 표시해 둔 자리다
-    fireEvent.click(screen.getByText("아이의 건강 데이터 활용을 위해 꼭 필요해요"));
+    fireEvent.click(screen.getByText(/아이의 건강 데이터 활용을 위해 꼭 필요해요/));
 
     expect(screen.getByLabelText("개인정보 수집 및 이용 동의").getAttribute("aria-checked")).toBe(
       "false",

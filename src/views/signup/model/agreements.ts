@@ -1,5 +1,5 @@
 // 약관 동의 항목과 전체 동의 규칙.
-// 와이어프레임 기준(sign_011)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(sign_001 약관 동의)이다.
 
 export type AgreementItem = {
   id: string;
@@ -25,13 +25,18 @@ export const AGREEMENTS: AgreementItem[] = [
     label: "개인정보 수집 및 이용 동의",
     required: true,
     // 왜 필요한지 밝히는 자리다. 이 서비스는 아이의 건강 데이터로 추천을 만든다
-    description: "아이의 건강 데이터 활용을 위해 꼭 필요해요",
+    description: "(아이의 건강 데이터 활용을 위해 꼭 필요해요)",
     href: "/mypage/service/privacy",
   },
-  { id: "marketing", label: "맞춤 혜택 및 이벤트 알림 수신 동의", required: false },
+  {
+    id: "marketing",
+    label: "맞춤 혜택 및 이벤트 알림 수신 동의",
+    required: false,
+    description: "* 동의하지 않으면 우리 아이 맞춤 건강 소식을 놓칠 수 있어요",
+  },
   {
     id: "thirdParty",
-    label: "맞춤형 제품 혜택을 위한 개인정보 제3자 제공 동의",
+    label: "맞춤형 제휴 혜택을 위한 개인정보 제3자 제공 동의",
     required: false,
   },
 ];

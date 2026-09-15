@@ -1,6 +1,5 @@
 // 회원가입 화면. 약관 동의와 닉네임을 차례로 받는다.
-// 와이어프레임 기준(sign_011, sign_011_동의완료, sign_012, sign_012_입력중)이라
-// 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(sign_001 약관 동의 1117-5438·1117-5503, 닉네임 1117-5567·1117-5582)이다.
 
 "use client";
 
@@ -49,6 +48,7 @@ export function SignupView() {
   if (step === "nickname" && canProceed(checked)) {
     return (
       <SingleInputScreen
+        headerTitle="회원가입"
         question="닉네임을 적어주세요"
         submitLabel="다음으로"
         submitDisabled={nickname.trim().length < MIN_NICKNAME}
@@ -57,7 +57,10 @@ export function SignupView() {
       >
         <FormField
           label="닉네임"
+          variant="underline"
           className="[&>label]:sr-only"
+          // 시안의 예시 닉네임. 회색이라 초기값이 아니라 자리 표시다
+          placeholder="졸린고양이 17"
           value={nickname}
           onChange={(event) => setNickname(event.target.value)}
           onClear={() => setNickname("")}
@@ -69,61 +72,63 @@ export function SignupView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader />
+      <PageHeader title="회원가입" />
 
-      <main className="flex flex-1 flex-col gap-1 px-4 pt-2">
-        <h1 className="text-xl font-bold text-balance text-foreground">
+      <main className="flex flex-1 flex-col px-5 pt-10">
+        <h1 className="text-body-medium-18 text-balance text-foreground">
           우리 아이의 맞춤 관리를 위해
           <br />
           안전하게 약관에 동의해 주세요.
         </h1>
 
-        <section className="flex flex-col pt-4">
+        <section className="flex flex-col gap-3 pt-6">
           <AgreementRow
             master
+            required
             label="[필수] 서비스 이용약관 전체 동의"
             checked={isAllChecked(checked, REQUIRED_IDS)}
             onCheckedChange={(next) => setChecked((prev) => toggleGroup(prev, REQUIRED_IDS, next))}
           />
-          {AGREEMENTS.filter((item) => item.required).map((item) => (
-            <AgreementRow
-              key={item.id}
-              label={item.label}
-              description={item.description}
-              href={item.href}
-              checked={checked.includes(item.id)}
-              onCheckedChange={(next) => toggleOne(item.id, next)}
-              className="pl-6"
-            />
-          ))}
+          <div className="flex flex-col gap-1">
+            {AGREEMENTS.filter((item) => item.required).map((item) => (
+              <AgreementRow
+                key={item.id}
+                required
+                label={item.label}
+                description={item.description}
+                href={item.href}
+                checked={checked.includes(item.id)}
+                onCheckedChange={(next) => toggleOne(item.id, next)}
+              />
+            ))}
+          </div>
         </section>
 
-        <section className="flex flex-col pt-4">
+        <section className="flex flex-col gap-3 pt-7">
           <AgreementRow
             master
             label="[선택] 서비스 이용약관 전체 동의"
             checked={isAllChecked(checked, OPTIONAL_IDS)}
             onCheckedChange={(next) => setChecked((prev) => toggleGroup(prev, OPTIONAL_IDS, next))}
           />
-          {AGREEMENTS.filter((item) => !item.required).map((item) => (
-            <AgreementRow
-              key={item.id}
-              label={item.label}
-              href={item.href}
-              checked={checked.includes(item.id)}
-              onCheckedChange={(next) => toggleOne(item.id, next)}
-              className="pl-6"
-            />
-          ))}
+          <div className="flex flex-col gap-1">
+            {/* 시안은 선택 항목에도 본문 화살표가 있으나 갈 화면이 없어 그리지 않는다 */}
+            {AGREEMENTS.filter((item) => !item.required).map((item) => (
+              <AgreementRow
+                key={item.id}
+                label={item.label}
+                description={item.description}
+                href={item.href}
+                checked={checked.includes(item.id)}
+                onCheckedChange={(next) => toggleOne(item.id, next)}
+              />
+            ))}
+          </div>
         </section>
       </main>
 
       <BottomActionBar>
-        <Button
-          className="min-h-12 w-full"
-          disabled={!canProceed(checked)}
-          onClick={() => void setStep("nickname")}
-        >
+        <Button disabled={!canProceed(checked)} onClick={() => void setStep("nickname")}>
           다음으로
         </Button>
       </BottomActionBar>
