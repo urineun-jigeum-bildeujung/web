@@ -81,7 +81,7 @@ cp .env.example .env.local
 | CSS | Tailwind CSS | 4.3.3 |
 | UI 컴포넌트 | shadcn/ui | 4.17.0 |
 | 프리미티브 | radix-ui | 1.6.7 |
-| 아이콘 (메인) | `shared/ui/icon` (Figma 43종) | — |
+| 아이콘 (메인) | `shared/ui/icon` (Figma 46종) | — |
 | 아이콘 (보충) | react-icons | 5.7.0 |
 | 아이콘 (shadcn 내부) | lucide-react | 1.31.0 |
 | 애니메이션 | motion | 13.1.0 |
