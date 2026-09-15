@@ -92,6 +92,16 @@ export const APP_MESSAGE = {
     title: "재고 부족",
     description: "수량을 줄이거나 다른 상품을 골라 주세요.",
   },
+
+  // 행정안전부 도로명주소 API가 거절하는 경우다. 무엇을 고쳐야 하는지 알려 줘야 다시 찾을 수 있다
+  "address.keywordTooBroad": {
+    title: "검색어가 너무 넓어요",
+    description: "도로명이나 건물번호를 함께 넣어 주세요.",
+  },
+  "address.keywordInvalid": {
+    title: "검색어를 다시 확인해 주세요",
+    description: "숫자만으로는 찾을 수 없어요. 도로명이나 동 이름과 함께 넣어 주세요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -125,5 +135,9 @@ export const APP_MESSAGE_CODE = {
   product: {
     notFound: "product.notFound",
     outOfStock: "product.outOfStock",
+  },
+  address: {
+    keywordTooBroad: "address.keywordTooBroad",
+    keywordInvalid: "address.keywordInvalid",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;
