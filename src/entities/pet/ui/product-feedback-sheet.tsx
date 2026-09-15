@@ -1,5 +1,7 @@
 // 최근에 산 제품이 아이에게 맞았는지 묻고 그 반응을 받는다.
-// UI 시안 기준(mypa_021 아이 제품 관리의 반응 시트, 1551-47882)이다. 메인의 상태 체크 시트도 이것이다.
+// UI 시안 기준(메인 상태 체크 시트, 1758-69187·1758-69255)이다. 마이페이지 반응 시트
+// (mypa_021, 1551-47882)도 같은 선택 로직이지만 감싸는 시트 모양이 달라(뜨는 카드) `variant="floating"`을
+// 그쪽에서 쓴다.
 //
 // 이 서비스가 "근거 있는 판단"으로 가는 자리다. 받은 반응이 다음 추천 적합도로 되돌아간다.
 
@@ -38,6 +40,8 @@ type ProductFeedbackSheetProps = {
   onOpenChange: (open: boolean) => void;
   /** 반응을 남긴 뒤 그 상품을 보러 간다 */
   onSeeProduct?: (productId: string) => void;
+  /** 감싸는 시트 모양. 메인 상태 체크는 `full`, 마이페이지 반응 시트는 기본값(`floating`) */
+  variant?: "floating" | "full";
 };
 
 export function ProductFeedbackSheet({
@@ -45,6 +49,7 @@ export function ProductFeedbackSheet({
   petName,
   onOpenChange,
   onSeeProduct,
+  variant = "floating",
 }: ProductFeedbackSheetProps) {
   const [picked, setPicked] = useState<string>();
   const [tooEarly, setTooEarly] = useState(false);
@@ -60,7 +65,7 @@ export function ProductFeedbackSheet({
   };
 
   return (
-    <BottomSheet open={target !== null} onOpenChange={close}>
+    <BottomSheet open={target !== null} onOpenChange={close} variant={variant}>
       {done ? (
         <div className="flex flex-col items-center gap-2 px-5 pb-4">
           <span className="flex size-10 items-center justify-center rounded-full bg-surface-brand">
@@ -95,9 +100,17 @@ export function ProductFeedbackSheet({
         </div>
       ) : (
         <div className="flex flex-col gap-3 px-5 pb-4">
-          <DrawerTitle className="text-title-bold-18 text-foreground">
-            {petName}에게 잘 맞았나요?
-          </DrawerTitle>
+          <div className="flex items-center justify-between">
+            <DrawerTitle className="text-title-bold-18 text-foreground">
+              {petName}에게 잘 맞았나요?
+            </DrawerTitle>
+            <DrawerClose
+              aria-label="닫기"
+              className="flex size-10 items-center justify-center text-foreground"
+            >
+              <Icon name="cancel" className="size-6" />
+            </DrawerClose>
+          </div>
 
           {target && (
             <div className="flex items-center gap-3">
@@ -146,20 +159,34 @@ export function ProductFeedbackSheet({
                   className={cn(
                     "flex w-19 flex-col items-center gap-2 rounded-lg py-1 transition-colors",
                     "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    selected ? "text-text-body-brand-default" : "text-foreground",
                   )}
                 >
-                  {/* 고른 것은 색과 함께 테두리로도 알린다 */}
-                  <Icon
-                    name={item.icon}
+                  {/* 고른 것은 배경·테두리색으로 알린다 */}
+                  <span
+                    aria-hidden
                     className={cn(
-                      "size-13 rounded-full",
+                      "flex size-13 items-center justify-center rounded-full border-2",
                       selected
-                        ? "text-icon-fill-brand ring-2 ring-surface-brand"
-                        : "text-icon-fill-default",
+                        ? "border-brand bg-surface-brand-weak"
+                        : "border-transparent bg-muted",
                     )}
-                  />
-                  <span className="text-label-bold-14">{item.label}</span>
+                  >
+                    <Icon
+                      name={item.icon}
+                      className={cn(
+                        "size-6",
+                        selected ? "text-icon-fill-brand" : "text-icon-fill-default",
+                      )}
+                    />
+                  </span>
+                  <span
+                    className={cn(
+                      "text-body-regular-13",
+                      selected ? "text-brand" : "text-foreground",
+                    )}
+                  >
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
@@ -168,7 +195,7 @@ export function ProductFeedbackSheet({
           {/* 아직 답할 수 없다는 것도 답이다. 억지로 고르게 하면 값이 흐려진다 */}
           <CheckboxRow
             label="아직 판단하기에는 일러요 (며칠 더 지켜볼게요)"
-            labelClassName="text-caption-regular-13 text-text-body-tertiary"
+            labelClassName="text-body-regular-13 text-text-body-tertiary"
             className="min-h-8 pt-3"
             checked={tooEarly}
             onCheckedChange={(next) => {
