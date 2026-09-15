@@ -6,7 +6,6 @@ export { BreedPicker } from "./ui/breed-picker";
 export { ProductFeedbackSheet, FEEDBACKS, type FeedbackTarget } from "./ui/product-feedback-sheet";
 export { BreedPickerStep } from "./ui/breed-picker-step";
 export { PetSwitcher, type PetSummary } from "./ui/pet-switcher";
-export { ProductReviewSheet, type PetProductReview } from "./ui/product-review-sheet";
 export {
   BODY_TYPE_GUIDE,
   BODY_TYPE_OPTIONS,

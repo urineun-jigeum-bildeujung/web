@@ -1,11 +1,12 @@
-// 화면 아래에 놓이는 아이 고르기 줄. 마지막 칸은 새 아이를 들이는 자리다.
-// 와이어프레임 기준(mypa_021)이라 디자인 확정 시 바뀔 수 있다.
+// 아이 고르기 줄. 마지막 칸은 새 아이를 들이는 자리다.
+// UI 시안 기준(mypa_021 내 아이 관리의 avator 줄)이다. 메인의 줄은 아직 와이어프레임 기준이다.
+//
+// 두 모양이 있다. 기본은 같은 크기의 원이 늘어서고, `hero`는 고른 아이만 96px로 크게 보인다.
 
 "use client";
 
-import { IoAdd } from "react-icons/io5";
-
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 export type PetSummary = {
   id: string;
@@ -21,10 +22,10 @@ type PetSwitcherProps = {
   onAdd?: () => void;
   /** 원 아래에 이름을 함께 보인다. 메인처럼 처음 보는 화면에서는 이름이 있어야 고를 수 있다 */
   withNames?: boolean;
+  /** `hero`는 고른 아이 96px, 나머지 48px. 아이 관리 화면의 줄이다 */
+  variant?: "default" | "hero";
   className?: string;
 };
-
-const CIRCLE = "size-11 shrink-0 rounded-full";
 
 export function PetSwitcher({
   pets,
@@ -32,13 +33,23 @@ export function PetSwitcher({
   onSelect,
   onAdd,
   withNames,
+  variant = "default",
   className,
 }: PetSwitcherProps) {
+  const hero = variant === "hero";
+  // hero는 고른 아이만 크고 나머지는 작다. 기본은 전부 44px이다
+  const circleSize = (selected: boolean) => (hero ? (selected ? "size-24" : "size-12") : "size-11");
+
   return (
     <div
       role="radiogroup"
       aria-label="아이 고르기"
-      className={cn("flex items-center gap-3 px-4 py-3", className)}
+      className={cn(
+        "flex gap-3 px-4 py-3",
+        // 크기가 다른 원을 아래 선에 맞춘다
+        hero ? "items-end gap-4 px-5 py-0" : "items-center",
+        className,
+      )}
     >
       {pets.map((pet) => {
         const selected = pet.id === selectedId;
@@ -51,23 +62,19 @@ export function PetSwitcher({
             aria-label={pet.name}
             onClick={() => onSelect?.(pet.id)}
             className={cn(
-              "flex flex-col items-center gap-1 transition-colors",
+              "flex flex-col items-center gap-1 rounded-full transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
             )}
           >
             <span
               aria-hidden
               className={cn(
-                CIRCLE,
-                "bg-muted",
-                // 고른 아이를 테두리로 알린다. 색만으로는 어느 것이 골라졌는지 알 수 없다.
-                selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+                "shrink-0 rounded-full bg-surface-disable bg-cover bg-center",
+                circleSize(selected),
+                // hero는 크기로 고른 것을 알린다. 기본은 테두리로 알린다 — 색만으로는 알 수 없다
+                !hero && selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
               )}
-              style={
-                pet.photoUrl
-                  ? { backgroundImage: `url(${pet.photoUrl})`, backgroundSize: "cover" }
-                  : undefined
-              }
+              style={pet.photoUrl ? { backgroundImage: `url(${pet.photoUrl})` } : undefined}
             />
             {withNames && (
               <span
@@ -89,16 +96,16 @@ export function PetSwitcher({
           type="button"
           aria-label="새 아이 추가"
           onClick={onAdd}
-          className="flex flex-col items-center gap-1 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex flex-col items-center gap-1 rounded-full text-icon-fill-tertiary transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span
             aria-hidden
             className={cn(
-              CIRCLE,
-              "flex items-center justify-center border-2 border-dashed border-border",
+              "flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-current",
+              hero ? "size-12" : "size-11",
             )}
           >
-            <IoAdd aria-hidden className="size-5" />
+            <Icon name="plus" className={hero ? "size-7" : "size-5"} />
           </span>
           {withNames && (
             <span aria-hidden className="text-xs">
