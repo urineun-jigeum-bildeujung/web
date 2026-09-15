@@ -32,3 +32,11 @@ test("disabled면 눌리지 않는다", () => {
   fireEvent.click(screen.getByRole("button", { name: /로그아웃/ }));
   expect(onClick).not.toHaveBeenCalled();
 });
+
+test("sm 크기는 설정 줄 규격(40·24·label/bold_14)으로 그린다", () => {
+  render(<ListRowLink href="/mypage/settings" title="테마설정" size="sm" />);
+
+  const link = screen.getByRole("link", { name: /테마설정/ });
+  expect(link.className).toContain("min-h-10");
+  expect(screen.getByText("테마설정").className).toContain("text-label-bold-14");
+});
