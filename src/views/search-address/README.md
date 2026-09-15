@@ -9,6 +9,7 @@
 | `api/address-search.ts` | 행안부 주소를 `/api/juso`를 거쳐 가져온다 |
 | `api/address-search.test.ts` | 무엇을 보내고 돌아온 것을 어떻게 다루는지 |
 | `api/use-query-address-search.ts` | 조회 훅. 화면은 `useQuery`를 직접 부르지 않는다 |
+| `../../app/api/juso/route.ts` | 승인키를 서버에 두는 통로 (app 레이어) |
 | `index.ts` | 공개 API |
 
 ## 페이지네이션
@@ -66,6 +67,12 @@
 **쪽 보정은 반만 해 준다.** `0`·음수·숫자가 아닌 값은 1로 바꿔 주지만 **마지막 쪽을 넘는 값은 그대로 받아 결과 0건을 준다** — `page=999`에 `totalCount=1`이면서 빈 목록이다(2026-09-15 실측). 그 경우만 조회 함수가 마지막 쪽을 다시 받아온다.
 
 응답 필드는 24개지만 Route Handler가 화면이 쓰는 넷(`zipNo`·`roadAddr`·`jibunAddr`·`bdNm`)만 추려 보낸다.
+
+**2xx라고 해서 우리가 아는 모양이라는 보장은 없다.** 점검 안내 페이지가 200으로 올 수 있어, Route Handler가 `results.common`의 생김새를 확인하고 아니면 `JUSO_502_UPSTREAM`으로 돌린다. 기다리는 시간도 5초로 끊는다 — 없으면 답하지 않는 요청이 쌓여 주소 검색 전체가 느려진다.
+
+## 쪽을 넘길 때
+
+`keepPreviousData`로 앞 결과를 그대로 둔다. 지우고 뼈대를 띄우면 넘길 때마다 화면이 들썩인다. 뼈대는 보여 줄 앞 결과가 없는 첫 검색에서만 나온다.
 
 ## 아직 없는 것
 

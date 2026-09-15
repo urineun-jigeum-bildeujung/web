@@ -3,6 +3,8 @@
 //
 // 행정안전부 도로명주소 API 응답 필드에 맞춘 형태다.
 
+import type { ComponentProps } from "react";
+
 import { cn } from "@/shared/lib/utils";
 
 export type AddressResult = {
@@ -15,8 +17,8 @@ export type AddressResult = {
 type AddressResultListProps = {
   results: AddressResult[];
   onSelect: (result: AddressResult) => void;
-  className?: string;
-};
+  // `results`·`onSelect`는 ul의 기본 속성과 이름이 겹친다. 우리 뜻이 이기게 덜어낸다
+} & Omit<ComponentProps<"ul">, "results" | "onSelect">;
 
 /** 시안이 보여주는 세 줄. 건물명은 도로명에 이미 들어 있어 따로 적지 않는다 */
 const ROWS = [
@@ -25,10 +27,15 @@ const ROWS = [
   { term: "구주소", of: (result: AddressResult) => result.jibunAddr },
 ];
 
-export function AddressResultList({ results, onSelect, className }: AddressResultListProps) {
+export function AddressResultList({
+  results,
+  onSelect,
+  className,
+  ...props
+}: AddressResultListProps) {
   return (
     // 시안은 항목 사이를 16px 띄우고 그 가운데에 선을 긋는다
-    <ul className={cn("flex flex-col gap-4", className)}>
+    <ul className={cn("flex flex-col gap-4", className)} {...props}>
       {/* 같은 건물의 여러 호수처럼 표시값이 겹치는 결과가 올 수 있어 순번을 함께 쓴다 */}
       {results.map((result, index) => (
         <li key={`${index}-${result.zipNo}-${result.roadAddr}`} className="border-b border-border">
