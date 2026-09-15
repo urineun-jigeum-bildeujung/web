@@ -76,6 +76,23 @@ const MOCK_RECENT: FeedbackTarget[] = [
 /** 타임딜 종료 시각. 실제로는 서버가 준다 */
 const DEAL_ENDS_AT = new Date(Date.now() + 11 * 3600_000 + 28 * 60_000 + 43_000);
 
+/** 시안 ProductCard/Grid의 price 슬롯 — 하루 급여비 캡션 + 별점 + 후기 수를 한 자리에 */
+function ProductMeta({ product }: { product: (typeof MOCK_PRODUCTS)[number] }) {
+  return (
+    <>
+      <p className="text-label-medium-11 text-text-body-tertiary">
+        {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
+      </p>
+      <div className="flex items-center gap-2">
+        <Rating value={product.rating} showValue />
+        <span className="text-label-medium-14 text-text-body-tertiary">
+          후기 {product.reviewCount}
+        </span>
+      </div>
+    </>
+  );
+}
+
 function SectionTitle({ children, href }: { children: React.ReactNode; href?: string }) {
   return (
     <div className="flex items-center justify-between">
@@ -216,15 +233,7 @@ export function HomeView() {
                           <Icon name="heart_stroke" className="size-5" />
                         </span>
                       }
-                      meta={
-                        <>
-                          <p className="text-xs text-muted-foreground">
-                            {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
-                          </p>
-                          <Rating value={product.rating} showValue />
-                          <span className="sr-only">후기 {product.reviewCount}개</span>
-                        </>
-                      }
+                      meta={<ProductMeta product={product} />}
                     />
                   </ScrollRowItem>
                 ))}
@@ -298,15 +307,7 @@ export function HomeView() {
                           name={product.name}
                           price={product.price}
                           originalPrice={product.originalPrice}
-                          meta={
-                            <>
-                              <p className="text-xs text-muted-foreground">
-                                {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}
-                                원
-                              </p>
-                              <Rating value={product.rating} showValue />
-                            </>
-                          }
+                          meta={<ProductMeta product={product} />}
                         />
                       </ScrollRowItem>
                     ))}
@@ -363,15 +364,7 @@ export function HomeView() {
                     imageBadge={
                       <MatchScoreBadge score={product.matchScore} petName={pet.name} size="sm" />
                     }
-                    meta={
-                      <>
-                        <p className="text-xs text-muted-foreground">
-                          {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
-                        </p>
-                        <Rating value={product.rating} showValue />
-                        <span className="sr-only">후기 {product.reviewCount}개</span>
-                      </>
-                    }
+                    meta={<ProductMeta product={product} />}
                   />
                 </li>
               ))}
