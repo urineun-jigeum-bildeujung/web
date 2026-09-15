@@ -7,7 +7,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 import { EditPetHealthView } from "./edit-pet-health-view";
 
 function submitButton() {
-  return screen.getByRole("button", { name: "수정 완료" }) as HTMLButtonElement;
+  return screen.getByRole("button", { name: "수정완료" }) as HTMLButtonElement;
 }
 
 function picker(name: string) {

@@ -1,5 +1,5 @@
-// 아이 정보를 고치는 화면들의 공통 골격. 헤더와 하단 완료 버튼이 같다.
-// 와이어프레임 기준(mypa_121, mypa_221, mypa_321)이라 디자인 확정 시 바뀔 수 있다.
+// 아이 정보를 고치는 화면들의 공통 골격. 머리말과 하단 완료 버튼이 같다.
+// UI 시안 기준(정보 수정 1555-49797 · 1507-43555 · 1507-43640)이다.
 
 "use client";
 
@@ -23,11 +23,11 @@ export function EditPetScreen({ children, submitDisabled }: EditPetScreenProps) 
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="정보 수정" />
 
-      <main className="flex flex-1 flex-col gap-6 px-4 pt-2 pb-4">{children}</main>
+      <main className="flex flex-1 flex-col gap-4 pt-3 pb-6">{children}</main>
 
       <BottomActionBar>
-        <Button className="min-h-11" disabled={submitDisabled} onClick={() => router.back()}>
-          수정 완료
+        <Button disabled={submitDisabled} onClick={() => router.back()}>
+          수정완료
         </Button>
       </BottomActionBar>
     </div>

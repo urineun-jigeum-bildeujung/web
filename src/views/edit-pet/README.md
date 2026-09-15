@@ -1,13 +1,18 @@
 # views/edit-pet
 
-아이 정보를 항목별로 고치는 세 화면. 와이어프레임 `mypa_121`·`mypa_221`·`mypa_321`에 대응한다.
+아이 정보를 항목별로 고치는 세 화면.
+
+- **라우트**: `/mypage/pets/basic` · `/mypage/pets/body` · `/mypage/pets/health` — `src/app/mypage/pets/{basic,body,health}/page.tsx`
+- **조립**: `entities/pet`의 `BreedPickerStep` · `SizeGuide` · `BodyTypeGuide` · `BodyTypeSlider` · `HealthPickerField`, `shared/ui`의 `page-header` · `bottom-action-bar` · `avatar-uploader`(`size="lg"`) · `form-field` · `chip-select` · `checkbox-row`
+- **상태**: 입력값은 화면 안 상태. 품종 고르기는 URL 쿼리 `picking`
+- **참고**: UI 시안 기준(정보 수정 기본 `1555-49797` · 체형 `1507-43555` · 건강 `1507-43640`)
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/edit-pet-screen.tsx` | 세 화면이 공유하는 골격. 헤더와 하단 완료 버튼 |
-| `ui/edit-pet-basic-view.tsx` | 사진·이름·견종·나이·성별·중성화 (`mypa_121`) |
-| `ui/edit-pet-body-view.tsx` | 체구·몸무게·체형 (`mypa_221`) |
-| `ui/edit-pet-health-view.tsx` | 염려질환·알러지 (`mypa_321`) |
+| `ui/edit-pet-screen.tsx` | 세 화면이 공유하는 골격. 머리말 "정보 수정"과 하단 "수정완료" |
+| `ui/edit-pet-basic-view.tsx` | 사진·이름·종·나이·성별·중성화 |
+| `ui/edit-pet-body-view.tsx` | 체구·몸무게·체형 |
+| `ui/edit-pet-health-view.tsx` | 걱정되는 질환·알러지 |
 | `ui/edit-pet-health-view.test.tsx` | 무엇을 답으로 세는지, 해당 없음이 고르기를 잠그는지 본다 |
 | `index.ts` | 공개 API |
 
@@ -17,25 +22,13 @@
 
 | | 온보딩 | 정보 수정 |
 | --- | --- | --- |
-| 헤더 | 닫기 + 진행 표시 | 뒤로가기 + "정보 수정" |
-| 하단 | 이전 / 다음 단계 작성하기 | 수정 완료 하나 |
-| 묶음 | `onbo_002`·`onbo_003`으로 나뉨 | `mypa_121` 한 화면에 모임 |
+| 머리말 | 진행 표시 | 뒤로가기 + "정보 수정" |
+| 하단 | 이전 / 다음 단계 작성하기 | 수정완료 하나 |
+| 묶음 | `onbo_002`·`onbo_003`으로 나뉨 | 기본 정보 한 화면에 모임 |
 
 그래서 단계 컴포넌트를 그대로 쓰지 않고 입력 요소만 재사용한다.
 
-## 라우트
-
-```text
-/mypage/pets/basic    mypa_121
-/mypage/pets/body     mypa_221
-/mypage/pets/health   mypa_321
-```
-
-**경로는 임시다.**
-
 **건강 정보는 온보딩과 같은 것으로 고른다.** 자유 입력이면 보호자마다 다르게 적어 같은 질환이 여러 표기로 쌓이고, 그 값으로는 추천을 만들 수 없다. 고르는 자리는 `entities/pet`의 `HealthPickerField`이고 온보딩 건강 단계가 같은 것을 쓴다.
-
-**`mypa_321`의 머리말은 따르지 않았다.** `mypa_121`·`mypa_221`은 `< 정보 수정`인데 `mypa_321`만 온보딩의 진행 표시 세 칸이 붙어 있다. 온보딩 프레임을 복사하며 머리말을 고치지 않은 것으로 보인다 — 마이페이지에서 들어온 화면에 온보딩 진행률이 뜨는 것은 말이 되지 않는다. PD 확인 대상이다.
 
 ## 아직 없는 것
 
