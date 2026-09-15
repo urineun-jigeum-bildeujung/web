@@ -1,8 +1,8 @@
 // 목록을 거르는 칩 줄. 하나만 고를 수 있어 시맨틱은 라디오다.
-// 와이어프레임 기준(noti_001, mypa_021, like_001_찜, reco_001)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_021 아이 제품 관리의 wrapper_chip)이다. 36px 알약이고 고른 것은 검정으로 찬다.
 //
 // ChipSelect와 다르다. 그것은 온보딩에서 보기를 고르는 큰 칩이라 폭을 균등하게 나누는데,
-// 이쪽 시안은 글자 크기에 맞는 작은 칩이 왼쪽에 늘어선다.
+// 이쪽은 글자 크기에 맞는 작은 칩이 왼쪽에 늘어선다.
 
 import { useId } from "react";
 
@@ -38,12 +38,13 @@ export function FilterChips({ label, options, value, onValueChange }: FilterChip
             <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
             <label
               htmlFor={itemId}
+              // 시안의 칩은 36px이다. 탭 크기는 디자인 시스템 값을 따른다
               className={cn(
-                "flex min-h-11 cursor-pointer items-center rounded-full border px-4 text-sm transition-colors",
+                "flex h-9 cursor-pointer items-center rounded-full px-3 text-label-medium-14 transition-colors",
                 "peer-focus-visible:ring-2 peer-focus-visible:ring-ring",
                 selected
-                  ? "border-foreground bg-foreground font-medium text-background"
-                  : "border-border bg-background text-muted-foreground hover:bg-muted",
+                  ? "bg-primary text-primary-foreground"
+                  : "border border-border-secondary bg-background text-foreground hover:bg-muted",
               )}
             >
               {option.label}
