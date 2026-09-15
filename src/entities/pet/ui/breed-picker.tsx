@@ -1,51 +1,122 @@
-// 강아지·고양이 품종을 종별로 나눠 고르는 화면 본문.
-// 와이어프레임 기준(onbo_013_품종선택)이라 디자인 확정 시 바뀔 수 있다.
+// 품종 목록. 검색어가 없으면 종별로 전부 보이고, 있으면 걸러진 것만 보인다.
+// UI 시안 기준(onbo_011_품종선택)이다.
 
 "use client";
 
 import { cn } from "@/shared/lib/utils";
-import { BREEDS, SPECIES_LABEL, type PetSpecies } from "../model/breeds";
+
+import { BREEDS, PET_SPECIES, SPECIES_LABEL, type PetSpecies } from "../model/breeds";
 
 type BreedPickerProps = {
-  value?: string;
-  onChange: (breed: string, species: PetSpecies) => void;
+  /** 검색어. 비어 있으면 전체 목록이다 */
+  query: string;
+  /** 지금 골라 둔 품종. 목록에서 표시만 하고 고르는 것은 막지 않는다 */
+  current?: string;
+  /** 줄을 누르면 바로 확정된다. 시안에 확인 버튼이 없다 */
+  onPick: (breed: string, species: PetSpecies) => void;
   className?: string;
 };
 
-export function BreedPicker({ value, onChange, className }: BreedPickerProps) {
+/** 띄어쓰기와 대소문자를 무시하고 견준다. "말티 즈"로 쳐도 말티즈가 나온다 */
+function normalize(text: string) {
+  return text.replace(/\s+/g, "").toLowerCase();
+}
+
+/** "기타"처럼 양쪽 목록에 다 있는 이름. 검색 결과에서는 종을 덧붙여 가른다 */
+function isShared(breed: string) {
+  return PET_SPECIES.every((species) => BREEDS[species].includes(breed));
+}
+
+type RowProps = {
+  breed: string;
+  species: PetSpecies;
+  current: boolean;
+  showSpecies: boolean;
+  onPick: (breed: string, species: PetSpecies) => void;
+};
+
+function Row({ breed, species, current, showSpecies, onPick }: RowProps) {
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
-      {(Object.keys(BREEDS) as PetSpecies[]).map((species) => (
+    <li>
+      <button
+        type="button"
+        aria-current={current || undefined}
+        onClick={() => onPick(breed, species)}
+        className={cn(
+          "flex min-h-11 w-full items-center gap-1 text-left text-body-medium-16 text-foreground transition-colors",
+          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          current && "font-bold",
+        )}
+      >
+        {breed}
+        {showSpecies && (
+          <span className="text-caption-regular-13 text-text-body-tertiary">
+            {SPECIES_LABEL[species]}
+          </span>
+        )}
+      </button>
+    </li>
+  );
+}
+
+export function BreedPicker({ query, current, onPick, className }: BreedPickerProps) {
+  const keyword = normalize(query);
+
+  if (keyword) {
+    const matched = PET_SPECIES.flatMap((species) =>
+      BREEDS[species]
+        .filter((breed) => normalize(breed).includes(keyword))
+        .map((breed) => ({ breed, species })),
+    );
+
+    if (matched.length === 0) {
+      return (
+        <p className={cn("px-5 py-6 text-center text-sm text-text-body-secondary", className)}>
+          찾는 품종이 없어요. 목록에 없다면 &ldquo;기타&rdquo;를 골라 주세요.
+        </p>
+      );
+    }
+
+    return (
+      <ul className={cn("mx-5 divide-y divide-border", className)}>
+        {matched.map(({ breed, species }) => (
+          <Row
+            key={`${species}-${breed}`}
+            breed={breed}
+            species={species}
+            current={current === breed}
+            showSpecies={isShared(breed)}
+            onPick={onPick}
+          />
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <div className={cn("flex flex-col gap-4", className)}>
+      {PET_SPECIES.map((species) => (
         // 같은 이름의 품종이 양쪽에 있다("기타"). 묶음에 이름을 붙여
         // 스크린 리더가 어느 종의 목록인지 알 수 있게 한다
-        <section key={species} aria-labelledby={`breed-${species}`} className="flex flex-col gap-3">
-          <h2 id={`breed-${species}`} className="text-base font-bold text-foreground">
+        <section key={species} aria-labelledby={`breed-${species}`}>
+          <h2
+            id={`breed-${species}`}
+            className="px-5 pb-1 text-label-bold-14 text-text-body-secondary"
+          >
             {SPECIES_LABEL[species]}
           </h2>
-          <div className="flex flex-wrap gap-2">
-            {BREEDS[species].map((breed) => {
-              const selected = value === breed;
-              return (
-                <button
-                  key={breed}
-                  type="button"
-                  // 목록이 길어 라디오 그룹의 화살표 이동이 오히려 번거롭다.
-                  // 누르면 곧바로 이전 화면으로 돌아가는 흐름이라 버튼으로 둔다.
-                  aria-pressed={selected}
-                  onClick={() => onChange(breed, species)}
-                  className={cn(
-                    "flex min-h-11 items-center rounded-full border px-4 text-sm transition-colors",
-                    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    selected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-foreground hover:bg-muted",
-                  )}
-                >
-                  {breed}
-                </button>
-              );
-            })}
-          </div>
+          <ul className="mx-5 divide-y divide-border">
+            {BREEDS[species].map((breed) => (
+              <Row
+                key={breed}
+                breed={breed}
+                species={species}
+                current={current === breed}
+                showSpecies={false}
+                onPick={onPick}
+              />
+            ))}
+          </ul>
         </section>
       ))}
     </div>

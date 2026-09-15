@@ -55,9 +55,7 @@ export function EditPetHealthView() {
           groups={CONCERN_GROUPS[SAVED.species]}
           value={concern}
           onChange={setConcern}
-          placeholder="신경 쓰이는 곳을 골라주세요"
           disabled={noConcern}
-          disabledPlaceholder="해당 사항 없음"
         />
         <CheckboxRow
           label="해당 사항이 없어요"
@@ -80,9 +78,7 @@ export function EditPetHealthView() {
           groups={ALLERGY_GROUPS}
           value={allergy}
           onChange={setAllergy}
-          placeholder="피해야 할 성분을 골라주세요"
           disabled={noAllergy}
-          disabledPlaceholder="해당 사항 없음"
         />
         {/* 시안(mypa_321)이 알러지 쪽에만 예시를 남긴다 */}
         <p className="text-xs text-muted-foreground">ex) 복숭아, 닭, 연어, 밀가루 등</p>

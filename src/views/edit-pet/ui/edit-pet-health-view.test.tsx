@@ -33,7 +33,7 @@ test("두 항목 모두 답이 있어야 고칠 수 있다", () => {
   expect(submitButton().disabled).toBe(true);
 });
 
-test("해당 없음을 켜면 고를 수 없고 문구가 바뀐다", () => {
+test("해당 없음을 켜면 고를 수 없고 고른 것도 보이지 않는다", () => {
   render(<EditPetHealthView />);
 
   const [concernCheck] = screen.getAllByRole("checkbox");
@@ -41,8 +41,8 @@ test("해당 없음을 켜면 고를 수 없고 문구가 바뀐다", () => {
 
   const field = picker("걱정되는 질환");
   expect(field.disabled).toBe(true);
-  // 시안 mypa_321이 잠긴 자리를 "해당 사항 없음"으로 바꾼다
-  expect(field.textContent).toContain("해당 사항 없음");
+  // 답이 아니라고 표시한 상태라 배지를 비운다
+  expect(field.textContent).not.toContain("슬개골 탈구");
 });
 
 test("해당 없음을 끄면 그 항목을 다시 받는다", () => {
@@ -54,7 +54,6 @@ test("해당 없음을 끄면 그 항목을 다시 받는다", () => {
 
   const field = picker("피해야 할 성분");
   expect(field.disabled).toBe(false);
-  expect(field.textContent).toContain("피해야 할 성분을 골라주세요");
   expect(submitButton().disabled).toBe(true);
 });
 
