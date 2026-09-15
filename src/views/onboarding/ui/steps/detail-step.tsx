@@ -38,7 +38,7 @@ export function DetailStep({
 
   return (
     <>
-      <main className="flex flex-1 flex-col gap-5 pb-6">
+      <main className="flex flex-1 flex-col gap-5 pt-5 pb-6">
         <h1 className="px-5 text-title-bold-20 text-foreground">{who}에 대해 더 알려주세요</h1>
 
         <div className="flex flex-col gap-6 px-5">

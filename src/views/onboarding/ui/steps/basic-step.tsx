@@ -25,7 +25,7 @@ export function BasicStep({ draft, onChange, onNext }: BasicStepProps) {
 
   return (
     <>
-      <main className="flex flex-1 flex-col gap-5 pb-6">
+      <main className="flex flex-1 flex-col gap-5 pt-5 pb-6">
         <h1 className="px-5 text-title-bold-20 text-foreground">아이를 소개해 주세요</h1>
 
         <div className="flex flex-col items-center gap-3">
