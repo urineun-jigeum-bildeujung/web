@@ -15,12 +15,13 @@ export function SettingGroup({ title, children, className, ...props }: SettingGr
   return (
     <section
       className={cn(
-        "flex flex-col gap-4 rounded-xl bg-card px-3 py-4 text-card-foreground",
+        "flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-card-foreground",
         className,
       )}
       {...props}
     >
-      {title && <h2 className="text-title-bold-16 text-foreground">{title}</h2>}
+      {/* 좌우 여백은 줄이 가진다. 카드가 가지면 줄의 호버 배경이 카드 끝까지 닿지 않는다 */}
+      {title && <h2 className="px-3 text-title-bold-16 text-foreground">{title}</h2>}
       {/* 시안은 줄 사이에 선이 없고 12px 간격이다 */}
       <div className="flex flex-col gap-3">{children}</div>
     </section>
