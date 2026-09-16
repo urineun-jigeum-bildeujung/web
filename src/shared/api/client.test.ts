@@ -74,6 +74,14 @@ describe("apiRequest", () => {
     await expect(apiRequest("/notifications/read-all")).resolves.toBeUndefined();
   });
 
+  // 명세가 `200 OK`만 약속하는 엔드포인트가 있다(장바구니 수량 변경). 본문을 파싱하려 들면
+  // 성공한 요청이 실패로 뒤집혀, 낙관적으로 그려 둔 것이 되돌아간다
+  it("본문 없는 200 응답도 성공으로 끝낸다", async () => {
+    stubFetch(new Response(null, { status: 200 }));
+
+    await expect(apiRequest("/carts/items/NORMAL/1")).resolves.toBeUndefined();
+  });
+
   it("query 옵션은 undefined·null을 빼고 배열은 같은 키를 반복해 쿼리 스트링을 만든다", async () => {
     const fetchMock = stubFetch(Response.json({}));
 
