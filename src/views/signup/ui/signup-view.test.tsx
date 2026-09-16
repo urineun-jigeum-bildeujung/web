@@ -16,7 +16,7 @@ vi.mock("@/shared/lib/app-toast", () => ({
   toastAppError: (...args: unknown[]) => toastAppError(...args),
 }));
 
-import { clearTokens, getAccessToken, getRefreshToken } from "@/shared/api/token-store";
+import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "@/shared/api/token-store";
 
 import { SignupView } from "./signup-view";
 
@@ -38,7 +38,9 @@ function goToNicknameStep() {
 beforeEach(() => {
   replace.mockClear();
   toastAppError.mockClear();
-  clearTokens();
+  // 이 화면은 소셜 인증을 마친 사람만 닿는다. 토큰이 없으면 로그인으로 돌려보내므로
+  // 나머지 테스트는 교환을 마친 상태에서 시작한다
+  saveTokens({ accessToken: "a-1", refreshToken: "r-1" });
 });
 
 afterEach(() => {
@@ -46,6 +48,15 @@ afterEach(() => {
 });
 
 describe("SignupView", () => {
+  // /login의 회원가입 링크로 바로 들어오면 토큰이 없다. 그대로 두면 약관과 닉네임을
+  // 다 채운 뒤 가입 요청이 401로 막힌다
+  it("토큰 없이 들어오면 로그인으로 돌려보낸다", () => {
+    clearTokens();
+    renderWith();
+
+    expect(replace).toHaveBeenCalledWith("/login");
+  });
+
   it("처음에는 다음으로 갈 수 없다", () => {
     renderWith();
 

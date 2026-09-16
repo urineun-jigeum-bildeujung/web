@@ -5,9 +5,10 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { toAppMessageCode } from "@/shared/api/error-message";
+import { hasSession } from "@/shared/api/token-store";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -44,6 +45,16 @@ export function SignupView() {
   const suggested = useSearchParams().get("nickname") ?? "";
   const [nickname, setNickname] = useState(suggested);
   const [submitting, setSubmitting] = useState(false);
+
+  // 소셜 인증을 거치지 않고 들어오면 가입을 마칠 수 없다. 가입 요청은 토큰의 `authId`로
+  // "누구의 가입인지"를 알기 때문에(`@AuthId`), 토큰이 없으면 마지막에 401이 난다.
+  // 약관과 닉네임을 다 채운 뒤에 막히지 않도록 들어오는 자리에서 돌려보낸다.
+  // 서버에서는 보관소가 비어 있어 늘 참이므로 효과 안에서만 본다.
+  useEffect(() => {
+    if (!hasSession()) {
+      router.replace("/login");
+    }
+  }, [router]);
 
   const submit = () => {
     setSubmitting(true);
