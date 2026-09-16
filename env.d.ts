@@ -11,6 +11,10 @@ namespace NodeJS {
     // 백엔드 API base URL. 비우면 same-origin /api/v1을 쓴다.
     NEXT_PUBLIC_API_BASE_URL?: string;
 
+    // 소셜 로그인 시작 주소의 base. 비우면 same-origin /api/auth를 쓴다.
+    // 게이트웨이가 일반 API와 다른 경로로 보내므로 API base URL에서 파생하지 않는다.
+    NEXT_PUBLIC_OAUTH_BASE_URL?: string;
+
     // 토스페이먼츠 클라이언트 키. 브라우저가 결제 UI를 띄울 때 쓰므로 노출되는 것이 정상이다.
     // 승인에 쓰는 시크릿 키는 여기 두지 않는다 — 그것은 백엔드가 쥔다.
     NEXT_PUBLIC_TOSS_CLIENT_KEY?: string;
