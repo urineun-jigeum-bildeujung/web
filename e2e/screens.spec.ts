@@ -2,6 +2,28 @@
 // 눈으로 훑을 때 놓치는 종류(하이드레이션 오류, 화면 폭 넘침)를 기계가 잡게 한다.
 import { expect, test } from "@playwright/test";
 
+/**
+ * 화면이 바깥에 기대는 것을 끊는다.
+ *
+ * 스모크는 "화면이 그려지는가"만 보는 것이라 백엔드와 토스 서버 상태에 흔들리면 안 된다.
+ *
+ * 장바구니는 `GET /carts`를 부르는데 백엔드 주소가 비어 있어 같은 오리진으로 가고,
+ * 그 자리에 아무것도 없어 404가 콘솔에 찍힌다. 빈 장바구니를 돌려줘 화면만 보게 한다.
+ *
+ * 토스 결제위젯은 키가 있는 환경에서만 바깥으로 요청을 내보낸다. 막지 않으면 키를 넣어 둔
+ * 로컬에서만 `networkidle`에 닿지 못해 같은 테스트가 CI와 다르게 돈다.
+ */
+test.beforeEach(async ({ page }) => {
+  await page.route("**/api/v1/carts", (route) =>
+    route.fulfill({ json: { memberId: 1, items: [], totalAmount: 0 } }),
+  );
+  // 끊지 않고 빈 스크립트로 답한다. 끊으면 `net::ERR_FAILED`가 콘솔에 남아 이 테스트가 잡는다.
+  // 위젯은 어느 쪽이든 못 떠서 "결제 수단을 불러오지 못했어요"로 내려앉는다
+  await page.route("**/*.tosspayments.com/**", (route) =>
+    route.fulfill({ status: 200, contentType: "application/javascript", body: "" }),
+  );
+});
+
 /** 홈에 걸어 둔 화면 목록과 같은 순서다 */
 const ROUTES = [
   "/",
