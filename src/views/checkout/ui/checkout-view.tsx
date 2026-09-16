@@ -112,6 +112,21 @@ export function CheckoutView() {
   const toggle = (id: string, on: boolean) =>
     setAgreed((prev) => (on ? [...new Set([...prev, id])] : prev.filter((v) => v !== id)));
 
+  /**
+   * 결제창을 띄운다.
+   *
+   * **실패가 두 갈래라 여기서도 받아야 한다.** 결제창이 뜬 뒤의 실패·취소는 토스가 `failUrl`로
+   * 되돌려 보내 `?code=`로 알 수 있지만, 창을 띄우기도 전에 막히면(파라미터 오류, 이미 진행 중인
+   * 요청 등) 리다이렉트가 일어나지 않고 약속만 깨진다. 놓치면 눌러도 아무 일이 없어 보인다.
+   */
+  const pay = async () => {
+    try {
+      await requestPayment?.();
+    } catch (error) {
+      toastAppError(APP_MESSAGE_CODE.payment.failed, error);
+    }
+  };
+
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="결제하기" />
@@ -253,7 +268,7 @@ export function CheckoutView() {
         <div className="px-4 pb-6">
           {/* 누르면 토스 결제창이 뜬다. 끝나면 브라우저가 완료 화면이나 이 화면으로 돌아온다.
               필수 동의 전에는 누를 수 없다 — 결제는 되돌릴 수 없는 동작이다 */}
-          <Button className="min-h-11 w-full" disabled={!canPay} onClick={() => requestPayment?.()}>
+          <Button className="min-h-11 w-full" disabled={!canPay} onClick={() => void pay()}>
             결제하기
           </Button>
         </div>

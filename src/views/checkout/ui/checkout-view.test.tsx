@@ -1,9 +1,14 @@
 // 결제하기 테스트. 금액 표시와 결제 잠금, 결제창을 띄우는지 본다.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { expect, test, vi } from "vitest";
 
-const { requestPayment } = vi.hoisted(() => ({ requestPayment: vi.fn() }));
+const { requestPayment, toastAppError } = vi.hoisted(() => ({
+  requestPayment: vi.fn(),
+  toastAppError: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
@@ -87,4 +92,22 @@ test("직접 입력을 고르기 전에는 입력 칸이 없다", () => {
   render(<CheckoutView />);
 
   expect(screen.queryByLabelText("배송 요청사항 직접 입력")).toBeNull();
+});
+
+/**
+ * 결제창이 뜬 뒤의 실패·취소는 토스가 `failUrl`로 되돌려 보내 `?code=`로 알 수 있지만,
+ * 창을 띄우기도 전에 막히면 리다이렉트가 없다. 놓치면 눌러도 아무 일이 없어 보인다.
+ */
+test("결제창을 띄우지 못하면 실패를 알린다", async () => {
+  requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
+  render(<CheckoutView />);
+
+  fireEvent.click(screen.getByLabelText("전체 동의"));
+  fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
+
+  await waitFor(() =>
+    expect(toastAppError).toHaveBeenCalledWith("payment.failed", expect.any(Error)),
+  );
+  // 알리고 끝이 아니라 다시 누를 수 있어야 한다
+  expect(screen.getByRole("button", { name: "결제하기" }).hasAttribute("disabled")).toBe(false);
 });
