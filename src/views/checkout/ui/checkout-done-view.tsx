@@ -8,6 +8,8 @@ import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
 import { DeliveryDetail, DetailRow, DetailSection, PaymentDetail } from "@/entities/order";
+
+import type { PaymentConfirmResult } from "../api/payment";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -33,7 +35,12 @@ const MOCK = {
   request: "문 앞에 놓아주세요.",
 };
 
-export function CheckoutDoneView() {
+type CheckoutDoneViewProps = {
+  /** 결제창이 성공으로 돌아와 승인까지 끝난 결과. 주소창으로 바로 들어오면 없다 */
+  payment?: PaymentConfirmResult | null;
+};
+
+export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
   return (
     <div className="flex min-h-dvh flex-col">
       {/* 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 오른쪽에 둔다 (paym_002) */}
@@ -68,7 +75,7 @@ export function CheckoutDoneView() {
                 term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
                 description={
                   <span className="text-body-regular-14 text-text-body-secondary">
-                    {MOCK.orderNo}
+                    {payment?.orderNo ?? MOCK.orderNo}
                   </span>
                 }
               />
@@ -103,10 +110,10 @@ export function CheckoutDoneView() {
         <div className="flex flex-col gap-4">
           <DetailSection title="결제상세" titleTrailing={MOCK.paidAt}>
             <PaymentDetail
-              total={MOCK.total}
+              total={payment?.amount ?? MOCK.total}
               itemPrice={MOCK.itemPrice}
               shippingFee={MOCK.shippingFee}
-              payMethod={MOCK.payMethod}
+              payMethod={payment?.payMethod ?? MOCK.payMethod}
             />
           </DetailSection>
 
@@ -129,7 +136,7 @@ export function CheckoutDoneView() {
           className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
           asChild
         >
-          <Link href={`/mypage/orders/${MOCK.orderId}`}>주문 상세 보기</Link>
+          <Link href={`/mypage/orders/${payment?.orderId ?? MOCK.orderId}`}>주문 상세 보기</Link>
         </Button>
         <Button asChild>
           <Link href="/">홈으로 가기</Link>

@@ -93,6 +93,12 @@ export const APP_MESSAGE = {
     description: "수량을 줄이거나 다른 상품을 골라 주세요.",
   },
 
+  // 토스 결제창이 실패나 취소로 돌아왔을 때다. 원인 코드는 화면에 내보내지 않는다
+  "payment.failed": {
+    title: "결제 실패",
+    description: "결제가 완료되지 않았어요. 다시 시도해 주세요.",
+  },
+
   // 택배사 연동 전이라 아직 갈 곳이 없다. 버튼을 잠가 두면 고장으로 읽히므로 왜 지금은 안 되는지 알린다
   "order.deliveryTrackingPreparing": {
     title: "배송 조회 준비 중",
@@ -144,6 +150,9 @@ export const APP_MESSAGE_CODE = {
   },
   order: {
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
+  },
+  payment: {
+    failed: "payment.failed",
   },
   address: {
     keywordTooBroad: "address.keywordTooBroad",

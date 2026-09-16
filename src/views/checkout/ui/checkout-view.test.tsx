@@ -1,8 +1,24 @@
-// 결제하기 테스트. 결제 수단 고르기와 금액 표시를 본다.
+// 결제하기 테스트. 금액 표시와 결제 잠금, 결제창을 띄우는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useEffect } from "react";
 import { expect, test, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+const { requestPayment } = vi.hoisted(() => ({ requestPayment: vi.fn() }));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+
+// 위젯은 토스 서버에서 스크립트를 받아 온다. 테스트에서는 준비됐다고만 알린다
+vi.mock("./toss-payment-widget", () => ({
+  TossPaymentWidget: ({ onReady }: { onReady: (fn: () => Promise<void>) => void }) => {
+    useEffect(() => {
+      onReady(requestPayment);
+    }, [onReady]);
+    return <div data-testid="toss-widget" />;
+  },
+}));
 
 import { CheckoutView } from "./checkout-view";
 
@@ -14,22 +30,10 @@ test("결제 내역을 항목별로 읽을 수 있다", () => {
   expect(screen.getByText("주문 수량 1개")).toBeDefined();
 });
 
-test("페이결제를 고르면 어느 페이인지 다시 묻는다", () => {
+// 결제수단 목록은 토스 위젯이 그린다. 우리가 라디오를 만들지 않는다
+test("결제 방법 자리를 토스 위젯이 채운다", () => {
   render(<CheckoutView />);
-
-  // 시안은 페이결제일 때만 세 칸을 보여준다
-  expect(screen.getByRole("radiogroup", { name: "페이 종류" })).toBeDefined();
-
-  fireEvent.click(screen.getByRole("radio", { name: "무통장입금" }));
-  expect(screen.queryByRole("radiogroup", { name: "페이 종류" })).toBeNull();
-});
-
-test("페이 종류를 바꾸면 그것이 골라진다", () => {
-  render(<CheckoutView />);
-
-  const naver = screen.getByRole("radio", { name: "네이버페이" });
-  fireEvent.click(naver);
-  expect(naver.getAttribute("aria-checked")).toBe("true");
+  expect(screen.getByTestId("toss-widget")).toBeDefined();
 });
 
 // 결제는 되돌릴 수 없다. 필수 동의 없이 눌리면 무엇에 동의했는지 모르는 채로 돈이 나간다.
@@ -49,6 +53,21 @@ test("필수 약관에 동의해야 결제할 수 있다", () => {
 
   // 선택 항목은 켜지 않아도 결제할 수 있다
   expect(pay.hasAttribute("disabled")).toBe(false);
+});
+
+test("결제하기를 누르면 결제창을 띄운다", () => {
+  render(<CheckoutView />);
+
+  for (const label of [
+    "[필수] 주문 상품 정보 동의",
+    "[필수] 개인정보 제3자 제공 동의",
+    "[필수] 결제 대행 서비스(PG) 이용 약관 동의",
+  ]) {
+    fireEvent.click(screen.getByLabelText(label));
+  }
+  fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
+
+  expect(requestPayment).toHaveBeenCalled();
 });
 
 test("전체 동의를 켜면 네 줄이 함께 켜진다", () => {
