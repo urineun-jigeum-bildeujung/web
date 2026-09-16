@@ -1,5 +1,19 @@
 // 결제: 필수 동의 전에는 결제할 수 없는지, 직접 입력 칸이 골랐을 때만 열리는지 본다.
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+/**
+ * 토스 결제위젯을 막는다.
+ *
+ * **결제창은 토스가 띄우는 외부 창이라 E2E가 끝까지 따라갈 수 없다.** 게다가 위젯이 뜨는지는
+ * 키(`NEXT_PUBLIC_TOSS_CLIENT_KEY`)와 토스 서버 상태에 달려 있어, 그대로 두면 같은 테스트가
+ * 로컬에서는 켜지고 CI에서는 잠긴다. 막아서 어디서 돌려도 같은 결과가 나오게 한다.
+ *
+ * 결제 버튼이 켜지는 데까지는 위젯을 목으로 바꾼 단위 테스트(`checkout-view.test.tsx`)가,
+ * 위젯이 실제로 결제창을 띄우는지는 `toss-payment-widget.test.tsx`가 본다.
+ */
+async function blockTossPayments(page: Page) {
+  await page.route("**/*.tosspayments.com/**", (route) => route.abort());
+}
 
 const REQUIRED = [
   "[필수] 주문 상품 정보 동의",
@@ -8,7 +22,8 @@ const REQUIRED = [
 ];
 
 // 결제는 되돌릴 수 없다. 동의 없이 눌리면 무엇에 동의했는지 모르는 채로 돈이 나간다.
-test("필수 약관에 동의하면 결제하고 완료 화면으로 넘어간다", async ({ page }) => {
+test("필수 약관에 동의하기 전에는 결제할 수 없다", async ({ page }) => {
+  await blockTossPayments(page);
   await page.goto("/payment");
 
   const pay = page.getByRole("button", { name: "결제하기" });
@@ -18,13 +33,23 @@ test("필수 약관에 동의하면 결제하고 완료 화면으로 넘어간�
     await page.getByLabel(label).click();
   }
 
-  // 선택 항목은 켜지 않아도 결제로 넘어간다
-  await expect(pay).toBeEnabled();
+  await expect(page.getByLabel(REQUIRED[0])).toHaveAttribute("data-state", "checked");
+});
 
-  // 버튼이 켜지는 데서 멈추면 결제 뒤에 어디로 가는지가 검증에서 빠진다
-  await pay.click();
-  await expect(page).toHaveURL(/\/payment\/done$/);
-  await expect(page.getByRole("heading", { name: "주문을 무사히 마쳤어요" })).toBeVisible();
+// 위젯을 못 띄우면 결제할 방법이 없다. 버튼이 켜져 있으면 눌러도 아무 일이 없어 고장으로 읽힌다.
+test("결제 수단을 못 불러오면 동의를 다 해도 결제 버튼이 잠긴 채다", async ({ page }) => {
+  await blockTossPayments(page);
+  await page.goto("/payment");
+
+  for (const label of REQUIRED) {
+    await page.getByLabel(label).click();
+  }
+
+  // Next의 라우트 안내자도 role="alert"를 달고 있어 문구로 좁힌다
+  await expect(
+    page.getByRole("alert").filter({ hasText: "결제 수단을 불러오지 못했어요" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "결제하기" })).toBeDisabled();
 });
 
 test("전체 동의 한 번으로 네 줄이 켜진다", async ({ page }) => {
