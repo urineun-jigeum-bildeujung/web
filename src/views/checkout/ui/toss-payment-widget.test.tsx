@@ -1,5 +1,5 @@
 // 토스 결제위젯 테스트. 위젯을 띄운 뒤 결제창을 띄울 수단을 부모에게 넘기는지 본다.
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { StrictMode } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
@@ -84,4 +84,32 @@ test("키가 없으면 위젯을 띄우지 않는다", () => {
 
   expect(getByRole("alert").textContent).toContain("결제 수단을 불러오지 못했어요");
   expect(loadTossPayments).not.toHaveBeenCalled();
+});
+
+/**
+ * **`onReady`가 바뀌어도 effect가 다시 돌면 안 된다.** 다시 돌면 새 `requestPayment`를 넘기고,
+ * 부모가 그것을 state에 담으면서 렌더가 무한히 되돈다 — 브라우저가 멈춘다 (#223).
+ *
+ * 부르는 쪽이 함수를 고정해 주기를 기대하지 않는다. 그 기대는 React Compiler의 메모이제이션에
+ * 기대는 것이고, 메모이제이션은 성능 최적화라 언제든 빠진다. 실제로 한 커밋 만에 빠졌다.
+ */
+test("onReady가 렌더마다 바뀌어도 위젯을 다시 띄우지 않는다", async () => {
+  const first = vi.fn();
+  const { rerender } = render(<TossPaymentWidget {...PROPS} onReady={first} />);
+
+  await waitFor(() => expect(first).toHaveBeenCalledWith(expect.any(Function)));
+
+  const second = vi.fn();
+  rerender(<TossPaymentWidget {...PROPS} onReady={second} />);
+
+  // effect가 다시 돌았다면 캐시된 약속의 `.then`이 마이크로태스크로 이어진다. 비우고 본다
+  await act(async () => {
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+  });
+
+  expect(second).not.toHaveBeenCalled();
+  expect(first).toHaveBeenCalledTimes(1);
+  expect(renderPaymentMethods).toHaveBeenCalledTimes(1);
 });

@@ -43,6 +43,18 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
   // 키는 렌더 시점에 알 수 있다. effect에서 판단하면 한 번 그린 뒤에 고치게 된다
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
   const [failed, setFailed] = useState(false);
+
+  // **`onReady`를 의존성에 두지 않는다.** 두면 부르는 쪽이 렌더마다 새 함수를 넘길 때
+  // effect가 다시 돌고, 그때마다 새 `requestPayment`를 넘겨 부모 상태가 바뀌어
+  // 렌더가 무한히 되돈다 — 브라우저가 멈춘다 (#223).
+  //
+  // 아이덴티티 안정을 부르는 쪽에 맡기지 않는 이유는, 그것이 React Compiler의
+  // 메모이제이션에 기대게 되기 때문이다. 메모이제이션은 성능 최적화라 언제든 빠질 수 있고
+  // 실제로 한 커밋 만에 빠졌다. 콜백은 늘 최신 것을 ref로 읽는다.
+  const onReadyRef = useRef(onReady);
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  });
   // 띄우기는 한 번, 기다리기는 매번이다. **끝난 자리를 boolean으로 들면 안 된다** —
   // StrictMode는 effect를 두 번 돌리는데, 첫 번째가 정리되고 두 번째가 "이미 띄웠다"며
   // 그냥 돌아서면 `onReady`를 아무도 부르지 않아 결제 버튼이 잠긴 채로 남는다.
@@ -68,7 +80,7 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
           return;
         }
 
-        onReady(async () => {
+        onReadyRef.current(async () => {
           // Redirect 방식이라 결제가 끝나면 브라우저가 아래 주소로 돌아온다.
           // 성공 주소에는 paymentKey·orderId·amount가 쿼리로 붙는다
           await widgets.requestPayment({
@@ -85,13 +97,13 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
         }
         // 토스 오류 문자열을 그대로 내보내면 사용자가 읽을 수 없다
         setFailed(true);
-        onReady(null);
+        onReadyRef.current(null);
       });
 
     return () => {
       disposed = true;
     };
-  }, [amount, clientKey, onReady, orderId, orderName]);
+  }, [amount, clientKey, orderId, orderName]);
 
   if (!clientKey || failed) {
     return (
