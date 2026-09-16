@@ -4,16 +4,17 @@
 
 - **라우트**: `/signup` — `src/app/signup/page.tsx`
 - **조립**: `shared/ui`의 `page-header` · `bottom-action-bar` · `button` · `checkbox-row` · `icon` · `form-field` · `single-input-screen`
-- **상태**: 단계는 URL 쿼리 `step`(`terms` · `nickname`). 체크한 약관과 닉네임은 화면 안 상태
+- **상태**: 단계는 URL 쿼리 `step`(`terms` · `nickname`), 추천 닉네임은 쿼리 `nickname`. 체크한 약관과 입력 중인 닉네임은 화면 안 상태
 - **참고**: UI 시안 기준(sign_001 약관 동의 `1117-5438`·`1117-5503`, 닉네임 `1117-5567`·`1117-5582`)
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/signup-view.tsx` | 화면 조립 |
-| `ui/signup-view.test.tsx` | 전체 동의·필수 조건·설명 영역 |
+| `ui/signup-view.test.tsx` | 전체 동의·필수 조건·설명 영역, 추천 닉네임 프리필, 가입 요청·토큰 교체·실패 |
 | `ui/agreement-row.tsx` | 약관 한 줄. 원형 체크와 본문 이동을 나눠 둔다 |
-| `model/agreements.ts` | 약관 항목과 전체 동의 규칙 |
+| `model/agreements.ts` | 약관 항목·전체 동의 규칙과 백엔드 enum 매핑 |
 | `model/agreements.test.ts` | 묶음 토글과 진행 조건 |
+| `api/signup.ts` | 가입 요청과 응답 토큰 교체 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것
@@ -35,3 +36,9 @@
 **닉네임 초기값이 비어 있다.** 시안의 "졸린고양이 17"은 회색 자리 표시라 placeholder로 넣었다. 가입 경로에서 닉네임을 받게 되면 실제 값과 규칙을 API 계약과 함께 정한다.
 
 **가입 완료 후 온보딩으로 보낸다.** 시안 메모의 "가입 완료시 별도 과정 없이 바로 로그인 상태로 진입됨"을 따랐다. 실제 인증은 백엔드 방식이 확정되어야 붙는다.
+
+**가입을 마치면 토큰을 갈아끼운다.** `memberId`는 가입(닉네임·약관)을 끝내야 생기는 값이라 로그인 직후 받은 JWT에는 들어 있지 않다. 백엔드가 가입 응답으로 `memberId`가 담긴 새 토큰 쌍을 주므로 그것으로 바꾼다. 바꾸지 않으면 이후 회원 API가 누구의 요청인지 알지 못한다.
+
+**고르지 않은 약관도 함께 보낸다.** 빠진 항목과 거절한 항목은 다른 사실이다. 선택 약관은 거절 기록 자체가 남아야 해서 `agreed: false`로 싣는다.
+
+**추천 닉네임은 쿼리로 받는다.** 콜백 화면이 교환 응답의 `nickname`을 `?nickname=`에 실어 넘긴다. `GET /members/me`가 아직 없어 이 화면이 스스로 조회할 수 없다.

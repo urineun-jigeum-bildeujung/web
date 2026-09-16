@@ -1,19 +1,49 @@
-// 전체 동의가 하위를 켜는지, 필수를 채워야 넘어가는지, 설명을 눌러도 체크가 안 바뀌는지 본다.
-import { fireEvent, render, screen } from "@testing-library/react";
+// 전체 동의가 하위를 켜는지, 필수를 채워야 넘어가는지, 가입 요청과 토큰 교체가 맞는지 본다.
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+const replace = vi.fn();
+let query = new URLSearchParams();
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace, back: vi.fn() }),
+  useSearchParams: () => query,
+}));
+
+const toastAppError = vi.fn();
+vi.mock("@/shared/lib/app-toast", () => ({
+  toastAppError: (...args: unknown[]) => toastAppError(...args),
+}));
+
+import { clearTokens, getAccessToken, getRefreshToken } from "@/shared/api/token-store";
 
 import { SignupView } from "./signup-view";
 
 function renderWith(search = "") {
+  query = new URLSearchParams(search);
   return render(
     <NuqsTestingAdapter searchParams={search}>
       <SignupView />
     </NuqsTestingAdapter>,
   );
 }
+
+/** 약관을 다 채우고 닉네임 단계로 넘어간다 */
+function goToNicknameStep() {
+  fireEvent.click(screen.getByLabelText("[필수] 서비스 이용약관 전체 동의"));
+  fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+}
+
+beforeEach(() => {
+  replace.mockClear();
+  toastAppError.mockClear();
+  clearTokens();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("SignupView", () => {
   it("처음에는 다음으로 갈 수 없다", () => {
@@ -92,18 +122,89 @@ describe("SignupView", () => {
     expect(screen.queryByText("닉네임을 적어주세요")).toBeNull();
   });
 
-  it("닉네임 단계는 처음에 비어 있고 두 자 미만이면 넘어갈 수 없다", () => {
+  it("추천 닉네임이 없으면 비어 있고 두 자 미만이면 넘어갈 수 없다", () => {
     renderWith();
-
-    fireEvent.click(screen.getByLabelText("[필수] 서비스 이용약관 전체 동의"));
-    fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+    goToNicknameStep();
 
     const input = screen.getByLabelText("닉네임") as HTMLInputElement;
-    // 가짜 값이 채워져 있으면 아무것도 하지 않아도 넘어가 이 단계가 무의미해진다
     expect(input.value).toBe("");
     expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(true);
 
     fireEvent.change(input, { target: { value: "보리" } });
+    expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(false);
+  });
+
+  // 콜백 화면이 교환 응답의 추천 닉네임을 쿼리에 실어 넘긴다
+  it("추천 닉네임을 받으면 미리 채워 둔다", () => {
+    renderWith("?nickname=졸린고양이 17");
+    goToNicknameStep();
+
+    expect((screen.getByLabelText("닉네임") as HTMLInputElement).value).toBe("졸린고양이 17");
+  });
+
+  it("고르지 않은 약관도 agreed false로 함께 보낸다", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json({ accessToken: "a-2", refreshToken: "r-2" }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWith();
+    goToNicknameStep();
+    fireEvent.change(screen.getByLabelText("닉네임"), { target: { value: "보리" } });
+    fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain("/members/signup");
+    expect(JSON.parse(String(init.body))).toEqual({
+      nickname: "보리",
+      agreements: [
+        { type: "AGE_OVER_14", agreed: true },
+        { type: "SERVICE_TERMS", agreed: true },
+        { type: "PRIVACY_COLLECTION", agreed: true },
+        { type: "MARKETING_BENEFIT", agreed: false },
+        { type: "THIRD_PARTY_PROVIDE", agreed: false },
+      ],
+    });
+  });
+
+  // memberId는 가입을 끝내야 생기는 값이라 로그인 직후 토큰에는 없다
+  it("가입 응답의 새 토큰으로 갈아끼우고 온보딩으로 보낸다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ accessToken: "a-2", refreshToken: "r-2" })),
+    );
+
+    renderWith();
+    goToNicknameStep();
+    fireEvent.change(screen.getByLabelText("닉네임"), { target: { value: "보리" } });
+    fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+
+    await waitFor(() => expect(getAccessToken()).toBe("a-2"));
+    expect(getRefreshToken()).toBe("r-2");
+    // 뒤로가기로 가입 화면에 되돌아오지 않게 replace다
+    expect(replace).toHaveBeenCalledWith("/onboarding");
+  });
+
+  it("가입이 실패하면 알리고 그 자리에 남는다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json({ errorCode: "MEMBER_409_ALREADY_HAVE_NICKNAME" }, { status: 409 }),
+        ),
+    );
+
+    renderWith();
+    goToNicknameStep();
+    fireEvent.change(screen.getByLabelText("닉네임"), { target: { value: "보리" } });
+    fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+
+    await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+    expect(toastAppError.mock.calls[0]?.[0]).toBe("member.nicknameTaken");
+    expect(replace).not.toHaveBeenCalled();
+    // 다시 시도할 수 있어야 한다
     expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(false);
   });
 });
