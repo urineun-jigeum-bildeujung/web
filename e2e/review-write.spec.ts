@@ -49,8 +49,9 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
   await page.goForward();
 
   await submit.click();
+  await expect(page.getByText("소중한 리뷰 감사해요!")).toBeVisible();
+  await page.getByRole("link", { name: "확인" }).click();
   await expect(page).toHaveURL(/\/mypage\/reviews\?tab=written/);
-  await expect(page.getByText("후기 등록")).toBeVisible();
 });
 
 test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
