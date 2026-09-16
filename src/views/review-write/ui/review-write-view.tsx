@@ -12,7 +12,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useId, useState, useSyncExternalStore } from "react";
 
@@ -20,6 +19,7 @@ import { PetSwitcher, type PetSummary } from "@/entities/pet";
 import { Badge } from "@/shared/ui/badge/badge";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
@@ -45,6 +45,25 @@ type ReviewWriteViewProps = {
   /** 리뷰를 달 구매 항목의 임시 식별자. API 계약 확정 전까지 쓴다 */
   orderItemId: string | undefined;
 };
+
+/** 어느 구매의 후기인지 모르면 쓸 수 없다. 초안도 항목별로 나뉘어야 해서 여기서 막는다 */
+function MissingOrderItem() {
+  return (
+    <div className="flex min-h-dvh flex-col bg-background">
+      <PageHeader title="리뷰 작성" />
+      <EmptyState
+        className="flex-1"
+        title="어떤 상품의 후기인지 알 수 없어요"
+        description="나의 상품 후기에서 후기 남기기를 눌러 들어와 주세요."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/mypage/reviews">나의 상품 후기로 가기</Link>
+          </Button>
+        }
+      />
+    </div>
+  );
+}
 
 const STEPS = ["rating", "detail"] as const;
 
@@ -77,23 +96,24 @@ function SectionTitle({ children, required }: { children: string; required?: boo
 }
 
 export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
-  const router = useRouter();
+  return orderItemId ? <ReviewWriteForm orderItemId={orderItemId} /> : <MissingOrderItem />;
+}
+
+function ReviewWriteForm({ orderItemId }: { orderItemId: string }) {
   const daysId = useId();
   // 단계는 뒤로가기로 되돌아와야 하므로 URL에 두고 push한다. 온보딩과 같은 판단이다
   const [step, setStep] = useQueryState(
     "step",
     parseAsStringLiteral(STEPS).withDefault("rating").withOptions({ history: "push" }),
   );
-  // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면 2단계에서 등록할 수 없다.
-  // 구매 항목 식별자가 없으면 빈 키로 두어 화면 안에서만 유지된다
-  const draftKey = orderItemId ?? "";
+  // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면 2단계에서 등록할 수 없다
   const draft = useSyncExternalStore(
     subscribeReviewDraft,
-    () => getReviewDraft(draftKey),
+    () => getReviewDraft(orderItemId),
     getReviewDraftOnServer,
   );
   const { score, days, responses, petId, text } = draft;
-  const patch = (next: Partial<ReviewDraft>) => setReviewDraft(draftKey, { ...draft, ...next });
+  const patch = (next: Partial<ReviewDraft>) => setReviewDraft(orderItemId, { ...draft, ...next });
   // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
   const [done, setDone] = useState(false);
@@ -108,7 +128,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
   const submit = () => {
     // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다. 남겨 둔 초안은 지운다
     setDone(true);
-    clearReviewDraft(draftKey);
+    clearReviewDraft(orderItemId);
   };
 
   if (done) {
@@ -287,7 +307,11 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
           </main>
 
           <BottomActionBar>
-            <Button variant="outline" onClick={() => router.back()}>
+            {/* 뒤로가기에 기대지 않는다. 2단계 주소로 바로 들어와도 1단계로 갈 수 있어야 한다 */}
+            <Button
+              variant="outline"
+              onClick={() => void setStep("rating", { history: "replace" })}
+            >
               이전
             </Button>
             <Button disabled={!ready} onClick={submit}>

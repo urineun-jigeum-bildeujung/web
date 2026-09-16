@@ -4,7 +4,7 @@
 
 - **라우트**: `/mypage/reviews/write?orderItemId=&step=` — `src/app/mypage/reviews/write/page.tsx`
 - **조립**: `entities/pet`(`PetSwitcher`) · `shared/ui`의 `page-header` · `badge` · `rating` · `bottom-action-bar` · `input` · `textarea` · `button`
-- **상태**: URL 쿼리 `orderItemId`·`step`(rating · detail)과 작성 폼 상태. API 계약 확정 전 미연동
+- **상태**: URL 쿼리 `orderItemId`·`step`(rating · detail)과 작성 폼 상태. `orderItemId`가 없으면 작성 화면 대신 나의 상품 후기로 안내한다. API 계약 확정 전 미연동
 - **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료 — Figma에는 "타임딜"로 이름이 잘못 붙어 있다). 같은 상품도 구매 건별로 구분해야 하므로 임시로 `orderItemId`를 사용한다
 
 | 파일 | 설명 |
