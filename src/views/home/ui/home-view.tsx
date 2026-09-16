@@ -9,6 +9,7 @@ import { useState } from "react";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
+import { Badge } from "@/shared/ui/badge/badge";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
@@ -252,13 +253,9 @@ export function HomeView() {
                           <p className="truncate text-label-bold-14 text-foreground">
                             {item.productName}
                           </p>
-                          <p className="flex gap-1 text-xs">
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
-                              {item.sinceLabel}
-                            </span>
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
-                              {item.countLabel}
-                            </span>
+                          <p className="flex gap-2">
+                            <Badge>{item.sinceLabel}</Badge>
+                            <Badge variant="outline">{item.countLabel}</Badge>
                           </p>
                         </div>
                       </div>
