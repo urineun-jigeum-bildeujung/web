@@ -47,7 +47,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을 둔다 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
 | `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
-| `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / strong)으로 뜻에 따라 색을 고른다 |
+| `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / brand / strong)으로 뜻에 따라 색을 고른다 |
 | `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
 | `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. `size` md(44 · 아이콘 28 · 화살표 28, 마이페이지 홈)와 sm(40 · 24 · 24, 설정). 이동용(Link)·실행용(Button)·정적(Static) |
@@ -63,7 +63,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `address-result-list/` | 주소 검색 결과. 우편번호·도로명·구주소 세 줄을 항목마다 보여준다 |
 | `info-notice/` | 정책·주의사항을 불릿으로 알리는 안내 블록 |
 | `product-grid-card/` | 2열 격자용 상품 카드. 이미지 위·안·아래에 놓을 것을 자리로 받는다 |
-| `rating/` | 별점 표시. 값은 스크린 리더용 문장으로 함께 읽힌다 |
+| `rating/` | 별점 표시. 노란 별에 반 개 단위까지 그리고, 값은 스크린 리더용 문장으로 함께 읽힌다 |
 | `quantity-stepper/` | 수량 빼기·값·더하기. 값이 바뀌면 스크린 리더가 알린다 |
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.

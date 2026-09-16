@@ -14,7 +14,7 @@
 | `ui/breed-picker.test.tsx` | 종별 묶음·검색·기타 구분 |
 | `ui/breed-picker-step.tsx` | 품종 고르기 화면. 머리말·검색창·목록. 줄을 누르면 바로 확정. 온보딩과 정보 수정이 함께 쓴다 |
 | `ui/breed-picker-step.test.tsx` | 검색이 목록을 거르고 줄을 누르면 종과 함께 넘어가는지 본다 |
-| `ui/pet-switcher.tsx` | 아이 고르기 줄. 마지막 칸은 새 아이 자리. `withNames`로 이름을, `variant="hero"`로 고른 아이를 90px로 보인다 (`mypa_021`) |
+| `ui/pet-switcher.tsx` | 아이 고르기 줄(원 48, 고른 아이 브랜드 테두리). 마지막 칸은 새 아이 자리. `withNames`로 이름을, `variant="hero"`로 고른 아이를 90px로 보인다 (`mypa_021`, 리뷰 작성) |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다 |
 | `model/breeds.ts` | 품종 목록, 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입 |
 | `model/breeds.test.ts` | 품종으로 종을 되찾는 규칙과 목록 개수 |
