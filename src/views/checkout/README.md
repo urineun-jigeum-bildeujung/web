@@ -1,13 +1,21 @@
 # views/checkout
 
-주문을 마치는 세 화면. 와이어프레임 `paym_001`·`paym_001_드롭다운`·`paym_001_직접입력`·`paym_011`·`paym_002`에 대응한다.
+주문을 마치는 세 화면.
+
+| 화면 | 단계 |
+| --- | --- |
+| 결제하기 (`paym_001` 계열) | **와이어프레임.** 시안이 결제수단 라디오를 직접 그렸는데 그 자리는 토스 결제위젯이 그려서 보류다 |
+| 배송지 설정 (`paym_011`) | UI 시안 (#210) |
+| 주문 완료 (`paym_002`) | UI 시안 (#210) |
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/checkout-view.tsx` | 결제하기. 배송지·결제 정보·결제 방법·약관 동의 (`paym_001`) |
 | `ui/checkout-view.test.tsx` | 결제 수단 고르기, 금액 표시, 필수 동의 잠금을 본다 |
-| `ui/checkout-address-view.tsx` | 배송지 설정 (`paym_011`) |
-| `ui/checkout-done-view.tsx` | 주문 완료. 주문번호와 주문 상세로 가는 길 (`paym_002`) |
+| `ui/checkout-address-view.test.tsx` | 고정 장소와 추가한 장소의 차이, 미입력 안내를 본다 |
+| `ui/checkout-done-view.test.tsx` | 주문번호·도착 예정·다음에 갈 곳을 본다 |
+| `ui/checkout-address-view.tsx` | 배송지 설정 (`paym_011`). 고정 장소와 추가한 장소를 구분선으로 가른다 |
+| `ui/checkout-done-view.tsx` | 주문 완료 (`paym_002`). 결제상세·배송지는 `entities/order` 조각을 쓴다 |
 | `ui/delivery-notice.tsx` | 언제 도착하는지 알리는 한 줄. 결제와 완료 두 화면이 쓴다 |
 | `ui/pay-method-picker.tsx` | 결제 수단 고르기. 페이결제면 어느 페이인지 한 번 더 묻는다 |
 | `index.ts` | 공개 API |
