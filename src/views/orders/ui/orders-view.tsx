@@ -39,9 +39,7 @@ const ACTION_CLASS =
   "h-9 flex-1 bg-surface-tertiary text-label-medium-14 text-foreground hover:bg-surface-tertiary/80";
 
 // 시안의 시트 버튼. 48px에 label/bold_16 (287:8795).
-// `font-bold`를 따로 붙이는 이유는 Button이 `font-medium`을 들고 있어서다. tailwind-merge는
-// 크기 토큰(`text-*`)과 굵기(`font-*`)를 다른 그룹으로 보므로 둘 다 남고, 나중에 선언된 쪽이 이긴다.
-const SHEET_ACTION_CLASS = "h-12 flex-1 text-label-bold-16 font-bold";
+const SHEET_ACTION_CLASS = "h-12 flex-1 text-label-bold-16";
 
 export function OrdersView() {
   // 확정·취소가 목록에 반영돼야 같은 버튼을 다시 누를 수 없다. 서버 연동 전까지 여기서 든다.
@@ -126,8 +124,7 @@ export function OrdersView() {
         className="gap-5 p-4"
       >
         <DrawerHeader className="gap-1 p-0">
-          {/* DrawerTitle도 `font-medium`을 들고 있어 굵기를 따로 되돌린다 */}
-          <DrawerTitle className="text-left text-title-bold-16 font-bold text-foreground">
+          <DrawerTitle className="text-left text-title-bold-16 text-foreground">
             무사히 잘 도착했나요?
           </DrawerTitle>
           <DrawerDescription className="text-left text-body-medium-14 text-text-body-secondary">

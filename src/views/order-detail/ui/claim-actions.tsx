@@ -52,8 +52,7 @@ export function ClaimActions() {
           <Button
             key={type}
             variant="ghost"
-            // Button이 `font-medium`을 들고 있어 토큰의 굵기가 죽는다. 따로 되돌린다
-            className="h-12 flex-1 text-label-bold-16 font-bold text-foreground"
+            className="h-12 flex-1 text-label-bold-16 text-foreground"
             onClick={() => setOpened(type)}
           >
             {CLAIMS[type].trigger}
