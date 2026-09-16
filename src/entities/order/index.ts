@@ -6,3 +6,7 @@ export {
   type OrderStatus,
 } from "./ui/order-status-badge";
 export { OrderProductRow } from "./ui/order-product-row";
+export { DetailSection } from "./ui/detail-section";
+export { DetailRow } from "./ui/detail-row";
+export { PaymentDetail } from "./ui/payment-detail";
+export { DeliveryDetail } from "./ui/delivery-detail";
