@@ -3,13 +3,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
-const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
-
-const toastAppSuccess = vi.fn();
-vi.mock("@/shared/lib/app-toast", () => ({
-  toastAppSuccess: (...args: unknown[]) => toastAppSuccess(...args),
-}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
 import { ReviewWriteView } from "./review-write-view";
 
@@ -134,14 +128,16 @@ describe("ReviewWriteView 2단계", () => {
     expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(true);
   });
 
-  it("등록하면 알리고 작성한 리뷰 목록으로 간다", () => {
+  it("등록하면 고마움을 전하고 확인이 작성한 리뷰 목록으로 이어진다", () => {
     renderAt();
     goToDetail();
     fillDetail();
 
     fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
 
-    expect(toastAppSuccess).toHaveBeenCalledWith("review.submitted");
-    expect(push).toHaveBeenCalledWith("/mypage/reviews?tab=written");
+    expect(screen.getByText("소중한 리뷰 감사해요!")).toBeDefined();
+    expect(screen.getByRole("link", { name: "확인" }).getAttribute("href")).toBe(
+      "/mypage/reviews?tab=written",
+    );
   });
 });

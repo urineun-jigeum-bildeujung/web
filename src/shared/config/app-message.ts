@@ -84,12 +84,6 @@ export const APP_MESSAGE = {
     description: "문자로 받은 번호를 입력해 주세요.",
   },
 
-  // 후기를 등록했을 때. 시안에 완료 화면이 없어 토스트로 알린다
-  "review.submitted": {
-    title: "후기 등록",
-    description: "남겨주신 반응이 다음 추천에 쓰여요.",
-  },
-
   "product.notFound": {
     title: "상품 없음",
     description: "판매가 끝났거나 삭제된 상품이에요.",
@@ -143,9 +137,6 @@ export const APP_MESSAGE_CODE = {
     alreadySignedUp: "member.alreadySignedUp",
     nicknameTaken: "member.nicknameTaken",
     verificationCodeSent: "member.verificationCodeSent",
-  },
-  review: {
-    submitted: "review.submitted",
   },
   product: {
     notFound: "product.notFound",

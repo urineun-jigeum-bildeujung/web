@@ -1,5 +1,6 @@
 // 리뷰 작성 화면. 별점과 함께 아이의 실제 반응을 두 단계로 받는다.
-// UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계)이다.
+// UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료)이다.
+// 완료 프레임은 Figma에서 "타임딜"로 이름이 잘못 붙어 있다.
 //
 // 이 화면이 이 서비스의 입력단이다. 기호성·배변·피부·활력·알러지는 보호자가 그동안
 // 혼자 추측하던 신호이고, 여기서 모인 것이 다음 추천의 근거가 된다.
@@ -10,16 +11,16 @@
 
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useId, useState } from "react";
 
 import { PetSwitcher, type PetSummary } from "@/entities/pet";
-import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
-import { toastAppSuccess } from "@/shared/lib/app-toast";
 import { Badge } from "@/shared/ui/badge/badge";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -46,6 +47,9 @@ const PETS: PetSummary[] = [
 
 const MIN_TEXT = 10;
 const MAX_TEXT = 300;
+
+/** 완료 문구에 넣을 보호자 닉네임. 회원 API가 붙으면 그 값을 쓴다 */
+const NICKNAME = "소리맘";
 
 // 목 데이터. 실제로는 orderItemId로 무엇을 샀는지 받아온다
 const PRODUCT = {
@@ -78,6 +82,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
   const [petId, setPetId] = useState<string>();
   const [photos, setPhotos] = useState<File[]>([]);
   const [text, setText] = useState("");
+  const [done, setDone] = useState(false);
 
   const answer = (key: string, value: string) =>
     setResponses((prev) => ({ ...prev, [key]: value }));
@@ -87,11 +92,41 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
   const ready = ratingReady && petId !== undefined && text.trim().length >= MIN_TEXT;
 
   const submit = () => {
-    // API 계약 확정 전이라 보내지 않는다. 시안에 완료 화면이 없어 토스트로 알리고 목록으로 간다
+    // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다
     void orderItemId;
-    toastAppSuccess(APP_MESSAGE_CODE.review.submitted);
-    router.push("/mypage/reviews?tab=written");
+    setDone(true);
   };
+
+  if (done) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-background">
+        <PageHeader title="리뷰 작성" />
+
+        {/* 시안(1884-29801)의 가운데 묶음. 56px 연한 브랜드 원 안에 체크, 제목 18, 설명 14 */}
+        <main className="flex flex-1 flex-col items-center justify-center gap-2 px-5 pb-6 text-center">
+          <span
+            aria-hidden
+            className="flex size-14 items-center justify-center rounded-full bg-surface-brand-weak text-icon-fill-brand"
+          >
+            <Icon name="check" />
+          </span>
+          <div className="flex flex-col gap-1">
+            <h1 className="text-title-bold-18 text-foreground">소중한 리뷰 감사해요!</h1>
+            <p className="text-body-medium-14 text-text-body-secondary">
+              {NICKNAME}님의 후기가 다른 보호자들에게
+              <br />큰 도움이 될 거예요
+            </p>
+          </div>
+        </main>
+
+        <BottomActionBar>
+          <Button asChild>
+            <Link href="/mypage/reviews?tab=written">확인</Link>
+          </Button>
+        </BottomActionBar>
+      </div>
+    );
+  }
 
   return (
     // 흰 섹션 사이로 회색 바탕이 8px 띠로 비친다
@@ -136,7 +171,8 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
               </div>
             </section>
 
-            <section className="flex flex-col bg-background">
+            {/* 마지막 섹션은 하단 버튼 줄까지 흰색으로 채운다. 그러지 않으면 바탕색이 드러난다 */}
+            <section className="flex flex-1 flex-col bg-background">
               <div className="flex flex-col gap-1 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-title-bold-16 text-foreground">
                   A 추천을 위해 알려주세요
@@ -189,7 +225,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
               </div>
             </section>
 
-            <section className="flex flex-col bg-background">
+            <section className="flex flex-1 flex-col bg-background">
               <SectionTitle required>사용 반려동물 프로필 선택</SectionTitle>
               <div className="px-5 pt-2 pb-4">
                 <PetSwitcher

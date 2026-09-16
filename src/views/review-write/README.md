@@ -5,12 +5,12 @@
 - **라우트**: `/mypage/reviews/write?orderItemId=&step=` — `src/app/mypage/reviews/write/page.tsx`
 - **조립**: `entities/pet`(`PetSwitcher`) · `shared/ui`의 `page-header` · `badge` · `rating` · `bottom-action-bar` · `input` · `textarea` · `button`
 - **상태**: URL 쿼리 `orderItemId`·`step`(rating · detail)과 작성 폼 상태. API 계약 확정 전 미연동
-- **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계). 같은 상품도 구매 건별로 구분해야 하므로 임시로 `orderItemId`를 사용한다
+- **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료 — Figma에는 "타임딜"로 이름이 잘못 붙어 있다). 같은 상품도 구매 건별로 구분해야 하므로 임시로 `orderItemId`를 사용한다
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/review-write-view.tsx` | 두 단계 조립. 1단계 별점·사용 기간·반응 5문항, 2단계 요약·아이·급여 편의성·사진·후기 |
-| `ui/review-write-view.test.tsx` | 단계별 필수 조건, 반 개 별점, 요약 카드, 등록 뒤 이동 |
+| `ui/review-write-view.tsx` | 두 단계 조립과 완료 화면. 1단계 별점·사용 기간·반응 5문항, 2단계 요약·아이·급여 편의성·사진·후기 |
+| `ui/review-write-view.test.tsx` | 단계별 필수 조건, 반 개 별점, 요약 카드, 완료 화면 |
 | `ui/product-row.tsx` | 리뷰를 다는 상품 줄. 사진 64 · 이름 · 재구매 배지 · 옵션 |
 | `ui/rating-input.tsx` | 별을 눌러 반 개 단위로 점수를 매긴다 |
 | `ui/response-select.tsx` | 반응 한 문항. 붙은 세그먼트로 고른다 |
@@ -31,4 +31,4 @@
 
 **사진은 고르는 즉시 올리지 않고 파일만 들고 있는다.** 등록 요청에 함께 실어 보낼 자리다. 시안에는 빼는 버튼이 없지만 잘못 고른 사진을 되돌릴 길이 있어야 해 24px X를 둔다.
 
-**등록 완료 화면이 시안에서 빠졌다.** 등록하면 토스트(`review.submitted`)로 알리고 작성한 리뷰 목록으로 간다. 토스트 모양은 PD가 나중에 준다.
+**등록하면 완료 화면으로 넘어간다.** 시안(1884-29801)대로 연한 브랜드 원 안의 체크와 "소중한 리뷰 감사해요!"이고, 확인을 누르면 작성한 리뷰 목록으로 간다. 설명의 닉네임은 회원 API가 붙으면 그 값을 쓴다.
