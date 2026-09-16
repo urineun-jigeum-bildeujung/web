@@ -44,6 +44,19 @@ function fillDetail({ skipPet = false } = {}) {
   });
 }
 
+describe("ReviewWriteView 진입", () => {
+  it("어떤 구매의 후기인지 모르면 작성 화면 대신 안내를 보인다", () => {
+    render(
+      <NuqsTestingAdapter searchParams="">
+        <ReviewWriteView orderItemId={undefined} />
+      </NuqsTestingAdapter>,
+    );
+
+    expect(screen.getByText("어떤 상품의 후기인지 알 수 없어요")).toBeDefined();
+    expect(screen.queryByRole("radiogroup", { name: "상품 만족도" })).toBeNull();
+  });
+});
+
 describe("ReviewWriteView 1단계", () => {
   it("별점 말고 아이의 반응도 함께 묻고, 반응은 선택이다", () => {
     renderAt();
@@ -141,6 +154,14 @@ describe("ReviewWriteView 2단계", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: "소리" }));
     expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(false);
+  });
+
+  it("이전은 뒤로가기 없이도 1단계로 돌아간다", () => {
+    renderAt("?step=detail");
+
+    fireEvent.click(screen.getByRole("button", { name: "이전" }));
+
+    expect(screen.getByRole("radiogroup", { name: "상품 만족도" })).toBeDefined();
   });
 
   it("후기가 열 자에 못 미치면 등록할 수 없다", () => {
