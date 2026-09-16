@@ -1,11 +1,18 @@
 // 무엇을 다 채워야 넘어가고 등록되는지, 아이의 반응을 실제로 받는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
+import { resetReviewDraftCache } from "../model/draft-storage";
 import { ReviewWriteView } from "./review-write-view";
+
+// 초안이 기기에 남으므로 테스트끼리 물들지 않게 비운다
+afterEach(() => {
+  window.localStorage.clear();
+  resetReviewDraftCache();
+});
 
 function renderAt(search = "") {
   return render(
@@ -76,6 +83,24 @@ describe("ReviewWriteView 1단계", () => {
     fireEvent.keyDown(half, { key: "ArrowRight" });
     // 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+  });
+
+  it("새로고침해도 별점과 사용 기간이 남는다", () => {
+    const first = renderAt();
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+    first.unmount();
+    resetReviewDraftCache();
+
+    renderAt("?step=detail");
+    fireEvent.click(screen.getByRole("radio", { name: "소리" }));
+    fireEvent.change(screen.getByLabelText("후기"), {
+      target: { value: "확실히 예전보다 계단 오를 때 덜 힘들어해요" },
+    });
+
+    // 2단계에서 새로고침한 뒤에도 1단계 값이 살아 있어 등록할 수 있다
+    expect(screen.getByText("16일째 사용 중")).toBeDefined();
+    expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("사용 기간에는 숫자만 남는다", () => {
