@@ -20,8 +20,17 @@ test("결제 내역을 항목별로 읽을 수 있다", () => {
   // 금액만 나열하면 어느 값인지 알 수 없어 dt·dd로 짝을 지운다.
   expect(screen.getByText("배송비")).toBeDefined();
   expect(screen.getByText("3,000원")).toBeDefined();
-  expect(screen.getByText("포인트 할인")).toBeDefined();
-  expect(screen.getByText("5,000원")).toBeDefined();
+  expect(screen.getByText("결제수단")).toBeDefined();
+  expect(screen.getByText("14,345원")).toBeDefined();
+});
+
+// 시안(mypa_161)의 결제상세는 결제금액·상품 옵션·배송비·결제수단 넷뿐이다
+test("시안에서 빠진 포인트 할인과 하단 링크를 보여주지 않는다", () => {
+  render(<OrderDetailView orderId="1" />);
+
+  expect(screen.queryByText("포인트 할인")).toBeNull();
+  expect(screen.queryByRole("link", { name: "리뷰 작성" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "문의하기" })).toBeNull();
 });
 
 test("주문마다 다른 내용을 보여준다", () => {

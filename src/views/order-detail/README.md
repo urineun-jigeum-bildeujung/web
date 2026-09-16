@@ -1,12 +1,14 @@
 # views/order-detail
 
-주문 하나의 내역을 자세히 보여주는 화면. 와이어프레임 `mypa_161`·`mypa_161_배송완료`·`mypa_161_반품`·`mypa_161_교환`에 대응한다.
+주문 하나의 내역을 자세히 보여주는 화면. UI 시안 `mypa_161`·`mypa_161_배송완료`에 대응한다.
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/order-detail-view.tsx` | 주문정보·결제상세·배송지 정보 세 카드를 조립한다 |
 | `ui/order-detail-view.test.tsx` | 카드 구성, 주문별 내용, 반품·교환 접수 조건을 본다 |
 | `ui/claim-actions.tsx` | 배송완료 주문의 반품·교환 버튼과 확인창 |
+| `ui/detail-section.tsx` | 제목을 안에 둔 흰 카드 |
+| `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
 | `index.ts` | 공개 API |
 
 ## 라우트
@@ -27,9 +29,19 @@
 
 전에는 화면 아래 링크 줄에 반품·교환이 `?type=return|exchange`로 있었다. 시안이 나와 확인창으로 옮겼고 링크에서는 뺐다(#139). **`/mypage/orders/[orderId]/claim` 라우트는 남는다** — 주문 취소가 아직 그 화면을 쓴다.
 
-## DetailCard는 shared로 옮겼다
+## 카드와 줄을 다시 이 화면에 두었다
 
-주문 완료(`paym_002`)에 같은 모양이 나와 `shared/ui/detail-card`로 올렸다. 처음에는 이 화면만 써서 여기 두었던 것이다.
+와이어프레임 때는 `shared/ui`의 `DetailCard`·`DefinitionRow`를 썼는데 UI 시안과 어긋나 되돌렸다 (#205).
+
+**`DetailCard`는 children을 `<dl>`로 감싼다.** 시안의 주문정보 카드에는 주문번호 쌍 옆에 상품 줄과 반품·교환 버튼이 함께 들어가는데 둘 다 `dl`의 자식으로 올 수 없다.
+
+**`DefinitionRow`는 이름 칸이 고정폭(`w-24`)에 타이포가 한 벌이다.** 시안은 자리마다 다르게 쓴다 — 주문번호는 `label/bold_14`와 `body/regular_14`, 결제금액은 `title/bold_16`과 `title/bold_18`, 배송비는 양쪽 다 `body/medium_14`다.
+
+**`paym_002`(결제 완료)에는 카드가 아예 없다.** 흰 바닥에 결제상세·배송지 정보가 그대로 놓인다. 그 화면 작업 때 `DetailCard`의 자리를 다시 본다.
+
+## 결제상세·배송지 블록은 `paym_002`와 같다
+
+두 시안의 그 블록이 타이포·간격까지 같다. 다만 지금 쓰는 곳이 한 곳뿐이라 공용으로 올리지 않았다. `/payment/done` 작업 때 실제로 두 곳이 쓰게 되면 `entities/order`로 올린다.
 
 ## 아직 없는 것
 
