@@ -7,8 +7,6 @@
 | `ui/order-detail-view.tsx` | 주문정보·결제상세·배송지 정보 세 카드를 조립한다 |
 | `ui/order-detail-view.test.tsx` | 카드 구성, 주문별 내용, 반품·교환 접수 조건을 본다 |
 | `ui/claim-actions.tsx` | 배송완료 주문의 반품·교환 버튼과 확인창 |
-| `ui/detail-section.tsx` | 제목을 안에 둔 흰 카드 |
-| `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
 | `index.ts` | 공개 API |
 
 ## 라우트
@@ -39,9 +37,9 @@
 
 **`paym_002`(결제 완료)에는 카드가 아예 없다.** 흰 바닥에 결제상세·배송지 정보가 그대로 놓인다. 그 화면 작업 때 `DetailCard`의 자리를 다시 본다.
 
-## 결제상세·배송지 블록은 `paym_002`와 같다
+## 결제상세·배송지 블록은 `entities/order`에 있다
 
-두 시안의 그 블록이 타이포·간격까지 같다. 다만 지금 쓰는 곳이 한 곳뿐이라 공용으로 올리지 않았다. `/payment/done` 작업 때 실제로 두 곳이 쓰게 되면 `entities/order`로 올린다.
+`paym_002`(주문 완료)가 같은 블록을 써서 올렸다 (#210). 카드 껍데기는 `DetailSection`이 갖지 않으므로 이 화면이 `className="rounded-xl bg-card px-3 py-4"`로 얹는다.
 
 ## 아직 없는 것
 

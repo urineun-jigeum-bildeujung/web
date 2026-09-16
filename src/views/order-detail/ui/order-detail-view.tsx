@@ -3,14 +3,21 @@
 //
 // 회색 바닥 위에 흰 카드 셋이 8px 간격으로 놓인다. 카드마다 안쪽 간격이 달라
 // `DetailSection`은 결제상세·배송지에만 쓰고 주문정보는 여기서 직접 조립한다.
+//
+// 결제상세·배송지 내용은 주문 완료(`paym_002`)와 같아 `entities/order`의 조각을 쓴다 (#210).
 
-import { OrderProductRow, OrderStatusBadge, type OrderStatus } from "@/entities/order";
+import {
+  DeliveryDetail,
+  DetailRow,
+  DetailSection,
+  OrderProductRow,
+  OrderStatusBadge,
+  PaymentDetail,
+  type OrderStatus,
+} from "@/entities/order";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
-import { formatWon } from "@/shared/ui/price/price";
 
 import { ClaimActions } from "./claim-actions";
-import { DetailRow } from "./detail-row";
-import { DetailSection } from "./detail-section";
 
 /** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다. */
 const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
@@ -33,11 +40,6 @@ const MOCK = {
   address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
   request: "문 앞에 놓아주세요.",
 };
-
-/** 시안이 이름 쪽에 굵은 글씨를 쓰는 줄. 결제상세 요약과 결제수단이 그렇다 */
-const STRONG_TERM = "text-title-bold-16 text-foreground";
-/** 값 쪽 기본. 배송지와 결제 세부가 모두 이 조합이다 */
-const VALUE = "text-body-medium-14 text-text-body-secondary";
 
 export function OrderDetailView({ orderId }: { orderId?: string }) {
   // 주문마다 다른 화면이 나와야 목록에서 무엇을 눌렀는지 알 수 있다.
@@ -79,60 +81,26 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
           {order.status === "delivered" && <ClaimActions />}
         </section>
 
-        <DetailSection title="결제상세" titleTrailing={MOCK.paidAt}>
-          <dl className="flex flex-col gap-2">
-            <DetailRow
-              term={<span className={STRONG_TERM}>결제금액</span>}
-              description={
-                <span className="text-title-bold-18 text-text-body-secondary">
-                  {formatWon(MOCK.total)}
-                </span>
-              }
-            />
-            {/* 세부 항목끼리는 4px로 더 붙는다 */}
-            <div className="flex flex-col gap-1">
-              <DetailRow
-                term={<span className={VALUE}>{MOCK.option}</span>}
-                description={<span className={VALUE}>{formatWon(MOCK.itemPrice)}</span>}
-              />
-              <DetailRow
-                term={<span className={VALUE}>배송비</span>}
-                description={<span className={VALUE}>{formatWon(MOCK.shippingFee)}</span>}
-              />
-            </div>
-            <DetailRow
-              term={<span className={STRONG_TERM}>결제수단</span>}
-              description={<span className={VALUE}>{MOCK.card}</span>}
-            />
-          </dl>
+        <DetailSection
+          title="결제상세"
+          titleTrailing={MOCK.paidAt}
+          className="rounded-xl bg-card px-3 py-4"
+        >
+          <PaymentDetail
+            total={MOCK.total}
+            itemPrice={MOCK.itemPrice}
+            shippingFee={MOCK.shippingFee}
+            payMethod={MOCK.card}
+          />
         </DetailSection>
 
-        <DetailSection title="배송지 정보">
-          <dl className="flex flex-col gap-3">
-            <DetailRow
-              term={<span className="text-label-bold-14 text-text-body-secondary">받는 사람</span>}
-              description={<span className={VALUE}>{MOCK.receiver}</span>}
-            />
-            <DetailRow
-              term={<span className="text-label-bold-14 text-text-body-secondary">연락처</span>}
-              description={<span className={VALUE}>{MOCK.phone}</span>}
-            />
-            {/* 주소와 요청사항은 길어서 한 줄에 견주지 않고 아래로 내린다 */}
-            <DetailRow
-              stacked
-              term={
-                <span className="text-label-bold-14 text-text-body-secondary">배송지 주소</span>
-              }
-              description={<span className={VALUE}>{MOCK.address}</span>}
-            />
-            <DetailRow
-              stacked
-              term={
-                <span className="text-label-bold-14 text-text-body-secondary">배송 요청사항</span>
-              }
-              description={<span className={VALUE}>{MOCK.request}</span>}
-            />
-          </dl>
+        <DetailSection title="배송지 정보" className="rounded-xl bg-card px-3 py-4">
+          <DeliveryDetail
+            receiver={MOCK.receiver}
+            phone={MOCK.phone}
+            address={MOCK.address}
+            request={MOCK.request}
+          />
         </DetailSection>
       </main>
     </div>
