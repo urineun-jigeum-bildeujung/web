@@ -5,3 +5,4 @@ export {
   ORDER_STATUS_LABEL,
   type OrderStatus,
 } from "./ui/order-status-badge";
+export { OrderProductRow } from "./ui/order-product-row";
