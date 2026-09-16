@@ -34,15 +34,18 @@ export function EmptyState({
       {...props}
     >
       {icon && (
-        <div aria-hidden className="mb-2 text-muted-foreground [&>svg]:size-12">
+        <div aria-hidden className="text-icon-fill-tertiary [&>svg]:size-12">
           {icon}
         </div>
       )}
-      <p className="text-title-bold-18 text-foreground">{title}</p>
-      {description && (
-        <p className="text-body-medium-14 text-balance text-text-body-secondary">{description}</p>
-      )}
-      {action && <div className="mt-4">{action}</div>}
+      {/* 제목·설명은 4px로 좁게 묶고, 아이콘·이 묶음·버튼 사이는 부모의 8px 간격을 그대로 쓴다 */}
+      <div className="flex flex-col gap-1">
+        <p className="text-title-bold-18 text-foreground">{title}</p>
+        {description && (
+          <p className="text-body-medium-14 text-balance text-text-body-secondary">{description}</p>
+        )}
+      </div>
+      {action && <div>{action}</div>}
     </div>
   );
 }
