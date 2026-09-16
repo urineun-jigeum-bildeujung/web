@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useId, useState } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 
 import { PetSwitcher, type PetSummary } from "@/entities/pet";
 import { Badge } from "@/shared/ui/badge/badge";
@@ -27,6 +27,14 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Rating } from "@/shared/ui/rating/rating";
 import { Textarea } from "@/shared/ui/textarea";
 
+import {
+  clearReviewDraft,
+  getReviewDraft,
+  getReviewDraftOnServer,
+  setReviewDraft,
+  subscribeReviewDraft,
+  type ReviewDraft,
+} from "../model/draft-storage";
 import { answeredSummary, HANDLING_QUESTION, RATING_STEP_QUESTIONS } from "../model/questions";
 import { PhotoPicker } from "./photo-picker";
 import { ProductRow } from "./product-row";
@@ -76,25 +84,31 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
     "step",
     parseAsStringLiteral(STEPS).withDefault("rating").withOptions({ history: "push" }),
   );
-  const [score, setScore] = useState(0);
-  const [days, setDays] = useState("");
-  const [responses, setResponses] = useState<Record<string, string | undefined>>({});
-  const [petId, setPetId] = useState<string>();
+  // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면 2단계에서 등록할 수 없다.
+  // 구매 항목 식별자가 없으면 빈 키로 두어 화면 안에서만 유지된다
+  const draftKey = orderItemId ?? "";
+  const draft = useSyncExternalStore(
+    subscribeReviewDraft,
+    () => getReviewDraft(draftKey),
+    getReviewDraftOnServer,
+  );
+  const { score, days, responses, petId, text } = draft;
+  const patch = (next: Partial<ReviewDraft>) => setReviewDraft(draftKey, { ...draft, ...next });
+  // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
-  const [text, setText] = useState("");
   const [done, setDone] = useState(false);
 
   const answer = (key: string, value: string) =>
-    setResponses((prev) => ({ ...prev, [key]: value }));
+    patch({ responses: { ...responses, [key]: value } });
 
   // 사진과 반응 문항은 선택이다. 나머지는 없으면 다음 추천에 쓸 수 없어 받아야 한다
   const ratingReady = score > 0 && days.length > 0;
   const ready = ratingReady && petId !== undefined && text.trim().length >= MIN_TEXT;
 
   const submit = () => {
-    // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다
-    void orderItemId;
+    // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다. 남겨 둔 초안은 지운다
     setDone(true);
+    clearReviewDraft(draftKey);
   };
 
   if (done) {
@@ -144,7 +158,11 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
                   상품은 만족스러우셨나요?
                   <Badge tone="brand">필수</Badge>
                 </h2>
-                <RatingInput value={score} onChange={setScore} label="상품 만족도" />
+                <RatingInput
+                  value={score}
+                  onChange={(next) => patch({ score: next })}
+                  label="상품 만족도"
+                />
               </div>
 
               <SectionTitle required>사용 기간</SectionTitle>
@@ -163,7 +181,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
                     pattern="[0-9]*"
                     maxLength={3}
                     value={days}
-                    onChange={(event) => setDays(event.target.value.replace(/\D/g, ""))}
+                    onChange={(event) => patch({ days: event.target.value.replace(/\D/g, "") })}
                     className="h-8 w-12 border-border-default bg-background p-1.5 text-center text-body-medium-14"
                   />
                   일째 사용 중
@@ -231,7 +249,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
                 <PetSwitcher
                   pets={PETS}
                   selectedId={petId}
-                  onSelect={setPetId}
+                  onSelect={(id) => patch({ petId: id })}
                   withNames
                   className="gap-4 p-0"
                 />
@@ -256,7 +274,7 @@ export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
                     id="review-text"
                     maxLength={MAX_TEXT}
                     value={text}
-                    onChange={(event) => setText(event.target.value)}
+                    onChange={(event) => patch({ text: event.target.value })}
                     placeholder={`사용 후 달라진 점을 자유롭게 남겨주세요 (최소 ${MIN_TEXT}자)`}
                     className="h-27.5 rounded-xl border-border-default bg-background p-4 text-body-medium-14 placeholder:text-text-body-tertiary"
                   />
