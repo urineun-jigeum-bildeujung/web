@@ -15,3 +15,12 @@ test("만점을 바꾸면 문구도 따라간다", () => {
   // 별은 max개를 그리면서 문구만 5점 만점으로 읽던 문제
   expect(screen.getByText("10점 만점에 3점")).toBeDefined();
 });
+
+test("반 개는 채운 별을 절반만 보인다", () => {
+  const { container } = render(<Rating value={4.5} />);
+
+  // 노란 별은 5개(넷은 온전히, 하나는 절반)이고 절반짜리만 w-1/2로 잘린다
+  const filled = container.querySelectorAll(".text-icon-fill-accent");
+  expect(filled).toHaveLength(5);
+  expect(container.querySelectorAll(".w-1\\/2")).toHaveLength(1);
+});

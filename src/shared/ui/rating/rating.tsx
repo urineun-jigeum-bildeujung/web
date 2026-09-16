@@ -1,42 +1,53 @@
 // 별점을 보여준다. 매기는 것은 별도 컴포넌트로 나눈다.
-// IA 기준(상품 상세·리뷰 목록·리뷰 상세·작성한 리뷰)이며 시안은 mypa_041_작성한이다.
-
-import { IoStar, IoStarOutline } from "react-icons/io5";
+// UI 시안 기준(mypa_041_작성한의 별 20, 리뷰 작성 1884-29325의 요약 카드)이다. 별은 노란색이고 반 개까지 그린다.
 
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type RatingProps = {
-  /** 0~5 */
+  /** 0~5. 반 개 단위(4.5)까지 그리고 그 아래는 반올림한다 */
   value: number;
   max?: number;
+  /** sm 14px, md 20px(시안 목록·요약 카드) */
   size?: "sm" | "md";
   /** 별 옆에 숫자를 함께 보여준다 */
   showValue?: boolean;
   className?: string;
 };
 
+/** 별 하나. 채움 정도는 0·0.5·1이고, 반 개는 채운 별을 왼쪽 절반만 보인다. 매기는 쪽(RatingInput)도 같은 별을 쓴다 */
+export function RatingStar({ fill, className }: { fill: 0 | 0.5 | 1; className: string }) {
+  return (
+    <span className={cn("relative shrink-0", className)}>
+      <Icon name="star" className={cn("size-full text-icon-fill-disable")} />
+      {fill > 0 && (
+        <span className={cn("absolute inset-0 overflow-hidden", fill === 0.5 && "w-1/2")}>
+          <Icon name="star" className="size-full text-icon-fill-accent" />
+        </span>
+      )}
+    </span>
+  );
+}
+
 export function Rating({ value, max = 5, size = "sm", showValue, className }: RatingProps) {
-  const filled = Math.round(value);
+  const halves = Math.round(value * 2);
 
   return (
-    <span className={cn("inline-flex items-center gap-0.5", className)}>
+    <span className={cn("inline-flex items-center", className)}>
       {/* 별 모양만으로는 값을 읽을 수 없어 스크린 리더용 문장을 따로 둔다 */}
       <span className="sr-only">{`${max}점 만점에 ${value}점`}</span>
       {Array.from({ length: max }, (_, index) => {
-        const Icon = index < filled ? IoStar : IoStarOutline;
+        const fill = Math.max(0, Math.min(2, halves - index * 2));
         return (
-          <Icon
+          <RatingStar
             key={index}
-            aria-hidden
-            className={cn(
-              size === "sm" ? "size-3.5" : "size-4",
-              index < filled ? "text-foreground" : "text-muted-foreground/40",
-            )}
+            fill={fill === 2 ? 1 : fill === 1 ? 0.5 : 0}
+            className={size === "sm" ? "size-3.5" : "size-5"}
           />
         );
       })}
       {showValue && (
-        <span aria-hidden className="ml-1 text-xs text-muted-foreground">
+        <span aria-hidden className="ml-1 text-label-medium-11 text-foreground">
           {value.toFixed(1)}
         </span>
       )}

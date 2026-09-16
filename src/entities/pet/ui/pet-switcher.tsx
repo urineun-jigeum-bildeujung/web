@@ -1,7 +1,8 @@
 // 아이 고르기 줄. 마지막 칸은 새 아이를 들이는 자리다.
-// UI 시안 기준(mypa_021 내 아이 관리의 avator 줄)이다. 메인의 줄은 아직 와이어프레임 기준이다.
+// UI 시안 기준(mypa_021 내 아이 관리의 avator 줄, 리뷰 작성 1884-29325의 프로필 선택)이다.
 //
-// 두 모양이 있다. 기본은 같은 크기의 원이 늘어서고, `hero`는 고른 아이만 90px로 크게 보인다.
+// 두 모양이 있다. 기본은 48px 원이 같은 크기로 늘어서고 고른 아이만 브랜드색 테두리가 붙는다.
+// `hero`는 고른 아이만 90px로 크게 보인다.
 
 "use client";
 
@@ -39,9 +40,8 @@ export function PetSwitcher({
   className,
 }: PetSwitcherProps) {
   const hero = variant === "hero";
-  // hero는 고른 아이만 90px로 크고 나머지는 48px이다. 기본은 전부 44px이다
-  const circleSize = (selected: boolean) =>
-    hero ? (selected ? "size-22.5" : "size-12") : "size-11";
+  // hero는 고른 아이만 90px로 크고 나머지는 48px이다. 기본은 전부 48px이다
+  const circleSize = (selected: boolean) => (hero && selected ? "size-22.5" : "size-12");
 
   return (
     <div
@@ -74,8 +74,10 @@ export function PetSwitcher({
               className={cn(
                 "flex shrink-0 items-center justify-center rounded-full bg-surface-disable",
                 circleSize(selected),
-                // hero는 크기로 고른 것을 알린다. 기본은 테두리로 알린다 — 색만으로는 알 수 없다
-                !hero && selected && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+                // hero는 크기로 고른 것을 알린다. 기본은 시안대로 1px 브랜드 테두리를 원 밖에 두른다
+                !hero &&
+                  selected &&
+                  "ring-1 ring-border-brand ring-offset-1 ring-offset-background",
               )}
             >
               {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 회색 원만 남는다 */}
@@ -85,7 +87,7 @@ export function PetSwitcher({
                     src={pet.photoUrl}
                     alt=""
                     fill
-                    sizes={hero ? (selected ? "90px" : "48px") : "44px"}
+                    sizes={hero && selected ? "90px" : "48px"}
                     className="object-cover"
                   />
                 )}
@@ -94,9 +96,10 @@ export function PetSwitcher({
             {withNames && (
               <span
                 aria-hidden
+                // 시안의 이름은 12px semibold다. 안 고른 아이는 흐린 글자색이다
                 className={cn(
-                  "text-xs",
-                  selected ? "font-medium text-foreground" : "text-muted-foreground",
+                  "text-label-bold-12",
+                  selected ? "text-foreground" : "text-text-body-unselect",
                 )}
               >
                 {pet.name}
@@ -117,10 +120,10 @@ export function PetSwitcher({
             aria-hidden
             className={cn(
               "flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-current",
-              hero ? "size-12" : "size-11",
+              "size-12",
             )}
           >
-            <Icon name="plus" className={hero ? "size-7" : "size-5"} />
+            <Icon name="plus" className="size-7" />
           </span>
           {withNames && (
             <span aria-hidden className="text-xs">
