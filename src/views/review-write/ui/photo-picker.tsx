@@ -1,5 +1,6 @@
 // 사진을 정해진 장수만큼 붙이고 뺀다.
-// 와이어프레임 기준(리뷰 작성_기본 상태, 사진 3개 다 채울때)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(리뷰작성 1884-29325의 사진 첨부)이다. 칸 74px, 더하는 칸은 점선에 플러스와 장수.
+// 시안에는 빼는 버튼이 없지만, 뺄 수 없으면 잘못 고른 사진을 되돌릴 길이 없어 24px X를 둔다.
 //
 // 고른 파일을 바로 올리지 않고 상위에 넘긴다. 리뷰를 등록할 때 함께 보내야
 // 쓰다 말았을 때 서버에 사진만 남지 않는다. AvatarUploader와 같은 판단이다.
@@ -8,9 +9,8 @@
 
 import Image from "next/image";
 import { useEffect, useId, useMemo } from "react";
-import { IoAdd, IoClose } from "react-icons/io5";
-
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type PhotoPickerProps = {
   files: File[];
@@ -40,9 +40,9 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
           <Image
             src={previews[index]}
             alt={`첨부한 사진 ${index + 1}`}
-            width={80}
-            height={80}
-            className="size-20 rounded-lg bg-muted object-cover"
+            width={74}
+            height={74}
+            className="size-18.5 rounded-lg bg-surface-disable object-cover"
           />
           <button
             type="button"
@@ -52,7 +52,7 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
             // 사진 위에 얹히는 자리라 동그라미를 키우면 사진을 가린다
             className="absolute -top-1.5 -right-1.5 flex size-6 items-center justify-center rounded-full bg-foreground text-background after:absolute after:-inset-2.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <IoClose aria-hidden className="size-4" />
+            <Icon name="cancel" className="size-4" />
           </button>
         </div>
       ))}
@@ -64,10 +64,10 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
             htmlFor={inputId}
             // 숫자만 읽히면 무엇을 하는 자리인지 알 수 없어 이름을 따로 준다
             aria-label={`사진 추가 (${files.length}/${max})`}
-            className="flex size-20 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-lg border border-dashed border-border text-muted-foreground focus-within:ring-2 focus-within:ring-ring"
+            className="flex size-18.5 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border-default bg-background text-text-body-secondary focus-within:ring-2 focus-within:ring-ring"
           >
-            <IoAdd aria-hidden className="size-5" />
-            <span aria-hidden className="text-xs">
+            <Icon name="plus" className="size-5" />
+            <span aria-hidden className="text-label-medium-11">
               {files.length}/{max}
             </span>
           </label>

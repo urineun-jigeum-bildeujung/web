@@ -1,0 +1,91 @@
+// 리뷰 작성이 묻는 아이의 반응. 별점만으로는 알 수 없는 것들이라 다음 추천의 근거가 된다.
+// UI 시안 기준(리뷰작성 1884-29400 1단계 5문항, 1884-29325 2단계 급여 편의성)이다.
+
+export type ResponseOption = { value: string; label: string };
+
+export type Question = {
+  key: string;
+  /** "기호성"처럼 무엇에 대한 것인지. 질문 위에 작게 놓인다 */
+  topic: string;
+  /** 요약 카드 배지에 쓰는 짧은 이름 */
+  short: string;
+  question: string;
+  /** 질문 옆에 흐리게 붙는 보충. "(정제 크기 등)" */
+  hint?: string;
+  options: readonly ResponseOption[];
+};
+
+const CHANGE_OPTIONS = [
+  { value: "worse", label: "나빠졌어요" },
+  { value: "same", label: "그대로예요" },
+  { value: "better", label: "좋아졌어요" },
+] as const;
+
+/** 1단계 "A 추천을 위해 알려주세요". 전부 선택이다 */
+export const RATING_STEP_QUESTIONS: readonly Question[] = [
+  {
+    key: "taste",
+    topic: "기호성",
+    short: "기호성",
+    question: "잘 먹었나요?",
+    options: [
+      { value: "bad", label: "안 먹어요" },
+      { value: "soso", label: "보통이에요" },
+      { value: "good", label: "잘 먹어요" },
+    ],
+  },
+  {
+    key: "stool",
+    topic: "소화 · 배변 반응",
+    short: "소화 · 배변",
+    question: "배변 상태는 어땠나요?",
+    options: CHANGE_OPTIONS,
+  },
+  {
+    key: "skin",
+    topic: "피부 · 모질",
+    short: "피부 · 모질",
+    question: "피부 · 털 상태는 어땠나요?",
+    options: CHANGE_OPTIONS,
+  },
+  {
+    // 시안은 "제충 · 활력"인데 오타로 보고 체중으로 쓴다
+    key: "vitality",
+    topic: "체중 · 활력",
+    short: "체중 · 활력",
+    question: "체중 · 활력은 어땠나요?",
+    options: CHANGE_OPTIONS,
+  },
+  {
+    key: "allergy",
+    topic: "알러지 반응",
+    short: "알러지",
+    question: "알러지 반응이 있었나요?",
+    options: [
+      { value: "none", label: "없었어요" },
+      { value: "yes", label: "있었어요" },
+    ],
+  },
+];
+
+/** 2단계의 급여 편의성. 이것도 선택이다 */
+export const HANDLING_QUESTION: Question = {
+  key: "handling",
+  topic: "급여 편의성",
+  short: "급여 편의성",
+  question: "아이에게 급여하기 편했나요?",
+  hint: "(정제 크기 등)",
+  options: [
+    { value: "hard", label: "불편해요" },
+    { value: "soso", label: "보통이에요" },
+    { value: "easy", label: "편해요" },
+  ],
+};
+
+/** 답한 문항만 골라 배지 문구로 만든다 */
+export function answeredSummary(responses: Record<string, string | undefined>) {
+  return [...RATING_STEP_QUESTIONS, HANDLING_QUESTION].flatMap((question) => {
+    const answer = question.options.find((option) => option.value === responses[question.key]);
+    return answer ? [{ key: question.key, short: question.short, label: answer.label }] : [];
+  });
+}

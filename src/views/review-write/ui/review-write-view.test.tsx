@@ -1,10 +1,25 @@
-// 무엇을 다 채워야 등록되는지, 아이의 반응을 실제로 받는지 본다.
+// 무엇을 다 채워야 넘어가고 등록되는지, 아이의 반응을 실제로 받는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
+
+const toastAppSuccess = vi.fn();
+vi.mock("@/shared/lib/app-toast", () => ({
+  toastAppSuccess: (...args: unknown[]) => toastAppSuccess(...args),
+}));
 
 import { ReviewWriteView } from "./review-write-view";
+
+function renderAt(search = "") {
+  return render(
+    <NuqsTestingAdapter searchParams={search}>
+      <ReviewWriteView orderItemId="oi1" />
+    </NuqsTestingAdapter>,
+  );
+}
 
 /** 같은 이름의 보기가 여러 묶음에 있어 묶음을 먼저 좁힌다 */
 function pick(group: string, option: string) {
@@ -13,95 +28,120 @@ function pick(group: string, option: string) {
   );
 }
 
-/** 시안이 묻는 것을 다 채운다. skipPet이면 아이만 비워 둔다 */
-function fillAll({ skipPet = false } = {}) {
+/** 1단계 필수(별점·사용 기간)를 채우고 2단계로 넘어간다 */
+function goToDetail() {
   fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
   fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
-  // "보통이에요"가 기호성과 급여 편의성 양쪽에 있어 묶음 안에서 고른다
-  pick("기호성 — 잘 먹었나요?", "잘 먹어요");
-  pick("소화 반응 — 아이 배변 상태는 어땠나요?", "좋아졌어요");
-  pick("급여 편의성(정제 크기 등) — 아이에게 급여하기 편했나요?", "보통이에요");
+  fireEvent.click(screen.getByRole("button", { name: "다음" }));
+}
+
+/** 2단계에서 필수를 다 채운다. skipPet이면 아이만 비워 둔다 */
+function fillDetail({ skipPet = false } = {}) {
   if (!skipPet) fireEvent.click(screen.getByRole("radio", { name: "소리" }));
-  fireEvent.change(screen.getByLabelText("다른 보호자에게 도움이 되는 후기"), {
+  fireEvent.change(screen.getByLabelText("후기"), {
     target: { value: "확실히 예전보다 계단 오를 때 덜 힘들어해요" },
   });
 }
 
-describe("ReviewWriteView", () => {
-  it("별점 말고 아이의 반응도 함께 묻는다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
+describe("ReviewWriteView 1단계", () => {
+  it("별점 말고 아이의 반응도 함께 묻고, 반응은 선택이다", () => {
+    renderAt();
 
-    expect(screen.getByText("기호성 — 잘 먹었나요?")).toBeDefined();
-    expect(screen.getByText("소화 반응 — 아이 배변 상태는 어땠나요?")).toBeDefined();
-    expect(
-      screen.getByText("급여 편의성(정제 크기 등) — 아이에게 급여하기 편했나요?"),
-    ).toBeDefined();
+    for (const question of [
+      "잘 먹었나요?",
+      "배변 상태는 어땠나요?",
+      "피부 · 털 상태는 어땠나요?",
+      "체중 · 활력은 어땠나요?",
+      "알러지 반응이 있었나요?",
+    ]) {
+      expect(screen.getByRole("radiogroup", { name: question })).toBeDefined();
+    }
+    expect(screen.getAllByText("선택").length).toBeGreaterThan(0);
   });
 
-  it("처음에는 등록할 수 없다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
+  it("별점과 사용 기간을 채워야 다음으로 간다", () => {
+    renderAt();
 
-    expect(screen.getByRole("button", { name: "리뷰 등록하기" }).hasAttribute("disabled")).toBe(
-      true,
-    );
+    const next = screen.getByRole("button", { name: "다음" });
+    expect(next.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    expect(next.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+    expect(next.hasAttribute("disabled")).toBe(false);
   });
 
-  it("어느 아이가 먹었는지 빠지면 등록할 수 없다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
-    // 아이를 모르면 그 답을 다음 추천에 쓸 수 없다
-    fillAll({ skipPet: true });
+  it("별은 반 개 단위로 매기고 화살표 키로 반 개씩 옮긴다", () => {
+    renderAt();
 
-    expect(screen.getByRole("button", { name: "리뷰 등록하기" }).hasAttribute("disabled")).toBe(
-      true,
-    );
+    const half = screen.getByRole("radio", { name: "5점 만점에 3.5점" });
+    fireEvent.click(half);
+    expect(half.getAttribute("aria-checked")).toBe("true");
 
-    fireEvent.click(screen.getByRole("radio", { name: "소리" }));
-    expect(screen.getByRole("button", { name: "리뷰 등록하기" }).hasAttribute("disabled")).toBe(
-      false,
-    );
-  });
-
-  it("후기가 열 자에 못 미치면 등록할 수 없다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
-    fillAll();
-
-    fireEvent.change(screen.getByLabelText("다른 보호자에게 도움이 되는 후기"), {
-      target: { value: "좋아요" },
-    });
-
-    expect(screen.getByRole("button", { name: "리뷰 등록하기" }).hasAttribute("disabled")).toBe(
-      true,
-    );
-  });
-
-  it("등록하면 어느 아이의 후기인지 짚어 고마움을 전한다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
-    fillAll();
-
-    fireEvent.click(screen.getByRole("button", { name: "리뷰 등록하기" }));
-
-    expect(screen.getByText("소중한 리뷰 감사해요!")).toBeDefined();
-    // 받침 없는 이름이라 "소리가"다
-    expect(screen.getByText(/소리가 어땠는지/)).toBeDefined();
-  });
-
-  it("화살표 키로 점수를 옮기면 그 별로 초점도 옮긴다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
-
-    const third = screen.getByRole("radio", { name: "5점 만점에 3점" });
-    fireEvent.click(third);
-    fireEvent.keyDown(third, { key: "ArrowRight" });
-
+    fireEvent.keyDown(half, { key: "ArrowRight" });
     // 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4점" }));
   });
 
   it("사용 기간에는 숫자만 남는다", () => {
-    render(<ReviewWriteView orderItemId="oi1" />);
+    renderAt();
 
     const days = screen.getByLabelText("사용 기간") as HTMLInputElement;
     fireEvent.change(days, { target: { value: "1a6" } });
 
     expect(days.value).toBe("16");
+  });
+});
+
+describe("ReviewWriteView 2단계", () => {
+  it("1단계에서 답한 문항만 요약 카드에 배지로 보인다", () => {
+    renderAt();
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4.5점" }));
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "7" } });
+    pick("잘 먹었나요?", "보통이에요");
+    pick("배변 상태는 어땠나요?", "좋아졌어요");
+    fireEvent.click(screen.getByRole("button", { name: "다음" }));
+
+    // "보통이에요"는 2단계의 급여 편의성 보기에도 있어 요약 카드 안에서 찾는다
+    const card = screen.getByText("7일째 사용 중").parentElement as HTMLElement;
+    expect(within(card).getByText("5점 만점에 4.5점")).toBeDefined();
+    expect(within(card).getByText("보통이에요")).toBeDefined();
+    expect(within(card).getByText("좋아졌어요")).toBeDefined();
+    // 안 답한 피부·모질은 배지가 없다
+    expect(within(card).queryByText(/피부/)).toBeNull();
+  });
+
+  it("어느 아이가 먹었는지 빠지면 등록할 수 없다", () => {
+    renderAt();
+    goToDetail();
+    // 아이를 모르면 그 답을 다음 추천에 쓸 수 없다
+    fillDetail({ skipPet: true });
+
+    expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(screen.getByRole("radio", { name: "소리" }));
+    expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(false);
+  });
+
+  it("후기가 열 자에 못 미치면 등록할 수 없다", () => {
+    renderAt();
+    goToDetail();
+    fillDetail();
+
+    fireEvent.change(screen.getByLabelText("후기"), { target: { value: "좋아요" } });
+
+    expect(screen.getByRole("button", { name: "등록하기" }).hasAttribute("disabled")).toBe(true);
+  });
+
+  it("등록하면 알리고 작성한 리뷰 목록으로 간다", () => {
+    renderAt();
+    goToDetail();
+    fillDetail();
+
+    fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+
+    expect(toastAppSuccess).toHaveBeenCalledWith("review.submitted");
+    expect(push).toHaveBeenCalledWith("/mypage/reviews?tab=written");
   });
 });
