@@ -41,6 +41,20 @@ export const AGREEMENTS: AgreementItem[] = [
   },
 ];
 
+/**
+ * 화면의 약관 id를 백엔드 `AgreementType` enum으로 옮긴다.
+ *
+ * 다섯 항목이 서버 enum 다섯과 1:1이다. 순서도 같게 두어 요청 본문이 명세 예시와
+ * 나란히 읽히게 했다. 서버가 필수 여부를 스스로 알고 있으므로 여기서 다시 보내지 않는다.
+ */
+export const AGREEMENT_TYPE_BY_ID = {
+  age: "AGE_OVER_14",
+  terms: "SERVICE_TERMS",
+  privacy: "PRIVACY_COLLECTION",
+  marketing: "MARKETING_BENEFIT",
+  thirdParty: "THIRD_PARTY_PROVIDE",
+} as const satisfies Record<string, string>;
+
 export const REQUIRED_IDS = AGREEMENTS.filter((item) => item.required).map((item) => item.id);
 export const OPTIONAL_IDS = AGREEMENTS.filter((item) => !item.required).map((item) => item.id);
 

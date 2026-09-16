@@ -3,10 +3,12 @@
 
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { FormField } from "@/shared/ui/form-field/form-field";
@@ -21,6 +23,7 @@ import {
   REQUIRED_IDS,
   toggleGroup,
 } from "../model/agreements";
+import { signUp } from "../api/signup";
 import { AgreementRow } from "./agreement-row";
 
 const STEPS = ["terms", "nickname"] as const;
@@ -36,9 +39,23 @@ export function SignupView() {
   );
 
   const [checked, setChecked] = useState<string[]>([]);
-  // 시안은 가입 경로에서 받은 닉네임이 미리 채워진 상태를 그렸다. 그 경로가 아직 없어
-  // 가짜 값을 넣어 두면 아무것도 하지 않아도 다음으로 넘어가 이 단계가 무의미해진다
-  const [nickname, setNickname] = useState("");
+  // 시안대로 백엔드가 만든 추천 닉네임이 미리 채워진 상태로 시작한다. 콜백 화면이
+  // 교환 응답의 `nickname`을 쿼리에 실어 넘긴다. 주소창으로 바로 들어오면 비어 있다
+  const suggested = useSearchParams().get("nickname") ?? "";
+  const [nickname, setNickname] = useState(suggested);
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = () => {
+    setSubmitting(true);
+    signUp({ nickname: nickname.trim(), checkedIds: checked })
+      // 시안 메모대로 가입을 마치면 별도 과정 없이 바로 들어간다.
+      // 뒤로가기로 가입 화면에 되돌아오지 않게 replace로 둔다
+      .then(() => router.replace("/onboarding"))
+      .catch((error: unknown) => {
+        toastAppError(toAppMessageCode(error), error);
+        setSubmitting(false);
+      });
+  };
 
   const toggleOne = (id: string, next: boolean) =>
     setChecked((prev) => (next ? [...prev, id] : prev.filter((entry) => entry !== id)));
@@ -51,9 +68,8 @@ export function SignupView() {
         headerTitle="회원가입"
         question="닉네임을 적어주세요"
         submitLabel="다음으로"
-        submitDisabled={nickname.trim().length < MIN_NICKNAME}
-        // 시안 메모대로 가입을 마치면 별도 과정 없이 바로 들어간다
-        onSubmit={() => router.push("/onboarding")}
+        submitDisabled={nickname.trim().length < MIN_NICKNAME || submitting}
+        onSubmit={submit}
       >
         <FormField
           label="닉네임"
