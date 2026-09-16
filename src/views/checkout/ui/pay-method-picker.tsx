@@ -63,7 +63,7 @@ export function PayMethodPicker({
                   <RadioGroupItem
                     id={`brand-${option.value}`}
                     value={option.value}
-                    className="peer sr-only"
+                    className="peer sr-only absolute size-px"
                   />
                   <Label
                     htmlFor={`brand-${option.value}`}

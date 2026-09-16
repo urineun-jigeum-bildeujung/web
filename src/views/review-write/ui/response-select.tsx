@@ -50,8 +50,13 @@ export function ResponseSelect({ question, value, onValueChange, className }: Re
 
           return (
             <div key={option.value} className="relative min-w-0 flex-1">
-              {/* 라디오는 숨기고 레이블을 누르게 한다. peer로 포커스 표시를 잇는다 */}
-              <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
+              {/* 라디오는 숨기고 레이블을 누르게 한다. peer로 포커스 표시를 잇는다.
+                  shadcn 라디오의 relative·size-4가 sr-only를 덮어 16px가 흐름에 남으므로 다시 덮는다 */}
+              <RadioGroupItem
+                id={itemId}
+                value={option.value}
+                className="peer sr-only absolute size-px"
+              />
               <label
                 htmlFor={itemId}
                 className={cn(
