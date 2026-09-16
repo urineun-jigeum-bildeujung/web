@@ -27,30 +27,42 @@ const METHODS_SELECTOR = "toss-payment-methods";
 /** 키가 없거나 위젯을 못 띄웠을 때. 원인은 화면에 내보내지 않는다 */
 const LOAD_FAILED = "결제 수단을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
 
+/** 위젯을 띄우고 그 조작 객체를 준다. 두 번 부르면 토스가 AlreadyRenderedError를 던진다 */
+async function renderWidgets(clientKey: string, amount: number) {
+  const tossPayments = await loadTossPayments(clientKey);
+  // 회원 결제수단을 저장하지 않으므로 비회원으로 연다. 저장은 브랜드페이 기능이고 계약이 따로다
+  const widgets = tossPayments.widgets({ customerKey: ANONYMOUS });
+
+  await widgets.setAmount({ currency: "KRW", value: amount });
+  await widgets.renderPaymentMethods({ selector: `#${METHODS_SELECTOR}` });
+
+  return widgets;
+}
+
 export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossPaymentWidgetProps) {
   // 키는 렌더 시점에 알 수 있다. effect에서 판단하면 한 번 그린 뒤에 고치게 된다
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
   const [failed, setFailed] = useState(false);
-  // 위젯은 한 번만 띄운다. 두 번 부르면 토스가 AlreadyRenderedError를 던진다
-  const renderedRef = useRef(false);
+  // 띄우기는 한 번, 기다리기는 매번이다. **끝난 자리를 boolean으로 들면 안 된다** —
+  // StrictMode는 effect를 두 번 돌리는데, 첫 번째가 정리되고 두 번째가 "이미 띄웠다"며
+  // 그냥 돌아서면 `onReady`를 아무도 부르지 않아 결제 버튼이 잠긴 채로 남는다.
+  // 약속을 들고 있으면 두 번째도 같은 위젯을 기다렸다가 제 몫을 한다.
+  const widgetsRef = useRef<ReturnType<typeof renderWidgets> | null>(null);
 
   useEffect(() => {
     // 키가 없으면 결제창을 띄울 수 없다. 버튼은 `requestPayment`가 없어 잠긴 채로 남는다
-    if (!clientKey || renderedRef.current) {
+    if (!clientKey) {
       return;
     }
-    renderedRef.current = true;
+
+    widgetsRef.current ??= renderWidgets(clientKey, amount);
 
     let disposed = false;
 
-    void (async () => {
-      try {
-        const tossPayments = await loadTossPayments(clientKey);
-        // 회원 결제수단을 저장하지 않으므로 비회원으로 연다. 저장은 브랜드페이 기능이고 계약이 따로다
-        const widgets = tossPayments.widgets({ customerKey: ANONYMOUS });
-
+    void widgetsRef.current
+      .then(async (widgets) => {
+        // 금액이 바뀌면 위젯에 다시 알린다. 처음 띄울 때 넣은 값과 같으면 그대로다
         await widgets.setAmount({ currency: "KRW", value: amount });
-        await widgets.renderPaymentMethods({ selector: `#${METHODS_SELECTOR}` });
 
         if (disposed) {
           return;
@@ -66,12 +78,15 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
             failUrl: `${window.location.origin}/payment`,
           });
         });
-      } catch {
+      })
+      .catch(() => {
+        if (disposed) {
+          return;
+        }
         // 토스 오류 문자열을 그대로 내보내면 사용자가 읽을 수 없다
         setFailed(true);
         onReady(null);
-      }
-    })();
+      });
 
     return () => {
       disposed = true;

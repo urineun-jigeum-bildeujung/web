@@ -1,0 +1,87 @@
+// 토스 결제위젯 테스트. 위젯을 띄운 뒤 결제창을 띄울 수단을 부모에게 넘기는지 본다.
+import { render, waitFor } from "@testing-library/react";
+import { StrictMode } from "react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
+
+const { renderPaymentMethods, requestPayment, setAmount, loadTossPayments } = vi.hoisted(() => ({
+  renderPaymentMethods: vi.fn(async () => ({ destroy: vi.fn() })),
+  requestPayment: vi.fn(async () => {}),
+  setAmount: vi.fn(async () => {}),
+  loadTossPayments: vi.fn(),
+}));
+
+vi.mock("@tosspayments/tosspayments-sdk", () => ({
+  ANONYMOUS: "ANONYMOUS",
+  loadTossPayments,
+}));
+
+import { TossPaymentWidget } from "./toss-payment-widget";
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  // 키는 빌드 때 번들에 박히는 값이라 테스트 환경에는 없다. 없으면 위젯 자체를 띄우지 않는다
+  vi.stubEnv("NEXT_PUBLIC_TOSS_CLIENT_KEY", "test_gck_test");
+  loadTossPayments.mockResolvedValue({
+    widgets: () => ({ setAmount, renderPaymentMethods, requestPayment }),
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+const PROPS = { amount: 12345, orderId: "order_test", orderName: "상품명" };
+
+/**
+ * **StrictMode가 effect를 두 번 돌린다.** 첫 번째가 정리된 뒤 두 번째가 "이미 띄웠다"며
+ * 그냥 돌아서면 `onReady`를 아무도 부르지 않아 결제 버튼이 영영 잠긴 채로 남는다.
+ * 개발 서버에서 실제로 그렇게 막혔다 (#212).
+ */
+test("effect가 두 번 돌아도 결제 수단을 부모에게 넘긴다", async () => {
+  const onReady = vi.fn();
+
+  render(
+    <StrictMode>
+      <TossPaymentWidget {...PROPS} onReady={onReady} />
+    </StrictMode>,
+  );
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  // 위젯은 한 번만 띄운다. 두 번 부르면 토스가 AlreadyRenderedError를 던진다
+  expect(renderPaymentMethods).toHaveBeenCalledTimes(1);
+});
+
+test("넘겨받은 수단을 부르면 결제창을 띄운다", async () => {
+  const onReady = vi.fn();
+
+  render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  await onReady.mock.calls[0][0]();
+
+  expect(requestPayment).toHaveBeenCalledWith(
+    expect.objectContaining({ orderId: "order_test", orderName: "상품명" }),
+  );
+});
+
+// 위젯을 못 띄우면 버튼이 잠긴 채로 남아야 한다. 이유는 화면에 내보내지 않는다
+test("위젯을 못 띄우면 안내를 띄우고 결제 수단을 넘기지 않는다", async () => {
+  loadTossPayments.mockRejectedValue(new Error("network"));
+  const onReady = vi.fn();
+
+  const { findByRole } = render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  expect((await findByRole("alert")).textContent).toContain("결제 수단을 불러오지 못했어요");
+  expect(onReady).toHaveBeenCalledWith(null);
+});
+
+// 키가 없으면 결제창을 띄울 수 없다. 버튼이 잠긴 채로 남아야 한다
+test("키가 없으면 위젯을 띄우지 않는다", () => {
+  vi.stubEnv("NEXT_PUBLIC_TOSS_CLIENT_KEY", "");
+  const onReady = vi.fn();
+
+  const { getByRole } = render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  expect(getByRole("alert").textContent).toContain("결제 수단을 불러오지 못했어요");
+  expect(loadTossPayments).not.toHaveBeenCalled();
+});
