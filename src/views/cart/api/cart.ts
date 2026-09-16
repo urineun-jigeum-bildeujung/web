@@ -3,9 +3,8 @@
 // **화면은 이 파일의 함수와 훅만 본다.** 응답 규격이 바뀌면 여기만 고치면 되도록
 // 필드 이름을 화면 쪽으로 옮기지 않고 명세 그대로 둔다.
 //
-// 규격 출처는 2026-09-16 백엔드 `API 명세 초안`이다. 확정되지 않아 가정한 것이 둘 있다 —
-// 삭제 경로가 수량 변경과 같은 자원 경로라는 것과, 줄을 가리키는 키가 `itemType`+`itemId`라는 것이다.
-// 조회 응답에는 `cartItemId`가 없는데 수량 변경 응답에는 있어 확인이 필요하다 (#214).
+// 규격 출처는 2026-09-16 백엔드 `API 명세 초안`이고 네 줄 모두 "완료"다. 경로와 줄 식별자는
+// 명세 표에 그대로 있어 확정이다 — 삭제도 수량 변경과 같은 자원 경로를 쓴다 (#217에서 확인).
 
 import { apiRequest } from "@/shared/api/client";
 
@@ -59,23 +58,18 @@ export function getCart(): Promise<Cart> {
   return apiRequest<Cart>("/carts");
 }
 
-/** 수량 변경 응답 */
-export type CartQuantityChanged = {
-  cartItemId: number;
-  quantity: number;
-};
-
 /**
  * 수량을 바꾼다.
  *
  * **바뀐 수량이 아니라 증감을 보낸다.** 스테퍼는 바뀐 값을 들고 있으므로 부르는 쪽이
  * 이전 값과의 차를 계산해야 한다. 증감이라 연달아 눌러 요청이 여러 번 나가도 서버에서 합쳐진다.
+ *
+ * **응답 본문을 기대하지 않는다.** 명세가 약속하는 것은 `200 OK`뿐이다. 한때 `cartItemId`·
+ * `quantity`가 온다고 적어 뒀는데, 그것은 명세 행의 "작성되어 있던 내용" 토글에 접혀 있던
+ * 개정 전 내용이었다 (#217). 바뀐 값은 다시 조회해서 맞춘다.
  */
-export function changeCartItemQuantity(
-  item: CartItemRef,
-  delta: number,
-): Promise<CartQuantityChanged> {
-  return apiRequest<CartQuantityChanged>(itemPath(item), {
+export function changeCartItemQuantity(item: CartItemRef, delta: number): Promise<void> {
+  return apiRequest<void>(itemPath(item), {
     method: "PATCH",
     body: { delta },
   });

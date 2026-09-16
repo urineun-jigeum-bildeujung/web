@@ -2,7 +2,11 @@
 //
 // **승인을 우리가 하지 않는 이유는 시크릿 키다.** 토스 승인 API는 시크릿 키로 인증하는데
 // 그것이 브라우저에 닿으면 누구나 결제를 승인할 수 있다. 백엔드가 쥐고 부른다
-// (2026-08-28 백엔드 협의, API 명세 `POST /payments/confirm`).
+// (2026-08-28 백엔드 협의).
+//
+// **어느 엔드포인트가 승인을 맡는지는 아직 정해지지 않았다.** API 명세의 결제 섹션에는
+// `POST /payments`(진행 중)와 `GET /payments/{paymentId}`(시작 전) 둘뿐이고 승인 자리가 없다.
+// `POST /payments`가 준비와 승인을 겸하는지 따로 생기는지 백엔드 확인을 기다린다 (#217).
 //
 // 화면이 이 함수만 보게 해 두면 API가 생겼을 때 이 안이 `apiRequest` 호출로 바뀌고
 // 화면 코드는 그대로 둘 수 있다.
@@ -35,8 +39,8 @@ export type PaymentConfirmResult = {
 export async function confirmPayment(
   request: PaymentConfirmRequest,
 ): Promise<PaymentConfirmResult> {
-  // API 계약이 정해지면 이 자리가 `apiRequest<PaymentConfirmResult>("/payments/confirm", …)`가 된다.
-  // 명세(`POST /payments/confirm`)는 있지만 아직 "시작 전"이다.
+  // 승인을 맡을 엔드포인트가 정해지면 이 자리가 `apiRequest<PaymentConfirmResult>(…)`가 된다.
+  // 화면은 이 함수만 보므로 경로가 무엇으로 정해지든 여기만 바뀐다.
   return {
     orderId: request.orderId,
     orderNo: "20260829-1234567",

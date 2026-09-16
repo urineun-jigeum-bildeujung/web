@@ -73,12 +73,12 @@ beforeEach(() => {
     totalAmount: stored.reduce((sum, row) => sum + (row.price ?? 0) * row.quantity, 0),
   }));
 
+  // 명세가 약속하는 것은 `200 OK`뿐이라 목도 아무것도 돌려주지 않는다
   changeCartItemQuantity.mockImplementation(async (ref: CartItemRef, delta: number) => {
     const row = stored.find((item) => isSame(item, ref));
     if (row) {
       row.quantity += delta;
     }
-    return { cartItemId: ref.itemId, quantity: row?.quantity ?? 0 };
   });
 
   removeCartItem.mockImplementation(async (ref: CartItemRef) => {
