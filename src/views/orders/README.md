@@ -5,9 +5,10 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/orders-view.tsx` | 주문·배송 확인 |
-| `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일·이름·옵션·결제 금액 |
 | `ui/delivery-tracking-dialog.tsx` | 배송 조회 준비중 안내 |
 | `index.ts` | 공개 API |
+
+주문 상품 줄은 상세 화면도 써서 `entities/order`로 옮겼다 (#205).
 
 ## 라우트
 

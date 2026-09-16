@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { OrderStatusBadge, type OrderStatus } from "@/entities/order";
+import { OrderProductRow, OrderStatusBadge, type OrderStatus } from "@/entities/order";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,8 +24,6 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { DeliveryTrackingDialog } from "./delivery-tracking-dialog";
-import { OrderProductRow } from "./order-product-row";
-
 type Order = { id: string; orderedAt: string; status: OrderStatus; amount: number };
 
 /** API 연동 전까지 화면 확인용 값 */
