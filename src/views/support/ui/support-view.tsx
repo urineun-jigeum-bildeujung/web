@@ -73,7 +73,7 @@ export function SupportView() {
                 value={`faq-${index}`}
                 className="not-last:border-b-0"
               >
-                <AccordionTrigger className="min-h-6 items-center gap-2 rounded-none border-0 py-0 text-title-bold-16 font-bold text-foreground hover:no-underline **:data-[slot=accordion-trigger-icon]:size-6 **:data-[slot=accordion-trigger-icon]:text-icon-fill-default">
+                <AccordionTrigger className="min-h-6 items-center gap-2 rounded-none border-0 py-0 text-title-bold-16 text-foreground hover:no-underline **:data-[slot=accordion-trigger-icon]:size-6 **:data-[slot=accordion-trigger-icon]:text-icon-fill-default">
                   {/* 펼친 질문은 물음표가 붉어져 어느 답이 열렸는지 한눈에 보인다 */}
                   <Icon
                     name="question_mark"

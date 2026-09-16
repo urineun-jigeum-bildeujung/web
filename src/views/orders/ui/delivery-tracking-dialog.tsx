@@ -27,8 +27,7 @@ export function DeliveryTrackingDialog({ open, onOpenChange }: DeliveryTrackingD
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="gap-4 rounded-2xl">
         <DialogHeader className="gap-1">
-          {/* DialogTitle이 `font-medium`을 들고 있어 토큰의 굵기가 죽는다. 따로 되돌린다 */}
-          <DialogTitle className="text-left text-title-bold-18 font-bold text-foreground">
+          <DialogTitle className="text-left text-title-bold-18 text-foreground">
             {MESSAGE.title}
           </DialogTitle>
           <DialogDescription className="text-left text-body-medium-14 text-text-body-secondary">
@@ -38,7 +37,7 @@ export function DeliveryTrackingDialog({ open, onOpenChange }: DeliveryTrackingD
 
         {/* shadcn DialogFooter는 회색 띠를 두르는데 안내 하나뿐이라 맨 줄로 둔다 */}
         <DialogClose asChild>
-          <Button className="h-10 w-full text-label-bold-14 font-bold">확인</Button>
+          <Button className="h-10 w-full text-label-bold-14">확인</Button>
         </DialogClose>
       </DialogContent>
     </Dialog>
