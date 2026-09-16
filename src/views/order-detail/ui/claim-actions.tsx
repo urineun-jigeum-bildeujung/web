@@ -1,5 +1,5 @@
 // 배송이 끝난 주문의 반품·교환 접수. 누르면 무슨 일이 일어나는지 알리고 한 번 더 확인받는다.
-// 와이어프레임 기준(mypa_161_배송완료, mypa_161_반품, mypa_161_교환)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(mypa_161_배송완료 302:11585)이다. 구분선 아래 48px 버튼 둘이 나란히 온다.
 //
 // 접수는 되돌리기 어렵다. 기사가 상품을 가지러 오고 그 뒤에야 환불이나 교환이 진행된다.
 // 링크를 누르는 순간 접수되는 것처럼 보이면 안 되므로 확인창으로 한 번 막는다.
@@ -46,13 +46,14 @@ export function ClaimActions() {
 
   return (
     <>
-      {/* 시안은 결제 금액 아래에 구분선을 두고 둘을 나란히 놓는다 */}
-      <div className="flex gap-2 border-t border-border pt-3">
+      {/* 시안은 상품 줄 아래에 구분선을 두고 둘을 나란히 놓는다 */}
+      <div className="flex gap-2 border-t border-border pt-2">
         {(Object.keys(CLAIMS) as ClaimType[]).map((type) => (
           <Button
             key={type}
             variant="ghost"
-            className="min-h-11 flex-1"
+            // Button이 `font-medium`을 들고 있어 토큰의 굵기가 죽는다. 따로 되돌린다
+            className="h-12 flex-1 text-label-bold-16 font-bold text-foreground"
             onClick={() => setOpened(type)}
           >
             {CLAIMS[type].trigger}
