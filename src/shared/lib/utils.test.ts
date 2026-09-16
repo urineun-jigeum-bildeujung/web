@@ -39,6 +39,26 @@ describe("타이포 토큰 (#176)", () => {
     expect(cn("text-foreground", "text-text-body-secondary")).toBe("text-text-body-secondary");
   });
 
+  /**
+   * 토큰의 굵기는 `font-weight: var(--tw-font-weight, 700)`이고 `font-medium`이 그 변수를 채운다.
+   * **그래서 함께 남으면 선언 순서와 무관하게 토큰의 700이 적용되지 않는다** (#219).
+   * shadcn의 Button·DrawerTitle·DialogTitle이 `font-medium`을 달고 온다.
+   */
+  it("shadcn이 달고 오는 굵기를 걷어낸다", () => {
+    expect(cn("font-medium", "text-title-bold-16")).toBe("text-title-bold-16");
+    expect(cn("text-sm font-medium", "text-label-bold-16")).toBe("text-label-bold-16");
+  });
+
+  // 행간도 같은 방식이다 — 토큰이 `line-height: var(--tw-leading, …)`라 leading-*이 이긴다
+  it("앞에 온 행간도 걷어낸다", () => {
+    expect(cn("leading-none", "text-body-medium-14")).toBe("text-body-medium-14");
+  });
+
+  // 토큰이 앞에 있고 굵기를 일부러 뒤에 붙였으면 그 뜻을 지운다
+  it("토큰 뒤에 붙인 굵기는 남긴다", () => {
+    expect(cn("text-title-bold-16", "font-medium")).toBe("text-title-bold-16 font-medium");
+  });
+
   // 목록이 globals.css와 어긋나면 새 토큰이 다시 색으로 오인된다
   it("토큰 목록이 globals.css의 타이포 정의와 같다", () => {
     const css = readFileSync(resolve(__dirname, "../../app/globals.css"), "utf8");
