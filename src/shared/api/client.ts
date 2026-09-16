@@ -137,7 +137,15 @@ async function parseResponse<TResponse>(response: Response, path: string): Promi
     return undefined as TResponse;
   }
 
-  return (await response.json()) as TResponse;
+  // 204만 걸러서는 모자란다. **본문 없이 200으로 끝내는 엔드포인트가 있다** — 장바구니 수량
+  // 변경 명세가 약속하는 것이 `200 OK`뿐이다. 바로 `json()`을 부르면 빈 본문에서 던져
+  // 성공한 요청이 실패로 뒤집히고, 낙관적으로 그려 둔 것이 되돌아간다.
+  const body = await response.text();
+  if (body.length === 0) {
+    return undefined as TResponse;
+  }
+
+  return JSON.parse(body) as TResponse;
 }
 
 let refreshPromise: Promise<boolean> | null = null;
