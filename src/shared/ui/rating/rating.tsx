@@ -15,14 +15,26 @@ type RatingProps = {
   className?: string;
 };
 
-/** 별 하나. 채움 정도는 0·0.5·1이고, 반 개는 채운 별을 왼쪽 절반만 보인다. 매기는 쪽(RatingInput)도 같은 별을 쓴다 */
+/**
+ * 별 하나. 채움 정도는 0·0.5·1이고, 반 개는 채운 별의 오른쪽 절반을 잘라낸다.
+ * 매기는 쪽(RatingInput)도 같은 별을 쓴다. `className`은 별 크기(size-*)다.
+ */
 export function RatingStar({ fill, className }: { fill: 0 | 0.5 | 1; className: string }) {
   return (
     <span className={cn("relative shrink-0", className)}>
-      <Icon name="star" className={cn("size-full text-icon-fill-disable")} />
+      <Icon name="star" className="size-full text-icon-fill-disable" />
       {fill > 0 && (
-        <span className={cn("absolute inset-0 overflow-hidden", fill === 0.5 && "w-1/2")}>
-          <Icon name="star" className="size-full text-icon-fill-accent" />
+        // 자르는 상자만 절반 폭이고 안의 별은 바깥과 같은 크기라야 작아지지 않고 잘린다
+        <span
+          className={cn(
+            "absolute inset-y-0 left-0 overflow-hidden",
+            fill === 0.5 ? "w-1/2" : "w-full",
+          )}
+        >
+          <Icon
+            name="star"
+            className={cn("absolute top-0 left-0 text-icon-fill-accent", className)}
+          />
         </span>
       )}
     </span>
