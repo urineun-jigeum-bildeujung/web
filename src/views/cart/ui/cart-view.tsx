@@ -32,6 +32,7 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
+import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
@@ -117,12 +118,10 @@ export function CartView() {
                   setCheckedKeys(checked ? sellable.map(cartItemKey) : [])
                 }
               />
-              {/* 시안이 고른 개수를 함께 보여준다. 몇 개를 담았고 몇 개를 고르는 중인지 한눈에 든다.
-                  shadcn Label을 쓰지 않는 이유는 그 기본값(text-sm·leading-none)이
-                  타이포 토큰과 같은 자리를 다투는데 tailwind-merge가 커스텀 토큰을 몰라 안 걷히기 때문이다 */}
-              <label htmlFor="cart-all" className="text-body-medium-16 text-foreground select-none">
+              {/* 시안이 고른 개수를 함께 보여준다. 몇 개를 담았고 몇 개를 고르는 중인지 한눈에 든다 */}
+              <Label htmlFor="cart-all" className="text-body-medium-16 text-foreground">
                 전체선택 ({checkedItems.length}/{sellable.length})
-              </label>
+              </Label>
             </div>
 
             <ul className="flex flex-col gap-2">
