@@ -1,9 +1,9 @@
-"use client";
-
 // 소셜 인증 복귀 화면. 백엔드가 넘긴 일회용 code를 토큰으로 바꾸고 다음 화면으로 보낸다.
 //
 // 보여줄 것이 거의 없는 화면이다. 성공하면 곧바로 떠나고, 남는 경우는 실패뿐이다.
 // 그래도 화면을 두는 이유는 교환에 왕복이 한 번 들어가서 그 사이가 비면 고장으로 읽히기 때문이다.
+
+"use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
