@@ -19,6 +19,8 @@ import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { FormField } from "@/shared/ui/form-field/form-field";
 
+import { socialLoginUrl } from "../config/oauth";
+
 // 브랜드 색은 아이콘 자체가 들고 있어 배경에 HEX를 쓰지 않는다.
 // 카카오는 노란 바탕에 검은 말풍선이라 원형 배경이 필요한데, 그 색만 토큰으로 뺐다
 const SOCIALS = [
@@ -117,9 +119,12 @@ export function LoginView() {
 
       <div className="flex items-center justify-center gap-10 pt-15 pb-10">
         {SOCIALS.map((social) => (
-          <button
+          // 인증 제공자 화면으로 리다이렉트되는 흐름이라 fetch가 아니라 브라우저를 통째로
+          // 보낸다. 이동이므로 button이 아니라 a다 — 새 탭·복사 같은 기본 동작도 따라온다.
+          // Next Link는 앱 라우트용이라 쓰지 않는다
+          <a
             key={social.id}
-            type="button"
+            href={socialLoginUrl(social.id)}
             aria-label={social.label}
             className={cn(
               "flex size-11 items-center justify-center rounded-full",
@@ -128,7 +133,7 @@ export function LoginView() {
             )}
           >
             {social.icon}
-          </button>
+          </a>
         ))}
       </div>
     </div>
