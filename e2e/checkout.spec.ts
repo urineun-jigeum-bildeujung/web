@@ -55,7 +55,7 @@ test("결제 수단을 못 불러오면 동의를 다 해도 결제 버튼이 �
 test("전체 동의 한 번으로 네 줄이 켜진다", async ({ page }) => {
   await page.goto("/payment");
 
-  await page.getByLabel("전체 동의").click();
+  await page.getByLabel("[전체 동의]").click();
 
   for (const label of [...REQUIRED, "[선택] 다음 주문을 위해 이 결제 수단 저장"]) {
     await expect(page.getByLabel(label)).toHaveAttribute("data-state", "checked");

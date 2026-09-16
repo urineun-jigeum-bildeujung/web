@@ -32,7 +32,9 @@ test("결제 내역을 항목별로 읽을 수 있다", () => {
 
   expect(screen.getByText("배송비")).toBeDefined();
   expect(screen.getByText("3,000원")).toBeDefined();
-  expect(screen.getByText("주문 수량 1개")).toBeDefined();
+  // 시안(paym_001)이 수량을 이름과 값으로 나눠 둔다
+  expect(screen.getByText("주문 수량")).toBeDefined();
+  expect(screen.getByText("1개")).toBeDefined();
 });
 
 // 결제수단 목록은 토스 위젯이 그린다. 우리가 라디오를 만들지 않는다
@@ -78,7 +80,7 @@ test("결제하기를 누르면 결제창을 띄운다", () => {
 test("전체 동의를 켜면 네 줄이 함께 켜진다", () => {
   render(<CheckoutView />);
 
-  fireEvent.click(screen.getByLabelText("전체 동의"));
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
 
   // 이 저장소는 jest-dom을 붙이지 않아 toBeChecked가 없다. shadcn Checkbox의 상태로 본다
   expect(
@@ -102,7 +104,7 @@ test("결제창을 띄우지 못하면 실패를 알린다", async () => {
   requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
   render(<CheckoutView />);
 
-  fireEvent.click(screen.getByLabelText("전체 동의"));
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
   fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
 
   await waitFor(() =>
