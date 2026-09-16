@@ -6,8 +6,8 @@
 | --- | --- |
 | `josa/josa.ts` | 이름 뒤 조사를 받침에 맞춰 고른다 |
 | `josa/josa.test.ts` | 받침 유무와 ㄹ 예외, 한글이 아닌 이름을 본다 |
-| `typo/typo-tokens.ts` | `globals.css` 타이포 토큰 이름 목록. tailwind-merge가 `text-title-bold-20`을 글자색으로 오인하지 않게 `cn`에 알려 준다 |
-| `utils.ts` | `cn` — clsx와 tailwind-merge로 className을 병합한다. 타이포 토큰을 글자 크기 그룹으로 등록한 설정이 얹혀 있다 (#176) |
+| `typo/typo-tokens.ts` | `globals.css` 타이포 토큰 이름 목록. tailwind-merge가 `text-title-bold-20`을 글자색으로 오인하지 않게, 또 shadcn의 `font-medium`에 굵기가 죽지 않게 `cn`에 알려 준다 |
+| `utils.ts` | `cn` — clsx와 tailwind-merge로 className을 병합한다. 타이포 토큰을 전용 그룹으로 등록하고 굵기·행간과 충돌시키는 설정이 얹혀 있다 (#176, #219) |
 | `utils.test.ts` | `cn` 단위 테스트. 타이포 토큰이 색과 겹쳐도 남는지, 목록이 `globals.css`와 같은지 본다 |
 | `app-toast.ts` | 토스트를 띄우는 유일한 통로(`toastAppSuccess`·`toastAppError`) — 호출부는 메시지 코드만 넘긴다 |
 | `report-error.ts` | 오류를 바깥으로 알리는 유일한 통로(`reportError`) — 민감정보를 걸러낸 요약만 남긴다. 관측 도구 접점 |

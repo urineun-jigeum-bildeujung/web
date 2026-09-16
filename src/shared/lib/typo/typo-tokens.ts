@@ -1,8 +1,9 @@
 // globals.css `@theme`의 타이포 토큰 이름. tailwind-merge에 알려 주려고 코드에도 한 벌 둔다.
 //
 // tailwind-merge는 CSS를 읽지 않아 `text-title-bold-20`을 글자색으로 오인하고,
-// `text-foreground` 같은 진짜 색과 겹치면 지워 버린다(#176). 이 목록을 글자 크기 그룹으로
-// 등록해 그 충돌을 막는다. globals.css와 어긋나면 `utils.test.ts`가 잡는다.
+// `text-foreground` 같은 진짜 색과 겹치면 지워 버린다(#176). 이 목록을 전용 클래스 그룹으로
+// 등록해 그 충돌을 막고, 그 그룹이 굵기·행간과 충돌한다고 알려 shadcn이 달고 오는
+// `font-medium`을 걷어내게 한다(#219). globals.css와 어긋나면 `utils.test.ts`가 잡는다.
 
 export const TYPO_TOKENS = [
   "title-bold-16",
