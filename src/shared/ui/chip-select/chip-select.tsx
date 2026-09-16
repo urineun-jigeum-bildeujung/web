@@ -58,7 +58,12 @@ export function ChipSelect({
           <div key={option.value} className="relative">
             {/* 라디오 자체는 숨기고 레이블 전체를 누를 수 있게 한다.
                 라디오가 레이블의 형제라 has-[]로는 포커스를 못 잡는다. peer로 잇는다. */}
-            <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
+            <RadioGroupItem
+              id={itemId}
+              value={option.value}
+              // shadcn 라디오의 relative·size-4가 CSS 순서상 sr-only를 덮어 16px 상자가 흐름에 남는다
+              className="peer sr-only absolute size-px"
+            />
             <label
               htmlFor={itemId}
               // 시안의 칩은 40px인데 탭 영역 기준(44px)을 지키려고 조금 더 높다

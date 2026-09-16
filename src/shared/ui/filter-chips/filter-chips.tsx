@@ -34,8 +34,14 @@ export function FilterChips({ label, options, value, onValueChange }: FilterChip
 
         return (
           <div key={option.value} className="relative">
-            {/* 라디오는 숨기고 레이블을 누르게 한다. peer로 포커스 표시를 잇는다. */}
-            <RadioGroupItem id={itemId} value={option.value} className="peer sr-only" />
+            {/* 라디오는 숨기고 레이블을 누르게 한다. peer로 포커스 표시를 잇는다.
+                shadcn 라디오의 relative·size-4가 CSS 순서상 sr-only를 덮어 16px 상자가 흐름에 남으므로
+                자리 값과 크기를 다시 덮는다 */}
+            <RadioGroupItem
+              id={itemId}
+              value={option.value}
+              className="peer sr-only absolute size-px"
+            />
             <label
               htmlFor={itemId}
               // 시안의 칩은 36px이다. 탭 크기는 디자인 시스템 값을 따른다
