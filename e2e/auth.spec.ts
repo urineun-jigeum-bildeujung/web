@@ -12,13 +12,20 @@ test("아이디와 비밀번호를 채워야 로그인 버튼이 켜진다", asy
   await expect(submit).toBeEnabled();
 });
 
-test("소셜은 카카오와 구글 둘만 둔다", async ({ page }) => {
+// 인증 제공자 화면으로 리다이렉트되는 흐름이라 버튼이 아니라 링크다
+test("소셜은 카카오와 구글 둘만 두고 인가 시작 주소로 나간다", async ({ page }) => {
   await page.goto("/login");
 
-  await expect(page.getByRole("button", { name: "카카오로 시작하기" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "구글로 시작하기" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "카카오로 시작하기" })).toHaveAttribute(
+    "href",
+    "/api/auth/oauth2/authorization/kakao",
+  );
+  await expect(page.getByRole("link", { name: "구글로 시작하기" })).toHaveAttribute(
+    "href",
+    "/api/auth/oauth2/authorization/google",
+  );
   // 시안에는 넷이 그려져 있으나 카카오·구글로 확정됐다
-  await expect(page.getByRole("button", { name: /네이버|애플/ })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: /네이버|애플/ })).toHaveCount(0);
 });
 
 test("전체 동의를 누르면 하위가 한꺼번에 체크된다", async ({ page }) => {
