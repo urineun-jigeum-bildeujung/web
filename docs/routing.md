@@ -97,7 +97,9 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | --- | --- | --- |
 | 온보딩 | `step` | `basic`, `detail`, `breed`, `health`, `done` |
 | 회원가입 | `step` | `terms`, `nickname` |
-| 소셜 인증 복귀 | `code` | 백엔드가 발급한 일회용 교환 코드 |
+| 회원가입 | `nickname` | 교환 응답이 준 추천 닉네임. 닉네임 단계의 초기값이다 |
+| 소셜 인증 복귀 | `code` | 백엔드가 발급한 일회용 교환 코드. 60초 뒤 만료되고 한 번만 쓴다 |
+| 소셜 인증 복귀 | `error` | 인증 실패. 지금은 `login_failed` 하나다 |
 | 나의 상품 후기 | `tab` | `writable`, `written` |
 | 반려동물 프로필 | `tab` | `profile`, `products` |
 | 상품 비교 | `slot` | 비교할 자리 인덱스 |
