@@ -120,8 +120,13 @@ export function CheckoutView() {
    * 요청 등) 리다이렉트가 일어나지 않고 약속만 깨진다. 놓치면 눌러도 아무 일이 없어 보인다.
    */
   const pay = async () => {
+    // **`try` 안에서 옵셔널 체이닝을 쓰지 않는다.** React Compiler가 try/catch 안의
+    // 값 블록(옵셔널 체이닝·조건식 등)을 만나면 이 컴포넌트 최적화를 통째로 포기한다 (#223).
+    if (!requestPayment) {
+      return;
+    }
     try {
-      await requestPayment?.();
+      await requestPayment();
     } catch (error) {
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
     }
