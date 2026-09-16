@@ -1,14 +1,17 @@
 // 결제하기. 어디로 보낼지, 무엇을 얼마에 사는지, 어떻게 낼지를 한 화면에서 확인한다.
 // 와이어프레임 기준(paym_001, paym_001_드롭다운, paym_001_직접입력)이라 디자인 확정 시 바뀔 수 있다.
 //
-// 실제 결제 호출은 붙이지 않는다. 승인은 시크릿 키를 쥔 백엔드가 맡고, 계약이 정해진 뒤에 잇는다.
+// 결제수단 자리는 토스 결제위젯이 그리고 결제창까지 띄운다 (#212).
+// **승인은 시크릿 키를 쥔 백엔드가 맡는다** — 우리는 결제창을 띄우는 데까지다.
 
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
@@ -20,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/shared/ui/textarea";
 
 import { DeliveryNotice } from "./delivery-notice";
-import { PayMethodPicker } from "./pay-method-picker";
+import { TossPaymentWidget } from "./toss-payment-widget";
 
 /** API 연동 전까지 화면 확인용 값 */
 const MOCK = {
@@ -86,15 +89,24 @@ function Section({
 }
 
 export function CheckoutView() {
-  const router = useRouter();
   const [request, setRequest] = useState(REQUEST_OPTIONS[0]);
   const [directRequest, setDirectRequest] = useState("");
-  const [method, setMethod] = useState("pay");
-  const [brand, setBrand] = useState("toss");
   const [agreed, setAgreed] = useState<string[]>([]);
+  // 위젯이 준비되면 결제창을 띄우는 함수를 준다. 준비 전에는 버튼을 잠근다
+  const [requestPayment, setRequestPayment] = useState<(() => Promise<void>) | null>(null);
+  // 주문번호는 화면이 열릴 때 한 번만 만든다. 원래 백엔드 `POST /payments`가 줄 값이다
+  const [orderId] = useState(() => `order_${crypto.randomUUID()}`);
+
+  // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다
+  const failCode = useSearchParams().get("code");
+  useEffect(() => {
+    if (failCode) {
+      toastAppError(APP_MESSAGE_CODE.payment.failed, failCode);
+    }
+  }, [failCode]);
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
-  const canPay = requiredIds.every((id) => agreed.includes(id));
+  const canPay = requiredIds.every((id) => agreed.includes(id)) && requestPayment !== null;
   const allAgreed = TERMS.every((term) => agreed.includes(term.id));
 
   const toggle = (id: string, on: boolean) =>
@@ -206,11 +218,12 @@ export function CheckoutView() {
         </Section>
 
         <Section title="결제 방법">
-          <PayMethodPicker
-            method={method}
-            onMethodChange={setMethod}
-            brand={brand}
-            onBrandChange={setBrand}
+          <TossPaymentWidget
+            amount={MOCK.total}
+            orderId={orderId}
+            orderName={MOCK.productName}
+            // 함수를 state에 넣을 때는 updater로 읽히지 않게 한 번 더 감싼다
+            onReady={(fn) => setRequestPayment(() => fn)}
           />
         </Section>
 
@@ -238,13 +251,9 @@ export function CheckoutView() {
         </section>
 
         <div className="px-4 pb-6">
-          {/* 실제 승인은 백엔드가 맡는다. 지금은 완료 화면으로 넘기기만 한다.
+          {/* 누르면 토스 결제창이 뜬다. 끝나면 브라우저가 완료 화면이나 이 화면으로 돌아온다.
               필수 동의 전에는 누를 수 없다 — 결제는 되돌릴 수 없는 동작이다 */}
-          <Button
-            className="min-h-11 w-full"
-            disabled={!canPay}
-            onClick={() => router.push("/payment/done")}
-          >
+          <Button className="min-h-11 w-full" disabled={!canPay} onClick={() => requestPayment?.()}>
             결제하기
           </Button>
         </div>

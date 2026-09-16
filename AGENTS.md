@@ -147,7 +147,7 @@
 
 ## 3. 기술 스택 (확정)
 
-버전은 2026-09-14 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
+버전은 2026-09-16 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
 
 **새 라이브러리는 작업을 시작하기 전에 정하십시오.** 이미 설치된 것·shadcn·플랫폼 기능으로 되는지 먼저 보고, 필요하면 최종 배포일과 React 19·Turbopack 호환을 확인합니다. 절차는 [library-convention](./docs/conventions/library-convention.md)을 따르고 `/check-library`가 그대로 실행합니다.
 
@@ -163,6 +163,7 @@
 | 아이콘 | react-icons | 5.7.0 | `shared/ui/icon`에 없는 글리프를 보충할 때만 |
 | 아이콘 | lucide-react | 1.31.0 | shadcn 생성 컴포넌트 내부 전용 |
 | 애니메이션 | motion | 13.1.0 | 애니메이션 |
+| 결제 | @tosspayments/tosspayments-sdk | 2.8.1 | 결제 UI와 결제창. 승인은 백엔드가 맡는다 |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |

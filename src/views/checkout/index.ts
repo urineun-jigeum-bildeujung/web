@@ -2,3 +2,4 @@
 export { CheckoutView } from "./ui/checkout-view";
 export { CheckoutAddressView } from "./ui/checkout-address-view";
 export { CheckoutDoneView } from "./ui/checkout-done-view";
+export { confirmPayment, type PaymentConfirmResult } from "./api/payment";
