@@ -39,7 +39,7 @@ test("URL로 작성한 리뷰 탭을 열 수 있다", () => {
 test("작성한 리뷰를 누르면 상세로 이어진다", () => {
   renderAt("?tab=written");
 
-  const links = screen.getAllByRole("link", { name: /상품명/ });
+  const links = screen.getAllByRole("link", { name: /멍 바나나스낵/ });
   expect(links[0].getAttribute("href")).toBe("/mypage/reviews/0");
 });
 
