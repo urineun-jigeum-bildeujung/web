@@ -19,9 +19,9 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 라우트 | 화면 | 접근 정책 | URL 상태·식별자 | 상태 |
 | --- | --- | --- | --- | --- |
 | `/` | 홈 | 공개 | 없음 | 현재 개발용 화면 입구. 실제 메인 화면으로 교체 예정 |
-| `/login` | 로그인 | 비회원 | 소셜 버튼은 게이트웨이 로그인 시작 주소로 브라우저 이동(fetch 아님). 시작 주소는 백엔드 `/api/v1` 이전 후 확정 | 스캐폴딩. 버튼 연결은 로그인 디자인 확정 뒤 |
-| `/auth/callback?code=` | 소셜 인증 복귀 | 비회원 | `code`(일회용, 60초 만료). `POST /auths/token/exchange`로 교환해 토큰 저장 후 `isNewUser`면 `/signup`, 아니면 `/`로 이동 | 예정. 로그인 디자인 확정 뒤 콜백 화면과 함께 |
-| `/signup?step=` | 회원가입 | 소셜 인증 직후 신규 회원 | `step=terms\|nickname`. 약관 동의는 소셜 가입도 자체 화면에서 받는다 | 구현됨. 닉네임 초기값은 교환 응답의 `nickname`으로 채울 예정 |
+| `/login` | 로그인 | 비회원 | 소셜 버튼은 `{NEXT_PUBLIC_OAUTH_BASE_URL}/oauth2/authorization/{kakao\|google}`로 브라우저 이동(fetch 아님). **이 주소만 `/api/v1`이 아니라 `/api/auth`다** | 소셜 연결됨. 아이디·비밀번호 폼은 붙일 API가 없어 시안대로 둠(#184) |
+| `/auth/callback?code=` · `?error=` | 소셜 인증 복귀 | 비회원 | 성공은 `code`(일회용, 60초 만료), 실패는 `error=login_failed`. `POST /auths/token/exchange`로 교환해 토큰 저장 후 **`needsSignup`**이면 `/signup?nickname=`, 아니면 `/`로 `replace` | 구현됨 |
+| `/signup?step=&nickname=` | 회원가입 | 가입을 마치지 않은 사용자 | `step=terms\|nickname`, `nickname`은 교환 응답의 추천 닉네임. 약관 동의는 소셜 가입도 자체 화면에서 받는다 | 구현됨. 마치면 새 토큰으로 교체하고 `/onboarding`으로 `replace` |
 | `/onboarding?step=` | 반려동물 프로필 등록 | 로그인·프로필 미완료 | `step=basic\|detail\|breed\|health\|done` | 구현됨. 최초 서비스 소개와의 관계는 확인 필요 |
 
 ### 상품 탐색

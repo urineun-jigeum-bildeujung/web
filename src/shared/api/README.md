@@ -18,7 +18,7 @@
 - **성공 응답에 본문이 없으면 그대로 끝낸다.** 204만이 아니라 **본문 없는 200도** 그렇다 — 명세가 `200 OK`만 약속하는 엔드포인트가 있다(장바구니 수량 변경). 곧장 `json()`을 부르면 빈 본문에서 던져 성공한 요청이 실패로 읽힌다 (#217).
 - `query` 옵션은 undefined·null을 빼고 배열은 같은 키를 반복해 쿼리 스트링을 만든다. `FormData` 본문은 직렬화하지 않고 Content-Type도 붙이지 않는다(이미지 업로드용).
 - `shouldRetryQuery`는 `AppProviders`의 QueryClient 기본 retry다. 4xx는 재시도하지 않고 5xx·네트워크 오류만 1회 재시도한다.
-- 소셜 로그인은 백엔드가 `/auth/callback?code=`로 일회용 code만 넘기고, 프론트가 `POST /auths/token/exchange`에 `{ code }`를 보내 accessToken·refreshToken·isNewUser·nickname을 받는다(토큰이 없는 상태라 `auth: false`). code는 1회용이고 60초 뒤 만료된다. 콜백 화면과 교환 함수·훅은 로그인 디자인 확정 뒤 별도 슬라이스에서 만든다.
+- 소셜 로그인은 백엔드가 `/auth/callback?code=`로 일회용 code만 넘기고(실패는 `?error=login_failed`), 프론트가 `POST /auths/token/exchange`에 `{ code }`를 보내 accessToken·refreshToken·**needsSignup**·nickname을 받는다(토큰이 없는 상태라 `auth: false`). code는 1회용이고 60초 뒤 만료된다. 신규 회원 여부가 아니라 `needsSignup`으로 가입 화면을 가른다 — 첫 로그인에서 가입을 마치지 않고 이탈한 사람은 다시 로그인해도 더 이상 신규가 아니라 가입에 영영 닿지 못한다. 콜백 화면과 교환 함수는 `views/auth-callback`에 있다.
 - 웹뷰에서도 토큰은 웹이 보관하고 재발급도 웹만 한다. 네이티브는 딥링크로 받은 code를 웹 콜백 URL로 넘기기만 한다.
 - 슬라이스별 요청 함수와 쿼리 훅은 각 슬라이스의 `api/` 세그먼트에 둔다. 이 폴더는 그것들이 공통으로 쓰는 클라이언트와 에러 규격만 담는다.
 - 백엔드 공통 에러 응답 포맷이 정해지면 사용자 노출 문구 규칙은 [app-message-convention](../../../docs/conventions/app-message-convention.md)을 따른다.
