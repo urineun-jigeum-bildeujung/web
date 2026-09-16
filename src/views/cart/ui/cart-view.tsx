@@ -6,6 +6,8 @@
 //
 // 상품 옵션 줄도 UI 시안에서 사라졌다. 와이어프레임은 이름 아래 옵션을 적었는데
 // 시안은 이름 한 줄만 두고 말줄임한다 (#172).
+//
+// 내용은 `GET /carts`가 준다. 수량과 빼기는 서버에 남으므로 새로고침해도 유지된다 (#214).
 
 "use client";
 
@@ -13,6 +15,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
 import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog,
@@ -32,122 +36,173 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
-import type { CartItem } from "../api/cart";
+import { cartItemKey, type CartItem } from "../api/cart";
+import { useMutateCartItem } from "../api/use-mutate-cart-item";
+import { useQueryCart } from "../api/use-query-cart";
+import { CartSkeleton } from "./cart-skeleton";
 
+// 응답에 `deliveryFee`가 없어 고정값을 유지한다. 백엔드에 확인을 요청해 뒀다 (#214)
 const SHIPPING_FEE = 3000;
 
-type CartViewProps = {
-  /** 담아 둔 상품. 서버가 준 것을 그대로 그린다 */
-  items: CartItem[];
+/**
+ * 못 사는 까닭을 우리 문구로 바꾼다.
+ *
+ * 서버가 `DEAL_ENDED` 같은 코드로 주는데 그대로 내보내면 읽을 수 없다.
+ * **명세에 나온 코드가 `DEAL_ENDED` 하나뿐이라 나머지는 기본 문구로 떨어진다.**
+ */
+const UNAVAILABLE_REASON: Record<string, string> = {
+  DEAL_ENDED: "타임딜이 끝났어요",
 };
+const UNAVAILABLE_DEFAULT = "지금은 살 수 없어요";
 
-export function CartView({ items: initialItems }: CartViewProps) {
-  const [items, setItems] = useState(initialItems);
+export function CartView() {
+  const { cart, error, isLoading } = useQueryCart();
+  const { changeQuantity, remove } = useMutateCartItem();
+
   // 시안은 아무것도 고르지 않은 상태(0/3)로 시작한다
-  const [checkedIds, setCheckedIds] = useState<string[]>([]);
+  const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
 
-  const allChecked = items.length > 0 && checkedIds.length === items.length;
-  const checkedItems = items.filter((item) => checkedIds.includes(item.id));
-  const itemTotal = checkedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const items = cart?.items ?? [];
+  // 살 수 없는 줄은 고를 수 없다. 개수를 셀 때도 빼야 "전체선택"이 끝까지 차오른다
+  const sellable = items.filter((item) => item.available);
+  const checkedItems = sellable.filter((item) => checkedKeys.includes(cartItemKey(item)));
+  const allChecked = sellable.length > 0 && checkedItems.length === sellable.length;
+
+  // 서버가 준 `subtotal`은 수량을 방금 바꿨을 때 아직 옛 값이라 여기서 다시 센다
+  const itemTotal = checkedItems.reduce((sum, item) => sum + (item.price ?? 0) * item.quantity, 0);
   // 담은 것이 없으면 배송비도 물리지 않는다.
   const total = itemTotal === 0 ? 0 : itemTotal + SHIPPING_FEE;
 
-  const toggle = (id: string) =>
-    setCheckedIds((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
-
-  const setQuantity = (id: string, quantity: number) =>
-    setItems((prev) => prev.map((item) => (item.id === id ? { ...item, quantity } : item)));
-
-  const remove = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-    setCheckedIds((prev) => prev.filter((v) => v !== id));
-  };
+  const toggle = (key: string) =>
+    setCheckedKeys((prev) => (prev.includes(key) ? prev.filter((v) => v !== key) : [...prev, key]));
 
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="장바구니" />
 
       <main className="flex flex-1 flex-col">
-        {items.length === 0 ? (
+        {/* 뼈대는 눈으로만 읽히는 표시다. 스크린 리더에는 불러오는 중이라고 말로 알린다 */}
+        {isLoading && (
+          <div role="status" aria-live="polite">
+            <span className="sr-only">장바구니를 불러오는 중</span>
+            <div aria-hidden>
+              <CartSkeleton />
+            </div>
+          </div>
+        )}
+
+        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다 */}
+        {error && (
+          <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
+        )}
+
+        {!isLoading && !error && items.length === 0 && (
           <EmptyState
             title="장바구니가 비었어요"
             description="마음에 드는 상품을 담아보세요."
             className="flex-1"
           />
-        ) : (
+        )}
+
+        {!isLoading && !error && items.length > 0 && (
           <>
             <div className="flex items-center gap-2 px-5 py-3">
               <Checkbox
                 id="cart-all"
                 className="size-6 rounded-md"
                 checked={allChecked}
+                disabled={sellable.length === 0}
                 onCheckedChange={(checked) =>
-                  setCheckedIds(checked ? items.map((item) => item.id) : [])
+                  setCheckedKeys(checked ? sellable.map(cartItemKey) : [])
                 }
               />
               {/* 시안이 고른 개수를 함께 보여준다. 몇 개를 담았고 몇 개를 고르는 중인지 한눈에 든다.
                   shadcn Label을 쓰지 않는 이유는 그 기본값(text-sm·leading-none)이
                   타이포 토큰과 같은 자리를 다투는데 tailwind-merge가 커스텀 토큰을 몰라 안 걷히기 때문이다 */}
               <label htmlFor="cart-all" className="text-body-medium-16 text-foreground select-none">
-                전체선택 ({checkedIds.length}/{items.length})
+                전체선택 ({checkedItems.length}/{sellable.length})
               </label>
             </div>
 
             <ul className="flex flex-col gap-2">
-              {items.map((item) => (
-                <li key={item.id} className="flex items-center gap-2 px-5 py-3">
-                  {/* 시안은 체크박스를 목록 왼쪽이 아니라 사진 위에 얹는다.
-                      사진과 이름이 붙어 있어야 무엇을 고르는지가 바로 읽힌다 */}
-                  <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-surface-disable">
-                    <Checkbox
-                      className="absolute top-1 left-1 z-10 size-4 rounded-sm"
-                      checked={checkedIds.includes(item.id)}
-                      onCheckedChange={() => toggle(item.id)}
-                      aria-label={`${item.name} 고르기`}
-                    />
-                    {item.imageUrl && (
-                      <Image
-                        src={item.imageUrl}
-                        alt=""
-                        width={80}
-                        height={80}
-                        className="size-full object-cover"
-                      />
-                    )}
-                  </div>
+              {items.map((item) => {
+                const key = cartItemKey(item);
+                const reason =
+                  (item.unavailableReason && UNAVAILABLE_REASON[item.unavailableReason]) ??
+                  UNAVAILABLE_DEFAULT;
+                // 살 수 없는 줄은 이름이 오지 않는다. **지어내지 않고 까닭을 그 자리에 둔다** —
+                // 없는 이름을 만들면 사용자는 그것을 상품명으로 읽는다
+                const name = item.productName ?? reason;
 
-                  <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 self-stretch">
-                    <div className="flex items-start justify-between gap-1">
-                      {/* 시안이 한 줄로 자른다. 목록에서는 무엇인지 알아볼 만큼만 보이면 된다 */}
-                      <p className="truncate text-title-bold-16 text-foreground">{item.name}</p>
-                      <button
-                        type="button"
-                        aria-label={`${item.name} 빼기`}
-                        onClick={() => setRemoveTarget(item)}
-                        className="shrink-0 text-icon-stroke-tertiary"
-                      >
-                        <Icon name="cancel" />
-                      </button>
+                return (
+                  <li key={key} className="flex items-center gap-2 px-5 py-3">
+                    {/* 시안은 체크박스를 목록 왼쪽이 아니라 사진 위에 얹는다.
+                        사진과 이름이 붙어 있어야 무엇을 고르는지가 바로 읽힌다 */}
+                    <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-surface-disable">
+                      <Checkbox
+                        className="absolute top-1 left-1 z-10 size-4 rounded-sm"
+                        checked={checkedKeys.includes(key)}
+                        disabled={!item.available}
+                        onCheckedChange={() => toggle(key)}
+                        aria-label={`${name} 고르기`}
+                      />
+                      {item.thumbnailUrl && (
+                        <Image
+                          src={item.thumbnailUrl}
+                          alt=""
+                          width={80}
+                          height={80}
+                          className="size-full object-cover"
+                        />
+                      )}
                     </div>
 
-                    <div className="flex items-end justify-between gap-2">
-                      {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
-                      <p className="text-foreground">
-                        <span className="text-title-bold-16">
-                          {item.price.toLocaleString("ko-KR")}
-                        </span>
-                        <span className="text-body-medium-16">원</span>
-                      </p>
-                      <QuantityStepper
-                        label={`${item.name} 수량`}
-                        value={item.quantity}
-                        onChange={(next) => setQuantity(item.id, next)}
-                      />
+                    <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 self-stretch">
+                      <div className="flex items-start justify-between gap-1">
+                        {/* 시안이 한 줄로 자른다. 목록에서는 무엇인지 알아볼 만큼만 보이면 된다 */}
+                        <p
+                          className={cn(
+                            "truncate text-title-bold-16",
+                            item.available ? "text-foreground" : "text-text-body-unselect",
+                          )}
+                        >
+                          {name}
+                        </p>
+                        <button
+                          type="button"
+                          aria-label={`${name} 빼기`}
+                          onClick={() => setRemoveTarget(item)}
+                          className="shrink-0 text-icon-stroke-tertiary"
+                        >
+                          <Icon name="cancel" />
+                        </button>
+                      </div>
+
+                      {/* 살 수 없는 줄은 금액도 수량도 뜻이 없어 아랫줄을 비운다. 까닭은 이름 자리가
+                          이미 들고 있고, 빼기는 남겨 둔다 — 지울 길이 없으면 장바구니에 계속 걸린다.
+                          **이 상태는 시안(cart_001)에 없어 새로 그리지 않고 있는 것만 썼다** (#214) */}
+                      {item.available && (
+                        <div className="flex items-end justify-between gap-2">
+                          {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
+                          <p className="text-foreground">
+                            <span className="text-title-bold-16">
+                              {(item.price ?? 0).toLocaleString("ko-KR")}
+                            </span>
+                            <span className="text-body-medium-16">원</span>
+                          </p>
+                          <QuantityStepper
+                            label={`${name} 수량`}
+                            value={item.quantity}
+                            // 서버는 바뀐 값이 아니라 증감을 받는다
+                            onChange={(next) => changeQuantity(item, next - item.quantity)}
+                          />
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
 
             <section className="mt-auto flex flex-col gap-3 p-5">
@@ -207,7 +262,7 @@ export function CartView({ items: initialItems }: CartViewProps) {
             <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
             <AlertDialogAction
               className="min-h-11"
-              onClick={() => removeTarget && remove(removeTarget.id)}
+              onClick={() => removeTarget && remove(removeTarget)}
             >
               상품 빼기
             </AlertDialogAction>
