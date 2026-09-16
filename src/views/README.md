@@ -92,6 +92,7 @@ views/
 | `search-result` | `/search/result` | 검색 결과 목록. 정렬과 적합도를 함께 보인다 |
 | `recommendations` | `/recommendations` | 고른 아이의 건강 고민에 맞는 상품 목록 |
 | `login` | `/login` | 로그인. 아이디·비밀번호와 소셜 두 갈래(카카오·구글) |
+| `auth-callback` | `/auth/callback` | 소셜 인증 복귀. 일회용 code를 토큰으로 바꾸고 다음 화면으로 보낸다 |
 | `signup` | `/signup` | 회원가입. 약관 동의와 닉네임을 차례로 받는다 |
 | `likes` | `/likes` | 찜한 상품·최근에 본 상품·자주 산 상품 (탭) |
 | `product-detail` | `/products/[productId]` | 상품 상세. 적합도와 근거를 가격 바로 아래 둔다 |
