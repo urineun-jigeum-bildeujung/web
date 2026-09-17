@@ -159,6 +159,7 @@ export function HomeView() {
   const [petId, setPetId] = useState(MOCK_PETS[0].id);
   const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
   const [dealOver, setDealOver] = useState(false);
+  const [notified, setNotified] = useState(false);
   const [recentIndex, setRecentIndex] = useState(0);
   const recentListRef = useRef<HTMLUListElement>(null);
 
@@ -187,25 +188,26 @@ export function HomeView() {
           aria-label="바로 가기"
           className="flex items-center gap-2.25 text-icon-stroke-tertiary"
         >
-          {/* 보이는 자리는 시안대로 28px·9px 간격을 두고, 누르는 자리만 after로 44px까지 안 보이게 넓힌다 */}
+          {/* 보이는 자리는 시안대로 28px·9px 간격을 두고, 누르는 자리만 after로 안 보이게 넓힌다.
+              가로는 간격(9px)의 절반까지만 넓혀 옆 아이콘 터치 영역과 겹치지 않게 한다 */}
           <Link
             href="/search"
             aria-label="검색"
-            className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
           >
             <Icon name="search" className="size-7" />
           </Link>
           <Link
             href="/mypage/notifications"
             aria-label="알림"
-            className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
           >
             <Icon name="bell_noti" className="size-7" />
           </Link>
           <Link
             href="/cart"
             aria-label="장바구니에 5개"
-            className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
           >
             <Icon name="cart" className="size-7" />
             {/* 시안(header, 카트 아이콘의 Notification Badge)의 18px·11px 값 그대로 */}
@@ -395,14 +397,25 @@ export function HomeView() {
                     description="매주 목요일 밤 12시에 새로운 특가가 열려요"
                     className="rounded-xl border border-dashed border-border px-0 py-4"
                     action={
-                      <button
-                        type="button"
-                        // 알림 신청 API가 아직 없어 자리만 만들어 둔다
-                        onClick={() => {}}
-                        className="min-h-11 px-2.5 text-body-medium-14 text-brand"
-                      >
-                        오픈 알림 받기
-                      </button>
+                      // 알림 신청 API가 아직 없어 타임딜 화면(DealsView)처럼 로컬 상태로만 완료를 알린다
+                      notified ? (
+                        <p
+                          role="status"
+                          className="inline-flex min-h-11 items-center gap-1 px-2.5 text-body-medium-14 text-text-body-secondary"
+                        >
+                          <Icon name="check" className="size-5" />
+                          오픈 알림 신청됨
+                        </p>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setNotified(true)}
+                          className="flex min-h-11 items-center gap-1 px-2.5 text-body-medium-14 text-brand"
+                        >
+                          <Icon name="bell" className="size-5" />
+                          오픈 알림 받기
+                        </button>
+                      )
                     }
                   />
                 </div>
@@ -483,7 +496,7 @@ export function HomeView() {
                       value={item.value}
                       // 시안은 고른 항목을 체크 표시가 아니라 배경색으로만 구분한다.
                       // Select 기본은 체크 아이콘을 같이 보여줘서 숨긴다
-                      className="h-10 rounded-md px-1.5 text-label-medium-14 data-[state=checked]:bg-surface-weak [&>span:first-child]:hidden"
+                      className="h-10 rounded-md px-1.5 text-label-medium-14 data-[state=checked]:bg-surface-weak data-[state=checked]:font-bold [&>span:first-child]:hidden"
                     >
                       {item.label}
                     </SelectItem>

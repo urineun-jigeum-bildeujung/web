@@ -118,7 +118,7 @@ export function ProductFeedbackSheet({
               </DrawerTitle>
               <DrawerClose
                 aria-label="닫기"
-                className="flex size-10 items-center justify-center text-icon-stroke-tertiary"
+                className="relative flex size-10 items-center justify-center text-icon-stroke-tertiary after:absolute after:-inset-0.5"
               >
                 <Icon name="cancel" className="size-6" />
               </DrawerClose>
