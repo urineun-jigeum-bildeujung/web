@@ -142,9 +142,7 @@ export function RecommendationsView() {
                   name={product.name}
                   price={product.price}
                   originalPrice={product.originalPrice}
-                  imageBadge={
-                    <MatchScoreBadge score={product.matchScore} petName={pet.name} size="sm" />
-                  }
+                  imageBadge={<MatchScoreBadge score={product.matchScore} petName={pet.name} />}
                   imageAction={
                     <button
                       type="button"
