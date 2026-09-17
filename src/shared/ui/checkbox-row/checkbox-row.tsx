@@ -31,7 +31,7 @@ const checkVariants = cva(
       // 시안 Checkbox의 round prop. true(기본)는 원형, false는 둥근 사각형(4px)이다
       round: {
         true: "rounded-full",
-        false: "rounded-[4px]",
+        false: "rounded-sm",
       },
     },
     defaultVariants: {
