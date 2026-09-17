@@ -57,7 +57,7 @@ export function BottomSheet({
           {/* 시안의 손잡이. 40px 영역 가운데 5px 막대 */}
           {showHandle && (
             <div aria-hidden className="flex h-10 shrink-0 items-center justify-center">
-              <span className="h-1.25 w-15 rounded-full bg-icon-fill-tertiary" />
+              <span className="h-1.25 w-15 rounded-full bg-surface-secondary" />
             </div>
           )}
           {children}
