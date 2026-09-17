@@ -34,7 +34,7 @@ const SAVED: SavedHealth = {
 
 export function EditPetHealthView() {
   // 갈래도 항목도 종마다 다르다. 저장된 아이의 종으로 받는다
-  const { options } = useQueryHealthOptions(SAVED.species);
+  const { options, isLoading, error } = useQueryHealthOptions(SAVED.species);
   const [concern, setConcern] = useState(SAVED.concern);
   const [noConcern, setNoConcern] = useState(SAVED.noConcern);
   const [allergy, setAllergy] = useState(SAVED.allergy);
@@ -43,9 +43,22 @@ export function EditPetHealthView() {
   const concernAnswered = concern.length > 0 || noConcern;
   const allergyAnswered = allergy.length > 0 || noAllergy;
 
+  // **선택지를 못 받았으면 고치지 못하게 막는다.** 빈 목록으로 두면 고를 것이 없어
+  // "해당 사항이 없어요"를 켜고 저장하게 되고, 그것이 답으로 남는다
+  const optionsReady = Boolean(options) && !error;
+
   return (
-    <EditPetScreen submitDisabled={!concernAnswered || !allergyAnswered}>
+    <EditPetScreen submitDisabled={!optionsReady || !concernAnswered || !allergyAnswered}>
       <div className="flex flex-col gap-5 px-5">
+        {/* 선택지가 없으면 왜 못 고치는지 알려야 한다. 잠긴 자리만 보이면 고장으로 읽힌다 */}
+        {!optionsReady && (
+          <p
+            role={error ? "alert" : "status"}
+            className="text-body-medium-14 text-text-body-secondary"
+          >
+            {isLoading ? "선택지를 불러오는 중이에요" : "선택지를 불러오지 못했어요"}
+          </p>
+        )}
         <section className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
             <h2 className="text-title-bold-16 text-foreground">
@@ -62,7 +75,7 @@ export function EditPetHealthView() {
             groups={options?.concerns ?? []}
             value={concern}
             onChange={setConcern}
-            disabled={noConcern}
+            disabled={noConcern || !optionsReady}
           />
           <CheckboxRow
             label="해당 사항이 없어요"
@@ -89,7 +102,7 @@ export function EditPetHealthView() {
               groups={options?.allergies ?? []}
               value={allergy}
               onChange={setAllergy}
-              disabled={noAllergy}
+              disabled={noAllergy || !optionsReady}
             />
             {/* 시안이 알러지 쪽에만 예시를 남긴다 */}
             <p className="text-caption-regular-12 text-text-body-tertiary">

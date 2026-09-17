@@ -23,16 +23,30 @@ type HealthStepProps = {
 
 export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: HealthStepProps) {
   // 갈래도 항목도 종마다 다르다. 고른 종의 것만 받는다
-  const { options } = useQueryHealthOptions(draft.species);
+  const { options, isLoading, error } = useQueryHealthOptions(draft.species);
 
   // 골랐거나 "해당 없음"을 켰거나, 두 항목 모두 답이 있어야 넘어간다
   const concernAnswered = draft.concern.length > 0 || draft.noConcern;
   const allergyAnswered = draft.allergy.length > 0 || draft.noAllergy;
 
+  // **선택지를 못 받았으면 넘어가지 못하게 막는다.** 빈 목록으로 두면 고를 것이 없어
+  // "해당 사항이 없어요" 둘을 켜고 그대로 등록된다 — 고민도 알레르기도 없다고 답한 셈이 된다
+  const optionsReady = Boolean(options) && !error;
+
   return (
     <>
       <main className="flex flex-1 flex-col gap-5 pt-5 pb-6">
         <h1 className="px-5 text-title-bold-20 text-foreground">꼼꼼하게 건강을 챙겨줄게요</h1>
+
+        {/* 선택지가 없으면 왜 못 고르는지 알려야 한다. 잠긴 자리만 보이면 고장으로 읽힌다 */}
+        {!optionsReady && (
+          <p
+            role={error ? "alert" : "status"}
+            className="px-5 text-body-medium-14 text-text-body-secondary"
+          >
+            {isLoading ? "선택지를 불러오는 중이에요" : "선택지를 불러오지 못했어요"}
+          </p>
+        )}
 
         <div className="flex flex-col gap-5 px-5">
           <div className="flex flex-col gap-3">
@@ -51,7 +65,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: 
               groups={options?.concerns ?? []}
               value={draft.concern}
               onChange={(concern) => onChange({ concern })}
-              disabled={draft.noConcern}
+              disabled={draft.noConcern || !optionsReady}
             />
             <CheckboxRow
               label="해당 사항이 없어요"
@@ -75,7 +89,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: 
                 groups={options?.allergies ?? []}
                 value={draft.allergy}
                 onChange={(allergy) => onChange({ allergy })}
-                disabled={draft.noAllergy}
+                disabled={draft.noAllergy || !optionsReady}
               />
               {/* 시안(onbo_004)이 알러지 쪽에만 예시를 남긴다 */}
               <p className="text-caption-regular-12 text-text-body-tertiary">
@@ -97,7 +111,10 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: 
         <Button variant="secondary" onClick={onPrev}>
           이전
         </Button>
-        <Button disabled={!concernAnswered || !allergyAnswered || isSubmitting} onClick={onSubmit}>
+        <Button
+          disabled={!optionsReady || !concernAnswered || !allergyAnswered || isSubmitting}
+          onClick={onSubmit}
+        >
           작성 완료
         </Button>
       </BottomActionBar>

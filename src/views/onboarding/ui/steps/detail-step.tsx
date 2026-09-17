@@ -18,7 +18,7 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 
 import { digitsOnly, formatBirthday } from "../../model/input-guards";
-import { parseBirthDate, parseWeight } from "../../model/to-register-request";
+import { parseAge, parseBirthDate, parseWeight } from "../../model/to-register-request";
 
 type DetailStepProps = {
   draft: PetProfileDraft;
@@ -38,13 +38,21 @@ export function DetailStep({
   // 체구를 골라야 몸무게·체질 항목이 나타난다. 시안 onbo_003_체구선택후.
   // 숫자를 못 뽑으면 등록 요청을 만들지 못한다. 다음 단계로 보내 놓고 마지막에 막지 않는다
   const weightError = draft.weight && parseWeight(draft.weight) === null;
+  // 나이는 등록에 필수다. 여기서 안 막으면 마지막 단계에서 까닭 모를 오류만 뜬다
+  const ageError = draft.age && parseAge(draft.age) === null;
   // 생일은 선택이라 비어 있어도 되지만, 적었는데 달력에 없는 날이면 알린다.
   // 그대로 보내면 서버가 본문을 통째로 거절한다
   const birthdayError =
     digitsOnly(draft.birthday).length === 8 && parseBirthDate(draft.birthday) === null;
 
   const canProceed = Boolean(
-    draft.breedId && draft.size && draft.weight && !weightError && !birthdayError,
+    draft.breedId &&
+    draft.size &&
+    draft.weight &&
+    draft.age &&
+    !weightError &&
+    !ageError &&
+    !birthdayError,
   );
   const who = draft.name || "아이";
 
@@ -87,6 +95,7 @@ export function DetailStep({
                 placeholder="나이를 적어주세요"
                 inputMode="numeric"
                 value={draft.age}
+                error={ageError && "나이를 적어주세요"}
                 onChange={(event) => onChange({ age: digitsOnly(event.target.value) })}
               />
               <FormField

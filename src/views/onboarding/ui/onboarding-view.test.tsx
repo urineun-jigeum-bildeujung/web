@@ -8,10 +8,28 @@ import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import { EMPTY_PROFILE_DRAFT } from "@/entities/pet";
 
+// 건강 단계가 선택지를 서버에서 받는다(#226). 못 받으면 넘어가지 못하게 막으므로 세운다.
+// 무엇을 보내고 어떻게 옮기는지는 `entities/pet/api/health-options.test.ts`가 본다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryHealthOptions: () => ({
+    options: {
+      concerns: [{ label: "관절·뼈", items: [{ value: "슬개골 탈구", label: "슬개골 탈구" }] }],
+      allergies: [{ label: "알레르기", items: [{ value: "CHICKEN", label: "닭고기" }] }],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { getDraft, resetDraftCache, setDraft } from "../model/draft-storage";
 import { OnboardingView } from "./onboarding-view";
 
 const push = vi.fn();
+const toastAppError = vi.fn();
+vi.mock("@/shared/lib/app-toast", () => ({
+  toastAppError: (...args: unknown[]) => toastAppError(...args),
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 // 도입부 목업 이미지. jsdom에는 이미지 최적화가 없어 img로 대신한다
 type MockImageProps = ComponentProps<"img"> & { fill?: boolean; priority?: boolean };
@@ -30,6 +48,7 @@ beforeEach(() => {
   window.localStorage.clear();
   resetDraftCache();
   push.mockClear();
+  toastAppError.mockClear();
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
 });
@@ -212,16 +231,22 @@ test("작성 완료를 누르면 프로필을 등록하고 완료 단계로 간�
   });
 });
 
-// 지우면 여섯 단계를 처음부터 다시 채워야 한다
+// 지우면 여섯 단계를 처음부터 다시 채워야 한다.
+// 실패가 실제로 처리된 뒤를 보지 않으면 요청 전에 통과할 수 있다
 test("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다", async () => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({}, { status: 500 })));
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({}, { status: 500 }));
+  vi.stubGlobal("fetch", fetchMock);
   fillDraft();
   renderAt("?step=health");
 
   fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
 
-  await waitFor(() => expect(getDraft().name).toBe("코코"));
+  // 실패를 알린 뒤에 본다. 그전에는 초안이 그대로인 것이 당연하다
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(getDraft().name).toBe("코코");
+  // 완료 단계로 넘어가지 않는다 — 등록되지 않았는데 됐다고 알리는 셈이다
   expect(screen.getByRole("button", { name: "작성 완료" })).toBeDefined();
+  expect(screen.queryByRole("button", { name: "홈으로 가기" })).toBeNull();
 });
 
 // 잘못 적은 값이 조용히 빠지면 사용자는 적었으니 저장된 줄 안다.
@@ -263,4 +288,61 @@ test("달력에 없는 날을 적으면 알리고 다음으로 못 간다", () =
   expect(
     (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
   ).toBe(true);
+});
+
+// 알레르기는 종별로 갈리는 코드가 있다(고양이 전용 BONITO, 강아지 전용 INSECT).
+// 그대로 두면 새 종에 없는 코드를 등록 요청에 실어 보낸다
+test("종이 바뀌면 고른 질환과 알레르기를 함께 비운다", async () => {
+  // 종마다 따로 부른다. 같은 값을 주면 한 품종이 양쪽 묶음에 다 뜬다
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      Promise.resolve(
+        Response.json(
+          url.includes("CAT")
+            ? [{ id: 36, breedName: "코리안 숏헤어" }]
+            : [{ id: 1, breedName: "말티즈" }],
+        ),
+      ),
+    ),
+  );
+  setDraft({
+    ...EMPTY_PROFILE_DRAFT,
+    species: "dog",
+    breedId: 1,
+    breedName: "말티즈",
+    concern: ["슬개골 탈구"],
+    allergy: ["CHICKEN"],
+  });
+  resetDraftCache();
+  renderAt("?step=breed");
+
+  fireEvent.click(await screen.findByRole("button", { name: "코리안 숏헤어" }));
+
+  expect(getDraft().species).toBe("cat");
+  expect(getDraft().concern).toEqual([]);
+  expect(getDraft().allergy).toEqual([]);
+});
+
+// 나이는 등록에 필수다. 여기서 안 막으면 마지막 단계에서 까닭 모를 오류만 뜬다
+test("나이를 비우면 다음 단계로 못 간다", () => {
+  setDraft({
+    ...EMPTY_PROFILE_DRAFT,
+    breedId: 1,
+    breedName: "말티즈",
+    size: "small",
+    weight: "4.2",
+  });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  expect(
+    (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+
+  fireEvent.change(screen.getByLabelText("나이"), { target: { value: "4" } });
+
+  expect(
+    (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
+  ).toBe(false);
 });

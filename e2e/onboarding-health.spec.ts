@@ -182,6 +182,8 @@ async function goToHealthAsCat(page: import("@playwright/test").Page) {
     .getByRole("radiogroup", { name: "아이의 체구" })
     .getByText("소형", { exact: true })
     .click();
+  // 나이도 등록에 필수라 채워야 다음으로 간다(#226)
+  await page.getByLabel("나이").fill("4");
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
   // nuqs가 URL을 잠깐 뒤에 바꾼다. 바로 새로고침하면 아직 detail이라 건강 단계가 아니다
@@ -216,6 +218,7 @@ test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
     .getByRole("radiogroup", { name: "아이의 체구" })
     .getByText("소형", { exact: true })
     .click();
+  await page.getByLabel("나이").fill("4");
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
 

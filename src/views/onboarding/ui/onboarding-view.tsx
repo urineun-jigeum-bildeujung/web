@@ -51,14 +51,16 @@ export function OnboardingView() {
   const progress = getStepProgress(step);
 
   const pickBreed = (breed: SpeciesBreed) => {
-    // 종이 바뀌면 앞서 고른 질환은 그 종의 갈래에 없는 것이 된다.
-    // 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면 추천 근거가 거짓이 된다
+    // 종이 바뀌면 앞서 고른 질환도 알레르기도 그 종의 목록에 없는 것이 된다.
+    // 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면 추천 근거가 거짓이 되고,
+    // 알레르기는 종별로 갈리는 코드가 있어(고양이 전용 BONITO, 강아지 전용 INSECT)
+    // 그대로 두면 새 종에 없는 코드를 등록 요청에 실어 보낸다
     const speciesChanged = breed.species !== draft.species;
     patch({
       breedId: breed.id,
       breedName: breed.breedName,
       species: breed.species,
-      ...(speciesChanged && { concern: [] }),
+      ...(speciesChanged && { concern: [], allergy: [] }),
     });
     void setStep("detail");
   };

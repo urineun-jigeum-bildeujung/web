@@ -33,9 +33,11 @@ const SIZE = { small: "SMALL", medium: "MEDIUM", large: "LARGE" } as const;
  *
  * **자유 입력이라 "4키로"·"5 kg"처럼 단위가 섞여 들어온다.** API는 `double`이라
  * 그대로 보낼 수 없다. 숫자를 못 찾으면 `null`이고, 부르는 쪽이 보내지 않는다.
+ *
+ * **앞자리 0이 없는 소수도 받는다.** `.5`를 `5`로 읽으면 0.5kg 고양이가 5kg으로 저장된다.
  */
 export function parseWeight(text: string): number | null {
-  const matched = /\d+(\.\d+)?/.exec(text);
+  const matched = /(?:\d+(?:\.\d+)?|\.\d+)/.exec(text);
   if (!matched) {
     return null;
   }

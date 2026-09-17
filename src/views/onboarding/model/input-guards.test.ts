@@ -14,9 +14,10 @@ describe("digitsOnly", () => {
     expect(digitsOnly("4.2kg", { decimal: true })).toBe("4.2");
   });
 
-  // "4.2.3"은 숫자가 아니라 API가 받지 못한다
-  test("소수점이 둘 이상이면 첫 번째만 남긴다", () => {
-    expect(digitsOnly("4.2.3", { decimal: true })).toBe("4.23");
+  // "4.23"으로 이어 붙이면 사용자가 적지 않은 몸무게가 된다
+  test("소수점이 둘 이상이면 첫 소수부까지만 남긴다", () => {
+    expect(digitsOnly("4.2.3", { decimal: true })).toBe("4.2");
+    expect(digitsOnly("1.2.3.4", { decimal: true })).toBe("1.2");
   });
 
   test("소수를 허용하지 않으면 점도 지운다", () => {
