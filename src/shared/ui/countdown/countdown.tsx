@@ -1,5 +1,8 @@
 // 남은 시간을 시:분:초로 세어 내리는 표시.
-// 와이어프레임 기준(메인, 타임딜)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(메인 타임딜 섹션, 1758-68883)이다.
+// 시안은 32px Regular인데 이 크기의 토큰이 없다(가장 큰 게 28px, 그것도 Bold뿐).
+// 가장 가까운 기존 토큰(28px Bold)의 크기·줄간격만 가져오고 굵기는 font-normal로
+// 덮어써 근사해 뒀다 — QA 확인 대기 목록 참고.
 
 "use client";
 
@@ -58,7 +61,11 @@ export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps
 
   if (left === null) {
     // 자리를 미리 잡아 둔다. 숫자가 들어올 때 화면이 밀리지 않게 한다.
-    return <p className={cn("text-2xl font-bold text-transparent", className)}>00 : 00 : 00</p>;
+    return (
+      <p className={cn("text-title-bold-28 font-normal text-transparent", className)}>
+        00 : 00 : 00
+      </p>
+    );
   }
 
   if (left <= 0) return <>{fallback}</>;
@@ -66,7 +73,7 @@ export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps
   const { hours, minutes, seconds } = split(left);
 
   return (
-    <p className={cn("text-2xl font-bold text-foreground", className)}>
+    <p className={cn("text-title-bold-28 font-normal text-foreground", className)}>
       {/* 1초마다 바뀌는 값이라 읽어 주면 방해가 된다. 남은 시간은 옆 문구가 알린다 */}
       <span aria-hidden>{`${pad(hours)} : ${pad(minutes)} : ${pad(seconds)}`}</span>
       <span className="sr-only">{`${hours}시간 ${minutes}분 남음`}</span>
