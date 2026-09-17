@@ -1,12 +1,14 @@
 // 온보딩 화면 테스트. 단계 이동과 다음 버튼 활성 조건을 검증한다.
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
-import { resetDraftCache } from "../model/draft-storage";
+import { EMPTY_PROFILE_DRAFT } from "@/entities/pet";
+
+import { getDraft, resetDraftCache, setDraft } from "../model/draft-storage";
 import { OnboardingView } from "./onboarding-view";
 
 const push = vi.fn();
@@ -30,6 +32,10 @@ beforeEach(() => {
   push.mockClear();
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 function renderAt(search: string, children: ReactNode = <OnboardingView />) {
@@ -158,4 +164,62 @@ test("완료 화면의 프로필 추가는 초안을 비우고 첫 입력 단계
 
   expect(window.localStorage.getItem("onboarding-draft")).toBeNull();
   expect(screen.getByRole("heading", { name: "아이를 소개해 주세요" })).toBeDefined();
+});
+
+// 마지막 단계의 "작성 완료"에서 프로필이 서버에 등록된다.
+// 초안은 앞 단계들이 채워 두므로 여기서는 저장소에 직접 넣고 그 단계만 연다
+function fillDraft() {
+  setDraft({
+    ...EMPTY_PROFILE_DRAFT,
+    name: "코코",
+    gender: "female",
+    neutered: "yes",
+    species: "dog",
+    breedId: 1,
+    breedName: "말티즈",
+    age: "4",
+    size: "small",
+    weight: "4.2",
+    noConcern: true,
+    noAllergy: true,
+  });
+  resetDraftCache();
+}
+
+test("작성 완료를 누르면 프로필을 등록하고 완료 단계로 간다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json({ petId: 1, name: "코코" }, { status: 201 }));
+  vi.stubGlobal("fetch", fetchMock);
+  fillDraft();
+  renderAt("?step=health");
+
+  fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
+
+  // 이 단계는 건강 옵션도 함께 부른다. 등록 호출만 골라 본다
+  const register = () =>
+    fetchMock.mock.calls.find(([url]) => String(url).includes("/members/me/pets"));
+  await waitFor(() => expect(register()).toBeDefined());
+
+  const [, init] = register() as [string, RequestInit];
+  expect(init.method).toBe("POST");
+  expect(JSON.parse(String(init.body))).toMatchObject({
+    name: "코코",
+    sex: "FEMALE",
+    species: "DOG",
+    breedId: 1,
+    bcs: 3,
+  });
+});
+
+// 지우면 여섯 단계를 처음부터 다시 채워야 한다
+test("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({}, { status: 500 })));
+  fillDraft();
+  renderAt("?step=health");
+
+  fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
+
+  await waitFor(() => expect(getDraft().name).toBe("코코"));
+  expect(screen.getByRole("button", { name: "작성 완료" })).toBeDefined();
 });

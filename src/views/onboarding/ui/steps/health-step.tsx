@@ -17,9 +17,11 @@ type HealthStepProps = {
   onChange: (patch: Partial<PetProfileDraft>) => void;
   onPrev: () => void;
   onSubmit: () => void;
+  /** 등록 요청이 도는 중. 두 번 눌러 두 마리가 등록되는 것을 막는다 */
+  isSubmitting?: boolean;
 };
 
-export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProps) {
+export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: HealthStepProps) {
   // 갈래도 항목도 종마다 다르다. 고른 종의 것만 받는다
   const { options } = useQueryHealthOptions(draft.species);
 
@@ -95,7 +97,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
         <Button variant="secondary" onClick={onPrev}>
           이전
         </Button>
-        <Button disabled={!concernAnswered || !allergyAnswered} onClick={onSubmit}>
+        <Button disabled={!concernAnswered || !allergyAnswered || isSubmitting} onClick={onSubmit}>
           작성 완료
         </Button>
       </BottomActionBar>

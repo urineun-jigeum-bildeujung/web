@@ -11,6 +11,9 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
 import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
 import {
   clearDraft,
@@ -19,7 +22,9 @@ import {
   setDraft,
   subscribeDraft,
 } from "../model/draft-storage";
+import { useMutateRegisterPet } from "../api/use-mutate-register-pet";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
+import { toRegisterRequest } from "../model/to-register-request";
 import { BasicStep } from "./steps/basic-step";
 import { DetailStep } from "./steps/detail-step";
 import { DoneStep } from "./steps/done-step";
@@ -42,6 +47,7 @@ export function OnboardingView() {
   const draft = useSyncExternalStore(subscribeDraft, getDraft, getDraftOnServer);
 
   const patch = (next: Partial<PetProfileDraft>) => setDraft({ ...draft, ...next });
+  const { registerPet, isSubmitting } = useMutateRegisterPet();
   const progress = getStepProgress(step);
 
   const pickBreed = (breed: SpeciesBreed) => {
@@ -62,6 +68,25 @@ export function OnboardingView() {
   const finish = (next: () => void) => {
     clearDraft();
     next();
+  };
+
+  /**
+   * 마지막 단계의 "작성 완료". 여기서 프로필이 서버에 등록된다.
+   *
+   * **실패하면 초안을 지우지 않는다.** 지우면 여섯 단계를 처음부터 다시 채워야 한다.
+   * 완료 화면으로도 보내지 않는다 — 등록되지 않았는데 됐다고 알리는 셈이다.
+   */
+  const submit = () => {
+    const request = toRegisterRequest(draft);
+    if (!request) {
+      // 단계마다 다음 버튼이 막고 있어 여기까지 오면 화면이 못 잡은 값이다
+      toastAppError(APP_MESSAGE_CODE.common.invalidInput);
+      return;
+    }
+
+    registerPet(request)
+      .then(() => void setStep("done"))
+      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
   };
 
   return (
@@ -102,7 +127,8 @@ export function OnboardingView() {
           draft={draft}
           onChange={patch}
           onPrev={() => void setStep("detail")}
-          onSubmit={() => void setStep("done")}
+          onSubmit={submit}
+          isSubmitting={isSubmitting}
         />
       )}
 
