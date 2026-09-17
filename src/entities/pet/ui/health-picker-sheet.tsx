@@ -33,8 +33,13 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
   // 시트 안에서 고르다 닫으면 되돌아가야 한다. 확정은 "선택 완료"에서만 한다
   const [picked, setPicked] = useState<string[]>(value);
 
-  const toggle = (item: string) =>
-    setPicked((prev) => (prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]));
+  const toggle = (value: string) =>
+    setPicked((prev) =>
+      prev.includes(value) ? prev.filter((picked) => picked !== value) : [...prev, value],
+    );
+
+  // 알레르기는 서버가 묶음 없이 줘서 한 묶음뿐이다. 탭이 하나면 고를 것이 없어 줄만 차지한다
+  const showTabs = groups.length > 1;
 
   return (
     <div className="flex flex-col gap-3 px-5 pb-4">
@@ -43,34 +48,36 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
       </DrawerHeader>
 
       <Tabs defaultValue={groups[0]?.label} className="gap-4">
-        {/* 갈래가 여섯이라 좁은 화면에서는 가로로 밀어 본다 */}
-        <TabsList
-          variant="line"
-          className="h-10 w-full [scrollbar-width:none] justify-start gap-0 overflow-x-auto p-0 [&::-webkit-scrollbar]:hidden"
-        >
-          {groups.map((group) => (
-            <TabsTrigger
-              key={group.label}
-              value={group.label}
-              className="h-8 min-w-11 flex-none px-2 text-label-medium-14 text-text-body-tertiary after:bottom-0 after:h-px data-active:font-bold data-active:text-foreground"
-            >
-              {group.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        {/* 갈래가 하나뿐이면 고를 것이 없다. 줄만 차지하고 탭으로 읽히기까지 한다 */}
+        {showTabs && (
+          <TabsList
+            variant="line"
+            className="h-10 w-full [scrollbar-width:none] justify-start gap-0 overflow-x-auto p-0 [&::-webkit-scrollbar]:hidden"
+          >
+            {groups.map((group) => (
+              <TabsTrigger
+                key={group.label}
+                value={group.label}
+                className="h-8 min-w-11 flex-none px-2 text-label-medium-14 text-text-body-tertiary after:bottom-0 after:h-px data-active:font-bold data-active:text-foreground"
+              >
+                {group.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        )}
 
         {groups.map((group) => (
           <TabsContent key={group.label} value={group.label}>
             {/* 여러 개를 고를 수 있어 라디오가 아니라 눌림 상태를 쓴다 */}
             <ul className="flex flex-wrap gap-3">
               {group.items.map((item) => {
-                const selected = picked.includes(item);
+                const selected = picked.includes(item.value);
                 return (
-                  <li key={item}>
+                  <li key={item.value}>
                     <button
                       type="button"
                       aria-pressed={selected}
-                      onClick={() => toggle(item)}
+                      onClick={() => toggle(item.value)}
                       // 시안의 칩은 36px이다. 탭 영역(44px)은 보이지 않는 테두리로 넓힌다
                       className={cn(
                         "relative flex h-9 items-center gap-1 rounded-full border px-3 text-label-medium-14 transition-colors after:absolute after:-inset-1",
@@ -82,7 +89,7 @@ function SheetBody({ title, groups, value, onConfirm }: SheetBodyProps) {
                     >
                       {/* 시안에는 없지만 색만으로 고른 것을 알리지 않는다. 색을 구분하기 어려운 사람도 안다 */}
                       {selected && <Icon name="check" className="size-4" />}
-                      {item}
+                      {item.label}
                     </button>
                   </li>
                 );

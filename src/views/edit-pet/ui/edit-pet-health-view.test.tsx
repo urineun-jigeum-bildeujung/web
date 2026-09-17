@@ -4,6 +4,36 @@ import { expect, test, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
+// 선택지 조회는 가짜로 둔다. 무엇을 보내고 어떻게 옮기는지는 `entities/pet/api/health-options.test.ts`가 본다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryHealthOptions: () => ({
+    options: {
+      concerns: [
+        {
+          label: "관절·뼈",
+          items: [
+            { value: "슬개골 탈구", label: "슬개골 탈구" },
+            { value: "관절염", label: "관절염" },
+          ],
+        },
+        { label: "체중·대사", items: [{ value: "과체중·비만", label: "과체중·비만" }] },
+      ],
+      allergies: [
+        {
+          label: "알레르기",
+          items: [
+            { value: "CHICKEN", label: "닭고기" },
+            { value: "DAIRY", label: "유제품" },
+          ],
+        },
+      ],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { EditPetHealthView } from "./edit-pet-health-view";
 
 function submitButton() {
