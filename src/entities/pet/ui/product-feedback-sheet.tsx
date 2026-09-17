@@ -182,7 +182,7 @@ export function ProductFeedbackSheet({
                         "flex size-13 items-center justify-center rounded-full border-2",
                         selected
                           ? "border-brand bg-surface-brand-weak"
-                          : "border-transparent bg-bg-secondary",
+                          : "border-transparent bg-surface-secondary",
                       )}
                     >
                       <Icon
