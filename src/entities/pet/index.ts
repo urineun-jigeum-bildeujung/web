@@ -9,19 +9,20 @@ export { PetSwitcher, type PetSummary } from "./ui/pet-switcher";
 export {
   BODY_TYPE_GUIDE,
   BODY_TYPE_OPTIONS,
-  BREEDS,
   DEFAULT_BODY_TYPE_INDEX,
   EMPTY_PROFILE_DRAFT,
-  findSpecies,
   GENDER_OPTIONS,
   NEUTERED_OPTIONS,
   PET_SPECIES,
   SIZE_GUIDE,
   SIZE_OPTIONS,
   SPECIES_LABEL,
+  SPECIES_PARAM,
   type PetProfileDraft,
   type PetSpecies,
 } from "./model/breeds";
+export { getBreeds, type Breed, type SpeciesBreed } from "./api/breeds";
+export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";
 export { HealthPickerField } from "./ui/health-picker-field";
 export { ALLERGY_GROUPS, CONCERN_GROUPS, type HealthGroup } from "./model/health";

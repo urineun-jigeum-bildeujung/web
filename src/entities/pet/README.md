@@ -11,13 +11,14 @@
 | `ui/size-guide.tsx` | 체구를 몇 kg으로 가르는지 보이는 물음표 말풍선 (`onbo_003_체구툴팁`) |
 | `ui/body-type-guide.test.tsx` | 다섯 단계가 이름만이 아니라 설명까지 읽히는지 본다 |
 | `ui/breed-picker.tsx` | 품종 목록. 검색 전에는 종별 전체, 검색 중에는 걸러진 것 (`onbo_011_품종선택`) |
-| `ui/breed-picker.test.tsx` | 종별 묶음·검색·기타 구분 |
+| `ui/breed-picker.test.tsx` | 종별 묶음·검색·같은 이름을 id로 가르기 |
 | `ui/breed-picker-step.tsx` | 품종 고르기 화면. 머리말·검색창·목록. 줄을 누르면 바로 확정. 온보딩과 정보 수정이 함께 쓴다 |
-| `ui/breed-picker-step.test.tsx` | 검색이 목록을 거르고 줄을 누르면 종과 함께 넘어가는지 본다 |
+| `ui/breed-picker-step.test.tsx` | 두 종을 각각 불러 합치는지, 검색·불러오는 중·실패 |
+| `api/breeds.ts` | 품종 조회 요청 함수와 `Breed`·`SpeciesBreed` 타입 |
+| `api/use-query-breeds.ts` | 강아지·고양이를 함께 받아 한 목록으로 펴는 훅 |
 | `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다 (`mypa_021`, 리뷰 작성, 메인 홈화면) |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다 |
-| `model/breeds.ts` | 품종 목록, 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입 |
-| `model/breeds.test.ts` | 품종으로 종을 되찾는 규칙과 목록 개수 |
+| `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터 |
 | `model/health.test.ts` | 질환 갈래가 종별로 갈리는지 |
 | `ui/health-picker-sheet.tsx` | 건강 관심사·알러지 성분을 탭으로 나눠 고르는 시트 (`onbo_004_바텀`) |
 | `ui/health-picker-field.tsx` | 그 시트를 여는 자리. 고른 것을 칩으로 되보인다 (`onbo_004`·`mypa_321`) |
@@ -39,3 +40,9 @@
 **질환 갈래는 종별로 다르다.** 기능명세서 v0.4 `데이터 구조`가 정본이고 강아지 11갈래 · 고양이 12갈래다. `CONCERN_GROUPS[species]`로 꺼내 쓴다 — 고양이에게 `십자인대 질환`을, 강아지에게 `헤어볼`을 보이면 "우리 아이 기준"이라는 전제가 무너진다.
 
 **알러지는 아직 더미다.** 확정 데이터가 코드 체계(`CHICKEN`·`WHEAT_GLUTEN`)라 문자열로 옮기면 계약이 정해질 때 다시 만든다.
+
+**품종은 서버가 준 id로 다룬다.** 등록 API(`POST /members/me/pets`)가 이름이 아니라 `breedId`를 받는다. 그래서 목록을 하드코딩할 수 없고 `GET /pets/breeds`로 받는다. 초안에는 `breedId`와 함께 화면에 보일 `breedName`을 둔다 — 목록을 다시 받기 전에도 고른 품종이 보여야 한다.
+
+**종을 되찾는 함수가 필요 없어졌다.** "기타"가 양쪽 목록에 다 있어 이름만으로는 어느 종인지 가릴 수 없었고, 그래서 `findSpecies(breed, hint)`를 두고 있었다. id는 종마다 다르므로 그 모호함이 사라진다.
+
+**품종 조회를 두 번 부른다.** API가 `species`를 필수로 받는데 품종 화면은 두 종을 한 번에 보이고 검색도 양쪽을 훑는다. 종마다 캐시가 따로 잡혀 한쪽이 실패해도 다른 쪽은 살아 있다.

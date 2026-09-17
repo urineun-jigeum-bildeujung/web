@@ -21,7 +21,9 @@ import { EditPetScreen } from "./edit-pet-screen";
 const SAVED = {
   name: "코코",
   species: "dog" as PetSpecies,
-  breed: "말티즈",
+  // 품종은 서버 id로 다룬다. 저장 API가 붙으면 상세 조회의 breedId·breedName이 들어온다
+  breedId: 1,
+  breedName: "말티즈",
   age: "4세",
   birthday: "",
   gender: "female",
@@ -37,9 +39,10 @@ export function EditPetBasicView() {
   // 품종 고르기는 별도 라우트로 나가지 않는다. 나가면 이 화면이 언마운트되어
   // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
   const [picking, setPicking] = useQueryState("picking");
-  const [breed, setBreed] = useState(SAVED.breed);
-  // 품종과 함께 저장 API로 보낼 값. 화면에서는 품종 목록의 현재 줄을 가릴 때만 쓴다
-  const [species, setSpecies] = useState(SAVED.species);
+  const [breedId, setBreedId] = useState(SAVED.breedId);
+  const [breedName, setBreedName] = useState(SAVED.breedName);
+  // 품종과 함께 저장 API로 보낼 값. 품종을 고르면 종도 함께 정해진다
+  const [, setSpecies] = useState(SAVED.species);
   const [name, setName] = useState(SAVED.name);
   const [age, setAge] = useState(SAVED.age);
   const [birthday, setBirthday] = useState(SAVED.birthday);
@@ -53,11 +56,11 @@ export function EditPetBasicView() {
             router.back()은 이 화면을 아예 벗어난다 — nuqs가 쿼리를
             replace로 넣어 picking이 히스토리에 쌓이지 않기 때문이다. */}
         <BreedPickerStep
-          value={breed}
-          species={species}
-          onConfirm={(next, nextSpecies) => {
-            setBreed(next);
-            setSpecies(nextSpecies);
+          value={breedId}
+          onConfirm={(next) => {
+            setBreedId(next.id);
+            setBreedName(next.breedName);
+            setSpecies(next.species);
             void setPicking(null);
           }}
           onCancel={() => void setPicking(null)}
@@ -91,10 +94,10 @@ export function EditPetBasicView() {
           <button
             type="button"
             onClick={() => void setPicking("breed")}
-            aria-label={`품종 고르기. 지금은 ${breed}`}
+            aria-label={`품종 고르기. 지금은 ${breedName}`}
             className="flex min-h-11 items-center justify-between rounded-lg border border-border-secondary px-3 text-body-medium-14 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <span>{breed}</span>
+            <span>{breedName}</span>
             <Icon name="right" className="text-icon-stroke-default" />
           </button>
         </div>

@@ -4,6 +4,8 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps, ReactNode } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
+
 import { resetDraftCache } from "../model/draft-storage";
 import { OnboardingView } from "./onboarding-view";
 
@@ -31,7 +33,10 @@ beforeEach(() => {
 });
 
 function renderAt(search: string, children: ReactNode = <OnboardingView />) {
-  return render(<NuqsTestingAdapter searchParams={search}>{children}</NuqsTestingAdapter>);
+  // 품종 단계가 서버에서 목록을 받는다(#226). Provider가 없으면 그 단계 렌더에서 죽는다
+  return render(<NuqsTestingAdapter searchParams={search}>{children}</NuqsTestingAdapter>, {
+    wrapper: createQueryWrapper(),
+  });
 }
 
 test("기본은 도입부를 보여준다", () => {
