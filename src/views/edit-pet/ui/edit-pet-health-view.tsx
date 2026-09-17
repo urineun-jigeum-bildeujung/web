@@ -8,7 +8,7 @@
 
 import { useState } from "react";
 
-import { ALLERGY_GROUPS, CONCERN_GROUPS, HealthPickerField, type PetSpecies } from "@/entities/pet";
+import { HealthPickerField, useQueryHealthOptions, type PetSpecies } from "@/entities/pet";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 
 import { EditPetScreen } from "./edit-pet-screen";
@@ -33,6 +33,8 @@ const SAVED: SavedHealth = {
 };
 
 export function EditPetHealthView() {
+  // 갈래도 항목도 종마다 다르다. 저장된 아이의 종으로 받는다
+  const { options } = useQueryHealthOptions(SAVED.species);
   const [concern, setConcern] = useState(SAVED.concern);
   const [noConcern, setNoConcern] = useState(SAVED.noConcern);
   const [allergy, setAllergy] = useState(SAVED.allergy);
@@ -57,7 +59,7 @@ export function EditPetHealthView() {
           </div>
           <HealthPickerField
             title="걱정되는 질환"
-            groups={CONCERN_GROUPS[SAVED.species]}
+            groups={options?.concerns ?? []}
             value={concern}
             onChange={setConcern}
             disabled={noConcern}
@@ -84,7 +86,7 @@ export function EditPetHealthView() {
           <div className="flex flex-col gap-2">
             <HealthPickerField
               title="피해야 할 성분"
-              groups={ALLERGY_GROUPS}
+              groups={options?.allergies ?? []}
               value={allergy}
               onChange={setAllergy}
               disabled={noAllergy}

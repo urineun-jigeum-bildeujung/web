@@ -4,6 +4,36 @@ import { describe, expect, test, vi } from "vitest";
 
 import { EMPTY_PROFILE_DRAFT } from "@/entities/pet";
 
+// 선택지 조회는 가짜로 둔다. 무엇을 보내고 어떻게 옮기는지는 `entities/pet/api/health-options.test.ts`가 본다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryHealthOptions: () => ({
+    options: {
+      concerns: [
+        {
+          label: "관절·뼈",
+          items: [
+            { value: "슬개골 탈구", label: "슬개골 탈구" },
+            { value: "관절염", label: "관절염" },
+          ],
+        },
+        { label: "체중·대사", items: [{ value: "과체중·비만", label: "과체중·비만" }] },
+      ],
+      allergies: [
+        {
+          label: "알레르기",
+          items: [
+            { value: "CHICKEN", label: "닭고기" },
+            { value: "DAIRY", label: "유제품" },
+          ],
+        },
+      ],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { HealthStep } from "./health-step";
 
 function renderWith(patch: Partial<typeof EMPTY_PROFILE_DRAFT>, onChange = vi.fn()) {
@@ -69,8 +99,17 @@ describe("고르는 자리", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "피해야 할 성분" }));
 
-    // 알러지 쪽 시트라 성분 계열 탭이 뜬다
-    expect(screen.getByRole("tab", { name: "육류" })).toBeDefined();
+    // 알러지 쪽 시트라 성분이 뜨고 질환 갈래는 없다
+    expect(screen.getByRole("button", { name: "닭고기" })).toBeDefined();
     expect(screen.queryByRole("tab", { name: "관절·뼈" })).toBeNull();
+  });
+
+  // 서버가 알레르기를 묶음 없이 줘서 탭이 하나뿐이다. 고를 것이 없는 탭 줄은 자리만 차지한다
+  test("알러지 시트에는 탭 줄이 보이지 않는다", () => {
+    renderWith({});
+
+    fireEvent.click(screen.getByRole("button", { name: "피해야 할 성분" }));
+
+    expect(screen.queryByRole("tab")).toBeNull();
   });
 });

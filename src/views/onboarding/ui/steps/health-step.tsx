@@ -7,12 +7,7 @@
 
 "use client";
 
-import {
-  ALLERGY_GROUPS,
-  CONCERN_GROUPS,
-  HealthPickerField,
-  type PetProfileDraft,
-} from "@/entities/pet";
+import { HealthPickerField, useQueryHealthOptions, type PetProfileDraft } from "@/entities/pet";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
@@ -25,6 +20,9 @@ type HealthStepProps = {
 };
 
 export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProps) {
+  // 갈래도 항목도 종마다 다르다. 고른 종의 것만 받는다
+  const { options } = useQueryHealthOptions(draft.species);
+
   // 골랐거나 "해당 없음"을 켰거나, 두 항목 모두 답이 있어야 넘어간다
   const concernAnswered = draft.concern.length > 0 || draft.noConcern;
   const allergyAnswered = draft.allergy.length > 0 || draft.noAllergy;
@@ -48,7 +46,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
             </div>
             <HealthPickerField
               title="걱정되는 질환"
-              groups={CONCERN_GROUPS[draft.species]}
+              groups={options?.concerns ?? []}
               value={draft.concern}
               onChange={(concern) => onChange({ concern })}
               disabled={draft.noConcern}
@@ -72,7 +70,7 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit }: HealthStepProp
             <div className="flex flex-col gap-2">
               <HealthPickerField
                 title="피해야 할 성분"
-                groups={ALLERGY_GROUPS}
+                groups={options?.allergies ?? []}
                 value={draft.allergy}
                 onChange={(allergy) => onChange({ allergy })}
                 disabled={draft.noAllergy}
