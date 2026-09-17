@@ -66,7 +66,10 @@ function normalize(raw: unknown): PetProfileDraft {
     gender: oneOf(saved.gender, GENDER_OPTIONS),
     neutered: oneOf(saved.neutered, NEUTERED_OPTIONS),
     species: PET_SPECIES.find((item) => item === saved.species) ?? EMPTY_PROFILE_DRAFT.species,
-    breed: text("breed"),
+    // 품종은 서버 id로 바뀌었다(#226). 옛 초안은 이름 문자열만 들고 있어 id를 만들 수 없다.
+    // 품종만 비우고 나머지는 살린다 — 6단계를 처음부터 돌게 하지 않는다
+    breedId: typeof saved.breedId === "number" ? saved.breedId : null,
+    breedName: typeof saved.breedId === "number" ? text("breedName") : "",
     age: text("age"),
     birthday: text("birthday"),
     size: oneOf(saved.size, SIZE_OPTIONS),

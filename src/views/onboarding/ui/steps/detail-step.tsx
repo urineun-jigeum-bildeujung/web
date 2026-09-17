@@ -33,7 +33,7 @@ export function DetailStep({
   onNext,
 }: DetailStepProps) {
   // 체구를 골라야 몸무게·체질 항목이 나타난다. 시안 onbo_003_체구선택후.
-  const canProceed = Boolean(draft.breed && draft.size && draft.weight);
+  const canProceed = Boolean(draft.breedId && draft.size && draft.weight);
   const who = draft.name || "아이";
 
   return (
@@ -48,13 +48,15 @@ export function DetailStep({
             <button
               type="button"
               onClick={onOpenBreedPicker}
-              aria-label={draft.breed ? `품종 고르기. 지금은 ${draft.breed}` : "품종 고르기"}
+              aria-label={
+                draft.breedName ? `품종 고르기. 지금은 ${draft.breedName}` : "품종 고르기"
+              }
               className={cn(
                 "flex min-h-11 items-center justify-between rounded-lg border bg-background px-3 text-body-medium-14 text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                draft.breed ? "border-border-secondary" : "border-border",
+                draft.breedName ? "border-border-secondary" : "border-border",
               )}
             >
-              <span>{draft.breed}</span>
+              <span>{draft.breedName}</span>
               <Icon name="right" className="text-icon-stroke-tertiary" />
             </button>
           </div>

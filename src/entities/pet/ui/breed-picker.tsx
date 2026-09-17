@@ -5,17 +5,18 @@
 
 import { cn } from "@/shared/lib/utils";
 
-import { BREEDS, PET_SPECIES, SPECIES_LABEL, type PetSpecies } from "../model/breeds";
+import type { SpeciesBreed } from "../api/breeds";
+import { PET_SPECIES, SPECIES_LABEL, type PetSpecies } from "../model/breeds";
 
 type BreedPickerProps = {
+  /** 두 종을 편 목록. 서버에서 받은 그대로다 */
+  breeds: SpeciesBreed[];
   /** 검색어. 비어 있으면 전체 목록이다 */
   query: string;
-  /** 지금 골라 둔 품종. 목록에서 표시만 하고 고르는 것은 막지 않는다 */
-  current?: string;
-  /** 골라 둔 품종의 종. "기타"는 양쪽 목록에 다 있어 이름만으로는 어느 줄인지 가를 수 없다 */
-  currentSpecies?: PetSpecies;
+  /** 지금 골라 둔 품종의 id. 목록에서 표시만 하고 고르는 것은 막지 않는다 */
+  currentId?: number | null;
   /** 줄을 누르면 바로 확정된다. 시안에 확인 버튼이 없다 */
-  onPick: (breed: string, species: PetSpecies) => void;
+  onPick: (breed: SpeciesBreed) => void;
   className?: string;
 };
 
@@ -24,36 +25,31 @@ function normalize(text: string) {
   return text.replace(/\s+/g, "").toLowerCase();
 }
 
-/** "기타"처럼 양쪽 목록에 다 있는 이름. 검색 결과에서는 종을 덧붙여 가른다 */
-function isShared(breed: string) {
-  return PET_SPECIES.every((species) => BREEDS[species].includes(breed));
-}
-
 type RowProps = {
-  breed: string;
-  species: PetSpecies;
+  breed: SpeciesBreed;
   current: boolean;
+  /** "기타"처럼 양쪽에 다 있는 이름은 종을 덧붙여 가른다 */
   showSpecies: boolean;
-  onPick: (breed: string, species: PetSpecies) => void;
+  onPick: (breed: SpeciesBreed) => void;
 };
 
-function Row({ breed, species, current, showSpecies, onPick }: RowProps) {
+function Row({ breed, current, showSpecies, onPick }: RowProps) {
   return (
     <li>
       <button
         type="button"
         aria-current={current || undefined}
-        onClick={() => onPick(breed, species)}
+        onClick={() => onPick(breed)}
         className={cn(
           "flex min-h-11 w-full items-center gap-1 text-left text-body-medium-16 text-foreground transition-colors",
           "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           current && "font-bold",
         )}
       >
-        {breed}
+        {breed.breedName}
         {showSpecies && (
           <span className="text-caption-regular-13 text-text-body-tertiary">
-            {SPECIES_LABEL[species]}
+            {SPECIES_LABEL[breed.species]}
           </span>
         )}
       </button>
@@ -61,21 +57,16 @@ function Row({ breed, species, current, showSpecies, onPick }: RowProps) {
   );
 }
 
-export function BreedPicker({
-  query,
-  current,
-  currentSpecies,
-  onPick,
-  className,
-}: BreedPickerProps) {
+export function BreedPicker({ breeds, query, currentId, onPick, className }: BreedPickerProps) {
   const keyword = normalize(query);
 
+  /** 같은 이름이 두 종에 다 있는가. 검색 결과에서만 종을 덧붙인다 */
+  const isShared = (name: string) =>
+    new Set(breeds.filter((breed) => breed.breedName === name).map((breed) => breed.species)).size >
+    1;
+
   if (keyword) {
-    const matched = PET_SPECIES.flatMap((species) =>
-      BREEDS[species]
-        .filter((breed) => normalize(breed).includes(keyword))
-        .map((breed) => ({ breed, species })),
-    );
+    const matched = breeds.filter((breed) => normalize(breed.breedName).includes(keyword));
 
     if (matched.length === 0) {
       return (
@@ -87,13 +78,12 @@ export function BreedPicker({
 
     return (
       <ul className={cn("mx-5 divide-y divide-border", className)}>
-        {matched.map(({ breed, species }) => (
+        {matched.map((breed) => (
           <Row
-            key={`${species}-${breed}`}
+            key={breed.id}
             breed={breed}
-            species={species}
-            current={current === breed && currentSpecies === species}
-            showSpecies={isShared(breed)}
+            current={currentId === breed.id}
+            showSpecies={isShared(breed.breedName)}
             onPick={onPick}
           />
         ))}
@@ -103,7 +93,7 @@ export function BreedPicker({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      {PET_SPECIES.map((species) => (
+      {PET_SPECIES.map((species: PetSpecies) => (
         // 같은 이름의 품종이 양쪽에 있다("기타"). 묶음에 이름을 붙여
         // 스크린 리더가 어느 종의 목록인지 알 수 있게 한다
         <section key={species} aria-labelledby={`breed-${species}`}>
@@ -114,16 +104,17 @@ export function BreedPicker({
             {SPECIES_LABEL[species]}
           </h2>
           <ul className="mx-5 divide-y divide-border">
-            {BREEDS[species].map((breed) => (
-              <Row
-                key={breed}
-                breed={breed}
-                species={species}
-                current={current === breed && currentSpecies === species}
-                showSpecies={false}
-                onPick={onPick}
-              />
-            ))}
+            {breeds
+              .filter((breed) => breed.species === species)
+              .map((breed) => (
+                <Row
+                  key={breed.id}
+                  breed={breed}
+                  current={currentId === breed.id}
+                  showSpecies={false}
+                  onPick={onPick}
+                />
+              ))}
           </ul>
         </section>
       ))}

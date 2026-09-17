@@ -7,26 +7,32 @@
 "use client";
 
 import { useState } from "react";
+
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE, type AppMessage } from "@/shared/config/app-message";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
-import type { PetSpecies } from "../model/breeds";
+import type { SpeciesBreed } from "../api/breeds";
+import { useQueryBreeds } from "../api/use-query-breeds";
 import { BreedPicker } from "./breed-picker";
 
 type BreedPickerStepProps = {
-  /** 지금 골라 둔 품종. 목록에서 표시한다 */
-  value: string;
-  /** 골라 둔 품종의 종. 같은 이름("기타")이 양쪽에 있어 함께 받아야 한 줄만 표시한다 */
-  species: PetSpecies;
-  /** 줄을 누르면 품종과 그 종을 함께 넘긴다. 시안에 확인 버튼이 없어 바로 확정이다 */
-  onConfirm: (breed: string, species: PetSpecies) => void;
+  /** 지금 골라 둔 품종의 id. 목록에서 표시한다 */
+  value: number | null;
+  /** 줄을 누르면 고른 품종을 통째로 넘긴다. 시안에 확인 버튼이 없어 바로 확정이다 */
+  onConfirm: (breed: SpeciesBreed) => void;
   /** 머리말의 뒤로가기 */
   onCancel: () => void;
 };
 
-export function BreedPickerStep({ value, species, onConfirm, onCancel }: BreedPickerStepProps) {
+export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepProps) {
   const [query, setQuery] = useState("");
+  const { breeds, isLoading, error } = useQueryBreeds();
+
+  const message: AppMessage | null = error ? APP_MESSAGE[toAppMessageCode(error)] : null;
 
   return (
     <>
@@ -45,7 +51,19 @@ export function BreedPickerStep({ value, species, onConfirm, onCancel }: BreedPi
       </div>
 
       <main className="flex-1 overflow-y-auto pt-5 pb-4">
-        <BreedPicker query={query} current={value} currentSpecies={species} onPick={onConfirm} />
+        {message ? (
+          <EmptyState role="alert" {...message} />
+        ) : isLoading ? (
+          // 목록이 오기 전에는 검색창만 있고 아래가 빈다. 왜 비었는지 알려 준다
+          <p
+            role="status"
+            className="px-5 text-center text-body-medium-14 text-text-body-secondary"
+          >
+            품종을 불러오는 중이에요
+          </p>
+        ) : (
+          <BreedPicker breeds={breeds} query={query} currentId={value} onPick={onConfirm} />
+        )}
       </main>
     </>
   );

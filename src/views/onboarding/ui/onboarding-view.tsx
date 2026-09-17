@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
-import { BreedPickerStep, type PetProfileDraft, type PetSpecies } from "@/entities/pet";
+import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
 import {
   clearDraft,
@@ -44,11 +44,16 @@ export function OnboardingView() {
   const patch = (next: Partial<PetProfileDraft>) => setDraft({ ...draft, ...next });
   const progress = getStepProgress(step);
 
-  const pickBreed = (breed: string, species: PetSpecies) => {
+  const pickBreed = (breed: SpeciesBreed) => {
     // 종이 바뀌면 앞서 고른 질환은 그 종의 갈래에 없는 것이 된다.
     // 강아지로 고른 "슬개골 탈구"가 고양이 프로필에 남으면 추천 근거가 거짓이 된다
-    const speciesChanged = species !== draft.species;
-    patch({ breed, species, ...(speciesChanged && { concern: [] }) });
+    const speciesChanged = breed.species !== draft.species;
+    patch({
+      breedId: breed.id,
+      breedName: breed.breedName,
+      species: breed.species,
+      ...(speciesChanged && { concern: [] }),
+    });
     void setStep("detail");
   };
 
@@ -86,8 +91,7 @@ export function OnboardingView() {
 
       {step === "breed" && (
         <BreedPickerStep
-          value={draft.breed}
-          species={draft.species}
+          value={draft.breedId}
           onConfirm={pickBreed}
           onCancel={() => void setStep("detail")}
         />

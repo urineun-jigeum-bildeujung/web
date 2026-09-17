@@ -14,13 +14,20 @@ beforeEach(() => {
 
 describe("저장과 복원", () => {
   it("저장한 것이 다시 읽힌다", () => {
-    setDraft({ ...EMPTY_PROFILE_DRAFT, name: "코코", species: "cat", breed: "먼치킨" });
+    setDraft({
+      ...EMPTY_PROFILE_DRAFT,
+      name: "코코",
+      species: "cat",
+      breedId: 40,
+      breedName: "먼치킨",
+    });
     resetDraftCache();
 
     const loaded = getDraft();
     expect(loaded.name).toBe("코코");
     expect(loaded.species).toBe("cat");
-    expect(loaded.breed).toBe("먼치킨");
+    expect(loaded.breedId).toBe(40);
+    expect(loaded.breedName).toBe("먼치킨");
   });
 
   it("저장된 것이 없으면 빈 초안이다", () => {
