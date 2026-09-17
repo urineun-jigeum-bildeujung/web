@@ -25,7 +25,7 @@ describe("RecommendationsView", () => {
     renderWith("?pet=2");
 
     // 점수만 보여주면 누구 기준인지 알 수 없다
-    expect(screen.getAllByText(/봄이와 잘 맞아요/)[0]).toBeDefined();
+    expect(screen.getAllByText(/봄이와 적합도 \d+점/)[0]).toBeDefined();
   });
 
   it("무엇을 근거로 골랐는지 알린다", () => {

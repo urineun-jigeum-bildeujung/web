@@ -30,34 +30,24 @@ describe("getMatchLevel", () => {
 });
 
 describe("MatchScoreBadge", () => {
-  test("점수를 보여준다", () => {
+  test("적합도 N점을 보여준다", () => {
     render(<MatchScoreBadge score={92} />);
-    expect(screen.getByText("92")).toBeDefined();
+    expect(screen.getByText("적합도 92점")).toBeDefined();
   });
 
-  test("색만으로 구분하지 않도록 구간 문구를 함께 읽힌다", () => {
+  test("이름을 넘기면 스크린 리더 문구에 누구 기준인지 함께 읽힌다", () => {
     render(<MatchScoreBadge score={92} petName="코코" />);
-    expect(screen.getByText("코코와 잘 맞아요. 적합도 92점")).toBeDefined();
+    expect(screen.getByText("코코와 적합도 92점")).toBeDefined();
   });
 
   test("이름이 없으면 우리 아이로 읽는다", () => {
     render(<MatchScoreBadge score={45} />);
-    expect(screen.getByText("우리 아이와 확인이 필요해요. 적합도 45점")).toBeDefined();
+    expect(screen.getByText("우리 아이와 적합도 45점")).toBeDefined();
   });
 
-  test("점수가 없으면 숫자 자리를 비우고 정보 확인 중만 보인다", () => {
+  // 검색 결과(#119)는 영양 정보 미등록 상품에 "정보 확인 중"을 보여주기로 정했다
+  test("점수가 없으면 정보 확인 중을 보여준다", () => {
     render(<MatchScoreBadge score={null} />);
-
     expect(screen.getByText("정보 확인 중")).toBeDefined();
-    // 0이 점수처럼 보이면 안 된다
-    expect(screen.queryByText("0")).toBeNull();
-  });
-
-  test("점수가 없다는 것을 스크린 리더도 안다", () => {
-    render(<MatchScoreBadge score={null} petName="코코" />);
-
-    expect(
-      screen.getByText("코코와 얼마나 맞는지 아직 알 수 없어요. 상품 정보를 확인하는 중입니다"),
-    ).toBeDefined();
   });
 });

@@ -221,9 +221,7 @@ export function SearchResultView() {
                     name={product.name}
                     price={product.price}
                     originalPrice={product.originalPrice}
-                    imageBadge={
-                      <MatchScoreBadge score={product.matchScore} petName={PET_NAME} size="sm" />
-                    }
+                    imageBadge={<MatchScoreBadge score={product.matchScore} petName={PET_NAME} />}
                     meta={
                       <>
                         <p className="text-xs text-muted-foreground">
