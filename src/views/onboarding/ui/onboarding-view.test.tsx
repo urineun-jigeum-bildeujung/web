@@ -223,3 +223,44 @@ test("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다"
   await waitFor(() => expect(getDraft().name).toBe("코코"));
   expect(screen.getByRole("button", { name: "작성 완료" })).toBeDefined();
 });
+
+// 잘못 적은 값이 조용히 빠지면 사용자는 적었으니 저장된 줄 안다.
+// 그대로 나가면 서버가 본문을 통째로 거절하기까지 한다
+test("몸무게에 숫자가 아닌 것은 들어가지 않는다", () => {
+  setDraft({ ...EMPTY_PROFILE_DRAFT, breedId: 1, breedName: "말티즈", size: "small" });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  fireEvent.change(screen.getByLabelText("대략적인 몸무게"), { target: { value: "4키로" } });
+
+  expect((screen.getByLabelText("대략적인 몸무게") as HTMLInputElement).value).toBe("4");
+});
+
+test("생년월일은 치는 대로 구분점이 붙는다", () => {
+  setDraft({ ...EMPTY_PROFILE_DRAFT, breedId: 1, breedName: "말티즈", size: "small" });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "20031029" } });
+
+  expect((screen.getByLabelText("생년월일") as HTMLInputElement).value).toBe("2003. 10. 29");
+});
+
+test("달력에 없는 날을 적으면 알리고 다음으로 못 간다", () => {
+  setDraft({
+    ...EMPTY_PROFILE_DRAFT,
+    breedId: 1,
+    breedName: "말티즈",
+    size: "small",
+    weight: "4.2",
+  });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  fireEvent.change(screen.getByLabelText("생년월일"), { target: { value: "20031092" } });
+
+  expect(screen.getByText("달력에 없는 날이에요")).toBeDefined();
+  expect(
+    (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+});

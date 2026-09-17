@@ -17,6 +17,9 @@ import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 
+import { digitsOnly, formatBirthday } from "../../model/input-guards";
+import { parseBirthDate, parseWeight } from "../../model/to-register-request";
+
 type DetailStepProps = {
   draft: PetProfileDraft;
   onChange: (patch: Partial<PetProfileDraft>) => void;
@@ -33,7 +36,16 @@ export function DetailStep({
   onNext,
 }: DetailStepProps) {
   // 체구를 골라야 몸무게·체질 항목이 나타난다. 시안 onbo_003_체구선택후.
-  const canProceed = Boolean(draft.breedId && draft.size && draft.weight);
+  // 숫자를 못 뽑으면 등록 요청을 만들지 못한다. 다음 단계로 보내 놓고 마지막에 막지 않는다
+  const weightError = draft.weight && parseWeight(draft.weight) === null;
+  // 생일은 선택이라 비어 있어도 되지만, 적었는데 달력에 없는 날이면 알린다.
+  // 그대로 보내면 서버가 본문을 통째로 거절한다
+  const birthdayError =
+    digitsOnly(draft.birthday).length === 8 && parseBirthDate(draft.birthday) === null;
+
+  const canProceed = Boolean(
+    draft.breedId && draft.size && draft.weight && !weightError && !birthdayError,
+  );
   const who = draft.name || "아이";
 
   return (
@@ -75,7 +87,7 @@ export function DetailStep({
                 placeholder="나이를 적어주세요"
                 inputMode="numeric"
                 value={draft.age}
-                onChange={(event) => onChange({ age: event.target.value })}
+                onChange={(event) => onChange({ age: digitsOnly(event.target.value) })}
               />
               <FormField
                 label="생년월일"
@@ -83,7 +95,8 @@ export function DetailStep({
                 placeholder="0000. 00. 00"
                 inputMode="numeric"
                 value={draft.birthday}
-                onChange={(event) => onChange({ birthday: event.target.value })}
+                error={birthdayError && "달력에 없는 날이에요"}
+                onChange={(event) => onChange({ birthday: formatBirthday(event.target.value) })}
               />
             </div>
           </div>
@@ -121,7 +134,10 @@ export function DetailStep({
                   placeholder="평균 몸무게 5kg"
                   inputMode="decimal"
                   value={draft.weight}
-                  onChange={(event) => onChange({ weight: event.target.value })}
+                  error={weightError && "숫자로 적어주세요"}
+                  onChange={(event) =>
+                    onChange({ weight: digitsOnly(event.target.value, { decimal: true }) })
+                  }
                   onClear={() => onChange({ weight: "" })}
                 />
               </div>
