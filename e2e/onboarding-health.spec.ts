@@ -1,7 +1,14 @@
 // 온보딩 건강 단계: 시트에서 갈래를 옮겨 여러 개를 고르고, 고른 것이 되보이는지 본다.
 import { expect, test } from "@playwright/test";
 
+import { stubPetCatalog } from "./fixtures/pet-catalog";
+
 const PATH = "/onboarding?step=health";
+
+// 품종·건강 옵션이 서버에서 온다(#226). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
+test.beforeEach(async ({ page }) => {
+  await stubPetCatalog(page);
+});
 
 test("갈래를 옮기면 그 갈래의 항목이 나온다", async ({ page }) => {
   await page.goto(PATH);
@@ -44,14 +51,16 @@ test("갈래를 넘나들며 고른 것이 함께 남는다", async ({ page }) =
   await expect(picker).toContainText("치석·플라그");
 });
 
-test("알러지는 성분 갈래로 나뉜다", async ({ page }) => {
+// 서버가 알레르기를 묶음 없이 줘서 갈래가 하나뿐이다. 고를 것이 없는 탭 줄은 그리지 않는다.
+// 저장은 코드(CHICKEN)로 하지만 화면에는 표시명이 보여야 한다
+test("알러지 시트는 탭 없이 성분을 표시명으로 보여준다", async ({ page }) => {
   await page.goto(PATH);
 
   await page.getByRole("button", { name: "피해야 할 성분" }).click();
 
-  await expect(page.getByRole("tab", { name: "육류" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "관절·뼈" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "닭고기" })).toBeVisible();
+  await expect(page.getByRole("tab")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "CHICKEN" })).toHaveCount(0);
 });
 
 test("해당 없음을 켜면 고를 수 없다", async ({ page }) => {
