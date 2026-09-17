@@ -2,6 +2,8 @@
 // 눈으로 훑을 때 놓치는 종류(하이드레이션 오류, 화면 폭 넘침)를 기계가 잡게 한다.
 import { expect, test } from "@playwright/test";
 
+import { stubPetCatalog } from "./fixtures/pet-catalog";
+
 /**
  * 화면이 바깥에 기대는 것을 끊는다.
  *
@@ -82,6 +84,11 @@ const ROUTES = [
   "/payment/done",
   "/dev",
 ];
+
+// 품종·건강 옵션이 서버에서 온다(#226). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
+test.beforeEach(async ({ page }) => {
+  await stubPetCatalog(page);
+});
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다
 test.use({ viewport: { width: 393, height: 852 } });
