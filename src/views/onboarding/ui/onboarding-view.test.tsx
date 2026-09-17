@@ -249,6 +249,28 @@ test("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다"
   expect(screen.queryByRole("button", { name: "홈으로 가기" })).toBeNull();
 });
 
+// 입력 단계가 달력에 없는 날을 막지만, 초안이 기기에 남아 `?step=health`로 바로
+// 들어오면 그 가드를 거치지 않는다. 생일을 뺀 채 등록되면 적은 사람은 저장된 줄 안다
+test("저장된 초안의 생일이 달력에 없는 날이면 등록하지 않고 그 칸으로 돌려보낸다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValue(Response.json({ petId: 1, name: "코코" }, { status: 201 }));
+  vi.stubGlobal("fetch", fetchMock);
+  fillDraft();
+  setDraft({ ...getDraft(), birthday: "2003. 10. 92" });
+  resetDraftCache();
+  renderAt("?step=health");
+
+  fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(
+    fetchMock.mock.calls.find(([url]) => String(url).includes("/members/me/pets")),
+  ).toBeUndefined();
+  // 고칠 칸이 있는 단계로 돌려보낸다
+  expect(screen.getByLabelText("생년월일")).toBeDefined();
+});
+
 // 잘못 적은 값이 조용히 빠지면 사용자는 적었으니 저장된 줄 안다.
 // 그대로 나가면 서버가 본문을 통째로 거절하기까지 한다
 test("몸무게에 숫자가 아닌 것은 들어가지 않는다", () => {
