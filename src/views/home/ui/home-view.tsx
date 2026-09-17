@@ -466,7 +466,7 @@ export function HomeView() {
                   // 보이는 크기는 시안대로 두고, 누르는 자리만 after:로 시안 프레임
                   // 높이(59px)만큼 확보한다. 글자 자체는 22px(line-height)라 위아래로
                   // (59-22)/2=18.5px씩 남긴다
-                  className="relative w-auto border-0 p-0 text-label-bold-14 shadow-none after:absolute after:inset-[-18.5px] data-[size=default]:h-auto"
+                  className="relative w-auto border-0 bg-transparent p-0 text-label-bold-14 shadow-none after:absolute after:inset-[-18.5px] data-[size=default]:h-auto dark:bg-transparent dark:hover:bg-transparent"
                 >
                   <SelectValue />
                 </SelectTrigger>
