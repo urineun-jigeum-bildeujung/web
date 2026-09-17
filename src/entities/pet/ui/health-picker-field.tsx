@@ -33,6 +33,11 @@ export function HealthPickerField({
   const [open, setOpen] = useState(false);
   const filled = !disabled && value.length > 0;
 
+  // 고른 값은 저장용이다. 알레르기는 `CHICKEN` 같은 코드라 그대로 찍으면 사람이 읽지 못한다.
+  // 목록에서 표시명을 되찾는다. 목록이 아직 안 왔거나 서버에서 빠진 항목이면 값을 그대로 보인다
+  const labelOf = (picked: string) =>
+    groups.flatMap((group) => group.items).find((item) => item.value === picked)?.label ?? picked;
+
   return (
     <>
       <button
@@ -55,12 +60,12 @@ export function HealthPickerField({
         <span className="flex flex-1 flex-wrap gap-1">
           {filled &&
             // 고른 것을 배지로 되보인다. 무엇을 골랐는지 시트를 다시 열지 않아도 안다
-            value.map((item) => (
+            value.map((picked) => (
               <span
-                key={item}
+                key={picked}
                 className="rounded-sm bg-surface-secondary px-1 py-0.5 text-label-bold-12 text-text-body-secondary"
               >
-                {item}
+                {labelOf(picked)}
               </span>
             ))}
         </span>
