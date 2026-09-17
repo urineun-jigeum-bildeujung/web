@@ -131,9 +131,11 @@ function SectionTitle({
     <div className={cn("flex items-center justify-between", className)}>
       <h2 className="text-title-bold-20 text-foreground">{children}</h2>
       {href && (
+        // 보이는 크기는 시안대로 두고, 누르는 자리만 after:로 44px 확보한다.
+        // min-h-11을 쓰면 이 줄 전체가 44px로 늘어나 제목과 격자 사이 간격이 밀린다
         <Link
           href={href}
-          className="flex min-h-11 items-center text-label-medium-14 text-text-body-tertiary"
+          className="relative text-label-medium-14 text-text-body-tertiary after:absolute after:-inset-2.75"
         >
           더보기
         </Link>
@@ -246,14 +248,16 @@ export function HomeView() {
               <div className="aspect-4/3 overflow-hidden rounded-lg bg-muted" />
               {/* 배너가 여럿임을 알리는 자리. 넘기는 것은 서버 데이터가 붙은 뒤에 잇는다.
                   시안(Frame 31)은 사진 박스가 아니라 padding을 포함한 이 섹션 기준
-                  bottom-[29.75px]다 — 테두리 없이 짙은 원 1개 + 흰 원 2개 */}
+                  bottom-[29.75px]다 — 테두리 없이 짙은 원 1개 + 옅은 원 2개.
+                  비선택 원은 라이트/다크 각각 surface/default(흰색/#141414)라 고정
+                  흰색이 아니라 모드에 따라 바뀌는 토큰(bg-background)을 쓴다 */}
               <span
                 aria-hidden
                 className="absolute bottom-[29.75px] left-1/2 flex -translate-x-1/2 gap-1"
               >
                 <span className="size-1.5 rounded-full bg-primary" />
-                <span className="size-1.5 rounded-full bg-icon-fill-static-white" />
-                <span className="size-1.5 rounded-full bg-icon-fill-static-white" />
+                <span className="size-1.5 rounded-full bg-background" />
+                <span className="size-1.5 rounded-full bg-background" />
               </span>
             </section>
 
