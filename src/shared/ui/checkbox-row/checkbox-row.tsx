@@ -1,9 +1,10 @@
-// 원형 체크박스와 레이블 한 줄. "해당 사항이 없어요" 같은 단일 확인부터 약관 동의 줄까지 쓴다.
-// UI 시안 기준(디자인 시스템 Checkbox 컴포넌트. onbo_004 두 곳, sign_001 로그인·약관 동의)이다.
+// 체크박스와 레이블 한 줄. "해당 사항이 없어요" 같은 단일 확인부터 약관 동의 줄까지 쓴다.
+// UI 시안 기준(디자인 시스템 Checkbox 컴포넌트. onbo_004 두 곳·sign_001 로그인·약관 동의는
+// 원형, 메인 상태 체크 시트(1758-69187)는 둥근 사각형)이다.
 //
-// 시안의 체크는 원이고 안 골랐을 때도 체크 모양이 회색으로 보인다. shadcn Checkbox는
-// 골랐을 때만 표시를 그리므로, 표시는 숨기고 체크 모양을 뒤에 따로 둔다. 골랐는지는
-// 원의 색과 aria-checked로 전한다. 보이는 크기는 시안대로 두고 누르는 자리만 44px로 넓힌다.
+// 안 골랐을 때도 체크 모양이 회색으로 보인다. shadcn Checkbox는 골랐을 때만 표시를
+// 그리므로, 표시는 숨기고 체크 모양을 뒤에 따로 둔다. 골랐는지는 배경색과
+// aria-checked로 전한다. 보이는 크기는 시안대로 두고 누르는 자리만 44px로 넓힌다.
 
 "use client";
 
@@ -15,7 +16,7 @@ import { Checkbox } from "@/shared/ui/checkbox";
 import { Icon } from "@/shared/ui/icon/icon";
 
 const checkVariants = cva(
-  "rounded-full border-0 bg-surface-disable dark:bg-surface-disable [&_[data-slot=checkbox-indicator]]:hidden",
+  "border-0 bg-surface-disable dark:bg-surface-disable [&_[data-slot=checkbox-indicator]]:hidden",
   {
     variants: {
       size: {
@@ -27,10 +28,16 @@ const checkVariants = cva(
         primary: "data-checked:bg-primary dark:data-checked:bg-primary",
         brand: "data-checked:bg-surface-brand dark:data-checked:bg-surface-brand",
       },
+      // 시안 Checkbox의 round prop. true(기본)는 원형, false는 둥근 사각형(4px)이다
+      round: {
+        true: "rounded-full",
+        false: "rounded-[4px]",
+      },
     },
     defaultVariants: {
       size: "m",
       tone: "primary",
+      round: true,
     },
   },
 );
@@ -56,6 +63,7 @@ export function CheckboxRow({
   disabled,
   size,
   tone,
+  round,
   description,
   trailing,
   className,
@@ -86,7 +94,7 @@ export function CheckboxRow({
           checked={checked}
           disabled={disabled}
           onCheckedChange={(next) => onCheckedChange?.(next === true)}
-          className={checkVariants({ size, tone })}
+          className={checkVariants({ size, tone, round })}
         />
         {/* 체크 아이콘은 원의 2/3 크기다 */}
         <Icon
