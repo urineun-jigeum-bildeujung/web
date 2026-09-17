@@ -24,7 +24,7 @@ import {
 } from "../model/draft-storage";
 import { useMutateRegisterPet } from "../api/use-mutate-register-pet";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
-import { toRegisterRequest } from "../model/to-register-request";
+import { parseBirthDate, toRegisterRequest } from "../model/to-register-request";
 import { BasicStep } from "./steps/basic-step";
 import { DetailStep } from "./steps/detail-step";
 import { DoneStep } from "./steps/done-step";
@@ -79,6 +79,15 @@ export function OnboardingView() {
    * 완료 화면으로도 보내지 않는다 — 등록되지 않았는데 됐다고 알리는 셈이다.
    */
   const submit = () => {
+    // 적었는데 못 알아들은 생일은 조용히 빼지 않는다. 입력 단계가 막고 있지만
+    // 초안이 기기에 남아 `?step=health`로 바로 들어오면 그 가드를 거치지 않는다.
+    // 빼고 보내면 사용자는 적었으니 저장된 줄 안다 — 고치라고 그 칸으로 돌려보낸다
+    if (draft.birthday.trim() && parseBirthDate(draft.birthday) === null) {
+      toastAppError(APP_MESSAGE_CODE.common.invalidInput);
+      void setStep("detail");
+      return;
+    }
+
     const request = toRegisterRequest(draft);
     if (!request) {
       // 단계마다 다음 버튼이 막고 있어 여기까지 오면 화면이 못 잡은 값이다
