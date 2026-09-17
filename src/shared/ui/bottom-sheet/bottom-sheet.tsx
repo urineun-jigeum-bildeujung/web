@@ -43,14 +43,15 @@ export function BottomSheet({
         <DrawerPrimitive.Content
           data-slot="drawer-content"
           className={cn(
-            "fixed z-50 mx-auto flex max-w-105 flex-col outline-none",
+            "fixed z-50 mx-auto flex max-w-105 flex-col bg-card text-card-foreground outline-none",
             variant === "floating"
-              ? // 양옆 8px·아래 32px 띄운 카드. 넓은 화면에서는 앱 기둥(420px)에서 양옆 8px을 뺀 폭으로 묶는다.
-                // 시안(surface/default_react)은 bg-card와 값이 같다
-                "inset-x-2 bottom-8 max-w-101 rounded-2xl bg-card text-card-foreground"
-              : // 화면 폭 꽉 채움, 위쪽 모서리만 둥글게. 시안(bg/default·surface/default)이
-                // bg-card(surface/default_react)와 다크 모드에서 값이 갈라져 따로 쓴다
-                "inset-x-0 bottom-0 rounded-t-xl bg-background text-foreground",
+              ? // 양옆 8px·아래 32px 띄운 카드. 넓은 화면에서는 앱 기둥(420px)에서 양옆 8px을 뺀 폭으로 묶는다
+                "inset-x-2 bottom-8 max-w-101 rounded-2xl"
+              : // 화면 폭 꽉 채움, 위쪽 모서리만 둥글게. 시안(선택 화면 1758-69187·완료 화면
+                // 1758-69255)은 라이트에서 bg/default·surface/default를 쓰지만, 다크 모드
+                // 전용 프레임(1758-67357·1758-67425)은 둘 다 surface/default_react를
+                // 쓴다 — bg-card가 라이트·다크 양쪽 값을 그대로 만족한다
+                "inset-x-0 bottom-0 rounded-t-xl",
             // 내용이 길면 시트 안에서 민다. 위쪽 여백(96px)과 아래 띄운 만큼을 뺀다
             "max-h-[calc(100dvh-8rem)] overflow-y-auto",
             className,
