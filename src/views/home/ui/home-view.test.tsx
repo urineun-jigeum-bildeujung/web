@@ -3,8 +3,9 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
+const pushMock = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: pushMock, back: vi.fn() }),
   usePathname: () => "/",
 }));
 
@@ -24,6 +25,28 @@ describe("HomeView", () => {
 
     expect(screen.getByText(/AI가 골라주는/)).toBeDefined();
     expect(screen.getByText(/최근에 구매한 상품/)).toBeDefined();
+  });
+
+  it("새 아이 추가를 누르면 온보딩 기본 정보 단계로 간다", () => {
+    renderWith();
+
+    fireEvent.click(screen.getByRole("button", { name: "새 아이 추가" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/onboarding?step=basic");
+  });
+
+  it("정렬을 별점 낮은순으로 바꾸면 낮은 별점 상품이 먼저 온다", () => {
+    renderWith("?category=food&sort=rating-low");
+
+    // 상품 카드 링크 순서로 정렬 결과를 확인한다 — 이름이 겹쳐서 href로 구분한다
+    const ids = screen
+      .getAllByRole("link")
+      .map((link) => link.getAttribute("href"))
+      .filter((href): href is string => !!href?.startsWith("/products/"))
+      .map((href) => href.split("/").pop());
+
+    // 별점 4.8(id 1·3·5)이 4.9(id 2·4·6)보다 먼저 온다
+    expect(ids).toEqual(["1", "3", "5", "2", "4", "6"]);
   });
 
   it("종류를 고르면 상품 목록으로 바뀐다", () => {

@@ -1,5 +1,5 @@
-// 2열 격자에 놓는 상품 카드. 고르는 모드에서는 우상단에 선택 표시가 붙는다.
-// 와이어프레임 기준(mypa_031, reco_001, like_001)이라 디자인 확정 시 바뀔 수 있다.
+// 2열 격자나 가로 목록에 놓는 상품 카드. 고르는 모드에서는 우상단에 선택 표시가 붙는다.
+// UI 시안 기준(ProductCard/Grid, node 1758-69014·1758-68918 등)이다.
 //
 // 화면마다 카드에 얹는 것이 달라 자리로 받는다. 적합도·구매 횟수는 이미지 안에,
 // 찜 하트나 지우기는 이미지 위에, 장바구니·구매하기는 카드 아래에 붙는다.
@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 import { IoCheckmarkCircle, IoImageOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
-import { Price } from "@/shared/ui/price/price";
+import { calcDiscountRate, formatWon } from "@/shared/ui/price/price";
 
 type ProductGridCardProps = {
   name: string;
@@ -21,7 +21,7 @@ type ProductGridCardProps = {
   imageUrl?: string;
   /** 가격 아래 붙는 것. 하루 급여비나 별점 */
   meta?: ReactNode;
-  /** 이미지 안 왼쪽 아래. 적합도나 구매 횟수 */
+  /** 이미지 안 왼쪽 위. 적합도나 구매 횟수 */
   imageBadge?: ReactNode;
   /** 이미지 오른쪽 위. 찜 하트나 지우기 — 링크 바깥에 두어 중첩을 피한다 */
   imageAction?: ReactNode;
@@ -52,6 +52,11 @@ export function ProductGridCard({
   onSelect,
   className,
 }: ProductGridCardProps) {
+  // 시안(ProductCard/Grid의 price 슬롯)은 이름·취소선·할인율+가격이 간격 없이
+  // 붙어 있고, 그 아래 meta(하루 급여비·별점)와만 4px 떨어진다. 공용 Price
+  // 컴포넌트는 아직 이 카드 시안 기준이 아니라서 값만 가져와 직접 그린다.
+  const discountRate = originalPrice ? calcDiscountRate(price, originalPrice) : 0;
+
   const body = (
     <>
       <div
@@ -74,12 +79,30 @@ export function ProductGridCard({
             )}
           />
         )}
-        {imageBadge && <div className="absolute bottom-2 left-2">{imageBadge}</div>}
+        {imageBadge && <div className="absolute top-3 left-3 flex">{imageBadge}</div>}
       </div>
-      <p className="truncate text-body-medium-14 text-foreground">{name}</p>
-      {option && <p className="truncate text-xs text-muted-foreground">{option}</p>}
-      <Price amount={price} originalAmount={originalPrice} size="sm" />
-      {meta}
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-start">
+          <p className="truncate text-body-medium-14 text-foreground">{name}</p>
+          {option && (
+            <p className="truncate text-label-regular-13 text-text-body-tertiary">{option}</p>
+          )}
+          {discountRate > 0 && originalPrice && (
+            <p className="text-label-regular-13 text-text-body-tertiary line-through">
+              {formatWon(originalPrice)}
+            </p>
+          )}
+          <div className="flex items-center gap-1">
+            {discountRate > 0 && (
+              <span className="text-label-regular-13 font-bold text-text-body-danger-default">
+                {discountRate}%
+              </span>
+            )}
+            <p className="text-title-bold-18 text-foreground">{formatWon(price)}</p>
+          </div>
+        </div>
+        {meta}
+      </div>
     </>
   );
 
@@ -113,7 +136,7 @@ export function ProductGridCard({
         body
       )}
       {/* 링크 안에 두면 링크 속 버튼이 되어 눌리지 않는다 */}
-      {imageAction && <div className="absolute top-1 right-1">{imageAction}</div>}
+      {imageAction && <div className="absolute top-3 right-3">{imageAction}</div>}
       {footer}
     </div>
   );
