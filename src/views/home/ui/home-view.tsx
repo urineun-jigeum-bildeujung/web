@@ -264,7 +264,7 @@ export function HomeView() {
               // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다
               onAdd={() => router.push("/onboarding?step=basic")}
               withNames
-              className="gap-4 px-5 py-0"
+              variant="main"
             />
 
             <section className="flex flex-col gap-5 pt-6 pb-8 pl-5">
