@@ -10,9 +10,10 @@ export function digitsOnly(text: string, { decimal = false } = {}): string {
   if (!decimal) {
     return cleaned;
   }
-  // 소수점이 둘 이상이면 첫 번째만 남긴다. "4.2.3"은 숫자가 아니다
-  const [whole, ...rest] = cleaned.split(".");
-  return rest.length > 0 ? `${whole}.${rest.join("")}` : cleaned;
+  // **소수점이 둘 이상이면 첫 소수부까지만 남긴다.** "4.2.3"을 "4.23"으로 이어 붙이면
+  // 사용자가 적지 않은 몸무게가 된다. 잘못 친 뒤는 버리고 앞은 살린다
+  const [whole, first] = cleaned.split(".");
+  return first === undefined ? cleaned : `${whole}.${first}`;
 }
 
 /**

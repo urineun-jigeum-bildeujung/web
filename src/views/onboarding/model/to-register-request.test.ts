@@ -28,6 +28,12 @@ describe("parseWeight", () => {
     expect(parseWeight("4.2")).toBe(4.2);
   });
 
+  // ".5"를 5로 읽으면 0.5kg 고양이가 5kg으로 저장된다
+  test("앞자리 0이 없는 소수도 읽는다", () => {
+    expect(parseWeight(".5")).toBe(0.5);
+    expect(parseWeight(".5kg")).toBe(0.5);
+  });
+
   test("숫자가 없으면 null이다", () => {
     expect(parseWeight("")).toBeNull();
     expect(parseWeight("모르겠어요")).toBeNull();
