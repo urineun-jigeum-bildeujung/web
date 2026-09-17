@@ -48,14 +48,30 @@ export function parseWeight(text: string): number | null {
  * 생년월일을 `YYYY-MM-DD`로 맞춘다.
  *
  * 화면이 `0000. 00. 00` 꼴을 자리 표시로 주지만 자유 입력이라 `2022-03-15`,
- * `2022.3.15`, `20220315`이 다 들어온다. 숫자 여덟 자를 못 채우면 `null`이다 —
- * 생일은 선택이라 안 보내면 그만이다.
+ * `2022.3.15`, `20220315`이 다 들어온다. 생일은 선택이라 못 알아들으면 안 보내면 그만이다.
+ *
+ * **자리 수만 세면 안 된다.** `2003-10-92` 같은 값이 그대로 나가면 서버가 `LocalDate`로
+ * 읽지 못해 본문을 통째로 거절한다(`Failed to read request`). 다른 칸까지 함께 죽는다.
+ * 앞날도 막는다 — API가 `@PastOrPresent`라 거절당한다.
  */
 export function parseBirthDate(text: string): string | null {
   const digits = text.replace(/\D/g, "");
   if (digits.length !== 8) {
     return null;
   }
+
+  const year = Number(digits.slice(0, 4));
+  const month = Number(digits.slice(4, 6));
+  const day = Number(digits.slice(6));
+
+  // 달력에 없는 날인지 본다. Date는 2월 30일을 3월 2일로 넘겨 버리므로 되읽어 견준다
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const real =
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  if (!real || date.getTime() > Date.now()) {
+    return null;
+  }
+
   return `${digits.slice(0, 4)}-${digits.slice(4, 6)}-${digits.slice(6)}`;
 }
 

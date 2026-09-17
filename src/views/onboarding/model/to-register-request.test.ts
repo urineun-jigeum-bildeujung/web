@@ -53,6 +53,25 @@ describe("parseBirthDate", () => {
     expect(parseBirthDate("2022")).toBeNull();
     expect(parseBirthDate("2022-3-1")).toBeNull();
   });
+
+  // 자리 수만 세면 2003-10-92가 그대로 나가 서버가 본문을 통째로 거절한다
+  test("달력에 없는 날은 null이다", () => {
+    expect(parseBirthDate("20031092")).toBeNull();
+    expect(parseBirthDate("20220230")).toBeNull();
+    expect(parseBirthDate("20221301")).toBeNull();
+    expect(parseBirthDate("20220100")).toBeNull();
+  });
+
+  test("윤년 2월 29일은 받고 평년은 막는다", () => {
+    expect(parseBirthDate("20240229")).toBe("2024-02-29");
+    expect(parseBirthDate("20230229")).toBeNull();
+  });
+
+  // API가 @PastOrPresent다
+  test("앞날은 null이다", () => {
+    const nextYear = new Date().getFullYear() + 1;
+    expect(parseBirthDate(`${nextYear}0101`)).toBeNull();
+  });
 });
 
 describe("parseAge", () => {
@@ -98,6 +117,14 @@ describe("toRegisterRequest", () => {
   test("생일을 적었으면 함께 보내고 아니면 아예 뺀다", () => {
     expect(toRegisterRequest({ ...FILLED, birthday: "2022.03.15" })?.birthDate).toBe("2022-03-15");
     expect(toRegisterRequest(FILLED)).not.toHaveProperty("birthDate");
+  });
+
+  // 생일은 선택이라 못 알아들었다고 등록까지 막지는 않는다. 그 칸만 빼고 보낸다
+  test("생일이 달력에 없는 날이면 그 칸만 빼고 보낸다", () => {
+    const request = toRegisterRequest({ ...FILLED, birthday: "2003.10.92" });
+
+    expect(request).not.toBeNull();
+    expect(request).not.toHaveProperty("birthDate");
   });
 
   test("고른 질환과 알레르기를 그대로 싣는다", () => {
