@@ -307,6 +307,20 @@ React Compiler가 활성화되어 있습니다(`next.config.ts`의 `reactCompile
 
 단, `useState(() => new QueryClient())`처럼 **인스턴스를 고정하려는 목적**은 메모이제이션이 아니므로 그대로 유지합니다.
 
+### 5.8 대기 표시
+
+**응답을 기다리는 동안 화면이 가만히 있으면 안 됩니다.** 사용자는 눌렸는지 모른 채 같은 버튼을 다시 누르거나, 멈춘 줄 알고 떠납니다.
+
+| 언제 | 무엇 |
+| --- | --- |
+| 화면을 **처음 그릴 때** | `shared/ui/skeleton` |
+| **이미 그려진 UI**가 응답을 기다릴 때 | `shared/ui/loading-swap`의 `LoadingSwap` |
+| **낙관적 갱신**을 쓰는 자리 | 아무것도 넣지 않습니다 |
+
+`LoadingSwap`은 버튼이면 **안의 라벨만**, 아이콘 자리면 **아이콘째** 바꾸고 자리(폭·높이)는 지킵니다. 색은 부모 글자색을 물려받아 variant마다 따로 줄 것이 없습니다.
+
+**`disabled`만으로는 모자랍니다.** 눌리지 않는다는 것과 처리 중이라는 것은 다른 사실입니다. 상세는 [component-convention](./docs/conventions/component-convention.md)의 "대기 상태" 절을 따릅니다.
+
 ---
 
 ## 6. 보류 중인 결정 (Pending)

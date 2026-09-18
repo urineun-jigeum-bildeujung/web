@@ -83,6 +83,46 @@
 
 **비활성은 `disabled` 속성으로 준다.** 회색으로만 칠하고 클릭이 되면 접근성 검사에 걸리고 사용자도 속는다.
 
+## 대기 상태
+
+**서버를 기다리는 동안 화면이 가만히 있으면 안 된다.** 눌렸는지 알 수 없으면 사용자는 다시 누르거나 떠난다. 세 갈래로 가른다.
+
+| 언제 | 무엇 | 왜 |
+| --- | --- | --- |
+| 화면을 **처음 그릴 때** | `Skeleton` | 아직 그릴 내용이 없다. 자리를 잡아 레이아웃이 밀리지 않게 한다 |
+| **이미 그려진 UI**가 기다릴 때 | `LoadingSwap` | 그려진 것을 지우면 자리가 무너진다. 겹쳐서 바꾼다 |
+| **낙관적 갱신**을 쓰는 자리 | **아무것도** | 이미 결과를 그려 놓았다. 대기 표시를 얹으면 오히려 끊겨 보인다 |
+
+### `LoadingSwap`을 쓰는 법
+
+버튼은 **라벨만** 바꾼다. 버튼째 갈아치우면 폭이 줄었다 늘어난다.
+
+```tsx
+<Button disabled={isSubmitting} onClick={onSubmit}>
+  <LoadingSwap loading={isSubmitting}>작성 완료</LoadingSwap>
+</Button>
+```
+
+아이콘 자리는 **아이콘째** 바꾸고, 아이콘이 16px보다 크면 스피너도 같이 키운다.
+
+```tsx
+<LoadingSwap loading={isSearching} label="다음 쪽을 불러오는 중" spinnerClassName="size-5">
+  <Icon name="right" className="size-5" />
+</LoadingSwap>
+```
+
+**문구는 하는 일에 맞춘다.** 기본값은 제출을 전제한 `"처리 중"`이고, 무언가를 받아 오는 자리는 `label`로 `"주문 내역을 불러오는 중"`처럼 바꾼다.
+
+### `disabled`만 주고 끝내지 않는다
+
+**눌리지 않는다는 것과 처리 중이라는 것은 다른 사실이다.** `disabled`는 앞만 말하므로, 사용자는 왜 안 눌리는지 모른 채 기다린다. 둘 다 필요하다 — `disabled`로 두 번 눌리는 것을 막고, `LoadingSwap`으로 왜인지 알린다.
+
+### 어디를 봐야 하는가
+
+`useMutation`을 쓰는 훅이 `isPending`(또는 `isSubmitting`)을 내주면 **그 값이 닿는 버튼에 대기 표시가 있어야 한다.** 훅에서 내주기만 하고 화면이 `disabled`에만 꽂아 두는 것이 가장 흔한 누락이다.
+
+`.claude/hooks/pending-ui-check.sh`가 `.tsx`를 저장할 때 이것을 상기시킨다. 막지는 않는다 — 낙관적 갱신처럼 정당한 예외가 있다.
+
 ## 접근성
 
 Lighthouse 접근성 95점이 목표다. `eslint-plugin-jsx-a11y` 규칙 31개가 저장 시점에 검사하지만 린트가 못 잡는 것들이 있다.
@@ -129,3 +169,4 @@ Lighthouse 접근성 95점이 목표다. `eslint-plugin-jsx-a11y` 규칙 31개�
 7. [ ] 누르는 것이 `button`인가, 아이콘 버튼에 `aria-label`이 있는가
 8. [ ] 테스트를 뒀는가, 없다면 이유가 있는가
 9. [ ] `/dev` 갤러리에 구역을 만들고 그 테스트의 목록에도 더했는가
+10. [ ] 서버를 기다리는 자리에 대기 표시가 있는가 — `Skeleton` / `LoadingSwap` / 낙관적 갱신이라 없음 중 하나
