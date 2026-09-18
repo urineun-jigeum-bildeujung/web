@@ -11,6 +11,7 @@ import { HealthPickerField, useQueryHealthOptions, type PetProfileDraft } from "
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
 type HealthStepProps = {
   draft: PetProfileDraft;
@@ -21,7 +22,13 @@ type HealthStepProps = {
   isSubmitting?: boolean;
 };
 
-export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: HealthStepProps) {
+export function HealthStep({
+  draft,
+  onChange,
+  onPrev,
+  onSubmit,
+  isSubmitting = false,
+}: HealthStepProps) {
   // 갈래도 항목도 종마다 다르다. 고른 종의 것만 받는다
   const { options, isLoading, error } = useQueryHealthOptions(draft.species);
 
@@ -115,7 +122,8 @@ export function HealthStep({ draft, onChange, onPrev, onSubmit, isSubmitting }: 
           disabled={!optionsReady || !concernAnswered || !allergyAnswered || isSubmitting}
           onClick={onSubmit}
         >
-          작성 완료
+          {/* 등록 왕복이 길다. disabled만 두면 왜 안 눌리는지 몰라 다시 누르게 된다 */}
+          <LoadingSwap loading={isSubmitting}>작성 완료</LoadingSwap>
         </Button>
       </BottomActionBar>
     </>

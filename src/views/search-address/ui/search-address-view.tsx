@@ -23,6 +23,7 @@ import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 import { Skeleton } from "@/shared/ui/skeleton";
 
@@ -184,6 +185,7 @@ export function SearchAddressView() {
             <Pagination
               page={safePage}
               lastPage={lastPage}
+              busy={isRefreshing}
               onChange={(next) => void setPage(next)}
             />
           </>
@@ -200,6 +202,8 @@ export function SearchAddressView() {
 type PaginationProps = {
   page: number;
   lastPage: number;
+  /** 다음 쪽이 오는 중. 누른 셰브론만 스피너로 바뀐다 */
+  busy?: boolean;
   onChange: (page: number) => void;
 };
 
@@ -210,7 +214,11 @@ type PaginationProps = {
  * 스크롤이 생기지 않는 수다. 쪽 번호를 늘어놓지 않는 것은 `역삼동`처럼 흔한 검색어가
  * 4,747건까지 나와 쪽이 천 개가 넘기 때문이다 — 몇 쪽인지 보여 주고 검색어를 좁히게 한다.
  */
-function Pagination({ page, lastPage, onChange }: PaginationProps) {
+function Pagination({ page, lastPage, busy = false, onChange }: PaginationProps) {
+  // 어느 쪽을 눌렀는지 기억한다. 둘 다 돌리면 어디로 가는 중인지 알 수 없다.
+  // `busy`가 풀리면 아래 조건에서 무시되므로 따로 되돌릴 것이 없다
+  const [pressed, setPressed] = useState<"prev" | "next">();
+
   // 한 쪽뿐이면 넘길 곳이 없다
   if (lastPage <= 1) {
     return null;
@@ -227,10 +235,19 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
         variant="ghost"
         aria-label="이전 페이지"
         disabled={page <= 1}
-        onClick={() => onChange(page - 1)}
+        onClick={() => {
+          setPressed("prev");
+          onChange(page - 1);
+        }}
         className="size-11 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
       >
-        <Icon name="left" className="size-5" />
+        <LoadingSwap
+          loading={busy && pressed === "prev"}
+          label="이전 쪽을 불러오는 중"
+          spinnerClassName="size-5"
+        >
+          <Icon name="left" className="size-5" />
+        </LoadingSwap>
       </Button>
 
       <p aria-live="polite" className="min-w-16 text-center text-label-bold-14 text-foreground">
@@ -242,10 +259,19 @@ function Pagination({ page, lastPage, onChange }: PaginationProps) {
         variant="ghost"
         aria-label="다음 페이지"
         disabled={page >= lastPage}
-        onClick={() => onChange(page + 1)}
+        onClick={() => {
+          setPressed("next");
+          onChange(page + 1);
+        }}
         className="size-11 p-0 disabled:opacity-100 disabled:[&_svg]:text-icon-stroke-disable"
       >
-        <Icon name="right" className="size-5" />
+        <LoadingSwap
+          loading={busy && pressed === "next"}
+          label="다음 쪽을 불러오는 중"
+          spinnerClassName="size-5"
+        >
+          <Icon name="right" className="size-5" />
+        </LoadingSwap>
       </Button>
     </nav>
   );
