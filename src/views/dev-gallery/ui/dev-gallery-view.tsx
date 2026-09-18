@@ -29,6 +29,7 @@ import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { InfoNotice } from "@/shared/ui/info-notice/info-notice";
 import { ListRowButton, ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
@@ -144,6 +145,7 @@ export function DevGalleryView() {
   const [quantity, setQuantity] = useState(1);
   const [pickedProduct, setPickedProduct] = useState("1");
   const [pickedPet, setPickedPet] = useState("1");
+  const [swapping, setSwapping] = useState(false);
 
   return (
     <div className="flex min-h-dvh flex-col border-x border-border">
@@ -405,6 +407,36 @@ export function DevGalleryView() {
           <ErrorBoundary>
             <BoomTrigger />
           </ErrorBoundary>
+        </Section>
+
+        <Section title="LoadingSwap">
+          <p className="text-xs text-muted-foreground">
+            누른 뒤 응답을 기다리는 동안 내용을 스피너로 바꾼다. 자리를 지켜서 폭이 흔들리지 않고,
+            색은 부모의 글자색을 따라간다. 화면이 처음 그려질 때의 대기는 Skeleton이다.
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => setSwapping((previous) => !previous)}
+          >
+            {swapping ? "대기 풀기" : "대기 중으로 바꾸기"}
+          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button disabled={swapping}>
+              <LoadingSwap loading={swapping}>결제하기</LoadingSwap>
+            </Button>
+            <Button variant="outline" disabled={swapping}>
+              <LoadingSwap loading={swapping}>배송지 변경</LoadingSwap>
+            </Button>
+            <Button variant="destructive" disabled={swapping}>
+              <LoadingSwap loading={swapping}>주문 취소</LoadingSwap>
+            </Button>
+            {/* 페이지네이션 셰브론은 아이콘 자리를 통째로 바꾼다 */}
+            <LoadingSwap loading={swapping} label="다음 쪽을 불러오는 중" spinnerClassName="size-5">
+              <Icon name="right" className="size-5" />
+            </LoadingSwap>
+          </div>
         </Section>
 
         <Section title="Skeleton">

@@ -19,6 +19,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | --- | --- |
 | `button.tsx` | shadcn Button. variant·size 조합을 cva로 정의한다 |
 | `skeleton.tsx` | shadcn Skeleton. 로딩 중 자리를 잡아 레이아웃이 밀리지 않게 한다 |
+| `spinner.tsx` | shadcn Spinner. `animate-spin`만 얹은 아이콘이고 색은 `currentColor`라 부모 글자색을 따른다. 화면에는 직접 쓰지 말고 `loading-swap/`을 거친다 |
 | `input.tsx` | shadcn Input |
 | `label.tsx` | shadcn Label. `htmlFor`로 입력과 묶인다 |
 | `checkbox.tsx` | shadcn Checkbox |
@@ -50,6 +51,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / brand / strong)으로 뜻에 따라 색을 고른다 |
 | `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
+| `loading-swap/` | 응답을 기다리는 동안 내용을 스피너로 바꾸되 자리(폭·높이)를 지킨다. 버튼 라벨·페이지네이션 셰브론처럼 **이미 그려진 UI**의 대기 표시. 처음 그릴 때의 대기는 `skeleton.tsx` |
 | `list-row/` | 아이콘 + 제목 + 설명 + 화살표 한 줄. `size` md(44 · 아이콘 28 · 화살표 28, 마이페이지 홈)와 sm(40 · 24 · 24, 설정). 이동용(Link)·실행용(Button)·정적(Static) |
 | `setting-group/` | 목록 줄을 제목과 함께 흰 카드(모서리 12)로 묶는다 |
 | `definition-row/` | 항목 이름과 값을 한 줄에. 읽기 위주 화면용 |
