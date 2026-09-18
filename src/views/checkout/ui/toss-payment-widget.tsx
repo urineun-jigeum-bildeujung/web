@@ -11,14 +11,24 @@
 import { ANONYMOUS, loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * 결제창에 실을 주문. **위젯을 띄울 때가 아니라 결제창을 열 때 받는다.**
+ *
+ * 두 값 모두 `[2] POST /payments`가 주는데, 그 호출은 결제 버튼을 누른 뒤에야 일어난다 —
+ * `[1]` 주문 생성에 배송 요청사항이 들어가기 때문이다. 위젯은 그전에 결제수단을 그려 두어야
+ * 하므로 이 둘을 prop으로 받을 수 없다 (#255).
+ */
+export type TossPaymentOrder = {
+  /** 토스가 6~64자 고유값을 요구한다. 백엔드가 준 `tossOrderId`를 그대로 넘긴다 */
+  orderId: string;
+  orderName: string;
+};
+
 type TossPaymentWidgetProps = {
   /** 결제할 금액. 위젯이 이 값으로 할부 개월 같은 것을 정한다 */
   amount: number;
   /** 결제창을 띄울 수 있게 준비됐는지 알린다. 버튼 잠금에 쓴다 */
-  onReady: (requestPayment: (() => Promise<void>) | null) => void;
-  /** 주문번호. 토스가 6~64자 고유값을 요구한다. 백엔드가 준 `tossOrderId`를 그대로 넘긴다 */
-  orderId: string;
-  orderName: string;
+  onReady: (requestPayment: ((order: TossPaymentOrder) => Promise<void>) | null) => void;
   /** 백엔드 `POST /payments`가 준 값. 없으면 비회원으로 연다 */
   customerKey?: string;
 };
@@ -42,13 +52,7 @@ async function renderWidgets(clientKey: string, amount: number, customerKey: str
   return widgets;
 }
 
-export function TossPaymentWidget({
-  amount,
-  onReady,
-  orderId,
-  orderName,
-  customerKey = "",
-}: TossPaymentWidgetProps) {
+export function TossPaymentWidget({ amount, onReady, customerKey = "" }: TossPaymentWidgetProps) {
   // 키는 렌더 시점에 알 수 있다. effect에서 판단하면 한 번 그린 뒤에 고치게 된다
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
   const [failed, setFailed] = useState(false);
@@ -92,7 +96,7 @@ export function TossPaymentWidget({
           return;
         }
 
-        onReadyRef.current(async () => {
+        onReadyRef.current(async ({ orderId, orderName }) => {
           // Redirect 방식이라 결제가 끝나면 브라우저가 아래 주소로 돌아온다.
           // 성공 주소에는 paymentKey·orderId·amount가 쿼리로 붙는다
           await widgets.requestPayment({
@@ -115,7 +119,7 @@ export function TossPaymentWidget({
     return () => {
       disposed = true;
     };
-  }, [amount, clientKey, customerKey, orderId, orderName]);
+  }, [amount, clientKey, customerKey]);
 
   if (!clientKey || failed) {
     return (

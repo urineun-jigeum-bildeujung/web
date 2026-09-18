@@ -239,10 +239,14 @@ export function CartView() {
                 </dl>
               )}
 
-              {/* 고른 것이 없으면 결제로 넘어갈 수 없다 */}
+              {/* 고른 것이 없으면 결제로 넘어갈 수 없다.
+                  **고른 줄을 쿼리로 넘긴다.** 넘기지 않으면 결제 화면이 장바구니 전체를 세어
+                  고르지 않은 것까지 결제된다 (#255) */}
               {checkedItems.length > 0 ? (
                 <Button asChild className={cn("h-11 w-full rounded-lg", "text-label-bold-16")}>
-                  <Link href="/payment">결제하기</Link>
+                  <Link href={`/payment?items=${checkedItems.map(cartItemKey).join(",")}`}>
+                    결제하기
+                  </Link>
                 </Button>
               ) : (
                 <Button disabled className={cn("h-11 w-full rounded-lg", "text-label-bold-16")}>
