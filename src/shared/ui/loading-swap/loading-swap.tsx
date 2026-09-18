@@ -27,14 +27,15 @@ export function LoadingSwap({
   ...props
 }: LoadingSwapProps) {
   return (
-    // 둘을 같은 격자 칸에 겹쳐 둔다. 칸 크기는 더 큰 쪽이 정하므로 버튼 폭이 흔들리지 않는다.
-    // absolute로 겹치면 부모마다 relative를 챙겨야 하는데 여기서는 그럴 일이 없다.
-    <span className={cn("inline-grid place-items-center", className)} {...props}>
+    // 크기를 정하는 것은 **자식 하나뿐**이다. 스피너는 흐름에서 빼 겹쳐 놓는다.
+    // 둘을 같은 격자 칸에 겹치면 칸이 더 큰 쪽을 따라가서, 자식이 스피너보다 작을 때
+    // (`size-3` 아이콘 등) 대기하는 동안 자리가 벌어진다 — 실측 12px → 16px (#233 리뷰).
+    <span className={cn("relative inline-flex items-center justify-center", className)} {...props}>
       {/* `invisible`은 자리를 차지한 채 화면에서만 지운다. 걷어내면 버튼이 줄었다 늘어난다.
           보조기기 트리에서도 함께 빠져서 대기 중에 옛 라벨이 읽히지 않는다. */}
-      <span className={cn("col-start-1 row-start-1", loading && "invisible")}>{children}</span>
+      <span className={cn(loading && "invisible")}>{children}</span>
       {loading && (
-        <Spinner aria-label={label} className={cn("col-start-1 row-start-1", spinnerClassName)} />
+        <Spinner aria-label={label} className={cn("absolute inset-0 m-auto", spinnerClassName)} />
       )}
     </span>
   );
