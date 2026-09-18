@@ -75,7 +75,7 @@ export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
                 term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
                 description={
                   <span className="text-body-regular-14 text-text-body-secondary">
-                    {payment?.orderNo ?? MOCK.orderNo}
+                    {payment?.orderNumber ?? MOCK.orderNo}
                   </span>
                 }
               />
@@ -113,7 +113,7 @@ export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
               total={payment?.amount ?? MOCK.total}
               itemPrice={MOCK.itemPrice}
               shippingFee={MOCK.shippingFee}
-              payMethod={payment?.payMethod ?? MOCK.payMethod}
+              payMethod={payment?.method ?? MOCK.payMethod}
             />
           </DetailSection>
 
@@ -136,7 +136,9 @@ export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
           className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
           asChild
         >
-          <Link href={`/mypage/orders/${payment?.orderId ?? MOCK.orderId}`}>주문 상세 보기</Link>
+          <Link href={`/mypage/orders/${payment?.orderNumber ?? MOCK.orderId}`}>
+            주문 상세 보기
+          </Link>
         </Button>
         <Button asChild>
           <Link href="/">홈으로 가기</Link>
