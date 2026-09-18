@@ -37,6 +37,20 @@ test("대기 중에도 원래 내용이 자리를 지킨다", () => {
   expect(content.className).toContain("invisible");
 });
 
+// 자식보다 스피너가 클 때 자리가 벌어지지 않아야 한다. 격자에 겹쳐 두면 칸이 더 큰 쪽을
+// 따라가서 `size-3` 자식이 대기하는 동안 12px에서 16px로 늘어났다 (#233 리뷰).
+// 스피너를 흐름에서 빼는 것이 그것을 막는 장치라 클래스로 확인한다 — jsdom은 레이아웃을
+// 계산하지 않아 실제 크기는 브라우저에서 쟀다.
+test("스피너가 자리 크기를 정하지 않는다", () => {
+  render(
+    <LoadingSwap loading>
+      <svg className="size-3" />
+    </LoadingSwap>,
+  );
+
+  expect(screen.getByRole("status").getAttribute("class")).toContain("absolute");
+});
+
 test("자리에 맞춰 스피너 크기를 키울 수 있다", () => {
   render(
     <LoadingSwap loading spinnerClassName="size-5">

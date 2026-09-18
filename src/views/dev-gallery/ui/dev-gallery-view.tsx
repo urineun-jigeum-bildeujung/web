@@ -417,7 +417,7 @@ export function DevGalleryView() {
           <Button
             variant="outline"
             size="sm"
-            className="self-start"
+            className="min-h-11 min-w-11 self-start"
             onClick={() => setSwapping((previous) => !previous)}
           >
             {swapping ? "대기 풀기" : "대기 중으로 바꾸기"}
