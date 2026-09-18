@@ -2,6 +2,14 @@
 // nuqs 기본값(replace)이면 히스토리에 쌓이지 않아 화면을 통째로 떠난다.
 import { expect, test } from "@playwright/test";
 
+import { stubPetCatalog } from "./fixtures/pet-catalog";
+
+// 아이 관리 화면이 아이 목록을 서버에서 받는다(#230). 세우지 않으면 401이라
+// 로그인으로 돌려보내져 탭·필터를 눌러 볼 자리가 없다
+test.beforeEach(async ({ page }) => {
+  await stubPetCatalog(page);
+});
+
 test("좋아요 탭을 옮긴 뒤 뒤로가기로 돌아온다", async ({ page }) => {
   await page.goto("/likes");
 

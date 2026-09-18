@@ -25,7 +25,7 @@ export { getBreeds, type Breed, type SpeciesBreed } from "./api/breeds";
 export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";
 export { HealthPickerField } from "./ui/health-picker-field";
-export { toLabels, type HealthGroup, type HealthOption } from "./model/health";
+export { type HealthGroup, type HealthOption } from "./model/health";
 export { getHealthOptions, type HealthOptions } from "./api/health-options";
 export { useQueryHealthOptions } from "./api/use-query-health-options";
 export { getPets, getPetDetail, type PetListItem, type PetDetail } from "./api/pets";
