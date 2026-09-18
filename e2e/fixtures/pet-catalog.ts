@@ -47,23 +47,44 @@ const MY_PETS = [
   { petId: 7, name: "보리", image: null, isDefault: false },
 ];
 
-const PET_DETAIL = {
-  petId: 3,
-  name: "코코",
-  species: "DOG",
-  breedId: 1,
-  breedName: "말티즈",
-  age: 4,
-  birthDate: "2022-03-15",
-  sex: "FEMALE",
-  isNeutered: true,
-  size: "SMALL",
-  weight: 4,
-  bcs: 3,
-  healthConcerns: ["슬개골 탈구"],
-  allergies: ["CHICKEN"],
-  image: null,
-  isDefault: true,
+/** 아이마다 다른 값을 준다. 하나로 돌려주면 아이를 바꿔도 같은 값이 보이는 것을 못 잡는다 */
+const PET_DETAIL: Record<string, unknown> = {
+  "3": {
+    petId: 3,
+    name: "코코",
+    species: "DOG",
+    breedId: 1,
+    breedName: "말티즈",
+    age: 4,
+    birthDate: "2022-03-15",
+    sex: "FEMALE",
+    isNeutered: true,
+    size: "SMALL",
+    weight: 4,
+    bcs: 3,
+    healthConcerns: ["슬개골 탈구"],
+    allergies: ["CHICKEN"],
+    image: null,
+    isDefault: true,
+  },
+  "7": {
+    petId: 7,
+    name: "보리",
+    species: "CAT",
+    breedId: 36,
+    breedName: "코리안 숏헤어",
+    age: 2,
+    birthDate: null,
+    sex: "MALE",
+    isNeutered: false,
+    size: "SMALL",
+    weight: 3.5,
+    bcs: 2,
+    healthConcerns: ["신장 건강"],
+    allergies: ["BONITO"],
+    image: null,
+    isDefault: false,
+  },
 };
 
 /**
@@ -92,5 +113,13 @@ export async function stubPetCatalog(page: Page) {
 
   // `*`는 `/`를 넘지 않아 목록과 상세를 한 패턴으로 잡을 수 없다. 둘로 나눈다
   await page.route("**/members/me/pets", (route) => route.fulfill({ json: MY_PETS }));
-  await page.route("**/members/me/pets/*", (route) => route.fulfill({ json: PET_DETAIL }));
+  await page.route("**/members/me/pets/*", (route) => {
+    const petId = new URL(route.request().url()).pathname.split("/").pop() ?? "";
+    const detail = PET_DETAIL[petId];
+    if (!detail) {
+      route.fulfill({ status: 404, json: { errorCode: "MEMBER_404_NOT_FOUND_PET" } });
+      return;
+    }
+    route.fulfill({ json: detail });
+  });
 }

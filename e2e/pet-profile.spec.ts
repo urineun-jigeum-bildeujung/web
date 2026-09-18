@@ -33,3 +33,16 @@ test("기본 아이가 처음 고른 아이다", async ({ page }) => {
   await expect(first).toHaveAccessibleName("코코");
   await expect(first).toHaveAttribute("aria-checked", "true");
 });
+
+// 아이를 바꾸면 그 아이의 상세를 다시 받아야 한다. 스텁이 한 아이만 돌려주던 동안에는
+// 보리를 골라도 코코의 값이 그대로 남는 것을 잡지 못했다
+test("다른 아이를 고르면 그 아이의 값으로 바뀐다", async ({ page }) => {
+  await page.goto("/mypage/pets");
+  await expect(page.getByText("말티즈 · 4세 · 여자아이")).toBeVisible();
+
+  await page.getByRole("radio", { name: "보리" }).click();
+
+  await expect(page.getByText("코리안 숏헤어 · 2세 · 남자아이")).toBeVisible();
+  await expect(page.getByText("3.5kg")).toBeVisible();
+  await expect(page.getByText("말티즈 · 4세 · 여자아이")).toHaveCount(0);
+});

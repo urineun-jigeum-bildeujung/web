@@ -11,6 +11,8 @@ import { Toaster } from "@/shared/ui/sonner";
 import { Tooltip } from "radix-ui";
 import { useState } from "react";
 
+import { SessionExpiryRedirect } from "./session-expiry-redirect";
+
 export function AppProviders({ children }: { children: React.ReactNode }) {
   // 요청마다 새 인스턴스를 만들되 리렌더 시 재생성되지 않도록 state로 고정한다.
   const [queryClient] = useState(
@@ -44,6 +46,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     // App Router 전용 어댑터라 경로가 nuqs/adapters/next/app이다.
     <NuqsAdapter>
       <QueryClientProvider client={queryClient}>
+        {/* 재발급까지 실패해 세션이 끝나면 로그인으로 보낸다. 화면마다 두면 빠뜨린 곳이 생긴다 */}
+        <SessionExpiryRedirect />
         {/* 툴팁은 앱 전체가 한 Provider를 공유해야 열림 상태가 겹치지 않는다 */}
         <Tooltip.Provider delayDuration={200}>{children}</Tooltip.Provider>
         <Toaster position="bottom-center" />
