@@ -24,6 +24,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { DeliveryTrackingDialog } from "./delivery-tracking-dialog";
+import { Icon } from "@/shared/ui/icon/icon";
 type Order = { id: string; orderedAt: string; status: OrderStatus; amount: number };
 
 /** API 연동 전까지 화면 확인용 값 */
@@ -59,7 +60,11 @@ export function OrdersView() {
 
       <main className="flex flex-1 flex-col gap-4 px-5 pt-3 pb-8">
         {orders.length === 0 ? (
-          <EmptyState title="주문 내역이 없어요" description="마음에 드는 상품을 찾아보세요." />
+          <EmptyState
+            icon={<Icon name="delivery" />}
+            title="아직 주문한 내역이 없어요"
+            description="맞춤 리포트로 딱 맞는 식단을 찾아보세요"
+          />
         ) : (
           orders.map((order) => (
             <article key={order.id} className="flex flex-col gap-3">

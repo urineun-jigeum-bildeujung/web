@@ -47,11 +47,11 @@ test("작성한 리뷰를 누르면 상세로 이어진다", () => {
 test("쓸 수 있는 후기가 없으면 그 사실을 알린다", () => {
   renderAt("", { writable: [] });
 
-  expect(screen.getByText("작성할 수 있는 후기가 없어요")).toBeDefined();
+  expect(screen.getByText("지금은 작성할 수 있는 후기가 없어요")).toBeDefined();
 });
 
 test("쓴 후기가 없으면 그 사실을 알린다", () => {
   renderAt("?tab=written", { written: [] });
 
-  expect(screen.getByText("작성한 후기가 없어요")).toBeDefined();
+  expect(screen.getByText("아직 작성한 후기가 없어요")).toBeDefined();
 });

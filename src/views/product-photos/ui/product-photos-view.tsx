@@ -16,6 +16,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { PhotoViewer } from "./photo-viewer";
+import { Icon } from "@/shared/ui/icon/icon";
 
 /** 격자에 놓을 사진 한 장. 어느 후기의 몇 번째인지를 함께 든다 */
 type PhotoRef = {
@@ -93,8 +94,9 @@ export function ProductPhotosView({ productId, reviews }: ProductPhotosViewProps
           </>
         ) : (
           <EmptyState
+            icon={<Icon name="cat" />}
             title="아직 사진 후기가 없어요"
-            description="사진과 함께 남긴 후기가 이곳에 모여요."
+            description="우리 아이가 맛있게 먹는 사진을 가장 먼저 자랑해 볼까요"
             className="py-16"
           />
         )}

@@ -31,6 +31,7 @@ import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { EmptyBagIllustration } from "@/shared/ui/empty-state/illustrations/bag";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -102,8 +103,14 @@ export function CartView() {
 
         {!isLoading && !error && items.length === 0 && (
           <EmptyState
-            title="장바구니가 비었어요"
-            description="마음에 드는 상품을 담아보세요."
+            icon={<EmptyBagIllustration />}
+            title="장바구니가 비어 있어요"
+            description="건강한 사료와 간식을 천천히 골라볼까요?"
+            action={
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/search">상품 둘러보기</Link>
+              </Button>
+            }
             className="flex-1"
           />
         )}

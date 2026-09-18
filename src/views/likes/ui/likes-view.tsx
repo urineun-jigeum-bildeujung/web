@@ -24,6 +24,7 @@ import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
+import { Icon } from "@/shared/ui/icon/icon";
 
 const TABS = ["liked", "recent", "often"] as const;
 
@@ -194,8 +195,9 @@ export function LikesView() {
 
               {visible.length === 0 ? (
                 <EmptyState
+                  icon={<Icon name="heart_fill" />}
                   title="아직 담아둔 상품이 없어요"
-                  description="마음에 드는 상품에 하트를 눌러보세요."
+                  description="마음에 드는 상품을 발견하면 하트를 꾹 눌러주세요"
                   className="flex-1"
                 />
               ) : (

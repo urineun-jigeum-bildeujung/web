@@ -96,9 +96,9 @@ export function RestockAlarmView() {
           </ul>
         ) : (
           <EmptyState
-            icon={<Icon name="search" />}
+            icon={<Icon name="tag" />}
             title="재입고 알림을 신청한 상품이 없어요"
-            description="품절된 상품에서 알림을 신청하면 여기에 모여요."
+            description="품절이라 아쉬웠던 상품의 알림을 켜고 가장 먼저 소식을 받아보세요"
           />
         )}
       </main>
