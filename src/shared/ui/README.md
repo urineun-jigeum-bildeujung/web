@@ -43,7 +43,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기 기본 버튼 |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
 | `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣고, 손잡이가 없는 시안은 `showHandle={false}` |
-| `empty-state/` | 목록이 비었을 때 안내와 다음 행동 |
+| `empty-state/` | 목록이 비었을 때 안내와 다음 행동. 그림은 72px이고 에 세트 밖 그림만 둔다 |
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을 둔다 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |

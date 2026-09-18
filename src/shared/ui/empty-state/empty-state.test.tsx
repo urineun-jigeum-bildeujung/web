@@ -5,8 +5,8 @@ import { expect, test } from "vitest";
 import { EmptyState } from "./empty-state";
 
 test("제목만 넘겨도 렌더링된다", () => {
-  render(<EmptyState title="등록된 배송지가 없어요" />);
-  expect(screen.getByText("등록된 배송지가 없어요")).toBeDefined();
+  render(<EmptyState title="아직 등록된 배송지가 없어요" />);
+  expect(screen.getByText("아직 등록된 배송지가 없어요")).toBeDefined();
 });
 
 test("설명과 액션을 함께 보여준다", () => {

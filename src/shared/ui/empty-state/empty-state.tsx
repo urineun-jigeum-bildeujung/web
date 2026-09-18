@@ -34,7 +34,9 @@ export function EmptyState({
       {...props}
     >
       {icon && (
-        <div aria-hidden className="text-icon-fill-tertiary [&>svg]:size-12">
+        // 시안의 그림은 72px이고 색은 `#B1B3BB` — `icon-fill-tertiary`와 정확히 같은 값이다.
+        // 아이콘이 `currentColor`를 물려받으므로 다크 모드도 토큰이 알아서 따라온다.
+        <div aria-hidden className="text-icon-fill-tertiary [&>svg]:size-18">
           {icon}
         </div>
       )}
