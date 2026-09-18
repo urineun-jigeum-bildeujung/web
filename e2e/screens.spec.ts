@@ -3,6 +3,7 @@
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { stubPhoneVerification } from "./fixtures/phone-verification";
 
 /**
  * 화면이 바깥에 기대는 것을 끊는다.
@@ -109,6 +110,7 @@ const ROUTES = [
 // 품종·건강 옵션이 서버에서 온다(#226). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  await stubPhoneVerification(page);
 });
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다
@@ -274,7 +276,7 @@ test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다",
   await expect(page.getByRole("textbox", { name: "아이의 이름을 알려주세요" })).toBeVisible();
 });
 
-// 문자 발송은 붙이지 않았다. 인증을 누르면 번호가 채워지는지 본다(#85).
+// 문자 발송은 양쪽 다 붙이지 않았다. 인증을 누르면 서버에 알리고 고정 번호가 채워진다(#85, #247).
 test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page }) => {
   await page.goto("/mypage/info/phone", { waitUntil: "networkidle" });
 
