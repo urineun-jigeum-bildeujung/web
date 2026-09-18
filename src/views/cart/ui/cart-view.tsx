@@ -57,6 +57,8 @@ const UNAVAILABLE_REASON: Record<string, string> = {
 const UNAVAILABLE_DEFAULT = "지금은 살 수 없어요";
 
 export function CartView() {
+  // 대기 표시 없음 — 첫 그림은 아래 CartSkeleton이 덮고, 수량 변경·삭제는 낙관적 갱신이라
+  // 왕복을 기다리지 않는다. 스피너를 얹으면 이미 그려진 결과가 오히려 끊겨 보인다
   const { cart, error, isLoading } = useQueryCart();
   const { changeQuantity, remove } = useMutateCartItem();
 
