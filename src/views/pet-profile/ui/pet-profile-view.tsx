@@ -93,9 +93,10 @@ export function PetProfileView() {
   const { pet, error: petError } = useQueryPetDetail(selectedPetId);
 
   const noPets = pets?.length === 0;
-  // **세션이 끊긴 것과 조회가 실패한 것은 다르다.** accessToken은 메모리에만 있어 새로고침하면
-  // 사라지고, 재발급 엔드포인트가 아직 없어 되살릴 수 없다. 그대로 두면 로그인하지 않은
-  // 보호자에게 "불러오지 못했어요"가 떠서 다시 눌러 보게 된다 — 눌러도 될 리가 없다
+  // **세션이 끊긴 것과 조회가 실패한 것은 다르다.** 재발급까지 실패하면 `clearTokens`가
+  // 알려 주지만(SessionExpiryRedirect), 토큰이 처음부터 없으면 재발급을 시도조차 하지 않아
+  // 그 알림이 없다. 그대로 두면 로그인하지 않은 보호자에게 "불러오지 못했어요"가 떠서
+  // 다시 눌러 보게 된다 — 눌러도 될 리가 없다
   const error = petsError ?? petError;
   const noSession = error instanceof ApiError && error.status === 401;
   const loadFailed = Boolean(error) && !noSession;
