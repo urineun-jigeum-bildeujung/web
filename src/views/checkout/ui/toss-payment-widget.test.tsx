@@ -30,7 +30,10 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const PROPS = { amount: 12345, orderId: "order_test", orderName: "상품명" };
+const PROPS = { amount: 12345 };
+
+/** 결제창을 열 때 넘기는 주문. `[2] POST /payments`가 주는 값이다 */
+const ORDER = { orderId: "ORD-20260918-000123", orderName: "상품명" };
 
 /**
  * **StrictMode가 effect를 두 번 돌린다.** 첫 번째가 정리된 뒤 두 번째가 "이미 띄웠다"며
@@ -57,11 +60,9 @@ test("넘겨받은 수단을 부르면 결제창을 띄운다", async () => {
   render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
 
   await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
-  await onReady.mock.calls[0][0]();
+  await onReady.mock.calls[0][0](ORDER);
 
-  expect(requestPayment).toHaveBeenCalledWith(
-    expect.objectContaining({ orderId: "order_test", orderName: "상품명" }),
-  );
+  expect(requestPayment).toHaveBeenCalledWith(expect.objectContaining(ORDER));
 });
 
 // 위젯을 못 띄우면 버튼이 잠긴 채로 남아야 한다. 이유는 화면에 내보내지 않는다

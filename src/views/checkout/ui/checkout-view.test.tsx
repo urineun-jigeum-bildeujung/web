@@ -1,12 +1,24 @@
-// 결제하기 테스트. 금액 표시와 결제 잠금, 결제창을 띄우는지 본다.
+// 결제하기 테스트. 금액 표시와 결제 잠금, 주문 생성부터 결제창까지의 순서를 본다.
+//
+// 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/cart`와
+// `entities/address`가 본다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 
-const { requestPayment, toastAppError } = vi.hoisted(() => ({
+import type { CartItem } from "@/entities/cart";
+
+import type { TossPaymentOrder } from "./toss-payment-widget";
+
+const { requestPayment, toastAppError, createOrder, preparePayment } = vi.hoisted(() => ({
   requestPayment: vi.fn(),
   toastAppError: vi.fn(),
+  createOrder: vi.fn(),
+  preparePayment: vi.fn(),
 }));
+
+const useQueryCart = vi.fn();
+const useQueryAddresses = vi.fn();
 
 vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 
@@ -15,9 +27,23 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
+// `cartItemKey`는 화면과 `pickOrderItems`가 같은 규칙을 써야 하므로 진짜를 그대로 둔다
+vi.mock("@/entities/cart", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/cart")>()),
+  useQueryCart: () => useQueryCart(),
+}));
+vi.mock("@/entities/address", () => ({ useQueryAddresses: () => useQueryAddresses() }));
+
+vi.mock("../api/orders", () => ({ createOrder }));
+vi.mock("../api/payment", () => ({ preparePayment }));
+
 // 위젯은 토스 서버에서 스크립트를 받아 온다. 테스트에서는 준비됐다고만 알린다
 vi.mock("./toss-payment-widget", () => ({
-  TossPaymentWidget: ({ onReady }: { onReady: (fn: () => Promise<void>) => void }) => {
+  TossPaymentWidget: ({
+    onReady,
+  }: {
+    onReady: (fn: (order: TossPaymentOrder) => Promise<void>) => void;
+  }) => {
     useEffect(() => {
       onReady(requestPayment);
     }, [onReady]);
@@ -27,58 +53,171 @@ vi.mock("./toss-payment-widget", () => ({
 
 import { CheckoutView } from "./checkout-view";
 
-test("결제 내역을 항목별로 읽을 수 있다", () => {
-  render(<CheckoutView />);
+// 앞 테스트의 호출 기록이 남으면 "부르지 않았다"를 단언할 수 없다
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
+/** 명세 예시를 옮긴 배송지 */
+const HOME = {
+  addressId: 5,
+  addressName: "집",
+  receiver: "홍길동",
+  phone: "010-1234-5678",
+  zipCode: "06133",
+  address: "서울특별시 강남구 테헤란로 123",
+  addressDetail: "UI타워 4층 404호",
+  deliveryNote: null,
+  isDefault: true,
+};
+
+const STUDIO = { ...HOME, addressId: 9, addressName: "자취방", isDefault: false };
+
+const ITEM: CartItem = {
+  itemType: "NORMAL",
+  itemId: 1,
+  quantity: 1,
+  available: true,
+  unavailableReason: null,
+  productName: "종근당 캣츠벨",
+  thumbnailUrl: null,
+  price: 9345,
+  originalPrice: 9345,
+  discountRate: 0,
+  subtotal: 9345,
+  dealEndAt: null,
+};
+
+/** 조회가 끝나 배송지와 상품이 모두 있는 평상시 화면 */
+function renderView({
+  items = [ITEM],
+  addresses = [HOME],
+  cartState = {},
+  addressState = {},
+}: {
+  items?: CartItem[];
+  addresses?: (typeof HOME)[];
+  cartState?: Record<string, unknown>;
+  addressState?: Record<string, unknown>;
+} = {}) {
+  useQueryCart.mockReturnValue({
+    cart: { memberId: 1, items, totalAmount: 9345 },
+    isLoading: false,
+    error: null,
+    ...cartState,
+  });
+  useQueryAddresses.mockReturnValue({
+    addresses,
+    isLoading: false,
+    error: null,
+    ...addressState,
+  });
+  return render(<CheckoutView />);
+}
+
+/** 필수 셋을 켠다. 켜야 결제 버튼이 열린다 */
+function agreeRequired() {
+  for (const label of [
+    "[필수] 주문 상품 정보 동의",
+    "[필수] 개인정보 제3자 제공 동의",
+    "[필수] 결제 대행 서비스(PG) 이용 약관 동의",
+  ]) {
+    fireEvent.click(screen.getByLabelText(label));
+  }
+}
+
+test("결제 내역을 항목별로 읽을 수 있다", () => {
+  renderView();
+
+  expect(screen.getByText("종근당 캣츠벨")).toBeDefined();
   expect(screen.getByText("배송비")).toBeDefined();
   expect(screen.getByText("3,000원")).toBeDefined();
+  // 상품 9,345원 + 배송비 3,000원
+  expect(screen.getByText("12,345원")).toBeDefined();
   // 시안(paym_001)이 수량을 이름과 값으로 나눠 둔다
   expect(screen.getByText("주문 수량")).toBeDefined();
   expect(screen.getByText("1개")).toBeDefined();
 });
 
+// 회원가입·온보딩에 배송지를 받는 자리가 없어 결제 화면이 기본 배송지를 쓴다 (#255)
+test("기본 배송지를 보여준다", () => {
+  renderView({ addresses: [STUDIO, HOME] });
+
+  expect(screen.getByText(HOME.receiver)).toBeDefined();
+  expect(screen.getByText(`${HOME.address} ${HOME.addressDetail}`)).toBeDefined();
+  expect(screen.getByRole("link", { name: "배송지 변경" }).getAttribute("href")).toBe(
+    "/payment/address",
+  );
+});
+
+// 시안 `empty_dilivery 2`. 고를 목록이 없으므로 설정이 아니라 등록으로 보낸다
+test("등록된 배송지가 없으면 등록하러 보낸다", () => {
+  renderView({ addresses: [] });
+
+  expect(screen.getByText("아직 등록된 배송지가 없어요")).toBeDefined();
+  expect(screen.getByRole("link", { name: "배송지 등록" }).getAttribute("href")).toBe(
+    "/mypage/address/new",
+  );
+  // 보낼 곳을 모르면 주문을 만들 수 없다
+  agreeRequired();
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+});
+
 // 결제수단 목록은 토스 위젯이 그린다. 우리가 라디오를 만들지 않는다
 test("결제 방법 자리를 토스 위젯이 채운다", () => {
-  render(<CheckoutView />);
+  renderView();
   expect(screen.getByTestId("toss-widget")).toBeDefined();
 });
 
 // 결제는 되돌릴 수 없다. 필수 동의 없이 눌리면 무엇에 동의했는지 모르는 채로 돈이 나간다.
 test("필수 약관에 동의해야 결제할 수 있다", () => {
-  render(<CheckoutView />);
+  renderView();
 
-  const pay = screen.getByRole("button", { name: "결제하기" });
+  const pay = screen.getByRole("button", { name: /결제하기/ });
   expect(pay.hasAttribute("disabled")).toBe(true);
 
-  for (const label of [
-    "[필수] 주문 상품 정보 동의",
-    "[필수] 개인정보 제3자 제공 동의",
-    "[필수] 결제 대행 서비스(PG) 이용 약관 동의",
-  ]) {
-    fireEvent.click(screen.getByLabelText(label));
-  }
+  agreeRequired();
 
   // 선택 항목은 켜지 않아도 결제할 수 있다
   expect(pay.hasAttribute("disabled")).toBe(false);
 });
 
-test("결제하기를 누르면 결제창을 띄운다", () => {
-  render(<CheckoutView />);
+/**
+ * 결제 버튼 한 번에 세 단계가 이어진다.
+ *
+ * **`[2]`에 가는 것은 숫자 PK, 결제창에 가는 것은 문자열 주문번호다.** 이름이 비슷해 섞이면
+ * 위젯은 떠도 승인에서 막힌다.
+ */
+test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", async () => {
+  createOrder.mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValueOnce({
+    tossOrderId: "ORD-20260918-000123",
+    amount: 12345,
+    orderName: "종근당 캣츠벨",
+    customerKey: "3f29a1d0",
+  });
+  renderView();
 
-  for (const label of [
-    "[필수] 주문 상품 정보 동의",
-    "[필수] 개인정보 제3자 제공 동의",
-    "[필수] 결제 대행 서비스(PG) 이용 약관 동의",
-  ]) {
-    fireEvent.click(screen.getByLabelText(label));
-  }
-  fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
+  agreeRequired();
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
 
-  expect(requestPayment).toHaveBeenCalled();
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+
+  expect(createOrder).toHaveBeenCalledWith({
+    addressId: HOME.addressId,
+    items: [{ itemType: "NORMAL", itemId: 1, quantity: 1 }],
+    // 드롭다운 기본값이 그대로 실린다
+    deliveryNote: "문 앞에 놓아주세요",
+  });
+  expect(preparePayment).toHaveBeenCalledWith({ orderId: 77 });
+  expect(requestPayment).toHaveBeenCalledWith({
+    orderId: "ORD-20260918-000123",
+    orderName: "종근당 캣츠벨",
+  });
 });
 
 test("전체 동의를 켜면 네 줄이 함께 켜진다", () => {
-  render(<CheckoutView />);
+  renderView();
 
   fireEvent.click(screen.getByLabelText("[전체 동의]"));
 
@@ -86,12 +225,12 @@ test("전체 동의를 켜면 네 줄이 함께 켜진다", () => {
   expect(
     screen.getByLabelText("[선택] 다음 주문을 위해 이 결제 수단 저장").getAttribute("data-state"),
   ).toBe("checked");
-  expect(screen.getByRole("button", { name: "결제하기" }).hasAttribute("disabled")).toBe(false);
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false);
 });
 
 // 시안(paym_001_직접입력)은 직접 입력을 고른 뒤에만 칸을 연다
 test("직접 입력을 고르기 전에는 입력 칸이 없다", () => {
-  render(<CheckoutView />);
+  renderView();
 
   expect(screen.queryByLabelText("배송 요청사항 직접 입력")).toBeNull();
 });
@@ -100,16 +239,33 @@ test("직접 입력을 고르기 전에는 입력 칸이 없다", () => {
  * 결제창이 뜬 뒤의 실패·취소는 토스가 `failUrl`로 되돌려 보내 `?code=`로 알 수 있지만,
  * 창을 띄우기도 전에 막히면 리다이렉트가 없다. 놓치면 눌러도 아무 일이 없어 보인다.
  */
-test("결제창을 띄우지 못하면 실패를 알린다", async () => {
-  requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
-  render(<CheckoutView />);
+test("주문을 만들지 못하면 실패를 알린다", async () => {
+  createOrder.mockRejectedValueOnce(new Error("OUT_OF_STOCK"));
+  renderView();
 
   fireEvent.click(screen.getByLabelText("[전체 동의]"));
-  fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
 
   await waitFor(() =>
     expect(toastAppError).toHaveBeenCalledWith("payment.failed", expect.any(Error)),
   );
   // 알리고 끝이 아니라 다시 누를 수 있어야 한다
-  expect(screen.getByRole("button", { name: "결제하기" }).hasAttribute("disabled")).toBe(false);
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false);
+  expect(requestPayment).not.toHaveBeenCalled();
+});
+
+// 살 수 없는 줄은 이름·금액이 `null`이라 셀 수도 주문에 실을 수도 없다
+test("살 수 없는 줄만 남으면 결제할 수 없다", () => {
+  const soldOut: CartItem = {
+    ...ITEM,
+    available: false,
+    unavailableReason: "DEAL_ENDED",
+    productName: null,
+    subtotal: null,
+  };
+  renderView({ items: [soldOut] });
+
+  expect(screen.getByText("결제할 상품이 없어요")).toBeDefined();
+  agreeRequired();
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
 });
