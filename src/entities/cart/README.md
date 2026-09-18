@@ -1,0 +1,21 @@
+# entities/cart
+
+담아 둔 상품. 장바구니 화면과 결제 흐름이 함께 쓴다.
+
+**`views/cart` 안에 있다가 여기로 내려왔다.** 결제 화면(`views/checkout`)이 주문에 실을 품목을 같은 조회에서 가져와야 하는데, `views/` 안에 두면 같은 레이어 간 참조라 막힌다 (AGENTS.md 4절, #255).
+
+| 파일 | 설명 |
+| --- | --- |
+| `api/cart.ts` | 조회·수량 변경·빼기 요청 함수와 `Cart`·`CartItem` 타입 |
+| `api/use-query-cart.ts` | 장바구니를 가져오는 훅 |
+| `api/use-mutate-cart-item.ts` | 수량 변경·빼기 훅. 낙관적 갱신과 되돌리기 |
+
+## 알아둘 것
+
+**줄의 식별자가 둘이다.** `itemType`(`TIME_DEAL`·`NORMAL`)과 `itemId`가 늘 짝으로 다닌다. 한 덩어리로 다뤄야 하는 자리에는 `cartItemKey()`를 쓴다.
+
+**살 수 없는 줄은 내용이 통째로 비어 온다.** `available: false`면 이름·사진·금액이 전부 `null`이고 `unavailableReason`만 채워진다. 그래서 내용 필드가 전부 nullable이고, **주문에 실을 때는 걸러야 한다.**
+
+**수량은 바뀐 값이 아니라 증감(`delta`)을 보낸다.** 스테퍼가 바뀐 값을 들고 있으므로 부르는 쪽이 이전 값과의 차를 계산한다. 증감이라 연달아 눌러 요청이 여러 번 나가도 서버에서 합쳐진다.
+
+**변경 실패 토스트는 여기서 띄우지 않는다.** `AppProviders`의 `MutationCache.onError`가 모든 변경 실패를 알린다.

@@ -2,11 +2,10 @@
 
 담아 둔 상품을 고르고 수량을 바꾸거나 빼는 화면. UI 시안 `cart_001`과 그 두 상태(`_선택`·`_삭제하기`)에 대응한다.
 
+**조회·변경은 [entities/cart](../../entities/cart/README.md)에 있다.** 결제 화면이 같은 것을 쓰게 되면서 내려갔다 (#255).
+
 | 파일 | 설명 |
 | --- | --- |
-| `api/cart.ts` | 장바구니 조회·수량 변경·빼기와 응답 타입(`Cart`·`CartItem`) |
-| `api/use-query-cart.ts` | 장바구니를 가져오는 훅 |
-| `api/use-mutate-cart-item.ts` | 수량 변경과 빼기. 낙관적 갱신과 되돌리기를 맡는다 |
 | `ui/cart-view.tsx` | 장바구니. 삭제 확인창을 함께 가진다 (`cart_001`) |
 | `ui/cart-skeleton.tsx` | 불러오는 동안 자리를 잡는 뼈대 |
 | `ui/cart-view.test.tsx` | 무엇이 합계에 들어가는지, 고른 것이 없을 때 금액 줄이 감춰지는지 본다 |
