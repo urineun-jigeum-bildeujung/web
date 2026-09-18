@@ -2,20 +2,34 @@
 // UI 시안 기준(mypa_081, 1117-7999)이다. 줄 높이 40, 아이콘 24, 제목 label/bold_14, 줄 사이 12px.
 //
 // 시안은 네 줄 다 화살표인데 갈 곳이 있는 줄이 없다. 갈 곳이 없는 줄은 화살표 없는 정적 줄로 둔다(#194의 선례).
-// 알림설정은 하위 화면 시안이 없어 줄 오른쪽에 스위치를 둔다. 로그아웃·회원탈퇴 동작은 나중에 붙인다.
+// 알림설정은 하위 화면 시안이 없어 줄 오른쪽에 스위치를 둔다.
+//
+// 로그아웃만 그 자리에서 동작하는 줄이다(#247). 회원탈퇴는 API가 아직 없어 정적 줄로 남는다.
 
 "use client";
 
 import { useId, useState } from "react";
 
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { toastAppError } from "@/shared/lib/app-toast";
+
 import { Icon } from "@/shared/ui/icon/icon";
-import { ListRowStatic } from "@/shared/ui/list-row/list-row";
+import { ListRowButton, ListRowStatic } from "@/shared/ui/list-row/list-row";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Switch } from "@/shared/ui/switch";
+
+import { useMutateLogout } from "../api/use-mutate-logout";
 
 export function SettingsView() {
   const pushId = useId();
   const [pushEnabled, setPushEnabled] = useState(true);
+  const { logout, isLoggingOut } = useMutateLogout();
+
+  // 실패해도 기기의 토큰은 지워져 로그아웃은 끝난다. 서버 정리가 안 됐다는 것만 알린다
+  const signOut = () => {
+    logout().catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+  };
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -33,9 +47,12 @@ export function SettingsView() {
           <Switch id={pushId} checked={pushEnabled} onCheckedChange={setPushEnabled} />
         </label>
         <ListRowStatic size="sm" title="테마설정" icon={<Icon name="mode" />} />
-        <ListRowStatic
+        <ListRowButton
           size="sm"
-          title="로그아웃"
+          hideChevron
+          disabled={isLoggingOut}
+          onClick={signOut}
+          title={<LoadingSwap loading={isLoggingOut}>로그아웃</LoadingSwap>}
           icon={<Icon name="key" className="text-icon-fill-purple" />}
         />
         <ListRowStatic size="sm" title="회원탈퇴" icon={<Icon name="user" />} />
