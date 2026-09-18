@@ -2,15 +2,34 @@
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
   usePathname: () => "/mypage",
 }));
 
+// 아이 원 줄이 목록을 서버에서 받는다(#230)
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryPets: () => ({
+    pets: [
+      { id: "3", name: "코코", isDefault: true },
+      { id: "7", name: "보리", isDefault: false },
+    ],
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { MypageView } from "./mypage-view";
 
+function renderView() {
+  return render(<MypageView />, { wrapper: createQueryWrapper() });
+}
+
 test("메뉴를 세 묶음으로 보여준다", () => {
-  render(<MypageView />);
+  renderView();
 
   for (const title of ["나의 쇼핑", "혜택과 결제", "고객지원"]) {
     expect(screen.getByRole("heading", { name: title })).toBeDefined();
@@ -18,7 +37,7 @@ test("메뉴를 세 묶음으로 보여준다", () => {
 });
 
 test("각 메뉴가 제 경로로 이어진다", () => {
-  render(<MypageView />);
+  renderView();
 
   expect(screen.getByRole("link", { name: /재입고 알림/ }).getAttribute("href")).toBe(
     "/mypage/restock",
@@ -32,7 +51,7 @@ test("각 메뉴가 제 경로로 이어진다", () => {
 });
 
 test("알림·서비스 안내가 각 화면으로 이어진다", () => {
-  render(<MypageView />);
+  renderView();
 
   expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
     "/mypage/notifications",
@@ -43,9 +62,17 @@ test("알림·서비스 안내가 각 화면으로 이어진다", () => {
 });
 
 test("반려동물 프로필 영역이 마이페이지_반려동물 화면으로 이어진다", () => {
-  render(<MypageView />);
+  renderView();
 
   expect(screen.getByRole("link", { name: "반려동물 프로필 관리" }).getAttribute("href")).toBe(
     "/mypage/pets",
   );
+});
+
+// 원이 목이던 동안에는 등록한 아이가 둘이 아니어도 늘 둘이 떴다
+test("아이 원을 서버에서 받은 목록으로 그린다", () => {
+  renderView();
+
+  expect(screen.getByTitle("코코")).toBeDefined();
+  expect(screen.getByTitle("보리")).toBeDefined();
 });

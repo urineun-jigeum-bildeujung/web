@@ -13,6 +13,8 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 import { BottomNav } from "@/widgets/bottom-nav";
 
+import { PetAvatars } from "./pet-avatars";
+
 const MENU_GROUPS = [
   {
     title: "나의 쇼핑",
@@ -74,13 +76,10 @@ const MENU_GROUPS = [
 ];
 
 /** API 연동 전까지 화면 확인용 값 */
+/** 닉네임·이메일은 아직 목이다. `GET /members/me`가 없다 */
 const MOCK_USER = {
   nickname: "졸린고양이 17",
   email: "cjsrudwls12@naver.com",
-  pets: [
-    { id: "1", name: "코코" },
-    { id: "2", name: "보리" },
-  ],
 };
 
 const HEADER_ICON =
@@ -135,14 +134,7 @@ export function MypageView() {
             aria-label="반려동물 프로필 관리"
             className="flex h-10.5 items-center gap-3 px-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {MOCK_USER.pets.map((pet) => (
-              <span
-                key={pet.id}
-                aria-hidden
-                title={pet.name}
-                className="size-10.5 shrink-0 rounded-full bg-surface-disable"
-              />
-            ))}
+            <PetAvatars />
             {/* 아이를 더 들이는 자리. 점선 원으로 비어 있음을 보인다 */}
             <span
               aria-hidden
