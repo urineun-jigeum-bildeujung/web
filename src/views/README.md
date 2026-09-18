@@ -87,6 +87,7 @@ views/
 | `service` | `/mypage/service` | 서비스 안내 (자리 표시) |
 | `service-terms` | `/mypage/service/terms` | 서비스 이용약관 (자리 표시) |
 | `service-privacy` | `/mypage/service/privacy` | 개인정보 처리방침 (자리 표시) |
+| `not-found` | (없는 주소 전부) | 404. `app/not-found.tsx`가 부른다 |
 | `deals` | `/deals` | 타임딜. 진행 중과 오픈 예정을 탭으로 나눈다 |
 | `search` | `/search` | 검색 입력. 최근 검색어와 카테고리로 시작하고 글자를 넣으면 추천어를 보인다 |
 | `search-result` | `/search/result` | 검색 결과 목록. 정렬과 적합도를 함께 보인다 |
