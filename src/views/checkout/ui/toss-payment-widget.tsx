@@ -3,8 +3,8 @@
 // 결제수단 목록·할부 개월·간편결제 분기를 우리가 만들지 않는 이유는 component-convention의
 // "외부 위젯이 그린다" 항목이다. 카드 정보 입력창은 아예 토스가 띄우는 별도 창이다.
 //
-// **승인은 여기서 하지 않는다.** 시크릿 키를 쥔 백엔드가 맡는다(엔드포인트는 미정, #217).
-// 우리는 결제창을 띄우고 돌아온 값을 완료 화면으로 넘기는 데까지다 (#212).
+// **승인은 여기서 하지 않는다.** 시크릿 키를 쥔 백엔드가 `POST /payments/confirm`으로 맡는다.
+// 우리는 결제창을 띄우고 돌아온 값을 완료 화면으로 넘기는 데까지다 (#212·#255).
 
 "use client";
 
@@ -16,9 +16,11 @@ type TossPaymentWidgetProps = {
   amount: number;
   /** 결제창을 띄울 수 있게 준비됐는지 알린다. 버튼 잠금에 쓴다 */
   onReady: (requestPayment: (() => Promise<void>) | null) => void;
-  /** 주문번호. 토스가 6~64자 고유값을 요구한다 */
+  /** 주문번호. 토스가 6~64자 고유값을 요구한다. 백엔드가 준 `tossOrderId`를 그대로 넘긴다 */
   orderId: string;
   orderName: string;
+  /** 백엔드 `POST /payments`가 준 값. 없으면 비회원으로 연다 */
+  customerKey?: string;
 };
 
 /** 위젯을 띄울 자리. 토스가 CSS 선택자로 찾는다 */
@@ -28,10 +30,11 @@ const METHODS_SELECTOR = "toss-payment-methods";
 const LOAD_FAILED = "결제 수단을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";
 
 /** 위젯을 띄우고 그 조작 객체를 준다. 두 번 부르면 토스가 AlreadyRenderedError를 던진다 */
-async function renderWidgets(clientKey: string, amount: number) {
+async function renderWidgets(clientKey: string, amount: number, customerKey: string) {
   const tossPayments = await loadTossPayments(clientKey);
-  // 회원 결제수단을 저장하지 않으므로 비회원으로 연다. 저장은 브랜드페이 기능이고 계약이 따로다
-  const widgets = tossPayments.widgets({ customerKey: ANONYMOUS });
+  // **`customerKey`는 백엔드 `POST /payments`가 준다.** 그 값으로 열어야 승인 때 같은 사용자로
+  // 이어진다. 값이 없으면 비회원(`ANONYMOUS`)으로 여는데, 그 경우 결제수단이 저장되지 않는다
+  const widgets = tossPayments.widgets({ customerKey: customerKey || ANONYMOUS });
 
   await widgets.setAmount({ currency: "KRW", value: amount });
   await widgets.renderPaymentMethods({ selector: `#${METHODS_SELECTOR}` });
@@ -39,7 +42,13 @@ async function renderWidgets(clientKey: string, amount: number) {
   return widgets;
 }
 
-export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossPaymentWidgetProps) {
+export function TossPaymentWidget({
+  amount,
+  onReady,
+  orderId,
+  orderName,
+  customerKey = "",
+}: TossPaymentWidgetProps) {
   // 키는 렌더 시점에 알 수 있다. effect에서 판단하면 한 번 그린 뒤에 고치게 된다
   const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
   const [failed, setFailed] = useState(false);
@@ -67,7 +76,10 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
       return;
     }
 
-    widgetsRef.current ??= renderWidgets(clientKey, amount);
+    // **한 번 띄운 위젯의 customerKey는 바꿀 수 없다.** 그래서 처음 값으로만 연다 —
+    // 값이 늦게 와도 다시 띄우지 않는다. 늦게 오는 경우는 부르는 쪽이 값이 온 뒤에
+    // 이 컴포넌트를 그려서 막는다
+    widgetsRef.current ??= renderWidgets(clientKey, amount, customerKey);
 
     let disposed = false;
 
@@ -103,7 +115,7 @@ export function TossPaymentWidget({ amount, onReady, orderId, orderName }: TossP
     return () => {
       disposed = true;
     };
-  }, [amount, clientKey, orderId, orderName]);
+  }, [amount, clientKey, customerKey, orderId, orderName]);
 
   if (!clientKey || failed) {
     return (

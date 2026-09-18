@@ -4,12 +4,41 @@
 // 그것이 브라우저에 닿으면 누구나 결제를 승인할 수 있다. 백엔드가 쥐고 부른다
 // (2026-08-28 백엔드 협의).
 //
-// **어느 엔드포인트가 승인을 맡는지는 아직 정해지지 않았다.** API 명세의 결제 섹션에는
-// `POST /payments`(진행 중)와 `GET /payments/{paymentId}`(시작 전) 둘뿐이고 승인 자리가 없다.
-// `POST /payments`가 준비와 승인을 겸하는지 따로 생기는지 백엔드 확인을 기다린다 (#217).
+// **승인 경로는 `POST /payments/confirm`이다** (2026-09-18 백엔드 확정, #255).
 //
-// 화면이 이 함수만 보게 해 두면 API가 생겼을 때 이 안이 `apiRequest` 호출로 바뀌고
-// 화면 코드는 그대로 둘 수 있다.
+// **이 파일은 결제 흐름의 [2]와 [5]를 맡는다.** [1] 주문 생성은 `orders.ts`에 있다.
+// 순서는 주문 생성 → 결제 요청 → 위젯 → 복귀 → 승인이고, 건너뛰면 승인에서 막힌다.
+//
+// **`orderId`가 두 개다.** `[2]`에 넘기는 것은 주문의 **숫자 PK**이고, 위젯과 승인에 쓰는
+// 것은 `[2]`가 돌려주는 **문자열 주문번호**(`tossOrderId`)다. 이름이 비슷해 섞이기 쉽다.
+
+import { apiRequest } from "@/shared/api/client";
+
+const PAYMENTS_PATH = "/payments";
+
+/** 결제 요청에 보내는 것. 주문 생성이 돌려준 숫자 PK다 */
+export type PreparePaymentRequest = {
+  orderId: number;
+};
+
+/**
+ * 결제창을 띄우는 데 필요한 값 전부.
+ *
+ * **`tossOrderId`는 토스가 보는 주문번호다.** 그전에는 프론트가 UUID로 만들어 썼는데,
+ * 그러면 백엔드가 승인 때 어느 주문인지 찾지 못한다.
+ */
+export type PreparePaymentResult = {
+  tossOrderId: string;
+  amount: number;
+  orderName: string;
+  /** 위젯이 이 사용자를 알아보는 키. 익명(`ANONYMOUS`)으로 두면 결제수단이 저장되지 않는다 */
+  customerKey: string;
+};
+
+/** 주문을 결제할 준비를 시키고 위젯에 넘길 값을 받는다 */
+export function preparePayment(request: PreparePaymentRequest): Promise<PreparePaymentResult> {
+  return apiRequest<PreparePaymentResult>(PAYMENTS_PATH, { method: "POST", body: request });
+}
 
 /** 토스가 성공 주소에 실어 보내는 값 */
 export type PaymentConfirmRequest = {
@@ -21,13 +50,16 @@ export type PaymentConfirmRequest = {
 };
 
 export type PaymentConfirmResult = {
-  orderId: string;
-  /** 주문 상세로 가는 식별자. 주문번호와 같은 값인지는 API 계약이 정해져야 안다 */
-  orderNo: string;
+  paymentId: number;
+  /** 사용자에게 보여주는 주문번호 */
+  orderNumber: string;
+  /** 즉시 승인되는 수단만 다루므로 성공이면 `DONE`이다 */
+  paymentStatus: string;
   /** 승인된 금액 */
   amount: number;
   /** "토스페이"처럼 이미 다듬어진 문자열 */
-  payMethod: string;
+  method: string;
+  approvedAt: string;
 };
 
 /**
@@ -39,12 +71,8 @@ export type PaymentConfirmResult = {
 export async function confirmPayment(
   request: PaymentConfirmRequest,
 ): Promise<PaymentConfirmResult> {
-  // 승인을 맡을 엔드포인트가 정해지면 이 자리가 `apiRequest<PaymentConfirmResult>(…)`가 된다.
-  // 화면은 이 함수만 보므로 경로가 무엇으로 정해지든 여기만 바뀐다.
-  return {
-    orderId: request.orderId,
-    orderNo: "20260829-1234567",
-    amount: request.amount,
-    payMethod: "토스페이",
-  };
+  return apiRequest<PaymentConfirmResult>(`${PAYMENTS_PATH}/confirm`, {
+    method: "POST",
+    body: request,
+  });
 }
