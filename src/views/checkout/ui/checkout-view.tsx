@@ -40,15 +40,11 @@ import { Textarea } from "@/shared/ui/textarea";
 import { createOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { pickOrderItems } from "../model/order-items";
-import { DeliveryNotice } from "./delivery-notice";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
 /** 장바구니 응답에 `deliveryFee`가 없어 고정값을 쓴다. 장바구니 화면과 같은 값이다 (#214) */
 const SHIPPING_FEE = 3000;
-
-/** 도착 예정일은 아직 서버가 주지 않는다. 시안 문구를 그대로 둔다 */
-const ARRIVE_AT = "모레(9/3)";
 
 /** 시안(paym_001_드롭다운) 순서 그대로다. 마지막 하나만 성격이 달라 값으로 가른다 */
 const REQUEST_DIRECT = "직접 입력";
@@ -251,13 +247,15 @@ export function CheckoutView() {
         <Section
           title="배송지 정보"
           action={
-            // **조회가 끝나기 전에는 내걸지 않는다.** 아직 배송지를 모르는 동안 "없음" 쪽으로
-            // 그리면 목록이 도착하는 순간 문구와 목적지가 함께 바뀌어, 누르려던 것이 손 밑에서
-            // 달라진다.
+            // **배송지를 알기 전에는 내걸지 않는다.** 조회 중에 "없음" 쪽으로 그리면 목록이
+            // 도착하는 순간 문구와 목적지가 함께 바뀌어 누르려던 것이 손 밑에서 달라지고,
+            // 조회 실패에서 그리면 같은 자리에 오류 문구와 "배송지 등록"이 함께 떠 사용자가
+            // 실패를 미등록으로 읽는다 (#259 리뷰).
             //
             // 등록된 곳이 없으면 고를 목록도 없다. 시안(`empty_dilivery 2`)이 이 자리의
             // 문구를 "배송지 등록"으로 바꾸고 등록 화면으로 곧장 보낸다
-            !addressLoading && (
+            !addressLoading &&
+            !addressError && (
               <Link
                 href={address ? "/payment/address" : "/mypage/address/new"}
                 className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-secondary"
@@ -347,7 +345,9 @@ export function CheckoutView() {
         <hr className="border-border" />
 
         <Section title="결제 정보">
-          <DeliveryNotice>지금 주문하면 {ARRIVE_AT} 도착해요</DeliveryNotice>
+          {/* **도착 예정일 줄은 그리지 않는다.** 시안(`paym_001`)에는 있지만 서버가 그 값을
+              주지 않는다. 시안 문구를 그대로 두면 오늘이 며칠이든 "모레(9/3)"이라 지난 날짜가
+              모든 주문에 뜬다 (#259 리뷰). 배송일을 받게 되면 `DeliveryNotice`로 되살린다 */}
 
           {cartLoading && <OrderItemSkeleton />}
 

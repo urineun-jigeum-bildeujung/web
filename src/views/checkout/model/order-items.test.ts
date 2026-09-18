@@ -1,3 +1,4 @@
+// 결제할 줄 고르기 테스트. 쿼리로 받은 것과 살 수 없는 줄을 어떻게 가르는지 본다.
 import { describe, expect, it } from "vitest";
 
 import type { CartItem } from "@/entities/cart";
@@ -60,6 +61,11 @@ describe("pickOrderItems", () => {
 
     expect(picked).toHaveLength(1);
     expect(picked[0].itemType).toBe("TIME_DEAL");
+  });
+
+  // `?items=`는 "아무것도 안 골랐다"에 가깝다. 쿼리 누락과 같이 다루면 장바구니가 통째로 결제된다
+  it("빈 문자열은 전체가 아니라 빈 선택이다", () => {
+    expect(pickOrderItems([sellable(1), sellable(2)], "")).toEqual([]);
   });
 
   it("고른 값이 하나도 맞지 않으면 빈 목록이다", () => {

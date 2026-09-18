@@ -254,6 +254,32 @@ test("주문을 만들지 못하면 실패를 알린다", async () => {
   expect(requestPayment).not.toHaveBeenCalled();
 });
 
+/**
+ * 창을 띄우는 마지막 걸음에서 막히는 경우다. 주문은 이미 만들어졌고 결제창만 열리지 않았다.
+ * `createOrder` 실패와 같은 `catch`로 떨어지지만 거기까지 가는 길이 달라 따로 본다.
+ */
+test("결제창을 띄우지 못하면 실패를 알린다", async () => {
+  createOrder.mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValueOnce({
+    tossOrderId: "ORD-20260918-000123",
+    amount: 12345,
+    orderName: "종근당 캣츠벨",
+    customerKey: "3f29a1d0",
+  });
+  requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(toastAppError).toHaveBeenCalledWith("payment.failed", expect.any(Error)),
+  );
+  // 알리고 끝이 아니라 다시 누를 수 있어야 한다
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false);
+});
+
 // 살 수 없는 줄은 이름·금액이 `null`이라 셀 수도 주문에 실을 수도 없다
 test("살 수 없는 줄만 남으면 결제할 수 없다", () => {
   const soldOut: CartItem = {

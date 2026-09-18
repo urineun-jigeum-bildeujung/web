@@ -87,6 +87,12 @@ export function TossPaymentWidget({ amount, onReady, customerKey = "" }: TossPay
 
     let disposed = false;
 
+    // **금액을 위젯에 알리는 동안 결제를 막는다.** 앞서 넘긴 결제 수단은 이전 금액으로 잠겨
+    // 있어, 걷어내지 않으면 장바구니 응답이 도착해 `amount`가 바뀌는 찰나에 눌렀을 때
+    // **옛 금액으로 결제 요청이 나간다** (#259 리뷰). 부르는 쪽은 이 값이 null인 동안 버튼을
+    // 잠그므로, 아래에서 새 것을 넘길 때까지 결제가 일어나지 않는다.
+    onReadyRef.current(null);
+
     void widgetsRef.current
       .then(async (widgets) => {
         // 금액이 바뀌면 위젯에 다시 알린다. 처음 띄울 때 넣은 값과 같으면 그대로다
