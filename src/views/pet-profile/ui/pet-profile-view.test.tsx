@@ -48,14 +48,6 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets: () => ({ pets: query.pets, isLoading: false, error: query.petsError }),
   useQueryPetDetail: () => ({ pet: query.pet, isLoading: false, error: query.petError }),
-  useQueryHealthOptions: () => ({
-    options: {
-      concerns: [{ label: "관절·뼈", items: [{ value: "슬개골 탈구", label: "슬개골 탈구" }] }],
-      allergies: [{ label: "알레르기", items: [{ value: "CHICKEN", label: "닭고기" }] }],
-    },
-    isLoading: false,
-    error: null,
-  }),
 }));
 
 import { PetProfileView } from "./pet-profile-view";
@@ -143,12 +135,12 @@ test("아이 제품을 반응 입력 여부로 거른다", () => {
   expect(screen.getAllByRole("button", { name: /반응 남기기/ })).toHaveLength(2);
 });
 
-// 저장은 코드로 하지만 상세 조회도 코드만 돌려준다. 그대로 찍으면 CHICKEN이 뜬다
-test("알레르기를 코드가 아니라 표시명으로 보인다", () => {
+// 상세가 코드만 준다. 백엔드가 displayName을 실어 줄 때까지 받은 값을 그대로 보인다 —
+// 선택지를 따로 받아 짝을 맞추면 곧 사라질 우회를 위해 요청이 한 번 더 나간다
+test("알레르기를 받은 코드 그대로 보인다", () => {
   renderView();
 
-  expect(screen.getByText("닭고기")).toBeDefined();
-  expect(screen.queryByText("CHICKEN")).toBeNull();
+  expect(screen.getByText("CHICKEN")).toBeDefined();
 });
 
 test("고른 아이의 품종·나이·성별을 한 줄로 보인다", () => {

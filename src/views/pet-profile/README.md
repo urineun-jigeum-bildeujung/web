@@ -3,7 +3,7 @@
 아이 관리. 반려동물의 정보와 그 아이가 먹은 제품을 탭으로 나눠 보여준다.
 
 - **라우트**: `/mypage/pets` — `src/app/mypage/pets/page.tsx`
-- **조립**: `entities/pet`의 `PetSwitcher`(`variant="hero"`) · `ProductFeedbackSheet` · 조회 훅 셋, `shared/ui`의 `page-header` · `tabs` · `filter-chips` · `badge` · `empty-state`
+- **조립**: `entities/pet`의 `PetSwitcher`(`variant="hero"`) · `ProductFeedbackSheet` · 목록·상세 조회 훅, `shared/ui`의 `page-header` · `tabs` · `filter-chips` · `badge` · `empty-state`
 - **상태**: 탭은 URL 쿼리 `tab`(`profile` · `products`), 거르기는 `reviewed`. 고른 아이와 열린 반응 시트는 화면 안 상태
 - **참고**: UI 시안 기준(`mypa_021` 내 아이 관리 `1514-44230` · 아이 제품 관리 `1551-46897` · 반응 시트 `1551-47882`)
 
@@ -34,7 +34,7 @@
 
 **기본 아이가 처음 고른 아이다.** 목록에 `ORDER BY`가 없어 순서가 DB에 달려서, `entities/pet`의 조회가 `isDefault`를 앞으로 올려 준다. 그 첫 아이를 쓰고, 보호자가 다른 아이를 누르면 그때부터 그 아이를 따른다.
 
-**알레르기는 표시명을 되찾아 보인다.** 상세가 `CHICKEN` 같은 코드만 주므로 상세가 함께 준 종으로 `GET /pets/health-options`를 받아 짝을 맞춘다. 백엔드가 상세에도 표시명을 실어 주면 이 우회를 걷어낸다.
+**알레르기는 받은 코드를 그대로 보인다.** 상세가 `CHICKEN` 같은 코드만 준다. 백엔드가 상세에도 `displayName`을 실어 주기로 해서, 그때까지 `GET /pets/health-options`를 따로 받아 짝을 맞추지 않는다 — 곧 사라질 우회를 위해 이 화면이 요청을 한 번 더 보내고 아이의 종까지 알아야 한다.
 
 **아이가 없으면 카드를 그리지 않는다.** 등록하러 가는 자리를 대신 보인다 — 빈 카드만 두면 고장으로 읽힌다. 불러오는 중과 실패도 문구로 알린다.
 

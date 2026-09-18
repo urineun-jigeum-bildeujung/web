@@ -46,9 +46,9 @@
 
 **품종 조회를 두 번 부른다.** API가 `species`를 필수로 받는데 품종 화면은 두 종을 한 번에 보이고 검색도 양쪽을 훑는다. 종마다 캐시가 따로 잡혀 한쪽이 실패해도 다른 쪽은 살아 있다.
 
-**고른 값을 그대로 찍지 않는다.** 저장은 코드로 하므로 목록에서 표시명을 되찾아 보인다. 그대로 찍으면 `CHICKEN`이 화면에 뜬다. 되찾는 자리는 `model/health.ts`의 `toLabels` 하나이고, 고르는 자리(`HealthPickerField`)와 상세를 보이는 자리가 함께 쓴다.
+**고른 값을 그대로 찍지 않는다.** 저장은 코드로 하므로 목록에서 표시명을 되찾아 보인다. 그대로 찍으면 `CHICKEN`이 화면에 뜬다. 되찾는 자리는 `model/health.ts`의 `toLabels`다. 고르는 자리(`HealthPickerField`)는 선택지를 손에 들고 있어 바로 쓴다.
 
-**상세 조회도 알레르기를 코드로만 준다.** `GET /members/me/pets/{petId}`의 `allergies`가 `CHICKEN` 배열이다. 등록 선택지(`GET /pets/health-options`)는 `{ code, displayName }`을 주므로 상세가 함께 주는 `species`로 그 종의 선택지를 받아 짝을 맞춘다. **백엔드가 상세에도 표시명을 실어 주면 이 우회를 걷어낸다**(#230). `healthConcerns`는 코드 자리에 한글이 들어 있어 그대로 쓴다.
+**상세 조회는 알레르기를 코드로만 준다.** `GET /members/me/pets/{petId}`의 `allergies`가 `CHICKEN` 배열이다. **받은 코드를 그대로 보인다** — 백엔드가 상세에도 `displayName`을 실어 주기로 했으므로, 그때까지 선택지를 따로 받아 짝을 맞추지 않는다(#230). 곧 사라질 우회를 위해 화면마다 요청이 한 번 더 나가고 그 화면이 종까지 알아야 하기 때문이다. `healthConcerns`는 코드 자리에 한글이 들어 있어 그대로 쓴다.
 
 **아이 목록은 순서를 보장하지 않는다.** 백엔드 `findByMemberId`에 `ORDER BY`가 없어 순서가 DB에 달렸다. 전환 줄은 순서가 흔들리면 눌렀던 자리가 매번 달라지므로 `isDefault`를 앞으로 올려 `api/pets.ts`에서 정렬한다.
 

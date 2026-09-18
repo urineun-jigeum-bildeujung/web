@@ -13,7 +13,6 @@ import { useEffect, useState } from "react";
 import {
   PetSwitcher,
   ProductFeedbackSheet,
-  useQueryHealthOptions,
   useQueryPetDetail,
   useQueryPets,
   type FeedbackTarget,
@@ -91,8 +90,6 @@ export function PetProfileView() {
   const { pets, error: petsError } = useQueryPets();
   const selectedPetId = pickedId ?? pets?.[0]?.id;
   const { pet, error: petError } = useQueryPetDetail(selectedPetId);
-  // 알레르기가 코드로만 와서 표시명을 선택지에서 되찾는다. 종을 알아야 하므로 상세가 먼저다
-  const { options } = useQueryHealthOptions(pet?.species ?? "dog");
 
   const noPets = pets?.length === 0;
   // **세션이 끊긴 것과 조회가 실패한 것은 다르다.** accessToken은 메모리에만 있어 새로고침하면
@@ -107,8 +104,7 @@ export function PetProfileView() {
       router.replace("/login");
     }
   }, [noSession, router]);
-  // 알레르기 선택지가 아직이면 코드가 그대로 보인다. 자리를 비우면 알레르기가 없는 아이로 읽힌다
-  const profile = pet ? toHeroProfile(pet, options?.allergies ?? []) : null;
+  const profile = pet ? toHeroProfile(pet) : null;
   const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
   const [productFilter, setProductFilter] = useQueryState(
     "reviewed",
