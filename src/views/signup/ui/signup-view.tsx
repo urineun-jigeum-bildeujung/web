@@ -79,7 +79,10 @@ export function SignupView() {
         headerTitle="회원가입"
         question="닉네임을 적어주세요"
         submitLabel="다음으로"
-        submitDisabled={nickname.trim().length < MIN_NICKNAME || submitting}
+        submitDisabled={nickname.trim().length < MIN_NICKNAME}
+        // 가입은 토큰 교체까지 도는 왕복이라 짧지 않다. `disabled`만 두면 왜 안 눌리는지
+        // 모른 채 다시 누르게 된다. 골격이 잠그는 것까지 함께 한다
+        submitting={submitting}
         onSubmit={submit}
       >
         <FormField

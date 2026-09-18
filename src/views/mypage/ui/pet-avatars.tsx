@@ -11,14 +11,34 @@
 import Image from "next/image";
 
 import { useQueryPets } from "@/entities/pet";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 /** 원 하나의 지름. 시안(mypa_001)의 42px이다 */
 const CIRCLE = "size-10.5 shrink-0 rounded-full";
 
-export function PetAvatars() {
-  const { pets } = useQueryPets();
+/** 목록을 기다리는 동안 잡아 둘 자리. 시안이 보통 둘을 보여 준다 */
+const PLACEHOLDER_COUNT = 2;
 
-  // 아직 못 받았거나 등록한 아이가 없으면 아무것도 그리지 않는다.
+export function PetAvatars() {
+  const { pets, isLoading } = useQueryPets();
+
+  // 원을 처음 그리는 자리라 그릴 내용이 아직 없다. 비워 두면 뒤따르는 점선 원이
+  // 왼쪽 끝에 붙어 있다가 목록이 오는 순간 오른쪽으로 밀린다
+  if (isLoading) {
+    return (
+      <>
+        {Array.from({ length: PLACEHOLDER_COUNT }, (_, index) => (
+          <Skeleton
+            key={index}
+            {...(index === 0 && { role: "status", "aria-label": "아이 목록을 불러오는 중" })}
+            className={`${CIRCLE} bg-surface-disable`}
+          />
+        ))}
+      </>
+    );
+  }
+
+  // 등록한 아이가 없으면 아무것도 그리지 않는다.
   // 뒤따르는 점선 원이 "아이를 들이는 자리"로 남아 할 일을 알린다
   return (
     <>

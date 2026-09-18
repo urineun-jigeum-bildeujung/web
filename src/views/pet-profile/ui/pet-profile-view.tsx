@@ -22,6 +22,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { ApiError } from "@/shared/api/client";
 import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { toHeroProfile } from "../model/to-hero-profile";
@@ -161,13 +162,18 @@ export function PetProfileView() {
             />
           ) : profile ? (
             <PetHeroCard profile={profile} />
-          ) : (
-            <p
-              role={loadFailed ? "alert" : "status"}
-              className="px-5 text-body-medium-14 text-text-body-secondary"
-            >
-              {loadFailed ? "아이 정보를 불러오지 못했어요" : "아이 정보를 불러오는 중이에요"}
+          ) : loadFailed ? (
+            <p role="alert" className="px-5 text-body-medium-14 text-text-body-secondary">
+              아이 정보를 불러오지 못했어요
             </p>
+          ) : (
+            // 카드를 처음 그리는 자리라 그릴 내용이 아직 없다. 문구만 두면 카드 자리가
+            // 통째로 비었다가 갑자기 채워진다. 실제 카드와 같은 크기로 자리를 잡는다
+            <Skeleton
+              role="status"
+              aria-label="아이 정보를 불러오는 중"
+              className="mx-5 h-110.25 rounded-t-lg rounded-b-2xl"
+            />
           )}
 
           {/* 아이 전환 줄은 화면 아래에 붙는다. 새 아이는 온보딩 기본 정보 단계에서 등록한다 */}

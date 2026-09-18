@@ -314,6 +314,8 @@ function ReviewWriteForm({ orderItemId }: { orderItemId: string }) {
             >
               이전
             </Button>
+            {/* 대기 표시 없음 — 등록 API가 아직 없어 제출이 동기다. 기다릴 것이 생기면
+                `LoadingSwap`으로 라벨만 바꾼다 */}
             <Button disabled={!ready} onClick={submit}>
               등록하기
             </Button>

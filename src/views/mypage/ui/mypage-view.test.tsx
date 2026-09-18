@@ -10,16 +10,18 @@ vi.mock("next/navigation", () => ({
 }));
 
 // 아이 원 줄이 목록을 서버에서 받는다(#230)
+let petsQuery: { pets: unknown; isLoading: boolean; error: null } = {
+  pets: [
+    { id: "3", name: "코코", isDefault: true },
+    { id: "7", name: "보리", isDefault: false },
+  ],
+  isLoading: false,
+  error: null,
+};
+
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
-  useQueryPets: () => ({
-    pets: [
-      { id: "3", name: "코코", isDefault: true },
-      { id: "7", name: "보리", isDefault: false },
-    ],
-    isLoading: false,
-    error: null,
-  }),
+  useQueryPets: () => petsQuery,
 }));
 
 import { MypageView } from "./mypage-view";
@@ -75,4 +77,20 @@ test("아이 원을 서버에서 받은 목록으로 그린다", () => {
 
   expect(screen.getByTitle("코코")).toBeDefined();
   expect(screen.getByTitle("보리")).toBeDefined();
+});
+
+// 원이 없다가 생기면 뒤따르는 점선 원이 왼쪽에 붙어 있다가 오른쪽으로 밀린다
+test("목록을 받는 동안 원 자리를 잡아 둔다", () => {
+  petsQuery = { pets: undefined, isLoading: true, error: null };
+  renderView();
+
+  expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
+  petsQuery = {
+    pets: [
+      { id: "3", name: "코코", isDefault: true },
+      { id: "7", name: "보리", isDefault: false },
+    ],
+    isLoading: false,
+    error: null,
+  };
 });
