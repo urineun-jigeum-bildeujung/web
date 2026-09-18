@@ -302,6 +302,21 @@ test("새 쪽을 기다리는 동안 앞 결과를 지우지 않는다", () => {
   expect(screen.getByRole("list").getAttribute("aria-busy")).toBe("true");
 });
 
+// 셰브론이 스피너로 바뀌면 누를 것처럼 보이지 않는다. 실제로도 못 누르게 맞춘다 (#236 리뷰).
+// 쪽마다 행안부에 한 번씩 나가므로 버려질 요청을 줄이는 뜻도 있다
+test("새 쪽을 기다리는 동안에는 쪽 버튼을 누를 수 없다", () => {
+  useQueryAddressSearch.mockReturnValue({
+    result: { items: ITEMS.slice(0, ADDRESS_PAGE_SIZE), totalCount: ITEMS.length, page: 1 },
+    error: null,
+    isSearching: false,
+    isRefreshing: true,
+  });
+  renderAt("?query=테헤란로&page=2");
+
+  const next = screen.getByRole("button", { name: "다음 페이지" }) as HTMLButtonElement;
+  expect(next.disabled).toBe(true);
+});
+
 // 쪽을 넘기는 동안 `keepPreviousData`가 **앞 쪽 결과**를 내준다. 보정 effect가 그 쪽 번호를
 // 근거로 읽으면 방금 누른 이동을 도로 되돌려, 한 번 눌러서는 넘어가지 않는다 (#235).
 //
