@@ -8,7 +8,7 @@
 
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   PetSwitcher,
@@ -20,6 +20,7 @@ import {
 } from "@/entities/pet";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { ApiError } from "@/shared/api/client";
 import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
@@ -94,7 +95,18 @@ export function PetProfileView() {
   const { options } = useQueryHealthOptions(pet?.species ?? "dog");
 
   const noPets = pets?.length === 0;
-  const loadFailed = Boolean(petsError ?? petError);
+  // **세션이 끊긴 것과 조회가 실패한 것은 다르다.** accessToken은 메모리에만 있어 새로고침하면
+  // 사라지고, 재발급 엔드포인트가 아직 없어 되살릴 수 없다. 그대로 두면 로그인하지 않은
+  // 보호자에게 "불러오지 못했어요"가 떠서 다시 눌러 보게 된다 — 눌러도 될 리가 없다
+  const error = petsError ?? petError;
+  const noSession = error instanceof ApiError && error.status === 401;
+  const loadFailed = Boolean(error) && !noSession;
+
+  useEffect(() => {
+    if (noSession) {
+      router.replace("/login");
+    }
+  }, [noSession, router]);
   // 알레르기 선택지가 아직이면 코드가 그대로 보인다. 자리를 비우면 알레르기가 없는 아이로 읽힌다
   const profile = pet ? toHeroProfile(pet, options?.allergies ?? []) : null;
   const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);

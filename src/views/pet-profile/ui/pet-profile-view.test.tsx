@@ -3,10 +3,14 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
 
+import { ApiError } from "@/shared/api/client";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push, replace, back: vi.fn() }),
+}));
 
 // 목록·상세·선택지 셋을 서버에서 받는다(#230). 무엇을 부르고 어떻게 옮기는지는
 // `entities/pet/api/pets.test.ts`가 보므로 여기서는 화면 동작만 본다
@@ -57,6 +61,8 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
 import { PetProfileView } from "./pet-profile-view";
 
 beforeEach(() => {
+  push.mockClear();
+  replace.mockClear();
   query.pets = PETS;
   query.petsError = null;
   query.pet = DETAIL;
@@ -170,4 +176,17 @@ test("불러오지 못하면 그 사실을 알린다", () => {
   renderView();
 
   expect(screen.getByRole("alert").textContent).toContain("불러오지 못했어요");
+});
+
+// accessToken은 메모리에만 있어 새로고침하면 사라진다. 재발급 엔드포인트가 아직 없어
+// 되살릴 수도 없다. "불러오지 못했어요"로 두면 눌러도 될 리 없는 것을 다시 누르게 한다
+test("세션이 없으면 실패가 아니라 로그인으로 보낸다", () => {
+  query.pets = undefined;
+  query.pet = undefined;
+  query.petsError = new ApiError(401, "인증 정보가 없습니다.");
+  renderView();
+
+  expect(push).not.toHaveBeenCalled();
+  expect(replace).toHaveBeenCalledWith("/login");
+  expect(screen.queryByRole("alert")).toBeNull();
 });
