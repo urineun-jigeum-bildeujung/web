@@ -251,14 +251,20 @@ export function CheckoutView() {
         <Section
           title="배송지 정보"
           action={
+            // **조회가 끝나기 전에는 내걸지 않는다.** 아직 배송지를 모르는 동안 "없음" 쪽으로
+            // 그리면 목록이 도착하는 순간 문구와 목적지가 함께 바뀌어, 누르려던 것이 손 밑에서
+            // 달라진다.
+            //
             // 등록된 곳이 없으면 고를 목록도 없다. 시안(`empty_dilivery 2`)이 이 자리의
             // 문구를 "배송지 등록"으로 바꾸고 등록 화면으로 곧장 보낸다
-            <Link
-              href={address ? "/payment/address" : "/mypage/address/new"}
-              className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-secondary"
-            >
-              {address ? "배송지 변경" : "배송지 등록"}
-            </Link>
+            !addressLoading && (
+              <Link
+                href={address ? "/payment/address" : "/mypage/address/new"}
+                className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-secondary"
+              >
+                {address ? "배송지 변경" : "배송지 등록"}
+              </Link>
+            )
           }
         >
           {addressLoading && <FieldRowsSkeleton />}
