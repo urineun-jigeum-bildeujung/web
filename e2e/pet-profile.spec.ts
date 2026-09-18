@@ -27,7 +27,9 @@ test("알레르기를 받은 코드 그대로 보인다", async ({ page }) => {
 test("기본 아이가 처음 고른 아이다", async ({ page }) => {
   await page.goto("/mypage/pets");
 
-  const [first] = await page.getByRole("radio").all();
-  await expect(first).toHaveAttribute("aria-checked", "true");
+  // `.all()`은 그 순간의 결과를 그대로 준다. 목록이 아직 안 그려졌으면 빈 배열이라
+  // 기다리지 않고 통과하거나 undefined로 터진다. `.first()`는 Locator라 붙을 때까지 기다린다
+  const first = page.getByRole("radio").first();
   await expect(first).toHaveAccessibleName("코코");
+  await expect(first).toHaveAttribute("aria-checked", "true");
 });
