@@ -53,8 +53,10 @@ export const APP_MESSAGE = {
   },
   // 아래 둘은 토스트가 아니라 화면을 대신 채운다. 그래도 문구는 같은 곳에서 관리한다
   "common.routeError": {
-    title: "화면을 불러오지 못했어요",
-    description: "잠시 후 다시 시도해 주세요.",
+    title: "앗, 잠시 화면이 멈췄어요",
+    // 시안이 두 줄로 끊어 읽힌다. 화면에서 `whitespace-pre-line`으로 그 줄바꿈을 살린다
+    description:
+      "페이지를 꼼꼼하게 불러오는 중에 예상치 못한 문제가 생겼어요\n잠시 뒤에 다시 시도해 주시면 안전하게 안내해 드릴게요",
   },
   "common.appError": {
     title: "문제가 생겼어요",
