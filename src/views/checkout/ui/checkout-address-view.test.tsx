@@ -83,6 +83,29 @@ test("줄을 누르면 그 배송지를 들고 간다", () => {
   expect(row.getAttribute("href")).toBe("/mypage/address/new?place=5");
 });
 
+// 픽스처의 집이 기본이면서 이름 묶음이기도 해서, 묶음을 먼저 그리는 회귀가 있어도
+// 위 테스트들은 통과한다. **기본을 custom 이름으로 두고 비기본을 집으로 둬야** 그 하나를 겨눈다 (#239 리뷰)
+test("기본 배송지는 이름과 무관하게 맨 앞에 온다", () => {
+  const defaultCustom = { ...STUDIO, isDefault: true };
+  const namedNonDefault = { ...HOME, isDefault: false };
+
+  renderWith({ addresses: [defaultCustom, namedNonDefault] });
+
+  const rows = screen
+    .getAllByRole("link")
+    .filter((row) => !/장소 추가하기/.test(row.textContent ?? ""));
+  expect(rows[0].textContent).toContain("자취방");
+  expect(rows[1].textContent).toContain("집");
+});
+
+// 재조회가 실패하면 앞서 받아 둔 값이 남는다. 함께 그리면 오류 문구 아래로 옛 배송지가 따라 나온다
+test("불러오지 못하면 앞서 받은 목록을 그리지 않는다", () => {
+  renderWith({ addresses: [HOME], error: new ApiError(500, "실패") });
+
+  expect(screen.getByRole("alert")).toBeDefined();
+  expect(screen.queryByText("집")).toBeNull();
+});
+
 test("하나도 없으면 넣으라고 알린다", () => {
   renderWith({ addresses: [] });
 

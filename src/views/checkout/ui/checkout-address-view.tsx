@@ -79,9 +79,15 @@ export function CheckoutAddressView() {
   // 대기 표시 없음 — 첫 그림뿐이라 아래 Skeleton이 덮는다. 줄을 눌러 기다리는 자리가 없다
   const { addresses, isLoading, error } = useQueryAddresses();
 
-  // 이름으로 아이콘이 붙는 곳을 위에, 나머지를 아래에 둔다
-  const named = addresses?.filter((place) => ICON_BY_NAME[place.addressName]) ?? [];
-  const rest = addresses?.filter((place) => !ICON_BY_NAME[place.addressName]) ?? [];
+  // 이름으로 아이콘이 붙는 곳을 위에, 나머지를 아래에 둔다.
+  //
+  // **기본 배송지는 이름과 무관하게 맨 앞이다.** 묶음부터 가르면 이름이 집·회사가 아닌
+  // 기본 배송지(`자취방` 등)가 아이콘 묶음 아래로 밀려, 맨 위가 기본이라는 읽기가 깨진다 (#239 리뷰).
+  const primary = addresses?.find((place) => place.isDefault);
+  const others = addresses?.filter((place) => !place.isDefault) ?? [];
+  const named = others.filter((place) => ICON_BY_NAME[place.addressName]);
+  const rest = others.filter((place) => !ICON_BY_NAME[place.addressName]);
+  const top = primary ? [primary, ...named] : named;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -97,30 +103,36 @@ export function CheckoutAddressView() {
           </div>
         )}
 
-        {/* 조회 실패는 토스트가 아니라 화면이 직접 보여 준다. 사라지면 왜 비었는지 알 수 없다 */}
+        {/* 조회 실패는 토스트가 아니라 화면이 직접 보여 준다. 사라지면 왜 비었는지 알 수 없다.
+            **실패하면 목록을 그리지 않는다.** 재조회가 실패하면 앞서 받아 둔 값이 남아 있어,
+            함께 그리면 오류 문구 아래로 옛 배송지가 따라 나온다 (#239 리뷰) */}
         {error && <EmptyState role="alert" {...APP_MESSAGE[toAppMessageCode(error)]} />}
 
-        {!isLoading && !error && addresses?.length === 0 && (
-          <EmptyState
-            title="등록된 배송지가 없어요"
-            description="상품을 배송받을 주소를 먼저 넣어주세요."
-          />
-        )}
+        {!isLoading &&
+          !error &&
+          (addresses?.length === 0 ? (
+            <EmptyState
+              title="등록된 배송지가 없어요"
+              description="상품을 배송받을 주소를 먼저 넣어주세요."
+            />
+          ) : (
+            <>
+              {top.length > 0 && (
+                <div className="flex flex-col gap-3">
+                  {top.map((place) => (
+                    <PlaceRow key={place.addressId} place={place} />
+                  ))}
+                </div>
+              )}
 
-        {named.length > 0 && (
-          <div className="flex flex-col gap-3">
-            {named.map((place) => (
-              <PlaceRow key={place.addressId} place={place} />
-            ))}
-          </div>
-        )}
+              {/* 시안의 선은 좌우 여백을 넘어 화면을 가로지른다. 양쪽에 줄이 있을 때만 그린다 */}
+              {top.length > 0 && rest.length > 0 && <hr className="-mx-5 border-border" />}
 
-        {/* 시안의 선은 좌우 여백을 넘어 화면을 가로지른다. 양쪽에 줄이 있을 때만 그린다 */}
-        {named.length > 0 && rest.length > 0 && <hr className="-mx-5 border-border" />}
-
-        {rest.map((place) => (
-          <PlaceRow key={place.addressId} place={place} />
-        ))}
+              {rest.map((place) => (
+                <PlaceRow key={place.addressId} place={place} />
+              ))}
+            </>
+          ))}
 
         <Link
           href="/mypage/address/new"
