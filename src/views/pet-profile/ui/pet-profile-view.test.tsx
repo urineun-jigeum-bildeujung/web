@@ -1,18 +1,74 @@
-// 아이 관리 테스트. 탭 전환과 반응 시트, 거르기를 본다.
+// 아이 관리 테스트. 탭 전환과 반응 시트, 거르기, 그리고 아이를 못 받았을 때를 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
+
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 
+// 목록·상세·선택지 셋을 서버에서 받는다(#230). 무엇을 부르고 어떻게 옮기는지는
+// `entities/pet/api/pets.test.ts`가 보므로 여기서는 화면 동작만 본다
+const PETS = [
+  { id: "3", name: "코코", isDefault: true },
+  { id: "7", name: "보리", isDefault: false },
+];
+
+const DETAIL = {
+  id: "3",
+  name: "코코",
+  species: "dog" as const,
+  breedId: 1,
+  breedName: "말티즈",
+  age: 4,
+  birthDate: "2022-03-15",
+  gender: "female" as const,
+  neutered: true,
+  size: "small" as const,
+  weight: 4,
+  bcs: 3,
+  healthConcerns: ["슬개골 탈구"],
+  allergyCodes: ["CHICKEN"],
+  isDefault: true,
+};
+
+const query = {
+  pets: PETS as { id: string; name: string; isDefault: boolean }[] | undefined,
+  petsError: null as Error | null,
+  pet: DETAIL as typeof DETAIL | undefined,
+  petError: null as Error | null,
+};
+
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryPets: () => ({ pets: query.pets, isLoading: false, error: query.petsError }),
+  useQueryPetDetail: () => ({ pet: query.pet, isLoading: false, error: query.petError }),
+  useQueryHealthOptions: () => ({
+    options: {
+      concerns: [{ label: "관절·뼈", items: [{ value: "슬개골 탈구", label: "슬개골 탈구" }] }],
+      allergies: [{ label: "알레르기", items: [{ value: "CHICKEN", label: "닭고기" }] }],
+    },
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 import { PetProfileView } from "./pet-profile-view";
+
+beforeEach(() => {
+  query.pets = PETS;
+  query.petsError = null;
+  query.pet = DETAIL;
+  query.petError = null;
+});
 
 function renderView(search = "") {
   render(
     <NuqsTestingAdapter searchParams={search}>
       <PetProfileView />
     </NuqsTestingAdapter>,
+    { wrapper: createQueryWrapper() },
   );
 }
 
@@ -79,4 +135,39 @@ test("아이 제품을 반응 입력 여부로 거른다", () => {
   // 목업 넷 중 둘만 반응을 남겼다
   renderView("?tab=products&reviewed=todo");
   expect(screen.getAllByRole("button", { name: /반응 남기기/ })).toHaveLength(2);
+});
+
+// 저장은 코드로 하지만 상세 조회도 코드만 돌려준다. 그대로 찍으면 CHICKEN이 뜬다
+test("알레르기를 코드가 아니라 표시명으로 보인다", () => {
+  renderView();
+
+  expect(screen.getByText("닭고기")).toBeDefined();
+  expect(screen.queryByText("CHICKEN")).toBeNull();
+});
+
+test("고른 아이의 품종·나이·성별을 한 줄로 보인다", () => {
+  renderView();
+
+  expect(screen.getByText("말티즈 · 4세 · 여자아이")).toBeDefined();
+  expect(screen.getByText("4kg")).toBeDefined();
+  expect(screen.getByText("보통")).toBeDefined();
+});
+
+// 등록한 아이가 없는데 빈 카드만 보이면 고장으로 읽힌다
+test("아이가 없으면 등록하러 가는 자리를 보인다", () => {
+  query.pets = [];
+  query.pet = undefined;
+  renderView();
+
+  expect(screen.getByText("아직 등록한 아이가 없어요")).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "아이 등록하기" }));
+  expect(push).toHaveBeenCalledWith("/onboarding?step=basic");
+});
+
+test("불러오지 못하면 그 사실을 알린다", () => {
+  query.pet = undefined;
+  query.petError = new Error("500");
+  renderView();
+
+  expect(screen.getByRole("alert").textContent).toContain("불러오지 못했어요");
 });

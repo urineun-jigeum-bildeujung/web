@@ -13,33 +13,24 @@ import { useState } from "react";
 import {
   PetSwitcher,
   ProductFeedbackSheet,
+  useQueryHealthOptions,
+  useQueryPetDetail,
+  useQueryPets,
   type FeedbackTarget,
-  type PetSummary,
 } from "@/entities/pet";
+import { Button } from "@/shared/ui/button";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
-import { PetHeroCard, type PetHeroProfile } from "./pet-hero-card";
+import { toHeroProfile } from "../model/to-hero-profile";
+import { PetHeroCard } from "./pet-hero-card";
 import { PetProductCard, type PetProduct } from "./pet-product-card";
 
 const TABS = ["profile", "products"] as const;
 
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_PETS: PetSummary[] = [
-  { id: "1", name: "코코" },
-  { id: "2", name: "보리" },
-];
-
-const MOCK_PROFILE: PetHeroProfile = {
-  name: "코코",
-  meta: "말티즈 · 4세 · 여자아이",
-  weight: "4kg",
-  bodyType: "보통",
-  concerns: ["눈물자국", "체중관리"],
-  allergies: ["복숭아"],
-};
-
+/** 제품 목록 API는 아직 없다. 화면 확인용 값 */
 const MOCK_PRODUCTS: PetProduct[] = [
   {
     id: "1",
@@ -94,7 +85,18 @@ export function PetProfileView() {
     // 프로필과 제품 관리는 서로 다른 화면이라 뒤로가기로 되돌아와야 한다
     parseAsStringLiteral(TABS).withDefault("profile").withOptions({ history: "push" }),
   );
-  const [selectedPetId, setSelectedPetId] = useState(MOCK_PETS[0].id);
+  // 목록을 받기 전에는 고른 아이가 없다. 받고 나면 기본 아이(맨 앞)를 쓴다
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const { pets, error: petsError } = useQueryPets();
+  const selectedPetId = pickedId ?? pets?.[0]?.id;
+  const { pet, error: petError } = useQueryPetDetail(selectedPetId);
+  // 알레르기가 코드로만 와서 표시명을 선택지에서 되찾는다. 종을 알아야 하므로 상세가 먼저다
+  const { options } = useQueryHealthOptions(pet?.species ?? "dog");
+
+  const noPets = pets?.length === 0;
+  const loadFailed = Boolean(petsError ?? petError);
+  // 알레르기 선택지가 아직이면 코드가 그대로 보인다. 자리를 비우면 알레르기가 없는 아이로 읽힌다
+  const profile = pet ? toHeroProfile(pet, options?.allergies ?? []) : null;
   const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
   const [productFilter, setProductFilter] = useQueryState(
     "reviewed",
@@ -140,15 +142,33 @@ export function PetProfileView() {
         </TabsList>
 
         <TabsContent value="profile" className="flex flex-1 flex-col gap-4 pt-5">
-          <PetHeroCard profile={MOCK_PROFILE} />
+          {/* 아이가 없으면 카드를 그릴 것이 없다. 왜 비었는지와 무엇을 할지 함께 보인다 */}
+          {noPets ? (
+            <EmptyState
+              title="아직 등록한 아이가 없어요"
+              description="아이를 등록하면 프로필과 먹은 제품을 여기서 관리할 수 있어요."
+              action={
+                <Button onClick={() => router.push("/onboarding?step=basic")}>아이 등록하기</Button>
+              }
+            />
+          ) : profile ? (
+            <PetHeroCard profile={profile} />
+          ) : (
+            <p
+              role={loadFailed ? "alert" : "status"}
+              className="px-5 text-body-medium-14 text-text-body-secondary"
+            >
+              {loadFailed ? "아이 정보를 불러오지 못했어요" : "아이 정보를 불러오는 중이에요"}
+            </p>
+          )}
 
           {/* 아이 전환 줄은 화면 아래에 붙는다. 새 아이는 온보딩 기본 정보 단계에서 등록한다 */}
           <div className="mt-auto pb-[calc(env(safe-area-inset-bottom)+2rem)]">
             <PetSwitcher
               variant="hero"
-              pets={MOCK_PETS}
+              pets={pets ?? []}
               selectedId={selectedPetId}
-              onSelect={setSelectedPetId}
+              onSelect={setPickedId}
               onAdd={() => router.push("/onboarding?step=basic")}
             />
           </div>
@@ -183,7 +203,7 @@ export function PetProfileView() {
 
       <ProductFeedbackSheet
         target={feedback}
-        petName={MOCK_PROFILE.name}
+        petName={pet?.name ?? ""}
         onOpenChange={(open) => !open && setFeedback(null)}
         onSeeProduct={(productId) => router.push(`/products/${productId}`)}
       />

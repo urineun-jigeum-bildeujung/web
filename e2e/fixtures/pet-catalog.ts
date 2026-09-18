@@ -41,8 +41,35 @@ const ALLERGIES = [
   { code: "DAIRY", displayName: "유제품" },
 ];
 
+/** 로그인한 보호자의 아이들. 기본 아이를 하나 둔다 */
+const MY_PETS = [
+  { petId: 3, name: "코코", image: null, isDefault: true },
+  { petId: 7, name: "보리", image: null, isDefault: false },
+];
+
+const PET_DETAIL = {
+  petId: 3,
+  name: "코코",
+  species: "DOG",
+  breedId: 1,
+  breedName: "말티즈",
+  age: 4,
+  birthDate: "2022-03-15",
+  sex: "FEMALE",
+  isNeutered: true,
+  size: "SMALL",
+  weight: 4,
+  bcs: 3,
+  healthConcerns: ["슬개골 탈구"],
+  allergies: ["CHICKEN"],
+  image: null,
+  isDefault: true,
+};
+
 /**
- * 품종·건강 옵션 조회를 세운다. 조회를 쓰는 화면을 여는 테스트는 `goto` 전에 부른다.
+ * 품종·건강 옵션과 내 아이 조회를 세운다. 조회를 쓰는 화면을 여는 테스트는 `goto` 전에 부른다.
+ *
+ * **아이 조회는 로그인이 있어야 한다.** 세우지 않으면 401이 떠 콘솔 오류로 잡힌다(#230).
  *
  * 등록(`POST /members/me/pets`)은 세우지 않는다. 그 화면까지 가는 테스트가 없고,
  * 무엇을 보내는지는 `to-register-request.test.ts`가 본다.
@@ -62,4 +89,8 @@ export async function stubPetCatalog(page: Page) {
       },
     }),
   );
+
+  // `*`는 `/`를 넘지 않아 목록과 상세를 한 패턴으로 잡을 수 없다. 둘로 나눈다
+  await page.route("**/members/me/pets", (route) => route.fulfill({ json: MY_PETS }));
+  await page.route("**/members/me/pets/*", (route) => route.fulfill({ json: PET_DETAIL }));
 }
