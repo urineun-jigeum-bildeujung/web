@@ -25,6 +25,8 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   COMMON_500: APP_MESSAGE_CODE.common.serverError,
 
   AUTH_400: APP_MESSAGE_CODE.auth.signInFailed,
+  // 인증번호 발송·확인 모두 번호마다 횟수를 센다 — 발송은 1시간에 5회, 확인은 5분에 5회다
+  AUTH_429_TOO_MANY_REQUESTS: APP_MESSAGE_CODE.member.tooManyVerifications,
 
   MEMBER_400_REQUIRED_AGREEMENT_NOT_AGREED: APP_MESSAGE_CODE.member.agreementRequired,
   MEMBER_401_UNAUTHORIZED: APP_MESSAGE_CODE.common.unauthorized,
