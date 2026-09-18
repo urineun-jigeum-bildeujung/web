@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 type SingleInputScreenProps = {
@@ -21,6 +22,8 @@ type SingleInputScreenProps = {
   /** 하단 버튼 문구 */
   submitLabel?: string;
   submitDisabled?: boolean;
+  /** 제출이 서버 응답을 기다리는 중. 버튼 문구가 스피너로 바뀌고 두 번 눌리지 않는다 */
+  submitting?: boolean;
   onSubmit?: () => void;
   className?: string;
 };
@@ -32,6 +35,7 @@ export function SingleInputScreen({
   children,
   submitLabel = "입력 완료",
   submitDisabled,
+  submitting = false,
   onSubmit,
   className,
 }: SingleInputScreenProps) {
@@ -50,8 +54,9 @@ export function SingleInputScreen({
       </main>
 
       <BottomActionBar>
-        <Button disabled={submitDisabled} onClick={onSubmit}>
-          {submitLabel}
+        {/* 대기 표시는 여기서 한다. 자리마다 되풀이하면 빠뜨리는 곳이 생긴다 (AGENTS.md 5.8) */}
+        <Button disabled={submitDisabled || submitting} onClick={onSubmit}>
+          <LoadingSwap loading={submitting}>{submitLabel}</LoadingSwap>
         </Button>
       </BottomActionBar>
     </div>
