@@ -60,7 +60,8 @@ test("넘겨받은 수단을 부르면 결제창을 띄운다", async () => {
   render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
 
   await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
-  await onReady.mock.calls[0][0](ORDER);
+  // 금액을 알리는 동안 한 번 잠그므로 첫 호출은 `null`이다. 마지막으로 넘겨준 것을 부른다
+  await onReady.mock.calls.at(-1)![0](ORDER);
 
   expect(requestPayment).toHaveBeenCalledWith(expect.objectContaining(ORDER));
 });
@@ -88,6 +89,27 @@ test("키가 없으면 위젯을 띄우지 않는다", () => {
 });
 
 /**
+ * **금액이 바뀌는 동안에는 결제를 막아야 한다.**
+ *
+ * 장바구니 응답이 도착하면 `amount`가 한 번 바뀐다. 그때 앞서 넘긴 결제 수단은 이전 금액으로
+ * 잠겨 있어, 걷어내지 않으면 그 찰나에 눌린 결제가 **옛 금액으로 나간다** (#259 리뷰).
+ */
+test("금액이 바뀌면 새 금액이 실릴 때까지 결제를 잠근다", async () => {
+  const onReady = vi.fn();
+  const { rerender } = render(<TossPaymentWidget amount={3000} onReady={onReady} />);
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  onReady.mockClear();
+
+  rerender(<TossPaymentWidget amount={12345} onReady={onReady} />);
+
+  // 잠그는 것이 먼저다. 새 수단은 setAmount가 끝난 뒤에 온다
+  expect(onReady).toHaveBeenNthCalledWith(1, null);
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  expect(setAmount).toHaveBeenLastCalledWith({ currency: "KRW", value: 12345 });
+});
+
+/**
  * **`onReady`가 바뀌어도 effect가 다시 돌면 안 된다.** 다시 돌면 새 `requestPayment`를 넘기고,
  * 부모가 그것을 state에 담으면서 렌더가 무한히 되돈다 — 브라우저가 멈춘다 (#223).
  *
@@ -111,6 +133,7 @@ test("onReady가 렌더마다 바뀌어도 위젯을 다시 띄우지 않는다"
   });
 
   expect(second).not.toHaveBeenCalled();
-  expect(first).toHaveBeenCalledTimes(1);
+  // 잠금(null) 한 번과 결제 수단 한 번. effect가 다시 돌았다면 이보다 늘어난다
+  expect(first).toHaveBeenCalledTimes(2);
   expect(renderPaymentMethods).toHaveBeenCalledTimes(1);
 });
