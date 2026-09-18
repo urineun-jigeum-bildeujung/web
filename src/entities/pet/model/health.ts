@@ -17,3 +17,18 @@ export type HealthGroup = {
   label: string;
   items: HealthOption[];
 };
+
+/**
+ * 고른 값을 표시명으로 되돌린다.
+ *
+ * **상세 조회가 알레르기를 코드로만 준다.** `CHICKEN`을 그대로 찍으면 사람이 읽지 못한다.
+ * 선택지(`GET /pets/health-options`)가 `{ code, displayName }`을 주므로 거기서 짝을 찾는다.
+ * 백엔드가 상세에도 표시명을 실어 주면 이 자리는 걷어낸다(#230).
+ *
+ * 선택지가 아직 안 왔거나 서버에서 빠진 항목이면 값을 그대로 보인다 — 자리를 비우면
+ * 알레르기가 없는 아이로 읽힌다.
+ */
+export function toLabels(values: string[], groups: HealthGroup[]): string[] {
+  const items = groups.flatMap((group) => group.items);
+  return values.map((value) => items.find((item) => item.value === value)?.label ?? value);
+}
