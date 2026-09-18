@@ -16,10 +16,14 @@
 | `ui/breed-picker-step.test.tsx` | 두 종을 각각 불러 합치는지, 검색·불러오는 중·실패 |
 | `api/breeds.ts` | 품종 조회 요청 함수와 `Breed`·`SpeciesBreed` 타입 |
 | `api/use-query-breeds.ts` | 강아지·고양이를 함께 받아 한 목록으로 펴는 훅 |
+| `api/pets.ts` | 내 아이 목록·상세 조회와 `PetListItem`·`PetDetail` 타입 |
+| `api/pets.test.ts` | 무엇을 부르는지, 기본 아이 정렬, enum을 화면 값으로 옮기는 것 |
+| `api/use-query-pets.ts` | 아이 목록을 가져오는 훅 |
+| `api/use-query-pet-detail.ts` | 고른 아이의 상세를 가져오는 훅 |
 | `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다 (`mypa_021`, 리뷰 작성, 메인 홈화면) |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다 |
 | `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터 |
-| `model/health.test.ts` | 질환 갈래가 종별로 갈리는지 |
+| `model/health.test.ts` | 고른 코드를 표시명으로 되돌리는 변환 |
 | `ui/health-picker-sheet.tsx` | 건강 관심사·알러지 성분을 탭으로 나눠 고르는 시트 (`onbo_004_바텀`) |
 | `ui/health-picker-field.tsx` | 그 시트를 여는 자리. 고른 것을 칩으로 되보인다 (`onbo_004`·`mypa_321`) |
 | `model/health.ts` | 고르는 항목과 묶음의 타입. 목록은 서버가 준다 |
@@ -42,7 +46,11 @@
 
 **품종 조회를 두 번 부른다.** API가 `species`를 필수로 받는데 품종 화면은 두 종을 한 번에 보이고 검색도 양쪽을 훑는다. 종마다 캐시가 따로 잡혀 한쪽이 실패해도 다른 쪽은 살아 있다.
 
-**고른 값을 그대로 찍지 않는다.** 저장은 코드로 하므로 `HealthPickerField`가 목록에서 표시명을 되찾아 보인다. 그대로 찍으면 `CHICKEN`이 화면에 뜬다. 반려동물 상세 조회(`GET /members/me/pets/{petId}`)도 `allergies`를 코드 배열로 주므로, 그 값을 보이는 화면(`views/pet-profile`)을 연결할 때 같은 처리가 필요하다.
+**고른 값을 그대로 찍지 않는다.** 저장은 코드로 하므로 목록에서 표시명을 되찾아 보인다. 그대로 찍으면 `CHICKEN`이 화면에 뜬다. 되찾는 자리는 `model/health.ts`의 `toLabels` 하나이고, 고르는 자리(`HealthPickerField`)와 상세를 보이는 자리가 함께 쓴다.
+
+**상세 조회도 알레르기를 코드로만 준다.** `GET /members/me/pets/{petId}`의 `allergies`가 `CHICKEN` 배열이다. 등록 선택지(`GET /pets/health-options`)는 `{ code, displayName }`을 주므로 상세가 함께 주는 `species`로 그 종의 선택지를 받아 짝을 맞춘다. **백엔드가 상세에도 표시명을 실어 주면 이 우회를 걷어낸다**(#230). `healthConcerns`는 코드 자리에 한글이 들어 있어 그대로 쓴다.
+
+**아이 목록은 순서를 보장하지 않는다.** 백엔드 `findByMemberId`에 `ORDER BY`가 없어 순서가 DB에 달렸다. 전환 줄은 순서가 흔들리면 눌렀던 자리가 매번 달라지므로 `isDefault`를 앞으로 올려 `api/pets.ts`에서 정렬한다.
 
 **알레르기만 코드 체계다.** 서버가 `{ code, displayName }`을 주므로 화면에는 표시명을 보이고 저장은 코드로 한다. 표시명이 바뀌어도 저장된 값이 깨지지 않는다(#123). 건강 고민은 한글 문자열 그대로 주고받아 비대칭인데, 백엔드에 확인을 요청해 두었다(#226).
 
