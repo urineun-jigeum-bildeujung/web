@@ -239,7 +239,9 @@ function Pagination({ page, lastPage, busy = false, onChange }: PaginationProps)
       <Button
         variant="ghost"
         aria-label="이전 페이지"
-        disabled={page <= 1}
+        // 셰브론이 스피너로 바뀌면 누를 것처럼 보이지 않는다. 실제로도 못 누르게 맞춘다.
+        // 쪽마다 행안부에 한 번씩 나가므로 버려질 요청을 줄이는 뜻도 있다
+        disabled={busy || page <= 1}
         onClick={() => {
           setPressed("prev");
           onChange(page - 1);
@@ -263,7 +265,7 @@ function Pagination({ page, lastPage, busy = false, onChange }: PaginationProps)
       <Button
         variant="ghost"
         aria-label="다음 페이지"
-        disabled={page >= lastPage}
+        disabled={busy || page >= lastPage}
         onClick={() => {
           setPressed("next");
           onChange(page + 1);
