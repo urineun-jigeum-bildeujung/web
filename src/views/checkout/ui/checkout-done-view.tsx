@@ -136,9 +136,11 @@ export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
           className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
           asChild
         >
-          <Link href={`/mypage/orders/${payment?.orderNumber ?? MOCK.orderId}`}>
-            주문 상세 보기
-          </Link>
+          {/* **승인 응답에는 주문 상세로 갈 식별자가 없다.** 계약이 주는 것은 표시용
+              `orderNumber`(`ORD-…`)뿐인데 이 라우트는 주문 id를 받는다. 그대로 넘기면
+              주문을 찾지 못해 엉뚱한 주문이 열린다 (#256 리뷰). 화면 흐름을 붙일 때
+              [1] 주문 생성이 돌려준 id를 들고 오도록 풀고, 그전까지는 목 값을 쓴다 */}
+          <Link href={`/mypage/orders/${MOCK.orderId}`}>주문 상세 보기</Link>
         </Button>
         <Button asChild>
           <Link href="/">홈으로 가기</Link>
