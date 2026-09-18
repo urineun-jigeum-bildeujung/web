@@ -3,7 +3,7 @@
 아이 관리. 반려동물의 정보와 그 아이가 먹은 제품을 탭으로 나눠 보여준다.
 
 - **라우트**: `/mypage/pets` — `src/app/mypage/pets/page.tsx`
-- **조립**: `entities/pet`의 `PetSwitcher`(`variant="hero"`) · `ProductFeedbackSheet`, `shared/ui`의 `page-header` · `tabs` · `filter-chips` · `badge`
+- **조립**: `entities/pet`의 `PetSwitcher`(`variant="hero"`) · `ProductFeedbackSheet` · 조회 훅 셋, `shared/ui`의 `page-header` · `tabs` · `filter-chips` · `badge` · `empty-state`
 - **상태**: 탭은 URL 쿼리 `tab`(`profile` · `products`), 거르기는 `reviewed`. 고른 아이와 열린 반응 시트는 화면 안 상태
 - **참고**: UI 시안 기준(`mypa_021` 내 아이 관리 `1514-44230` · 아이 제품 관리 `1551-46897` · 반응 시트 `1551-47882`)
 
@@ -11,6 +11,7 @@
 | --- | --- |
 | `ui/pet-profile-view.tsx` | 두 탭과 반응 시트를 조립한다 |
 | `ui/pet-profile-view.test.tsx` | 탭 전환·수정 링크·반응 시트·거르기·새 아이 추가 경로 |
+| `model/to-hero-profile.ts` | 상세 조회로 받은 아이를 사진 카드가 그릴 모양으로 옮긴다 |
 | `ui/pet-hero-card.tsx` | 내 아이 관리 탭의 사진 카드. 이름·몸무게·질환 세 줄과 수정 화살표 |
 | `ui/pet-product-card.tsx` | 아이 제품 관리 탭의 제품 한 장과 "반응 남기기" 버튼 |
 | `index.ts` | 공개 API |
@@ -27,7 +28,18 @@
 
 **머리말의 종 아이콘은 그리지 않았다.** 시안이 제품 탭에만 종을 두고 내 아이 관리 탭에는 없어 PD 확인 대상이다(#189).
 
+## 아이 정보는 서버에서 온다
+
+`GET /members/me/pets`로 전환 줄을, `GET /members/me/pets/{petId}`로 사진 카드를 채운다(#230).
+
+**기본 아이가 처음 고른 아이다.** 목록에 `ORDER BY`가 없어 순서가 DB에 달려서, `entities/pet`의 조회가 `isDefault`를 앞으로 올려 준다. 그 첫 아이를 쓰고, 보호자가 다른 아이를 누르면 그때부터 그 아이를 따른다.
+
+**알레르기는 표시명을 되찾아 보인다.** 상세가 `CHICKEN` 같은 코드만 주므로 상세가 함께 준 종으로 `GET /pets/health-options`를 받아 짝을 맞춘다. 백엔드가 상세에도 표시명을 실어 주면 이 우회를 걷어낸다.
+
+**아이가 없으면 카드를 그리지 않는다.** 등록하러 가는 자리를 대신 보인다 — 빈 카드만 두면 고장으로 읽힌다. 불러오는 중과 실패도 문구로 알린다.
+
 ## 아직 없는 것
 
-- 아이를 바꿔도 화면 내용은 그대로다. 아이별 데이터는 API 계약이 정해진 뒤에 붙인다
-- 사진이 없어 카드와 전환 줄이 회색 자리다. `photoUrl`이 오면 `next/image`로 그린다
+- 제품 목록은 목 데이터다. 아이별 구매 이력 API가 정해진 뒤에 붙인다
+- 사진이 없는 아이는 카드와 전환 줄이 회색 자리다. `photoUrl`이 오면 `next/image`로 그린다
+- 정보 수정 세 화면은 저장된 값이 목 데이터다. **수정 API가 없어 이번에 붙이지 않았다** — 값만 채우면 "수정완료"가 아무것도 하지 않는 화면이 된다
