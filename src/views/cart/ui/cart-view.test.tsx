@@ -167,7 +167,7 @@ describe("CartView", () => {
   it("담은 것이 없으면 비었다고 알린다", async () => {
     renderCart([]);
 
-    expect(await screen.findByText("장바구니가 비었어요")).toBeDefined();
+    expect(await screen.findByText("장바구니가 비어 있어요")).toBeDefined();
     expect(screen.queryByText(/전체선택/)).toBeNull();
   });
 

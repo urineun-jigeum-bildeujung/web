@@ -15,6 +15,7 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import type { WritableReview, WrittenReview } from "../model/mock-reviews";
+import { Icon } from "@/shared/ui/icon/icon";
 
 const TABS = ["writable", "written"] as const;
 
@@ -85,8 +86,9 @@ export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
               ))
             ) : (
               <EmptyState
-                title="작성할 수 있는 후기가 없어요"
-                description="구매를 확정하면 후기를 남길 수 있어요."
+                // 시안은 연필인데 `shared/ui/icon` 48종에 없다. 비워 두고 PD팀에 추가를 요청한다
+                title="지금은 작성할 수 있는 후기가 없어요"
+                description="구매하신 상품이 도착하면 솔직한 후기를 남겨주세요"
               />
             )}
           </TabsContent>
@@ -119,7 +121,11 @@ export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
                 </Link>
               ))
             ) : (
-              <EmptyState title="작성한 후기가 없어요" />
+              <EmptyState
+                icon={<Icon name="review" />}
+                title="아직 작성한 후기가 없어요"
+                description="다른 보호자들을 위해 아이의 경험을 나눠주세요"
+              />
             )}
           </TabsContent>
         </Tabs>

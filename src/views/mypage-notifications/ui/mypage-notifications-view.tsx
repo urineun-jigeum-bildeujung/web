@@ -15,6 +15,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { NotificationDialog } from "./notification-dialog";
 import { NotificationRow, type NotificationItem } from "./notification-row";
+import { Icon } from "@/shared/ui/icon/icon";
 
 const FILTER_VALUES = ["all", "unread", "read"] as const;
 const FILTER_OPTIONS = [
@@ -128,8 +129,9 @@ export function MypageNotificationsView() {
 
         {visible.length === 0 ? (
           <EmptyState
-            title={filter === "unread" ? "새 알림이 없어요" : "아직 알림이 없어요"}
-            description="새로운 소식이 오면 여기에서 알려드릴게요."
+            icon={<Icon name="bell" />}
+            title={filter === "unread" ? "새 알림이 없어요" : "아직 도착한 알림이 없어요"}
+            description="새로운 혜택이나 맞춤 리포트가 도착하면 가장 먼저 알려드릴게요"
             className="flex-1"
           />
         ) : (

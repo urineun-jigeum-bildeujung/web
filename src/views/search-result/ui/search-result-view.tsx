@@ -16,6 +16,7 @@ import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card
 import { Rating } from "@/shared/ui/rating/rating";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { Icon } from "@/shared/ui/icon/icon";
 
 /** IA의 검색 결과 행에 적힌 목록. 메인의 정렬과 달라 여기 따로 둔다 */
 const SORTS = ["recommend", "popular", "price-low", "price-high", "reviews"] as const;
@@ -187,7 +188,11 @@ export function SearchResultView() {
         )}
 
         {results.length === 0 ? (
-          <EmptyState title="검색 결과가 없어요" description="다른 말로 다시 찾아보세요." />
+          <EmptyState
+            icon={<Icon name="search" />}
+            title="검색 결과가 없어요"
+            description="단어의 철자가 맞는지 확인하거나 다른 검색어로 다시 찾아보세요"
+          />
         ) : (
           <>
             <div className="flex items-center justify-between">

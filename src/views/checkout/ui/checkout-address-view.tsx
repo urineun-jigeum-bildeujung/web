@@ -112,8 +112,8 @@ export function CheckoutAddressView() {
           !error &&
           (addresses?.length === 0 ? (
             <EmptyState
-              title="등록된 배송지가 없어요"
-              description="상품을 배송받을 주소를 먼저 넣어주세요."
+              title="아직 등록된 배송지가 없어요"
+              description="상품을 안전하게 받아보실 주소를 미리 등록해 주세요"
             />
           ) : (
             <>

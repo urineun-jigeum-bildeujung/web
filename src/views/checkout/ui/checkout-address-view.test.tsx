@@ -109,7 +109,7 @@ test("불러오지 못하면 앞서 받은 목록을 그리지 않는다", () =>
 test("하나도 없으면 넣으라고 알린다", () => {
   renderWith({ addresses: [] });
 
-  expect(screen.getByText("등록된 배송지가 없어요")).toBeDefined();
+  expect(screen.getByText("아직 등록된 배송지가 없어요")).toBeDefined();
 });
 
 // 조회 실패는 토스트가 아니라 화면이 직접 보여준다. 사라지면 왜 비었는지 알 수 없다
