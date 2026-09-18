@@ -15,6 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import { cartItemKey, useMutateCartItem, useQueryCart, type CartItem } from "@/entities/cart";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
 import { cn } from "@/shared/lib/utils";
@@ -37,9 +38,6 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
-import { cartItemKey, type CartItem } from "../api/cart";
-import { useMutateCartItem } from "../api/use-mutate-cart-item";
-import { useQueryCart } from "../api/use-query-cart";
 import { CartSkeleton } from "./cart-skeleton";
 
 // 응답에 `deliveryFee`가 없어 고정값을 유지한다. 백엔드에 확인을 요청해 뒀다 (#214)

@@ -15,8 +15,8 @@ const { getCart, changeCartItemQuantity, removeCartItem } = vi.hoisted(() => ({
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
 // `cartItemKey`는 화면과 훅이 같은 규칙을 써야 하므로 진짜를 그대로 둔다
-vi.mock("../api/cart", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../api/cart")>()),
+vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/cart/api/cart")>()),
   getCart,
   changeCartItemQuantity,
   removeCartItem,
@@ -24,7 +24,7 @@ vi.mock("../api/cart", async (importOriginal) => ({
 
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
-import type { Cart, CartItem, CartItemRef } from "../api/cart";
+import type { Cart, CartItem, CartItemRef } from "@/entities/cart";
 import { CartView } from "./cart-view";
 
 // 살 수 없는 줄은 이름과 금액이 `null`로 오므로 그 타입을 그대로 받는다
