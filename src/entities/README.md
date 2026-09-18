@@ -38,6 +38,7 @@ entities/
 
 | 슬라이스 | 역할 |
 | --- | --- |
+| [address](address/README.md) | 배송 받을 곳. 조회·등록·수정. 배송지 화면과 결제 흐름이 함께 쓴다 |
 | [pet](pet/README.md) | 반려동물. 품종 목록과 프로필 선택지 |
 | [order](order/README.md) | 주문. 상태 뱃지 |
 | [product](product/README.md) | 상품 표현. 지금은 적합도 배지만 있다 |
