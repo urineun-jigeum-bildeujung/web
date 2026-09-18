@@ -12,29 +12,45 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useState } from "react";
 
+import { useQueryAddresses, useMutateAddress, type Address } from "@/entities/address";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
-
-/** 이미 저장된 곳을 다시 열 때 채워 넣을 값. API 연동 전까지 화면 확인용이다 */
-const SAVED_PLACES: Record<
-  string,
-  { label: string; receiver: string; phone: string; address: string; detail: string }
-> = {
-  home: {
-    label: "집",
-    receiver: "전경진",
-    phone: "010-1234-5678",
-    address: "서울특별시 강남구 테헤란로 123",
-    detail: "UI타워 4층 404호",
-  },
-  office: { label: "회사", receiver: "", phone: "", address: "", detail: "" },
-};
+import { Skeleton } from "@/shared/ui/skeleton";
 
 export function EditAddressView() {
   // 새 배송지와 이미 있는 곳의 수정을 한 화면이 맡는다. 어느 쪽인지는 주소창이 들고 있다.
+  // `place`는 고칠 배송지의 `addressId`다.
   const [place] = useQueryState("place");
+  const { addresses, isLoading, error } = useQueryAddresses();
+
+  // **고칠 대상이 있으면 목록을 기다린다.** 빈 폼을 먼저 그리면 값이 나중에 들어오면서
+  // 사용자가 적던 것을 덮는다. 새로 넣는 경우는 채울 것이 없으므로 기다리지 않는다.
+  if (place && isLoading) {
+    return <EditAddressSkeleton />;
+  }
+
+  if (place && error) {
+    return <EmptyState role="alert" {...APP_MESSAGE[toAppMessageCode(error)]} />;
+  }
+
+  const saved = place
+    ? addresses?.find((address) => String(address.addressId) === place)
+    : undefined;
+
+  // 지워졌거나 주소창을 손으로 고친 경우다. 새 배송지로 취급하면 고치려던 것이 하나 더 생긴다
+  if (place && !saved) {
+    return (
+      <EmptyState
+        title="찾는 배송지가 없어요"
+        description="이미 지웠거나 주소가 잘못됐어요. 목록에서 다시 골라주세요."
+      />
+    );
+  }
 
   // App Router는 같은 경로에서 쿼리만 바뀌면 컴포넌트를 그대로 둔다.
   // 그러면 고칠 대상이 집에서 회사로 바뀌어도 입력값이 앞의 것으로 남는다.
@@ -42,34 +58,78 @@ export function EditAddressView() {
   //
   // 고른 주소(roadAddr)는 key에 넣지 않는다. 넣으면 검색에서 돌아올 때마다 폼이 다시 서서
   // 먼저 적어둔 이름·연락처가 지워진다.
-  return <EditAddressForm key={place ?? "new"} place={place} />;
+  return <EditAddressForm key={place ?? "new"} place={place} saved={saved} />;
 }
 
-function EditAddressForm({ place }: { place: string | null }) {
+function EditAddressSkeleton() {
+  return (
+    <div role="status" aria-live="polite" className="flex flex-col gap-3 px-5 pt-3">
+      <span className="sr-only">배송지를 불러오는 중</span>
+      <div aria-hidden className="flex flex-col gap-3">
+        <Skeleton className="h-7 w-2/3" />
+        {[0, 1, 2, 3].map((index) => (
+          <Skeleton key={index} className="h-14 w-full" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EditAddressForm({ place, saved }: { place: string | null; saved?: Address }) {
   const router = useRouter();
-  const saved = place ? SAVED_PLACES[place] : undefined;
+  const { create, update, isSaving } = useMutateAddress();
 
-  // 검색 화면이 실어 보낸 주소. 시안이 도로명만 보여줘서 화면에 쓰는 것도 그것뿐이다.
-  // 우편번호(`zipNo`)는 읽지 않고 주소창에 그대로 둔다 — 저장 API가 생기면 그때 폼이 읽어
-  // `zipNo → zipCode`, `roadAddr → address`로 보낸다(백엔드 회신 2026-09-15). 지금 상태로 받아 두면
-  // 아무도 쓰지 않는 값이 되고, 빼 버리면 사용자가 고른 우편번호를 다시 검색해야 얻는다.
+  // 검색 화면이 실어 보낸 값. 시안이 도로명만 보여줘서 화면에 쓰는 것은 그것뿐이지만,
+  // 우편번호는 등록에 **필수**라 함께 읽어 보낸다 (`zipNo → zipCode`, `roadAddr → address`).
   const [roadAddr] = useQueryState("roadAddr");
+  const [zipNo] = useQueryState("zipNo");
 
-  const [label, setLabel] = useState(saved?.label ?? "");
+  const [label, setLabel] = useState(saved?.addressName ?? "");
   const [receiver, setReceiver] = useState(saved?.receiver ?? "");
   const [phone, setPhone] = useState(saved?.phone ?? "");
-  const [detail, setDetail] = useState(saved?.detail ?? "");
-  const [request, setRequest] = useState("");
-  const [isDefault, setIsDefault] = useState(false);
+  const [detail, setDetail] = useState(saved?.addressDetail ?? "");
+  const [request, setRequest] = useState(saved?.deliveryNote ?? "");
+  const [isDefault, setIsDefault] = useState(saved?.isDefault ?? false);
 
   // 고르고 온 주소가 이미 저장된 값을 덮는다. 고치러 들어와 새로 골랐다는 뜻이다.
+  //
+  // **도로명과 우편번호는 짝으로 움직인다.** 새로 고른 도로명에 저장돼 있던 옛 우편번호를
+  // 붙이면 배송이 엉뚱한 곳으로 간다. 한쪽만 바꾸지 않는다.
   const address = roadAddr ?? saved?.address ?? "";
+  const zipCode = roadAddr ? (zipNo ?? "") : (saved?.zipCode ?? "");
+
+  const submit = async () => {
+    const request_ = {
+      addressName: label.trim(),
+      receiver: receiver.trim(),
+      phone: phone.trim(),
+      zipCode,
+      address,
+      addressDetail: detail.trim(),
+      // 적지 않았으면 빈 문자열이 아니라 null이다. 명세에서 유일하게 nullable인 필드다
+      deliveryNote: request.trim() || null,
+      isDefault,
+    };
+
+    // 실패 토스트는 `MutationCache.onError`가 전역으로 띄운다. 여기서 또 잡지 않는다.
+    // 던지면 화면에 남아 고쳐서 다시 낼 수 있다 — 떠나 버리면 적은 것이 사라진다
+    if (saved) {
+      await update({ addressId: saved.addressId, request: request_ });
+    } else {
+      await create(request_);
+    }
+    router.back();
+  };
 
   return (
     <SingleInputScreen
-      question={saved ? `${saved.label} 주소를 고칠까요?` : "어디로 보내드릴까요?"}
-      submitDisabled={!label.trim() || !receiver.trim() || !phone.trim() || !address.trim()}
-      onSubmit={() => router.back()}
+      question={saved ? `${saved.addressName} 주소를 고칠까요?` : "어디로 보내드릴까요?"}
+      // 우편번호도 필수다. 주소를 고르면 함께 오므로 따로 물을 칸은 없다
+      submitDisabled={
+        !label.trim() || !receiver.trim() || !phone.trim() || !address.trim() || !zipCode
+      }
+      submitting={isSaving}
+      onSubmit={() => void submit()}
     >
       {/* 시안은 예시를 별도 줄이 아니라 placeholder로 넣는다 */}
       <FormField
