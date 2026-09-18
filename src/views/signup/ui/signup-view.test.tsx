@@ -219,3 +219,18 @@ describe("SignupView", () => {
     expect(screen.getByRole("button", { name: "다음으로" }).hasAttribute("disabled")).toBe(false);
   });
 });
+
+// `disabled`는 "안 눌린다"만 말한다. 가입은 토큰 교체까지 도는 왕복이라, 왜 안 눌리는지
+// 보이지 않으면 다시 누르게 된다
+it("가입 요청이 도는 동안 처리 중임을 알린다", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockReturnValue(new Promise(() => {})));
+  renderWith();
+  goToNicknameStep();
+  fireEvent.change(screen.getByLabelText("닉네임"), { target: { value: "보리" } });
+
+  fireEvent.click(screen.getByRole("button", { name: "다음으로" }));
+
+  await waitFor(() => expect(screen.getByRole("status", { name: "처리 중" })).toBeDefined());
+  // 자리를 지켜야 버튼 폭이 흔들리지 않는다
+  expect(screen.getByText("다음으로").className).toContain("invisible");
+});

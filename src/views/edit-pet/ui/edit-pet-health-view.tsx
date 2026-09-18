@@ -50,7 +50,9 @@ export function EditPetHealthView() {
   return (
     <EditPetScreen submitDisabled={!optionsReady || !concernAnswered || !allergyAnswered}>
       <div className="flex flex-col gap-5 px-5">
-        {/* 선택지가 없으면 왜 못 고치는지 알려야 한다. 잠긴 자리만 보이면 고장으로 읽힌다 */}
+        {/* 대기 표시 없음 — 고르는 자리가 잠긴 채 회색으로 차 있어 자리가 무너지지 않는다.
+            Skeleton으로 덮으면 "왜 못 고치는지"를 말해 주는 이 문구가 사라진다.
+            선택지가 없으면 왜 못 고치는지 알려야 한다. 잠긴 자리만 보이면 고장으로 읽힌다 */}
         {!optionsReady && (
           <p
             role={error ? "alert" : "status"}

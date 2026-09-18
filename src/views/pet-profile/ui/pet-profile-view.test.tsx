@@ -182,3 +182,11 @@ test("세션이 없으면 실패가 아니라 로그인으로 보낸다", () => 
   expect(replace).toHaveBeenCalledWith("/login");
   expect(screen.queryByRole("alert")).toBeNull();
 });
+
+// 문구만 두면 카드 자리가 통째로 비었다가 갑자기 채워진다
+test("아이 정보를 받는 동안 카드 자리를 잡아 둔다", () => {
+  query.pet = undefined;
+  renderView();
+
+  expect(screen.getByRole("status", { name: "아이 정보를 불러오는 중" })).toBeDefined();
+});

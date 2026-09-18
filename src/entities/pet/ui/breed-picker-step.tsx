@@ -14,6 +14,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 import type { SpeciesBreed } from "../api/breeds";
 import { useQueryBreeds } from "../api/use-query-breeds";
@@ -27,6 +28,9 @@ type BreedPickerStepProps = {
   /** 머리말의 뒤로가기 */
   onCancel: () => void;
 };
+
+/** 기다리는 동안 채워 둘 줄 수. 한 화면에 들어차는 만큼만 그린다 */
+const PLACEHOLDER_ROWS = 8;
 
 export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepProps) {
   const [query, setQuery] = useState("");
@@ -54,13 +58,15 @@ export function BreedPickerStep({ value, onConfirm, onCancel }: BreedPickerStepP
         {message ? (
           <EmptyState role="alert" {...message} />
         ) : isLoading ? (
-          // 목록이 오기 전에는 검색창만 있고 아래가 빈다. 왜 비었는지 알려 준다
-          <p
-            role="status"
-            className="px-5 text-center text-body-medium-14 text-text-body-secondary"
-          >
-            품종을 불러오는 중이에요
-          </p>
+          // 목록을 처음 그리는 자리라 그릴 내용이 아직 없다. 문구 한 줄만 두면 검색창
+          // 아래가 비었다가 갑자기 수십 줄로 차서 화면이 튄다. 줄 높이로 자리를 잡는다
+          <ul aria-label="품종을 불러오는 중" role="status" className="flex flex-col gap-1 px-5">
+            {Array.from({ length: PLACEHOLDER_ROWS }, (_, index) => (
+              <li key={index} className="flex min-h-11 items-center">
+                <Skeleton className="h-5 w-40 rounded-sm" />
+              </li>
+            ))}
+          </ul>
         ) : (
           <BreedPicker breeds={breeds} query={query} currentId={value} onPick={onConfirm} />
         )}
