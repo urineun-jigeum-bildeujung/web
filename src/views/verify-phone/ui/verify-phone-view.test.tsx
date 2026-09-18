@@ -140,3 +140,70 @@ test("요청이 너무 잦으면 까닭을 알린다", async () => {
   await waitFor(() => expect(toastAppError).toHaveBeenCalled());
   expect(screen.queryByText("인증 번호를 입력해주세요")).toBeNull();
 });
+
+// A로 인증한 뒤 B로 고치면 인증하지 않은 번호로 완료할 수 있었다
+test("인증한 뒤 번호를 고치면 완료가 다시 잠긴다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation((url: string) =>
+      url.includes("verify-confirm")
+        ? Promise.resolve(Response.json({ verified: true }))
+        : Promise.resolve(Response.json({ expiresInSeconds: 180 })),
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  await waitFor(() => expect(submit().disabled).toBe(false));
+
+  fireEvent.change(screen.getByLabelText("휴대폰 번호"), { target: { value: "010-9999-8888" } });
+  expect(submit().disabled).toBe(true);
+});
+
+// 하이픈만 달라진 같은 번호까지 잠그면 사용자가 까닭을 알 수 없다
+test("표기만 달라진 같은 번호는 인증이 유지된다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation((url: string) =>
+      url.includes("verify-confirm")
+        ? Promise.resolve(Response.json({ verified: true }))
+        : Promise.resolve(Response.json({ expiresInSeconds: 180 })),
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  await waitFor(() => expect(submit().disabled).toBe(false));
+
+  fireEvent.change(screen.getByLabelText("휴대폰 번호"), { target: { value: "01012345678" } });
+  expect(submit().disabled).toBe(false);
+});
+
+// inputMode는 붙여넣기를 막지 않는다. Number("12ab")가 NaN이 되고 JSON이 null로 적어
+// 서버의 int 계약이 깨진다 — 본문이 통째로 거절된다
+test("숫자가 아닌 인증번호는 보내지 않는다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ expiresInSeconds: 180 }));
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.change(screen.getByLabelText("인증 번호"), { target: { value: "12ab" } });
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(
+    fetchMock.mock.calls.find(([url]) => String(url).includes("verify-confirm")),
+  ).toBeUndefined();
+});
