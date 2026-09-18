@@ -85,6 +85,14 @@ export const APP_MESSAGE = {
     title: "인증 번호 전송",
     description: "문자로 받은 번호를 입력해 주세요.",
   },
+  "member.verificationCodeWrong": {
+    title: "인증 번호가 맞지 않아요",
+    description: "번호를 다시 확인해 주세요. 3분이 지났다면 다시 받아야 합니다.",
+  },
+  "member.tooManyVerifications": {
+    title: "잠시 후 다시 시도해 주세요",
+    description: "인증 요청이 너무 잦습니다.",
+  },
 
   "product.notFound": {
     title: "상품 없음",
@@ -145,6 +153,8 @@ export const APP_MESSAGE_CODE = {
     alreadySignedUp: "member.alreadySignedUp",
     nicknameTaken: "member.nicknameTaken",
     verificationCodeSent: "member.verificationCodeSent",
+    verificationCodeWrong: "member.verificationCodeWrong",
+    tooManyVerifications: "member.tooManyVerifications",
   },
   product: {
     notFound: "product.notFound",
