@@ -71,13 +71,18 @@ export function SearchAddressView() {
   // 주소창의 쪽이 범위를 벗어나면 조회 쪽에서 보정해 돌려준다. 화면은 보정된 값을 쓴다
   const safePage = result?.page ?? 1;
 
-  // 보정이 일어났으면 주소창도 맞춰 둔다. 사용자가 누른 적 없는 이동이라 history를 쌓지 않는다
+  // 보정이 일어났으면 주소창도 맞춰 둔다. 사용자가 누른 적 없는 이동이라 history를 쌓지 않는다.
+  //
+  // **새 쪽이 오는 중에는 보정하지 않는다** (#235). `keepPreviousData`를 쓰므로 그동안 `result`는
+  // **앞 쪽의 것**이고, 그 쪽 번호를 보정 근거로 읽으면 방금 누른 이동을 도로 되돌린다.
+  // 그러면 한 번 눌러서는 쪽이 넘어가지 않는다 — 두 번째는 캐시에서 바로 나와 넘어가므로
+  // "한 번 더 눌러야 되는" 증상으로 보인다.
   useEffect(() => {
-    if (result && safePage !== page) {
+    if (result && !isRefreshing && safePage !== page) {
       void setPage(safePage, { history: "replace" });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- result는 매 렌더 새 객체라 넣으면 무한 루프다
-  }, [safePage, page, setPage]);
+  }, [safePage, page, setPage, isRefreshing]);
 
   // 쪽을 넘기거나 다시 찾으면 고른 것이 화면에서 사라진다. 그대로 두면 안 보이는 주소로 넘어간다.
   // 상태를 지우는 대신 지금 목록에 있는지로 판단해 effect 없이 끝낸다
