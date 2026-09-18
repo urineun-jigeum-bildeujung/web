@@ -101,13 +101,14 @@ export function CartView() {
           <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
         )}
 
+        {/* 버튼은 시안이 92×40이다. shadcn `sm`은 h-7(28px)이라 시안보다 작아 높이를 맞춘다 */}
         {!isLoading && !error && items.length === 0 && (
           <EmptyState
             icon={<EmptyBagIllustration />}
             title="장바구니가 비어 있어요"
             description="건강한 사료와 간식을 천천히 골라볼까요?"
             action={
-              <Button variant="outline" size="sm" asChild>
+              <Button variant="outline" size="sm" className="min-h-10 px-3" asChild>
                 <Link href="/search">상품 둘러보기</Link>
               </Button>
             }
