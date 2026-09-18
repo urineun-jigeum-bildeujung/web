@@ -19,6 +19,27 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/carts", (route) =>
     route.fulfill({ json: { memberId: 1, items: [], totalAmount: 0 } }),
   );
+  // 배송지 설정도 같은 이유다. 빈 목록을 주면 "등록된 배송지가 없어요"만 보이므로
+  // 줄이 실제로 그려지는 것까지 보도록 한 건을 돌려준다 (#237)
+  await page.route("**/api/v1/members/me/addresses", (route) =>
+    route.fulfill({
+      json: {
+        addresses: [
+          {
+            addressId: 5,
+            addressName: "집",
+            receiver: "홍길동",
+            phone: "010-1234-5678",
+            zipCode: "06133",
+            address: "서울특별시 강남구 테헤란로 123",
+            addressDetail: "UI타워 4층 404호",
+            deliveryNote: null,
+            isDefault: true,
+          },
+        ],
+      },
+    }),
+  );
   // 끊지 않고 빈 스크립트로 답한다. 끊으면 `net::ERR_FAILED`가 콘솔에 남아 이 테스트가 잡는다.
   // 위젯은 어느 쪽이든 못 떠서 "결제 수단을 불러오지 못했어요"로 내려앉는다
   await page.route("**/*.tosspayments.com/**", (route) =>
