@@ -14,12 +14,30 @@
 
 ## 주소는 어디서 오는가
 
-이 화면에서 직접 적지 않는다. `받을 곳 주소` 줄은 입력칸이 아니라 `/mypage/address/search`로 가는 링크이고, 검색 화면이 고른 주소를 `?roadAddr=`에 실어 돌려보낸다.
+이 화면에서 직접 적지 않는다. `받을 곳 주소` 줄은 입력칸이 아니라 `/mypage/address/search`로 가는 링크이고, 검색 화면이 고른 주소를 `?roadAddr=`·`?zipNo=`에 실어 돌려보낸다.
+
+**도로명과 우편번호는 짝으로 움직인다.** `zipCode`가 등록 필수인데 폼에 칸이 없어, 새로 고른 도로명에 저장돼 있던 옛 우편번호를 붙이면 아무도 눈치채지 못한 채 배송이 엉뚱한 곳으로 간다. 한쪽만 바꾸지 않는다.
 
 컴포넌트 상태로 들지 않은 이유는 검색 화면으로 넘어가는 순간 사라지기 때문이다. URL에 두면 새로고침과 뒤로가기에서도 살아남는다 (AGENTS.md 5.1).
 
+## 무엇을 보내는가
+
+`entities/address`의 `useMutateAddress`를 쓴다 (#237). `place`가 있으면 그 `addressId`를 고치고, 없으면 새로 등록한다.
+
+| 폼 | API |
+| --- | --- |
+| 배송지 이름 | `addressName` |
+| 받는 분 이름 | `receiver` |
+| 연락처 | `phone` |
+| 받을 곳 주소 | `address` · `zipCode`(주소창에서 함께 온다) |
+| 상세 주소 | `addressDetail` |
+| 배송 요청사항 | `deliveryNote` — **적지 않으면 빈 문자열이 아니라 `null`이다.** 명세에서 유일한 nullable |
+| 계속 이 주소로 받을게요 | `isDefault` |
+
+**고칠 대상이 있으면 목록을 기다린 뒤에 폼을 그린다.** 빈 폼을 먼저 그리면 값이 나중에 들어오면서 사용자가 적던 것을 덮는다.
+
+**저장이 끝난 뒤에 떠난다.** 먼저 떠나면 실패했을 때 적은 것이 사라진다. 실패 문구는 `MutationCache.onError`가 전역으로 띄운다.
+
 ## 아직 없는 것
 
-API 연동. 화면 안의 값은 확인용 목 데이터다.
-
-백엔드가 `Address` 엔티티에 `receiverPhone`·`zipCode` 컬럼을 추가하고 `deliveryNode`를 `deliveryNote`로 고치기로 했다(2026-09-15 회신). 저장할 때 `zipNo → zipCode`, `roadAddr → address`로 매핑해 보낸다.
+**삭제.** 지우는 자리가 `/mypage/address`인데 그 화면은 PD 시안 대기다. `entities/address`에 함수만 있다.
