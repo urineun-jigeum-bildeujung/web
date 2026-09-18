@@ -269,3 +269,18 @@ test("살 수 없는 줄만 남으면 결제할 수 없다", () => {
   agreeRequired();
   expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
 });
+
+// 조회 중에 "없음" 쪽으로 그리면 목록이 도착하는 순간 문구와 목적지가 함께 바뀐다
+test("배송지를 불러오는 동안에는 바꾸는 자리를 내걸지 않는다", () => {
+  renderView({ addressState: { addresses: undefined, isLoading: true } });
+
+  expect(screen.queryByRole("link", { name: "배송지 등록" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "배송지 변경" })).toBeNull();
+});
+
+// 조회 실패는 토스트가 아니라 화면이 직접 보여 준다. 사라지면 왜 비었는지 알 수 없다
+test("배송지를 못 불러오면 화면이 알린다", () => {
+  renderView({ addressState: { addresses: undefined, error: new Error("network") } });
+
+  expect(screen.getByRole("alert")).toBeDefined();
+});
