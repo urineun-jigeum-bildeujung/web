@@ -86,7 +86,7 @@ export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
               ))
             ) : (
               <EmptyState
-                // 시안은 연필인데 `shared/ui/icon` 48종에 없다. 비워 두고 PD팀에 추가를 요청한다
+                icon={<Icon name="pencil" />}
                 title="지금은 작성할 수 있는 후기가 없어요"
                 description="구매하신 상품이 도착하면 솔직한 후기를 남겨주세요"
               />

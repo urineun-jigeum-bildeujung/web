@@ -9,11 +9,11 @@
 // 홈으로 나가는 길은 남아 있으므로 갇히지 않는다.
 
 import { useEffect } from "react";
-import { IoReloadCircle } from "react-icons/io5";
 
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { reportError } from "@/shared/lib/report-error";
 import { Button } from "@/shared/ui/button";
+import { Icon } from "@/shared/ui/icon/icon";
 
 const MESSAGE = APP_MESSAGE[APP_MESSAGE_CODE.common.routeError];
 
@@ -25,8 +25,8 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 
   return (
     <div role="alert" className="flex flex-1 flex-col items-center justify-center px-5 text-center">
-      {/* 시안 `ion:reload-circle` 102px. `shared/ui/icon` 세트 밖이라 react-icons로 보충한다 */}
-      <IoReloadCircle aria-hidden className="size-25.5 text-icon-fill-light-red" />
+      {/* 디자인 시스템 `icon_reload`. 시안이 102px이라 세트 기본(24)에서 키운다 */}
+      <Icon name="reload" className="size-25.5 text-icon-fill-light-red" />
 
       {/* 시안 간격 — 그림에서 제목까지 28, 제목에서 설명까지 16, 설명에서 버튼까지 40 */}
       <p className="mt-7 text-title-bold-20 text-foreground">{MESSAGE.title}</p>
@@ -35,7 +35,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
       </p>
 
       <Button onClick={reset} variant="secondary" className="mt-10 min-h-11 px-4">
-        <IoReloadCircle aria-hidden />
+        <Icon name="reload" />
         다시 시도하기
       </Button>
     </div>
