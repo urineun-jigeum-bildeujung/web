@@ -3,14 +3,15 @@
 마이페이지 홈. 프로필 카드와 메뉴 묶음을 보여준다.
 
 - **라우트**: `/mypage` — `src/app/mypage/page.tsx`
-- **조립**: `shared/ui`의 `page-header` · `setting-group` · `list-row` · `icon`, `widgets/bottom-nav`
-- **상태**: 없음. 값은 확인용 목 데이터
+- **조립**: `entities/pet`의 목록 조회 훅, `shared/ui`의 `page-header` · `setting-group` · `list-row` · `icon`, `widgets/bottom-nav`
+- **상태**: 아이 목록은 서버 상태(TanStack Query). 닉네임·이메일은 아직 목이다
 - **참고**: UI 시안 기준(`mypa_001`, `1474-23129`)
 
 | 파일 | 설명 |
 | --- | --- |
+| `ui/pet-avatars.tsx` | 프로필 카드의 아이 원 줄. 목록 조회를 쓰는 유일한 자리라 여기만 클라이언트다 |
 | `ui/mypage-view.tsx` | 마이페이지 홈 |
-| `ui/mypage-view.test.tsx` | 메뉴 묶음과 이동 경로 |
+| `ui/mypage-view.test.tsx` | 메뉴 묶음과 이동 경로, 아이 원이 서버 목록을 따르는지 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것
@@ -21,6 +22,14 @@
 
 **하단 내비는 아직 와이어프레임 기준이다.** 메인 화면(#185)에서 시안으로 옮긴다.
 
+## 아이 원은 서버에서 온다
+
+`GET /members/me/pets`로 등록한 아이를 원으로 그린다(#230). **이 줄만 클라이언트 컴포넌트다** — 화면 전체를 `use client`로 돌리면 메뉴 묶음까지 클라이언트로 내려간다.
+
+고르는 자리가 아니라 아이 관리로 가는 링크 안이라 `PetSwitcher`를 쓰지 않는다. 그것은 라디오 묶음이어서 링크 안에 넣으면 누르는 것이 둘로 갈린다.
+
+등록한 아이가 없으면 원을 그리지 않는다. 뒤따르는 점선 원이 아이를 들이는 자리로 남아 할 일을 알린다.
+
 ## 아직 없는 것
 
-API 연동. 닉네임·이메일·아이 목록은 확인용 목 데이터이며 백엔드 계약이 정해지면 교체한다.
+닉네임·이메일은 확인용 목 데이터다. `GET /members/me`가 아직 없다.
