@@ -403,9 +403,11 @@ export function CheckoutView() {
 
         <Section title="결제 방법">
           {/* **`customerKey`를 넘기지 못한다.** 그 값은 `[2] POST /payments`가 주는데 그 호출은
-              결제 버튼을 누른 뒤라, 위젯은 비회원(`ANONYMOUS`)으로 열린다. 승인은 `paymentKey`·
-              `orderId`·`amount`로 이뤄져 통과하지만 결제수단 저장은 되지 않는다. 회원 조회에서
-              미리 받을 수 있는지 백엔드에 확인을 요청해 뒀다 (#255) */}
+              결제 버튼을 누른 뒤라, 위젯은 비회원(`ANONYMOUS`)으로 열린다.
+
+              **지금은 이것을 문제로 보지 않는다.** 회원으로 열어야 얻는 것은 저장해 둔 결제수단을
+              다시 쓰는 일인데, 실결제가 되지 않아 저장할 카드가 없다. 실결제를 붙일 때 다시
+              본다 — `customerKey`는 이미 prop이라 값만 꽂으면 된다 (#255) */}
           <TossPaymentWidget
             amount={total}
             // 함수를 state에 넣을 때는 updater로 읽히지 않게 한 번 더 감싼다
