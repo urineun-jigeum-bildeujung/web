@@ -1,41 +1,109 @@
-// 배송지 설정 테스트. 고정 장소와 추가한 장소가 다르게 보이는지 본다.
+// 배송지 설정 테스트. 저장해 둔 곳을 어떻게 갈라 보여주는지 본다.
+//
+// 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/address`가 본다.
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
 
+import { ApiError } from "@/shared/api/client";
+
+const useQueryAddresses = vi.fn();
+
+// PageHeader의 뒤로가기가 useRouter를 쓴다
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
+vi.mock("@/entities/address", () => ({
+  useQueryAddresses: () => useQueryAddresses(),
+}));
 
 import { CheckoutAddressView } from "./checkout-address-view";
 
-test("저장해 둔 장소를 이름과 주소로 보여준다", () => {
-  render(<CheckoutAddressView />);
+/** 명세 예시 JSON을 옮긴 값 */
+const HOME = {
+  addressId: 5,
+  addressName: "집",
+  receiver: "홍길동",
+  phone: "010-1234-5678",
+  zipCode: "06133",
+  address: "서울특별시 강남구 테헤란로 123",
+  addressDetail: "UI타워 4층 404호",
+  deliveryNote: null,
+  isDefault: true,
+};
 
-  for (const label of ["집", "회사", "자취방"]) {
-    expect(screen.getByText(label)).toBeDefined();
-  }
+const STUDIO = {
+  ...HOME,
+  addressId: 9,
+  addressName: "자취방",
+  addressDetail: "3층",
+  isDefault: false,
+};
+
+function renderWith(state: Partial<ReturnType<typeof useQueryAddresses>>) {
+  useQueryAddresses.mockReturnValue({
+    addresses: undefined,
+    isLoading: false,
+    error: null,
+    ...state,
+  });
+  return render(<CheckoutAddressView />);
+}
+
+test("저장해 둔 장소를 이름과 주소로 보여준다", () => {
+  renderWith({ addresses: [HOME, STUDIO] });
+
+  expect(screen.getByText("집")).toBeDefined();
+  expect(screen.getByText("자취방")).toBeDefined();
   expect(screen.getByText("기본 배송지")).toBeDefined();
 });
 
-// 주소를 아직 넣지 않은 곳은 빈칸이 아니라 무엇을 해야 하는지 알린다
-test("주소가 없으면 넣으라고 안내한다", () => {
-  render(<CheckoutAddressView />);
-  expect(screen.getByText("상품을 배송받을 주소를 입력해 주세요.")).toBeDefined();
+// 도로명과 상세주소가 따로 온다. 한쪽만 보이면 몇 층인지 알 수 없다
+test("도로명과 상세주소를 한 줄로 붙여 보여준다", () => {
+  renderWith({ addresses: [HOME] });
+
+  expect(screen.getByText("서울특별시 강남구 테헤란로 123 UI타워 4층 404호")).toBeDefined();
 });
 
-// 시안(paym_011)은 집·회사에만 아이콘을 두고 사용자가 더한 곳은 이름만 보여준다
-test("사용자가 더한 장소에는 아이콘이 없다", () => {
-  const { container } = render(<CheckoutAddressView />);
+// 서버는 종류를 내려주지 않는다. 화면이 addressName으로 골라 붙인다
+test("집·회사에만 아이콘이 붙고 사용자가 지은 이름에는 없다", () => {
+  const { container } = renderWith({ addresses: [HOME, STUDIO] });
 
   const rows = [...container.querySelectorAll("a")];
-  const custom = rows.find((row) => row.textContent?.includes("자취방"));
   const fixed = rows.find((row) => row.textContent?.includes("집"));
+  const custom = rows.find((row) => row.textContent?.includes("자취방"));
 
   // 화살표는 모든 줄에 있으므로 아이콘이 하나뿐이면 장소 아이콘이 없다는 뜻이다
-  expect(custom?.querySelectorAll("svg").length).toBe(1);
   expect(fixed?.querySelectorAll("svg").length).toBe(2);
+  expect(custom?.querySelectorAll("svg").length).toBe(1);
+});
+
+// 고른 줄의 addressId를 들고 가야 그 배송지를 고칠 수 있다
+test("줄을 누르면 그 배송지를 들고 간다", () => {
+  renderWith({ addresses: [HOME] });
+
+  const row = screen.getByRole("link", { name: /집/ }) as HTMLAnchorElement;
+  expect(row.getAttribute("href")).toBe("/mypage/address/new?place=5");
+});
+
+test("하나도 없으면 넣으라고 알린다", () => {
+  renderWith({ addresses: [] });
+
+  expect(screen.getByText("등록된 배송지가 없어요")).toBeDefined();
+});
+
+// 조회 실패는 토스트가 아니라 화면이 직접 보여준다. 사라지면 왜 비었는지 알 수 없다
+test("불러오지 못하면 그 사실을 화면에 남긴다", () => {
+  renderWith({ error: new ApiError(500, "실패") });
+
+  expect(screen.getByRole("alert")).toBeDefined();
+});
+
+test("찾는 동안 뼈대를 보여준다", () => {
+  renderWith({ isLoading: true });
+
+  expect(screen.getByRole("status")).toBeDefined();
 });
 
 test("장소를 더 넣을 수 있다", () => {
-  render(<CheckoutAddressView />);
+  renderWith({ addresses: [HOME] });
 
   const link = screen.getByRole("link", { name: /장소 추가하기/ });
   expect(link.getAttribute("href")).toBe("/mypage/address/new");
