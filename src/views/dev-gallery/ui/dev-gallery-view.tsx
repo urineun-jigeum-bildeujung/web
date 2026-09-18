@@ -39,6 +39,10 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
+import { toast } from "sonner";
+
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError, toastAppSuccess } from "@/shared/lib/app-toast";
 import { Icon } from "@/shared/ui/icon/icon";
 import { ICON_NAMES } from "@/shared/ui/icon/icon-shapes";
 
@@ -173,6 +177,30 @@ export function DevGalleryView() {
       />
 
       <main className="flex-1">
+        {/* 시안 대조용. snackbar는 띄워 봐야 색이 보이는데 실제로 뜨는 자리가
+            변경 실패뿐이라 여기서 세 상태를 손으로 띄운다 (디자인 시스템 324:5419) */}
+        <Section title="Snackbar">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={() => toast("장바구니에 담았어요")}>
+              기본
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toastAppSuccess(APP_MESSAGE_CODE.member.verificationCodeSent)}
+            >
+              성공
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => toastAppError(APP_MESSAGE_CODE.common.serverError)}
+            >
+              실패
+            </Button>
+          </div>
+        </Section>
+
         <Section title="Icon">
           <p className="text-xs text-muted-foreground">
             Figma icon 페이지 {ICON_NAMES.length}종. 색은 글자색, 크기는 size-*로 정한다
