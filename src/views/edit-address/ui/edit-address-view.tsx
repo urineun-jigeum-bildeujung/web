@@ -129,7 +129,9 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         !label.trim() || !receiver.trim() || !phone.trim() || !address.trim() || !zipCode
       }
       submitting={isSaving}
-      onSubmit={() => void submit()}
+      // 저장이 실패하면 `submit`이 거부된다. `void`는 반환값만 버리고 거부는 남겨서
+      // 처리되지 않은 Promise 거부가 콘솔에 찍힌다. 문구는 전역 토스트가 이미 띄운다 (#239 리뷰)
+      onSubmit={() => void submit().catch(() => undefined)}
     >
       {/* 시안은 예시를 별도 줄이 아니라 placeholder로 넣는다 */}
       <FormField
