@@ -5,7 +5,7 @@
 // 뒤로가기로 주소창이 바뀌는 경우는 여기서 확인하지 못한다.
 // NuqsTestingAdapter는 `hasMemory`로 우리가 쓴 값만 기억할 뿐, 밖에서 주소창을 바꾸는 것은 흉내내지 못한다.
 // 그 경우는 화면 쪽에서 렌더 중에 앞 값과 견주어 입력칸을 맞춘다.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -300,4 +300,34 @@ test("새 쪽을 기다리는 동안 앞 결과를 지우지 않는다", () => {
   expect(screen.queryByRole("status")).toBeNull();
   expect(screen.getByText(ITEMS[0].roadAddr)).toBeDefined();
   expect(screen.getByRole("list").getAttribute("aria-busy")).toBe("true");
+});
+
+// 쪽을 넘기는 동안 `keepPreviousData`가 **앞 쪽 결과**를 내준다. 보정 effect가 그 쪽 번호를
+// 근거로 읽으면 방금 누른 이동을 도로 되돌려, 한 번 눌러서는 넘어가지 않는다 (#235).
+//
+// 위의 "다음·이전으로 쪽을 넘기고"가 이걸 못 잡은 이유는 가짜가 늘 **요청한 쪽을 그대로**
+// 돌려줘서 앞 쪽이 남아 있는 상황 자체가 만들어지지 않았기 때문이다.
+test("새 쪽을 기다리는 동안 앞 쪽 번호로 되돌리지 않는다", async () => {
+  // 1쪽만 받아 둔 상태. 어느 쪽을 물어도 1쪽 것을 placeholder로 내주고 아직 오는 중이라고 답한다
+  useQueryAddressSearch.mockImplementation((keyword: string, page: number) => ({
+    result: keyword
+      ? { items: ITEMS.slice(0, ADDRESS_PAGE_SIZE), totalCount: ITEMS.length, page: 1 }
+      : undefined,
+    error: null,
+    isSearching: false,
+    isRefreshing: page !== 1,
+  }));
+
+  renderAt("?query=역삼동");
+  await waitFor(() => expect(firstResult()).toBeDefined());
+
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+
+  // **누른 직후에 단언하면 고치기 전에도 통과한다.** 되돌리는 것은 effect라 한 박자 뒤에 일어난다
+  await act(async () => {
+    await Promise.resolve();
+  });
+
+  const asked = useQueryAddressSearch.mock.calls.at(-1);
+  expect(asked).toEqual(["역삼동", 2]);
 });
