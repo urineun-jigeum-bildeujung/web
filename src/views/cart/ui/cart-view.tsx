@@ -31,7 +31,6 @@ import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
-import { EmptyBagIllustration } from "@/shared/ui/empty-state/illustrations/bag";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Label } from "@/shared/ui/label";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -104,7 +103,7 @@ export function CartView() {
         {/* 버튼은 시안이 92×40이다. shadcn `sm`은 h-7(28px)이라 시안보다 작아 높이를 맞춘다 */}
         {!isLoading && !error && items.length === 0 && (
           <EmptyState
-            icon={<EmptyBagIllustration />}
+            icon={<Icon name="bag" />}
             title="장바구니가 비어 있어요"
             description="건강한 사료와 간식을 천천히 골라볼까요?"
             action={
