@@ -27,7 +27,7 @@ describe("ProductPhotosView", () => {
 
     // 목데이터에서 사진이 달린 후기는 둘, 각 3장이다
     expect(screen.getAllByRole("button", { name: /크게 보기/ })).toHaveLength(6);
-    expect(screen.getByText("6장")).toBeDefined();
+    expect(screen.getByText(/사진이 있는 리뷰/).textContent).toContain("6장");
   });
 
   it("사진을 누르면 그 사진을 남긴 후기가 함께 열린다", () => {
