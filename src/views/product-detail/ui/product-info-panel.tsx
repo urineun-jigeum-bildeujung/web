@@ -152,7 +152,11 @@ export function ProductInfoPanel({ match, petName }: ProductInfoPanelProps) {
                 className="text-icon-fill-default transition-transform group-aria-expanded/accordion-trigger:rotate-180"
               />
             </AccordionTrigger>
-            <AccordionContent className="pb-0" />
+            <AccordionContent>
+              <p className="text-body-medium-14 text-text-body-secondary">
+                안내 내용을 준비하고 있어요.
+              </p>
+            </AccordionContent>
           </AccordionItem>
         ))}
       </Accordion>
