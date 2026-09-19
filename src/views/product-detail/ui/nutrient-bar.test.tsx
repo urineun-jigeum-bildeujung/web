@@ -28,17 +28,21 @@ describe("getNutrientLevel", () => {
 });
 
 describe("NutrientBar", () => {
-  // 시안이 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려우면 아무 정보가 아니다.
-  // 숨은 글자로 두면 화면 낭독기에만 닿으므로 배지에 눈에 보이게 적는다
-  it("구간을 값 옆에 글자로 적는다", () => {
+  // 시안의 배지는 값만 적는다("12%"). 부족/적정/과다는 막대 아래 줄이 굵기·색으로 맡는다
+  it("배지는 값만 적고, 막대 아래 줄이 지금 구간을 굵게 표시한다", () => {
     render(
       <NutrientBar
         nutrient={{ name: "지방", valueLabel: "12%", position: 0.86, properRange: proper }}
       />,
     );
 
-    const badge = screen.getByText("12% 과다");
-    expect(badge.className).not.toContain("sr-only");
+    expect(screen.getByText("12%")).toBeDefined();
+    expect(screen.queryByText("12% 과다")).toBeNull();
+
+    const active = screen.getByText("과다");
+    expect(active.className).toContain("text-text-body-default");
+    const inactive = screen.getByText("부족");
+    expect(inactive.className).toContain("text-text-body-tertiary");
   });
 
   // 재지 않은 성분에 구간 이름을 붙이면 없는 판정을 만든다
@@ -48,6 +52,6 @@ describe("NutrientBar", () => {
     expect(screen.getByText("3%")).toBeDefined();
     expect(screen.queryByText("적정")).toBeNull();
     expect(screen.queryByText("기준 없음")).toBeNull();
-    expect(screen.getByText("절대 기준치가 없어 상대적으로만 표기해요")).toBeDefined();
+    expect(screen.getByText("절대적 기준치가 없어 정상적으로 표기돼요")).toBeDefined();
   });
 });
