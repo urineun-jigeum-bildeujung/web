@@ -34,6 +34,11 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   PRODUCT_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
 
+  // 결제 승인이 거절되는 경우다. 결제창은 이미 성공한 뒤라 "다시 시도" 계열 문구를 쓰지 않는다.
+  // 계약에 적힌 코드는 둘이고, 나머지는 `payment.confirmFailed`가 받는다 (#260)
+  PAYMENT_400_AMOUNT_MISMATCH: APP_MESSAGE_CODE.payment.amountMismatch,
+  PAYMENT_502_TOSS_CONFIRM_FAILED: APP_MESSAGE_CODE.payment.confirmFailed,
+
   // 백엔드가 아니라 우리 Route Handler(`/api/juso`)가 붙이는 코드다. 행정안전부 응답을 옮긴 것이라
   // `JUSO_` 접두사로 출처를 구분한다. 나머지(키 오류·두 글자 미만)는 기본 문구가 알맞다 —
   // 전자는 사용자가 할 일이 없는 우리 설정 문제이고, 후자는 화면이 이미 막고 있다.
