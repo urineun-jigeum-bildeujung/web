@@ -8,8 +8,8 @@ type RatingProps = {
   /** 0~5. 반 개 단위(4.5)까지 그리고 그 아래는 반올림한다 */
   value: number;
   max?: number;
-  /** sm 14px, md 20px(시안 목록·요약 카드) */
-  size?: "sm" | "md";
+  /** sm 14px(리뷰 카드), md 20px(목록), lg 28px(리뷰 탭 별점 요약) */
+  size?: "sm" | "md" | "lg";
   /** 별 옆에 숫자를 함께 보여준다 */
   showValue?: boolean;
   className?: string;
@@ -54,15 +54,20 @@ export function Rating({ value, max = 5, size = "sm", showValue, className }: Ra
           <RatingStar
             key={index}
             fill={fill === 2 ? 1 : fill === 1 ? 0.5 : 0}
-            className={size === "sm" ? "size-3.5" : "size-5"}
+            className={size === "sm" ? "size-3.5" : size === "md" ? "size-5" : "size-7"}
           />
         );
       })}
-      {showValue && (
-        <span aria-hidden className="ml-1 text-label-medium-11 text-foreground">
-          {value.toFixed(1)}
-        </span>
-      )}
+      {showValue &&
+        (size === "lg" ? (
+          <span aria-hidden className="ml-2 text-title-bold-24 text-text-body-default">
+            {value.toFixed(1)}
+          </span>
+        ) : (
+          <span aria-hidden className="ml-1 text-label-medium-11 text-foreground">
+            {value.toFixed(1)}
+          </span>
+        ))}
     </span>
   );
 }

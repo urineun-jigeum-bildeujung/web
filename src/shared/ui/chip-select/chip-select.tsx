@@ -27,6 +27,8 @@ type ChipSelectProps = {
   /** 한 줄에 몇 개를 놓을지. 기본은 보기 수에 맞춰 나눈다 */
   columns?: number;
   className?: string;
+  /** 칩 하나(label)의 모양을 시안별로 다르게 써야 할 때만 넘긴다. 기본 모양은 그대로 둔다 */
+  chipClassName?: string;
 };
 
 export function ChipSelect({
@@ -36,6 +38,7 @@ export function ChipSelect({
   onValueChange,
   columns,
   className,
+  chipClassName,
 }: ChipSelectProps) {
   const id = useId();
   const perRow = columns ?? options.length;
@@ -73,6 +76,7 @@ export function ChipSelect({
                 selected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background text-foreground hover:bg-muted",
+                chipClassName,
               )}
             >
               <span>{option.label}</span>
