@@ -53,9 +53,10 @@ const COMPARE: Record<
 
 const MATCH_STATES = ["on", "off"] as const;
 
-/** 사진 수만큼 썸네일 자리를 만든다. 리뷰 수로 자르면 사진 6장이어도 두 칸만 나온다 */
-const PHOTO_PREVIEWS = PHOTO_REVIEWS.flatMap((review) =>
-  Array.from({ length: review.photoCount }, (_, index) => ({ review, index })),
+/** 사진 수만큼 썸네일 자리를 만든다. 리뷰 수로 자르면 사진 6장이어도 두 칸만 나온다.
+    reviewIndex는 PHOTO_REVIEWS 안 자리라 사진 리뷰 화면의 review 쿼리와 그대로 맞는다 */
+const PHOTO_PREVIEWS = PHOTO_REVIEWS.flatMap((review, reviewIndex) =>
+  Array.from({ length: review.photoCount }, (_, index) => ({ review, reviewIndex, index })),
 ).slice(0, 4);
 
 /** "말티즈 · 8세 · 4kg"에서 품종만 뗀다 */
@@ -125,14 +126,15 @@ export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }:
             </Link>
           </div>
 
-          {/* 사진 앞의 넉 장만 미리 보인다. 나머지는 전체보기에서 격자로 본다 */}
-          <ul className="flex justify-between gap-1">
-            {PHOTO_PREVIEWS.map(({ review, index }) => (
+          {/* 사진 앞의 넉 장만 미리 보인다. 나머지는 전체보기에서 격자로 본다.
+              4열 정사각 그리드라 393px보다 좁은 화면에서도 폭을 넘지 않는다 */}
+          <ul className="grid grid-cols-4 gap-1">
+            {PHOTO_PREVIEWS.map(({ review, reviewIndex, index }) => (
               <li key={`${review.id}-${index}`}>
                 <Link
-                  href={`/products/${productId}/photos`}
+                  href={`/products/${productId}/photos?review=${reviewIndex}&photo=${index}`}
                   aria-label={`${review.nickname}의 후기 사진 ${index + 1}번째 보기`}
-                  className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <IoImageOutline aria-hidden className="size-6 text-muted-foreground" />
                 </Link>
