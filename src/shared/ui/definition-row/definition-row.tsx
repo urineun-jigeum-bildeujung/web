@@ -14,6 +14,9 @@ type DefinitionRowProps = {
   emptyText?: string;
   /** 값을 오른쪽 끝에 붙인다. 금액처럼 자릿수를 견주는 값에 쓴다 */
   alignEnd?: boolean;
+  /** 시안이 다르게 그린 화면(상품 상세 배송 표 등)만 항목명·값 색/크기/너비를 덮어쓴다 */
+  termClassName?: string;
+  descriptionClassName?: string;
 } & ComponentProps<"div">;
 
 export function DefinitionRow({
@@ -21,6 +24,8 @@ export function DefinitionRow({
   description,
   emptyText = "등록 전",
   alignEnd,
+  termClassName,
+  descriptionClassName,
   className,
   ...props
 }: DefinitionRowProps) {
@@ -28,12 +33,13 @@ export function DefinitionRow({
 
   return (
     <div className={cn("flex min-h-12 items-center gap-4 px-4 py-2", className)} {...props}>
-      <dt className="w-24 shrink-0 text-sm text-muted-foreground">{term}</dt>
+      <dt className={cn("w-24 shrink-0 text-sm text-muted-foreground", termClassName)}>{term}</dt>
       <dd
         className={cn(
           "min-w-0 flex-1 truncate text-sm",
           alignEnd && "text-right",
           isEmpty ? "text-muted-foreground" : "text-foreground",
+          descriptionClassName,
         )}
       >
         {isEmpty ? emptyText : description}

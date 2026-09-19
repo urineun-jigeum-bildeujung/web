@@ -15,6 +15,9 @@ type EmptyStateProps = {
   icon?: ReactNode;
   /** 다음 행동으로 이끄는 버튼 */
   action?: ReactNode;
+  /** 기본은 굵은 18px 제목이지만, 시안이 다르게 그린 화면(Q&A 빈 상태 등)만 덮어쓴다 */
+  titleClassName?: string;
+  descriptionClassName?: string;
 } & ComponentProps<"div">;
 
 export function EmptyState({
@@ -22,6 +25,8 @@ export function EmptyState({
   description,
   icon,
   action,
+  titleClassName,
+  descriptionClassName,
   className,
   ...props
 }: EmptyStateProps) {
@@ -42,9 +47,16 @@ export function EmptyState({
       )}
       {/* 제목·설명은 4px로 좁게 묶고, 아이콘·이 묶음·버튼 사이는 부모의 8px 간격을 그대로 쓴다 */}
       <div className="flex flex-col gap-1">
-        <p className="text-title-bold-18 text-foreground">{title}</p>
+        <p className={cn("text-title-bold-18 text-foreground", titleClassName)}>{title}</p>
         {description && (
-          <p className="text-body-medium-14 text-balance text-text-body-secondary">{description}</p>
+          <p
+            className={cn(
+              "text-body-medium-14 text-balance text-text-body-secondary",
+              descriptionClassName,
+            )}
+          >
+            {description}
+          </p>
         )}
       </div>
       {action && <div>{action}</div>}

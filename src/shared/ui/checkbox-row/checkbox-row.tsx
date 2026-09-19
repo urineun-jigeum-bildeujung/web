@@ -54,6 +54,9 @@ type CheckboxRowProps = VariantProps<typeof checkVariants> & {
   className?: string;
   /** 레이블 글꼴·색을 바꿀 때. 기본은 caption/regular_13에 보조 글자색이다 */
   labelClassName?: string;
+  /** 체크박스를 레이블 오른쪽 끝으로 보낸다(시안 상품 상세 리뷰 필터처럼 "레이블 …… 체크"
+      순서로 그린 줄만 켠다). 기본은 체크박스가 왼쪽이다 */
+  reverse?: boolean;
 };
 
 export function CheckboxRow({
@@ -68,9 +71,57 @@ export function CheckboxRow({
   trailing,
   className,
   labelClassName,
+  reverse,
 }: CheckboxRowProps) {
   const id = useId();
   const small = size === "s";
+
+  const box = (
+    <span
+      className={cn(
+        "relative flex shrink-0 items-center justify-center",
+        small ? "size-4" : "size-6",
+        // 설명이 있으면 원이 첫 줄 글자(행간 22px) 가운데에 오도록 맞춘다
+        description && !reverse && (small ? "mt-0.75" : "-mt-0.25"),
+      )}
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        disabled={disabled}
+        onCheckedChange={(next) => onCheckedChange?.(next === true)}
+        className={checkVariants({ size, tone, round })}
+      />
+      {/* 체크 아이콘은 원의 2/3 크기다 */}
+      <Icon
+        name="check"
+        className={cn(
+          "pointer-events-none absolute text-icon-fill-static-white",
+          small ? "size-2.5" : "size-4",
+        )}
+      />
+    </span>
+  );
+
+  const labelBlock = (
+    <div className="flex min-w-0 flex-1 flex-col gap-1 self-stretch">
+      {/* 레이블이 남은 자리를 모두 차지해 행 어디를 눌러도 체크된다.
+          아래 설명은 htmlFor 밖이라 눌러도 토글되지 않는다 */}
+      <label
+        htmlFor={id}
+        className={cn(
+          "flex flex-1 cursor-pointer items-center text-caption-regular-13 text-text-body-secondary select-none",
+          disabled && "cursor-not-allowed text-text-label-disable",
+          labelClassName,
+        )}
+      >
+        {label}
+      </label>
+      {description && (
+        <p className="text-caption-regular-12 text-text-body-tertiary">{description}</p>
+      )}
+    </div>
+  );
 
   return (
     // 최소 44px을 확보해 손가락으로 누르기 쉽게 한다. 설명이 붙으면 위로 맞춘다
@@ -81,48 +132,17 @@ export function CheckboxRow({
         className,
       )}
     >
-      <span
-        className={cn(
-          "relative flex shrink-0 items-center justify-center",
-          small ? "size-4" : "size-6",
-          // 설명이 있으면 원이 첫 줄 글자(행간 22px) 가운데에 오도록 맞춘다
-          description && (small ? "mt-0.75" : "-mt-0.25"),
-        )}
-      >
-        <Checkbox
-          id={id}
-          checked={checked}
-          disabled={disabled}
-          onCheckedChange={(next) => onCheckedChange?.(next === true)}
-          className={checkVariants({ size, tone, round })}
-        />
-        {/* 체크 아이콘은 원의 2/3 크기다 */}
-        <Icon
-          name="check"
-          className={cn(
-            "pointer-events-none absolute text-icon-fill-static-white",
-            small ? "size-2.5" : "size-4",
-          )}
-        />
-      </span>
-
-      <div className="flex min-w-0 flex-1 flex-col gap-1 self-stretch">
-        {/* 레이블이 남은 자리를 모두 차지해 행 어디를 눌러도 체크된다.
-            아래 설명은 htmlFor 밖이라 눌러도 토글되지 않는다 */}
-        <label
-          htmlFor={id}
-          className={cn(
-            "flex flex-1 cursor-pointer items-center text-caption-regular-13 text-text-body-secondary select-none",
-            disabled && "cursor-not-allowed text-text-label-disable",
-            labelClassName,
-          )}
-        >
-          {label}
-        </label>
-        {description && (
-          <p className="text-caption-regular-12 text-text-body-tertiary">{description}</p>
-        )}
-      </div>
+      {reverse ? (
+        <>
+          {labelBlock}
+          {box}
+        </>
+      ) : (
+        <>
+          {box}
+          {labelBlock}
+        </>
+      )}
 
       {trailing}
     </div>

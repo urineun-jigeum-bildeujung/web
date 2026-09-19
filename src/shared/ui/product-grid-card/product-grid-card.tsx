@@ -34,6 +34,10 @@ type ProductGridCardProps = {
   selected?: boolean;
   onSelect?: () => void;
   className?: string;
+  /** 시안이 다르게 그린 화면(상품 상세의 "함께 보면 좋은 상품" 등)만 가격 크기를 덮어쓴다 */
+  priceClassName?: string;
+  /** 기본은 이미지 오른쪽 위(top-3 right-3). 시안이 다르게 그린 화면만 자리를 덮어쓴다 */
+  imageActionClassName?: string;
 };
 
 export function ProductGridCard({
@@ -51,6 +55,8 @@ export function ProductGridCard({
   selected,
   onSelect,
   className,
+  priceClassName,
+  imageActionClassName,
 }: ProductGridCardProps) {
   // 시안(ProductCard/Grid의 price 슬롯)은 이름·취소선·할인율+가격이 간격 없이
   // 붙어 있고, 그 아래 meta(하루 급여비·별점)와만 4px 떨어진다. 공용 Price
@@ -98,7 +104,9 @@ export function ProductGridCard({
                 {discountRate}%
               </span>
             )}
-            <p className="text-title-bold-18 text-foreground">{formatWon(price)}</p>
+            <p className={cn("text-title-bold-18 text-foreground", priceClassName)}>
+              {formatWon(price)}
+            </p>
           </div>
         </div>
         {meta}
@@ -135,8 +143,17 @@ export function ProductGridCard({
       ) : (
         body
       )}
-      {/* 링크 안에 두면 링크 속 버튼이 되어 눌리지 않는다 */}
-      {imageAction && <div className="absolute top-3 right-3">{imageAction}</div>}
+      {/* 링크 안에 두면 링크 속 버튼이 되어 눌리지 않는다. 카드 전체(이미지+글) 기준으로
+          자리를 잡으면 아래쪽으로 놓을 때 이미지가 아니라 카드 맨 아래(글 밑)에 붙는다.
+          이미지와 정확히 같은 크기(aspect-square)의 투명판을 따로 둬서 이미지 기준으로
+          자리를 잡는다 */}
+      {imageAction && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 aspect-square">
+          <div className={cn("pointer-events-auto absolute top-3 right-3", imageActionClassName)}>
+            {imageAction}
+          </div>
+        </div>
+      )}
       {footer}
     </div>
   );

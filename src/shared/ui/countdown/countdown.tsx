@@ -18,6 +18,8 @@ type CountdownProps = {
   /** 다 지났을 때 알린다. 끝난 뒤 화면이 통째로 바뀌어야 하는 자리에서 쓴다 */
   onEnd?: () => void;
   className?: string;
+  /** 배지처럼 좁은 자리에 넣을 때. 콜론 사이 공백 없이 "02:14:33"으로 붙여 쓴다 */
+  compact?: boolean;
 };
 
 function split(ms: number) {
@@ -31,7 +33,7 @@ function split(ms: number) {
 
 const pad = (value: number) => String(value).padStart(2, "0");
 
-export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps) {
+export function Countdown({ endsAt, fallback, onEnd, className, compact }: CountdownProps) {
   // 서버와 클라이언트의 시각이 달라 하이드레이션이 어긋난다. 처음에는 그리지 않고
   // 화면에 붙은 뒤부터 센다.
   const [left, setLeft] = useState<number | null>(null);
@@ -59,12 +61,17 @@ export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps
     return () => clearInterval(timer);
   }, [endsAt]);
 
+  const separator = compact ? ":" : " : ";
+  // compact는 문장 중간(배지·안내 문구)에 끼워 쓰므로 블록 요소(p)가 아니라
+  // 인라인 요소(span)로 그려야 한다
+  const Tag = compact ? "span" : "p";
+
   if (left === null) {
     // 자리를 미리 잡아 둔다. 숫자가 들어올 때 화면이 밀리지 않게 한다.
     return (
-      <p className={cn("text-title-bold-28 font-normal text-transparent", className)}>
-        00 : 00 : 00
-      </p>
+      <Tag className={cn("text-title-bold-28 font-normal text-transparent", className)}>
+        {`00${separator}00${separator}00`}
+      </Tag>
     );
   }
 
@@ -73,10 +80,12 @@ export function Countdown({ endsAt, fallback, onEnd, className }: CountdownProps
   const { hours, minutes, seconds } = split(left);
 
   return (
-    <p className={cn("text-title-bold-28 font-normal text-foreground", className)}>
+    <Tag className={cn("text-title-bold-28 font-normal text-foreground", className)}>
       {/* 1초마다 바뀌는 값이라 읽어 주면 방해가 된다. 남은 시간은 옆 문구가 알린다 */}
-      <span aria-hidden>{`${pad(hours)} : ${pad(minutes)} : ${pad(seconds)}`}</span>
+      <span
+        aria-hidden
+      >{`${pad(hours)}${separator}${pad(minutes)}${separator}${pad(seconds)}`}</span>
       <span className="sr-only">{`${hours}시간 ${minutes}분 남음`}</span>
-    </p>
+    </Tag>
   );
 }
