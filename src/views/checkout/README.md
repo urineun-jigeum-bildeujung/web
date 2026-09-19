@@ -19,6 +19,7 @@
 | `ui/checkout-done-view.tsx` | 주문 완료 (`paym_002`). 결제상세·배송지는 `entities/order` 조각을 쓴다 |
 | `ui/delivery-notice.tsx` | 언제 도착하는지 알리는 한 줄. **지금 쓰는 곳이 없다** — 아래 "도착 예정일" 절 |
 | `ui/toss-payment-widget.tsx` | 토스 결제 UI와 결제창 (#212) |
+| `ui/copy-order-number.tsx` | 승인 실패 화면의 주문번호 복사 버튼. 이 조각만 클라이언트 컴포넌트다 |
 | `api/orders.ts` | `[1]` 주문 생성. `Idempotency-Key`를 실어 두 번 만들어지지 않게 한다 |
 | `api/payment.ts` | `[2]` 결제 요청과 `[5]` 승인 |
 | `api/payment.test.ts` | 무엇을 어떤 모양으로 보내는지, `orderId` 두 값이 제자리에 가는지 |
@@ -98,7 +99,7 @@
 
 | | 하는 것 |
 | --- | --- |
-| 주문번호 | 토스가 복귀 쿼리에 실어 준 `orderId`를 크게 보인다. 승인 응답이 없으니 화면이 댈 수 있는 식별자가 이것뿐이다 |
+| 주문번호 | 토스가 복귀 쿼리에 실어 준 `orderId`를 크게 보이고 **복사 버튼**을 붙인다. 승인 응답이 없으니 화면이 댈 수 있는 식별자가 이것뿐이고, 문의에 붙이려면 옮겨 적지 않아도 되어야 한다 |
 | 다음 행동 | **문의하기**와 **주문 내역 보기**. 다시 결제하러 가는 길은 주지 않는다 |
 | 문구 | `payment.confirmFailed` · `payment.amountMismatch` |
 
