@@ -61,6 +61,17 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search?slot=0");
   });
 
+  it("상세에서 고른 첫 상품을 카드 이동과 검색어 수정에도 유지한다", () => {
+    renderWith("?q=퍼피&slot=1&from=detail&first=123");
+
+    expect(screen.getByRole("link", { name: /퍼피 성장기 사료/ }).getAttribute("href")).toBe(
+      "/compare?slot=1&product=4&from=detail&first=123",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /검색어 고치기/ }));
+    expect(push).toHaveBeenCalledWith("/search?slot=1&from=detail&first=123");
+  });
+
   // 점수를 모르는 상품이 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다
   it("적합도를 재지 못한 상품은 가장 싸도 마지막에 온다", () => {
     renderWith("?q=사료&sort=price-low");

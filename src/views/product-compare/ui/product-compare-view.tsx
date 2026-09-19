@@ -15,6 +15,7 @@ import { IoCartOutline, IoNotificationsOutline } from "react-icons/io5";
 import {
   CompareSlot,
   CompareTable,
+  MOCK_DETAIL_PRODUCT,
   type CompareProduct,
   type CompareRow,
 } from "@/entities/product";
@@ -74,10 +75,17 @@ export function ProductCompareView() {
   // 검색에서 고른 상품이 주소창에 담겨 온다. 어느 자리에 무엇을 넣을지 알려 준다.
   const [slot] = useQueryState("slot");
   const [product] = useQueryState("product");
+  const [from] = useQueryState("from");
+  const [firstProduct] = useQueryState("first");
 
   // 서버 연동 전까지 담긴 상품을 화면이 든다. 빼면 그 자리가 비고 표가 사라진다.
   const [slots, setSlots] = useState<[CompareProduct | undefined, CompareProduct | undefined]>(
     () => {
+      if (from === "detail" && product) {
+        const first = { id: firstProduct ?? product, ...MOCK_DETAIL_PRODUCT };
+        return [first, slot === "1" ? PICKABLE[product] : undefined];
+      }
+
       const picked = product ? PICKABLE[product] : undefined;
       if (!picked) return MOCK_PRODUCTS;
 
@@ -95,7 +103,13 @@ export function ProductCompareView() {
   const sameKind = both && first.kind === second.kind;
 
   // 고르는 일은 검색 화면이 맡는다. 어느 자리를 채우러 왔는지는 주소창이 들고 간다.
-  const goSelect = (index: number) => router.push(`/search?slot=${index}`);
+  const goSelect = (index: number) => {
+    const detailContext =
+      from === "detail" && index === 1 && first
+        ? `&from=detail&first=${encodeURIComponent(first.id)}`
+        : "";
+    router.push(`/search?slot=${index}${detailContext}`);
+  };
 
   return (
     <div className="flex min-h-dvh flex-col">

@@ -138,6 +138,12 @@ export function SearchResultView() {
   // 비교 화면이 자리를 채우러 보냈으면 그 자리 번호가 담겨 온다.
   // 그때는 카드가 상세가 아니라 비교 화면으로 되돌아간다
   const [slot] = useQueryState("slot");
+  const [from] = useQueryState("from");
+  const [first] = useQueryState("first");
+  const detailContext =
+    slot !== null && from === "detail" && first
+      ? `&from=detail&first=${encodeURIComponent(first)}`
+      : "";
   // 정렬은 같은 목록을 좁히는 것이라 히스토리에 쌓지 않는다.
   // 쌓으면 뒤로가기를 여러 번 눌러야 화면을 떠난다
   const [sort, setSort] = useQueryState(
@@ -171,7 +177,11 @@ export function SearchResultView() {
         {/* 입력창처럼 보이지만 버튼이다. 여기서 고쳐 치는 게 아니라 검색 화면으로 되돌아간다 */}
         <button
           type="button"
-          onClick={() => router.push(slot ? `/search?slot=${encodeURIComponent(slot)}` : "/search")}
+          onClick={() =>
+            router.push(
+              slot ? `/search?slot=${encodeURIComponent(slot)}${detailContext}` : "/search",
+            )
+          }
           className="flex min-h-11 flex-1 items-center gap-2 rounded-full bg-muted px-3 text-left transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <IoSearchOutline aria-hidden className="size-5 shrink-0 text-muted-foreground" />
@@ -221,7 +231,7 @@ export function SearchResultView() {
                     href={
                       slot === null
                         ? `/products/${product.id}`
-                        : `/compare?slot=${encodeURIComponent(slot)}&product=${product.id}`
+                        : `/compare?slot=${encodeURIComponent(slot)}&product=${product.id}${detailContext}`
                     }
                     name={product.name}
                     price={product.price}
