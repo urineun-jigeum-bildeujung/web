@@ -72,6 +72,21 @@ test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
   );
 });
 
+test("장바구니를 누르면 옵션 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "면역 지원 영양제 90정 옵션 선택" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByText("90정 (기본 구성)")).toBeVisible();
+
+  await sheet.getByRole("button", { name: "면역 지원 영양제 90정 수량 하나 늘리기" }).click();
+  await sheet.getByRole("button", { name: "42,000원 장바구니 담기" }).click();
+
+  await expect(sheet).toBeHidden();
+  await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
+});
+
 // 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
 test("공유를 누르면 현재 주소가 클립보드에 담긴다", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
