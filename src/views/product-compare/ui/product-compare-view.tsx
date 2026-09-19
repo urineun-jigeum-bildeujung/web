@@ -34,6 +34,9 @@ const PICKABLE: Record<string, CompareProduct> = {
   "5": { id: "5", name: "저자극 덴탈껌 14개입", price: 10800, kind: "snack" },
   "6": { id: "6", name: "고양이 화장실 모래 6L", price: 14900, kind: "supply" },
   "7": { id: "7", name: "실속형 대용량 사료 5kg", price: 18900, kind: "food" },
+  // 상세 상품(면역 지원 영양제)이 supplement라, 검색으로 고를 수 있는 같은 종류가
+  // 하나도 없으면 상세→비교 흐름이 항상 "종류가 달라 비교할 수 없다"로 끝난다
+  "8": { id: "8", name: "관절 건강 영양제 60정", price: 24000, kind: "supplement" },
 };
 
 /** API 연동 전까지 화면 확인용 값. 시안 comp_001이 사료 둘을 견준다 */
@@ -68,6 +71,28 @@ const MOCK_ROWS: CompareRow[] = [
     ],
   },
   { label: "칼로리", values: ["310kcal", "360kcal"] },
+];
+
+/** 영양제 둘을 견줄 때 쓰는 항목. 사료 전용(10g당 가격·알갱이 크기·형태 및 식감·칼로리) 대신
+ *  정제 상품에 맞는 값으로 바꾸고, 나머지 공통 항목(핵심 기능성·알러지 안심·권장 연령대·주요
+ *  영양 비율)은 그대로 쓴다 */
+const MOCK_SUPPLEMENT_ROWS: CompareRow[] = [
+  { label: "1정당 가격", values: ["233원", "400원"] },
+  { label: "주요 성분", values: ["오메가3", "글루코사민"] },
+  {
+    label: "핵심 기능성",
+    values: [
+      ["면역력 강화", "항산화"],
+      ["관절 건강", "염증 완화"],
+    ],
+  },
+  {
+    label: "알러지 안심",
+    values: [["그레인프리"], ["무설탕"]],
+  },
+  { label: "권장 연령대", values: ["전연령", "7세 이상"] },
+  { label: "1일 섭취량", values: ["1정", "2정"] },
+  { label: "총 정 수", values: ["90정 (약 3개월분)", "60정 (약 1개월분)"] },
 ];
 
 export function ProductCompareView() {
@@ -152,7 +177,7 @@ export function ProductCompareView() {
           (sameKind ? (
             <CompareTable
               productNames={[first.name, second.name]}
-              rows={MOCK_ROWS}
+              rows={first.kind === "supplement" ? MOCK_SUPPLEMENT_ROWS : MOCK_ROWS}
               className="border-t border-border"
             />
           ) : (
