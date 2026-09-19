@@ -62,8 +62,9 @@ export const MOCK_PRODUCT = {
   originalPrice: 30_000,
   rating: 4.8,
   reviewCount: 108,
-  // 시안 상태(정상·타임딜·품절)를 하나씩 확인하는 중이라 지금은 품절로 고정해 둔다(#229)
-  status: "soldout" as ProductStatus,
+  // `?status=normal|deal|soldout`으로 세 상태를 새로고침 없이 바꿔 볼 수 있다.
+  // 기본값은 실제로 살 수 있는 정상 상태다
+  status: "normal" as ProductStatus,
   seller: "골라주개냥",
   shipping: "빠름출발 · 14시 이전 주문 시 당일 발송(이후 주문 시 내일 이내 발송)",
   shippingFee: "무료배송 · 조건 미충족 시 3,000원",
