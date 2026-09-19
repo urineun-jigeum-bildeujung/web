@@ -68,17 +68,17 @@ test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page 
   await expect(omegaBadge).not.toHaveAttribute("aria-label");
 
   // 단백질(28%)은 적정 구간이라 "적정"만 진한 색, 나머지 둘은 옅은 색으로 표시된다
-  const protein = nutrients.locator("li", { hasText: "단백질" });
+  const protein = nutrients.getByRole("listitem").filter({ hasText: "단백질" });
   await expect(protein.getByText("적정", { exact: true })).toHaveClass(/text-text-body-default/);
   await expect(protein.getByText("부족", { exact: true })).toHaveClass(/text-text-body-tertiary/);
   await expect(protein.getByText("과다", { exact: true })).toHaveClass(/text-text-body-tertiary/);
 
   // 지방(12%)은 과다 구간이다
-  const fat = nutrients.locator("li", { hasText: "지방" });
+  const fat = nutrients.getByRole("listitem").filter({ hasText: "지방" });
   await expect(fat.getByText("과다", { exact: true })).toHaveClass(/text-text-body-default/);
 
   // 오메가3(3%)는 절대 기준치가 없어 부족/적정/과다 줄 자체가 없다
-  const omega = nutrients.locator("li", { hasText: "오메가3" });
+  const omega = nutrients.getByRole("listitem").filter({ hasText: "오메가3" });
   await expect(omega.getByText("부족", { exact: true })).toHaveCount(0);
 });
 
