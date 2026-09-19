@@ -3,8 +3,10 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { expect, test, vi } from "vitest";
 
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push, back: vi.fn() }),
   usePathname: () => "/compare",
 }));
 
@@ -31,6 +33,31 @@ test("한 자리를 비우면 견줄 것이 없어 표가 사라진다", () => {
   expect(screen.queryByRole("table")).toBeNull();
   expect(screen.getByText(/여기에 담아주세요/)).toBeDefined();
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
+});
+
+test("상품 상세에서 담아 온 경우 현재 상품만 첫 자리에 보여준다", () => {
+  renderView("?slot=0&product=123&from=detail");
+
+  expect(screen.getByText("면역 지원 영양제 90정")).toBeDefined();
+  expect(screen.getByText("21,000원")).toBeDefined();
+  expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
+  expect(screen.queryByRole("table")).toBeNull();
+});
+
+test("두 번째 상품을 고르러 갈 때 첫 상품 ID를 함께 전달한다", () => {
+  renderView("?slot=0&product=123&from=detail");
+
+  fireEvent.click(screen.getByRole("button", { name: "상품 추가하기" }));
+
+  expect(push).toHaveBeenCalledWith("/search?slot=1&from=detail&first=123");
+});
+
+test("검색에서 두 번째 상품을 고르고 돌아와도 상세 상품이 첫 자리에 남는다", () => {
+  renderView("?slot=1&product=4&from=detail&first=123");
+
+  expect(screen.getByText("면역 지원 영양제 90정")).toBeDefined();
+  expect(screen.getByText("퍼피 성장기 사료 1kg")).toBeDefined();
+  expect(screen.queryByText("중소형견 소포장 사료 1kg")).toBeNull();
 });
 
 // 시안 comp_001_에러. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라 견줄 수 없다

@@ -112,6 +112,17 @@ describe("SearchView", () => {
     );
   });
 
+  it("상품 상세에서 온 비교라면 첫 상품도 결과 화면까지 들고 간다", () => {
+    renderView("?slot=1&from=detail&first=123");
+
+    fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "덴탈껌" } });
+    fireEvent.click(screen.getByRole("button", { name: "저자극 덴탈껌" }));
+
+    expect(push).toHaveBeenCalledWith(
+      "/search/result?q=%EC%A0%80%EC%9E%90%EA%B7%B9%20%EB%8D%B4%ED%83%88%EA%BB%8C&slot=1&from=detail&first=123",
+    );
+  });
+
   it("최근 검색어를 다시 눌러도 목록에 하나만 남는다", () => {
     renderView();
 

@@ -51,6 +51,8 @@ export function SearchView() {
 
   // 비교 화면이 자리를 채우러 보냈으면 그 자리 번호가 담겨 온다. 결과 화면까지 들고 간다
   const [slot] = useQueryState("slot");
+  const [from] = useQueryState("from");
+  const [first] = useQueryState("first");
   const [keyword, setKeyword] = useState("");
   // 저장소는 React 밖의 것이라 효과로 되읽지 않고 여기서 구독한다
   const recent = useSyncExternalStore(subscribeRecent, getRecent, getRecentOnServer);
@@ -74,7 +76,11 @@ export function SearchView() {
     // 종류 목록이 아니라 검색 결과 화면으로 보낸다. 어느 종류인지 알 수 없는 말을
     // 특정 카테고리로 보내면 "양치 껌"을 검색해도 사료 목록이 뜬다
     const forSlot = slot ? `&slot=${encodeURIComponent(slot)}` : "";
-    router.push(`/search/result?q=${encodeURIComponent(trimmed)}${forSlot}`);
+    const detailContext =
+      slot !== null && from === "detail" && first
+        ? `&from=detail&first=${encodeURIComponent(first)}`
+        : "";
+    router.push(`/search/result?q=${encodeURIComponent(trimmed)}${forSlot}${detailContext}`);
   };
 
   return (
