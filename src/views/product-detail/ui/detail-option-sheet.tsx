@@ -57,7 +57,7 @@ export function DetailOptionSheet({
         </div>
 
         <Button
-          className="h-10 w-full text-label-bold-14"
+          className="min-h-11 w-full text-label-bold-14"
           onClick={() => {
             onAddToCart(quantity);
             setQuantity(1);

@@ -277,7 +277,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
               />
               <Button
                 variant="default"
-                className="h-10 shrink-0 px-2 text-label-bold-14"
+                className="min-h-11 shrink-0 px-2 text-label-bold-14"
                 onClick={() =>
                   toast.custom(
                     (toastId) => (
