@@ -64,17 +64,20 @@ export function ProductPhotosView({ productId, reviews }: ProductPhotosViewProps
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="사진 리뷰 전체보기" />
+      {/* 시안(1755-53664)의 헤더 제목은 "사진 리뷰"다. 목록 요약 줄(사진이 있는
+          리뷰 N장)이 따로 있어 헤더까지 "전체보기"를 안 붙인다 */}
+      <PageHeader title="사진 리뷰" />
 
       <main className="flex flex-1 flex-col">
         {photos.length > 0 ? (
           <>
-            <p className="px-4 py-3 text-sm text-muted-foreground">
-              사진이 있는 리뷰 <span className="font-bold text-foreground">{total}장</span>
+            <p className="px-5 py-3 text-body-medium-16 text-text-body-default">
+              사진이 있는 리뷰 {total}
+              <span className="text-label-bold-16">장</span>
             </p>
 
-            {/* 시안은 여백 없는 3열이다. 사진을 최대한 크게 보여주려는 것이다 */}
-            <ul className="grid grid-cols-3 gap-0.5">
+            {/* 시안은 좌우 20px 여백에 4px 간격 3열이다 */}
+            <ul className="grid grid-cols-3 gap-1 px-5">
               {photos.map((ref) => {
                 const owner = reviews[ref.reviewIndex];
                 return (
