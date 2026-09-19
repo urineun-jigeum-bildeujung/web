@@ -22,20 +22,26 @@ export type ReviewFilter = {
   /** 재구매한 사람의 후기만 */
   repeatOnly: boolean;
   species: Species | null;
+  /** 골라 둔 품종 id들(#264). `GET /pets/breeds`가 준 id 그대로다 */
+  breedIds: number[];
   /** 나이 구간(세) */
   age: [number, number];
   neutered: Neutered | null;
   /** 체중 구간(kg) */
   weight: [number, number];
+  /** 골라 둔 건강 관심사 값들(#264). `GET /pets/health-options` items 값 그대로다 */
+  healthConcerns: string[];
 };
 
 export const DEFAULT_FILTER: ReviewFilter = {
   period: [...PERIOD_RANGE],
   repeatOnly: false,
   species: null,
+  breedIds: [],
   age: [...AGE_RANGE],
   neutered: null,
   weight: [...WEIGHT_RANGE],
+  healthConcerns: [],
 };
 
 /** 양 끝 그대로면 고르지 않은 것과 같다 */
@@ -48,9 +54,11 @@ export function isDefault(filter: ReviewFilter) {
     untouchedRange(filter.period, PERIOD_RANGE) &&
     !filter.repeatOnly &&
     filter.species === null &&
+    filter.breedIds.length === 0 &&
     untouchedRange(filter.age, AGE_RANGE) &&
     filter.neutered === null &&
-    untouchedRange(filter.weight, WEIGHT_RANGE)
+    untouchedRange(filter.weight, WEIGHT_RANGE) &&
+    filter.healthConcerns.length === 0
   );
 }
 
@@ -101,7 +109,7 @@ export function applyFilter(reviews: MockReview[], filter: ReviewFilter) {
 }
 
 /**
- * 조건을 주소 한 칸에 싣는다. 여섯 가지를 키마다 나누면 주소가 길어져,
+ * 조건을 주소 한 칸에 싣는다. 여덟 가지를 키마다 나누면 주소가 길어져,
  * 기본값과 다른 것만 모아 `period:3-6|weight:1-9` 꼴로 적는다.
  */
 export function serializeFilter(filter: ReviewFilter) {
@@ -110,9 +118,11 @@ export function serializeFilter(filter: ReviewFilter) {
   if (!untouchedRange(filter.period, PERIOD_RANGE)) parts.push(`period:${filter.period.join("-")}`);
   if (filter.repeatOnly) parts.push("repeat:1");
   if (filter.species) parts.push(`species:${filter.species}`);
+  if (filter.breedIds.length > 0) parts.push(`breed:${filter.breedIds.join(",")}`);
   if (!untouchedRange(filter.age, AGE_RANGE)) parts.push(`age:${filter.age.join("-")}`);
   if (filter.neutered) parts.push(`neutered:${filter.neutered}`);
   if (!untouchedRange(filter.weight, WEIGHT_RANGE)) parts.push(`weight:${filter.weight.join("-")}`);
+  if (filter.healthConcerns.length > 0) parts.push(`concern:${filter.healthConcerns.join(",")}`);
 
   return parts.join("|");
 }
@@ -146,13 +156,17 @@ export function parseFilter(param: string): ReviewFilter {
 
   const species = entries.get("species");
   const neutered = entries.get("neutered");
+  const breed = entries.get("breed");
+  const concern = entries.get("concern");
 
   return {
     period: parseRange(entries.get("period"), PERIOD_RANGE),
     repeatOnly: entries.get("repeat") === "1",
     species: species === "dog" || species === "cat" ? species : null,
+    breedIds: breed ? breed.split(",").map(Number).filter(Number.isFinite) : [],
     age: parseRange(entries.get("age"), AGE_RANGE),
     neutered: neutered === "yes" || neutered === "no" ? neutered : null,
     weight: parseRange(entries.get("weight"), WEIGHT_RANGE),
+    healthConcerns: concern ? concern.split(",").filter(Boolean) : [],
   };
 }

@@ -11,6 +11,8 @@
 
 import { useId, useState } from "react";
 
+import { toLabels, useQueryBreeds, useQueryHealthOptions, type PetSpecies } from "@/entities/pet";
+import { cn } from "@/shared/lib/utils";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
@@ -32,6 +34,7 @@ import {
   type ReviewFilter,
   type Species,
 } from "../model/review-filter";
+import { ReviewFilterPicker, type PickerGroup } from "./review-filter-picker";
 
 /** 시안의 종·중성화 칩은 완전한 필 모양에 32px로, 온보딩(40px)과 다르다.
     ChipSelect는 온보딩과 함께 쓰는 공용 컴포넌트라 기본 모양은 그대로 두고
@@ -40,16 +43,41 @@ import {
 const REVIEW_CHIP_CLASS =
   "relative min-h-0 h-8 rounded-full px-3 py-0 text-label-medium-12 after:absolute after:-inset-y-1.5 after:inset-x-0";
 
-/** 시안(1716:48026)의 "품종 선택하기"·"건강 관심사 선택하기" 줄. 고를 것이 많아
-    전체화면으로 나가야 하지만 그 화면은 #150에서 만든다. 지금은 시안 모양만
-    맞추고 눌러도 아무 일도 하지 않는다 */
-function PickerRowPlaceholder({ placeholder }: { placeholder: string }) {
+/** 시안(1716:48026)의 "품종 선택하기"·"건강 관심사 선택하기" 줄. 골라 둔 것이
+    있으면 그 이름을, 없으면 안내 문구를 보인다. 눌러야 여는 전체화면은
+    review-filter-picker.tsx다(#264) */
+function PickerRow({
+  label,
+  placeholder,
+  onClick,
+}: {
+  label: string | null;
+  placeholder: string;
+  onClick: () => void;
+}) {
   return (
-    <div className="flex h-11 w-full items-center justify-between rounded-lg border border-border px-3">
-      <span className="text-body-medium-14 text-text-body-tertiary">{placeholder}</span>
-      <Icon name="right" aria-hidden className="size-6 text-text-body-tertiary" />
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex h-11 w-full items-center justify-between rounded-lg border border-border px-3 text-left"
+    >
+      <span
+        className={cn(
+          "truncate text-body-medium-14",
+          label ? "text-text-body-default" : "text-text-body-tertiary",
+        )}
+      >
+        {label ?? placeholder}
+      </span>
+      <Icon name="right" aria-hidden className="size-6 shrink-0 text-text-body-tertiary" />
+    </button>
   );
+}
+
+/** 여러 개 고른 값을 줄 하나로 요약한다. "말티즈 외 1개"처럼 */
+function summarize(labels: string[]) {
+  if (labels.length === 0) return null;
+  return labels.length === 1 ? labels[0] : `${labels[0]} 외 ${labels.length - 1}개`;
 }
 
 type ReviewFilterSheetProps = {
@@ -141,6 +169,33 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
   };
 
   const patch = (part: Partial<ReviewFilter>) => setDraft((prev) => ({ ...prev, ...part }));
+
+  // 품종·건강 관심사 전체화면(#264). 종 필터와 별개로, 화면 안에서 강아지·고양이를
+  // 오갈 수 있어 각자 자기 종 상태를 든다 — 위 "종" 칩이 비어 있으면 강아지로 시작한다
+  // 대기 표시 없음 — isLoading은 여기서 그리지 않고 ReviewFilterPicker에 그대로
+  // 넘긴다. 그 전체화면이 열릴 때 자기 자리에 Skeleton을 그린다
+  const [breedOpen, setBreedOpen] = useState(false);
+  const [breedSpecies, setBreedSpecies] = useState<PetSpecies>(draft.species ?? "dog");
+  const { breeds, isLoading: breedsLoading } = useQueryBreeds();
+  const breedGroups: PickerGroup[] = [
+    {
+      // #264: 체구 5분류(소형·중형·대형·초소형·믹스)는 PD·백엔드 어디에도 값이
+      // 없어 확정표를 받을 때까지 한 묶음으로 둔다. 분류가 오면 그룹만 나누면 된다
+      label: "전체",
+      items: breeds
+        .filter((breed) => breed.species === breedSpecies)
+        .map((breed) => ({ value: String(breed.id), label: breed.breedName })),
+    },
+  ];
+  const breedLabels = draft.breedIds
+    .map((id) => breeds.find((breed) => breed.id === id)?.breedName)
+    .filter((name): name is string => Boolean(name));
+
+  const [healthOpen, setHealthOpen] = useState(false);
+  const [healthSpecies, setHealthSpecies] = useState<PetSpecies>(draft.species ?? "dog");
+  const { options: healthOptions, isLoading: healthLoading } = useQueryHealthOptions(healthSpecies);
+  const healthGroups: PickerGroup[] = healthOptions?.concerns ?? [];
+  const healthLabels = healthOptions ? toLabels(draft.healthConcerns, healthOptions.concerns) : [];
 
   return (
     <>
@@ -236,7 +291,11 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
               </Field>
 
               <Field title="품종">
-                <PickerRowPlaceholder placeholder="품종 선택하기" />
+                <PickerRow
+                  label={summarize(breedLabels)}
+                  placeholder="품종 선택하기"
+                  onClick={() => setBreedOpen(true)}
+                />
               </Field>
 
               <Field title="나이">
@@ -299,8 +358,11 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
               </Field>
 
               <Field title="건강 관심사">
-                {/* 고를 것이 많아 전체화면으로 나가야 하지만, 그 화면은 #150에서 만든다 */}
-                <PickerRowPlaceholder placeholder="건강 관심사 선택하기" />
+                <PickerRow
+                  label={summarize(healthLabels)}
+                  placeholder="건강 관심사 선택하기"
+                  onClick={() => setHealthOpen(true)}
+                />
               </Field>
             </TabsContent>
           </div>
@@ -327,6 +389,32 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
           </Button>
         </div>
       </BottomSheet>
+
+      <ReviewFilterPicker
+        open={breedOpen}
+        onOpenChange={setBreedOpen}
+        title="품종 선택"
+        itemNoun="품종"
+        species={breedSpecies}
+        onSpeciesChange={setBreedSpecies}
+        groups={breedGroups}
+        isLoading={breedsLoading}
+        value={draft.breedIds.map(String)}
+        onApply={(next) => patch({ breedIds: next.map(Number) })}
+      />
+
+      <ReviewFilterPicker
+        open={healthOpen}
+        onOpenChange={setHealthOpen}
+        title="건강 관심사 선택"
+        itemNoun="관심사"
+        species={healthSpecies}
+        onSpeciesChange={setHealthSpecies}
+        groups={healthGroups}
+        isLoading={healthLoading}
+        value={draft.healthConcerns}
+        onApply={(next) => patch({ healthConcerns: next })}
+      />
     </>
   );
 }
