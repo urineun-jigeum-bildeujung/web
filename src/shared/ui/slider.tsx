@@ -67,7 +67,7 @@ function Slider({
           // 그대로 확인). 보이는 크기는 그대로 두고 누르는 자리만 44px로 넓힌다
           className="relative flex size-6.5 shrink-0 items-center justify-center rounded-full bg-surface-tertiary outline-none transition-shadow select-none after:absolute after:-inset-2.25 focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
         >
-          <span aria-hidden className="size-4 rounded-full bg-white" />
+          <span aria-hidden className="size-4 rounded-full bg-icon-fill-static-white" />
         </SliderPrimitive.Thumb>
       ))}
     </SliderPrimitive.Root>
