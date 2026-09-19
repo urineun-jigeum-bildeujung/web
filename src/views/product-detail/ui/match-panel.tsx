@@ -9,10 +9,9 @@
 
 "use client";
 
-import { IoAlertCircleOutline, IoCheckmark, IoPaw } from "react-icons/io5";
-
 import { getMatchLevel } from "@/entities/product";
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/ui/select";
 
 import type { PetMatch } from "../model/mock-product";
@@ -31,13 +30,14 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
   const { petId, petName } = match;
 
   return (
-    <section aria-labelledby="match-heading" className="flex flex-col gap-3 px-4 py-5">
+    <section aria-labelledby="match-heading" className="flex flex-col gap-3 p-5">
       <Select value={petId} onValueChange={onPetChange}>
         <SelectTrigger
           aria-label="적합도 기준이 되는 아이"
-          className="min-h-11 w-auto gap-2 rounded-full border-0 bg-muted px-4 text-sm text-muted-foreground"
+          // 시안 높이(py-8 기준 34px 안팎)가 44px보다 작다. 보이는 높이는 시안대로 두고
+          // 누르는 자리만 after로 안 보이게 44px까지 넓힌다
+          className="relative w-auto gap-1 self-start rounded-full border-0 bg-surface-secondary px-3 py-2 text-label-medium-12 text-text-body-default after:absolute after:inset-x-0 after:-inset-y-1.25"
         >
-          <IoPaw aria-hidden className="size-4" />
           {petName} 기준으로 보고 있어요
         </SelectTrigger>
         {/* 기본값(item-aligned)은 고른 항목을 트리거 위에 겹쳐 놓아, 트리거가
@@ -51,12 +51,12 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
         </SelectContent>
       </Select>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* 점수를 재지 못했으면 원을 채우지 않는다. 채워 두면 낮은 점수처럼 읽힌다 */}
         <span
           aria-hidden
           className={cn(
-            "flex size-16 shrink-0 items-center justify-center rounded-full text-base font-bold",
+            "flex size-12 shrink-0 items-center justify-center rounded-full text-title-bold-18",
             match.score === null
               ? "border border-border text-muted-foreground"
               : "bg-brand text-brand-foreground",
@@ -66,12 +66,14 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
         </span>
 
         <div className="flex min-w-0 flex-col gap-0.5">
-          <h2 id="match-heading" className="text-base font-bold text-foreground">
+          <h2 id="match-heading" className="text-title-bold-16 text-text-body-default">
             {match.score === null
               ? `${petName} 기준으로는 아직 재지 못했어요`
               : `${petName}와 ${level.label}`}
           </h2>
-          <p className="text-xs text-muted-foreground">({match.profileLabel} 기준)</p>
+          <p className="text-caption-regular-12 text-text-body-secondary">
+            ({match.profileLabel} 기준)
+          </p>
           <p className="sr-only">
             {match.score === null ? "상품 정보를 확인하는 중입니다" : `적합도 ${match.score}점`}
           </p>
@@ -79,25 +81,31 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
       </div>
 
       <ul className="flex flex-col gap-2">
-        {match.reasons.map((reason) => {
-          const Icon = reason.tone === "good" ? IoCheckmark : IoAlertCircleOutline;
-          return (
-            <li key={reason.text} className="flex items-start gap-2 text-sm text-foreground">
-              <Icon
-                aria-hidden
-                className={cn(
-                  "mt-0.5 size-4 shrink-0",
-                  reason.tone === "good" ? "text-foreground" : "text-brand",
-                )}
-              />
-              {/* 아이콘 모양만으로는 도움인지 주의인지 알 수 없다 */}
-              <span className="sr-only">
-                {reason.tone === "good" ? "도움되는 점." : "지켜볼 점."}
-              </span>
-              <span className="min-w-0">{reason.text}</span>
-            </li>
-          );
-        })}
+        {match.reasons.map((reason) => (
+          <li
+            key={reason.text}
+            className={cn(
+              "flex items-center gap-1 text-body-medium-14",
+              reason.tone === "good"
+                ? "text-text-body-info-strong"
+                : "text-text-body-danger-strong",
+            )}
+          >
+            <Icon
+              name={reason.tone === "good" ? "check" : "danger"}
+              aria-hidden
+              className={cn(
+                "size-5 shrink-0",
+                reason.tone === "good" ? "text-surface-info" : "text-icon-fill-red",
+              )}
+            />
+            {/* 아이콘 모양만으로는 도움인지 주의인지 알 수 없다 */}
+            <span className="sr-only">
+              {reason.tone === "good" ? "도움되는 점." : "지켜볼 점."}
+            </span>
+            <span className="min-w-0">{reason.text}</span>
+          </li>
+        ))}
       </ul>
     </section>
   );
