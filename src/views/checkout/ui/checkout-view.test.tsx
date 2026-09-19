@@ -22,9 +22,12 @@ const useQueryAddresses = vi.fn();
 
 vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 
+/** 테스트마다 쿼리를 바꾼다. 결제창 복귀(`?code=`)와 고른 줄(`?items=`)이 여기로 들어온다 */
+let searchParams = new URLSearchParams();
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParams,
 }));
 
 // `cartItemKey`는 화면과 `pickOrderItems`가 같은 규칙을 써야 하므로 진짜를 그대로 둔다
@@ -56,6 +59,7 @@ import { CheckoutView } from "./checkout-view";
 // 앞 테스트의 호출 기록이 남으면 "부르지 않았다"를 단언할 수 없다
 beforeEach(() => {
   vi.clearAllMocks();
+  searchParams = new URLSearchParams();
 });
 
 /** 명세 예시를 옮긴 배송지 */
@@ -309,4 +313,37 @@ test("배송지를 못 불러오면 화면이 알린다", () => {
   renderView({ addressState: { addresses: undefined, error: new Error("network") } });
 
   expect(screen.getByRole("alert")).toBeDefined();
+});
+
+/**
+ * 결제창이 실패나 취소로 돌아오면 토스가 `?code=`를 붙여 되돌려 보낸다.
+ * 놓치면 사용자는 눌러도 아무 일이 없었던 것처럼 보고 다시 누른다.
+ */
+test("결제창이 실패로 돌아오면 알린다", async () => {
+  searchParams = new URLSearchParams("code=PAY_PROCESS_CANCELED");
+  renderView();
+
+  await waitFor(() =>
+    expect(toastAppError).toHaveBeenCalledWith("payment.failed", "PAY_PROCESS_CANCELED"),
+  );
+});
+
+// 평상시 진입에서 실패를 알리면 사용자가 하지도 않은 일로 놀란다
+test("쿼리가 없으면 실패를 알리지 않는다", () => {
+  renderView();
+
+  expect(toastAppError).not.toHaveBeenCalled();
+});
+
+// 장바구니가 고른 줄을 `?items=`로 넘긴다. 맞는 줄만 결제 대상이 된다
+test("고른 줄만 결제 대상으로 센다", () => {
+  searchParams = new URLSearchParams("items=NORMAL:1");
+  renderView({
+    items: [ITEM, { ...ITEM, itemId: 2, productName: "다른 상품", subtotal: 5000 }],
+  });
+
+  expect(screen.getByText("종근당 캣츠벨")).toBeDefined();
+  expect(screen.queryByText("다른 상품")).toBeNull();
+  // 고른 줄 9,345 + 배송비 3,000
+  expect(screen.getByText("12,345원")).toBeDefined();
 });
