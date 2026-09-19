@@ -128,7 +128,7 @@ export function NutrientBar({ nutrient }: NutrientBarProps) {
           </div>
         ) : (
           <p className="text-caption-regular-12 text-text-body-secondary">
-            절대적 기준치가 없어 정상적으로 표기돼요
+            절대적 기준치가 없어 상댓값만 표기돼요
           </p>
         )}
       </div>
