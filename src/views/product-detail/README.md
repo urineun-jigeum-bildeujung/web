@@ -3,7 +3,7 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper`
+- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬·맞춤보기·거르기 조건은 `reviewSort` · `reviewMatch` · `reviewFilter`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
 - **참고**: 확정 UI 시안 기준(#229). 상품·적합도·영양 분석은 전부 목데이터고 API 계약(#123) 확정 전 미연동
 
@@ -25,6 +25,8 @@
 | `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·맞춤보기 토글·정렬·후기 목록 |
 | `ui/review-panel.test.tsx` | 맞춤보기가 품종으로 거르는지, 정렬이 순서를 바꾸는지 |
 | `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭 |
+| `ui/review-filter-picker.tsx` | 품종·건강 관심사를 고르는 전체화면(#264). 갈래-항목 좌우 분할, 데이터만 갈아끼워 재사용 |
+| `ui/review-filter-picker.test.tsx` | 갈래를 바꾸면 오른쪽 목록이 바뀌는지, 여러 개 고르고 적용·초기화가 되는지 |
 | `ui/qna-panel.tsx` | Q&A 탭. 문의 버튼 둘과 답변 상태가 붙은 목록 |
 | `ui/qna-panel.test.tsx` | 답변 상태 구분, 작성자 가림, 문의 둘이 다른 곳으로 가는지 |
 | `ui/nutrient-bar.tsx` | 영양 성분 하나가 부족–적정–과다 중 어디인지 |

@@ -98,6 +98,17 @@ describe("주소에 싣고 되읽기", () => {
     expect(restored).toEqual(filter);
   });
 
+  it("품종·건강 관심사도 실어 되읽어도 같다(#264)", () => {
+    const filter = filterWith({
+      breedIds: [12, 45],
+      healthConcerns: ["근육량 감소", "슬개골 탈구"],
+    });
+    const restored = parseFilter(serializeFilter(filter));
+
+    expect(restored).toEqual(filter);
+    expect(isDefault(filter)).toBe(false);
+  });
+
   it("주소가 망가져 있어도 기본값으로 견딘다", () => {
     const restored = parseFilter("age:abc|species:hamster|weight:99-999|repeat:xyz");
 

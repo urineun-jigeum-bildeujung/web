@@ -8,6 +8,14 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/products/1",
 }));
 
+// 리뷰 필터 바텀시트(#264)가 품종·건강 관심사 조회를 실제로 부른다.
+// 이 탭 테스트가 보는 것과는 무관해 가짜로 둔다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryBreeds: () => ({ breeds: [], isLoading: false, error: null }),
+  useQueryHealthOptions: () => ({ options: undefined, isLoading: false, error: null }),
+}));
+
 import { ReviewPanel } from "./review-panel";
 
 function renderPanel(search = "") {
