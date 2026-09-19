@@ -48,16 +48,25 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
 
 // 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
 // 아무것도 아니므로 막대 아래 부족/적정/과다 줄에서 지금 구간만 글자로 진하게 드러나야 한다.
+// 그 줄은 aria-hidden이라 화면 낭독기는 값 배지의 접근성 이름("12%, 과다")으로 듣는다.
 test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
   await page.goto(PATH);
 
   const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
 
-  // 값 배지는 숫자만 적는다. 구간 이름은 그 아래 부족/적정/과다 줄이 맡는다
-  await expect(nutrients.getByText("28%", { exact: true })).toBeVisible();
-  await expect(nutrients.getByText("12%", { exact: true })).toBeVisible();
-  // 절대 기준치가 없는 성분에는 구간 이름을 붙이지 않는다
-  await expect(nutrients.getByText("3%", { exact: true })).toBeVisible();
+  // 값 배지는 눈에는 숫자만 보이지만, 접근성 이름엔 구간이 함께 실린다
+  await expect(nutrients.getByText("28%", { exact: true })).toHaveAttribute(
+    "aria-label",
+    "28%, 적정",
+  );
+  await expect(nutrients.getByText("12%", { exact: true })).toHaveAttribute(
+    "aria-label",
+    "12%, 과다",
+  );
+  // 절대 기준치가 없는 성분은 구간이 없어 접근성 이름도 값 그대로다
+  const omegaBadge = nutrients.getByText("3%", { exact: true });
+  await expect(omegaBadge).toBeVisible();
+  await expect(omegaBadge).not.toHaveAttribute("aria-label");
 
   // 단백질(28%)은 적정 구간이라 "적정"만 진하게, 나머지 둘은 옅게 표시된다
   const protein = nutrients.locator("li", { hasText: "단백질" });

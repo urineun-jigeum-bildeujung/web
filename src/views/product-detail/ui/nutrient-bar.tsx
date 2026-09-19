@@ -2,8 +2,13 @@
 // UI 시안 기준(상품 상세 영양 성분 분석, 1702-18866)이다.
 //
 // 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
-// 아무 정보가 아니므로, 막대 아래 부족/적정/과다 줄에서 지금 구간만 진하게 표시한다.
-// 값 배지(예: "12%")는 숫자만 적고 구간 이름은 붙이지 않는다 — 시안이 그렇게 그렸다.
+// 아무 정보가 아니므로, 막대 아래 부족/적정/과다 줄에서 지금 구간만 굵게·진하게
+// 표시한다 — 색만으로 정보를 전달하지 않는다는 규칙(design-convention "터치 UX")을
+// 굵기로도 지킨다. 값 배지(예: "12%")는 숫자만 적는다 — 시안이 그렇게 그렸다.
+//
+// 이 줄은 세 성분마다 반복되는 눈금이라 aria-hidden으로 화면 낭독기를 건너뛰게
+// 하는 대신, 값 배지의 aria-label에 구간 이름을 실어 보낸다("12%, 과다"). 배지
+// 안 글자는 숫자만 그대로 보이고 화면 낭독기만 구간까지 듣는다.
 //
 // 절대 기준치가 없는 성분(오메가3)은 구간을 재지 않는다. 눈금을 붙이면 가운데가
 // 적정으로 읽혀 없는 판정을 만들어낸다.
@@ -51,6 +56,18 @@ export function getNutrientLevel({ position, properRange }: Nutrient) {
   return "proper" as const;
 }
 
+const LEVEL_LABEL = {
+  low: "부족",
+  proper: "적정",
+  high: "과다",
+} as const;
+
+/** 구간이 있는 성분만 화면 낭독기용 문구("12%, 과다")를 만든다 */
+function accessibleValueLabel(nutrient: Nutrient, level: ReturnType<typeof getNutrientLevel>) {
+  if (level === "unknown") return undefined;
+  return `${nutrient.valueLabel}, ${LEVEL_LABEL[level]}`;
+}
+
 export function NutrientBar({ nutrient }: NutrientBarProps) {
   const level = getNutrientLevel(nutrient);
   const { properRange } = nutrient;
@@ -76,12 +93,15 @@ export function NutrientBar({ nutrient }: NutrientBarProps) {
               style={{ left: percent }}
             >
               <span
+                // 화면엔 숫자만 보이지만, 구간이 있으면 화면 낭독기는 "12%, 과다"처럼
+                // 구간까지 듣는다 — 부족/적정/과다 줄은 aria-hidden이라 이 자리 말고는
+                // 화면 낭독기에 구간을 전달할 곳이 없다
+                aria-label={accessibleValueLabel(nutrient, level)}
                 className={cn(
                   "rounded-full px-2 py-0.5 text-label-bold-11 whitespace-nowrap",
                   LEVEL_CLASS[level].chip,
                 )}
               >
-                {/* 재지 않은 성분도 값만 적는다. 구간 이름은 아래 부족/적정/과다 줄이 맡는다 */}
                 {nutrient.valueLabel}
               </span>
               {/* 손잡이는 진한 원 하나가 아니라 옅은 원(halo) 안에 진한 원이 겹친 두 겹이다 */}
@@ -94,22 +114,22 @@ export function NutrientBar({ nutrient }: NutrientBarProps) {
         </div>
 
         {properRange ? (
-          <div aria-hidden className="flex justify-between text-label-bold-14">
-            <span
-              className={level === "low" ? "text-text-body-default" : "text-text-body-tertiary"}
-            >
-              부족
-            </span>
-            <span
-              className={level === "proper" ? "text-text-body-default" : "text-text-body-tertiary"}
-            >
-              적정
-            </span>
-            <span
-              className={level === "high" ? "text-text-body-default" : "text-text-body-tertiary"}
-            >
-              과다
-            </span>
+          // 화면 낭독기에는 위 값 배지의 aria-label이 구간을 이미 전했으니 이 줄은
+          // 건너뛰게 한다. 시안이 다루지 않는 저시력·색약 사용자를 위해 지금 구간만
+          // 굵게(bold) 표시해 색 말고 굵기로도 구분되게 한다(design-convention "터치 UX")
+          <div aria-hidden className="flex justify-between">
+            {(["low", "proper", "high"] as const).map((key) => (
+              <span
+                key={key}
+                className={
+                  level === key
+                    ? "text-label-bold-14 text-text-body-default"
+                    : "text-label-medium-14 text-text-body-tertiary"
+                }
+              >
+                {LEVEL_LABEL[key]}
+              </span>
+            ))}
           </div>
         ) : (
           <p className="text-caption-regular-12 text-text-body-secondary">
