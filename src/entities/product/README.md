@@ -4,6 +4,7 @@
 
 | 파일 | 설명 |
 | --- | --- |
+| `model/mock-detail-product.ts` | API 연동 전 상품 상세·비교 화면이 공유하는 상품 요약 목데이터 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |
 | `ui/compare-slot.tsx` | 비교할 자리 하나. 비어 있으면 담으라고 안내한다 (`comp_001`, `comp_001_empty`) |
@@ -12,7 +13,7 @@
 
 ## 아직 없는 것
 
-타입(`model/`)과 조회 훅(`api/`)은 백엔드 API 계약이 정해진 뒤에 만든다.
+API 응답 타입과 조회 훅(`api/`)은 백엔드 API 계약이 정해진 뒤에 만든다.
 
 상품 카드는 두지 않는다. 화면마다 보여주는 항목이 아홉 가지로 갈려, 조각(`shared/ui`의 `Price`·`ProductSummary`)을 화면에서 조립한다. 근거는 [component-convention](../../../docs/conventions/component-convention.md)의 "공용으로 올리는 기준"을 본다.
 
