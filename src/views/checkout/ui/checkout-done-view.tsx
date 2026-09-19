@@ -8,6 +8,7 @@ import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
 import { DeliveryDetail, DetailRow, DetailSection, PaymentDetail } from "@/entities/order";
+import { APP_MESSAGE, type AppMessageCode } from "@/shared/config/app-message";
 
 import type { PaymentConfirmResult } from "../api/payment";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -35,12 +36,97 @@ const MOCK = {
   request: "문 앞에 놓아주세요.",
 };
 
+/**
+ * 승인이 실패했을 때 라우트가 넘기는 것.
+ *
+ * **주문번호를 들고 온다.** 승인 응답이 없으니 화면이 댈 수 있는 식별자가 토스에서 받은
+ * 이 값뿐이고, 문의할 때 사용자가 부르는 번호다.
+ */
+export type PaymentFailure = {
+  /** 토스가 복귀 쿼리에 실어 보낸 문자열 주문번호 (`ORD-…`) */
+  orderId: string;
+  code: AppMessageCode;
+};
+
 type CheckoutDoneViewProps = {
   /** 결제창이 성공으로 돌아와 승인까지 끝난 결과. 주소창으로 바로 들어오면 없다 */
   payment?: PaymentConfirmResult | null;
+  /** 승인이 실패했을 때만 온다. 있으면 완료가 아니라 이 사실부터 알린다 */
+  failure?: PaymentFailure | null;
 };
 
-export function CheckoutDoneView({ payment }: CheckoutDoneViewProps) {
+/**
+ * 승인이 끝나지 않았을 때의 화면.
+ *
+ * **다시 결제하러 가는 길을 주지 않는다.** 여기까지 왔다는 것은 결제창에서 성공했다는
+ * 뜻이라 이미 돈이 빠져나갔을 수 있다. 다시 누를 자리를 만들면 두 번 결제될 여지가 생긴다.
+ * 대신 주문번호를 크게 보여주고 문의로 보낸다 (#260).
+ *
+ * **시안에 없는 화면이다.** `paym_002`는 성공만 그려서 공용 조각으로 조립했다. PD 확인 대상.
+ */
+function ConfirmFailure({ failure }: { failure: PaymentFailure }) {
+  // 문구 중에는 제목만 있는 것도 있다. 모르는 백엔드 코드가 그런 기본 문구로 떨어질 수 있다
+  const message = APP_MESSAGE[failure.code];
+
+  return (
+    <div role="alert" className="flex flex-1 flex-col items-center justify-center px-5 text-center">
+      <Icon name="notice" className="size-25.5 text-icon-fill-light-red" />
+      <p className="mt-7 text-title-bold-20 text-foreground">{message.title}</p>
+      {"description" in message && (
+        <p className="mt-4 text-body-medium-14 whitespace-pre-line text-text-body-secondary">
+          {message.description}
+        </p>
+      )}
+
+      {/* 문의할 때 대는 유일한 식별자다. 고를 수 있게 두어 옮겨 적지 않아도 되게 한다 */}
+      <dl className="mt-8 flex w-full flex-col gap-2 rounded-lg bg-surface-secondary px-4 py-3">
+        <dt className="text-label-bold-14 text-foreground">주문번호</dt>
+        <dd className="text-body-regular-14 text-text-body-secondary select-all">
+          {failure.orderId}
+        </dd>
+      </dl>
+    </div>
+  );
+}
+
+export function CheckoutDoneView({ payment, failure }: CheckoutDoneViewProps) {
+  if (failure) {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <PageHeader
+          leading="none"
+          right={
+            <Link
+              href="/"
+              aria-label="닫기"
+              className="flex size-11 items-center justify-center text-foreground"
+            >
+              <Icon name="cancel" />
+            </Link>
+          }
+        />
+
+        <main className="flex flex-1 flex-col">
+          <ConfirmFailure failure={failure} />
+        </main>
+
+        {/* 다시 결제하러 보내지 않는다. 문의와 주문 내역 확인만 남긴다 */}
+        <BottomActionBar className="[&>*]:h-12">
+          <Button
+            variant="secondary"
+            className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
+            asChild
+          >
+            <Link href="/mypage/support">문의하기</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/mypage/orders">주문 내역 보기</Link>
+          </Button>
+        </BottomActionBar>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-dvh flex-col">
       {/* 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 오른쪽에 둔다 (paym_002) */}

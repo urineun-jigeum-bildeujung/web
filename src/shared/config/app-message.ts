@@ -101,6 +101,21 @@ export const APP_MESSAGE = {
     description: "결제가 완료되지 않았어요. 다시 시도해 주세요.",
   },
 
+  // **결제창은 성공했는데 서버 승인에서 막힌 경우다.** 위 `payment.failed`와 다르다 —
+  // 그쪽은 결제 자체가 시작되지 않았지만 여기는 이미 결제가 일어났을 수 있다.
+  // 그래서 "다시 시도해 주세요"라고 하지 않는다. 다시 누르면 두 번 결제될 여지를 만든다
+  "payment.confirmFailed": {
+    title: "결제 확인이 끝나지 않았어요",
+    description:
+      "결제는 접수됐지만 주문을 확정하는 중에 문제가 생겼어요\n아래 주문번호로 문의해 주시면 바로 확인해 드릴게요",
+  },
+  // 금액이 어긋나면 승인이 거절된다. 우리가 보낸 값과 토스가 아는 값이 다른 경우다
+  "payment.amountMismatch": {
+    title: "결제 금액이 맞지 않아요",
+    description:
+      "주문 금액과 결제 금액이 달라 승인하지 못했어요\n결제가 됐다면 자동으로 취소되니 잠시 기다려 주세요",
+  },
+
   // 택배사 연동 전이라 아직 갈 곳이 없다. 버튼을 잠가 두면 고장으로 읽히므로 왜 지금은 안 되는지 알린다
   "order.deliveryTrackingPreparing": {
     title: "배송 조회 준비 중",
@@ -155,6 +170,8 @@ export const APP_MESSAGE_CODE = {
   },
   payment: {
     failed: "payment.failed",
+    confirmFailed: "payment.confirmFailed",
+    amountMismatch: "payment.amountMismatch",
   },
   address: {
     keywordTooBroad: "address.keywordTooBroad",
