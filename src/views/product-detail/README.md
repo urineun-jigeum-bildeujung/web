@@ -3,9 +3,9 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬·맞춤보기·거르기 조건은 `reviewSort` · `reviewMatch` · `reviewFilter`. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
-- **참고**: 와이어프레임 기준(`상품상세`). 시안의 섹션 라벨이 아직 `수정 진행 예정`이다. 상품·적합도·영양 분석은 전부 목데이터고 API 계약(#123) 확정 전 미연동
+- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper`
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬·맞춤보기·거르기 조건은 `reviewSort` · `reviewMatch` · `reviewFilter`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **참고**: 확정 UI 시안 기준(#229). 상품·적합도·영양 분석은 전부 목데이터고 API 계약(#123) 확정 전 미연동
 
 | 파일 | 설명 |
 | --- | --- |
@@ -43,9 +43,9 @@
 
 **재지 못한 아이에게는 점수를 채우지 않는다.** 냥이 기준으로는 이 영양제를 잴 수 없다. 0점으로 내려보내면 궁합이 나쁜 상품처럼 읽힌다 — 재 봤더니 안 맞는 것과 아직 재지 않은 것은 다른 이야기다(#119).
 
-**영양 성분 막대는 구간을 글자로도 알린다.** 시안은 적정을 초록, 과다를 빨강으로만 구분하는데 색을 구분하기 어려운 사람에게는 아무 정보가 아니다. 값 배지에 `28% 적정`처럼 구간 이름을 함께 적는다.
+**영양 성분 막대는 구간을 글자로도 알린다.** 시안은 적정을 초록, 과다를 빨강으로만 구분하는데 색을 구분하기 어려운 사람에게는 아무 정보가 아니다. 값 배지는 숫자만 적고(`28%`), 그 아래 `부족·적정·과다` 줄에서 지금 값이 속한 이름만 진하게 표시해 구간을 알린다.
 
-처음에는 숨은 글자(`sr-only`)로 뒀다가 눈에 보이게 바꿨다(#131 리뷰). 숨겨 두면 화면 낭독기 사용자에게만 닿고, **화면은 보이지만 색을 가리기 어려운 사람에게는 색이 여전히 유일한 단서**로 남는다. 막대 아래 `부족·적정·과다`는 축 눈금이라 현재 값이 어디인지는 알려주지 않는다.
+`부족·적정·과다` 줄은 `aria-hidden`이라 화면 낭독기에는 닿지 않는다 — 값 배지에도 구간 이름이 없어, 지금 구조로는 화면 낭독기 사용자가 이 값이 어느 구간인지 알 방법이 없다. 확정 시안을 따라가며 남은 틈이라 별도로 다시 봐야 한다.
 
 **절대 기준치가 없는 성분은 재지 않는다.** 오메가3에 부족–적정–과다 눈금을 붙이면 가운데가 적정으로 읽혀, 있지도 않은 판정을 만들어낸다. 눈금 대신 그 사실을 적는다.
 
@@ -58,9 +58,3 @@
 **과다·적정 배지의 글자색은 각각 `destructive-foreground`·`success-foreground`를 사용한다.** Figma 컴포넌트에 맞춰 두 토큰 모두 흰색을 사용한다. WCAG 비율 공식으로는 대비가 기준에 못 미치지만, PD팀이 APCA 기준으로 재평가해 유지하기로 했다.
 
 **아이 고르는 Select는 `position="popper"`다.** 기본값(`item-aligned`)은 고른 항목을 트리거 위에 겹쳐 놓아서, 트리거가 화면 아래쪽에 있으면 나머지 항목이 화면 밖으로 밀린다.
-
-## 아직 없는 것
-
-리뷰·Q&A 탭은 요약과 들어가는 길만 둔다. 목록 화면(`/products/[productId]/reviews`)이 따로 있고, 시안에서 두 탭의 내용을 실측하지 못했다.
-
-품절·타임딜 같은 상태 변형도 담지 않았다. 시안에 별도 프레임이 있다.
