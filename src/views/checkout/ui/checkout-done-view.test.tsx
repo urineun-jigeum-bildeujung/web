@@ -8,12 +8,43 @@ import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 import { CheckoutDoneView } from "./checkout-done-view";
 
-test("주문번호와 도착 예정을 알린다", () => {
+test("주문번호를 알린다", () => {
   render(<CheckoutDoneView />);
 
   expect(screen.getByText("주문을 무사히 마쳤어요")).toBeDefined();
   expect(screen.getByText("20260829-1234567")).toBeDefined();
-  expect(screen.getByText("모레(9/3)")).toBeDefined();
+});
+
+// 서버가 배송 예정일을 주지 않는다. 시안 문구를 그대로 두면 지난 날짜가 모든 주문에 뜬다 (#262)
+test("서버가 주지 않는 도착 예정일은 그리지 않는다", () => {
+  render(<CheckoutDoneView />);
+
+  expect(screen.queryByText(/도착할 예정이에요/)).toBeNull();
+});
+
+// 승인 응답의 approvedAt을 시안 형식(`26.08.28 15:43`)으로 옮긴다
+test("결제일시를 승인 응답으로 보인다", () => {
+  render(
+    <CheckoutDoneView
+      payment={{
+        paymentId: 1,
+        orderNumber: "ORD-20260919-000001",
+        paymentStatus: "DONE",
+        amount: 12345,
+        method: "토스페이",
+        approvedAt: "2026-09-19T14:30:00",
+      }}
+    />,
+  );
+
+  expect(screen.getByText("26.09.19 14:30")).toBeDefined();
+});
+
+// 값이 없거나 읽을 수 없으면 줄을 비운다. 지어낸 날짜를 보이느니 안 보이는 편이 낫다
+test("승인 시각이 없으면 결제일시를 비운다", () => {
+  render(<CheckoutDoneView />);
+
+  expect(screen.queryByText(/^\d{2}\.\d{2}\.\d{2} /)).toBeNull();
 });
 
 test("결제 내역과 배송지를 함께 남긴다", () => {

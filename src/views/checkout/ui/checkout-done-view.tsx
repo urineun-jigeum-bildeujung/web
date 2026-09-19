@@ -4,6 +4,7 @@
 // 흰 바닥에 요약 카드 하나만 떠 있고 결제상세·배송지는 카드 없이 그대로 놓인다.
 // 그 두 블록은 주문 상세(mypa_161)와 같아 `entities/order`의 조각을 쓴다 (#210).
 
+import { format } from "date-fns";
 import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
@@ -18,16 +19,23 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { CopyOrderNumber } from "./copy-order-number";
 
-/** API 연동 전까지 화면 확인용 값 */
+/**
+ * 아직 목인 값들.
+ *
+ * **승인 응답으로는 채울 수 없는 것들이다.** 그 응답이 주는 것은 `paymentId`·`orderNumber`·
+ * `paymentStatus`·`amount`·`method`·`approvedAt` 여섯뿐이고, 상품과 배송지는 주문 상세
+ * 조회(`GET /orders/{orderId}`)가 열려야 온다 — 명세에서 아직 `시작 전`이다 (#262).
+ *
+ * **완료 화면은 리다이렉트로 들어온다.** 결제 화면이 알던 장바구니·배송지를 그대로 들고
+ * 올 수 없어, 다시 조회하지 않는 한 이 자리를 채울 방법이 없다.
+ */
 const MOCK = {
   /** 문의할 때 사용자가 대는 유일한 식별자다. 실제 값은 결제 승인 응답이 준다 */
   orderNo: "20260829-1234567",
-  /** 주문 상세로 가는 식별자. 주문번호와 같은 값인지는 API 계약이 정해져야 안다 */
+  /** 주문 상세로 가는 식별자. 승인 응답에는 없어 계약이 정해져야 안다 */
   orderId: "1",
   productName: "상품명",
   option: "상품 옵션",
-  arriveAt: "모레(9/3)",
-  paidAt: "26.08.28 15:43",
   total: 12345,
   itemPrice: 9345,
   shippingFee: 3000,
@@ -37,6 +45,20 @@ const MOCK = {
   address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
   request: "문 앞에 놓아주세요.",
 };
+
+/**
+ * 승인 시각을 화면 형식으로 옮긴다.
+ *
+ * 시안(`paym_002`)이 `26.08.28 15:43`으로 쓴다. 값이 없거나 읽을 수 없으면 줄을 비운다 —
+ * 지어낸 날짜를 보이느니 안 보이는 편이 낫다.
+ */
+function formatPaidAt(approvedAt: string | undefined) {
+  if (!approvedAt) {
+    return undefined;
+  }
+  const date = new Date(approvedAt);
+  return Number.isNaN(date.getTime()) ? undefined : format(date, "yy.MM.dd HH:mm");
+}
 
 /**
  * 승인이 실패했을 때 라우트가 넘기는 것.
@@ -190,17 +212,15 @@ export function CheckoutDoneView({ payment, failure }: CheckoutDoneViewProps) {
                 </div>
               </div>
 
-              {/* 언제 오는지가 이 화면에서 가장 궁금한 것이라 날짜만 굵게 둔다 */}
-              <p className="flex items-center justify-center gap-0.5 text-text-body-secondary">
-                <span className="text-label-bold-14">{MOCK.arriveAt}</span>
-                <span className="text-body-medium-14">문 앞으로 도착할 예정이에요</span>
-              </p>
+              {/* **도착 예정일 줄은 그리지 않는다.** 시안(`paym_002`)에는 있지만 서버가 그 값을
+                  주지 않는다. 시안 문구를 그대로 두면 오늘이 며칠이든 `9/3`이라 지난 날짜가
+                  모든 주문에 뜬다 (#262). 배송일을 받게 되면 `DeliveryNotice`로 되살린다 */}
             </div>
           </section>
         </div>
 
         <div className="flex flex-col gap-4">
-          <DetailSection title="결제상세" titleTrailing={MOCK.paidAt}>
+          <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
             <PaymentDetail
               total={payment?.amount ?? MOCK.total}
               itemPrice={MOCK.itemPrice}
