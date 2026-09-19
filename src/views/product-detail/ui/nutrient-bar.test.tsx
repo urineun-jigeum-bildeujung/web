@@ -28,8 +28,9 @@ describe("getNutrientLevel", () => {
 });
 
 describe("NutrientBar", () => {
-  // 시안의 배지는 값만 적는다("12%"). 부족/적정/과다는 막대 아래 줄이 굵기·색으로 맡는다
-  it("배지는 값만 적고, 막대 아래 줄이 지금 구간을 굵게 표시한다", () => {
+  // 시안의 배지는 값만 적는다("12%"). 부족/적정/과다는 굵기가 모두 같고(시안 확인)
+  // 막대 아래 줄이 지금 구간만 색으로 표시한다
+  it("배지는 값만 적고, 막대 아래 줄이 지금 구간을 색으로 표시한다", () => {
     render(
       <NutrientBar
         nutrient={{ name: "지방", valueLabel: "12%", position: 0.86, properRange: proper }}
@@ -41,10 +42,8 @@ describe("NutrientBar", () => {
 
     const active = screen.getByText("과다");
     expect(active.className).toContain("text-text-body-default");
-    expect(active.className).toContain("text-label-bold-14");
     const inactive = screen.getByText("부족");
     expect(inactive.className).toContain("text-text-body-tertiary");
-    expect(inactive.className).toContain("text-label-medium-14");
   });
 
   // 부족/적정/과다 줄은 aria-hidden이라 화면 낭독기가 건너뛴다. 구간은 값 배지의

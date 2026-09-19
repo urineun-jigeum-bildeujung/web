@@ -46,9 +46,8 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
 });
 
-// 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
-// 아무것도 아니므로 막대 아래 부족/적정/과다 줄에서 지금 구간만 글자로 진하게 드러나야 한다.
-// 그 줄은 aria-hidden이라 화면 낭독기는 값 배지의 접근성 이름("12%, 과다")으로 듣는다.
+// 시안은 부족/적정/과다를 색으로만 구분한다(굵기는 셋 다 같다). 그 줄은
+// aria-hidden이라 화면 낭독기는 값 배지의 접근성 이름("12%, 과다")으로 듣는다.
 test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
   await page.goto(PATH);
 
@@ -68,7 +67,7 @@ test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page 
   await expect(omegaBadge).toBeVisible();
   await expect(omegaBadge).not.toHaveAttribute("aria-label");
 
-  // 단백질(28%)은 적정 구간이라 "적정"만 진하게, 나머지 둘은 옅게 표시된다
+  // 단백질(28%)은 적정 구간이라 "적정"만 진한 색, 나머지 둘은 옅은 색으로 표시된다
   const protein = nutrients.locator("li", { hasText: "단백질" });
   await expect(protein.getByText("적정", { exact: true })).toHaveClass(/text-text-body-default/);
   await expect(protein.getByText("부족", { exact: true })).toHaveClass(/text-text-body-tertiary/);
