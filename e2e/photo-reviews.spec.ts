@@ -8,7 +8,7 @@ test("리뷰 탭에서 사진을 골라 열고 뒤로가기로 격자에 돌아�
 
   await page.getByRole("link", { name: "전체보기" }).click();
   await expect(page).toHaveURL(/\/products\/1\/photos$/);
-  await expect(page.getByRole("heading", { name: "사진 리뷰 전체보기" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "사진 리뷰" })).toBeVisible();
 
   await page
     .getByRole("button", { name: /크게 보기/ })
@@ -61,5 +61,5 @@ test("없는 후기를 가리키면 격자만 보인다", async ({ page }) => {
   await page.goto("/products/1/photos?review=99");
 
   await expect(page.getByRole("dialog")).toBeHidden();
-  await expect(page.getByRole("heading", { name: "사진 리뷰 전체보기" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "사진 리뷰" })).toBeVisible();
 });

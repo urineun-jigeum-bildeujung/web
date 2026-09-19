@@ -47,16 +47,31 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
 });
 
 // 시안은 적정을 초록, 과다를 빨강으로만 구분한다. 색을 구분하기 어려운 사람에게는
-// 아무것도 아니므로 값 옆에 구간 이름이 눈에 보여야 한다.
-// 숨은 글자로 두면 화면 낭독기에만 닿고 색약 사용자에게는 색이 유일한 단서로 남는다.
+// 아무것도 아니므로 막대 아래 부족/적정/과다 줄에서 지금 구간만 글자로 진하게 드러나야 한다.
 test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
   await page.goto(PATH);
 
   const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
-  await expect(nutrients.getByText("28% 적정")).toBeVisible();
-  await expect(nutrients.getByText("12% 과다")).toBeVisible();
+
+  // 값 배지는 숫자만 적는다. 구간 이름은 그 아래 부족/적정/과다 줄이 맡는다
+  await expect(nutrients.getByText("28%", { exact: true })).toBeVisible();
+  await expect(nutrients.getByText("12%", { exact: true })).toBeVisible();
   // 절대 기준치가 없는 성분에는 구간 이름을 붙이지 않는다
   await expect(nutrients.getByText("3%", { exact: true })).toBeVisible();
+
+  // 단백질(28%)은 적정 구간이라 "적정"만 진하게, 나머지 둘은 옅게 표시된다
+  const protein = nutrients.locator("li", { hasText: "단백질" });
+  await expect(protein.getByText("적정", { exact: true })).toHaveClass(/text-text-body-default/);
+  await expect(protein.getByText("부족", { exact: true })).toHaveClass(/text-text-body-tertiary/);
+  await expect(protein.getByText("과다", { exact: true })).toHaveClass(/text-text-body-tertiary/);
+
+  // 지방(12%)은 과다 구간이다
+  const fat = nutrients.locator("li", { hasText: "지방" });
+  await expect(fat.getByText("과다", { exact: true })).toHaveClass(/text-text-body-default/);
+
+  // 오메가3(3%)는 절대 기준치가 없어 부족/적정/과다 줄 자체가 없다
+  const omega = nutrients.locator("li", { hasText: "오메가3" });
+  await expect(omega.getByText("부족", { exact: true })).toHaveCount(0);
 });
 
 test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
@@ -107,7 +122,7 @@ test("영양 배지가 화면 밖으로 넘치지 않는다", async ({ page }) =
   const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
   const area = (await nutrients.boundingBox())!;
 
-  for (const label of ["28% 적정", "12% 과다", "5% 적정", "3%"]) {
+  for (const label of ["28%", "12%", "5%", "3%"]) {
     const badge = (await nutrients.getByText(label, { exact: true }).boundingBox())!;
     expect(badge.x, `${label} 배지가 왼쪽으로 넘쳤다`).toBeGreaterThanOrEqual(area.x);
     expect(badge.x + badge.width, `${label} 배지가 오른쪽으로 넘쳤다`).toBeLessThanOrEqual(
