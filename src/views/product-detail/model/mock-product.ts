@@ -4,6 +4,8 @@
 // 아이마다 결과가 달라지므로 아이를 키로 나눠 둔다 — 한 벌만 두면 아이를 바꿔도
 // 같은 근거가 나와서, 이 화면이 무엇을 보여주려는 것인지 확인할 수 없다.
 
+import { MOCK_DETAIL_PRODUCT } from "@/entities/product";
+
 /** 추천 근거 한 줄. 도움이 되는 것과 지켜볼 것을 갈라 읽힌다 */
 export type MatchReason = {
   tone: "good" | "caution";
@@ -48,15 +50,25 @@ export type RelatedProduct = {
   reviewCount: number;
 };
 
+/** 상품 하나는 한 시점에 이 중 하나다. 타임딜이면서 동시에 품절인 상태는 다루지 않는다 */
+export type ProductStatus = "normal" | "deal" | "soldout";
+
+/** 타임딜 종료 시각. 실제로는 서버가 준다 */
+export const DEAL_ENDS_AT = new Date(Date.now() + 2 * 3600_000 + 14 * 60_000 + 33_000);
+
 export const MOCK_PRODUCT = {
-  name: "면역 지원 영양제 90정",
-  price: 21_000,
+  name: MOCK_DETAIL_PRODUCT.name,
+  price: MOCK_DETAIL_PRODUCT.price,
   originalPrice: 30_000,
   rating: 4.8,
   reviewCount: 108,
+  // 시안 상태(정상·타임딜·품절)를 하나씩 확인하는 중이라 지금은 품절로 고정해 둔다(#229)
+  status: "soldout" as ProductStatus,
   seller: "골라주개냥",
   shipping: "빠름출발 · 14시 이전 주문 시 당일 발송(이후 주문 시 내일 이내 발송)",
   shippingFee: "무료배송 · 조건 미충족 시 3,000원",
+  /** 옵션 선택 시트가 보여줄 구성. 지금은 구성이 하나뿐이라 spec의 "제품 용량"과 같은 값이다 */
+  optionLabel: "90정 (기본 구성)",
   /** 이미지가 아직 없다. 몇 장인지만 알고 자리를 잡는다 */
   imageCount: 3,
   spec: [
