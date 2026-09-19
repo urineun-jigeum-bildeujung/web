@@ -34,9 +34,9 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
       <Select value={petId} onValueChange={onPetChange}>
         <SelectTrigger
           aria-label="적합도 기준이 되는 아이"
-          // 시안 높이(py-8 기준 34px 안팎)가 44px보다 작다. 보이는 높이는 시안대로 두고
-          // 누르는 자리만 after로 안 보이게 44px까지 넓힌다
-          className="relative w-auto gap-1 self-start rounded-full border-0 bg-surface-secondary px-3 py-2 text-label-medium-12 text-text-body-default after:absolute after:inset-x-0 after:-inset-y-1.25"
+          // 실측 높이 32px가 44px보다 작다. 보이는 높이는 시안대로 두고
+          // 누르는 자리만 after로 안 보이게 44px까지 넓힌다(위아래 6px씩)
+          className="relative w-auto gap-1 self-start rounded-full border-0 bg-surface-secondary px-3 py-2 text-label-medium-12 text-text-body-default after:absolute after:inset-x-0 after:-inset-y-1.5"
         >
           {petName} 기준으로 보고 있어요
         </SelectTrigger>

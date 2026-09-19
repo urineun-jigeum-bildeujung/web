@@ -49,7 +49,7 @@ export function DescriptionCollapse() {
         aria-expanded={expanded}
         onClick={() => setExpanded((prev) => !prev)}
         className={cn(
-          "absolute left-1/2 z-10 flex h-10 -translate-x-1/2 items-center gap-1.5 rounded-lg px-2 text-label-bold-14 whitespace-nowrap text-text-label-default focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          "absolute left-1/2 z-10 flex min-h-11 -translate-x-1/2 items-center gap-1.5 rounded-lg px-2 text-label-bold-14 whitespace-nowrap text-text-label-default focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           // 접혔을 때는 시안 위치(그라데이션 위)에, 펼쳤을 때는 늘어난 이미지
           // 바로 아래로 — 클릭한 자리에 그대로 있으면 펼친 내용을 보려고 한참
           // 내려도 "접기"를 다시 누르려면 처음 자리까지 올라가야 한다
