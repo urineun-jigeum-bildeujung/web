@@ -65,6 +65,6 @@ describe("NutrientBar", () => {
     expect(screen.getByText("3%").getAttribute("aria-label")).toBeNull();
     expect(screen.queryByText("적정")).toBeNull();
     expect(screen.queryByText("기준 없음")).toBeNull();
-    expect(screen.getByText("절대적 기준치가 없어 정상적으로 표기돼요")).toBeDefined();
+    expect(screen.getByText("절대적 기준치가 없어 상댓값만 표기돼요")).toBeDefined();
   });
 });
