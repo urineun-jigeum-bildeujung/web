@@ -1,5 +1,5 @@
 // 리뷰 탭 테스트. 맞춤보기가 실제로 거르는지, 정렬이 순서를 바꾸는지 본다.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
@@ -24,6 +24,14 @@ function renderPanel(search = "") {
 }
 
 describe("ReviewPanel", () => {
+  it("리뷰 수가 아니라 사진 장수를 기준으로 앞의 네 장을 보여준다", () => {
+    renderPanel();
+
+    const photos = within(screen.getByRole("region", { name: "리뷰 사진" }));
+    expect(photos.getAllByRole("listitem")).toHaveLength(4);
+    expect(photos.getByRole("link", { name: "구름아사랑해의 후기 사진 1번째 보기" })).toBeDefined();
+  });
+
   it("후기가 목록으로 보이고 아이 프로필이 함께 읽힌다", () => {
     renderPanel();
 
