@@ -60,6 +60,15 @@ test("검색에서 두 번째 상품을 고르고 돌아와도 상세 상품이 
   expect(screen.queryByText("중소형견 소포장 사료 1kg")).toBeNull();
 });
 
+// 상세 상품(면역 지원 영양제)은 supplement라, 검색에서 같은 종류를 고를 수 있어야
+// 비교표가 뜬다. 고를 수 있는 게 없으면 상세→비교 흐름이 늘 안내만 보고 끝난다
+test("상세에서 온 상품과 같은 종류를 고르면 비교표가 뜬다", () => {
+  renderView("?slot=1&product=8&from=detail&first=123");
+
+  expect(screen.getByRole("table")).toBeDefined();
+  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
+});
+
 // 시안 comp_001_에러. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라 견줄 수 없다
 test("종류가 다른 둘을 담으면 표 대신 안내가 나온다", () => {
   // 자리 1에 간식(저자극 덴탈껌)을 담는다. 자리 0은 사료다

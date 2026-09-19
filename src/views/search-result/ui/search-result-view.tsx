@@ -110,6 +110,19 @@ const MOCK_RESULTS = [
     salesCount: 640,
     matchScore: null,
   },
+  // 상세(면역 지원 영양제)에서 비교하러 오면 같은 종류(supplement)가 있어야
+  // 비교표가 뜬다. 검색에서 실제로 고를 수 있게 여기에도 둔다
+  {
+    id: "8",
+    name: "관절 건강 영양제 60정",
+    price: 24000,
+    originalPrice: 27000,
+    dailyCost: 800,
+    rating: 4.6,
+    reviewCount: 74,
+    salesCount: 390,
+    matchScore: 81,
+  },
 ];
 
 type Product = (typeof MOCK_RESULTS)[number];
