@@ -39,6 +39,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 | 폴더 | 설명 |
 | --- | --- |
+| `snackbar/` | 장바구니 담기·찜하기 같은 가벼운 확인을 하단에 알리는 스낵바. `showSnackbar(text)` 하나면 대부분 충분하고, 안에 버튼을 더 넣어야 하면 `SNACKBAR_CLASS`로 직접 그린다 |
 | `icon/` | 디자인 시스템 아이콘 51종. `name`으로 고르고 색은 글자색, 크기는 `size-*`. `icon-shapes.ts`는 Figma에서 스크립트로 만든 파일이라 손으로 고치지 않는다 |
 | `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기 기본 버튼 |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |

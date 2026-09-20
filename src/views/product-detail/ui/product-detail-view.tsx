@@ -26,6 +26,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
+import { showSnackbar, SNACKBAR_CLASS, SNACKBAR_OPTIONS } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
@@ -88,24 +89,6 @@ function RatingSummary({
         <span className="text-body-medium-14 text-text-body-secondary">후기 {reviewCount}</span>
       )}
     </span>
-  );
-}
-
-// 시안의 스낵바는 하단 버튼 바로 위 8px에 뜬다. 각 토스트의 높이는 늘리지 않고
-// 보이는 위치만 올려야 여러 개가 쌓일 때 간격이 벌어지지 않는다.
-const SNACKBAR_CLASS =
-  "pointer-events-auto relative bottom-13 flex min-h-9.5 w-[calc(100vw-40px)] max-w-88.25 items-center rounded-lg bg-surface-primary px-3 py-2 text-text-label-inverse";
-
-const SNACKBAR_OPTIONS = { className: "pointer-events-none" } as const;
-
-function showSnackbar(text: string) {
-  toast.custom(
-    () => (
-      <div role="status" className={SNACKBAR_CLASS}>
-        <span className="text-body-medium-14">{text}</span>
-      </div>
-    ),
-    SNACKBAR_OPTIONS,
   );
 }
 
