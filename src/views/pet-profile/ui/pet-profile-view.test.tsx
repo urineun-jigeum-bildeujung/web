@@ -79,17 +79,19 @@ test("기본은 내 아이 관리 탭이다", () => {
   expect(screen.getByText("걱정되는 질환 · 알러지")).toBeDefined();
 });
 
-test("정보 줄의 화살표가 각 수정 화면으로 간다", () => {
+// 라우트가 어느 아이인지 가리지 않아 쿼리로 실어 보낸다(#268). 빠뜨리면 수정 화면이
+// 고칠 아이를 모른다
+test("정보 줄의 화살표가 고른 아이를 실어 각 수정 화면으로 간다", () => {
   renderView();
 
   expect(screen.getByRole("link", { name: "기본 정보 수정" }).getAttribute("href")).toBe(
-    "/mypage/pets/basic",
+    "/mypage/pets/basic?petId=3",
   );
   expect(screen.getByRole("link", { name: "체형 수정" }).getAttribute("href")).toBe(
-    "/mypage/pets/body",
+    "/mypage/pets/body?petId=3",
   );
   expect(screen.getByRole("link", { name: "건강 정보 수정" }).getAttribute("href")).toBe(
-    "/mypage/pets/health",
+    "/mypage/pets/health?petId=3",
   );
 });
 

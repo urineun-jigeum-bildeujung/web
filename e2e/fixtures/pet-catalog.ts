@@ -113,7 +113,14 @@ export async function stubPetCatalog(page: Page) {
 
   // `*`는 `/`를 넘지 않아 목록과 상세를 한 패턴으로 잡을 수 없다. 둘로 나눈다
   await page.route("**/members/me/pets", (route) => route.fulfill({ json: MY_PETS }));
+  // 수정은 저장된 것처럼 답한다. 무엇을 보내는지는 테스트가 요청을 들여다본다
   await page.route("**/members/me/pets/*", (route) => {
+    if (route.request().method() === "PATCH") {
+      route.fulfill({
+        json: { petId: 3, name: "코코", species: "DOG", isDefault: true, breedId: 1 },
+      });
+      return;
+    }
     const petId = new URL(route.request().url()).pathname.split("/").pop() ?? "";
     const detail = PET_DETAIL[petId];
     if (!detail) {

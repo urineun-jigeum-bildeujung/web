@@ -4,12 +4,14 @@
 
 - **라우트**: `/mypage/pets/basic` · `/mypage/pets/body` · `/mypage/pets/health` — `src/app/mypage/pets/{basic,body,health}/page.tsx`
 - **조립**: `entities/pet`의 `BreedPickerStep` · `SizeGuide` · `BodyTypeGuide` · `BodyTypeSlider` · `HealthPickerField`, `shared/ui`의 `page-header` · `bottom-action-bar` · `avatar-uploader`(`size="lg"`) · `form-field` · `chip-select` · `checkbox-row`
-- **상태**: 입력값은 화면 안 상태. 품종 고르기는 URL 쿼리 `picking`
+- **상태**: 저장된 값은 서버 상태(TanStack Query), 고치는 값은 화면 안 상태. 어느 아이인지와 품종 고르기는 URL 쿼리 `petId`·`picking`
 - **참고**: UI 시안 기준(정보 수정 기본 `1555-49797` · 체형 `1507-43555` · 건강 `1507-43640`)
 
 | 파일 | 설명 |
 | --- | --- |
+| `model/use-edit-pet.ts` | 셋이 함께 쓰는 자리. 고칠 아이를 정하고 상세를 받아 저장까지 잇는다 |
 | `ui/edit-pet-screen.tsx` | 세 화면이 공유하는 골격. 머리말 "정보 수정"과 하단 "수정완료" |
+| `ui/edit-pet-status.tsx` | 저장된 값을 못 받았을 때 까닭을 알린다 |
 | `ui/edit-pet-basic-view.tsx` | 사진·이름·종·나이·성별·중성화 |
 | `ui/edit-pet-body-view.tsx` | 체구·몸무게·체형 |
 | `ui/edit-pet-health-view.tsx` | 걱정되는 질환·알러지 |
@@ -30,8 +32,26 @@
 
 **건강 정보는 온보딩과 같은 것으로 고른다.** 자유 입력이면 보호자마다 다르게 적어 같은 질환이 여러 표기로 쌓이고, 그 값으로는 추천을 만들 수 없다. 고르는 자리는 `entities/pet`의 `HealthPickerField`이고 온보딩 건강 단계가 같은 것을 쓴다.
 
+## 어느 아이를 고치는지 쿼리로 받는다
+
+라우트가 `/mypage/pets/basic`처럼 아이를 가리지 않는다. 아이 관리 카드의 화살표가 `?petId=`를 실어 보낸다(#268). 없으면 고칠 아이를 모르므로 그 사실을 알리고 저장을 막는다.
+
+`useQueryState`를 쓰게 되어 **세 라우트를 `Suspense`로 감싼다.** 감싸지 않으면 정적 프리렌더가 실패하는데 **빌드에서만 드러난다**.
+
+## 값이 도착한 뒤에 폼을 마운트한다
+
+효과 안에서 `setState`로 채우면 React가 연쇄 렌더로 잡고(`react-hooks/set-state-in-effect`), 아이를 바꿨을 때 옛 값이 남을 여지도 생긴다. 상세를 받기 전에는 골격과 안내만 그리고, 받은 뒤 `key={pet.id}`로 폼을 새로 띄운다.
+
+## 고치는 것만 보낸다
+
+`PATCH /members/me/pets/{petId}`는 전 필드가 선택이다. 체형 화면이 이름·나이까지 실으면 **고치지도 않은 값을 덮어쓴다.** 화면마다 자기가 맡은 필드만 담는다.
+
+**빈 배열은 "해당 없음"으로 답한 것이다.** 안 고른 것과 없다고 답한 것을 서버가 가리지 못해, 건강 화면은 비어 있으면 체크가 켜진 것으로 읽는다.
+
 ## 아직 없는 것
 
-저장된 값이 목 데이터다.
+사진. `image`는 presigned로 올린 URL을 실어 보내는데 그 흐름은 별도 이슈다(#269).
+
+아이 삭제. `DELETE /members/me/pets/{petId}`가 있지만 **시안에 지우는 자리가 없다.** 되돌릴 수 없는 동작이라 진입점과 확인 절차를 PD와 정해야 한다.
 
 품종은 `?picking=breed`로 같은 화면 안에서 고른다. 별도 라우트로 나가면 이 화면이 언마운트되어 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩이 단계를 쿼리로 넘기는 것과 같은 이유다. 목록을 그리는 `BreedPickerStep`은 `entities/pet`에 있어 온보딩과 함께 쓴다.

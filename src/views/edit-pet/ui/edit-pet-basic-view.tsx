@@ -8,46 +8,76 @@
 import { useQueryState } from "nuqs";
 import { useState } from "react";
 
-import { BreedPickerStep, GENDER_OPTIONS, NEUTERED_OPTIONS, type PetSpecies } from "@/entities/pet";
+import {
+  BreedPickerStep,
+  GENDER_OPTIONS,
+  NEUTERED_OPTIONS,
+  parseAge,
+  parseBirthDate,
+  SPECIES_PARAM,
+  type PetDetail,
+  type PetSpecies,
+} from "@/entities/pet";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 
+import { useEditPet } from "../model/use-edit-pet";
 import { EditPetScreen } from "./edit-pet-screen";
-
-/** API 연동 전까지 화면 확인용 값 */
-// 종을 함께 든다. "기타"는 양쪽 품종 목록에 다 있어 이름만으로는 가를 수 없다.
-const SAVED = {
-  name: "코코",
-  species: "dog" as PetSpecies,
-  // 품종은 서버 id로 다룬다. 저장 API가 붙으면 상세 조회의 breedId·breedName이 들어온다
-  breedId: 1,
-  breedName: "말티즈",
-  age: "4세",
-  birthday: "",
-  gender: "female",
-  neutered: "yes",
-};
+import { EditPetStatus } from "./edit-pet-status";
 
 /** 항목 제목. 시안의 title/bold_16 */
 function FieldTitle({ children }: { children: React.ReactNode }) {
   return <p className="text-title-bold-16 text-foreground">{children}</p>;
 }
 
-export function EditPetBasicView() {
+type BasicFormProps = {
+  pet: PetDetail;
+  isSaving: boolean;
+  onSave: (patch: {
+    name: string;
+    species: "DOG" | "CAT";
+    breedId: number;
+    age: number;
+    birthDate?: string;
+    sex: "MALE" | "FEMALE";
+    isNeutered: boolean;
+  }) => void;
+};
+
+function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
   // 품종 고르기는 별도 라우트로 나가지 않는다. 나가면 이 화면이 언마운트되어
   // 입력하던 이름·나이·성별이 전부 저장값으로 되돌아간다. 온보딩과 같이 단계로 바꿔 끼운다.
   const [picking, setPicking] = useQueryState("picking");
-  const [breedId, setBreedId] = useState(SAVED.breedId);
-  const [breedName, setBreedName] = useState(SAVED.breedName);
-  // 품종과 함께 저장 API로 보낼 값. 품종을 고르면 종도 함께 정해진다
-  const [, setSpecies] = useState(SAVED.species);
-  const [name, setName] = useState(SAVED.name);
-  const [age, setAge] = useState(SAVED.age);
-  const [birthday, setBirthday] = useState(SAVED.birthday);
-  const [gender, setGender] = useState(SAVED.gender);
-  const [neutered, setNeutered] = useState(SAVED.neutered);
+  const [breedId, setBreedId] = useState(pet.breedId);
+  const [breedName, setBreedName] = useState(pet.breedName);
+  // 품종을 고르면 종도 함께 정해진다. 종은 저장 요청에 실어 보낸다
+  const [species, setSpecies] = useState<PetSpecies>(pet.species);
+  const [name, setName] = useState(pet.name);
+  const [age, setAge] = useState(String(pet.age));
+  const [birthday, setBirthday] = useState(pet.birthDate ?? "");
+  const [gender, setGender] = useState<string>(pet.gender);
+  const [neutered, setNeutered] = useState(pet.neutered ? "yes" : "no");
+
+  const parsedAge = parseAge(age);
+  // 생일은 선택이다. 비었으면 보내지 않고, 적었는데 못 알아들으면 저장을 막는다 —
+  // 조용히 빼고 보내면 적은 사람은 저장된 줄 안다
+  const parsedBirth = parseBirthDate(birthday);
+  const birthdayBroken = birthday.trim().length > 0 && parsedBirth === null;
+
+  const submit = () => {
+    if (parsedAge === null || birthdayBroken) return;
+    onSave({
+      name: name.trim(),
+      species: SPECIES_PARAM[species],
+      breedId,
+      age: parsedAge,
+      ...(parsedBirth && { birthDate: parsedBirth }),
+      sex: gender === "female" ? "FEMALE" : "MALE",
+      isNeutered: neutered === "yes",
+    });
+  };
 
   if (picking === "breed") {
     return (
@@ -70,7 +100,11 @@ export function EditPetBasicView() {
   }
 
   return (
-    <EditPetScreen submitDisabled={!name.trim()}>
+    <EditPetScreen
+      submitDisabled={!name.trim() || parsedAge === null || birthdayBroken}
+      submitting={isSaving}
+      onSubmit={submit}
+    >
       <div className="flex justify-center">
         <AvatarUploader
           size="lg"
@@ -150,4 +184,19 @@ export function EditPetBasicView() {
       </div>
     </EditPetScreen>
   );
+}
+
+export function EditPetBasicView() {
+  const { pet, missingPetId, isLoading, error, isSaving, save } = useEditPet();
+
+  if (!pet) {
+    return (
+      <EditPetScreen submitDisabled>
+        <EditPetStatus missingPetId={missingPetId} isLoading={isLoading} error={error} />
+      </EditPetScreen>
+    );
+  }
+
+  // 아이가 바뀌면 입력값도 그 아이의 것으로 새로 시작해야 한다
+  return <BasicForm key={pet.id} pet={pet} isSaving={isSaving} onSave={save} />;
 }

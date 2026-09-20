@@ -23,6 +23,7 @@ export function toHeroProfile(pet: PetDetail): PetHeroProfile {
   const gender = GENDER_OPTIONS.find((option) => option.value === pet.gender)?.label ?? "";
 
   return {
+    id: pet.id,
     name: pet.name,
     meta: [pet.breedName, `${pet.age}세`, gender].filter(Boolean).join(" · "),
     weight: formatWeight(pet.weight),

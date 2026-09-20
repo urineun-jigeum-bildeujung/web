@@ -1,9 +1,15 @@
 // 초안을 등록 요청으로 옮기는 규칙. 화면 값과 API 값의 모양이 거의 다 달라 하나씩 본다.
 import { describe, expect, test } from "vitest";
 
-import { EMPTY_PROFILE_DRAFT, type PetProfileDraft } from "@/entities/pet";
+import {
+  EMPTY_PROFILE_DRAFT,
+  parseAge,
+  parseBirthDate,
+  parseWeight,
+  type PetProfileDraft,
+} from "@/entities/pet";
 
-import { parseAge, parseBirthDate, parseWeight, toRegisterRequest } from "./to-register-request";
+import { toRegisterRequest } from "./to-register-request";
 
 /** 필수를 다 채운 초안. 각 테스트가 필요한 칸만 덮어쓴다 */
 const FILLED: PetProfileDraft = {

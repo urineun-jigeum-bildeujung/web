@@ -6,6 +6,9 @@
 import {
   BodyTypeGuide,
   BodyTypeSlider,
+  parseAge,
+  parseBirthDate,
+  parseWeight,
   SIZE_OPTIONS,
   SizeGuide,
   type PetProfileDraft,
@@ -18,7 +21,6 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 
 import { digitsOnly, formatBirthday } from "../../model/input-guards";
-import { parseAge, parseBirthDate, parseWeight } from "../../model/to-register-request";
 
 type DetailStepProps = {
   draft: PetProfileDraft;

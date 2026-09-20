@@ -4,6 +4,36 @@ import { expect, test, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
+// 어느 아이를 고치는지는 쿼리로 온다(#268). 저장된 값도 상세 조회에서 온다 —
+// 무엇을 부르는지는 `entities/pet/api/pets.test.ts`가 본다
+const save = vi.fn();
+vi.mock("../model/use-edit-pet", () => ({
+  useEditPet: () => ({
+    pet: {
+      id: "3",
+      name: "코코",
+      species: "dog",
+      breedId: 1,
+      breedName: "말티즈",
+      age: 4,
+      birthDate: null,
+      gender: "female",
+      neutered: true,
+      size: "small",
+      weight: 4,
+      bcs: 3,
+      healthConcerns: ["슬개골 탈구"],
+      allergies: [],
+      isDefault: true,
+    },
+    missingPetId: false,
+    isLoading: false,
+    error: null,
+    isSaving: false,
+    save: (...args: unknown[]) => save(...args),
+  }),
+}));
+
 // 선택지 조회는 가짜로 둔다. 무엇을 보내고 어떻게 옮기는지는 `entities/pet/api/health-options.test.ts`가 본다
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
@@ -34,7 +64,13 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
   }),
 }));
 
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
+
 import { EditPetHealthView } from "./edit-pet-health-view";
+
+function renderView() {
+  return render(<EditPetHealthView />, { wrapper: createQueryWrapper() });
+}
 
 function submitButton() {
   return screen.getByRole("button", { name: "수정완료" }) as HTMLButtonElement;
@@ -45,7 +81,7 @@ function picker(name: string) {
 }
 
 test("저장된 값이 칩으로 채워진 채로 열린다", () => {
-  render(<EditPetHealthView />);
+  renderView();
 
   // 자유 입력이 아니라 고른 것을 되보인다
   expect(picker("걱정되는 질환").textContent).toContain("슬개골 탈구");
@@ -53,7 +89,7 @@ test("저장된 값이 칩으로 채워진 채로 열린다", () => {
 });
 
 test("두 항목 모두 답이 있어야 고칠 수 있다", () => {
-  render(<EditPetHealthView />);
+  renderView();
 
   // 신경 쓰이는 곳의 해당 없음을 켰다 끄면 값이 비어 답이 없어진다
   const [concernCheck] = screen.getAllByRole("checkbox");
@@ -64,7 +100,7 @@ test("두 항목 모두 답이 있어야 고칠 수 있다", () => {
 });
 
 test("해당 없음을 켜면 고를 수 없고 고른 것도 보이지 않는다", () => {
-  render(<EditPetHealthView />);
+  renderView();
 
   const [concernCheck] = screen.getAllByRole("checkbox");
   fireEvent.click(concernCheck);
@@ -76,7 +112,7 @@ test("해당 없음을 켜면 고를 수 없고 고른 것도 보이지 않는�
 });
 
 test("해당 없음을 끄면 그 항목을 다시 받는다", () => {
-  render(<EditPetHealthView />);
+  renderView();
 
   // 켜진 채로 값을 남겨 두면 체크를 껐을 때 그것이 답으로 되살아난다
   const [, allergyCheck] = screen.getAllByRole("checkbox");
@@ -88,7 +124,7 @@ test("해당 없음을 끄면 그 항목을 다시 받는다", () => {
 });
 
 test("누르면 그 갈래의 시트가 열린다", () => {
-  render(<EditPetHealthView />);
+  renderView();
 
   fireEvent.click(picker("걱정되는 질환"));
 
@@ -97,4 +133,13 @@ test("누르면 그 갈래의 시트가 열린다", () => {
   // 고양이 갈래는 없다
   expect(screen.queryByRole("tab", { name: "스트레스 행동" })).toBeNull();
   expect(screen.queryByRole("tab", { name: "육류" })).toBeNull();
+});
+
+// 고친 것만 보낸다. 다른 화면이 고치는 이름·몸무게까지 실으면 덮어쓴다
+test("수정완료를 누르면 고른 값만 보낸다", () => {
+  renderView();
+
+  fireEvent.click(submitButton());
+
+  expect(save).toHaveBeenCalledWith({ healthConcerns: ["슬개골 탈구"], allergies: [] });
 });

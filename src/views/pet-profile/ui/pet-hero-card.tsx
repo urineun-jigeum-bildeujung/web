@@ -12,6 +12,8 @@ import { Badge } from "@/shared/ui/badge/badge";
 import { Icon } from "@/shared/ui/icon/icon";
 
 export type PetHeroProfile = {
+  /** 수정 화면에 어느 아이인지 넘긴다. 라우트가 아이를 가리지 않는다(#268) */
+  id: string;
   name: string;
   /** "말티즈 · 4세 · 여자아이" */
   meta: string;
@@ -95,17 +97,17 @@ export function PetHeroCard({ profile }: PetHeroCardProps) {
       />
 
       <div className="absolute inset-x-4 bottom-5 flex flex-col gap-4">
-        <InfoRow href="/mypage/pets/basic" label="기본 정보 수정">
+        <InfoRow href={`/mypage/pets/basic?petId=${profile.id}`} label="기본 정보 수정">
           <span className="truncate text-title-bold-18">{profile.name}</span>
           <span className="truncate text-body-medium-14">{profile.meta}</span>
         </InfoRow>
 
-        <InfoRow href="/mypage/pets/body" label="체형 수정">
+        <InfoRow href={`/mypage/pets/body?petId=${profile.id}`} label="체형 수정">
           <span className="text-title-bold-18">{profile.weight}</span>
           <span className="text-body-medium-14">{profile.bodyType}</span>
         </InfoRow>
 
-        <InfoRow href="/mypage/pets/health" label="건강 정보 수정">
+        <InfoRow href={`/mypage/pets/health?petId=${profile.id}`} label="건강 정보 수정">
           <span className="flex min-w-0 flex-col gap-2">
             <span className="text-title-bold-18">걱정되는 질환 · 알러지</span>
             <span className="flex flex-wrap gap-2">

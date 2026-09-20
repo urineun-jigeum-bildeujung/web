@@ -10,7 +10,12 @@ import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
-import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
+import {
+  BreedPickerStep,
+  parseBirthDate,
+  type PetProfileDraft,
+  type SpeciesBreed,
+} from "@/entities/pet";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
@@ -24,7 +29,7 @@ import {
 } from "../model/draft-storage";
 import { useMutateRegisterPet } from "../api/use-mutate-register-pet";
 import { getStepProgress, ONBOARDING_STEPS } from "../model/steps";
-import { parseBirthDate, toRegisterRequest } from "../model/to-register-request";
+import { toRegisterRequest } from "../model/to-register-request";
 import { BasicStep } from "./steps/basic-step";
 import { DetailStep } from "./steps/detail-step";
 import { DoneStep } from "./steps/done-step";

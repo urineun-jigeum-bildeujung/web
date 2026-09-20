@@ -124,3 +124,31 @@ export async function getPetDetail(petId: string): Promise<PetDetail> {
     isDefault: pet.isDefault,
   };
 }
+
+/**
+ * 고칠 것만 보낸다.
+ *
+ * **전 필드가 선택이다.** 화면마다 고치는 항목이 달라, 기본 정보 화면이 몸무게를
+ * 덮어쓰지 않으려면 보내지 않아야 한다.
+ *
+ * `allergies`는 코드만 보낸다 — 표시명은 서버가 아는 값이라 되돌려 줄 필요가 없다.
+ */
+export type PetUpdate = Partial<{
+  name: string;
+  sex: "MALE" | "FEMALE";
+  isNeutered: boolean;
+  species: "DOG" | "CAT";
+  age: number;
+  birthDate: string;
+  size: "SMALL" | "MEDIUM" | "LARGE";
+  weight: number;
+  bcs: number;
+  image: string;
+  breedId: number;
+  healthConcerns: string[];
+  allergies: string[];
+}>;
+
+export function updatePet(petId: string, patch: PetUpdate): Promise<void> {
+  return apiRequest<void>(`/members/me/pets/${petId}`, { method: "PATCH", body: patch });
+}
