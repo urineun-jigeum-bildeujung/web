@@ -34,15 +34,42 @@ test("알림설정에 스위치가 있다", () => {
   expect(screen.getByRole("switch", { name: "알림설정" })).toBeDefined();
 });
 
-test("테마·회원탈퇴는 자리만 있고 아직 누를 수 없다", () => {
+test("테마설정은 자리만 있고 아직 누를 수 없다", () => {
   renderView();
 
   // 이어질 동작이 정해지지 않아 표시용 줄로 둔다. 누를 수 있게 두면 눌렀을 때
-  // 아무 일도 없어 고장으로 읽힌다. 회원탈퇴는 API가 아직 없다
-  for (const label of ["테마설정", "회원탈퇴"]) {
-    expect(screen.getByText(label)).toBeDefined();
-    expect(screen.queryByRole("button", { name: new RegExp(label) })).toBeNull();
-  }
+  // 아무 일도 없어 고장으로 읽힌다
+  expect(screen.getByText("테마설정")).toBeDefined();
+  expect(screen.queryByRole("button", { name: /테마설정/ })).toBeNull();
+});
+
+// 탈퇴는 되돌릴 수 없다. 바로 보내면 잘못 누른 사람이 계정을 잃는다
+test("회원탈퇴는 한 번 묻고 보낸다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+
+  fireEvent.click(screen.getByRole("button", { name: /회원탈퇴/ }));
+  expect(fetchMock).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: "탈퇴하기" }));
+
+  await waitFor(() => expect(hasSession()).toBe(false));
+  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(url).toContain("/members/me");
+  expect(init.method).toBe("DELETE");
+});
+
+// 계정이 살아 있는데 토큰만 비우면 쫓겨난 채로 탈퇴됐는지도 알 수 없다. 로그아웃과 다르다
+test("탈퇴에 실패하면 기기의 토큰을 지우지 않는다", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({}, { status: 500 })));
+  renderView();
+
+  fireEvent.click(screen.getByRole("button", { name: /회원탈퇴/ }));
+  fireEvent.click(screen.getByRole("button", { name: "탈퇴하기" }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(hasSession()).toBe(true);
 });
 
 // 기기에서만 지우면 서버의 refreshToken이 살아 있어 그것을 쥔 쪽이 계속 재발급을 받는다

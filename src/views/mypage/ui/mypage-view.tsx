@@ -14,6 +14,7 @@ import { SettingGroup } from "@/shared/ui/setting-group/setting-group";
 import { BottomNav } from "@/widgets/bottom-nav";
 
 import { PetAvatars } from "./pet-avatars";
+import { ProfileSummary } from "./profile-summary";
 
 const MENU_GROUPS = [
   {
@@ -76,12 +77,6 @@ const MENU_GROUPS = [
 ];
 
 /** API 연동 전까지 화면 확인용 값 */
-/** 닉네임·이메일은 아직 목이다. `GET /members/me`가 없다 */
-const MOCK_USER = {
-  nickname: "졸린고양이 17",
-  email: "cjsrudwls12@naver.com",
-};
-
 const HEADER_ICON =
   "flex size-11 items-center justify-center rounded-md text-icon-stroke-tertiary transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
 
@@ -111,14 +106,7 @@ export function MypageView() {
             href="/mypage/info"
             className="flex items-center justify-between gap-2 px-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-              <span className="truncate text-title-bold-16 text-foreground">
-                {MOCK_USER.nickname}
-              </span>
-              <span className="truncate text-body-regular-13 text-text-body-tertiary">
-                {MOCK_USER.email}
-              </span>
-            </span>
+            <ProfileSummary />
             <span
               aria-hidden
               className="flex size-12 shrink-0 items-center justify-center text-icon-fill-default"
