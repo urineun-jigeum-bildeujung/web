@@ -61,9 +61,10 @@ describe("RecommendationsView", () => {
 
   // 메인 "맞춤 추천" 더보기로 들어오는 서브 화면이라 뒤로가기가 있어야 한다.
   // 시안 헤더(로고형)와 다르게 유지하기로 한 것을 여기서 고정해 둔다(#273)
-  it("머리말에 뒤로가기가 있다", () => {
+  it("머리말에 뒤로가기와 제목이 있다", () => {
     renderWith();
     expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "맞춤 추천" })).toBeDefined();
   });
 
   // 정렬은 분류와 같이 주소에 남아야 한다. 상품 상세에 갔다 돌아와도 유지돼야 하기 때문이다

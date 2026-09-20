@@ -110,7 +110,7 @@ export function RecommendationsView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="상품 둘러보기" />
+      <PageHeader title="맞춤 추천" />
 
       {/* 시안(홈화면 프레임 기준)은 상태 표시줄+헤더 아래로 12px을 두고 본문이 시작한다.
           다른 화면들도 PageHeader 다음에 pt-3을 공통으로 쓴다 */}
