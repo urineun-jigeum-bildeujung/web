@@ -3,6 +3,7 @@
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPhoneVerification } from "./fixtures/phone-verification";
 
 /**
@@ -111,6 +112,7 @@ const ROUTES = [
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
   await stubPhoneVerification(page);
+  await stubMemberProfile(page);
 });
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다
