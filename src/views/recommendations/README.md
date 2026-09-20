@@ -11,10 +11,10 @@
 ## 라우트
 
 ```text
-/recommendations?pet=<아이 id>&category=<상품 분류>
+/recommendations?pet=<아이 id>&category=<all|food|snack|supplement>&sort=<recommend|latest|rating-high|rating-low>
 ```
 
-어느 아이 기준인지와 어떤 분류로 걸렀는지를 주소에 남긴다. 상품 상세로 갔다 돌아와도 조건이 유지되어야 한다.
+어느 아이 기준인지, 어떤 분류로 걸렀는지, 어떤 기준으로 정렬했는지를 주소에 남긴다. 상품 상세로 갔다 돌아와도 조건이 유지되어야 한다.
 
 메인 화면의 "맞춤 추천" 섹션 "더보기"를 눌러 들어오는 서브 화면이다. 시안 헤더는 홈 화면과 같은
 로고형(뒤로가기 없음)이지만, 이 화면은 바텀내비 탭 루트가 아니라 더보기로 들어가는 서브 화면이라
