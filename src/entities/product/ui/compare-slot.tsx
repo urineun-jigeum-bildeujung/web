@@ -62,7 +62,8 @@ export function CompareSlot({
         </div>
         <Button
           variant="secondary"
-          className="h-10 w-full gap-1.5 text-label-bold-14"
+          // 보이는 높이는 시안대로 40px, 누르는 자리만 위아래로 2px씩 넓혀 44px을 채운다
+          className="relative h-10 w-full gap-1.5 text-label-bold-14 after:absolute after:-inset-y-0.5"
           onClick={onAdd}
         >
           상품 추가하기
@@ -127,7 +128,8 @@ export function CompareSlot({
         )}
         <Button
           variant="secondary"
-          className="ml-auto h-10 w-26.75 text-label-bold-14"
+          // 보이는 높이는 시안대로 40px, 누르는 자리만 위아래로 2px씩 넓혀 44px을 채운다
+          className="relative ml-auto h-10 w-26.75 text-label-bold-14 after:absolute after:-inset-y-0.5"
           onClick={onAddToCart}
         >
           장바구니 추가

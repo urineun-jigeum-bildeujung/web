@@ -203,7 +203,11 @@ export function ProductCompareView() {
       // 모르는 상품이 다시 두 자리에 겹칠 수 있다. 화면만 확인할 땐 product 자체를
       // 안 주고 들어오면(위 !product 분기) MOCK_PRODUCTS 두 자리를 그대로 본다
       const picked = PICKABLE[product];
-      const other = otherId && otherId !== "none" ? PICKABLE[otherId] : undefined;
+      // otherId가 지금 고르는 product와 같으면(주소를 손으로 조작했을 때만 가능하다 —
+      // goSelect는 반대쪽 자리의 실제 값만 보내 절대 같은 id를 만들지 않는다) 그대로
+      // 믿으면 두 자리가 같은 상품이 되어 React key가 겹친다. 잘못된 쿼리로 보고 비운다
+      const other =
+        otherId && otherId !== "none" && otherId !== product ? PICKABLE[otherId] : undefined;
       return slot === "1" ? [other, picked] : [picked, other];
     },
   );
