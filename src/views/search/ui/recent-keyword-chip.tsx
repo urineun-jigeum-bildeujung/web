@@ -6,7 +6,7 @@
 
 "use client";
 
-import { IoClose } from "react-icons/io5";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type RecentKeywordChipProps = {
   keyword: string;
@@ -16,11 +16,15 @@ type RecentKeywordChipProps = {
 
 export function RecentKeywordChip({ keyword, onSearch, onRemove }: RecentKeywordChipProps) {
   return (
-    <span className="inline-flex items-center rounded-full border border-border bg-background">
+    // 시안(2396-80487)의 칩은 보이는 높이가 40px, X 아이콘은 24px이다. 누르는 자리는
+    // home-view와 같은 after: 기법으로 44px을 지킨다
+    <span className="relative inline-flex h-10 items-center rounded-full border border-border bg-background">
       <button
         type="button"
         onClick={() => onSearch(keyword)}
-        className="min-h-11 rounded-l-full py-1.5 pr-1 pl-3 text-sm whitespace-nowrap text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        // 세로(h-10→44px)와 같은 계산으로 가로도 넓힌다. 이 버튼은 글자 길이만큼
+        // 넓어 44px는 보통 넘지만, 짧은 검색어에서도 기준을 지키려고 똑같이 둔다
+        className="relative flex h-full items-center rounded-l-full pr-1 pl-3 text-sm whitespace-nowrap text-foreground after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
         {keyword}
       </button>
@@ -28,9 +32,11 @@ export function RecentKeywordChip({ keyword, onSearch, onRemove }: RecentKeyword
         type="button"
         aria-label={`${keyword} 검색 기록 지우기`}
         onClick={() => onRemove(keyword)}
-        className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-r-full py-1.5 pr-3 pl-1 text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        // 실제 박스 폭이 4(pl)+24(아이콘)+12(pr)=40px라 세로처럼 가로도 2px씩
+        // 넓혀야 44px 탭 기준을 채운다 — inset-x-0이면 세로만 늘고 가로는 40px에 머문다
+        className="relative flex h-full shrink-0 items-center justify-center rounded-r-full pr-3 pl-1 text-muted-foreground after:absolute after:-inset-0.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
-        <IoClose aria-hidden className="size-4" />
+        <Icon name="cancel" aria-hidden className="size-6" />
       </button>
     </span>
   );

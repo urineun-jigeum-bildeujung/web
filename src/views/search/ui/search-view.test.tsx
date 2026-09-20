@@ -50,7 +50,7 @@ describe("SearchView", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "전체삭제" }));
 
-    expect(screen.getByText("최근에 검색한 내역이 없어요")).toBeDefined();
+    expect(screen.getByText(/최근에 검색한 내역이 없어요/)).toBeDefined();
     // 지울 것이 없으면 전체삭제도 사라진다
     expect(screen.queryByRole("button", { name: "전체삭제" })).toBeNull();
   });
@@ -98,11 +98,12 @@ describe("SearchView", () => {
     );
   });
 
-  // 비교 화면이 자리를 채우러 보낸 경우. 고른 뒤 갈 곳이 달라 맥락을 알린다
+  // 비교 화면이 자리를 채우러 보낸 경우. 시안(1117-9724)엔 카테고리 둘러보기가 없다 —
+  // 고른 뒤 갈 곳이 다르니 검색으로만 좁혀 들어오게 한다
   it("비교할 자리를 채우러 왔으면 그 자리를 결과 화면까지 들고 간다", () => {
     renderView("?slot=1");
 
-    expect(screen.getByText("비교할 상품을 검색해 주세요")).toBeDefined();
+    expect(screen.queryByText("카테고리로 둘러보기")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("상품 검색"), { target: { value: "덴탈껌" } });
     fireEvent.click(screen.getByRole("button", { name: "저자극 덴탈껌" }));
