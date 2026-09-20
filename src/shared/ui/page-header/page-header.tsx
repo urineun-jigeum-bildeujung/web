@@ -73,7 +73,9 @@ export function PageHeader({
         <span />
       )}
 
-      <div className="flex items-center justify-end gap-1">{right}</div>
+      {/* 시안(1758-69162)의 알림·장바구니 등 오른쪽 아이콘은 회색(#868b94, icon-stroke-tertiary)이다.
+          자식이 스스로 색을 정하면(예: 닫기 X) 그대로 우선한다 — 여기 색은 물려주는 기본값일 뿐이다 */}
+      <div className="flex items-center justify-end gap-1 text-icon-stroke-tertiary">{right}</div>
     </header>
   );
 }

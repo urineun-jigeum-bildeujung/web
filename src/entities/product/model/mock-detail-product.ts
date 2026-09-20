@@ -3,4 +3,6 @@ export const MOCK_DETAIL_PRODUCT = {
   name: "면역 지원 영양제 90정",
   price: 21_000,
   kind: "supplement" as const,
+  // views/product-detail의 PET_MATCHES(petId "1" 소리)가 이 상품에 매긴 실제 점수와 맞춘다
+  matchScore: 92,
 };

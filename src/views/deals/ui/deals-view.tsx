@@ -15,7 +15,6 @@ import {
   IoBagHandleOutline,
   IoCheckmark,
   IoNotificationsOutline,
-  IoSearchOutline,
   IoTimeOutline,
 } from "react-icons/io5";
 import { toast } from "sonner";
@@ -25,6 +24,7 @@ import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
@@ -147,20 +147,22 @@ export function DealsView() {
       <PageHeader
         title="타임딜"
         right={
+          // 시안(1758-69162)의 오른쪽 아이콘은 회색(icon-stroke-tertiary)이다 — PageHeader가
+          // 기본으로 물려주므로 여기서 따로 색을 정하지 않는다
           <div className="flex items-center">
             <Link
               href="/search"
               aria-label="검색"
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              <IoSearchOutline aria-hidden className="size-6" />
+              <Icon name="search" className="size-6" />
             </Link>
             <Link
               href="/cart"
               aria-label="장바구니"
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              <IoBagHandleOutline aria-hidden className="size-6" />
+              <Icon name="cart" className="size-6" />
             </Link>
           </div>
         }

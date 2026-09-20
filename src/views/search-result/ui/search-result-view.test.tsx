@@ -30,7 +30,7 @@ describe("SearchResultView", () => {
   it("걸리는 게 없으면 없다고 알린다", () => {
     renderWith("?q=고양이모래");
 
-    expect(screen.getByText("검색 결과가 없어요")).toBeDefined();
+    expect(screen.getByText(/검색 결과가 없어요/)).toBeDefined();
     // 셀 것이 없으니 개수와 정렬도 감춘다
     expect(screen.queryByLabelText("정렬")).toBeNull();
   });
@@ -43,14 +43,35 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search");
   });
 
-  // 비교 화면이 자리를 채우러 보낸 경우. 고르면 상세가 아니라 비교로 돌아간다
-  it("비교할 자리를 채우러 왔으면 카드가 비교 화면으로 간다", () => {
+  // 비교 화면이 자리를 채우러 보낸 경우. 카드는 체크만 되고, 선택 완료로 확정해야 비교로 간다
+  it("비교할 자리를 채우러 왔으면 카드를 체크하고 선택 완료를 눌러야 비교 화면으로 간다", () => {
     renderWith("?q=퍼피&slot=1");
 
-    expect(screen.getByRole("link", { name: /퍼피 성장기 사료/ }).getAttribute("href")).toBe(
-      "/compare?slot=1&product=4",
-    );
-    expect(screen.getByText("고르면 비교 화면으로 담아 드릴게요")).toBeDefined();
+    // 카드가 링크가 아니라 체크 버튼이 된다
+    expect(screen.queryByRole("link", { name: /퍼피 성장기 사료/ })).toBeNull();
+    // 시안(1117-6424)엔 총 개수·정렬이 없다 — 무엇이 맞는지가 아니라 고르는 것 자체가 목적이다
+    expect(screen.queryByText(/^총 \d+개$/)).toBeNull();
+    expect(screen.queryByLabelText("정렬")).toBeNull();
+
+    const complete = screen.getByRole("button", { name: "선택 완료" });
+    expect(complete.hasAttribute("disabled")).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: /퍼피 성장기 사료/ }));
+    expect(complete.hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(complete);
+    expect(push).toHaveBeenCalledWith("/compare?slot=1&product=4");
+  });
+
+  it("체크한 카드를 다시 누르면 선택이 풀리고 선택 완료가 다시 비활성된다", () => {
+    renderWith("?q=퍼피&slot=1");
+
+    const card = screen.getByRole("button", { name: /퍼피 성장기 사료/ });
+    fireEvent.click(card);
+    expect(screen.getByRole("button", { name: "선택 완료" }).hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(card);
+    expect(screen.getByRole("button", { name: "선택 완료" }).hasAttribute("disabled")).toBe(true);
   });
 
   it("자리를 들고 검색어를 고치러 가도 자리를 잃지 않는다", () => {
@@ -61,12 +82,20 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search?slot=0");
   });
 
-  it("상세에서 고른 첫 상품을 카드 이동과 검색어 수정에도 유지한다", () => {
+  // 반대쪽 자리에 이미 있는 상품을 또 고르면 두 자리의 id가 겹쳐 React가 "두 자식이
+  // 같은 key를 가졌다" 경고를 내고 CompareSlot이 뭉개지던 버그다(#245)
+  it("반대쪽 자리에 이미 있는 상품은 고르는 목록에서 빠진다", () => {
+    renderWith("?q=저지방&slot=0&other=2");
+
+    expect(screen.queryByRole("button", { name: /노령견 저지방 소화케어 사료/ })).toBeNull();
+  });
+
+  it("상세에서 고른 첫 상품을 선택 완료와 검색어 수정에도 유지한다", () => {
     renderWith("?q=퍼피&slot=1&from=detail&first=123");
 
-    expect(screen.getByRole("link", { name: /퍼피 성장기 사료/ }).getAttribute("href")).toBe(
-      "/compare?slot=1&product=4&from=detail&first=123",
-    );
+    fireEvent.click(screen.getByRole("button", { name: /퍼피 성장기 사료/ }));
+    fireEvent.click(screen.getByRole("button", { name: "선택 완료" }));
+    expect(push).toHaveBeenCalledWith("/compare?slot=1&product=4&from=detail&first=123");
 
     fireEvent.click(screen.getByRole("button", { name: /검색어 고치기/ }));
     expect(push).toHaveBeenCalledWith("/search?slot=1&from=detail&first=123");
@@ -80,7 +109,6 @@ describe("SearchResultView", () => {
     const last = items[items.length - 1];
 
     expect(last.textContent).toContain("실속형 대용량 사료 5kg");
-    expect(last.textContent).toContain("정보 확인 중");
     // 18,900원이라 퍼피(21,000원)보다 싸지만 위로 오지 않는다
     expect(items[0].textContent).not.toContain("실속형");
   });
@@ -90,5 +118,30 @@ describe("SearchResultView", () => {
     renderWith("?q=사료&sort=아무거나");
 
     expect(screen.getAllByRole("listitem").length).toBeGreaterThan(0);
+  });
+
+  // 일반 검색은 적합도 대신 찜하기를 보여준다(2396-80432)
+  it("그냥 검색하러 왔으면 적합도 대신 찜하기가 보이고 찜하면 눌린 채로 바뀐다", () => {
+    renderWith("?q=퍼피");
+
+    expect(screen.queryByText(/적합도/)).toBeNull();
+
+    const like = screen.getByRole("button", { name: /퍼피 성장기 사료 1kg 찜하기/ });
+    expect(like.getAttribute("aria-pressed")).toBe("false");
+
+    fireEvent.click(like);
+    expect(like.getAttribute("aria-pressed")).toBe("true");
+  });
+
+  // 비교 자리를 채우러 왔으면 체크만 하면 되니 카드가 이름·가격만 보인다(1117-6424) —
+  // 할인율·별점·찜하기 같은 판단 재료는 일반 검색에서만 쓰인다
+  it("비교할 자리를 채우러 왔으면 찜하기·할인율·별점 없이 이름과 가격만 보인다", () => {
+    renderWith("?q=퍼피&slot=1");
+
+    expect(screen.queryByRole("button", { name: /찜하기/ })).toBeNull();
+    expect(screen.queryByText(/적합도/)).toBeNull();
+    expect(screen.queryByText(/하루 예상 급여비/)).toBeNull();
+    expect(screen.getByText("퍼피 성장기 사료 1kg")).toBeDefined();
+    expect(screen.getByText("21,000원")).toBeDefined();
   });
 });

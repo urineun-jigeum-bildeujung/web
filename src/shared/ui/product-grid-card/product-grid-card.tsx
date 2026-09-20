@@ -8,9 +8,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IoCheckmarkCircle, IoImageOutline } from "react-icons/io5";
+import { IoImageOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 import { calcDiscountRate, formatWon } from "@/shared/ui/price/price";
 
 type ProductGridCardProps = {
@@ -65,25 +66,25 @@ export function ProductGridCard({
 
   const body = (
     <>
-      <div
-        className={cn(
-          "relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-muted",
-          selectable && selected && "ring-2 ring-primary",
-        )}
-      >
+      <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-muted">
         {imageUrl ? (
           <Image src={imageUrl} alt="" fill className="object-cover" />
         ) : (
           <IoImageOutline aria-hidden className="size-8 text-muted-foreground" />
         )}
         {selectable && (
-          <IoCheckmarkCircle
+          // 시안(1117-6424)은 이미지 전체에 테두리를 두르지 않는다. 우상단 24px 원의
+          // 배경색만 바뀌고(#dddee3/#ff611d), 흰 체크 아이콘은 선택 여부와 무관하게
+          // 항상 보인다 — 선택 상태는 카드 버튼의 aria-pressed로 이미 전해진다
+          <span
             aria-hidden
             className={cn(
-              "absolute top-2 right-2 size-6",
-              selected ? "text-primary" : "text-muted-foreground/40",
+              "absolute top-2 right-2 flex size-6 items-center justify-center rounded-full",
+              selected ? "bg-surface-brand" : "bg-surface-disable",
             )}
-          />
+          >
+            <Icon name="check" className="size-4 text-icon-fill-static-white" />
+          </span>
         )}
         {imageBadge && <div className="absolute top-3 left-3 flex">{imageBadge}</div>}
       </div>
@@ -122,7 +123,9 @@ export function ProductGridCard({
         aria-pressed={selected}
         onClick={onSelect}
         className={cn(
-          "flex flex-col gap-2 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+          // button은 div와 달리 width:auto가 내용에 맞춰 줄어든다(폼 컨트롤의 내재적 크기 규칙).
+          // w-full이 없으면 그리드 칸 너비(모두 같음)를 안 채워 카드마다 이미지 크기가 들쭉날쭉해진다
+          "flex w-full flex-col gap-2 rounded-lg text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
           className,
         )}
       >
