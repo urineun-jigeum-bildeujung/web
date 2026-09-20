@@ -30,7 +30,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | --- | --- | --- | --- | --- |
 | `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
 | `/deals` | 타임딜 목록 | 공개 후보 | `status` 계약 미확정 | 스캐폴딩 |
-| `/recommendations` | 맞춤 추천 | 인증 필요 후보 | 추천 기준 `petId` 전달 방식 미확정 | 화면 유형 확인 필요 |
+| `/recommendations` | 맞춤 추천 | 인증 필요 후보 | 추천 기준 `petId` 전달 방식 미확정 | 메인 "맞춤 추천" 섹션 더보기로 진입하는 서브 화면(#273). `PageHeader` 사용 |
 | `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch`, `reviewFilter` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
 | `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `review`, `photo` | 구현됨 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
@@ -128,7 +128,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | --- | --- | --- |
 | 최초 서비스 소개와 프로필 등록 온보딩 | `/onboarding`은 현재 프로필 등록에 사용 | PM·PD |
 | 상품 상세 진입 경로별 분리 | `/products/[productId]` 하나로 재사용 | PM·PD |
-| 추천 화면 유형과 기준 프로필 | `/recommendations` 유지, `petId` 전달 방식 미정 | PM·PD·백엔드 |
+| 추천 화면 기준 프로필 | `/recommendations`는 메인 더보기로 진입하는 서브 화면으로 확정(#273). `petId` 전달 방식만 미정 | PM·백엔드 |
 | 카드 등록 방식 | 토스 결제위젯 대체 여부 미정 | PM·PD |
 | 결제 완료 주문 식별·PG 복귀 경로 | 실제 결제 승인은 아직 붙지 않았다. 대행사 계약과 사업자등록이 정해진 뒤 `/payment/done`에 승인·주문 식별을 붙인다 | 백엔드·결제 담당 |
 | 장바구니·결제 화면 간 데이터 전달 | `/cart`에서 고른 상품과 `/payment/address`에서 고른 배송지가 다음 화면에 반영되지 않는다. 라우터 구조(쿼리 vs 상태)가 정해진 뒤 붙인다 | PD·백엔드 |
