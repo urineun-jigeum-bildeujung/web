@@ -33,7 +33,7 @@ const DETAIL = {
   weight: 4,
   bcs: 3,
   healthConcerns: ["슬개골 탈구"],
-  allergyCodes: ["CHICKEN"],
+  allergies: [{ code: "CHICKEN", displayName: "닭고기" }],
   isDefault: true,
 };
 
@@ -135,12 +135,12 @@ test("아이 제품을 반응 입력 여부로 거른다", () => {
   expect(screen.getAllByRole("button", { name: /반응 남기기/ })).toHaveLength(2);
 });
 
-// 상세가 코드만 준다. 백엔드가 displayName을 실어 줄 때까지 받은 값을 그대로 보인다 —
-// 선택지를 따로 받아 짝을 맞추면 곧 사라질 우회를 위해 요청이 한 번 더 나간다
-test("알레르기를 받은 코드 그대로 보인다", () => {
+// 저장은 코드로 하지만 상세가 표시명을 함께 준다. 코드를 찍으면 사람이 읽지 못한다
+test("알레르기를 표시명으로 보인다", () => {
   renderView();
 
-  expect(screen.getByText("CHICKEN")).toBeDefined();
+  expect(screen.getByText("닭고기")).toBeDefined();
+  expect(screen.queryByText("CHICKEN")).toBeNull();
 });
 
 test("고른 아이의 품종·나이·성별을 한 줄로 보인다", () => {
