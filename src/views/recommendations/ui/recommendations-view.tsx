@@ -194,7 +194,7 @@ export function RecommendationsView() {
           >
             <SelectTrigger
               aria-label="정렬"
-              className="relative w-auto shrink-0 border-0 bg-transparent p-0 text-body-medium-14 text-text-body-secondary shadow-none after:absolute after:-inset-2.5 data-[size=default]:h-auto"
+              className="relative w-auto shrink-0 border-0 bg-transparent p-0 text-body-medium-14 text-text-body-secondary shadow-none after:absolute after:-inset-x-2.5 after:-inset-y-3 data-[size=default]:h-auto"
             >
               <SelectValue />
             </SelectTrigger>
