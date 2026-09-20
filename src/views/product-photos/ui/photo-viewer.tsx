@@ -11,7 +11,6 @@
 
 import { useState } from "react";
 import { IoChevronBack, IoChevronForward, IoClose, IoImageOutline } from "react-icons/io5";
-import { toast } from "sonner";
 
 import { ReviewCard, type MockReview } from "@/entities/review";
 import { cn } from "@/shared/lib/utils";
@@ -25,6 +24,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog";
 import { Icon } from "@/shared/ui/icon/icon";
+import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
 type PhotoViewerProps = {
   review: MockReview;
@@ -133,22 +133,7 @@ export function PhotoViewer({
             aria-pressed={liked}
             onClick={() => {
               setLiked(!liked);
-              if (!liked)
-                // margin-bottom을 쓰면 sonner의 스택 높이 계산에 끼어 토스트가 여러 개
-                // 쌓일 때 간격이 벌어진다(product-detail-view.tsx에서 이미 확인한 버그).
-                // position:relative + bottom으로 옮기고, 바깥 래퍼는 pointer-events-none으로
-                // 둬 뒤에 깔린 화면을 막지 않게 한다
-                toast.custom(
-                  () => (
-                    <div
-                      role="status"
-                      className="pointer-events-auto relative bottom-13 flex min-h-9.5 w-[calc(100vw-40px)] max-w-88.25 items-center rounded-lg bg-surface-primary px-3 py-2 text-text-label-inverse"
-                    >
-                      <span className="text-body-medium-14">해당 상품을 찜 목록에 담았어요!</span>
-                    </div>
-                  ),
-                  { className: "pointer-events-none" },
-                );
+              if (!liked) showSnackbar("해당 상품을 찜 목록에 담았어요!");
             }}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
