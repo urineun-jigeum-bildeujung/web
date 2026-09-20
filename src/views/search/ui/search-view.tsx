@@ -132,8 +132,9 @@ export function SearchView() {
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="상품을 검색해보세요"
             // 시안(1117-9724·1117-6366)은 알약 모양이 아니라 8px 모서리에 옅은 회색(#eeeff1)
-            // 채움이고, 클릭·입력 중에도 테두리·포커스 링이 생기지 않는다
-            className="h-11 rounded-lg border-0 bg-secondary px-10 focus-visible:border-0 focus-visible:ring-0"
+            // 채움이고, 클릭·입력 중에도 테두리는 생기지 않는다. 다만 키보드 포커스
+            // 표시 자체를 없애면 안 되므로(코드래빗 지적) 테두리 대신 링으로 표시한다
+            className="h-11 rounded-lg border-0 bg-secondary px-10 focus-visible:border-0 focus-visible:ring-2 focus-visible:ring-ring"
           />
           {typing && (
             <button

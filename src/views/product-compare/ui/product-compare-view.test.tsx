@@ -88,6 +88,16 @@ test("검색으로 갈 때 반대쪽 자리의 현재 상품 id를 함께 전달
   expect(push).toHaveBeenCalledWith("/search?slot=0&other=1");
 });
 
+// 정상 흐름(goSelect)은 절대 같은 id를 만들지 않지만, 주소를 손으로 조작하면
+// product와 other가 같은 값일 수 있다. 그대로 믿으면 두 자리가 같은 상품이 되어
+// React key가 겹친다(코드리뷰 지적)
+test("product와 other가 같은 id면 반대쪽 자리를 비운다", () => {
+  renderView("?slot=0&product=1&other=1");
+
+  expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
+  expect(screen.getAllByText("중소형견 소포장 사료 1kg")).toHaveLength(1);
+});
+
 // 자리를 비우고 검색을 한 바퀴 돌고 와도 비운 자리가 화면 확인용 기본값으로
 // 되살아나지 않아야 한다. "other" 자체가 없는 것과 구분하려고 "none"을 쓴다
 test("두 자리를 다 비우고 검색에 가면 other가 none으로 담긴다", () => {
