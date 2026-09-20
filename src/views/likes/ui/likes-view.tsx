@@ -1,5 +1,6 @@
 // 찜한 상품·최근에 본 상품·자주 산 상품을 탭으로 나눠 본다.
-// 와이어프레임 기준(like_001_찜, like_001_최근, like_001_최근 삭제)이라 디자인 확정 시 바뀔 수 있다.
+// UI 시안 기준(#274, 찜 탭 1117-4972, 빈 상태 2022-158710)이다. "최근에 봤어요"·
+// "자주 샀어요"는 이번 시안에 없어 와이어프레임 스타일을 그대로 둔다.
 
 "use client";
 
@@ -7,8 +8,9 @@ import Link from "next/link";
 
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
-import { IoClose, IoHeart } from "react-icons/io5";
+import { IoClose } from "react-icons/io5";
 
+import { BottomNav } from "@/widgets/bottom-nav";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,29 +23,29 @@ import {
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
-import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { Icon } from "@/shared/ui/icon/icon";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
-import { Icon } from "@/shared/ui/icon/icon";
 
 const TABS = ["liked", "recent", "often"] as const;
 
-const CATEGORIES = [
+// 찜 탭 전용 필터. 상품 종류가 아니라 알림 상태로 거른다(#274, 1117-4972 chip 줄).
+// "새 알림"·"확인한 알림"이 정확히 무엇에 대한 알림인지(재입고·가격 인하 등)는
+// Figma에 문구가 없어 PD팀 확인 대기 중이다(개인 QA 기록) — 우선 시안 라벨만 옮긴다
+const NOTICES = [
   { value: "all", label: "전체" },
-  { value: "food", label: "사료" },
-  { value: "snack", label: "간식" },
-  { value: "supplement", label: "영양제" },
+  { value: "new", label: "새 알림" },
+  { value: "seen", label: "확인한 알림" },
 ] as const;
-
-/** 주소로 받을 수 있는 값. 목록에 없는 값이 오면 목록이 통째로 빈다 */
-const CATEGORY_VALUES = ["all", "food", "snack", "supplement"] as const;
+const NOTICE_VALUES = ["all", "new", "seen"] as const;
 
 type Product = {
   id: string;
   name: string;
   price: number;
   originalPrice: number;
-  category: string;
+  /** 찜 탭에만 있다. 의미가 확정되지 않아 있음/없음 정도로만 둔다 */
+  notice?: "new" | "seen";
   /** 자주 산 상품에만 있는 것 */
   boughtCount?: number;
   lastBought?: string;
@@ -51,19 +53,35 @@ type Product = {
 
 /** API 연동 전까지 화면 확인용 값 */
 const MOCK: Record<(typeof TABS)[number], Product[]> = {
-  liked: Array.from({ length: 4 }, (_, index) => ({
-    id: `l${index}`,
-    name: "그레인프리 연어 사료 2kg",
-    price: 31200,
-    originalPrice: 39000,
-    category: ["food", "snack", "supplement", "food"][index],
-  })),
+  liked: [
+    {
+      id: "l0",
+      name: "그레인프리 연어 사료 2kg",
+      price: 25600,
+      originalPrice: 32000,
+      notice: "new",
+    },
+    {
+      id: "l1",
+      name: "그레인프리 연어 사료 2kg",
+      price: 31200,
+      originalPrice: 39000,
+      notice: "seen",
+    },
+    {
+      id: "l2",
+      name: "그레인프리 연어 사료 2kg",
+      price: 31200,
+      originalPrice: 39000,
+      notice: "new",
+    },
+    { id: "l3", name: "그레인프리 연어 사료 2kg", price: 31200, originalPrice: 39000 },
+  ],
   recent: Array.from({ length: 4 }, (_, index) => ({
     id: `r${index}`,
     name: "그레인프리 연어 사료 2kg",
     price: 31200,
     originalPrice: 39000,
-    category: "food",
   })),
   often: [
     {
@@ -71,7 +89,6 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      category: "food",
       lastBought: "마지막 구매 2주 전",
     },
     {
@@ -79,7 +96,6 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      category: "food",
       boughtCount: 4,
     },
     {
@@ -87,7 +103,6 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      category: "food",
       boughtCount: 5,
     },
     {
@@ -95,7 +110,6 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      category: "food",
     },
   ],
 };
@@ -120,16 +134,16 @@ export function LikesView() {
     // nuqs 기본값 replace는 히스토리에 쌓지 않아 화면을 통째로 떠난다
     parseAsStringLiteral(TABS).withDefault("liked").withOptions({ history: "push" }),
   );
-  const [category, setCategory] = useQueryState(
-    "category",
-    parseAsStringLiteral(CATEGORY_VALUES).withDefault("all"),
+  const [notice, setNotice] = useQueryState(
+    "notice",
+    parseAsStringLiteral(NOTICE_VALUES).withDefault("all"),
   );
   const [items, setItems] = useState(MOCK);
   const [removing, setRemoving] = useState<Product | null>(null);
 
   const visible =
-    tab === "liked" && category !== "all"
-      ? items.liked.filter((item) => item.category === category)
+    tab === "liked" && notice !== "all"
+      ? items.liked.filter((item) => item.notice === notice)
       : items[tab];
 
   const remove = (id: string) => {
@@ -149,48 +163,93 @@ export function LikesView() {
   );
 
   // 찜 탭의 하트는 푸는 자리다. 누르면 목록에서 빠지므로 다른 탭과 같이 확인을 거친다.
+  // 시안(1117-4972의 slot_4)은 흰 원판(32px) 위에 채워진 하트, 사진 오른쪽 아래 4px이다
   const heartButton = (product: Product) => (
     <button
       type="button"
       onClick={() => setRemoving(product)}
       aria-pressed
       aria-label={`${product.name} 찜 풀기`}
-      className="flex size-11 items-center justify-center text-foreground"
+      className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static after:absolute after:-inset-1.5"
     >
-      <IoHeart aria-hidden className="size-5" />
+      <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
     </button>
   );
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader leading="none" title="좋아요" />
+      {/* 시안 header/type=logo. /likes는 바텀내비 탭 루트라 home-view와 같은 헤더를 쓴다 —
+          지금 코드는 뒤로가기 있는 PageHeader였는데, 서브 화면이 아니라 탭 루트라 맞지 않았다 */}
+      <header className="flex h-12 items-center justify-between px-5">
+        <p className="text-title-bold-18 text-brand">골라주개냥</p>
+        <nav
+          aria-label="바로 가기"
+          className="flex items-center gap-2.25 text-icon-stroke-tertiary"
+        >
+          <Link
+            href="/search"
+            aria-label="검색"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+          >
+            <Icon name="search" className="size-7" />
+          </Link>
+          <Link
+            href="/mypage/notifications"
+            aria-label="알림"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+          >
+            <Icon name="bell_noti" className="size-7" />
+          </Link>
+          <Link
+            href="/cart"
+            aria-label="장바구니"
+            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+          >
+            <Icon name="cart" className="size-7" />
+          </Link>
+        </nav>
+      </header>
 
-      <main className="flex flex-1 flex-col px-4 pb-8">
+      <main className="flex flex-1 flex-col pb-8">
         <Tabs value={tab} onValueChange={(next) => void setTab(next as (typeof TABS)[number])}>
-          <TabsList className="w-full">
-            <TabsTrigger value="liked" className="flex-1">
+          {/* 시안(1117-4999)은 3등분 밑줄 탭이다 — 고른 탭만 굵게+검정 밑줄, 나머지는
+              회색 글자다. variant="line"의 밑줄을 시안 두께(1.5px)·위치(바로 아래)로 옮긴다 */}
+          <TabsList variant="line" className="h-auto w-full gap-0 rounded-none bg-transparent p-0">
+            <TabsTrigger
+              value="liked"
+              className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
+            >
               찜했어요
             </TabsTrigger>
-            <TabsTrigger value="recent" className="flex-1">
+            <TabsTrigger
+              value="recent"
+              className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
+            >
               최근에 봤어요
             </TabsTrigger>
-            <TabsTrigger value="often" className="flex-1">
+            <TabsTrigger
+              value="often"
+              className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
+            >
               자주 샀어요
             </TabsTrigger>
           </TabsList>
 
           {TABS.map((value) => (
             <TabsContent key={value} value={value} className="flex flex-col gap-4 pt-4">
-              {/* 종류로 거르는 것은 찜 탭에만 있다 */}
-              {value === "liked" && (
-                <FilterChips
-                  label="상품 종류 고르기"
-                  options={CATEGORIES}
-                  value={category}
-                  onValueChange={(next) =>
-                    void setCategory(next as (typeof CATEGORY_VALUES)[number])
-                  }
-                />
+              {/* 알림 상태로 거르는 것은 찜 탭에만 있다(시안 1117-4972). 칩 자체(36px 알약,
+                  고른 것만 bg-primary)는 FilterChips와 정확히 같은 시안값이라 그대로 쓴다.
+                  빈 상태 시안(2022-158710)엔 칩 줄 자체가 없어, 찜한 상품이 하나도 없을
+                  때는(거른 결과가 아니라 원본이 빈 것) 칩도 같이 감춘다 */}
+              {value === "liked" && items.liked.length > 0 && (
+                <div className="px-5">
+                  <FilterChips
+                    label="알림 상태 고르기"
+                    options={NOTICES}
+                    value={notice}
+                    onValueChange={(next) => void setNotice(next as (typeof NOTICE_VALUES)[number])}
+                  />
+                </div>
               )}
 
               {visible.length === 0 ? (
@@ -201,7 +260,7 @@ export function LikesView() {
                   className="flex-1"
                 />
               ) : (
-                <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+                <ul className="grid grid-cols-2 gap-x-3 gap-y-5 px-5">
                   {visible.map((product) => (
                     <li key={product.id} className="flex">
                       <ProductGridCard
@@ -210,7 +269,11 @@ export function LikesView() {
                         name={product.name}
                         price={product.price}
                         originalPrice={product.originalPrice}
-                        // 찜 탭은 하트로 빼고, 나머지는 X로 지운다
+                        // 찜 탭만 시안이 확정돼 우측 하단 4px로 옮긴다. 나머지 탭은
+                        // 확정 시안이 없어 공용 기본 위치(우상단)를 그대로 둔다
+                        imageActionClassName={
+                          value === "liked" ? "top-auto right-1 bottom-1" : undefined
+                        }
                         imageAction={
                           value === "liked" ? heartButton(product) : closeButton(product)
                         }
@@ -244,6 +307,10 @@ export function LikesView() {
           ))}
         </Tabs>
       </main>
+
+      {/* 시안(1117-4972)의 navigation 인스턴스다. /likes는 BottomNav의 네 경로 중 하나라
+          "좋아요" 탭이 그대로 켜진다(#273의 /recommendations와 다른 점) */}
+      <BottomNav />
 
       {/* 빼기는 되돌릴 수 없어 확인 창으로 막는다 */}
       <AlertDialog open={removing !== null} onOpenChange={(open) => !open && setRemoving(null)}>
