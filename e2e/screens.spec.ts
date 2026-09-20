@@ -69,10 +69,10 @@ const ROUTES = [
   "/mypage/address/search",
   "/mypage/pets",
   "/mypage/pets?tab=products",
-  "/mypage/pets/basic",
-  "/mypage/pets/body",
-  "/mypage/pets/health",
-  "/mypage/pets/basic?picking=breed",
+  "/mypage/pets/basic?petId=3",
+  "/mypage/pets/body?petId=3",
+  "/mypage/pets/health?petId=3",
+  "/mypage/pets/basic?petId=3&picking=breed",
   "/mypage/restock",
   "/mypage/recently-viewed",
   "/mypage/reviews",
@@ -253,7 +253,7 @@ test.describe("넓은 화면", () => {
 
 // 화면을 오갈 때 입력하던 값이 남는지 본다. 별도 라우트로 나가면 언마운트로 날아간다.
 test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ page }) => {
-  await page.goto("/mypage/pets/basic", { waitUntil: "networkidle" });
+  await page.goto("/mypage/pets/basic?petId=3", { waitUntil: "networkidle" });
 
   const name = page.getByRole("textbox", { name: "아이의 이름을 알려주세요" });
   await name.fill("보리");
@@ -269,7 +269,7 @@ test("품종을 고르고 돌아와도 입력하던 값이 남는다", async ({ 
 // 상단 뒤로가기가 화면을 벗어나면 안 된다. nuqs가 쿼리를 replace로 넣어 router.back()이 이 화면을 지나친다.
 test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다", async ({ page }) => {
   await page.goto("/mypage/pets", { waitUntil: "networkidle" });
-  await page.goto("/mypage/pets/basic", { waitUntil: "networkidle" });
+  await page.goto("/mypage/pets/basic?petId=3", { waitUntil: "networkidle" });
 
   await page.getByRole("button", { name: /품종 고르기/ }).click();
   await expect(page.getByRole("heading", { name: "품종선택" })).toBeVisible();

@@ -47,3 +47,36 @@ test("다른 아이를 고르면 그 아이의 값으로 바뀐다", async ({ pa
   await expect(page.getByText("3.5kg")).toBeVisible();
   await expect(page.getByText("말티즈 · 4세 · 여자아이")).toHaveCount(0);
 });
+
+// 수정 API가 없어 붙이지 못하던 화면들이다(#268). 라우트가 아이를 가리지 않아
+// 쿼리로 넘기는데, 빠지면 저장된 값을 받지 못한다
+test("체형 수정이 저장된 값으로 열리고 고친 것만 보낸다", async ({ page }) => {
+  const sent: unknown[] = [];
+  page.on("request", (request) => {
+    if (request.method() === "PATCH" && request.url().includes("/members/me/pets/")) {
+      sent.push(request.postDataJSON());
+    }
+  });
+
+  await page.goto("/mypage/pets/body?petId=3");
+
+  // 저장된 값이 채워진 채로 열린다
+  await expect(page.getByLabel("코코의 대략적인 몸무게를 알려주세요")).toHaveValue("4");
+
+  await page.getByLabel("코코의 대략적인 몸무게를 알려주세요").fill("5.5");
+  await page.getByRole("button", { name: "수정완료" }).click();
+
+  await expect.poll(() => sent.length).toBe(1);
+  // 이름·나이는 이 화면이 고치지 않는다. 함께 보내면 덮어쓴다
+  expect(sent[0]).toEqual({ size: "SMALL", weight: 5.5, bcs: 3 });
+});
+
+test("고칠 아이를 모르면 그 사실을 알린다", async ({ page }) => {
+  await page.goto("/mypage/pets/body");
+
+  // 토스트 영역도 alert이라 본문으로 좁힌다
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "고칠 아이를 찾지 못했어요",
+  );
+  await expect(page.getByRole("button", { name: "수정완료" })).toBeDisabled();
+});

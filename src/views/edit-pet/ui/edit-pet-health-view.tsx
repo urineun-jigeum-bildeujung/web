@@ -8,37 +8,28 @@
 
 import { useState } from "react";
 
-import { HealthPickerField, useQueryHealthOptions, type PetSpecies } from "@/entities/pet";
+import { HealthPickerField, useQueryHealthOptions, type PetDetail } from "@/entities/pet";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 
+import { useEditPet } from "../model/use-edit-pet";
 import { EditPetScreen } from "./edit-pet-screen";
+import { EditPetStatus } from "./edit-pet-status";
 
-type SavedHealth = {
-  /** 질환 갈래가 종별로 달라 함께 든다 */
-  species: PetSpecies;
-  concern: string[];
-  noConcern: boolean;
-  allergy: string[];
-  noAllergy: boolean;
+type HealthFormProps = {
+  pet: PetDetail;
+  isSaving: boolean;
+  onSave: (patch: { healthConcerns: string[]; allergies: string[] }) => void;
 };
 
-/** API 연동 전까지 화면 확인용 값 */
-// 해당 없음이 켜진 항목은 값을 비워 둔다. 체크를 끄면 다시 답을 받아야 한다.
-const SAVED: SavedHealth = {
-  species: "dog",
-  concern: ["슬개골 탈구"],
-  noConcern: false,
-  allergy: [],
-  noAllergy: true,
-};
-
-export function EditPetHealthView() {
+function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
   // 갈래도 항목도 종마다 다르다. 저장된 아이의 종으로 받는다
-  const { options, isLoading, error } = useQueryHealthOptions(SAVED.species);
-  const [concern, setConcern] = useState(SAVED.concern);
-  const [noConcern, setNoConcern] = useState(SAVED.noConcern);
-  const [allergy, setAllergy] = useState(SAVED.allergy);
-  const [noAllergy, setNoAllergy] = useState(SAVED.noAllergy);
+  const { options, isLoading, error } = useQueryHealthOptions(pet.species);
+  // 빈 배열은 "해당 없음"으로 답한 것이다 — 안 고른 것과 없다고 답한 것을 서버가
+  // 가리지 못해, 비어 있으면 켠 것으로 읽는다
+  const [concern, setConcern] = useState(pet.healthConcerns);
+  const [noConcern, setNoConcern] = useState(pet.healthConcerns.length === 0);
+  const [allergy, setAllergy] = useState(pet.allergies.map((item) => item.code));
+  const [noAllergy, setNoAllergy] = useState(pet.allergies.length === 0);
 
   const concernAnswered = concern.length > 0 || noConcern;
   const allergyAnswered = allergy.length > 0 || noAllergy;
@@ -48,7 +39,16 @@ export function EditPetHealthView() {
   const optionsReady = Boolean(options) && !error;
 
   return (
-    <EditPetScreen submitDisabled={!optionsReady || !concernAnswered || !allergyAnswered}>
+    <EditPetScreen
+      submitDisabled={!optionsReady || !concernAnswered || !allergyAnswered}
+      submitting={isSaving}
+      onSubmit={() =>
+        onSave({
+          healthConcerns: noConcern ? [] : concern,
+          allergies: noAllergy ? [] : allergy,
+        })
+      }
+    >
       <div className="flex flex-col gap-5 px-5">
         {/* 대기 표시 없음 — 고르는 자리가 잠긴 채 회색으로 차 있어 자리가 무너지지 않는다.
             Skeleton으로 덮으면 "왜 못 고치는지"를 말해 주는 이 문구가 사라진다.
@@ -124,4 +124,19 @@ export function EditPetHealthView() {
       </div>
     </EditPetScreen>
   );
+}
+
+export function EditPetHealthView() {
+  const { pet, missingPetId, isLoading, error, isSaving, save } = useEditPet();
+
+  if (!pet) {
+    return (
+      <EditPetScreen submitDisabled>
+        <EditPetStatus missingPetId={missingPetId} isLoading={isLoading} error={error} />
+      </EditPetScreen>
+    );
+  }
+
+  // 아이가 바뀌면 고른 값도 그 아이의 것으로 새로 시작해야 한다
+  return <HealthForm key={pet.id} pet={pet} isSaving={isSaving} onSave={save} />;
 }
