@@ -3,7 +3,10 @@ import { render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  usePathname: () => "/recommendations",
+}));
 
 import { RecommendationsView } from "./recommendations-view";
 
@@ -33,15 +36,40 @@ describe("RecommendationsView", () => {
     expect(screen.getByText(/건강 고민을 바탕으로 추천해요/)).toBeDefined();
   });
 
-  it("고민을 바꾸면 목록도 바뀐다", () => {
-    const { unmount } = renderWith("?concern=joint");
-    const joint = screen.getAllByRole("listitem").map((el) => el.textContent);
+  it("분류를 바꾸면 목록도 바뀐다", () => {
+    const { unmount } = renderWith("?category=food");
+    const food = screen.getAllByRole("listitem").map((el) => el.textContent);
     unmount();
 
-    renderWith("?concern=dental");
-    const dental = screen.getAllByRole("listitem").map((el) => el.textContent);
+    renderWith("?category=snack");
+    const snack = screen.getAllByRole("listitem").map((el) => el.textContent);
 
-    // 칩을 눌러도 같은 목록이면 거른 것이 아니다
-    expect(joint).not.toEqual(dental);
+    // 탭을 눌러도 같은 목록이면 거른 것이 아니다
+    expect(food).not.toEqual(snack);
+  });
+
+  it("전체 탭은 모든 분류를 보여준다", () => {
+    const { unmount } = renderWith("?category=food");
+    const food = screen.getAllByRole("listitem").length;
+    unmount();
+
+    renderWith("?category=all");
+    const all = screen.getAllByRole("listitem").length;
+
+    expect(all).toBeGreaterThan(food);
+  });
+
+  // 메인 "맞춤 추천" 더보기로 들어오는 서브 화면이라 뒤로가기가 있어야 한다.
+  // 시안 헤더(로고형)와 다르게 유지하기로 한 것을 여기서 고정해 둔다(#273)
+  it("머리말에 뒤로가기가 있다", () => {
+    renderWith();
+    expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
+  });
+
+  // 정렬은 분류와 같이 주소에 남아야 한다. 상품 상세에 갔다 돌아와도 유지돼야 하기 때문이다
+  it("주소로 받은 정렬 기준대로 목록을 늘어놓는다", () => {
+    renderWith("?sort=rating-low");
+    const low = screen.getAllByRole("listitem").map((el) => el.textContent);
+    expect(low[0]).toMatch(/적합도 57점/);
   });
 });
