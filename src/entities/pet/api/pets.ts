@@ -31,10 +31,17 @@ type PetDetailResponse = {
   weight: number;
   bcs: number;
   healthConcerns: string[];
-  /** `CHICKEN` 같은 코드다. 표시명은 `GET /pets/health-options`에서 되찾는다 */
-  allergies: string[];
+  /** 등록 선택지(`GET /pets/health-options`)와 같은 모양이다 */
+  allergies: { code: string; displayName: string }[];
   image: string | null;
   isDefault: boolean;
+};
+
+/** 알레르기 한 항목. 저장값과 보일 이름을 함께 든다 */
+export type AllergyOption = {
+  /** `CHICKEN` 같은 코드 */
+  code: string;
+  displayName: string;
 };
 
 /** 아이 전환 줄이 쓰는 최소 정보 */
@@ -62,8 +69,13 @@ export type PetDetail = {
   /** 체형 1~5. 화면 슬라이더는 0부터 세므로 옮길 때 하나를 뺀다 */
   bcs: number;
   healthConcerns: string[];
-  /** 코드 배열이다. 표시명이 필요하면 `toAllergyLabels`를 쓴다 */
-  allergyCodes: string[];
+  /**
+   * 알레르기. 저장은 `code`로 하고 화면에는 `displayName`을 보인다.
+   *
+   * **상세 조회가 코드만 주던 때가 있었다.** 그때는 선택지를 따로 받아 짝을 맞추거나
+   * 코드를 그대로 보여야 했는데, 백엔드가 표시명을 함께 싣기로 하면서 사라진 문제다.
+   */
+  allergies: AllergyOption[];
   photoUrl?: string;
   isDefault: boolean;
 };
@@ -107,7 +119,7 @@ export async function getPetDetail(petId: string): Promise<PetDetail> {
     weight: pet.weight,
     bcs: pet.bcs,
     healthConcerns: pet.healthConcerns,
-    allergyCodes: pet.allergies,
+    allergies: pet.allergies,
     ...(pet.image && { photoUrl: pet.image }),
     isDefault: pet.isDefault,
   };

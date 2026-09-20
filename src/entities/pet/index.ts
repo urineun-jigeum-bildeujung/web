@@ -28,6 +28,12 @@ export { HealthPickerField } from "./ui/health-picker-field";
 export { type HealthGroup, type HealthOption } from "./model/health";
 export { getHealthOptions, type HealthOptions } from "./api/health-options";
 export { useQueryHealthOptions } from "./api/use-query-health-options";
-export { getPets, getPetDetail, type PetListItem, type PetDetail } from "./api/pets";
+export {
+  getPets,
+  getPetDetail,
+  type AllergyOption,
+  type PetListItem,
+  type PetDetail,
+} from "./api/pets";
 export { useQueryPets } from "./api/use-query-pets";
 export { useQueryPetDetail } from "./api/use-query-pet-detail";

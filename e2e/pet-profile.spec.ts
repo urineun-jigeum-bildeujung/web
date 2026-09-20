@@ -16,11 +16,12 @@ test("고른 아이의 품종·나이·성별과 몸무게를 보인다", async 
   await expect(page.getByText("보통")).toBeVisible();
 });
 
-// 상세가 코드만 준다. 백엔드가 displayName을 실어 줄 때까지 받은 값을 그대로 보인다
-test("알레르기를 받은 코드 그대로 보인다", async ({ page }) => {
+// 저장은 코드로 하지만 상세가 표시명을 함께 준다. 코드를 찍으면 사람이 읽지 못한다
+test("알레르기를 표시명으로 보인다", async ({ page }) => {
   await page.goto("/mypage/pets");
 
-  await expect(page.getByText("CHICKEN")).toBeVisible();
+  await expect(page.getByText("닭고기")).toBeVisible();
+  await expect(page.getByText("CHICKEN")).toHaveCount(0);
 });
 
 // 목록에 ORDER BY가 없어 순서가 DB에 달렸다. 기본 아이가 처음 고른 아이여야 한다

@@ -22,7 +22,7 @@ const DETAIL = {
   weight: 4.2,
   bcs: 3,
   healthConcerns: ["슬개골 탈구"],
-  allergies: ["CHICKEN"],
+  allergies: [{ code: "CHICKEN", displayName: "닭고기" }],
   image: null,
   isDefault: true,
 };
@@ -88,12 +88,12 @@ test("상세의 enum을 화면 값으로 옮긴다", async () => {
   });
 });
 
-// 표시명은 선택지에서 되찾는다. 여기서는 코드를 잃지 않고 넘기는 것까지 본다
-test("알레르기는 코드 그대로 넘긴다", async () => {
+// 저장은 코드로 하고 화면에는 표시명을 보인다. 둘 다 잃지 않고 넘겨야 한다
+test("알레르기는 코드와 표시명을 함께 넘긴다", async () => {
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(DETAIL)));
 
   const pet = await getPetDetail("3");
 
-  expect(pet.allergyCodes).toEqual(["CHICKEN"]);
+  expect(pet.allergies).toEqual([{ code: "CHICKEN", displayName: "닭고기" }]);
   expect(pet.healthConcerns).toEqual(["슬개골 탈구"]);
 });

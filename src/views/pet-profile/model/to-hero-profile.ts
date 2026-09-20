@@ -16,9 +16,8 @@ function formatWeight(weight: number): string {
 /**
  * 아이 한 마리를 카드 모양으로 옮긴다.
  *
- * **알레르기는 받은 코드를 그대로 보인다.** 상세가 `CHICKEN` 같은 코드만 주는데, 백엔드가
- * 상세에도 `displayName`을 실어 주기로 했다. 그때까지 선택지를 따로 받아 짝을 맞추지 않는다 —
- * 곧 사라질 우회를 위해 화면마다 요청을 한 번 더 보내게 된다(#230).
+ * **알레르기는 상세가 준 표시명을 그대로 쓴다.** 저장은 코드로 하지만 상세 응답이
+ * `{ code, displayName }`을 함께 주므로 선택지를 따로 받을 일이 없다(#267).
  */
 export function toHeroProfile(pet: PetDetail): PetHeroProfile {
   const gender = GENDER_OPTIONS.find((option) => option.value === pet.gender)?.label ?? "";
@@ -30,7 +29,7 @@ export function toHeroProfile(pet: PetDetail): PetHeroProfile {
     // 서버는 체형을 1부터, 화면 눈금은 0부터 센다
     bodyType: BODY_TYPE_OPTIONS[pet.bcs - 1] ?? "",
     concerns: pet.healthConcerns,
-    allergies: pet.allergyCodes,
+    allergies: pet.allergies.map((item) => item.displayName),
     ...(pet.photoUrl && { photoUrl: pet.photoUrl }),
   };
 }
