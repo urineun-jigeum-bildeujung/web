@@ -4,7 +4,7 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/recommendations-view.tsx` | 상품 둘러보기 |
+| `ui/recommendations-view.tsx` | 맞춤 추천 |
 | `ui/recommendations-view.test.tsx` | 적합도가 문장으로도 읽히는지, 아이를 고를 수 있는지, 분류를 바꾸면 목록이 바뀌는지 본다 |
 | `index.ts` | 공개 API |
 
