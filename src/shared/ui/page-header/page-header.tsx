@@ -42,8 +42,10 @@ export function PageHeader({
     <header
       // 좌우 슬롯 폭이 달라도 제목이 화면 중앙에 오도록 3열 그리드로 잡는다.
       // justify-between으로 두면 오른쪽에 버튼을 더할 때마다 제목이 밀린다.
+      // 좌우 여백은 Figma 공용 header 컴포넌트(1136-19080·1482-27507·1568-70276·
+      // 1568-84544·2022-157282 등, 220여 곳에 쓰인 것 중 표본 확인) 그대로 20px이다
       className={cn(
-        "grid h-12 grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] items-center gap-2 px-2",
+        "grid h-12 grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)] items-center gap-2 px-5",
         className,
       )}
       {...props}
@@ -74,8 +76,13 @@ export function PageHeader({
       )}
 
       {/* 시안(1758-69162)의 알림·장바구니 등 오른쪽 아이콘은 회색(#868b94, icon-stroke-tertiary)이다.
-          자식이 스스로 색을 정하면(예: 닫기 X) 그대로 우선한다 — 여기 색은 물려주는 기본값일 뿐이다 */}
-      <div className="flex items-center justify-end gap-1 text-icon-stroke-tertiary">{right}</div>
+          자식이 스스로 색을 정하면(예: 닫기 X) 그대로 우선한다 — 여기 색은 물려주는 기본값일 뿐이다.
+          간격도 공용 header 컴포넌트와 같다 — 33px 슬롯에 28px 아이콘이 가운데 있고 슬롯 사이
+          4px라, 아이콘끼리는 4+2.5+2.5=9px 떨어진다. 여기서는 슬롯 없이 아이콘을 바로 넣으므로
+          그 9px을 gap으로 준다 */}
+      <div className="flex items-center justify-end gap-2.25 text-icon-stroke-tertiary">
+        {right}
+      </div>
     </header>
   );
 }

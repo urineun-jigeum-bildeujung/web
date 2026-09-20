@@ -255,9 +255,9 @@ export function ProductCompareView() {
       <PageHeader
         title="상품비교"
         right={
-          // home-view와 같은 순서(알림→장바구니)·아이콘 세트·탭 영역이다(1568-70276).
-          // 장바구니는 #214로 이미 나와 있어 링크로 잇는다. 시안의 첫 슬롯(touch_gudie)은
-          // 아이콘 없이 자리만 차지해 두 아이콘 사이 실제 간격을 만든다
+          // home-view와 같은 순서(알림→장바구니)·아이콘 세트다(1568-70276). 첫 슬롯은
+          // 시안(touch_gudie)처럼 아이콘 없이 자리만 차지한다 — PageHeader가 여백·간격을
+          // 공용 header 컴포넌트 값(20px·9px)으로 맞춰 주므로 여기선 아이콘만 놓는다
           <>
             <span aria-hidden className="size-7" />
             <Link
@@ -278,7 +278,8 @@ export function ProductCompareView() {
         }
       />
 
-      <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
+      {/* 시안(1117-6319)의 카드 영역 폭이 353px(393-353=40, 양쪽 20px)이다 */}
+      <main className="flex flex-1 flex-col gap-4 px-5 pb-4">
         <div className="flex items-start gap-4">
           {slots.map((product, index) => (
             <CompareSlot
