@@ -6,12 +6,12 @@
 
 "use client";
 
-import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
 import { useQueryMyReviews, type MyReviewItem } from "@/entities/review";
+import { formatDisplayDate } from "@/shared/lib/date/display-date";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -43,9 +43,19 @@ function Thumbnail({ src }: { src?: string }) {
   );
 }
 
-/** 응답의 `YYYY-MM-DD`를 시안의 `26.07.20` 꼴로. 날짜만 있는 값이라 시간대에 밀리지 않게 parseISO로 읽는다 */
-function shortDate(isoDate: string) {
-  return format(parseISO(isoDate), "yy.MM.dd");
+/**
+ * 작성일 한 줄. 응답의 `YYYY-MM-DD`를 시안의 `26.07.20` 꼴로 그린다.
+ *
+ * 읽을 수 없는 값이면 라벨까지 통째로 비운다 — `작성일`만 남으면 값을 잃은 것이 아니라
+ * 빈 날짜가 있는 것처럼 보인다.
+ */
+function WrittenDate({ isoDate }: { isoDate: string }) {
+  const date = formatDisplayDate(isoDate);
+  if (!date) {
+    return null;
+  }
+
+  return <p className="text-caption-regular-13 text-text-body-secondary">작성일 {date}</p>;
 }
 
 /** 받는 동안 잡아 둘 자리. 목록 한 줄과 같은 높이(날짜 한 줄 + 68px)다 */
@@ -76,9 +86,7 @@ function WrittenList({ items }: { items: MyReviewItem[] }) {
       className="flex flex-col gap-3 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       {/* 응답에 구매일이 없다. 시안의 그 자리에 작성일을 보인다 */}
-      <p className="text-caption-regular-13 text-text-body-secondary">
-        작성일 {shortDate(item.createdAt)}
-      </p>
+      <WrittenDate isoDate={item.createdAt} />
       <div className="flex h-17 items-center gap-3">
         <Thumbnail src={item.imageUrl} />
         <div className="flex h-full min-w-0 flex-1 flex-col gap-1">
