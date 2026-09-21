@@ -21,6 +21,7 @@ export {
   type PetProfileDraft,
   type PetSpecies,
 } from "./model/breeds";
+export { groupBreedsByBodySize, type BodySizeGroup } from "./model/body-groups";
 export { getBreeds, type Breed, type SpeciesBreed } from "./api/breeds";
 export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";

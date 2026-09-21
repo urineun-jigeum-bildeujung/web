@@ -24,6 +24,8 @@
 | `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다 (`mypa_021`, 리뷰 작성, 메인 홈화면) |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다 |
 | `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터 |
+| `model/body-groups.ts` | 리뷰 필터 품종 선택 화면(#264)용 체구그룹 상수와 `groupBreedsByBodySize` |
+| `model/body-groups.test.ts` | 정상 매칭·표기 차이·믹스·미매칭 기타 그룹 처리 |
 | `model/health.test.ts` | 고른 코드를 표시명으로 되돌리는 변환 |
 | `ui/health-picker-sheet.tsx` | 건강 관심사·알러지 성분을 탭으로 나눠 고르는 시트 (`onbo_004_바텀`) |
 | `ui/health-picker-field.tsx` | 그 시트를 여는 자리. 고른 것을 칩으로 되보인다 (`onbo_004`·`mypa_321`) |
@@ -38,6 +40,8 @@
 `PetProfileSelector`(아바타로 반려동물 전환)는 마이페이지 작업에서 만든다.
 
 **체구 문구는 UI 시안에서 소형·중형·대형으로 확정됐다.** 와이어프레임의 견종 기준 문구(소형견 등)는 쓰지 않는다. 몇 kg으로 가르는지는 `SIZE_GUIDE`에 있고 `SizeGuide` 말풍선이 보인다.
+
+**`SIZE_OPTIONS`와 `body-groups.ts`는 다른 개념이다.** `SIZE_OPTIONS`는 보호자가 직접 고르는 온보딩 체구(소형·중형·대형 3단계)고, `body-groups.ts`는 리뷰 필터 품종 선택 화면에서 품종을 묶어 보여주기 위한 체구그룹(초소형·소형·중형·대형·믹스)이다. 둘을 하나로 합치지 않는다.
 
 **질환 갈래는 종별로 다르다.** 서버가 종에 맞춰 걸러 준다 — 고양이에게 `십자인대 질환`을, 강아지에게 `헤어볼`을 보이면 "우리 아이 기준"이라는 전제가 무너진다. 알레르기도 마찬가지라 고양이 전용 `BONITO`, 강아지 전용 `INSECT` 같은 코드가 있다. **종이 바뀌면 앞서 고른 것을 비워야 한다** — 새 종에 없는 코드를 등록 요청에 실어 보내게 된다.
 
