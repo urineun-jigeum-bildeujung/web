@@ -10,14 +10,15 @@ import type { DealItem, TimeDealGroup, TimeDealList } from "@/entities/product";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
-const { showSnackbar, add } = vi.hoisted(() => ({
+const { showSnackbar, add, removeAsync } = vi.hoisted(() => ({
   showSnackbar: vi.fn(),
   add: vi.fn(),
+  removeAsync: vi.fn(),
 }));
 
-// 담기는 서버를 부른다. 이 화면 테스트의 관심은 담긴 뒤의 표시라 호출만 세운다 (#316)
+// 담기·빼기가 서버를 부른다. 이 화면 테스트의 관심은 그 뒤의 표시라 호출만 세운다 (#316)
 vi.mock("@/entities/cart", () => ({
-  useMutateCartItem: () => ({ add, isAdding: false }),
+  useMutateCartItem: () => ({ add, removeAsync, isAdding: false }),
 }));
 vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
@@ -182,7 +183,11 @@ describe("DealsView", () => {
       await screen.findByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기"),
     );
 
-    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기")).toBeDefined();
+    // **빼기도 서버를 탄다.** 로컬 목록만 지우면 장바구니에 줄이 남는다 (#316 리뷰)
+    expect(
+      await screen.findByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기"),
+    ).toBeDefined();
+    expect(removeAsync).toHaveBeenCalledWith({ itemType: "TIME_DEAL", itemId: 1 });
   });
 
   it("수량을 올리면 담기 버튼의 금액도 오른다", async () => {

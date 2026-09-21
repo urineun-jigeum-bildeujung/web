@@ -408,7 +408,7 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
   // QA가 빈 상태를 바로 보고 싶을 때 쓰는 개발용 스위치. 실제 딜 종료와는 별개다
   const [devForceEmpty, setDevForceEmpty] = useState(false);
 
-  const { add, isAdding } = useMutateCartItem();
+  const { add, removeAsync, isAdding } = useMutateCartItem();
 
   const addToCart = async (dealItemId: string, quantity: number) => {
     // **타임딜은 `TIME_DEAL`로 간다.** 상품과 딜이 id 공간을 따로 써서 종류 없이는
@@ -420,9 +420,12 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
     showSnackbar("장바구니에 담겼어요");
   };
 
-  const handleItemAction = (item: DealItem) => {
+  const handleItemAction = async (item: DealItem) => {
     const id = String(item.timeDealItemId);
     if (addedIds.includes(id)) {
+      // **서버에서도 뺀다.** 로컬 목록만 지우면 버튼은 "담기"로 돌아가는데 장바구니에는
+      // 그 줄이 남고, 다시 담으면 서버가 같은 줄의 수량을 더한다 (#316 리뷰)
+      await removeAsync({ itemType: "TIME_DEAL", itemId: item.timeDealItemId });
       setAddedIds((prev) => prev.filter((v) => v !== id));
       return;
     }
