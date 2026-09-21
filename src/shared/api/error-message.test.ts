@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 import { ApiError } from "./client";
-import { toAppMessageCode } from "./error-message";
+import { toAppMessageCode, MESSAGE_BY_ERROR_CODE } from "./error-message";
 import { ImageUploadError } from "./upload-image";
 
 const apiError = (status: number, errorCode?: string) =>
@@ -84,5 +84,105 @@ describe("toAppMessageCode", () => {
     for (const cause of cases) {
       expect(APP_MESSAGE[toAppMessageCode(cause)]).toBeDefined();
     }
+  });
+});
+
+/**
+ * **매핑에 적힌 코드가 백엔드에 실재하는지 본다.**
+ *
+ * 죽은 키는 조용히 지나간다 — 매핑이 안 걸려 기본 문구로 떨어질 뿐 오류가 나지 않는다.
+ * 그렇게 `AUTH_400`과 `PAYMENT_400_AMOUNT_MISMATCH` 둘이 오래 남아 있었다 (#310).
+ *
+ * 백엔드 소스를 여기서 읽을 수는 없으니, **대조해 확인한 목록을 적어 두고 그것과 견준다.**
+ * 서버가 코드를 바꾸면 이 목록도 함께 고쳐야 하고, 그 순간이 다시 대조할 때다.
+ */
+describe("서버 에러 코드와의 대조", () => {
+  /** 2026-09-22에 백엔드 소스에서 확인한 코드들 (`grep -rhoE '"[A-Z]+_[0-9]{3}_[A-Z_]+"'`) */
+  const SERVER_CODES = new Set([
+    "AUTH_400_INVALID_LOGIN_CODE",
+    "AUTH_400_INVALID_TOKEN",
+    "AUTH_403_MEMBER_ID_MISMATCH",
+    "AUTH_404_INVALID_AUTH",
+    "AUTH_429_TOO_MANY_REQUESTS",
+    "COMMON_400",
+    "COMMON_405",
+    "COMMON_500",
+    "MEMBER_400_DUPLICATE_AGREEMENT_TYPE",
+    "MEMBER_400_INVALID_ALLERGY",
+    "MEMBER_400_INVALID_BREED",
+    "MEMBER_400_INVALID_CONCERN",
+    "MEMBER_400_INVALID_IMAGE_EXTENSION",
+    "MEMBER_400_INVALID_PHONE_CODE",
+    "MEMBER_400_LAST_DEFAULT_ADDRESS",
+    "MEMBER_400_REQUIRED_AGREEMENT_NOT_AGREED",
+    "MEMBER_401_UNAUTHORIZED",
+    "MEMBER_403_FORBIDDEN_IMAGE",
+    "MEMBER_404_NOT_FOUND",
+    "MEMBER_404_NOT_FOUND_ADDRESS",
+    "MEMBER_404_NOT_FOUND_PET",
+    "MEMBER_404_NOT_FOUND_PRODUCT",
+    "MEMBER_409_ALREADY_HAVE_NICKNAME",
+    "MEMBER_409_ALREADY_SIGNED_UP",
+    "ORDER_400_INVALID_CLAIM_TYPE",
+    "ORDER_400_INVALID_CURSOR",
+    "ORDER_403_OWNER_MISMATCH",
+    "ORDER_404_ADDRESS_NOT_FOUND",
+    "ORDER_404_CART_ITEM_NOT_FOUND",
+    "ORDER_404_ITEM_NOT_FOUND",
+    "ORDER_404_ORDER_NOT_FOUND",
+    "ORDER_404_PRODUCT_NOT_FOUND",
+    "ORDER_409_CLAIM_ALREADY_IN_PROGRESS",
+    "ORDER_409_CLAIM_ITEM_QUANTITY_EXCEEDED",
+    "ORDER_409_INSUFFICIENT_STOCK",
+    "ORDER_409_NOT_CANCELLABLE",
+    "ORDER_409_NOT_CLAIMABLE",
+    "ORDER_409_NOT_CONFIRMABLE",
+    "ORDER_409_PRODUCT_NOT_PURCHASABLE",
+    "ORDER_409_STOCK_MOVEMENT_CONFLICT",
+    "ORDER_500_INVENTORY_REQUEST_INVALID",
+    "ORDER_500_MEMBER_SERVICE_REQUEST_INVALID",
+    "ORDER_503_INVENTORY_SERVICE_UNAVAILABLE",
+    "ORDER_503_MEMBER_SERVICE_UNAVAILABLE",
+    "ORDER_503_PRODUCT_SERVICE_UNAVAILABLE",
+    "PAYMENT_403_ORDER_OWNER_MISMATCH",
+    "PAYMENT_404_NOT_FOUND",
+    "PAYMENT_404_ORDER_NOT_FOUND",
+    "PAYMENT_409_AMOUNT_MISMATCH",
+    "PAYMENT_409_NOT_CONFIRMABLE",
+    "PAYMENT_409_ORDER_NOT_PAYABLE",
+    "PAYMENT_500_TOSS_CANCEL_FAILED",
+    "PAYMENT_502_TOSS_CONFIRM_FAILED",
+    "PAYMENT_503_ORDER_SERVICE_UNAVAILABLE",
+    "PAYMENT_503_TOSS_SERVICE_UNAVAILABLE",
+    "PRODUCT_400_INVALID_CURSOR",
+    "PRODUCT_400_INVALID_TIME_DEAL_STATUS",
+    "PRODUCT_404_PRODUCT_NOT_FOUND",
+    "PRODUCT_404_TIME_DEAL_ITEM_NOT_FOUND",
+    "PRODUCT_409_INSUFFICIENT_STOCK",
+    "PRODUCT_409_STOCK_MOVEMENT_CONFLICT",
+    "PRODUCT_409_STOCK_MOVEMENT_PRECONDITION_NOT_MET",
+    "REVIEW_400_DUPLICATE_QUESTION_KEY",
+    "REVIEW_400_INVALID_ANSWER",
+    "REVIEW_400_INVALID_FILTER",
+    "REVIEW_400_INVALID_IMAGE_EXTENSION",
+    "REVIEW_400_INVALID_PET",
+    "REVIEW_400_INVALID_QUESTION_KEY",
+    "REVIEW_403_FORBIDDEN_IMAGE",
+    "REVIEW_403_PURCHASE_NOT_CONFIRMED",
+    "REVIEW_404_NOT_FOUND",
+    "REVIEW_409_ALREADY_REVIEWED",
+    "SECURITY_401_MISSING_AUTH_ID",
+    "SECURITY_401_UNAUTHORIZED",
+    "SECURITY_403_MISSING_MEMBER_ID",
+  ]);
+
+  /** 우리 Route Handler(`/api/juso`)가 붙이는 코드. 백엔드 것이 아니라 대조 대상이 아니다 */
+  const OURS = /^JUSO_/;
+
+  it("매핑에 죽은 키가 없다", () => {
+    const dead = Object.keys(MESSAGE_BY_ERROR_CODE).filter(
+      (code) => !OURS.test(code) && !SERVER_CODES.has(code),
+    );
+    expect(dead).toEqual([]);
   });
 });
