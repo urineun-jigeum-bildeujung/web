@@ -92,6 +92,14 @@ export function useMutateCartItem() {
     /** 증감을 보낸다. 스테퍼가 준 값과 이전 값의 차는 부르는 쪽이 계산한다 */
     changeQuantity: (item: CartItemRef, delta: number) => quantity.mutate({ item, delta }),
     remove: (item: CartItemRef) => removal.mutate(item),
+    /**
+     * 빼고 나서 기다린다.
+     *
+     * `remove`와 달리 실패를 던진다. **서버에서 빠진 것을 확인한 뒤에 화면 상태를 바꿔야
+     * 하는 자리**가 쓴다 — 타임딜 목록의 담김 표시가 그렇다. 먼저 바꾸면 버튼은 "담기"로
+     * 돌아가는데 장바구니에는 줄이 남고, 다시 담으면 서버가 수량을 더한다 (#316 리뷰).
+     */
+    removeAsync: (item: CartItemRef) => removal.mutateAsync(item),
     /** 담고 나서 기다린다. 실패는 던져서 부르는 쪽이 시트를 열어 둘 수 있게 한다 */
     add: (item: CartItemRef, count: number) => addition.mutateAsync({ item, quantity: count }),
     isAdding: addition.isPending,
