@@ -126,6 +126,29 @@ test("명세에 없는 상태 값이 오면 뱃지와 행동 버튼을 내보내
   expect(screen.getByRole("link", { name: "자세히 보기" })).toBeDefined();
 });
 
+// 보내는 중에 시트가 닫히면 어느 주문을 확정하는지 잃은 채 요청만 남는다 (#293 리뷰)
+test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async () => {
+  let release: (() => void) | undefined;
+  confirmOrder.mockImplementation(
+    () =>
+      new Promise<void>((resolve) => {
+        release = () => resolve();
+      }),
+  );
+
+  render(<OrdersView />, { wrapper: createQueryWrapper() });
+  fireEvent.click(await screen.findByRole("button", { name: "구매 확정하기" }));
+  fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "나중에 할게요" }).hasAttribute("disabled")).toBe(
+      true,
+    ),
+  );
+
+  release?.();
+});
+
 test("주문이 없으면 빈 상태를 안내한다", async () => {
   served = [];
   render(<OrdersView />, { wrapper: createQueryWrapper() });

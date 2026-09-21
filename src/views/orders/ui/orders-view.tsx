@@ -169,7 +169,13 @@ export function OrdersView() {
           시안의 카드에는 손잡이가 없다 */}
       <BottomSheet
         open={asking !== null}
-        onOpenChange={(open) => !open && setAskingConfirmId(null)}
+        // 보내는 중에는 닫히지 않는다. 바깥을 눌러 닫으면 어느 주문을 확정하는지 잃은 채
+        // 요청만 남아, 끝났을 때 무엇이 확정됐는지 알 수 없다 (#293 리뷰)
+        onOpenChange={(open) => {
+          if (!open && confirmingId === null) {
+            setAskingConfirmId(null);
+          }
+        }}
         showHandle={false}
         className="gap-5 p-4"
       >
@@ -195,6 +201,7 @@ export function OrdersView() {
           <Button
             variant="secondary"
             className={`${SHEET_ACTION_CLASS} bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80`}
+            disabled={confirmingId !== null}
             onClick={() => setAskingConfirmId(null)}
           >
             나중에 할게요
@@ -226,13 +233,27 @@ export function OrdersView() {
       {/* 주문 취소는 되돌릴 수 없어 확인 창으로 막는다 */}
       <AlertDialog
         open={askingCancelId !== null}
-        onOpenChange={(open) => !open && setAskingCancelId(null)}
+        // 시트와 같은 이유로 보내는 중에는 닫히지 않는다 (#293 리뷰)
+        onOpenChange={(open) => {
+          if (!open && cancelingId === null) {
+            setAskingCancelId(null);
+          }
+        }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent
+          // Escape는 `onOpenChange`를 거치지 않고 바로 닫는 경로라 따로 막는다
+          onEscapeKeyDown={(event) => {
+            if (cancelingId !== null) {
+              event.preventDefault();
+            }
+          }}
+        >
           <AlertDialogTitle>주문을 취소할까요?</AlertDialogTitle>
           <AlertDialogDescription>결제하신 금액은 안전하게 환불 처리돼요.</AlertDialogDescription>
           <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
+            <AlertDialogCancel className="min-h-11" disabled={cancelingId !== null}>
+              닫기
+            </AlertDialogCancel>
             <AlertDialogAction
               className="min-h-11"
               disabled={cancelingId !== null}
