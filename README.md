@@ -81,7 +81,7 @@ cp .env.example .env.local
 | 구분 | 패키지 | 버전 |
 | --- | --- | --- |
 | CSS | Tailwind CSS | 4.3.3 |
-| UI 컴포넌트 | shadcn/ui | 4.17.0 |
+| UI 컴포넌트 | shadcn/ui (CLI · devDependency) | 4.17.0 |
 | 프리미티브 | radix-ui | 1.6.7 |
 | 아이콘 (메인) | `shared/ui/icon` (Figma 51종) | — |
 | 아이콘 (보충) | react-icons | 5.7.0 |
