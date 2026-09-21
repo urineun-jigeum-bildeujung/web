@@ -11,7 +11,13 @@
 
 import { useId, useState } from "react";
 
-import { toLabels, useQueryBreeds, useQueryHealthOptions, type PetSpecies } from "@/entities/pet";
+import {
+  groupBreedsByBodySize,
+  toLabels,
+  useQueryBreeds,
+  useQueryHealthOptions,
+  type PetSpecies,
+} from "@/entities/pet";
 import { cn } from "@/shared/lib/utils";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
@@ -177,16 +183,16 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
   const [breedOpen, setBreedOpen] = useState(false);
   const [breedSpecies, setBreedSpecies] = useState<PetSpecies>(draft.species ?? "dog");
   const { breeds, isLoading: breedsLoading } = useQueryBreeds();
-  const breedGroups: PickerGroup[] = [
-    {
-      // #264: 체구 5분류(소형·중형·대형·초소형·믹스)는 PD·백엔드 어디에도 값이
-      // 없어 확정표를 받을 때까지 한 묶음으로 둔다. 분류가 오면 그룹만 나누면 된다
-      label: "전체",
-      items: breeds
-        .filter((breed) => breed.species === breedSpecies)
-        .map((breed) => ({ value: String(breed.id), label: breed.breedName })),
-    },
-  ];
+  // #264: 체구그룹(초소형·소형·중형·대형·믹스)은 `GET /pets/breeds`에 없는 값이라
+  // `entities/pet`의 화면 쪽 상수(body-groups.ts)로 나눈다. 표에 없는 품종은
+  // groupBreedsByBodySize가 "기타" 그룹으로 모아 사라지지 않게 한다
+  const breedGroups: PickerGroup[] = groupBreedsByBodySize(
+    breedSpecies,
+    breeds.filter((breed) => breed.species === breedSpecies),
+  ).map((group) => ({
+    label: group.label,
+    items: group.breeds.map((breed) => ({ value: String(breed.id), label: breed.breedName })),
+  }));
   const breedLabels = draft.breedIds
     .map((id) => breeds.find((breed) => breed.id === id)?.breedName)
     .filter((name): name is string => Boolean(name));
