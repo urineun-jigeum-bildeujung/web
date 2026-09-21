@@ -315,7 +315,19 @@ test("품종 단계의 상단 뒤로가기는 정보 수정으로 돌아온다",
 });
 
 // 문자 발송은 양쪽 다 붙이지 않았다. 인증을 누르면 서버에 알리고 고정 번호가 채워진다(#85, #247).
+// **콘솔도 함께 본다.** 위 ROUTES 루프는 화면을 열기만 해서, 값이 바뀔 때 나는 것을 못 잡는다.
+// 통신사 Select가 비제어로 떠 있다가 고르는 순간 제어로 바뀌던 것이 그랬다 (#336).
+//
+// **`error`만 보면 놓친다.** Radix는 그 경고를 `console.warn`으로 낸다 — 실측으로 확인했다.
+// 이 화면에서 나오는 것은 React DevTools 안내(`info`)와 HMR 연결(`log`)뿐이라 둘 다 본다.
 test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page }) => {
+  const complaints: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error" || message.type() === "warning") {
+      complaints.push(`${message.type()}: ${message.text()}`);
+    }
+  });
+
   await page.goto("/mypage/info/phone", { waitUntil: "networkidle" });
 
   await page.getByLabel("통신사").click();
@@ -327,6 +339,8 @@ test("휴대폰 인증을 누르면 인증번호가 채워진다", async ({ page
 
   await page.getByRole("button", { name: "인증 번호 확인" }).click();
   await expect(page.getByRole("button", { name: "입력 완료" })).toBeEnabled();
+
+  expect(complaints, `콘솔 경고·오류 ${complaints.join(" | ")}`).toEqual([]);
 });
 
 // 다섯 단계를 담아 세로로 길다. 낮은 화면에서 잘리면 마지막 단계를 못 읽는다(#87).

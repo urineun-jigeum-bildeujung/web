@@ -106,7 +106,10 @@ export function VerifyPhoneView() {
       submitting={isSaving}
       onSubmit={submit}
     >
-      <Select value={carrier} onValueChange={(next) => setCarrier(next as CarrierCode)}>
+      {/* **`?? ""`로 처음부터 제어 컴포넌트로 둔다.** `undefined`면 Radix가 비제어로 보고,
+          고르는 순간 제어로 바뀌어 React가 경고한다. 빈 문자열은 "고른 것 없음"이라
+          아래 placeholder가 그대로 뜬다 (#336) */}
+      <Select value={carrier ?? ""} onValueChange={(next) => setCarrier(next as CarrierCode)}>
         {/* 시안의 입력칸과 같은 44px 상자. 값이 차면 선이 진해진다 */}
         <SelectTrigger
           aria-label="통신사"
