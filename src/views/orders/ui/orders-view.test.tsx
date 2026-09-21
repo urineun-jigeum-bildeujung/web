@@ -78,11 +78,14 @@ test("서버가 준 주문을 상품명과 주문 일자로 보여준다", async
   expect(screen.getAllByText("주문 일자 26.09.15").length).toBeGreaterThan(0);
 });
 
-test("결제완료 주문에는 주문 취소가, 배송완료에는 구매 확정하기가 나온다", async () => {
+// 결제 직후 주문도 배송준비중으로 보인다. 시안에 "결제완료" 뱃지가 없다 (#297)
+test("결제 직후 주문에는 주문 취소가, 배송완료에는 구매 확정하기가 나온다", async () => {
   render(<OrdersView />, { wrapper: createQueryWrapper() });
 
   expect(await screen.findByRole("button", { name: "주문 취소" })).toBeDefined();
   expect(screen.getByRole("button", { name: "구매 확정하기" })).toBeDefined();
+  expect(screen.getByText("배송준비중")).toBeDefined();
+  expect(screen.queryByText("결제완료")).toBeNull();
 });
 
 test("구매 확정은 서버를 부르고 끝난 뒤 목록에서 그 버튼이 사라진다", async () => {
@@ -123,7 +126,6 @@ test("명세에 없는 상태 값이 오면 뱃지와 행동 버튼을 내보내
   // 주문 자체는 보인다 — 상태를 모른다고 주문을 감추면 산 것이 사라진다
   expect(await screen.findByText("테스트 상품 9")).toBeDefined();
   expect(screen.queryByText("배송준비중")).toBeNull();
-  expect(screen.queryByText("결제완료")).toBeNull();
   expect(screen.queryByRole("button", { name: "주문 취소" })).toBeNull();
   expect(screen.queryByRole("button", { name: "구매 확정하기" })).toBeNull();
   // 상세로 가는 길은 남는다
