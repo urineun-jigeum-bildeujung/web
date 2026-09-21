@@ -1,4 +1,8 @@
 // 검색 결과: 검색에서 넘어오는 길과 되돌아가는 길, 정렬이 뒤로가기를 막지 않는지 본다.
+//
+// 검색·정렬은 서버(product-service)가 한다(#282). Next 서버 프로세스가 보내는 요청은
+// 브라우저 page.route()로 못 가로채, `playwright.server-fetch.config.ts`가 이 스펙 전용
+// 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 import { expect, test } from "@playwright/test";
 
 test("검색어를 넣고 엔터를 치면 결과 화면으로 간다", async ({ page }) => {
@@ -44,7 +48,7 @@ test("정렬을 바꿔도 뒤로가기 한 번에 검색 화면으로 간다", a
   await expect(page).toHaveURL(/\/search$/);
 });
 
-// 정렬을 골라도 순서가 그대로면 죽은 UI다.
+// 정렬을 골라도 순서가 그대로면 죽은 UI다. 서버가 정렬해 준 결과를 그대로 그리는지 본다
 test("정렬을 고르면 목록 순서가 바뀐다", async ({ page }) => {
   await page.goto("/search/result?q=사료");
 
@@ -74,17 +78,4 @@ test("검색한 말이 돌아와도 최근 검색어에 남는다", async ({ pag
   await expect(recent).toBeVisible();
   // 맨 앞으로 올라온다
   await expect(page.getByRole("listitem").first()).toContainText("무곡물");
-});
-
-// 재 봤더니 안 맞는 것과 아직 재지 않은 것은 다른 이야기다.
-// 점수를 모르는 상품이 가격순 첫 줄에 오면 무엇을 기준으로 고르는지가 흐려진다.
-// 일반 검색 결과는 적합도 배지 대신 찜하기·별점을 보여주므로(2396-80432), 여기서
-// 확인할 수 있는 건 배지 문구가 아니라 정렬 순서 자체다
-test("적합도를 재지 못한 상품은 가장 싸도 마지막에 온다", async ({ page }) => {
-  await page.goto("/search/result?q=사료&sort=price-low");
-
-  const cards = page.getByRole("listitem");
-  // 18,900원이라 첫 카드(21,000원)보다 싸지만 적합도가 없어 마지막으로 밀린다
-  await expect(cards.last()).toContainText("실속형 대용량 사료 5kg");
-  await expect(cards.first()).toContainText("퍼피 성장기 사료 1kg");
 });
