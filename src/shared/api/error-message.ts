@@ -37,6 +37,10 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   MEMBER_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
 
   PRODUCT_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
+
+  REVIEW_409_ALREADY_REVIEWED: APP_MESSAGE_CODE.review.alreadyReviewed,
+  REVIEW_403_PURCHASE_NOT_CONFIRMED: APP_MESSAGE_CODE.review.purchaseNotConfirmed,
+  REVIEW_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
 
   // 결제 승인이 거절되는 경우다. 결제창은 이미 성공한 뒤라 "다시 시도" 계열 문구를 쓰지 않는다.

@@ -7,7 +7,8 @@
 // 어느 아이가 먹었는지를 함께 받는 것도 같은 이유다 — 아이를 모르면 쓸 수 없는 답이다.
 //
 // 필수는 별점·사용 기간·아이·후기 글이고 반응 문항은 전부 선택이다. 문항을 필수로 묶으면
-// 모르는 항목까지 아무 답이나 고르게 되어 근거가 흐려진다.
+// 모르는 항목까지 아무 답이나 고르게 되어 근거가 흐려진다. 다만 서버가 반응 문항을 하나 이상
+// 요구해(`answerValues @NotEmpty`) 백엔드 확인이 올 때까지 하나는 받는다(#291).
 
 "use client";
 
@@ -15,7 +16,13 @@ import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useId, useState, useSyncExternalStore } from "react";
 
-import { PetSwitcher, type PetSummary } from "@/entities/pet";
+import { useQueryMyProfile } from "@/entities/member";
+import { PetSwitcher, useQueryPets } from "@/entities/pet";
+import { useQueryProductSummary } from "@/entities/product";
+import { useMutateCreateReview } from "@/entities/review";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { Badge } from "@/shared/ui/badge/badge";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -23,8 +30,10 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Rating } from "@/shared/ui/rating/rating";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 
 import {
@@ -36,6 +45,7 @@ import {
   type ReviewDraft,
 } from "../model/draft-storage";
 import { answeredSummary, HANDLING_QUESTION, RATING_STEP_QUESTIONS } from "../model/questions";
+import { toCreateRequest } from "../model/to-create-request";
 import { PhotoPicker } from "./photo-picker";
 import { ProductRow } from "./product-row";
 import { RatingInput } from "./rating-input";
@@ -67,23 +77,20 @@ function MissingProduct() {
 
 const STEPS = ["rating", "detail"] as const;
 
-const PETS: PetSummary[] = [
-  { id: "p1", name: "소리" },
-  { id: "p2", name: "냥냥이" },
-];
-
 const MIN_TEXT = 10;
 const MAX_TEXT = 300;
 
-/** 완료 문구에 넣을 보호자 닉네임. 회원 API가 붙으면 그 값을 쓴다 */
-const NICKNAME = "소리맘";
-
-// 목 데이터. 실제로는 productId로 상품 정보를 받아온다
-const PRODUCT = {
-  name: "오메가3 피쉬오일 60캡슐",
-  option: "[옵션] 60정 1병",
-  repurchase: "재구매 2회",
-};
+/** 두 단계 머리의 상품 줄. 받기 전에는 같은 높이의 자리만 잡아 아래가 밀리지 않게 한다 */
+function ProductHeader({ productId }: { productId: string }) {
+  const { product } = useQueryProductSummary(productId);
+  return product ? (
+    <ProductRow name={product.name} imageUrl={product.imageUrl} />
+  ) : (
+    <div className="px-5 pt-1 pb-3">
+      <Skeleton className="h-16 w-full rounded-lg" />
+    </div>
+  );
+}
 
 /** 시안 섹션 제목 줄. 굵은 14 글자 옆에 필수·선택 배지 */
 function SectionTitle({ children, required }: { children: string; required?: boolean }) {
@@ -117,18 +124,38 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
   const [done, setDone] = useState(false);
+  const { pets } = useQueryPets();
+  const { profile } = useQueryMyProfile();
+  const { createReview, isSubmitting } = useMutateCreateReview();
 
   const answer = (key: string, value: string) =>
     patch({ responses: { ...responses, [key]: value } });
 
-  // 사진과 반응 문항은 선택이다. 나머지는 없으면 다음 추천에 쓸 수 없어 받아야 한다
+  // 사진과 반응 문항은 선택이다. 나머지는 없으면 다음 추천에 쓸 수 없어 받아야 한다.
+  // 단, 서버가 반응 문항을 하나 이상 요구해 그때까지 여기서도 하나는 받는다(#291)
   const ratingReady = score > 0 && days.length > 0;
-  const ready = ratingReady && petId !== undefined && text.trim().length >= MIN_TEXT;
+  const answered = answeredSummary(responses).length > 0;
+  const ready = ratingReady && petId !== undefined && text.trim().length >= MIN_TEXT && answered;
 
+  /**
+   * 등록. 사진이 있으면 훅이 먼저 올린다.
+   *
+   * **실패하면 초안을 지우지 않는다.** 지우면 두 단계를 처음부터 다시 채워야 한다.
+   * 완료 화면으로도 가지 않는다 — 등록되지 않았는데 됐다고 알리는 셈이다.
+   */
   const submit = () => {
-    // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다. 남겨 둔 초안은 지운다
-    setDone(true);
-    clearReviewDraft(productId);
+    const request = toCreateRequest(draft, productId);
+    if (!request) {
+      // 버튼이 막고 있어 여기까지 오면 화면이 못 잡은 값이다
+      toastAppError(APP_MESSAGE_CODE.common.invalidInput);
+      return;
+    }
+    createReview({ request, photos })
+      .then(() => {
+        setDone(true);
+        clearReviewDraft(productId);
+      })
+      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
   };
 
   if (done) {
@@ -147,7 +174,8 @@ function ReviewWriteForm({ productId }: { productId: string }) {
           <div className="flex flex-col gap-1">
             <h1 className="text-title-bold-18 text-foreground">소중한 리뷰 감사해요!</h1>
             <p className="text-body-medium-14 text-text-body-secondary">
-              {NICKNAME}님의 후기가 다른 보호자들에게
+              {/* 아직 못 받았으면 이름 없이 부른다. 빈 채로 두면 "님의"만 남는다 */}
+              {profile?.nickname ?? "보호자"}님의 후기가 다른 보호자들에게
               <br />큰 도움이 될 거예요
             </p>
           </div>
@@ -171,7 +199,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
         <>
           <main className="flex flex-1 flex-col gap-2">
             <section className="flex flex-col bg-background">
-              <ProductRow {...PRODUCT} />
+              <ProductHeader productId={productId} />
 
               <div className="flex flex-col items-center gap-2 px-5 pt-2 pb-4">
                 <h2 className="flex items-start gap-2 text-title-bold-16 text-foreground">
@@ -241,7 +269,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
         <>
           <main className="flex flex-1 flex-col gap-2">
             <section className="flex flex-col bg-background">
-              <ProductRow {...PRODUCT} />
+              <ProductHeader productId={productId} />
 
               {/* 1단계에서 답한 것을 되짚어 준다. 답한 문항만 배지로 보인다 */}
               <div className="px-5 py-3">
@@ -267,7 +295,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
               <SectionTitle required>사용 반려동물 프로필 선택</SectionTitle>
               <div className="px-5 pt-2 pb-4">
                 <PetSwitcher
-                  pets={PETS}
+                  pets={pets ?? []}
                   selectedId={petId}
                   onSelect={(id) => patch({ petId: id })}
                   withNames
@@ -314,10 +342,9 @@ function ReviewWriteForm({ productId }: { productId: string }) {
             >
               이전
             </Button>
-            {/* 대기 표시 없음 — 등록 API가 아직 없어 제출이 동기다. 기다릴 것이 생기면
-                `LoadingSwap`으로 라벨만 바꾼다 */}
-            <Button disabled={!ready} onClick={submit}>
-              등록하기
+            {/* 사진 업로드까지 겹치면 왕복이 길다. disabled만 두면 왜 안 눌리는지 몰라 다시 누르게 된다 */}
+            <Button disabled={!ready || isSubmitting} onClick={submit}>
+              <LoadingSwap loading={isSubmitting}>등록하기</LoadingSwap>
             </Button>
           </BottomActionBar>
         </>

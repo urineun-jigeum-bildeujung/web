@@ -148,6 +148,15 @@ export const APP_MESSAGE = {
     title: "쓸 수 없는 사진 형식",
     description: "JPG · PNG · WEBP · GIF 사진을 골라 주세요.",
   },
+  // 리뷰는 상품마다 한 번이고 구매 확정 뒤에만 쓸 수 있다. 둘 다 사용자가 고칠 수 있는 것이 아니라 왜인지만 알린다
+  "review.alreadyReviewed": {
+    title: "이미 후기를 남긴 상품이에요",
+    description: "후기는 상품마다 한 번만 쓸 수 있어요.",
+  },
+  "review.purchaseNotConfirmed": {
+    title: "구매 확정 후에 쓸 수 있어요",
+    description: "주문 내역에서 구매 확정을 먼저 해 주세요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -199,5 +208,9 @@ export const APP_MESSAGE_CODE = {
   image: {
     uploadFailed: "image.uploadFailed",
     unsupportedType: "image.unsupportedType",
+  },
+  review: {
+    alreadyReviewed: "review.alreadyReviewed",
+    purchaseNotConfirmed: "review.purchaseNotConfirmed",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;

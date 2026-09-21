@@ -1,4 +1,4 @@
-// 상품 조회 API. 검색 결과 목록을 부른다.
+// 상품 조회 API. 검색 결과 목록과 상품 한 건의 요약(이름·대표 사진)을 부른다.
 //
 // **일반 async 함수다.** React를 몰라도 되고, 반환하는 Promise를 그대로 화면에 넘기면
 // 서버 컴포넌트(await)에서도, `use()`로 클라이언트에 흘려보내는 곳에서도 똑같이 쓸 수 있다.
@@ -96,4 +96,36 @@ export function searchProducts(params: {
     nextCursor: response.nextCursor,
     hasNext: response.hasNext,
   }));
+}
+
+/** 백엔드 `ProductDetailResponse` 중 요약에 쓰는 부분만 */
+type ProductDetailApiResponse = {
+  productId: number;
+  summary: {
+    images: string[];
+    productName: string;
+  };
+};
+
+/** 리뷰 작성 화면의 상품 줄처럼 이름과 대표 사진만 필요한 자리가 쓴다 */
+export type ProductSummary = {
+  productId: number;
+  name: string;
+  /** 첫 번째 사진. 없으면 회색 자리만 남긴다 */
+  imageUrl?: string;
+};
+
+/**
+ * 상품 한 건의 요약. 상세 응답에서 이름과 첫 사진만 옮긴다.
+ *
+ * 옵션명·재구매 횟수 같은 값은 응답에 없다. 화면이 그 자리를 비워 두는 이유다.
+ */
+export function getProductSummary(productId: string): Promise<ProductSummary> {
+  return apiRequest<ProductDetailApiResponse>(`/products/${productId}`, { auth: false }).then(
+    (response) => ({
+      productId: response.productId,
+      name: response.summary.productName,
+      ...(response.summary.images[0] && { imageUrl: response.summary.images[0] }),
+    }),
+  );
 }

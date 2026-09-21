@@ -7,7 +7,8 @@ import { Badge } from "@/shared/ui/badge/badge";
 
 type ProductRowProps = {
   name: string;
-  option: string;
+  /** "[옵션] 60정 1병". 상품 요약 응답에 없어 지금은 비어 있다 */
+  option?: string;
   /** "재구매 2회". 없으면 배지를 그리지 않는다 */
   repurchase?: string;
   imageUrl?: string;
@@ -25,7 +26,7 @@ export function ProductRow({ name, option, repurchase, imageUrl }: ProductRowPro
           <span className="truncate text-title-bold-16 text-foreground">{name}</span>
           {repurchase && <Badge>{repurchase}</Badge>}
         </p>
-        <p className="text-label-medium-11 text-text-body-secondary">{option}</p>
+        {option && <p className="text-label-medium-11 text-text-body-secondary">{option}</p>}
       </div>
     </div>
   );

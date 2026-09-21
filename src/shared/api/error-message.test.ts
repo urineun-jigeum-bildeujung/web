@@ -27,6 +27,18 @@ describe("toAppMessageCode", () => {
     expect(toAppMessageCode(apiError(400, "MEMBER_400_INVALID_IMAGE_EXTENSION"))).toBe(
       APP_MESSAGE_CODE.image.unsupportedType,
     );
+    expect(toAppMessageCode(apiError(400, "REVIEW_400_INVALID_IMAGE_EXTENSION"))).toBe(
+      APP_MESSAGE_CODE.image.unsupportedType,
+    );
+  });
+
+  it("리뷰 규칙에 걸린 것은 왜인지를 알리는 문구로 간다", () => {
+    expect(toAppMessageCode(apiError(409, "REVIEW_409_ALREADY_REVIEWED"))).toBe(
+      APP_MESSAGE_CODE.review.alreadyReviewed,
+    );
+    expect(toAppMessageCode(apiError(403, "REVIEW_403_PURCHASE_NOT_CONFIRMED"))).toBe(
+      APP_MESSAGE_CODE.review.purchaseNotConfirmed,
+    );
   });
 
   // 백엔드가 새 코드를 추가하면 우리는 나중에 안다. 그동안에도 화면은 무언가를 보여줘야 한다
