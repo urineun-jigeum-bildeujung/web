@@ -17,7 +17,7 @@ afterEach(() => {
 function renderAt(search = "") {
   return render(
     <NuqsTestingAdapter searchParams={search}>
-      <ReviewWriteView orderItemId="oi1" />
+      <ReviewWriteView productId="p1" />
     </NuqsTestingAdapter>,
   );
 }
@@ -48,7 +48,7 @@ describe("ReviewWriteView 진입", () => {
   it("어떤 구매의 후기인지 모르면 작성 화면 대신 안내를 보인다", () => {
     render(
       <NuqsTestingAdapter searchParams="">
-        <ReviewWriteView orderItemId={undefined} />
+        <ReviewWriteView productId={undefined} />
       </NuqsTestingAdapter>,
     );
 

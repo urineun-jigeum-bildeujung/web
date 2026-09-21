@@ -2,7 +2,8 @@
 //
 // 단계는 URL에 있는데 입력값이 컴포넌트 상태여서, 2단계에서 새로고침하면 별점·사용 기간이
 // 비어 "등록하기"가 눌리지 않는 채로 남았다. 온보딩 초안(`views/onboarding/model/draft-storage`)과
-// 같은 판단으로 구매 항목별로 기기에 두고, 등록을 마치면 지운다.
+// 같은 판단으로 상품별로 기기에 두고, 등록을 마치면 지운다. 백엔드가 회원+상품당 리뷰를
+// 한 건만 받으므로 구매 건이 아니라 상품이 단위다.
 //
 // 저장소는 React 밖의 것이라 `useSyncExternalStore`로 잇는다.
 
@@ -29,7 +30,7 @@ const QUESTIONS = [...RATING_STEP_QUESTIONS, HANDLING_QUESTION];
 let cache: { key: string; draft: ReviewDraft } | null = null;
 const listeners = new Set<() => void>();
 
-const storageKey = (orderItemId: string) => `review-draft:${orderItemId}`;
+const storageKey = (productId: string) => `review-draft:${productId}`;
 
 /** 저장된 값을 한 칸씩 확인해 옮긴다. 모양이 맞지 않는 칸은 버리고 기본값을 쓴다 */
 function normalize(raw: unknown): ReviewDraft {
@@ -79,8 +80,8 @@ export function subscribeReviewDraft(listener: () => void) {
 }
 
 /** 읽을 때마다 새 객체를 만들면 useSyncExternalStore가 무한히 다시 그린다 */
-export function getReviewDraft(orderItemId: string): ReviewDraft {
-  const key = storageKey(orderItemId);
+export function getReviewDraft(productId: string): ReviewDraft {
+  const key = storageKey(productId);
   if (cache?.key !== key) cache = { key, draft: load(key) };
   return cache.draft;
 }
@@ -90,8 +91,8 @@ export function getReviewDraftOnServer(): ReviewDraft {
   return EMPTY_REVIEW_DRAFT;
 }
 
-export function setReviewDraft(orderItemId: string, next: ReviewDraft) {
-  const key = storageKey(orderItemId);
+export function setReviewDraft(productId: string, next: ReviewDraft) {
+  const key = storageKey(productId);
   cache = { key, draft: next };
   try {
     window.localStorage.setItem(key, JSON.stringify(next));
@@ -101,11 +102,11 @@ export function setReviewDraft(orderItemId: string, next: ReviewDraft) {
   listeners.forEach((listener) => listener());
 }
 
-/** 등록을 마쳤으면 지운다. 남겨 두면 같은 항목에 다시 들어올 때 지난 값이 채워져 보인다 */
-export function clearReviewDraft(orderItemId: string) {
-  cache = { key: storageKey(orderItemId), draft: EMPTY_REVIEW_DRAFT };
+/** 등록을 마쳤으면 지운다. 남겨 두면 같은 상품에 다시 들어올 때 지난 값이 채워져 보인다 */
+export function clearReviewDraft(productId: string) {
+  cache = { key: storageKey(productId), draft: EMPTY_REVIEW_DRAFT };
   try {
-    window.localStorage.removeItem(storageKey(orderItemId));
+    window.localStorage.removeItem(storageKey(productId));
   } catch {
     // 지우지 못해도 화면은 빈 초안으로 시작한다
   }

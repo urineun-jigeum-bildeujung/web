@@ -80,7 +80,7 @@ export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
                   </div>
                   {/* 시안의 action_button. 40px에 굵은 14px */}
                   <Button asChild variant="outline" className="h-10 w-full text-label-bold-14">
-                    <Link href={`/mypage/reviews/write?orderItemId=${item.id}`}>후기 남기기</Link>
+                    <Link href={`/mypage/reviews/write?productId=${item.id}`}>후기 남기기</Link>
                   </Button>
                 </article>
               ))

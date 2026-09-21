@@ -1,7 +1,13 @@
 // 리뷰 작성이 묻는 아이의 반응. 별점만으로는 알 수 없는 것들이라 다음 추천의 근거가 된다.
 // UI 시안 기준(리뷰작성 1884-29400 1단계 5문항, 1884-29325 2단계 급여 편의성)이다.
+//
+// `key`는 백엔드 `ReviewQuestionType`, 보기 `value`는 `ReviewAnswer` 값 그대로다. 등록 요청의
+// `answerValues`에 이 값이 그대로 실리므로 따로 바꾸는 표를 두지 않는다. 화면 문구는 `label`이 든다.
 
-export type ResponseOption = { value: string; label: string };
+/** 백엔드 `ReviewAnswer`. 나쁨 · 보통 · 좋음 순서다 */
+export type ReviewAnswer = "NEGATIVE" | "NEUTRAL" | "POSITIVE";
+
+export type ResponseOption = { value: ReviewAnswer; label: string };
 
 export type Question = {
   key: string;
@@ -16,33 +22,33 @@ export type Question = {
 };
 
 const CHANGE_OPTIONS = [
-  { value: "worse", label: "나빠졌어요" },
-  { value: "same", label: "그대로예요" },
-  { value: "better", label: "좋아졌어요" },
+  { value: "NEGATIVE", label: "나빠졌어요" },
+  { value: "NEUTRAL", label: "그대로예요" },
+  { value: "POSITIVE", label: "좋아졌어요" },
 ] as const;
 
 /** 1단계 "A 추천을 위해 알려주세요". 전부 선택이다 */
 export const RATING_STEP_QUESTIONS: readonly Question[] = [
   {
-    key: "taste",
+    key: "PALATABILITY",
     topic: "기호성",
     short: "기호성",
     question: "잘 먹었나요?",
     options: [
-      { value: "bad", label: "안 먹어요" },
-      { value: "soso", label: "보통이에요" },
-      { value: "good", label: "잘 먹어요" },
+      { value: "NEGATIVE", label: "안 먹어요" },
+      { value: "NEUTRAL", label: "보통이에요" },
+      { value: "POSITIVE", label: "잘 먹어요" },
     ],
   },
   {
-    key: "stool",
+    key: "DIGESTION",
     topic: "소화 · 배변 반응",
     short: "소화 · 배변",
     question: "배변 상태는 어땠나요?",
     options: CHANGE_OPTIONS,
   },
   {
-    key: "skin",
+    key: "SKIN_COAT",
     topic: "피부 · 모질",
     short: "피부 · 모질",
     question: "피부 · 털 상태는 어땠나요?",
@@ -50,35 +56,36 @@ export const RATING_STEP_QUESTIONS: readonly Question[] = [
   },
   {
     // 시안은 "제충 · 활력"인데 오타로 보고 체중으로 쓴다
-    key: "vitality",
+    key: "WEIGHT_VITALITY",
     topic: "체중 · 활력",
     short: "체중 · 활력",
     question: "체중 · 활력은 어땠나요?",
     options: CHANGE_OPTIONS,
   },
   {
-    key: "allergy",
+    key: "ALLERGY",
     topic: "알러지 반응",
     short: "알러지",
     question: "알러지 반응이 있었나요?",
     options: [
-      { value: "none", label: "없었어요" },
-      { value: "yes", label: "있었어요" },
+      // 백엔드가 이 문항만 NEUTRAL을 받지 않는다. 반응이 없는 것이 "좋음"이다
+      { value: "POSITIVE", label: "없었어요" },
+      { value: "NEGATIVE", label: "있었어요" },
     ],
   },
 ];
 
 /** 2단계의 급여 편의성. 이것도 선택이다 */
 export const HANDLING_QUESTION: Question = {
-  key: "handling",
+  key: "FEEDING_CONVENIENCE",
   topic: "급여 편의성",
   short: "급여 편의성",
   question: "아이에게 급여하기 편했나요?",
   hint: "(정제 크기 등)",
   options: [
-    { value: "hard", label: "불편해요" },
-    { value: "soso", label: "보통이에요" },
-    { value: "easy", label: "편해요" },
+    { value: "NEGATIVE", label: "불편해요" },
+    { value: "NEUTRAL", label: "보통이에요" },
+    { value: "POSITIVE", label: "편해요" },
   ],
 };
 
