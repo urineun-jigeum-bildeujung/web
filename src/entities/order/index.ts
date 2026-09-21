@@ -2,13 +2,19 @@
 export {
   cancelOrder,
   confirmOrder,
+  getOrderDetail,
   getOrders,
   type GetOrdersParams,
+  type OrderDeliveryAddress,
+  type OrderDetail,
+  type OrderDetailItem,
   type OrderListItem,
   type OrderListResponse,
+  type OrderPayment,
   type OrderSummary,
 } from "./api/orders";
 export { useMutateOrder } from "./api/use-mutate-order";
+export { useQueryOrderDetail } from "./api/use-query-order-detail";
 export { useQueryOrders } from "./api/use-query-orders";
 export { toOrderStatus } from "./model/order-status";
 export {
