@@ -2,13 +2,14 @@
 
 import { Skeleton } from "@/shared/ui/skeleton";
 
-/** 시안(mypa_061)이 네 건으로 그려져 있어 같은 수만큼 자리를 잡는다 */
-const CARDS = [0, 1, 2, 3];
+/** 시안(mypa_061)이 네 건으로 그려져 있어 첫 그림은 같은 수만큼 자리를 잡는다 */
+const DEFAULT_COUNT = 4;
 
-export function OrdersSkeleton() {
+/** 다음 쪽을 이어 부를 때는 한 장만 세운다. 이미 그려진 목록 아래에 붙는 자리라서다 */
+export function OrdersSkeleton({ count = DEFAULT_COUNT }: { count?: number }) {
   return (
     <div className="flex flex-col gap-4">
-      {CARDS.map((card) => (
+      {Array.from({ length: count }, (_, card) => (
         <div key={card} className="flex flex-col gap-3">
           <div className="flex flex-col gap-2">
             {/* 주문 일자 줄 */}

@@ -5,7 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `api/orders.ts` | 주문 API. 목록·상세 조회와 구매 확정·주문 취소 |
-| `api/use-query-orders.ts` | 주문 목록 조회 훅 |
+| `api/use-query-orders.ts` | 주문 목록 조회 훅. 커서로 다음 쪽을 이어 받는다 |
 | `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다 |
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |

@@ -5,7 +5,8 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/orders-view.tsx` | 주문·배송 확인 |
-| `ui/orders-skeleton.tsx` | 불러오는 동안의 뼈대 |
+| `ui/orders-skeleton.tsx` | 불러오는 동안의 뼈대. 이어 부를 때는 한 장만 |
+| `ui/use-load-more.ts` | 목록 끝이 보이면 다음 쪽을 부른다 |
 | `ui/delivery-tracking-dialog.tsx` | 배송 조회 준비중 안내 |
 | `index.ts` | 공개 API |
 
@@ -17,8 +18,13 @@
 
 ## API
 
-`GET /orders`로 받는다. 커서 페이지네이션(`size`·`cursor` → `nextCursor`·`hasNext`)인데
-**지금은 첫 쪽만 부른다.** 명세 Example이 한 쪽짜리뿐이라 이어 부르는 동작을 확인하지 못했다.
+`GET /orders`로 받는다. 커서 페이지네이션(`size`·`cursor` → `nextCursor`·`hasNext`)이고
+**목록 끝이 화면에 들어오면 다음 쪽을 이어 부른다.** 한 번에 오는 것이 기본 열 건이라
+첫 쪽만 그리면 열한 번째 주문부터 볼 길이 없다 (#288).
+
+**"더보기" 버튼 대신 스크롤로 잇는다.** 시안(mypa_061)에 버튼 자리가 없어서다.
+`nextCursor`는 백엔드가 `Base64(orderedAt + ":::" + orderId)`로 만든 값이라 받은 그대로
+다시 보낸다. `hasNext`가 참이어도 커서가 없으면 멈춘다 — 그대로 두면 같은 쪽을 끝없이 부른다.
 
 구매 확정·주문 취소는 `204 No Content`라 바뀐 주문을 응답으로 받지 못한다. 끝난 뒤 목록을
 다시 조회해 맞춘다. **낙관적으로 먼저 그리지 않는다** — 되돌릴 수 없는 동작이라 서버가 거절하면
