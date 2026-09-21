@@ -70,6 +70,9 @@ export const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   ORDER_404_ADDRESS_NOT_FOUND: APP_MESSAGE_CODE.address.notFound,
   ORDER_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
   ORDER_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
+  // 담기·주문에서 판매가 멈춘 상품을 만난 경우다. 재고 부족과 달리 기다려도 돌아오지 않는다
+  ORDER_409_PRODUCT_NOT_PURCHASABLE: APP_MESSAGE_CODE.product.notPurchasable,
+  ORDER_404_CART_ITEM_NOT_FOUND: APP_MESSAGE_CODE.common.notFound,
   // 주문이 딴 서비스를 부르다 막힌 경우다. 사용자가 고칠 것이 없어 다시 시도만 권한다
   ORDER_503_MEMBER_SERVICE_UNAVAILABLE: APP_MESSAGE_CODE.order.temporarilyUnavailable,
   ORDER_503_PRODUCT_SERVICE_UNAVAILABLE: APP_MESSAGE_CODE.order.temporarilyUnavailable,

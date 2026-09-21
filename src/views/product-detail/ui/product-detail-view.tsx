@@ -16,6 +16,7 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { useMutateCartItem } from "@/entities/cart";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -135,6 +136,7 @@ type ProductDetailViewProps = {
 
 export function ProductDetailView({ productId }: ProductDetailViewProps) {
   const router = useRouter();
+  const { add, isAdding } = useMutateCartItem();
   // 고른 탭에 따라 보이는 것이 통째로 달라진다. nuqs 기본은 replace라
   // 그대로 두면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
   const [tab, setTab] = useQueryState(
@@ -500,7 +502,11 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
       <DetailOptionSheet
         open={optionSheetOpen}
         onOpenChange={setOptionSheetOpen}
-        onAddToCart={() => {
+        adding={isAdding}
+        onAddToCart={async (quantity) => {
+          // **라우트가 준 진짜 상품 id다.** 화면의 이름·가격은 아직 목이지만(#123) 이
+          // 값은 주소에서 온 것이라 그대로 보낼 수 있다
+          await add({ itemType: "NORMAL", itemId: Number(productId) }, quantity);
           setOptionSheetOpen(false);
           showSnackbar("상품이 장바구니에 담겼어요");
         }}

@@ -2,6 +2,7 @@
 // 딜 데이터를 실제로 조회하고 정렬·거르는 것은 서버 책임이라 여기서 다시 보지 않는다
 // (entities/product/api/time-deals.test.ts가 요청 파라미터·매핑을 본다).
 import { act, fireEvent, render, screen } from "@testing-library/react";
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -9,7 +10,15 @@ import type { DealItem, TimeDealGroup, TimeDealList } from "@/entities/product";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
-const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+const { showSnackbar, add } = vi.hoisted(() => ({
+  showSnackbar: vi.fn(),
+  add: vi.fn(),
+}));
+
+// 담기는 서버를 부른다. 이 화면 테스트의 관심은 담긴 뒤의 표시라 호출만 세운다 (#316)
+vi.mock("@/entities/cart", () => ({
+  useMutateCartItem: () => ({ add, isAdding: false }),
+}));
 vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
 import { DealsView } from "./deals-view";
@@ -119,6 +128,8 @@ async function renderWith(
           upcomingDealsPromise={Promise.resolve(toList(upcomingGroups))}
         />
       </NuqsTestingAdapter>,
+      // 담기가 서버를 부르게 되면서 이 화면도 Query 컨텍스트를 탄다 (#316)
+      { wrapper: createQueryWrapper() },
     );
   });
 }
@@ -152,7 +163,11 @@ describe("DealsView", () => {
     // 시트의 담기 버튼은 금액을 함께 읽힌다(기본 수량 1개 기준 목록가)
     fireEvent.click(screen.getByRole("button", { name: "24,000원 장바구니 담기" }));
 
-    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeDefined();
+    // 담기가 서버를 기다린다. 응답이 온 뒤에 담긴 표시로 바뀐다 (#316)
+    expect(
+      await screen.findByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기"),
+    ).toBeDefined();
+    expect(add).toHaveBeenCalledWith({ itemType: "TIME_DEAL", itemId: 1 }, 1);
     expect(showSnackbar).toHaveBeenCalledWith("장바구니에 담겼어요");
   });
 
@@ -161,9 +176,11 @@ describe("DealsView", () => {
 
     fireEvent.click(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기"));
     fireEvent.click(screen.getByRole("button", { name: "24,000원 장바구니 담기" }));
-    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeDefined();
 
-    fireEvent.click(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기"));
+    // 담기가 서버를 기다린다 (#316)
+    fireEvent.click(
+      await screen.findByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기"),
+    );
 
     expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기")).toBeDefined();
   });

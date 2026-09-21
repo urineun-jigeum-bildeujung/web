@@ -9,12 +9,16 @@ import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { DrawerTitle } from "@/shared/ui/drawer";
 import { formatWon } from "@/shared/ui/price/price";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
 type DetailOptionSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddToCart: (quantity: number) => void;
+  /** 서버가 끝날 때까지 기다린다. 실패하면 거부되고 시트는 열린 채 남는다 */
+  onAddToCart: (quantity: number) => Promise<void>;
+  /** 담는 중. 버튼 라벨을 대기 표시로 바꾼다 (AGENTS.md 5.8) */
+  adding?: boolean;
   productName: string;
   /** "90정 (기본 구성)"처럼 고를 수 있는 구성이 하나뿐일 때 보여줄 이름 */
   optionLabel: string;
@@ -25,6 +29,7 @@ export function DetailOptionSheet({
   open,
   onOpenChange,
   onAddToCart,
+  adding = false,
   productName,
   optionLabel,
   price,
@@ -58,12 +63,20 @@ export function DetailOptionSheet({
 
         <Button
           className="min-h-11 w-full text-label-bold-14"
-          onClick={() => {
-            onAddToCart(quantity);
-            setQuantity(1);
+          disabled={adding}
+          onClick={async () => {
+            try {
+              await onAddToCart(quantity);
+              setQuantity(1);
+            } catch {
+              // 실패 알림은 MutationCache.onError가 맡는다. 고른 수량은 그대로 두어
+              // 다시 누를 수 있게 한다
+            }
           }}
         >
-          {formatWon(price * quantity)} 장바구니 담기
+          <LoadingSwap loading={adding} label="장바구니에 담는 중">
+            {formatWon(price * quantity)} 장바구니 담기
+          </LoadingSwap>
         </Button>
       </div>
     </BottomSheet>

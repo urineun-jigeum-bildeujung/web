@@ -13,6 +13,7 @@ import { IoImageOutline } from "react-icons/io5";
 import { Button } from "@/shared/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
 import { formatWon } from "@/shared/ui/price/price";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
 export type OptionSheetProduct = {
@@ -32,15 +33,22 @@ type ProductOptionSheetProps = {
   /** 고른 상품. null이면 닫힌다 */
   product: OptionSheetProduct | null;
   onOpenChange: (open: boolean) => void;
-  onAddToCart: (productId: string, quantity: number) => void;
+  /**
+   * 담기. **거부되면 시트가 열린 채 남는다** — 실패 알림은 전역 토스트가 맡고, 고른 수량은
+   * 그대로 두어 다시 누를 수 있게 한다 (#316).
+   */
+  onAddToCart: (productId: string, quantity: number) => Promise<void> | void;
+  /** 담는 중. 버튼 라벨을 대기 표시로 바꾼다 (AGENTS.md 5.8) */
+  adding?: boolean;
 };
 
 type SheetBodyProps = {
   product: OptionSheetProduct;
-  onAddToCart: (productId: string, quantity: number) => void;
+  onAddToCart: (productId: string, quantity: number) => Promise<void> | void;
+  adding?: boolean;
 };
 
-function SheetBody({ product, onAddToCart }: SheetBodyProps) {
+function SheetBody({ product, onAddToCart, adding = false }: SheetBodyProps) {
   const [quantity, setQuantity] = useState(1);
 
   return (
@@ -81,8 +89,20 @@ function SheetBody({ product, onAddToCart }: SheetBodyProps) {
       </div>
 
       <div className="px-5 pt-4 pb-12.5">
-        <Button className="min-h-11 w-full" onClick={() => onAddToCart(product.id, quantity)}>
-          {formatWon(product.price * quantity)} 장바구니 담기
+        <Button
+          className="min-h-11 w-full"
+          disabled={adding}
+          onClick={async () => {
+            try {
+              await onAddToCart(product.id, quantity);
+            } catch {
+              // 실패 알림은 MutationCache.onError가 맡는다. 고른 수량은 그대로 둔다
+            }
+          }}
+        >
+          <LoadingSwap loading={adding} label="장바구니에 담는 중">
+            {formatWon(product.price * quantity)} 장바구니 담기
+          </LoadingSwap>
         </Button>
       </div>
     </div>
@@ -93,13 +113,16 @@ export function ProductOptionSheet({
   product,
   onOpenChange,
   onAddToCart,
+  adding,
 }: ProductOptionSheetProps) {
   return (
     <Drawer open={product !== null} onOpenChange={onOpenChange}>
       <DrawerContent>
         {/* 상품이 바뀌면 통째로 새로 그려 수량이 1로 돌아간다.
             효과로 되돌리면 앞 상품의 수량이 한 번 그려진 뒤에 바뀐다 */}
-        {product && <SheetBody key={product.id} product={product} onAddToCart={onAddToCart} />}
+        {product && (
+          <SheetBody key={product.id} product={product} onAddToCart={onAddToCart} adding={adding} />
+        )}
       </DrawerContent>
     </Drawer>
   );

@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { QUERY_KEYS } from "@/shared/config/query-keys";
 
 import {
+  addCartItem,
   cartItemKey,
   changeCartItemQuantity,
   removeCartItem,
@@ -74,9 +75,25 @@ export function useMutateCartItem() {
     onSettled: settle,
   });
 
+  /**
+   * 담기.
+   *
+   * **낙관적 갱신을 걸지 않는다.** 수량 변경·빼기와 달리 담기는 서버가 줄을 만들어야 짝이
+   * 확정된다. 먼저 그렸다가 되돌리면 방금 담은 것이 사라지는 장면이 되고, 그 사이 수량을
+   * 만지면 없는 줄을 고치려 든다. 대신 부르는 쪽이 `isAdding`으로 대기를 보인다 (#316).
+   */
+  const addition = useMutation({
+    mutationFn: ({ item, quantity: count }: { item: CartItemRef; quantity: number }) =>
+      addCartItem(item, count),
+    onSettled: settle,
+  });
+
   return {
     /** 증감을 보낸다. 스테퍼가 준 값과 이전 값의 차는 부르는 쪽이 계산한다 */
     changeQuantity: (item: CartItemRef, delta: number) => quantity.mutate({ item, delta }),
     remove: (item: CartItemRef) => removal.mutate(item),
+    /** 담고 나서 기다린다. 실패는 던져서 부르는 쪽이 시트를 열어 둘 수 있게 한다 */
+    add: (item: CartItemRef, count: number) => addition.mutateAsync({ item, quantity: count }),
+    isAdding: addition.isPending,
   };
 }

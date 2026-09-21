@@ -248,6 +248,9 @@ export function ProductCompareView() {
   // entities/cart에 "새로 담기" API가 아직 없어(변경·삭제만 있다) 실제 요청 없이
   // 담겼다고 알린다. product-detail-view·deals-view와 같은 방식이다 — 실제 API가
   // 붙을 때 세 화면을 함께 정리한다
+  // **여기서는 서버를 부르지 않는다.** 이 화면은 상품 자체가 목이라(`PICKABLE`의 키가
+  // "1"~"8") 그 id를 그대로 보내면 엉뚱한 상품이 담긴다. 상품 목록이 실제 API로 바뀌면
+  // 상품 상세·타임딜과 같은 방식으로 붙인다 (#316)
   const addToCart = () => showSnackbar("장바구니에 담겼어요");
 
   return (
