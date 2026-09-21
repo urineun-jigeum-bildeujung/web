@@ -105,6 +105,8 @@ const paymentKeys = {
   detailAll: () => [...paymentKeys.all, "detail"] as const,
   detail: (paymentId: ResourceId) => [...paymentKeys.detailAll(), paymentId] as const,
   methods: () => [...paymentKeys.all, "methods"] as const,
+  /** 결제 승인. paymentKey 하나가 결제 한 건을 가리킨다 — 같은 키로 두 번 부르지 않게 한다 */
+  confirm: (paymentKey: ResourceId) => [...paymentKeys.all, "confirm", paymentKey] as const,
 };
 
 const notificationKeys = {

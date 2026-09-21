@@ -1,5 +1,6 @@
 // 결제: 필수 동의 전에는 결제할 수 없는지, 직접 입력 칸이 골랐을 때만 열리는지 본다.
 import { expect, test, type Page } from "@playwright/test";
+import { stubOrders } from "./fixtures/orders";
 
 /**
  * 토스 결제위젯을 막는다.
@@ -78,11 +79,15 @@ test("직접 입력을 고르면 100자 제한 칸이 열린다", async ({ page 
 });
 
 // 주문번호는 문의할 때 사용자가 대는 유일한 식별자다.
+//
+// **주문을 세워 둔다.** 완료 화면이 목 데이터를 버리고 실제 주문을 조회하게 되면서(#308)
+// 상품·배송지·주문번호가 전부 서버에서 온다.
 test("주문 완료에 주문번호와 주문 상세로 가는 길이 있다", async ({ page }) => {
+  await stubOrders(page);
   // 결제창에 들어가기 전에 우리가 복귀 주소에 실어 둔 숫자 주문 id다 (#301)
   await page.goto("/payment/done?order=77");
 
-  await expect(page.getByText("20260829-1234567")).toBeVisible();
+  await expect(page.getByText("ORD-E2E-0001")).toBeVisible();
   await expect(page.getByRole("link", { name: "주문 상세 보기" })).toHaveAttribute(
     "href",
     "/mypage/orders/77",
