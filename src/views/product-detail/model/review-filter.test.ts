@@ -109,6 +109,15 @@ describe("주소에 싣고 되읽기", () => {
     expect(isDefault(filter)).toBe(false);
   });
 
+  it("건강 관심사 값에 ,·|가 섞여 있어도 되읽으면 같다(코드래빗 리뷰)", () => {
+    const filter = filterWith({
+      healthConcerns: ["관절, 근육 통증", "심장|면역"],
+    });
+    const restored = parseFilter(serializeFilter(filter));
+
+    expect(restored).toEqual(filter);
+  });
+
   it("주소가 망가져 있어도 기본값으로 견딘다", () => {
     const restored = parseFilter("age:abc|species:hamster|weight:99-999|repeat:xyz");
 
