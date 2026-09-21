@@ -33,6 +33,7 @@ function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
         quantity: 1,
         unitPrice: 35000,
         itemStatus: "PAID",
+        claims: [],
       },
     ],
     deliveryAddress: {
@@ -138,6 +139,7 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
           quantity: 2,
           unitPrice: 10000,
           itemStatus: "PAID",
+          claims: [],
         },
         {
           orderItemId: 3,
@@ -146,6 +148,7 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
           quantity: 1,
           unitPrice: 15000,
           itemStatus: "PAID",
+          claims: [],
         },
       ],
     }),

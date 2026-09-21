@@ -77,6 +77,24 @@ export async function getOrders({
  * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
  * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
  */
+/**
+ * 그 상품에 걸린 클레임 한 건. 백엔드 `OrderDetailResponse.ClaimSummary` 그대로다.
+ *
+ * **아직 화면이 쓰지 않는다.** 신청 화면 시안이 없어 접수를 못 하니 목록도 늘 비어 있다.
+ * 로컬 백엔드로 실측해 빈 배열이 오는 것을 확인했고, 모양은 소스에서 옮겼다 (#322).
+ */
+export type OrderItemClaim = {
+  claimId: number;
+  /** `CANCEL`·`RETURN`·`EXCHANGE` */
+  claimType: string;
+  /** `REQUESTED`·`APPROVED`·`REJECTED`·`COMPLETED` 등 */
+  claimStatus: string;
+  /** ISO 8601 */
+  requestedAt: string;
+  /** 아직 끝나지 않았으면 없다 */
+  completedAt: string | null;
+};
+
 export type OrderDetailItem = OrderListItem & {
   unitPrice: number;
   /**
@@ -85,6 +103,8 @@ export type OrderDetailItem = OrderListItem & {
    * 주문 상태와 마찬가지로 값 목록을 알지 못해 문자열로 둔다. 화면이 아직 쓰지 않는다.
    */
   itemStatus: string;
+  /** 그 상품에 걸린 클레임들. 없으면 빈 배열이다 */
+  claims: OrderItemClaim[];
 };
 
 /** 주문에 붙은 배송지. 배송지 등록 API와 달리 연락처 이름이 `receiverPhone`이다 */

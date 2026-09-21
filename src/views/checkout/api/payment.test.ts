@@ -20,9 +20,29 @@ function stubFetch(body: unknown, status = 200) {
 
 // 결제 버튼을 연타하거나 재시도가 일어나도 주문이 두 건 생기면 안 된다
 test("주문 생성은 Idempotency-Key를 실어 보낸다", async () => {
-  const fetchMock = stubFetch({ orderId: 1 }, 201);
+  // **로컬 백엔드로 받아 본 실제 응답이다** (#322). orderId만 쓰지만 서버가 주는 것을
+  // 그대로 적어 두어, 응답이 바뀌면 이 목이 먼저 어긋난다
+  const fetchMock = stubFetch(
+    {
+      orderId: 1,
+      orderNumber: "ORD-20260922-000001",
+      orderStatus: "PENDING",
+      productAmount: 48000,
+      shippingFee: 3000,
+      totalAmount: 51000,
+      items: [
+        {
+          orderItemId: 1,
+          productName: "오리&고구마 소형견 사료 1.5kg",
+          quantity: 2,
+          unitPrice: 24000,
+        },
+      ],
+    },
+    201,
+  );
 
-  const { orderId } = await createOrder({
+  const { orderId, shippingFee } = await createOrder({
     addressId: 5,
     items: [{ productId: 12, quantity: 2 }],
   });
@@ -32,6 +52,9 @@ test("주문 생성은 Idempotency-Key를 실어 보낸다", async () => {
   expect(init.method).toBe("POST");
   expect(new Headers(init.headers).get("Idempotency-Key")).toMatch(/[0-9a-f-]{36}/);
   expect(orderId).toBe(1);
+  // 주문 상세 응답에는 이 필드가 없어 화면이 totalAmount - productAmount로 만든다.
+  // 만드는 시점에는 서버가 직접 준다는 것을 여기 남겨 둔다 (#322)
+  expect(shippingFee).toBe(3000);
 });
 
 // 같은 값을 두 번 부르면 서버가 같은 요청으로 못 알아본다
