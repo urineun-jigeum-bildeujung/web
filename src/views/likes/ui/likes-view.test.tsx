@@ -43,6 +43,7 @@ describe("LikesView", () => {
     renderWith();
 
     fireEvent.click(screen.getByRole("tab", { name: "최근에 봤어요" }));
+    fireEvent.click(screen.getByRole("tab", { name: "자주 샀어요" }));
 
     // MVP 범위 밖이라 탭 전환 없이 찜 탭 내용이 그대로 남는다
     expect(screen.getByLabelText("상품 분류")).toBeDefined();
