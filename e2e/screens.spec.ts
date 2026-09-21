@@ -1,5 +1,8 @@
 // 만들어 둔 화면을 모두 열어 콘솔 오류와 가로 스크롤을 확인한다.
 // 눈으로 훑을 때 놓치는 종류(하이드레이션 오류, 화면 폭 넘침)를 기계가 잡게 한다.
+//
+// `/deals`는 서버에서 실제 API를 조회해(#282) 이 스위트의 dev 서버로는 확인할 수
+// 없다 — 같은 스모크를 `e2e/deals.server-fetch.spec.ts`로 옮겼다.
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
@@ -93,7 +96,6 @@ const ROUTES = [
   "/login",
   "/signup",
   "/likes",
-  "/deals",
   "/search",
   "/recommendations",
   "/mypage/pets?tab=products&reviewed=todo",
