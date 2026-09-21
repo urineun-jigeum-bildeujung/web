@@ -31,7 +31,7 @@ async function pickResponse(page: Page, group: string, option: string) {
 async function goToDetail(page: Page) {
   await page.getByRole("radio", { name: "5점 만점에 4.5점" }).click();
   await page.getByLabel("사용 기간").fill("16");
-  // 반응은 선택이지만 서버가 하나 이상을 요구해 하나는 답한다. 요약 카드에 실리는지도 본다
+  // **기호성은 필수다.** 시안이 문항에 "필수" 배지를 붙였다 (#302). 요약 카드에 실리는지도 본다
   await pickResponse(page, "잘 먹었나요?", "잘 먹어요");
   await page.getByRole("button", { name: "다음" }).click();
 }
@@ -53,6 +53,10 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
   // 아이 목록은 `stubPetCatalog`의 것이다
   await page.getByRole("radio", { name: "코코" }).click();
   await page.getByLabel("후기").fill("확실히 예전보다 계단 오를 때 덜 힘들어해요");
+  // 급여 편의성이 남아 아직 잠겨 있다 — 시안이 필수로 그린다 (#302)
+  await expect(submit).toBeDisabled();
+
+  await pickResponse(page, "아이에게 급여하기 편했나요?", "편해요");
   await expect(submit).toBeEnabled();
 
   // 기기 뒤로가기로 1단계에 돌아온다
