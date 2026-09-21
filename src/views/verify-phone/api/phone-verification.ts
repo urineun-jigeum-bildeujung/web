@@ -5,6 +5,8 @@
 
 import { apiRequest } from "@/shared/api/client";
 
+import type { CarrierCode } from "../model/carriers";
+
 /** 백엔드 `PhoneVerificationSendResponse`와 같은 모양이다 */
 export type VerificationSent = {
   /** 인증번호가 살아 있는 시간. 지금은 180초다 */
@@ -48,4 +50,18 @@ export async function confirmVerification(phone: string, code: string): Promise<
     body: { phone: digitsOf(phone), code: Number(code) },
   });
   return verified;
+}
+
+/**
+ * 인증한 번호를 회원 정보에 저장한다.
+ *
+ * **서버가 `code`를 다시 검증한다.** member-service가 내부 API로 auth-service에
+ * "이 번호 인증됐나"를 되묻는다 — 프론트 주장만 믿지 않는다. 그래서 화면이 인증번호를
+ * 완료 버튼까지 들고 있어야 한다.
+ */
+export function savePhone(phone: string, carrier: CarrierCode, code: string): Promise<void> {
+  return apiRequest<void>("/members/me/phone", {
+    method: "PATCH",
+    body: { phone: digitsOf(phone), carrier, code: Number(code) },
+  });
 }

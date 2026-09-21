@@ -26,7 +26,7 @@ export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";
 export { HealthPickerField } from "./ui/health-picker-field";
 export { type HealthGroup, type HealthOption } from "./model/health";
-export { parseAge, parseBirthDate, parseWeight } from "./model/parse-profile-input";
+export { parseAge, parseWeight } from "./model/parse-profile-input";
 export { getHealthOptions, type HealthOptions } from "./api/health-options";
 export { useQueryHealthOptions } from "./api/use-query-health-options";
 export {

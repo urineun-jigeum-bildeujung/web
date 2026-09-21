@@ -60,6 +60,8 @@ views/
 | `onboarding` | `/onboarding` | 반려동물 프로필 등록 6단계. 최초 서비스 소개와의 관계는 확인 필요 |
 | `mypage` | `/mypage` | 마이페이지 홈 |
 | `my-info` | `/mypage/info` | 내 정보와 배송지 목록 |
+| `edit-name` | `/mypage/info/name` | 이름 변경 |
+| `edit-birth` | `/mypage/info/birth` | 생년월일 변경 |
 | `edit-nickname` | `/mypage/info/nickname` | 닉네임 변경 |
 | `verify-phone` | `/mypage/info/phone` | 휴대폰 번호 인증 |
 | `edit-address` | `/mypage/address/new` | 배송지 추가·수정 |

@@ -22,9 +22,8 @@ import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
 import { digitsOf } from "../api/phone-verification";
+import { CARRIER_OPTIONS, type CarrierCode } from "../model/carriers";
 import { useMutatePhoneVerification } from "../api/use-mutate-phone-verification";
-
-const CARRIERS = ["SKT", "KT", "LG U+", "SKT 알뜰폰", "KT 알뜰폰", "LG U+ 알뜰폰"];
 
 /**
  * 문자가 가지 않으므로 받은 것처럼 채워 넣는 값.
@@ -39,7 +38,7 @@ const CHIP_CLASS = "h-8 rounded-md px-2 text-label-medium-14";
 
 export function VerifyPhoneView() {
   const router = useRouter();
-  const [carrier, setCarrier] = useState<string>();
+  const [carrier, setCarrier] = useState<CarrierCode>();
   const [phone, setPhone] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
@@ -48,7 +47,8 @@ export function VerifyPhoneView() {
   // 지금 번호와 견준다 — 늦게 도착한 응답도 옛 번호를 적어 두므로 저절로 어긋난다
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
 
-  const { requestCode, isRequesting, confirmCode, isConfirming } = useMutatePhoneVerification();
+  const { requestCode, isRequesting, confirmCode, isConfirming, savePhone, isSaving } =
+    useMutatePhoneVerification();
 
   const verified = verifiedPhone !== null && verifiedPhone === digitsOf(phone);
   const canRequestCode = Boolean(carrier) && digitsOf(phone).length >= 10;
@@ -61,6 +61,19 @@ export function VerifyPhoneView() {
         setCode(FIXED_CODE);
         toastAppSuccess(APP_MESSAGE_CODE.member.verificationCodeSent);
       })
+      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+  };
+
+  /**
+   * 인증한 번호를 회원 정보에 저장한다.
+   *
+   * **인증번호를 여기까지 들고 온다.** 서버가 저장 시점에 다시 검증하기 때문이다 —
+   * 프론트가 "인증했다"고 주장하는 것만 믿지 않는다.
+   */
+  const submit = () => {
+    if (!carrier) return;
+    savePhone({ phone, carrier, code })
+      .then(() => router.back())
       .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
   };
 
@@ -83,10 +96,11 @@ export function VerifyPhoneView() {
   return (
     <SingleInputScreen
       question="연락받으실 번호를 알려주세요"
-      submitDisabled={!verified}
-      onSubmit={() => router.back()}
+      submitDisabled={!verified || !carrier}
+      submitting={isSaving}
+      onSubmit={submit}
     >
-      <Select value={carrier} onValueChange={setCarrier}>
+      <Select value={carrier} onValueChange={(next) => setCarrier(next as CarrierCode)}>
         {/* 시안의 입력칸과 같은 44px 상자. 값이 차면 선이 진해진다 */}
         <SelectTrigger
           aria-label="통신사"
@@ -95,9 +109,13 @@ export function VerifyPhoneView() {
           <SelectValue placeholder="통신사 선택" />
         </SelectTrigger>
         <SelectContent>
-          {CARRIERS.map((item) => (
-            <SelectItem key={item} value={item} className="min-h-10 text-body-medium-14">
-              {item}
+          {CARRIER_OPTIONS.map((item) => (
+            <SelectItem
+              key={item.value}
+              value={item.value}
+              className="min-h-10 text-body-medium-14"
+            >
+              {item.label}
             </SelectItem>
           ))}
         </SelectContent>

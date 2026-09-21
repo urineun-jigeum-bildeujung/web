@@ -1,13 +1,7 @@
 // 초안을 등록 요청으로 옮기는 규칙. 화면 값과 API 값의 모양이 거의 다 달라 하나씩 본다.
 import { describe, expect, test } from "vitest";
 
-import {
-  EMPTY_PROFILE_DRAFT,
-  parseAge,
-  parseBirthDate,
-  parseWeight,
-  type PetProfileDraft,
-} from "@/entities/pet";
+import { EMPTY_PROFILE_DRAFT, parseAge, parseWeight, type PetProfileDraft } from "@/entities/pet";
 
 import { toRegisterRequest } from "./to-register-request";
 
@@ -49,40 +43,6 @@ describe("parseWeight", () => {
   test("0 이하는 null이다", () => {
     expect(parseWeight("0")).toBeNull();
     expect(parseWeight("0kg")).toBeNull();
-  });
-});
-
-describe("parseBirthDate", () => {
-  test("어떤 구분자로 적어도 YYYY-MM-DD가 된다", () => {
-    expect(parseBirthDate("2022-03-15")).toBe("2022-03-15");
-    expect(parseBirthDate("2022. 03. 15")).toBe("2022-03-15");
-    expect(parseBirthDate("20220315")).toBe("2022-03-15");
-  });
-
-  // 생일은 선택이라 못 알아들으면 안 보내면 된다
-  test("숫자 여덟 자가 아니면 null이다", () => {
-    expect(parseBirthDate("")).toBeNull();
-    expect(parseBirthDate("2022")).toBeNull();
-    expect(parseBirthDate("2022-3-1")).toBeNull();
-  });
-
-  // 자리 수만 세면 2003-10-92가 그대로 나가 서버가 본문을 통째로 거절한다
-  test("달력에 없는 날은 null이다", () => {
-    expect(parseBirthDate("20031092")).toBeNull();
-    expect(parseBirthDate("20220230")).toBeNull();
-    expect(parseBirthDate("20221301")).toBeNull();
-    expect(parseBirthDate("20220100")).toBeNull();
-  });
-
-  test("윤년 2월 29일은 받고 평년은 막는다", () => {
-    expect(parseBirthDate("20240229")).toBe("2024-02-29");
-    expect(parseBirthDate("20230229")).toBeNull();
-  });
-
-  // API가 @PastOrPresent다
-  test("앞날은 null이다", () => {
-    const nextYear = new Date().getFullYear() + 1;
-    expect(parseBirthDate(`${nextYear}0101`)).toBeNull();
   });
 });
 
