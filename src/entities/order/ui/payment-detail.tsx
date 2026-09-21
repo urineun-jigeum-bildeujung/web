@@ -40,8 +40,12 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
   // 둘은 늘 함께 온다. 하나만 있는 경우는 없어 같이 묶어 판단한다
   const hasBreakdown = itemPrice !== undefined && shippingFee !== undefined;
 
+  // **줄을 `<div>`로 더 감싸지 않는다.** `<dl>`의 자식 `<div>`는 `dt`·`dd`만 담을 수 있어서,
+  // 간격을 주려고 한 겹 더 넣으면 그 안의 `dt`·`dd`가 `dl` 소속으로 읽히지 않는다. 스크린
+  // 리더가 이름과 값을 짝으로 읽지 못하고 Lighthouse도 잡는다 (#341). 그래서 간격을 4px로
+  // 깔고 묶음이 시작되는 줄에만 `mt-1`을 더해 8px을 만든다.
   return (
-    <dl className="flex flex-col gap-2">
+    <dl className="flex flex-col gap-1">
       <DetailRow
         term={<span className={STRONG_TERM}>결제금액</span>}
         description={
@@ -49,13 +53,14 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
         }
       />
 
-      {/* 세부 항목끼리는 4px로 더 붙는다 */}
+      {/* 세부 항목끼리는 4px(기본 gap)로 붙고, 위 결제금액과는 8px 떨어진다 */}
       {hasBreakdown && (
-        <div className="flex flex-col gap-1">
+        <>
           {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
             금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
             임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
           <DetailRow
+            className="mt-1"
             term={<span className={VALUE}>상품 옵션</span>}
             description={<span className={VALUE}>{formatWon(itemPrice)}</span>}
           />
@@ -63,12 +68,13 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
             term={<span className={VALUE}>배송비</span>}
             description={<span className={VALUE}>{formatWon(shippingFee)}</span>}
           />
-        </div>
+        </>
       )}
 
       {/* **수단 이름 대신 로고를 둔다.** PD팀이 두 화면을 `paym_002`의 토스페이 로고로
           통일하라고 확정했다 (2026-09-21, #304). 서버가 주는 `payment.method`는 그리지 않는다 */}
       <DetailRow
+        className="mt-1"
         term={<span className={STRONG_TERM}>결제수단</span>}
         description={
           <Image
