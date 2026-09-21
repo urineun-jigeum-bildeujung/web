@@ -59,10 +59,12 @@ const cartKeys = {
   list: (petId?: ResourceId) => [...cartKeys.all, "list", { petId }] as const,
 };
 
+// 목록은 상태로 거르지 않는다. `GET /orders`가 받는 것은 `size`·`cursor`뿐이고 상태 필터는
+// 명세에 없다. 응답을 바꾸는 것은 한 쪽에 몇 개를 담느냐이므로 size만 키에 넣는다 (#284).
 const orderKeys = {
   all: ["order"] as const,
   listAll: () => [...orderKeys.all, "list"] as const,
-  list: (status?: string) => [...orderKeys.listAll(), { status }] as const,
+  list: (size?: number) => [...orderKeys.listAll(), { size }] as const,
   detailAll: () => [...orderKeys.all, "detail"] as const,
   detail: (orderId: ResourceId) => [...orderKeys.detailAll(), orderId] as const,
 };
