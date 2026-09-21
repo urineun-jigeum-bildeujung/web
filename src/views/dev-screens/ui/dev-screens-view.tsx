@@ -39,7 +39,7 @@ const SCREEN_GROUPS = [
       { href: "/mypage/restock", label: "재입고 알림", hint: "mypa_031" },
       { href: "/mypage/recently-viewed", label: "최근 본 상품", hint: "IA_v0.6" },
       { href: "/mypage/reviews", label: "나의 상품 후기", hint: "mypa_041" },
-      { href: "/mypage/reviews/write?orderItemId=0", label: "리뷰 작성", hint: "IA_v0.6" },
+      { href: "/mypage/reviews/write?productId=0", label: "리뷰 작성", hint: "IA_v0.6" },
       { href: "/mypage/reviews/1", label: "리뷰 상세", hint: "IA_v0.6" },
       { href: "/mypage/payment", label: "결제 수단 관리", hint: "mypa_051" },
       { href: "/mypage/orders", label: "주문·배송 확인", hint: "mypa_061" },

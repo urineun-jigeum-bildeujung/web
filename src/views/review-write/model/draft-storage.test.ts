@@ -18,7 +18,7 @@ describe("review draft-storage", () => {
     setReviewDraft("oi1", {
       score: 4.5,
       days: "7",
-      responses: { taste: "soso" },
+      responses: { PALATABILITY: "NEUTRAL" },
       petId: "p1",
       text: "잘 먹어요",
     });
@@ -27,7 +27,7 @@ describe("review draft-storage", () => {
     expect(getReviewDraft("oi1")).toEqual({
       score: 4.5,
       days: "7",
-      responses: { taste: "soso" },
+      responses: { PALATABILITY: "NEUTRAL" },
       petId: "p1",
       text: "잘 먹어요",
     });
@@ -42,13 +42,17 @@ describe("review draft-storage", () => {
   it("보기에 없는 답과 범위 밖 점수는 버린다", () => {
     window.localStorage.setItem(
       "review-draft:oi1",
-      JSON.stringify({ score: 9, days: "1a2", responses: { taste: "nope", stool: "better" } }),
+      JSON.stringify({
+        score: 9,
+        days: "1a2",
+        responses: { PALATABILITY: "nope", DIGESTION: "POSITIVE" },
+      }),
     );
 
     const draft = getReviewDraft("oi1");
     expect(draft.score).toBe(0);
     expect(draft.days).toBe("12");
-    expect(draft.responses).toEqual({ stool: "better" });
+    expect(draft.responses).toEqual({ DIGESTION: "POSITIVE" });
   });
 
   it("지우면 빈 초안으로 돌아간다", () => {

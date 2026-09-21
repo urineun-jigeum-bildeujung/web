@@ -42,12 +42,12 @@ import { RatingInput } from "./rating-input";
 import { ResponseSelect } from "./response-select";
 
 type ReviewWriteViewProps = {
-  /** 리뷰를 달 구매 항목의 임시 식별자. API 계약 확정 전까지 쓴다 */
-  orderItemId: string | undefined;
+  /** 리뷰를 달 상품. 백엔드가 회원+상품당 한 건만 받아 구매 건이 아니라 상품이 단위다 */
+  productId: string | undefined;
 };
 
-/** 어느 구매의 후기인지 모르면 쓸 수 없다. 초안도 항목별로 나뉘어야 해서 여기서 막는다 */
-function MissingOrderItem() {
+/** 어느 상품의 후기인지 모르면 쓸 수 없다. 초안도 상품별로 나뉘어야 해서 여기서 막는다 */
+function MissingProduct() {
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <PageHeader title="리뷰 작성" />
@@ -78,7 +78,7 @@ const MAX_TEXT = 300;
 /** 완료 문구에 넣을 보호자 닉네임. 회원 API가 붙으면 그 값을 쓴다 */
 const NICKNAME = "소리맘";
 
-// 목 데이터. 실제로는 orderItemId로 무엇을 샀는지 받아온다
+// 목 데이터. 실제로는 productId로 상품 정보를 받아온다
 const PRODUCT = {
   name: "오메가3 피쉬오일 60캡슐",
   option: "[옵션] 60정 1병",
@@ -95,11 +95,11 @@ function SectionTitle({ children, required }: { children: string; required?: boo
   );
 }
 
-export function ReviewWriteView({ orderItemId }: ReviewWriteViewProps) {
-  return orderItemId ? <ReviewWriteForm orderItemId={orderItemId} /> : <MissingOrderItem />;
+export function ReviewWriteView({ productId }: ReviewWriteViewProps) {
+  return productId ? <ReviewWriteForm productId={productId} /> : <MissingProduct />;
 }
 
-function ReviewWriteForm({ orderItemId }: { orderItemId: string }) {
+function ReviewWriteForm({ productId }: { productId: string }) {
   const daysId = useId();
   // 단계는 뒤로가기로 되돌아와야 하므로 URL에 두고 push한다. 온보딩과 같은 판단이다
   const [step, setStep] = useQueryState(
@@ -109,11 +109,11 @@ function ReviewWriteForm({ orderItemId }: { orderItemId: string }) {
   // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면 2단계에서 등록할 수 없다
   const draft = useSyncExternalStore(
     subscribeReviewDraft,
-    () => getReviewDraft(orderItemId),
+    () => getReviewDraft(productId),
     getReviewDraftOnServer,
   );
   const { score, days, responses, petId, text } = draft;
-  const patch = (next: Partial<ReviewDraft>) => setReviewDraft(orderItemId, { ...draft, ...next });
+  const patch = (next: Partial<ReviewDraft>) => setReviewDraft(productId, { ...draft, ...next });
   // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
   const [done, setDone] = useState(false);
@@ -128,7 +128,7 @@ function ReviewWriteForm({ orderItemId }: { orderItemId: string }) {
   const submit = () => {
     // API 계약 확정 전이라 보내지 않고 완료 화면으로만 넘어간다. 남겨 둔 초안은 지운다
     setDone(true);
-    clearReviewDraft(orderItemId);
+    clearReviewDraft(productId);
   };
 
   if (done) {

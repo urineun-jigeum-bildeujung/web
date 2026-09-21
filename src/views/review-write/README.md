@@ -2,10 +2,10 @@
 
 구매한 상품의 리뷰를 두 단계로 작성한다. 별점과 함께 아이의 실제 반응을 받는다.
 
-- **라우트**: `/mypage/reviews/write?orderItemId=&step=` — `src/app/mypage/reviews/write/page.tsx`
+- **라우트**: `/mypage/reviews/write?productId=&step=` — `src/app/mypage/reviews/write/page.tsx`
 - **조립**: `entities/pet`(`PetSwitcher`) · `shared/ui`의 `page-header` · `badge` · `rating` · `bottom-action-bar` · `input` · `textarea` · `button`
-- **상태**: URL 쿼리 `orderItemId`·`step`(rating · detail)과 작성 폼 상태. `orderItemId`가 없으면 작성 화면 대신 나의 상품 후기로 안내한다. API 계약 확정 전 미연동
-- **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료 — Figma에는 "타임딜"로 이름이 잘못 붙어 있다). 같은 상품도 구매 건별로 구분해야 하므로 임시로 `orderItemId`를 사용한다
+- **상태**: URL 쿼리 `productId`·`step`(rating · detail)과 작성 폼 상태. `productId`가 없으면 작성 화면 대신 나의 상품 후기로 안내한다. 등록 API 미연동
+- **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료 — Figma에는 "타임딜"로 이름이 잘못 붙어 있다). 백엔드가 회원+상품당 리뷰 한 건만 받아 `productId`가 단위다
 
 | 파일 | 설명 |
 | --- | --- |
@@ -16,8 +16,8 @@
 | `ui/response-select.tsx` | 반응 한 문항. 붙은 세그먼트로 고른다 |
 | `ui/photo-picker.tsx` | 사진을 최대 세 장 붙이고 뺀다 |
 | `ui/photo-picker.test.tsx` | 장수 제한·빼기·미리보기 주소 정리 |
-| `model/questions.ts` | 반응 문항과 보기, 답한 것만 추리는 요약 |
-| `model/draft-storage.ts` | 작성 중인 값을 구매 항목별로 기기에 남긴다. 등록하면 지운다 |
+| `model/questions.ts` | 반응 문항과 보기, 답한 것만 추리는 요약. 키와 값은 백엔드 `ReviewQuestionType`·`ReviewAnswer` |
+| `model/draft-storage.ts` | 작성 중인 값을 상품별로 기기에 남긴다. 등록하면 지운다 |
 | `model/draft-storage.test.ts` | 되읽기, 항목별 분리, 깨진 값 버리기, 지우기 |
 | `index.ts` | 공개 API |
 
@@ -25,7 +25,7 @@
 
 **필수는 별점 · 사용 기간 · 아이 · 후기 글이고 반응 문항은 전부 선택이다.** 와이어프레임은 반응 3문항을 필수로 묶었는데 시안이 선택으로 바꿨다. 모르는 항목까지 아무 답이나 고르게 하면 추천 근거가 흐려진다. 어느 아이가 먹었는지는 여전히 필수다 — 아이를 모르면 그 답을 다음 추천에 쓸 수 없다.
 
-**단계는 URL에, 입력값은 기기에 둔다.** 온보딩과 같은 판단으로 단계를 `push`해서 기기 뒤로가기가 1단계로 돌아오고, 별점·사용 기간·반응·아이·후기 글은 `localStorage`에 구매 항목별로 남겨 2단계에서 새로고침해도 등록할 수 있다. 사진은 `File`이라 남기지 않는다. 등록을 마치면 지운다.
+**단계는 URL에, 입력값은 기기에 둔다.** 온보딩과 같은 판단으로 단계를 `push`해서 기기 뒤로가기가 1단계로 돌아오고, 별점·사용 기간·반응·아이·후기 글은 `localStorage`에 상품별로 남겨 2단계에서 새로고침해도 등록할 수 있다. 사진은 `File`이라 남기지 않는다. 등록을 마치면 지운다.
 
 **별점은 반 개 단위다.** 시안이 4.5점을 그려 두었다. 별 하나(44px)를 좌우 22px로 갈라 라디오 열 개로 받고 화살표 키는 0.5씩 움직인다. 탭 크기는 시안 값을 그대로 쓴다는 규칙에 맞는다.
 

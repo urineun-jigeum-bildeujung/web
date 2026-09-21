@@ -24,7 +24,7 @@ test("기본은 작성 가능한 리뷰 탭이다", () => {
 
   const links = screen.getAllByRole("link", { name: "후기 남기기" });
   expect(links.length).toBeGreaterThan(0);
-  expect(links[0].getAttribute("href")).toBe("/mypage/reviews/write?orderItemId=0");
+  expect(links[0].getAttribute("href")).toBe("/mypage/reviews/write?productId=0");
 });
 
 test("URL로 작성한 리뷰 탭을 열 수 있다", () => {
