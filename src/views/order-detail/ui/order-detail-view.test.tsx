@@ -159,6 +159,18 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
   expect(screen.getAllByText("결제완료")).toHaveLength(1);
 });
 
+// 주문은 결제 전에도 만들어진다. 그때 `payment`가 null로 오는데 빈 카드를 세우면
+// 결제가 끝난 것처럼 보인다 (백엔드 `OrderDetailResponse.from`)
+test("결제 전 주문이면 결제상세 카드를 세우지 않는다", async () => {
+  getOrderDetail.mockResolvedValue(makeDetail({ orderStatus: "PENDING", payment: null }));
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  expect(await screen.findByRole("heading", { name: "주문정보" })).toBeDefined();
+  expect(screen.queryByRole("heading", { name: "결제상세" })).toBeNull();
+  // 배송지는 결제와 무관하게 정해져 있어 그대로 보인다
+  expect(screen.getByRole("heading", { name: "배송지 정보" })).toBeDefined();
+});
+
 test("조회가 실패하면 토스트 대신 화면에서 알린다", async () => {
   getOrderDetail.mockRejectedValue(new Error("network down"));
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });

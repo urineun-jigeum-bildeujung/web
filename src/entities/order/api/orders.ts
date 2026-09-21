@@ -126,7 +126,13 @@ export type OrderDetail = {
   deliveryAddress: OrderDeliveryAddress;
   /** 배송 요청사항. 남기지 않고 주문할 수 있다 */
   deliveryNote: string;
-  payment: OrderPayment;
+  /**
+   * 결제 정보. **아직 결제되지 않은 주문에는 없다.**
+   *
+   * 백엔드 `OrderDetailResponse.from`이 `result.payment()`가 비면 `null`을 담는다.
+   * 주문은 결제 전(`PENDING`)에도 만들어지므로 그 사이에 상세를 열면 여기가 빈다.
+   */
+  payment: OrderPayment | null;
 };
 
 /** 주문 하나를 배송지·결제 정보까지 가져온다 */
