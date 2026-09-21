@@ -38,7 +38,7 @@ test("승인이 성공하면 완료 화면을 그린다", async () => {
     paymentStatus: "DONE",
     amount: 12345,
     method: "토스페이",
-    approvedAt: "2026-09-19T10:00:00",
+    approvedAt: "2026-09-19T10:00:00+09:00",
   });
 
   await renderPage(QUERY);
