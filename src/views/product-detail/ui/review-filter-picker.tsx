@@ -10,9 +10,12 @@
 import { useState } from "react";
 
 import { PET_SPECIES, SPECIES_LABEL, type PetSpecies } from "@/entities/pet";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE, type AppMessage } from "@/shared/config/app-message";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Skeleton } from "@/shared/ui/skeleton";
 
@@ -32,6 +35,8 @@ type ReviewFilterPickerProps = {
   onSpeciesChange: (species: PetSpecies) => void;
   groups: PickerGroup[];
   isLoading?: boolean;
+  /** 품종·건강 관심사 조회가 실패했을 때의 원본 에러. 실패를 빈 목록과 갈라 보여준다 */
+  error?: unknown;
   /** 지금 골라 둔 값들 */
   value: string[];
   onApply: (next: string[]) => void;
@@ -44,6 +49,7 @@ function PickerBody({
   onSpeciesChange,
   groups,
   isLoading,
+  error,
   value,
   onApply,
   onClose,
@@ -54,6 +60,10 @@ function PickerBody({
 
   const toggle = (item: string) =>
     setPicked((prev) => (prev.includes(item) ? prev.filter((v) => v !== item) : [...prev, item]));
+
+  // 조회가 실패하면 빈 그룹과 구분해 알린다 — 안 그러면 "이 그루핑엔 원래 없나 보다"로
+  // 읽힌다. breed-picker-step.tsx와 같은 문구 조회 규칙을 쓴다
+  const message: AppMessage | null = error ? APP_MESSAGE[toAppMessageCode(error)] : null;
 
   const current = groups[activeGroup] ?? groups[0];
   const pickedItems = groups
@@ -101,7 +111,9 @@ function PickerBody({
         ))}
       </div>
 
-      {isLoading ? (
+      {message ? (
+        <EmptyState role="alert" className="flex-1" {...message} />
+      ) : isLoading ? (
         <div className="flex flex-1 flex-col gap-2 px-5 py-3">
           {Array.from({ length: 6 }, (_, index) => (
             <Skeleton key={index} className="h-11 w-full" />

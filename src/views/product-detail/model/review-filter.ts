@@ -122,7 +122,10 @@ export function serializeFilter(filter: ReviewFilter) {
   if (!untouchedRange(filter.age, AGE_RANGE)) parts.push(`age:${filter.age.join("-")}`);
   if (filter.neutered) parts.push(`neutered:${filter.neutered}`);
   if (!untouchedRange(filter.weight, WEIGHT_RANGE)) parts.push(`weight:${filter.weight.join("-")}`);
-  if (filter.healthConcerns.length > 0) parts.push(`concern:${filter.healthConcerns.join(",")}`);
+  // 건강 관심사는 서버 문자열을 그대로 쓴다(model/health.ts). ","·"|"가 값 안에
+  // 섞여 오면 구분자와 겹쳐 되읽기가 깨지므로 각 값을 인코딩해서 싣는다
+  if (filter.healthConcerns.length > 0)
+    parts.push(`concern:${filter.healthConcerns.map(encodeURIComponent).join(",")}`);
 
   return parts.join("|");
 }
@@ -167,6 +170,6 @@ export function parseFilter(param: string): ReviewFilter {
     age: parseRange(entries.get("age"), AGE_RANGE),
     neutered: neutered === "yes" || neutered === "no" ? neutered : null,
     weight: parseRange(entries.get("weight"), WEIGHT_RANGE),
-    healthConcerns: concern ? concern.split(",").filter(Boolean) : [],
+    healthConcerns: concern ? concern.split(",").filter(Boolean).map(decodeURIComponent) : [],
   };
 }

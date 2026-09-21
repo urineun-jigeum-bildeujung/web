@@ -182,7 +182,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
   // 넘긴다. 그 전체화면이 열릴 때 자기 자리에 Skeleton을 그린다
   const [breedOpen, setBreedOpen] = useState(false);
   const [breedSpecies, setBreedSpecies] = useState<PetSpecies>(draft.species ?? "dog");
-  const { breeds, isLoading: breedsLoading } = useQueryBreeds();
+  const { breeds, isLoading: breedsLoading, error: breedsError } = useQueryBreeds();
   // #264: 체구그룹(초소형·소형·중형·대형·믹스)은 `GET /pets/breeds`에 없는 값이라
   // `entities/pet`의 화면 쪽 상수(body-groups.ts)로 나눈다
   const breedGroups: PickerGroup[] = groupBreedsByBodySize(
@@ -198,7 +198,11 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
 
   const [healthOpen, setHealthOpen] = useState(false);
   const [healthSpecies, setHealthSpecies] = useState<PetSpecies>(draft.species ?? "dog");
-  const { options: healthOptions, isLoading: healthLoading } = useQueryHealthOptions(healthSpecies);
+  const {
+    options: healthOptions,
+    isLoading: healthLoading,
+    error: healthError,
+  } = useQueryHealthOptions(healthSpecies);
   const healthGroups: PickerGroup[] = healthOptions?.concerns ?? [];
   const healthLabels = healthOptions ? toLabels(draft.healthConcerns, healthOptions.concerns) : [];
 
@@ -404,6 +408,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
         onSpeciesChange={setBreedSpecies}
         groups={breedGroups}
         isLoading={breedsLoading}
+        error={breedsError}
         value={draft.breedIds.map(String)}
         onApply={(next) => patch({ breedIds: next.map(Number) })}
       />
@@ -417,6 +422,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
         onSpeciesChange={setHealthSpecies}
         groups={healthGroups}
         isLoading={healthLoading}
+        error={healthError}
         value={draft.healthConcerns}
         onApply={(next) => patch({ healthConcerns: next })}
       />

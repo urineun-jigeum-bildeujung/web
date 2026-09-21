@@ -94,4 +94,13 @@ describe("ReviewFilterPicker", () => {
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it("조회가 실패하면 빈 그룹 대신 실패 안내를 보여준다(코드래빗 리뷰)", () => {
+    setup({ error: new Error("network down") });
+
+    expect(screen.getByRole("alert")).toBeDefined();
+    expect(screen.getByText("요청 실패")).toBeDefined();
+    expect(screen.queryByText("말티즈")).toBeNull();
+    expect(screen.queryByText("소형견")).toBeNull();
+  });
 });
