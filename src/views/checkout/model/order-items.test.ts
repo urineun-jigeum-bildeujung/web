@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CartItem } from "@/entities/cart";
 
-import { pickOrderItems } from "./order-items";
+import { pickOrderItems, toOrderItem } from "./order-items";
 
 /** 살 수 있는 줄. 내용 필드가 전부 채워져 온다 */
 function sellable(itemId: number, itemType: CartItem["itemType"] = "NORMAL"): CartItem {
@@ -74,5 +74,36 @@ describe("pickOrderItems", () => {
 
   it("장바구니를 아직 못 받았으면 빈 목록이다", () => {
     expect(pickOrderItems(undefined, null)).toEqual([]);
+  });
+});
+
+describe("toOrderItem", () => {
+  /** 기존 헬퍼에 수량만 얹는다 */
+  function line(itemType: CartItem["itemType"], itemId: number, quantity: number): CartItem {
+    return { ...sellable(itemId, itemType), quantity };
+  }
+
+  it("일반 상품은 productId로 간다", () => {
+    expect(toOrderItem(line("NORMAL", 12, 2))).toEqual({ productId: 12, quantity: 2 });
+  });
+
+  it("타임딜은 dealItemId로 간다", () => {
+    expect(toOrderItem(line("TIME_DEAL", 34, 1))).toEqual({ dealItemId: 34, quantity: 1 });
+  });
+
+  it("**두 필드가 동시에 실리지 않는다**", () => {
+    // 서버 `CreateOrderRequest.Item`이 `@AssertTrue`로 하나만 허용한다. 둘 다 보내도,
+    // 둘 다 안 보내도 본문을 통째로 거절한다 (#306)
+    for (const itemType of ["NORMAL", "TIME_DEAL"] as const) {
+      const keys = Object.keys(toOrderItem(line(itemType, 7, 1))).filter((k) => k !== "quantity");
+      expect(keys).toHaveLength(1);
+    }
+  });
+
+  it("장바구니가 쓰던 itemType·itemId는 넘어가지 않는다", () => {
+    // 그전에는 장바구니 규격을 그대로 보내 주문 생성이 매번 400이었다
+    const item = toOrderItem(line("NORMAL", 12, 2));
+    expect(item).not.toHaveProperty("itemType");
+    expect(item).not.toHaveProperty("itemId");
   });
 });

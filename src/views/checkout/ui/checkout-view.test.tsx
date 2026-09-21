@@ -209,7 +209,9 @@ test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", asy
 
   expect(createOrder).toHaveBeenCalledWith({
     addressId: HOME.addressId,
-    items: [{ itemType: "NORMAL", itemId: 1, quantity: 1 }],
+    // **장바구니 규격이 아니라 주문 규격이다.** 서버가 상품과 타임딜을 다른 필드로
+    // 받아, itemType·itemId를 그대로 보내면 매번 400이었다 (#306)
+    items: [{ productId: 1, quantity: 1 }],
     // 드롭다운 기본값이 그대로 실린다
     deliveryNote: "문 앞에 놓아주세요",
   });

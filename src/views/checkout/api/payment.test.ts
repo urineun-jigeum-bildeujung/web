@@ -24,7 +24,7 @@ test("주문 생성은 Idempotency-Key를 실어 보낸다", async () => {
 
   const { orderId } = await createOrder({
     addressId: 5,
-    items: [{ itemType: "PRODUCT", itemId: 12, quantity: 2 }],
+    items: [{ productId: 12, quantity: 2 }],
   });
 
   const [url, init] = fetchMock.mock.calls[0];
@@ -37,7 +37,7 @@ test("주문 생성은 Idempotency-Key를 실어 보낸다", async () => {
 // 같은 값을 두 번 부르면 서버가 같은 요청으로 못 알아본다
 test("주문 생성은 부를 때마다 다른 Idempotency-Key를 쓴다", async () => {
   const fetchMock = stubFetch({ orderId: 1 }, 201);
-  const request = { addressId: 5, items: [{ itemType: "PRODUCT", itemId: 12, quantity: 1 }] };
+  const request = { addressId: 5, items: [{ productId: 12, quantity: 1 }] };
 
   await createOrder(request);
   await createOrder(request);

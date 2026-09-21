@@ -14,14 +14,24 @@ const ORDERS_PATH = "/orders";
 /**
  * 주문에 담는 줄.
  *
- * **줄을 가리키는 값이 둘이다** — 장바구니와 같은 규격으로 `itemType`과 `itemId`를 함께 보낸다.
- * 상품과 타임딜이 id 공간을 따로 쓰기 때문에 종류 없이 id만으로는 가리킬 수 없다.
+ * **장바구니와 규격이 다르다.** 장바구니는 `itemType`+`itemId`로 줄을 가리키는데
+ * (`AddCartItemRequest`), 주문은 종류별로 필드를 나눠 받는다.
+ *
+ * ```java
+ * public record Item(Long productId, Long dealItemId, @Positive int quantity) {
+ *     @AssertTrue(message = "productId와 dealItemId 중 하나만 존재해야 합니다.")
+ *     public boolean isValidReference() {
+ *         return (productId == null) != (dealItemId == null);
+ *     }
+ * }
+ * ```
+ *
+ * **둘 중 정확히 하나만 실어야 한다.** 둘 다 보내도, 둘 다 안 보내도 서버가 본문을 거절한다.
+ * 그래서 타입도 유니온으로 갈라 두 필드를 동시에 채울 수 없게 한다 (#306).
  */
-export type OrderItemRequest = {
-  itemType: string;
-  itemId: number;
-  quantity: number;
-};
+export type OrderItemRequest = { quantity: number } & (
+  { productId: number; dealItemId?: never } | { dealItemId: number; productId?: never }
+);
 
 export type CreateOrderRequest = {
   addressId: number;
