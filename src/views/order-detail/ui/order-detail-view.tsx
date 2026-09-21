@@ -118,7 +118,6 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                   // 배송비 필드가 따로 없다. 기능명세서가 3,000원 고정으로 적어 두었고 명세
                   // Example의 차액도 3,000원이라 결제 금액에서 상품 금액을 뺀다 (#288)
                   shippingFee={order.totalAmount - order.productAmount}
-                  payMethod={order.payment.method}
                 />
               </DetailSection>
             )}

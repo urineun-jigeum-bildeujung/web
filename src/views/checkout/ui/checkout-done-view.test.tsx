@@ -56,7 +56,8 @@ test("결제 내역과 배송지를 함께 남긴다", () => {
 
   expect(screen.getByRole("heading", { name: "결제상세" })).toBeDefined();
   expect(screen.getByRole("heading", { name: "배송지 정보" })).toBeDefined();
-  expect(screen.getByText("토스페이")).toBeDefined();
+  // 결제수단은 글자가 아니라 로고다. PD팀이 토스페이 로고로 통일하라고 확정했다 (#304)
+  expect(screen.getByRole("img", { name: "토스페이" })).toBeDefined();
   expect(screen.getByText("3,000원")).toBeDefined();
 });
 
