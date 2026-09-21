@@ -3,8 +3,10 @@ import { expect, test } from "vitest";
 
 import { toOrderStatus } from "./order-status";
 
-test("명세에서 확인된 세 값을 화면 상태로 옮긴다", () => {
+test("화면이 그리는 다섯 상태를 서버 값에서 옮긴다", () => {
   expect(toOrderStatus("PAID")).toBe("paid");
+  expect(toOrderStatus("PREPARING")).toBe("preparing");
+  expect(toOrderStatus("SHIPPING")).toBe("shipping");
   expect(toOrderStatus("DELIVERED")).toBe("delivered");
   expect(toOrderStatus("CONFIRMED")).toBe("confirmed");
 });
@@ -14,12 +16,13 @@ test("대소문자가 달라도 같은 값으로 읽는다", () => {
   expect(toOrderStatus("Delivered")).toBe("delivered");
 });
 
-// 명세에 없는 값을 추측으로 매핑하면 틀렸을 때 조용히 엉뚱한 뱃지가 붙는다.
-// 모르는 것은 모른다고 돌려줘야 화면이 감출 수 있다 (#284).
-test("명세에 없는 값은 추측하지 않고 null이다", () => {
-  expect(toOrderStatus("PREPARING")).toBeNull();
-  expect(toOrderStatus("SHIPPING")).toBeNull();
+// 백엔드 enum에는 아홉이 있지만 시안에 자리가 있는 것은 다섯뿐이다. 나머지를 억지로
+// 끼워 넣으면 없는 단계가 있는 것처럼 보인다. 어떻게 보여줄지는 PD 확인 대상이다 (#288).
+test("시안에 자리가 없는 상태는 null이다", () => {
+  expect(toOrderStatus("PENDING")).toBeNull();
   expect(toOrderStatus("CANCELLED")).toBeNull();
+  expect(toOrderStatus("REFUNDED")).toBeNull();
+  expect(toOrderStatus("PARTIAL_REFUND")).toBeNull();
   expect(toOrderStatus("")).toBeNull();
 });
 
