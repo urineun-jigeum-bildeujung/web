@@ -193,6 +193,84 @@ test("목록 끝이 보이면 다음 쪽을 이어서 가져온다", async () =>
   expect(screen.getByText("테스트 상품 1")).toBeDefined();
 });
 
+// 서버가 방금 보낸 커서를 그대로 돌려주면 같은 쪽을 끝없이 부르며 목록이 불어난다 (#294 리뷰)
+test("같은 커서가 다시 오면 더 부르지 않는다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  // 받은 커서를 다시 실어 보내도 같은 커서를 또 준다
+  getOrders.mockImplementation(async () => ({
+    orders: [makeOrder(1, "PAID")],
+    nextCursor: "SAME",
+    hasNext: true,
+  }));
+
+  render(<OrdersView />, { wrapper: createQueryWrapper() });
+  await screen.findByText("테스트 상품 1");
+
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  // 두 번(첫 쪽 + 같은 커서로 한 번)에서 멈춘다
+  await waitFor(() => expect(getOrders).toHaveBeenCalledTimes(2));
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+  await waitFor(() => expect(getOrders).toHaveBeenCalledTimes(2));
+});
+
+// 둘째 쪽이 실패했다고 보고 있던 목록까지 사라지면 스크롤하던 자리를 잃는다 (#294 리뷰)
+test("다음 쪽 조회가 실패해도 앞 쪽은 남는다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) => {
+    if (cursor) {
+      throw new Error("network down");
+    }
+    return { orders: [makeOrder(1, "PAID")], nextCursor: "CURSOR-1", hasNext: true };
+  });
+
+  render(<OrdersView />, { wrapper: createQueryWrapper() });
+  await screen.findByText("테스트 상품 1");
+
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  expect(await screen.findByRole("button", { name: /다시 시도/ })).toBeDefined();
+  // 앞 쪽은 그대로다. 전체 오류 화면으로 덮지 않는다
+  expect(screen.getByText("테스트 상품 1")).toBeDefined();
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
 test("주문이 없으면 빈 상태를 안내한다", async () => {
   served = [];
   render(<OrdersView />, { wrapper: createQueryWrapper() });
