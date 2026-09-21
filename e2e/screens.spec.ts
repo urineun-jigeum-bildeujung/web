@@ -76,7 +76,7 @@ const ROUTES = [
   "/mypage/restock",
   "/mypage/recently-viewed",
   "/mypage/reviews",
-  "/mypage/reviews/write?orderItemId=0",
+  "/mypage/reviews/write?productId=0",
   "/mypage/reviews/1",
   "/mypage/payment",
   "/mypage/orders",
