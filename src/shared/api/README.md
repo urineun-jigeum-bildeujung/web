@@ -13,7 +13,7 @@
 | `upload-image.ts` | 이미지 한 장을 presigned URL로 S3에 직접 올리고 `fileUrl`을 돌려준다(`uploadImage`). 회원·아이 사진 발급 함수와 `ImageUploadError` 포함 |
 | `upload-image.test.ts` | 확장자 뽑기, 발급 본문, PUT 헤더(`x-amz-tagging`), 실패 구분 |
 
-- base URL은 `NEXT_PUBLIC_API_BASE_URL`을 읽고, 없으면 `/api/v1`을 쓴다.
+- base URL은 요청 시점에 해석한다(`getApiBaseUrl`). 브라우저는 `NEXT_PUBLIC_API_BASE_URL`을 읽고 없으면 same-origin `/api/v1`을 쓴다. **서버(RSC 등)는 이 same-origin fallback을 쓰지 않는다** — 서버의 `fetch`는 현재 페이지 origin이 없어 상대 경로를 못 풀기 때문이다. 서버는 `API_BASE_URL_INTERNAL`(GitOps가 실행 중인 컨테이너에 주입)을 읽는데, 값이 없거나 `http(s)://`로 시작하는 절대 URL이 아니면(`/api/v1`을 실수로 넣는 경우 포함) 바로 오류를 던진다(#282).
 - 성공 응답은 리소스를 그대로 반환하고, 실패 응답은 Spring 표준 ProblemDetail(RFC 9457)을 파싱해 `ApiError.problem`에 담는다. timestamp·traceId는 응답에 없다(traceId는 백엔드 로깅 전용).
 - accessToken이 있으면 요청에 `Authorization: Bearer`를 붙인다. 권한 매트릭스상 PUBLIC 엔드포인트(상품·타임딜·리뷰 조회)는 `auth: false`로 부르면 토큰을 붙이지 않고 401에도 재발급하지 않는다. PUBLIC 여부 판단은 슬라이스 api 세그먼트가 한다.
 - 401이면 재발급(`/auths/token/refresh`) 후 원 요청을 1회 재시도한다. 재발급은 rotation 정책(중복 호출 시 탈취 간주) 때문에 동시 401에서도 한 번만 호출된다(single-flight). 게이트웨이가 JWT를 먼저 검증하므로 재발급 요청에는 만료된 accessToken을 붙이지 않는다. 재발급까지 실패하면 토큰을 지우고 401을 그대로 던진다 — 로그인 이동·캐시 비우기 같은 앱 정책은 `subscribeTokensCleared`로 구독한 쪽이 처리한다.

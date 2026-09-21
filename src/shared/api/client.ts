@@ -67,10 +67,41 @@ interface TokenPair {
   refreshToken: string;
 }
 
-// 변수를 빈 값으로 두는 경우까지 포함해 "비우면 /api/v1" 규칙을 지키기 위해 ??가 아니라 ||를 쓴다.
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/v1";
-
 const REFRESH_PATH = "/auths/token/refresh";
+
+/**
+ * base URL을 요청 시점에 해석한다. standalone 서버는 런타임에 주입된 환경변수를 읽어야 하므로
+ * 모듈 로드 시점에 한 번만 계산해 두면 안 된다.
+ *
+ * **서버에서는 브라우저용 same-origin(`/api/v1`)으로 되돌아가지 않는다.** 서버의 `fetch`는
+ * 현재 페이지 origin이라는 개념이 없어 상대 경로를 그대로 받으면 곧장 TypeError가 난다 —
+ * 설정이 빠졌으면 알아보기 쉬운 오류로 바로 드러나야 조용히 실패하지 않는다.
+ */
+function getApiBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    // 변수를 빈 값으로 두는 경우까지 포함해 "비우면 /api/v1" 규칙을 지키기 위해 ??가 아니라 ||를 쓴다.
+    return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "/api/v1";
+  }
+
+  const serverBaseUrl = process.env.API_BASE_URL_INTERNAL?.trim();
+  if (!serverBaseUrl || !isAbsoluteHttpUrl(serverBaseUrl)) {
+    throw new Error(
+      "서버 API 주소가 없거나 절대 URL이 아닙니다. API_BASE_URL_INTERNAL 환경변수를 확인하세요.",
+    );
+  }
+  return serverBaseUrl;
+}
+
+// `/api/v1` 같은 상대 경로가 실수로 들어와도 여기서 걸러진다. 서버의 fetch는 상대 경로를
+// 못 풀어 이 검증 없이 넘기면 나중에 훨씬 알아보기 어려운 TypeError로 터진다.
+function isAbsoluteHttpUrl(value: string): boolean {
+  try {
+    const { protocol } = new URL(value);
+    return protocol === "http:" || protocol === "https:";
+  } catch {
+    return false;
+  }
+}
 
 export function buildQueryString(query: QueryParams | undefined): string {
   if (!query) {
@@ -116,7 +147,7 @@ async function parseProblemDetail(response: Response): Promise<ProblemDetail | u
 function requestOnce(path: string, options: ApiRequestOptions): Promise<Response> {
   const { body, headers, query, auth = true, ...rest } = options;
 
-  return fetch(`${API_BASE_URL}${path}${buildQueryString(query)}`, {
+  return fetch(`${getApiBaseUrl()}${path}${buildQueryString(query)}`, {
     ...rest,
     headers: buildHeaders(headers, body, auth),
     body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),

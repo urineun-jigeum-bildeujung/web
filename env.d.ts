@@ -6,6 +6,10 @@ namespace NodeJS {
     // 행정안전부 도로명주소 검색 API 승인키. Route Handler에서만 읽는다.
     JUSO_CONFM_KEY?: string;
 
+    // 서버 런타임(RSC 등)에서 백엔드 API를 부를 때 쓰는 절대 URL. 서버의 fetch는 same-origin
+    // 상대 경로를 못 풀어 반드시 절대 URL이어야 한다. GitOps에서 실행 중인 컨테이너에 주입한다.
+    API_BASE_URL_INTERNAL?: string;
+
     // PUBLIC — NEXT_PUBLIC_ 접두사가 붙은 값. 브라우저에 노출되므로 비밀값을 두지 않는다.
 
     // 백엔드 API base URL. 비우면 same-origin /api/v1을 쓴다.

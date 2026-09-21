@@ -114,6 +114,64 @@ describe("apiRequest", () => {
   });
 });
 
+describe("apiRequest base URL", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
+
+  it("브라우저에서는 NEXT_PUBLIC_API_BASE_URL이 있으면 그 절대 URL을 쓴다", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "https://api.example.com/api/v1");
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/products", { auth: false });
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("https://api.example.com/api/v1/products");
+  });
+
+  it("브라우저에서 NEXT_PUBLIC_API_BASE_URL이 없으면 same-origin 상대 경로로 되돌아간다", async () => {
+    vi.stubEnv("NEXT_PUBLIC_API_BASE_URL", "");
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/products", { auth: false });
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("/api/v1/products");
+  });
+
+  it("서버(window 없음)에서는 API_BASE_URL_INTERNAL의 절대 URL을 쓴다", async () => {
+    vi.stubGlobal("window", undefined);
+    vi.stubEnv("API_BASE_URL_INTERNAL", "http://product-service:8083/api/v1");
+    const fetchMock = stubFetch(Response.json({}));
+
+    await apiRequest("/products", { auth: false });
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("http://product-service:8083/api/v1/products");
+  });
+
+  it("서버에서 API_BASE_URL_INTERNAL이 없으면 same-origin으로 되돌아가지 않고 바로 오류를 던진다", async () => {
+    vi.stubGlobal("window", undefined);
+    vi.stubEnv("API_BASE_URL_INTERNAL", "");
+    stubFetch(Response.json({}));
+
+    await expect(apiRequest("/products", { auth: false })).rejects.toThrow(
+      "서버 API 주소가 없거나 절대 URL이 아닙니다",
+    );
+  });
+
+  it("서버에서 API_BASE_URL_INTERNAL이 상대 경로면 거부한다", async () => {
+    vi.stubGlobal("window", undefined);
+    vi.stubEnv("API_BASE_URL_INTERNAL", "/api/v1");
+    stubFetch(Response.json({}));
+
+    await expect(apiRequest("/products", { auth: false })).rejects.toThrow(
+      "서버 API 주소가 없거나 절대 URL이 아닙니다",
+    );
+  });
+});
+
 describe("buildQueryString", () => {
   it("값이 하나도 없으면 빈 문자열이다", () => {
     expect(buildQueryString(undefined)).toBe("");
