@@ -29,7 +29,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 라우트 | 화면 | 접근 정책 | URL 상태·식별자 | 상태 |
 | --- | --- | --- | --- | --- |
 | `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
-| `/deals` | 타임딜 목록 | 공개 후보 | `status` 계약 미확정 | 스캐폴딩 |
+| `/deals` | 타임딜 목록 | 공개 후보 | `tab=live\|upcoming` | UI 시안 반영(#275). 담긴 상품·딜 종료는 화면 안 상태라 URL에 없음 |
 | `/recommendations` | 맞춤 추천 | 인증 필요 후보 | `pet`(아이 id, 서버 전달 방식 미확정), `category=all\|food\|snack\|supplement`, `sort=recommend\|latest\|rating-high\|rating-low` | 메인 "맞춤 추천" 섹션 더보기로 진입하는 서브 화면(#273). `PageHeader` 사용 |
 | `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch`, `reviewFilter` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
 | `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `review`, `photo` | 구현됨 |

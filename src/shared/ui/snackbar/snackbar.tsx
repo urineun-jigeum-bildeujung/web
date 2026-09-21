@@ -6,7 +6,8 @@
 
 import { toast } from "sonner";
 
-/** 확인하기 버튼처럼 스낵바 안에 직접 무엇을 더 그려야 할 때 이 클래스로 감싼다 */
+/** 확인하기 버튼처럼 스낵바 안에 직접 무엇을 더 그려야 할 때 이 클래스로 감싼다.
+ * 버튼과 문구를 양 끝에 벌려야 해서 폭을 화면 가까이 채운다 */
 export const SNACKBAR_CLASS =
   "pointer-events-auto relative bottom-13 flex min-h-9.5 w-[calc(100vw-40px)] max-w-88.25 items-center rounded-lg bg-surface-primary px-3 py-2 text-text-label-inverse";
 
