@@ -1,6 +1,7 @@
 // 찜한 상품·최근에 본 상품·자주 산 상품을 탭으로 나눠 본다.
 // UI 시안 기준(#274, 찜 탭 1117-4972, 빈 상태 2022-158710)이다. "최근에 봤어요"·
-// "자주 샀어요"는 이번 시안에 없어 와이어프레임 스타일을 그대로 둔다.
+// "자주 샀어요"는 PD 확인 결과 이번 MVP 범위 밖이다(#274 QA 답변) — 탭은 남겨두고
+// 눌러도 반응하지 않게 disabled로 막는다.
 
 "use client";
 
@@ -29,23 +30,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 const TABS = ["liked", "recent", "often"] as const;
 
-// 찜 탭 전용 필터. 상품 종류가 아니라 알림 상태로 거른다(#274, 1117-4972 chip 줄).
-// "새 알림"·"확인한 알림"이 정확히 무엇에 대한 알림인지(재입고·가격 인하 등)는
-// Figma에 문구가 없어 PD팀 확인 대기 중이다(개인 QA 기록) — 우선 시안 라벨만 옮긴다
-const NOTICES = [
+// 찜 탭 전용 필터. PD가 알림 상태 대신 상품 카테고리로 거르는 걸로 바꿨다
+// (#274 QA 답변, 1117-4972 chip 줄 갱신). /recommendations와 같은 값 체계를 쓴다.
+const CATEGORIES = [
   { value: "all", label: "전체" },
-  { value: "new", label: "새 알림" },
-  { value: "seen", label: "확인한 알림" },
+  { value: "food", label: "사료" },
+  { value: "snack", label: "간식" },
+  { value: "supplement", label: "영양제" },
 ] as const;
-const NOTICE_VALUES = ["all", "new", "seen"] as const;
+const CATEGORY_VALUES = ["all", "food", "snack", "supplement"] as const;
 
 type Product = {
   id: string;
   name: string;
   price: number;
   originalPrice: number;
-  /** 찜 탭에만 있다. 의미가 확정되지 않아 있음/없음 정도로만 둔다 */
-  notice?: "new" | "seen";
+  /** 찜 탭에만 있다. "all"은 필터 값일 뿐 상품에는 붙지 않는다 */
+  category?: Exclude<(typeof CATEGORY_VALUES)[number], "all">;
   /** 자주 산 상품에만 있는 것 */
   boughtCount?: number;
   lastBought?: string;
@@ -59,23 +60,29 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
       name: "그레인프리 연어 사료 2kg",
       price: 25600,
       originalPrice: 32000,
-      notice: "new",
+      category: "food",
     },
     {
       id: "l1",
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      notice: "seen",
+      category: "snack",
     },
     {
       id: "l2",
       name: "그레인프리 연어 사료 2kg",
       price: 31200,
       originalPrice: 39000,
-      notice: "new",
+      category: "supplement",
     },
-    { id: "l3", name: "그레인프리 연어 사료 2kg", price: 31200, originalPrice: 39000 },
+    {
+      id: "l3",
+      name: "그레인프리 연어 사료 2kg",
+      price: 31200,
+      originalPrice: 39000,
+      category: "food",
+    },
   ],
   recent: Array.from({ length: 4 }, (_, index) => ({
     id: `r${index}`,
@@ -134,16 +141,16 @@ export function LikesView() {
     // nuqs 기본값 replace는 히스토리에 쌓지 않아 화면을 통째로 떠난다
     parseAsStringLiteral(TABS).withDefault("liked").withOptions({ history: "push" }),
   );
-  const [notice, setNotice] = useQueryState(
-    "notice",
-    parseAsStringLiteral(NOTICE_VALUES).withDefault("all"),
+  const [category, setCategory] = useQueryState(
+    "category",
+    parseAsStringLiteral(CATEGORY_VALUES).withDefault("all"),
   );
   const [items, setItems] = useState(MOCK);
   const [removing, setRemoving] = useState<Product | null>(null);
 
   const visible =
-    tab === "liked" && notice !== "all"
-      ? items.liked.filter((item) => item.notice === notice)
+    tab === "liked" && category !== "all"
+      ? items.liked.filter((item) => item.category === category)
       : items[tab];
 
   const remove = (id: string) => {
@@ -162,12 +169,13 @@ export function LikesView() {
     </button>
   );
 
-  // 찜 탭의 하트는 푸는 자리다. 누르면 목록에서 빠지므로 다른 탭과 같이 확인을 거친다.
-  // 시안(1117-4972의 slot_4)은 흰 원판(32px) 위에 채워진 하트, 사진 오른쪽 아래 4px이다
+  // 찜 탭의 하트는 누르면 바로 풀린다. 취소 기능이 없어 하나씩 눌러야 하는데
+  // 그때마다 확인 모달·토스트가 뜨면 오히려 방해된다는 PD 판단이라 확인 없이 바로 뺀다
+  // (#274 QA 답변). 시안(1117-4972 slot_2)은 흰 원판(32px) 위 채워진 하트, 사진 오른쪽 위 4px이다
   const heartButton = (product: Product) => (
     <button
       type="button"
-      onClick={() => setRemoving(product)}
+      onClick={() => remove(product.id)}
       aria-pressed
       aria-label={`${product.name} 찜 풀기`}
       className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static after:absolute after:-inset-1.5"
@@ -221,14 +229,17 @@ export function LikesView() {
             >
               찜했어요
             </TabsTrigger>
+            {/* MVP 범위 밖이라 눌러도 반응하지 않는다(#274 QA 답변) — 탭 자체는 시안대로 둔다 */}
             <TabsTrigger
               value="recent"
+              disabled
               className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
             >
               최근에 봤어요
             </TabsTrigger>
             <TabsTrigger
               value="often"
+              disabled
               className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
             >
               자주 샀어요
@@ -237,17 +248,19 @@ export function LikesView() {
 
           {TABS.map((value) => (
             <TabsContent key={value} value={value} className="flex flex-col gap-4 pt-4">
-              {/* 알림 상태로 거르는 것은 찜 탭에만 있다(시안 1117-4972). 칩 자체(36px 알약,
+              {/* 카테고리로 거르는 것은 찜 탭에만 있다(시안 1117-4972). 칩 자체(36px 알약,
                   고른 것만 bg-primary)는 FilterChips와 정확히 같은 시안값이라 그대로 쓴다.
                   빈 상태 시안(2022-158710)엔 칩 줄 자체가 없어, 찜한 상품이 하나도 없을
                   때는(거른 결과가 아니라 원본이 빈 것) 칩도 같이 감춘다 */}
               {value === "liked" && items.liked.length > 0 && (
                 <div className="px-5">
                   <FilterChips
-                    label="알림 상태 고르기"
-                    options={NOTICES}
-                    value={notice}
-                    onValueChange={(next) => void setNotice(next as (typeof NOTICE_VALUES)[number])}
+                    label="상품 분류"
+                    options={CATEGORIES}
+                    value={category}
+                    onValueChange={(next) =>
+                      void setCategory(next as (typeof CATEGORY_VALUES)[number])
+                    }
                   />
                 </div>
               )}
@@ -269,11 +282,9 @@ export function LikesView() {
                         name={product.name}
                         price={product.price}
                         originalPrice={product.originalPrice}
-                        // 찜 탭만 시안이 확정돼 우측 하단 4px로 옮긴다. 나머지 탭은
-                        // 확정 시안이 없어 공용 기본 위치(우상단)를 그대로 둔다
-                        imageActionClassName={
-                          value === "liked" ? "top-auto right-1 bottom-1" : undefined
-                        }
+                        // 찜 탭만 시안이 확정돼 우측 상단 4px로 옮긴다(공용 기본값은 12px).
+                        // 나머지 탭은 확정 시안이 없어 공용 기본 위치를 그대로 둔다
+                        imageActionClassName={value === "liked" ? "top-1 right-1" : undefined}
                         imageAction={
                           value === "liked" ? heartButton(product) : closeButton(product)
                         }

@@ -1,4 +1,4 @@
-// 탭마다 무엇이 붙는지, 알림 상태로 거르기가 목록을 줄이는지 본다.
+// 탭마다 무엇이 붙는지, 카테고리로 거르기가 목록을 줄이는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
@@ -19,24 +19,33 @@ function renderWith(search = "") {
 }
 
 describe("LikesView", () => {
-  it("찜 탭에만 알림 상태 거르기가 있다", () => {
+  it("찜 탭에만 카테고리 거르기가 있다", () => {
     const { unmount } = renderWith();
-    expect(screen.getByLabelText("알림 상태 고르기")).toBeDefined();
+    expect(screen.getByLabelText("상품 분류")).toBeDefined();
     unmount();
 
     renderWith("?tab=recent");
-    expect(screen.queryByLabelText("알림 상태 고르기")).toBeNull();
+    expect(screen.queryByLabelText("상품 분류")).toBeNull();
   });
 
-  it("찜 탭에서 새 알림만 고르면 그것만 남는다", () => {
-    renderWith("?tab=liked&notice=new");
-    // 목업에서 새 알림은 둘이다
+  it("찜 탭에서 사료만 고르면 그것만 남는다", () => {
+    renderWith("?tab=liked&category=food");
+    // 목업에서 사료는 둘이다
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
 
-  it("주소에 없는 알림 상태가 오면 전체로 떨어진다", () => {
-    renderWith("?tab=liked&notice=legacy");
+  it("주소에 없는 카테고리가 오면 전체로 떨어진다", () => {
+    renderWith("?tab=liked&category=legacy");
     expect(screen.getAllByRole("listitem")).toHaveLength(4);
+  });
+
+  it("최근에 봤어요·자주 샀어요 탭은 눌러도 반응하지 않는다", () => {
+    renderWith();
+
+    fireEvent.click(screen.getByRole("tab", { name: "최근에 봤어요" }));
+
+    // MVP 범위 밖이라 탭 전환 없이 찜 탭 내용이 그대로 남는다
+    expect(screen.getByLabelText("상품 분류")).toBeDefined();
   });
 
   it("자주 산 탭에는 구매 횟수와 살 수 있는 버튼이 붙는다", () => {
@@ -56,26 +65,25 @@ describe("LikesView", () => {
     expect(screen.getAllByLabelText(/목록에서 빼기/)).toHaveLength(4);
   });
 
-  it("찜을 풀면 목록에서 빠진다", () => {
+  it("찜을 풀면 확인 없이 바로 목록에서 빠진다", () => {
     renderWith("?tab=liked");
 
+    // 취소 기능이 없어 확인 모달이 뜨면 오히려 방해된다는 판단으로 뺐다(#274 QA 답변)
     fireEvent.click(screen.getAllByLabelText(/찜 풀기/)[0]);
-    fireEvent.click(screen.getByRole("button", { name: "지우기" }));
 
-    // 하트만 비우고 목록에 남기면 푼 것이 아니다
+    expect(screen.queryByRole("button", { name: "지우기" })).toBeNull();
     expect(screen.getAllByRole("listitem")).toHaveLength(3);
   });
 
   // 빈 상태 시안(2022-158710)엔 칩 줄이 없다. 거른 결과가 빈 것과는 다르다
-  it("찜한 상품이 하나도 없으면 알림 상태 칩도 감춘다", () => {
+  it("찜한 상품이 하나도 없으면 카테고리 칩도 감춘다", () => {
     renderWith("?tab=liked");
 
     for (const button of screen.getAllByLabelText(/찜 풀기/)) {
       fireEvent.click(button);
-      fireEvent.click(screen.getByRole("button", { name: "지우기" }));
     }
 
-    expect(screen.queryByLabelText("알림 상태 고르기")).toBeNull();
+    expect(screen.queryByLabelText("상품 분류")).toBeNull();
     expect(screen.getByText("아직 담아둔 상품이 없어요")).toBeDefined();
   });
 
