@@ -4,6 +4,8 @@
 
 | 파일 | 설명 |
 | --- | --- |
+| `api/products.ts` | 검색 결과 조회(`searchProducts`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282) |
+| `api/products.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
 | `model/mock-detail-product.ts` | API 연동 전 상품 상세·비교 화면이 공유하는 상품 요약 목데이터 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |
@@ -14,7 +16,11 @@
 
 ## 아직 없는 것
 
-API 응답 타입과 조회 훅(`api/`)은 백엔드 API 계약이 정해진 뒤에 만든다.
+`api/products.ts`는 검색 목록 조회만 있다. 상품 상세·목록(비검색) 조회, 정가(`originalPrice`) 표시 정책은
+아직 없다 — 서버 응답에 정가 필드가 없고 `discountRate`에서 역산하면 반올림 오차로 실제 값과
+어긋날 수 있어(#282) 만들어내지 않았다. 조회 훅(React Query)은 만들지 않았다 — 상품·타임딜은
+공개 데이터라 서버 컴포넌트에서 직접 fetch하고, 진짜 클라이언트 재조회가 필요한 지점(더보기 등)이
+생기면 그때 훅을 얹는다.
 
 상품 카드는 두지 않는다. 화면마다 보여주는 항목이 아홉 가지로 갈려, 조각(`shared/ui`의 `Price`·`ProductSummary`)을 화면에서 조립한다. 근거는 [component-convention](../../../docs/conventions/component-convention.md)의 "공용으로 올리는 기준"을 본다.
 
