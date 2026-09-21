@@ -336,9 +336,13 @@ function UpcomingDealsSection({
                         <span className="text-title-bold-18 text-brand">
                           예정 {item.discountRate}%
                         </span>
-                        <span className="text-label-medium-11 text-text-body-unselect">
-                          {openLabel} 오픈
-                        </span>
+                        {/* 값이 없으면 줄째로 비운다. `오픈`만 남으면 언제 여는지 아는
+                            것처럼 보인다 (#300 리뷰) */}
+                        {openLabel && (
+                          <span className="text-label-medium-11 text-text-body-unselect">
+                            {openLabel} 오픈
+                          </span>
+                        )}
                       </span>
                     }
                     // 시안(1905-32448)은 이 자리(action_button)가 아예 없다 — 장식용
