@@ -88,12 +88,12 @@ describe("LikesView", () => {
     expect(screen.getByText("아직 담아둔 상품이 없어요")).toBeDefined();
   });
 
-  // /likes는 바텀내비 탭 루트라 홈과 같은 로고형 헤더를 쓴다(#274). 뒤로가기 있는
-  // PageHeader가 아니라는 것을 여기서 고정해 둔다
-  it("머리말이 로고형이다 — 뒤로가기 없이 검색·알림·장바구니로 이동한다", () => {
+  // 시안(header, 1585:18342)은 뒤로가기 화살표 + 검색·알림·장바구니고 제목이 없다(#274).
+  // 바텀내비 탭 루트라 로고형일 거라 짐작했던 게 틀렸다는 것을 여기서 고정해 둔다
+  it("머리말에 뒤로가기가 있고 검색·알림·장바구니로 이동한다", () => {
     renderWith();
 
-    expect(screen.queryByRole("button", { name: "이전 화면으로" })).toBeNull();
+    expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
     expect(screen.getByRole("link", { name: "검색" }).getAttribute("href")).toBe("/search");
     expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
       "/mypage/notifications",

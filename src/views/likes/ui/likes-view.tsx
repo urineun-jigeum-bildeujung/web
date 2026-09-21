@@ -25,6 +25,7 @@ import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { Icon } from "@/shared/ui/icon/icon";
+import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
@@ -189,37 +190,36 @@ export function LikesView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* 시안 header/type=logo. /likes는 바텀내비 탭 루트라 home-view와 같은 헤더를 쓴다 —
-          지금 코드는 뒤로가기 있는 PageHeader였는데, 서브 화면이 아니라 탭 루트라 맞지 않았다 */}
-      <header className="flex h-12 items-center justify-between px-5">
-        <p className="text-title-bold-18 text-brand">골라주개냥</p>
-        <nav
-          aria-label="바로 가기"
-          className="flex items-center gap-2.25 text-icon-stroke-tertiary"
-        >
-          <Link
-            href="/search"
-            aria-label="검색"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-          >
-            <Icon name="search" className="size-7" />
-          </Link>
-          <Link
-            href="/mypage/notifications"
-            aria-label="알림"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-          >
-            <Icon name="bell_noti" className="size-7" />
-          </Link>
-          <Link
-            href="/cart"
-            aria-label="장바구니"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-          >
-            <Icon name="cart" className="size-7" />
-          </Link>
-        </nav>
-      </header>
+      {/* 시안(header, 1585:18342)은 로고가 아니라 뒤로가기 화살표 + 검색·알림·장바구니고
+          제목이 없다. /likes가 바텀내비 탭 루트라 home-view와 같은 로고형이라고 판단해
+          PageHeader를 걷어냈던 게 틀렸다 — 원래대로 되돌린다(leading 기본값 back 그대로) */}
+      <PageHeader
+        right={
+          <div className="flex items-center">
+            <Link
+              href="/search"
+              aria-label="검색"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Icon name="search" className="size-6" />
+            </Link>
+            <Link
+              href="/mypage/notifications"
+              aria-label="알림"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Icon name="bell_noti" className="size-6" />
+            </Link>
+            <Link
+              href="/cart"
+              aria-label="장바구니"
+              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <Icon name="cart" className="size-6" />
+            </Link>
+          </div>
+        }
+      />
 
       <main className="flex flex-1 flex-col pb-8">
         <Tabs value={tab} onValueChange={(next) => void setTab(next as (typeof TABS)[number])}>
