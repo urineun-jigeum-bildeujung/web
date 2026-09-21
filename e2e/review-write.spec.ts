@@ -75,8 +75,17 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
 test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
   await page.goto(`${PATH}&step=detail`);
 
-  // CSS 셀렉터 대신 접근성 이름으로 찾는다. DOM이 바뀌어도 이름은 남는다
-  const input = page.getByLabel("사진 추가 (0/3)");
+  // 더하는 칸은 사진첩·카메라를 고르는 시트를 연다(#296). 확인은 닫기만 한다
+  await page.getByRole("button", { name: "사진 추가 (0/3)" }).click();
+  const sheet = page.getByRole("dialog", { name: "사진 첨부하기" });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole("button", { name: "카메라" })).toBeEnabled();
+  await sheet.getByRole("button", { name: "확인" }).click();
+  await expect(sheet).toBeHidden();
+
+  // CSS 셀렉터 대신 접근성 이름으로 찾는다. DOM이 바뀌어도 이름은 남는다.
+  // 파일창은 자동화로 못 열어 사진첩 입력에 바로 넣는다
+  const input = page.getByLabel("사진첩에서 고르기");
   await input.setInputFiles([
     { name: "a.png", mimeType: "image/png", buffer: PNG },
     { name: "b.png", mimeType: "image/png", buffer: PNG },
@@ -85,9 +94,9 @@ test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
 
   await expect(page.getByRole("button", { name: /사진 빼기/ })).toHaveCount(3);
   // 다 채우면 더할 자리가 사라진다
-  await expect(input).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /사진 추가/ })).toHaveCount(0);
 
   await page.getByRole("button", { name: "1번째 사진 빼기" }).click();
   await expect(page.getByRole("button", { name: /사진 빼기/ })).toHaveCount(2);
-  await expect(page.getByLabel("사진 추가 (2/3)")).toBeAttached();
+  await expect(page.getByRole("button", { name: "사진 추가 (2/3)" })).toBeAttached();
 });
