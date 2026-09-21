@@ -39,7 +39,7 @@ import { Textarea } from "@/shared/ui/textarea";
 
 import { createOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
-import { pickOrderItems } from "../model/order-items";
+import { pickOrderItems, toOrderItem } from "../model/order-items";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -221,11 +221,9 @@ export function CheckoutView() {
     try {
       const { orderId } = await createOrder({
         addressId: address.addressId,
-        items: items.map((item) => ({
-          itemType: item.itemType,
-          itemId: item.itemId,
-          quantity: item.quantity,
-        })),
+        // 장바구니 규격(`itemType`+`itemId`)을 주문 규격으로 옮긴다. 서버가 상품과
+        // 타임딜을 다른 필드로 받는다 (#306)
+        items: items.map(toOrderItem),
         // 적지 않았으면 빈 문자열이 아니라 아예 보내지 않는다
         deliveryNote: deliveryNote || null,
       });

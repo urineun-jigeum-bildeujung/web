@@ -2,6 +2,8 @@
 
 import { cartItemKey, type CartItem } from "@/entities/cart";
 
+import type { OrderItemRequest } from "../api/orders";
+
 /**
  * 결제 대상 줄을 고른다.
  *
@@ -22,4 +24,20 @@ export function pickOrderItems(items: CartItem[] | undefined, selected: string |
 
   const keys = selected.split(",");
   return sellable.filter((item) => keys.includes(cartItemKey(item)));
+}
+
+/**
+ * 장바구니 줄을 주문 생성 규격으로 옮긴다.
+ *
+ * **장바구니와 주문의 규격이 다르다.** 장바구니는 `itemType`+`itemId`로 줄을 가리키는데
+ * 주문은 종류별로 필드를 나눠 받고, `@AssertTrue`로 **둘 중 하나만** 허용한다. 장바구니
+ * 규격을 그대로 보내면 본문이 통째로 거절당한다 (#306).
+ *
+ * `api`가 아니라 여기 있는 이유는 순수 변환이기 때문이다. 화면 테스트가 `api/orders`를
+ * 통째로 목으로 바꿔서, 저기 두면 변환까지 사라진다.
+ */
+export function toOrderItem(item: CartItem): OrderItemRequest {
+  return item.itemType === "TIME_DEAL"
+    ? { dealItemId: item.itemId, quantity: item.quantity }
+    : { productId: item.itemId, quantity: item.quantity };
 }

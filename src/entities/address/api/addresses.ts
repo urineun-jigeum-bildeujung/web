@@ -45,7 +45,10 @@ export type SaveAddressRequest = {
  * 기본값처럼 읽힌다. 순서가 흔들리면 눌렀던 자리가 매번 달라진다.
  */
 export async function getAddresses(): Promise<Address[]> {
-  const { addresses } = await apiRequest<{ addresses: Address[] }>(ADDRESSES_PATH);
+  // **응답이 최상위 배열이다.** 명세에는 `{ addresses: [...] }`로 적혀 있지만 구현은
+  // `ResponseEntity<List<AddressDetailResponse>>`다(`AddressController.getMyAddresses`).
+  // 껍데기를 벗기려 들면 `undefined`를 펼치게 되어 조회가 통째로 터진다 (#306)
+  const addresses = await apiRequest<Address[]>(ADDRESSES_PATH);
   return [...addresses].sort((a, b) => Number(b.isDefault) - Number(a.isDefault));
 }
 

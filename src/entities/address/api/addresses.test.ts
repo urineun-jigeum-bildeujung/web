@@ -31,8 +31,11 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("목록은 addresses로 감싸여 온다", async () => {
-  const fetchMock = vi.fn().mockResolvedValue(Response.json({ addresses: [HOME] }));
+// **응답은 최상위 배열이다.** 명세에는 `{ addresses: [...] }`로 적혀 있지만 구현이
+// `ResponseEntity<List<AddressDetailResponse>>`다. 이 테스트가 명세 쪽을 고정하고 있어
+// 껍데기를 벗기던 코드가 초록불을 받았고, 실서버에 붙으면 조회가 통째로 터지는 상태였다 (#306)
+test("목록은 최상위 배열로 온다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json([HOME]));
   vi.stubGlobal("fetch", fetchMock);
 
   const addresses = await getAddresses();
@@ -45,7 +48,7 @@ test("목록은 addresses로 감싸여 온다", async () => {
 
 // 명세가 순서를 약속하지 않는다. 고르는 화면은 맨 위가 기본값처럼 읽혀서 흔들리면 안 된다
 test("기본 배송지가 앞에 온다", async () => {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json({ addresses: [OFFICE, HOME] })));
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json([OFFICE, HOME])));
 
   const addresses = await getAddresses();
 
