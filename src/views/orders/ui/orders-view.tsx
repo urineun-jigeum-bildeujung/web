@@ -3,7 +3,6 @@
 
 "use client";
 
-import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +17,7 @@ import {
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
+import { formatDisplayDate } from "@/shared/lib/date/display-date";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,13 +110,17 @@ export function OrdersView() {
           list.map((order) => {
             const status = toOrderStatus(order.orderStatus);
             const row = toProductRow(order);
+            const orderedAt = formatDisplayDate(order.orderedAt);
 
             return (
               <article key={order.orderId} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-2">
-                  <p className="text-body-regular-13 text-text-body-secondary">
-                    주문 일자 {format(new Date(order.orderedAt), "yy.MM.dd")}
-                  </p>
+                  {/* 읽을 수 없는 값이면 줄을 비운다. 지어낸 날짜를 보이느니 낫다 */}
+                  {orderedAt && (
+                    <p className="text-body-regular-13 text-text-body-secondary">
+                      주문 일자 {orderedAt}
+                    </p>
+                  )}
 
                   {row && (
                     <OrderProductRow

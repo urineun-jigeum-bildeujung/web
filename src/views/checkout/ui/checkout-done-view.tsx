@@ -4,12 +4,12 @@
 // 흰 바닥에 요약 카드 하나만 떠 있고 결제상세·배송지는 카드 없이 그대로 놓인다.
 // 그 두 블록은 주문 상세(mypa_161)와 같아 `entities/order`의 조각을 쓴다 (#210).
 
-import { format } from "date-fns";
 import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
 import { DeliveryDetail, DetailRow, DetailSection, PaymentDetail } from "@/entities/order";
 import { APP_MESSAGE, type AppMessageCode } from "@/shared/config/app-message";
+import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
 import type { PaymentConfirmResult } from "../api/payment";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -53,11 +53,7 @@ const MOCK = {
  * 지어낸 날짜를 보이느니 안 보이는 편이 낫다.
  */
 function formatPaidAt(approvedAt: string | undefined) {
-  if (!approvedAt) {
-    return undefined;
-  }
-  const date = new Date(approvedAt);
-  return Number.isNaN(date.getTime()) ? undefined : format(date, "yy.MM.dd HH:mm");
+  return approvedAt ? formatDisplayDateTime(approvedAt) : null;
 }
 
 /**

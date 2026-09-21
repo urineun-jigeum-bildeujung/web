@@ -8,8 +8,6 @@
 
 "use client";
 
-import { format } from "date-fns";
-
 import {
   DeliveryDetail,
   DetailRow,
@@ -22,6 +20,7 @@ import {
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
+import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -110,7 +109,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             {order.payment && (
               <DetailSection
                 title="결제상세"
-                titleTrailing={format(new Date(order.payment.paidAt), "yy.MM.dd HH:mm")}
+                titleTrailing={formatDisplayDateTime(order.payment.paidAt)}
                 className="rounded-xl bg-card px-3 py-4"
               >
                 <PaymentDetail
