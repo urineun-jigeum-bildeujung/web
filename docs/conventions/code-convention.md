@@ -162,7 +162,7 @@ React Compiler가 켜져 있다(`next.config.ts`의 `reactCompiler: true`). `use
 ```
 shared/lib/
 ├── motion/       # motion 프리셋 (variants, transition 상수)
-├── date/         # date-fns 래퍼, 포맷 함수
+├── date/         # 날짜·시각 표시 함수 (아래 "날짜와 시각 표시")
 └── utils.ts      # 예외 — shadcn CLI 소유 (cn). 위치·이름을 바꾸지 않는다
 ```
 
