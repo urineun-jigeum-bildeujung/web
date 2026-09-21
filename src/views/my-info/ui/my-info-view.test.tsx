@@ -16,7 +16,7 @@ type Profile = {
   email: string;
 };
 
-const query: { profile: Profile | undefined; isLoading: boolean } = {
+const query: { profile: Profile | undefined; isLoading: boolean; error: Error | null } = {
   profile: {
     nickname: "신나는강아지813",
     name: null,
@@ -26,10 +26,18 @@ const query: { profile: Profile | undefined; isLoading: boolean } = {
     email: "me@example.com",
   },
   isLoading: false,
+  error: null,
 };
 
+/** 아이·배송지도 각자 실패할 수 있다 */
+const others = { petsError: null as Error | null, addressesError: null as Error | null };
+
 vi.mock("@/entities/member", () => ({
-  useQueryMyProfile: () => ({ profile: query.profile, isLoading: query.isLoading, error: null }),
+  useQueryMyProfile: () => ({
+    profile: query.profile,
+    isLoading: query.isLoading,
+    error: query.error,
+  }),
 }));
 vi.mock("@/entities/pet", () => ({
   useQueryPets: () => ({
@@ -38,7 +46,7 @@ vi.mock("@/entities/pet", () => ({
       { id: "2", name: "보리", isDefault: false },
     ],
     isLoading: false,
-    error: null,
+    error: others.petsError,
   }),
 }));
 vi.mock("@/entities/address", () => ({
@@ -57,7 +65,7 @@ vi.mock("@/entities/address", () => ({
       },
     ],
     isLoading: false,
-    error: null,
+    error: others.addressesError,
   }),
 }));
 
@@ -77,6 +85,9 @@ beforeEach(() => {
     email: "me@example.com",
   };
   query.isLoading = false;
+  query.error = null;
+  others.petsError = null;
+  others.addressesError = null;
 });
 
 test("머리말과 닉네임이 서버 값이다", () => {
@@ -121,4 +132,30 @@ test("불러오는 동안 값 자리를 잡아 둔다", () => {
 
   expect(screen.getByRole("heading", { name: "내 정보" })).toBeDefined();
   expect(screen.queryByText("등록 전이에요")).toBeNull();
+});
+
+// 못 받은 것과 비어 있는 것은 다른 사실이다. "등록 전이에요"로 두면 보호자는
+// 적어 넣으면 되는 줄 알고 적을 자리를 찾다 헤맨다
+test("회원 정보를 못 받으면 등록 전이 아니라 실패를 알린다", () => {
+  query.profile = undefined;
+  query.error = new Error("500");
+  renderView();
+
+  expect(screen.getAllByText("불러오지 못했어요").length).toBeGreaterThan(0);
+  expect(screen.queryByText("등록 전이에요")).toBeNull();
+});
+
+test("아이 목록을 못 받으면 등록 전이 아니라 실패를 알린다", () => {
+  others.petsError = new Error("500");
+  renderView();
+
+  expect(screen.getByText("불러오지 못했어요")).toBeDefined();
+});
+
+// 빈 목록으로 두면 보호자는 자기가 넣은 배송지가 사라진 줄 안다
+test("배송지를 못 받으면 그 사실을 알린다", () => {
+  others.addressesError = new Error("500");
+  renderView();
+
+  expect(screen.getByRole("alert").textContent).toContain("배송지를 불러오지 못했어요");
 });
