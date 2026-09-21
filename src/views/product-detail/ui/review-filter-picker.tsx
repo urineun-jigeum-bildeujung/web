@@ -87,7 +87,10 @@ function PickerBody({
               setActiveGroup(0);
             }}
             className={cn(
-              "flex h-9 items-center justify-center rounded-full px-3 text-label-medium-14 transition-colors",
+              // 시각 높이(36px)는 시안대로 두고, 보이지 않는 세로 영역만 44px까지
+              // 넓힌다(review-filter-sheet.tsx의 REVIEW_CHIP_CLASS와 같은 규칙).
+              // 가로는 옆 칩과 8px밖에 안 떨어져 있어 넓히지 않는다
+              "relative flex h-9 items-center justify-center rounded-full px-3 text-label-medium-14 transition-colors after:absolute after:inset-x-0 after:-inset-y-1",
               species === option
                 ? "bg-primary text-primary-foreground"
                 : "border border-border text-foreground",
@@ -168,7 +171,11 @@ function PickerBody({
             <button
               type="button"
               onClick={() => setPicked([])}
-              className="text-body-medium-14 text-text-body-secondary"
+              // 글자 자체는 44px에 한참 못 미쳐 보이지 않는 영역을 사방으로 넓힌다.
+              // 아래로는 칩 줄과 8px밖에 안 떨어져 있어 4px만 내리고(칩 쪽도 위로
+              // 4px 넓히니 합쳐서 딱 8px, 겹치지 않는다), 위는 스크롤 영역이라
+              // 넉넉히 20px까지 넓혀도 다른 버튼과 안 겹친다
+              className="relative text-body-medium-14 text-text-body-secondary after:absolute after:-inset-x-3 after:-top-5 after:-bottom-1"
             >
               초기화
             </button>
@@ -183,7 +190,9 @@ function PickerBody({
                   type="button"
                   onClick={() => toggle(item.value)}
                   aria-label={`${item.label} 빼기`}
-                  className="flex h-9 items-center gap-1 rounded-full border border-border px-3 text-label-medium-14 text-text-body-default"
+                  // 칩끼리 가로로 8px밖에 안 떨어져 있어 세로만 넓힌다. 위로 4px는
+                  // "초기화" 줄이 아래로 4px 넓힌 것과 맞닿기만 하고 겹치지 않는다
+                  className="relative flex h-9 items-center gap-1 rounded-full border border-border px-3 text-label-medium-14 text-text-body-default after:absolute after:inset-x-0 after:-inset-y-1"
                 >
                   {item.label}
                   <Icon name="cancel" aria-hidden className="size-6" />
