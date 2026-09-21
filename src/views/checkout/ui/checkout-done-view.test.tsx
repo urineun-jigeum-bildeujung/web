@@ -64,7 +64,12 @@ const ORDER: OrderDetail = {
 
 /** 승인이 끝나고 주문도 받아 온, 가장 흔한 상태 */
 function ready() {
-  useQueryPaymentConfirm.mockReturnValue({ payment: PAYMENT, error: null, isConfirming: false });
+  useQueryPaymentConfirm.mockReturnValue({
+    payment: PAYMENT,
+    error: null,
+    isConfirming: false,
+    canConfirm: true,
+  });
   useQueryOrderDetail.mockReturnValue({ order: ORDER, error: null, isLoading: false });
 }
 
@@ -99,7 +104,12 @@ test("결제일시를 승인 응답으로 보인다", () => {
 // 값이 없거나 읽을 수 없으면 줄을 비운다. 지어낸 날짜를 보이느니 안 보이는 편이 낫다
 test("승인 시각이 없으면 결제일시를 비운다", () => {
   // `ready({ payment: undefined })`는 기본 매개변수가 되살려서 안 된다. 직접 세운다
-  useQueryPaymentConfirm.mockReturnValue({ payment: undefined, error: null, isConfirming: false });
+  useQueryPaymentConfirm.mockReturnValue({
+    payment: undefined,
+    error: null,
+    isConfirming: false,
+    canConfirm: true,
+  });
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(screen.queryByText(/^\d{2}\.\d{2}\.\d{2} /)).toBeNull();
@@ -138,7 +148,12 @@ test("결제 내역을 남긴다", () => {
 
 // 눌렸는지 모른 채 기다리면 같은 자리를 다시 누르거나 떠난다 (AGENTS.md 5.8)
 test("승인을 기다리는 동안 자리를 잡는다", () => {
-  useQueryPaymentConfirm.mockReturnValue({ payment: undefined, error: null, isConfirming: true });
+  useQueryPaymentConfirm.mockReturnValue({
+    payment: undefined,
+    error: null,
+    isConfirming: true,
+    canConfirm: true,
+  });
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(screen.getByRole("status", { name: "결제를 확인하는 중" })).toBeDefined();
@@ -179,6 +194,7 @@ function failed() {
     payment: undefined,
     error: new Error("승인 실패"),
     isConfirming: false,
+    canConfirm: true,
   });
 }
 

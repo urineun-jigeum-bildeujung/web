@@ -23,6 +23,7 @@
 | `api/orders.ts` | `[1]` 주문 생성. `Idempotency-Key`를 실어 두 번 만들어지지 않게 한다 |
 | `api/payment.ts` | `[2]` 결제 요청과 `[5]` 승인 |
 | `api/use-query-payment-confirm.ts` | 승인을 **브라우저에서 정확히 한 번** 부른다. 서버 컴포넌트에서는 토큰이 없어 부를 수 없다 (#308) |
+| `api/use-query-payment-confirm.test.tsx` | StrictMode 이중 마운트와 실패 후 재마운트에서 승인이 한 번만 나가는지 |
 | `api/payment.test.ts` | 무엇을 어떤 모양으로 보내는지, `orderId` 두 값이 제자리에 가는지 |
 | `model/order-items.ts` | 장바구니에서 결제할 줄만 고른다 |
 | `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301) |
