@@ -38,7 +38,6 @@ const MOCK = {
   total: 12345,
   itemPrice: 9345,
   shippingFee: 3000,
-  payMethod: "토스페이",
   receiver: "천경진",
   phone: "010-1234-5678",
   address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
@@ -226,7 +225,6 @@ export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneView
               total={payment?.amount ?? MOCK.total}
               itemPrice={MOCK.itemPrice}
               shippingFee={MOCK.shippingFee}
-              payMethod={payment?.method ?? MOCK.payMethod}
             />
           </DetailSection>
 
