@@ -6,6 +6,8 @@
 | --- | --- |
 | `api/products.ts` | 검색 결과 조회(`searchProducts`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282) |
 | `api/products.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
+| `api/time-deals.ts` | 타임딜 목록 조회(`getTimeDeals`). 백엔드가 딜 묶음 개수를 제한하지 않아 배열 그대로 보존한다(#282) |
+| `api/time-deals.test.ts` | 요청 파라미터·다중 딜 묶음 보존·`stockBadge` 매핑 단위 테스트 |
 | `model/mock-detail-product.ts` | API 연동 전 상품 상세·비교 화면이 공유하는 상품 요약 목데이터 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |

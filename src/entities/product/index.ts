@@ -5,6 +5,14 @@ export {
   type ProductSearchResult,
   type ProductSort,
 } from "./api/products";
+export {
+  getTimeDeals,
+  type DealItem,
+  type DealStock,
+  type TimeDealGroup,
+  type TimeDealList,
+  type TimeDealStatus,
+} from "./api/time-deals";
 export { MatchScoreBadge, getMatchLevel } from "./ui/match-score-badge";
 export { CompareTable, type CompareRow } from "./ui/compare-table";
 export { CompareSlot, type CompareProduct, type ProductKind } from "./ui/compare-slot";

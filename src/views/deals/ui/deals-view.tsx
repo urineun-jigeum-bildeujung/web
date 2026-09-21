@@ -3,6 +3,10 @@
 // 빈 화면 1905-32457, 옵션 시트 2544-56035)이다.
 //
 // 이 화면의 주인공은 상품이 아니라 남은 시간이다. 시간이 다 되면 목록도 함께 사라진다.
+//
+// 목록은 서버가 조회해 준다(#282). `/app/deals/page.tsx`가 만든 두 Promise(진행중·오픈예정)를
+// 각각 `use()`로 풀어 독립된 Suspense 아래 둔다 — 헤더·탭은 그 결과를 기다리지 않는다.
+// 백엔드가 딜 묶음(dealId) 개수를 제한하지 않아, 한 상태에 묶음이 여러 개 와도 전부 그린다.
 
 "use client";
 
@@ -10,18 +14,24 @@ import { format, isToday, isTomorrow } from "date-fns";
 import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useState } from "react";
+import { Suspense, use, useState } from "react";
 
-import { ProductOptionSheet, type OptionSheetProduct } from "@/entities/product";
+import {
+  ProductOptionSheet,
+  type DealItem,
+  type OptionSheetProduct,
+  type TimeDealList,
+} from "@/entities/product";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
-import { calcDiscountRate, formatWon } from "@/shared/ui/price/price";
+import { formatWon } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 const TABS = ["live", "upcoming"] as const;
@@ -31,84 +41,13 @@ const TAB_LABEL = [
   ["upcoming", "오픈 예정"],
 ] as const;
 
-type LiveDeal = {
-  /** 이 딜 자체의 id. `time_deal_items`의 `deal_item_id`에 대응할 자리 */
-  id: string;
-  /** 상품 상세로 이동할 때 쓰는 실제 상품 id. 딜 id와 다른 자원이다 */
-  productId: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  optionLabel: string;
-  unitLabel: string;
-  unitAmount: number;
-  /** 남은 수량 상태. 품절이면 담을 수 없다 */
-  stock: "enough" | "low" | "none";
-};
+// 시안(1905-32420·32424·32428)의 배지 색·문구다. 재고 충분(enough)은 배지가 없다
+const STOCK_BADGE = {
+  low: { label: "품절임박", className: "bg-brand text-brand-foreground" },
+  none: { label: "품절", className: "bg-primary text-primary-foreground" },
+} as const;
 
-type UpcomingDeal = {
-  id: string;
-  name: string;
-  /** 열릴 때 적용될 할인율 */
-  expectedRate: number;
-};
-
-// 시안(1905-32420 등)의 예시 상품·가격을 그대로 옮겼다. 목록과 옵션 시트가 같은
-// 값을 보게 하려고 한 군데(이 배열)만 둔다 — 시안 원본은 목록 24,000원과 시트
-// 21,000원이 서로 달랐는데(같은 상품·같은 급여비 캡션인데도), 목록 값을 기준으로
-// 삼았다. 어느 쪽이 맞는지는 PD팀 확인 중이다(개인 QA 기록)
-const LIVE_DEALS: LiveDeal[] = [
-  {
-    id: "d1",
-    productId: "p101",
-    name: "오리&고구마 소형견 사료 1.5kg",
-    price: 24_000,
-    originalPrice: 32_000,
-    optionLabel: "1.5kg (기본 구성)",
-    unitLabel: "하루 예상 급여비 약",
-    unitAmount: 960,
-    stock: "low",
-  },
-  {
-    id: "d2",
-    productId: "p102",
-    name: "데일리 루테인 영양제 30정",
-    price: 14_400,
-    originalPrice: 18_000,
-    optionLabel: "30정 (기본 구성)",
-    unitLabel: "1정당 약",
-    unitAmount: 480,
-    stock: "enough",
-  },
-  {
-    id: "d3",
-    productId: "p103",
-    name: "황태 단호박 미니 큐브 20개입",
-    price: 13_600,
-    originalPrice: 16_000,
-    optionLabel: "20개입 (기본 구성)",
-    unitLabel: "1개당 약",
-    unitAmount: 680,
-    stock: "none",
-  },
-];
-
-const UPCOMING_DEALS: UpcomingDeal[] = [
-  { id: "u1", name: "사슴고기&현미 소형견 사료 1.2kg", expectedRate: 22 },
-  { id: "u2", name: "고양이 그레인프리 사료 1.5kg", expectedRate: 30 },
-];
-
-/** 내일 오전 10시. 실제로는 서버가 오픈 시각을 준다.
- * 오늘 10시가 아직 안 지났으면 오늘로 잡는 대신 늘 내일로 고정한다 — 접속 시각에 따라
- * "오늘"·"내일"이 오락가락하면 화면을 확인할 때마다 문구가 달라져 QA하기 어렵다 */
-function nextOpenAt() {
-  const at = new Date();
-  at.setDate(at.getDate() + 1);
-  at.setHours(10, 0, 0, 0);
-  return at;
-}
-
-/** "내일 오전 10시". 오늘·내일이면 날짜 대신 그 말을 쓴다 */
+/** "내일 오전 10시"처럼. 오늘·내일이면 날짜 대신 그 말을 쓴다 */
 function formatOpenAt(at: Date) {
   const day = isToday(at)
     ? "오늘"
@@ -118,13 +57,317 @@ function formatOpenAt(at: Date) {
   return `${day} ${format(at, "a h'시'", { locale: ko })}`;
 }
 
-// 시안(1905-32420·32424·32428)의 배지 색·문구다. 재고 충분(enough)은 배지가 없다
-const STOCK_BADGE = {
-  low: { label: "품절임박", className: "bg-brand text-brand-foreground" },
-  none: { label: "품절", className: "bg-primary text-primary-foreground" },
-} as const;
+/** 결과 영역이 대기 중일 때 자리를 잡는다. 카운트다운 자리 하나 + 카드 3장 자리 */
+function DealsSkeleton() {
+  return (
+    <div className="flex flex-col" role="status" aria-label="타임딜을 불러오는 중">
+      <div className="flex flex-col gap-1 px-5 pt-3">
+        <Skeleton className="h-9 w-32" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+      <ul className="flex flex-col">
+        {Array.from({ length: 3 }, (_, index) => (
+          <li
+            key={index}
+            className="flex items-center gap-4 border-b border-border py-5 pr-17 pl-5 last:border-b-0"
+          >
+            <Skeleton className="size-24 shrink-0 rounded-md" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-5 w-1/2" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
-export function DealsView() {
+type LiveDealsSectionProps = {
+  dealsPromise: Promise<TimeDealList>;
+  /** 서버가 다시 알려준 게 아니라, 이 화면에서 카운트다운이 다 돼 로컬로만 숨긴 딜 id들 */
+  endedDealIds: number[];
+  onGroupEnd: (dealId: number) => void;
+  addedIds: string[];
+  onItemAction: (item: DealItem) => void;
+};
+
+/** 진행중 탭 내용. 딜 묶음마다 카운트다운+목록을 반복해 그린다(묶음이 여러 개일 수 있다) */
+function LiveDealsSection({
+  dealsPromise,
+  endedDealIds,
+  onGroupEnd,
+  addedIds,
+  onItemAction,
+}: LiveDealsSectionProps) {
+  const { groups } = use(dealsPromise);
+  const visibleGroups = groups.filter((group) => !endedDealIds.includes(group.dealId));
+
+  if (visibleGroups.length === 0) {
+    return (
+      <EmptyState
+        // 시안(1905-32457)은 44px 아이콘·icon/fill/secondary 색이다(다른 화면의
+        // 72px·icon-fill-tertiary 기본값과 다르다). EmptyState가 아이콘을 담는
+        // 자리에 `[&>svg]:size-18`을 걸어 두어 className 크기 지정으로는 못 이긴다
+        // (부모>svg 결합자가 단일 클래스보다 우선) — 인라인 style로 덮는다
+        icon={
+          <Icon
+            name="clock"
+            className="text-icon-fill-secondary"
+            style={{ width: 44, height: 44 }}
+          />
+        }
+        title="지금 진행 중인 타임딜이 없어요"
+        // 시안은 title/bold_18이 아니라 body/medium_18(18px·500)이다
+        titleClassName="text-body-medium-18"
+        description={
+          <>
+            새로운 타임딜이 열리면 알려드릴게요
+            <br />
+            다른 상품도 둘러보시겠어요?
+          </>
+        }
+        className="flex-1"
+      />
+    );
+  }
+
+  return (
+    <>
+      {visibleGroups.map((group) => (
+        <div key={group.dealId}>
+          <div className="flex flex-col px-5 pt-3">
+            <Countdown endsAt={new Date(group.endAt)} onEnd={() => onGroupEnd(group.dealId)} />
+            <p className="text-sm text-muted-foreground">종료까지 남은 시간</p>
+          </div>
+
+          <ul className="flex flex-col">
+            {group.items.map((item) => {
+              const soldOut = item.stock === "none";
+              const id = String(item.timeDealItemId);
+              const added = addedIds.includes(id);
+              const badge = item.stock === "enough" ? null : STOCK_BADGE[item.stock];
+
+              return (
+                <li
+                  key={id}
+                  className={cn(
+                    "relative border-b border-border last:border-b-0",
+                    // 시안(1905-32428)은 품절 카드 전체를 45%로 흐리게 한다
+                    soldOut && "opacity-45",
+                  )}
+                >
+                  {/* 썸네일·텍스트를 누르면 상품 상세로 간다. 담기 버튼은 링크 안에
+                      두면 "링크 속 버튼"이 되어 눌리지 않으므로 링크 바깥의 절대
+                      위치 요소로 따로 둔다(product-grid-card의 imageAction과 같은 방식) */}
+                  <Link
+                    href={`/products/${item.productId}`}
+                    className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <ProductSummary
+                      name={item.name}
+                      imageSize={24}
+                      className="gap-4 py-5 pr-17 pl-5"
+                      imageBadge={
+                        badge && (
+                          <span
+                            className={cn(
+                              "rounded px-1 py-0.5 text-label-medium-12",
+                              badge.className,
+                            )}
+                          >
+                            {badge.label}
+                          </span>
+                        )
+                      }
+                      meta={
+                        <div className="flex flex-col items-start">
+                          {item.discountRate > 0 && (
+                            <p className="text-label-regular-13 text-text-body-unselect line-through">
+                              {formatWon(item.originalPrice)}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-1">
+                            {item.discountRate > 0 && (
+                              <span className="text-label-regular-13 font-bold text-destructive">
+                                {item.discountRate}%
+                              </span>
+                            )}
+                            <span className="text-title-bold-18 text-foreground">
+                              {formatWon(item.price)}
+                            </span>
+                          </div>
+                          {/* unitLabel이 실제로 null일 수 있다(정규화 단위가 없는 상품) —
+                              없으면 이 줄 자체를 안 그린다 */}
+                          {item.unitLabel && (
+                            <p className="text-label-medium-11 text-text-body-unselect">
+                              {item.unitLabel} {formatWon(item.unitAmount)}
+                            </p>
+                          )}
+                        </div>
+                      }
+                    />
+                  </Link>
+                  <button
+                    type="button"
+                    disabled={soldOut}
+                    aria-label={
+                      soldOut
+                        ? `${item.name} 품절`
+                        : added
+                          ? `${item.name} 장바구니에서 빼기`
+                          : `${item.name} 장바구니에 담기`
+                    }
+                    onClick={() => onItemAction(item)}
+                    // 시안(1905-32420·32424·32428)은 테두리 없는 6px 모서리
+                    // 사각형이다. 담을 수 있음/담김은 배경이 아예 없고, 품절만
+                    // disable 회색(surface-disable)이 채워진다. 링크 위에 겹쳐야 해서
+                    // absolute로 뺐다(product-grid-card의 imageAction과 같은 방식)
+                    className={cn(
+                      "absolute top-1/2 right-5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors",
+                      "after:absolute after:-inset-1.5",
+                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      soldOut ? "bg-surface-disable" : "hover:bg-muted",
+                    )}
+                  >
+                    {added ? (
+                      <Icon name="check" aria-hidden className="size-6 text-icon-fill-default" />
+                    ) : (
+                      <Icon name="cart" aria-hidden className="size-6 text-icon-fill-secondary" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </>
+  );
+}
+
+type UpcomingDealsSectionProps = {
+  dealsPromise: Promise<TimeDealList>;
+  notifiedDealIds: number[];
+  onToggleNotify: (dealId: number) => void;
+};
+
+/** 오픈예정 탭 내용. 딜 묶음마다 오픈 카운트다운+목록+알림 버튼을 반복해 그린다 */
+function UpcomingDealsSection({
+  dealsPromise,
+  notifiedDealIds,
+  onToggleNotify,
+}: UpcomingDealsSectionProps) {
+  const { groups } = use(dealsPromise);
+
+  if (groups.length === 0) {
+    return (
+      // Figma에 오픈예정 전용 빈 화면이 따로 없어, 진행중 탭 빈 화면(1905-32457)과
+      // 같은 아이콘·색·크기·간격·설명 문구를 그대로 재사용하고 제목만 이 탭 문맥에
+      // 맞춰 바꿨다 — 근거는 deals/README.md의 "아직 확인이 끝나지 않은 것"을 본다
+      <EmptyState
+        icon={
+          <Icon
+            name="clock"
+            className="text-icon-fill-secondary"
+            style={{ width: 44, height: 44 }}
+          />
+        }
+        title="오픈 예정인 타임딜이 없어요"
+        titleClassName="text-body-medium-18"
+        description={
+          <>
+            새로운 타임딜이 열리면 알려드릴게요
+            <br />
+            다른 상품도 둘러보시겠어요?
+          </>
+        }
+        className="flex-1"
+      />
+    );
+  }
+
+  return (
+    <>
+      {groups.map((group) => {
+        const notified = notifiedDealIds.includes(group.dealId);
+        const openAt = new Date(group.startAt);
+        const openLabel = formatOpenAt(openAt);
+
+        return (
+          <div key={group.dealId}>
+            <div className="flex flex-col px-5 pt-3">
+              {/* 신청해도 나중에 취소할 수 있어 남은 시간은 계속 보여준다. 버튼 문구만 바뀐다 */}
+              <Countdown
+                endsAt={openAt}
+                fallback={<p className="text-2xl font-bold text-foreground">곧 열려요</p>}
+              />
+              <p className="text-sm text-muted-foreground">{openLabel}에 봬요!</p>
+            </div>
+
+            <ul className="flex flex-col">
+              {group.items.map((item) => (
+                <li key={item.timeDealItemId} className="border-b border-border last:border-b-0">
+                  <ProductSummary
+                    name={item.name}
+                    imageSize={24}
+                    className="gap-4 p-5"
+                    meta={
+                      <span className="flex flex-col gap-0.5">
+                        <span className="text-title-bold-18 text-brand">
+                          예정 {item.discountRate}%
+                        </span>
+                        <span className="text-label-medium-11 text-text-body-unselect">
+                          {openLabel} 오픈
+                        </span>
+                      </span>
+                    }
+                    // 시안(1905-32448)은 이 자리(action_button)가 아예 없다 — 장식용
+                    // 가방 아이콘을 지운다
+                  />
+                </li>
+              ))}
+            </ul>
+
+            <div className="px-5 py-4">
+              {/* 다시 누르면 신청을 취소한다. 이 "신청됨" 상태 자체의 시안은 아직 개별
+                  확인 전이다(로컬 QA 기록) */}
+              {notified ? (
+                // 신청 전 버튼과 높이·모서리·글자 스타일·눌림 효과가 전부 같아야 해서
+                // 직접 만든 button 대신 같은 공용 Button을 쓴다(variant만 바꾼다)
+                <Button
+                  variant="default"
+                  onClick={() => onToggleNotify(group.dealId)}
+                  aria-label="오픈 알림 신청 취소하기"
+                  className="min-h-11 text-label-bold-14"
+                >
+                  <Icon name="bell" aria-hidden className="size-6" />
+                  오픈 알림 신청됨
+                </Button>
+              ) : (
+                <Button
+                  variant="secondary"
+                  onClick={() => onToggleNotify(group.dealId)}
+                  className="min-h-11 text-label-bold-14"
+                >
+                  <Icon name="bell" aria-hidden className="size-6 text-icon-stroke-tertiary" />
+                  오픈 알림 신청하기
+                </Button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
+}
+
+type DealsViewProps = {
+  liveDealsPromise: Promise<TimeDealList>;
+  upcomingDealsPromise: Promise<TimeDealList>;
+};
+
+export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewProps) {
   // nuqs 기본은 replace라 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다.
   // 고른 탭에 따라 보이는 것이 통째로 달라지므로 되돌아올 수 있어야 한다
   const [tab, setTab] = useQueryState(
@@ -132,22 +375,39 @@ export function DealsView() {
     parseAsStringLiteral(TABS).withDefault("live").withOptions({ history: "push" }),
   );
 
-  // 목 데이터 단계라 화면에 붙는 순간을 기준으로 잡는다. 실제로는 서버가 종료 시각을 준다
-  const [endsAt] = useState(() => new Date(Date.now() + 11 * 3_600_000 + 28 * 60_000 + 43_000));
-  const [opensAt] = useState(nextOpenAt);
-
-  const [dealOver, setDealOver] = useState(false);
+  // 서버가 다시 알려준 게 아니라 카운트다운이 다 돼 로컬에서만 숨긴 딜들이다.
+  // 실제로 그 딜이 끝났는지는 다음에 이 화면을 다시 열 때 서버 조회로 확인된다
+  const [endedDealIds, setEndedDealIds] = useState<number[]>([]);
+  const [notifiedDealIds, setNotifiedDealIds] = useState<number[]>([]);
   const [picked, setPicked] = useState<OptionSheetProduct | null>(null);
   const [addedIds, setAddedIds] = useState<string[]>([]);
-  const [notified, setNotified] = useState(false);
-
-  const openLabel = formatOpenAt(opensAt);
+  // QA가 빈 상태를 바로 보고 싶을 때 쓰는 개발용 스위치. 실제 딜 종료와는 별개다
+  const [devForceEmpty, setDevForceEmpty] = useState(false);
 
   const addToCart = (productId: string) => {
+    // 실제 장바구니 담기(mutation)는 이번 이슈(#282) 범위 밖이다 — 목업 그대로 로컬 상태만 바꾼다
     setAddedIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
     setPicked(null);
     // 시안(1905-32431 snackbar)은 수량 설명 없이 한 줄이다
     showSnackbar("장바구니에 담겼어요");
+  };
+
+  const handleItemAction = (item: DealItem) => {
+    const id = String(item.timeDealItemId);
+    if (addedIds.includes(id)) {
+      setAddedIds((prev) => prev.filter((v) => v !== id));
+      return;
+    }
+    setPicked({
+      id,
+      name: item.name,
+      price: item.price,
+      // 실제 API에 옵션 구성("1.5kg (기본 구성)" 같은) 개념 자체가 없다. 있는 데이터로
+      // 지어내지 않고 빈 문자열로 둔다 — README의 "아직 확인이 끝나지 않은 것"에 남김
+      optionLabel: "",
+      unitLabel: item.unitLabel ?? undefined,
+      unitAmount: item.unitAmount,
+    });
   };
 
   return (
@@ -196,12 +456,8 @@ export function DealsView() {
         </TabsList>
 
         <TabsContent value="live" className="flex flex-col">
-          {dealOver ? (
+          {devForceEmpty ? (
             <EmptyState
-              // 시안(1905-32457)은 44px 아이콘·icon/fill/secondary 색이다(다른 화면의
-              // 72px·icon-fill-tertiary 기본값과 다르다). EmptyState가 아이콘을 담는
-              // 자리에 `[&>svg]:size-18`을 걸어 두어 className 크기 지정으로는 못 이긴다
-              // (부모>svg 결합자가 단일 클래스보다 우선) — 인라인 style로 덮는다
               icon={
                 <Icon
                   name="clock"
@@ -210,7 +466,6 @@ export function DealsView() {
                 />
               }
               title="지금 진행 중인 타임딜이 없어요"
-              // 시안은 title/bold_18이 아니라 body/medium_18(18px·500)이다
               titleClassName="text-body-medium-18"
               description={
                 <>
@@ -219,209 +474,47 @@ export function DealsView() {
                   다른 상품도 둘러보시겠어요?
                 </>
               }
-              // 시안엔 버튼이 없다. 우선 시안 그대로 두고, 버튼이 있는 편이 나을지는
-              // PD팀 확인 중이다(개인 QA 기록) — 답에 따라 되살릴 수 있다
               className="flex-1"
             />
           ) : (
-            <>
-              <div className="flex flex-col px-5 pt-3">
-                <Countdown endsAt={endsAt} onEnd={() => setDealOver(true)} />
-                <p className="text-sm text-muted-foreground">종료까지 남은 시간</p>
-              </div>
-
-              <ul className="flex flex-col">
-                {LIVE_DEALS.map((deal) => {
-                  const soldOut = deal.stock === "none";
-                  const added = addedIds.includes(deal.id);
-                  const badge = deal.stock === "enough" ? null : STOCK_BADGE[deal.stock];
-                  const discountRate = calcDiscountRate(deal.price, deal.originalPrice);
-
-                  return (
-                    <li
-                      key={deal.id}
-                      className={cn(
-                        "relative border-b border-border last:border-b-0",
-                        // 시안(1905-32428)은 품절 카드 전체를 45%로 흐리게 한다
-                        soldOut && "opacity-45",
-                      )}
-                    >
-                      {/* 썸네일·텍스트를 누르면 상품 상세로 간다. 담기 버튼은 링크 안에
-                          두면 "링크 속 버튼"이 되어 눌리지 않으므로 링크 바깥의 절대
-                          위치 요소로 따로 둔다(product-grid-card의 imageAction과 같은 방식) */}
-                      <Link
-                        href={`/products/${deal.productId}`}
-                        className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                      >
-                        <ProductSummary
-                          name={deal.name}
-                          imageSize={24}
-                          className="gap-4 py-5 pr-17 pl-5"
-                          imageBadge={
-                            badge && (
-                              <span
-                                className={cn(
-                                  "rounded px-1 py-0.5 text-label-medium-12",
-                                  badge.className,
-                                )}
-                              >
-                                {badge.label}
-                              </span>
-                            )
-                          }
-                          meta={
-                            <div className="flex flex-col items-start">
-                              {discountRate > 0 && (
-                                <p className="text-label-regular-13 text-text-body-unselect line-through">
-                                  {formatWon(deal.originalPrice)}
-                                </p>
-                              )}
-                              <div className="flex items-center gap-1">
-                                {discountRate > 0 && (
-                                  <span className="text-label-regular-13 font-bold text-destructive">
-                                    {discountRate}%
-                                  </span>
-                                )}
-                                <span className="text-title-bold-18 text-foreground">
-                                  {formatWon(deal.price)}
-                                </span>
-                              </div>
-                              <p className="text-label-medium-11 text-text-body-unselect">
-                                {deal.unitLabel} {formatWon(deal.unitAmount)}
-                              </p>
-                            </div>
-                          }
-                        />
-                      </Link>
-                      <button
-                        type="button"
-                        disabled={soldOut}
-                        aria-label={
-                          soldOut
-                            ? `${deal.name} 품절`
-                            : added
-                              ? `${deal.name} 장바구니에서 빼기`
-                              : `${deal.name} 장바구니에 담기`
-                        }
-                        onClick={() =>
-                          added
-                            ? setAddedIds((prev) => prev.filter((id) => id !== deal.id))
-                            : setPicked({
-                                id: deal.id,
-                                name: deal.name,
-                                price: deal.price,
-                                optionLabel: deal.optionLabel,
-                                unitLabel: deal.unitLabel,
-                                unitAmount: deal.unitAmount,
-                              })
-                        }
-                        // 시안(1905-32420·32424·32428)은 테두리 없는 6px 모서리
-                        // 사각형이다. 담을 수 있음/담김은 배경이 아예 없고, 품절만
-                        // disable 회색(surface-disable)이 채워진다. 링크 위에 겹쳐야 해서
-                        // absolute로 뺐다(product-grid-card의 imageAction과 같은 방식)
-                        className={cn(
-                          "absolute top-1/2 right-5 flex size-8 -translate-y-1/2 items-center justify-center rounded-md transition-colors",
-                          "after:absolute after:-inset-1.5",
-                          "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                          soldOut ? "bg-surface-disable" : "hover:bg-muted",
-                        )}
-                      >
-                        {added ? (
-                          <Icon
-                            name="check"
-                            aria-hidden
-                            className="size-6 text-icon-fill-default"
-                          />
-                        ) : (
-                          <Icon
-                            name="cart"
-                            aria-hidden
-                            className="size-6 text-icon-fill-secondary"
-                          />
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
+            <Suspense fallback={<DealsSkeleton />}>
+              <LiveDealsSection
+                dealsPromise={liveDealsPromise}
+                endedDealIds={endedDealIds}
+                onGroupEnd={(dealId) => setEndedDealIds((prev) => [...prev, dealId])}
+                addedIds={addedIds}
+                onItemAction={handleItemAction}
+              />
+            </Suspense>
           )}
         </TabsContent>
 
         <TabsContent value="upcoming" className="flex flex-col">
-          <div className="flex flex-col px-5 pt-3">
-            {/* 신청해도 나중에 취소할 수 있어 남은 시간은 계속 보여준다. 버튼 문구만 바뀐다 */}
-            <Countdown
-              endsAt={opensAt}
-              fallback={<p className="text-2xl font-bold text-foreground">곧 열려요</p>}
+          <Suspense fallback={<DealsSkeleton />}>
+            <UpcomingDealsSection
+              dealsPromise={upcomingDealsPromise}
+              notifiedDealIds={notifiedDealIds}
+              onToggleNotify={(dealId) =>
+                setNotifiedDealIds((prev) =>
+                  prev.includes(dealId) ? prev.filter((v) => v !== dealId) : [...prev, dealId],
+                )
+              }
             />
-            <p className="text-sm text-muted-foreground">{openLabel}에 봬요!</p>
-          </div>
-
-          <ul className="flex flex-col">
-            {UPCOMING_DEALS.map((deal) => (
-              <li key={deal.id} className="border-b border-border last:border-b-0">
-                <ProductSummary
-                  name={deal.name}
-                  imageSize={24}
-                  className="gap-4 p-5"
-                  meta={
-                    <span className="flex flex-col gap-0.5">
-                      <span className="text-title-bold-18 text-brand">
-                        예정 {deal.expectedRate}%
-                      </span>
-                      <span className="text-label-medium-11 text-text-body-unselect">
-                        {openLabel} 오픈
-                      </span>
-                    </span>
-                  }
-                  // 시안(1905-32448)은 이 자리(action_button)가 아예 없다 — 장식용
-                  // 가방 아이콘을 지운다
-                />
-              </li>
-            ))}
-          </ul>
-
-          <div className="px-5 py-4">
-            {/* 다시 누르면 신청을 취소한다. 이 "신청됨" 상태 자체의 시안은 아직 개별
-                확인 전이다(로컬 QA 기록) */}
-            {notified ? (
-              // 신청 전 버튼과 높이·모서리·글자 스타일·눌림 효과가 전부 같아야 해서
-              // 직접 만든 button 대신 같은 공용 Button을 쓴다(variant만 바꾼다)
-              <Button
-                variant="default"
-                onClick={() => setNotified(false)}
-                aria-label="오픈 알림 신청 취소하기"
-                className="min-h-11 text-label-bold-14"
-              >
-                <Icon name="bell" aria-hidden className="size-6" />
-                오픈 알림 신청됨
-              </Button>
-            ) : (
-              <Button
-                variant="secondary"
-                onClick={() => setNotified(true)}
-                className="min-h-11 text-label-bold-14"
-              >
-                <Icon name="bell" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-                오픈 알림 신청하기
-              </Button>
-            )}
-          </div>
+          </Suspense>
         </TabsContent>
       </Tabs>
 
-      {/* 실제 진행 딜이 11시간 넘게 남아 빈 상태를 보려면 오래 기다려야 한다.
+      {/* 실제 진행 딜이 몇 시간씩 남아 빈 상태를 보려면 오래 기다려야 할 수 있다.
           QA가 두 상태를 바로 오가며 볼 수 있게 둔 개발용 버튼이다 — 시안엔 없고
           운영 빌드에는 나가지 않는다 */}
       {process.env.NODE_ENV !== "production" && (
         <div className="border-t border-border p-4 text-center">
           <button
             type="button"
-            onClick={() => setDealOver((prev) => !prev)}
+            onClick={() => setDevForceEmpty((prev) => !prev)}
             className="text-label-medium-12 text-text-body-tertiary underline"
           >
-            [개발용] {dealOver ? "타임딜 상품 있는 상태 보기" : "타임딜 빈 상태 보기"}
+            [개발용] {devForceEmpty ? "타임딜 상품 있는 상태 보기" : "타임딜 빈 상태 보기"}
           </button>
         </div>
       )}
