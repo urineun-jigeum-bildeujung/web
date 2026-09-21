@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e:browser": "playwright test",
+    "test:e2e:server-fetch": "playwright test --config=playwright.server-fetch.config.ts",
+    "test:e2e": "npm run test:e2e:browser && npm run test:e2e:server-fetch",
     "prepare": "husky && (git config pull.rebase true || exit 0)"
   },
   "dependencies": {
