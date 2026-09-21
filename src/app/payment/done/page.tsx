@@ -8,7 +8,13 @@
 // 사용자는 결제가 어떻게 됐는지도, 무엇으로 문의해야 하는지도 알 수 없다 (#260).
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
-import { CheckoutDoneView, confirmPayment, type PaymentFailure } from "@/views/checkout";
+import {
+  CheckoutDoneView,
+  confirmPayment,
+  ORDER_PARAM,
+  readOrderId,
+  type PaymentFailure,
+} from "@/views/checkout";
 
 type PaymentDonePageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -36,22 +42,26 @@ function toConfirmFailureCode(error: unknown): AppMessageCode {
 export default async function PaymentDonePage({ searchParams }: PaymentDonePageProps) {
   const params = await searchParams;
   const paymentKey = one(params.paymentKey);
-  const orderId = one(params.orderId);
+  // **토스가 붙이는 `orderId`는 문자열 주문번호다.** 승인 본문에 그대로 들어가는 값이고,
+  // 주문 상세 라우트가 받는 숫자 id가 아니다 (payment-flow-contract "orderId가 두 개")
+  const tossOrderId = one(params.orderId);
   const amount = Number(one(params.amount));
+  // 숫자 주문 id는 결제창에 들어가기 전에 우리가 복귀 주소에 실어 둔 것이다 (#301)
+  const orderId = readOrderId(one(params[ORDER_PARAM]));
 
   let payment = null;
   let failure: PaymentFailure | null = null;
 
   // 셋이 다 있고 금액이 숫자일 때만 승인을 부른다. 주소창으로 직접 들어온 경우가 걸러진다
-  if (paymentKey && orderId && Number.isFinite(amount)) {
+  if (paymentKey && tossOrderId && Number.isFinite(amount)) {
     try {
-      payment = await confirmPayment({ paymentKey, orderId, amount });
+      payment = await confirmPayment({ paymentKey, orderId: tossOrderId, amount });
     } catch (error) {
       // **주문번호를 함께 넘긴다.** 승인이 실패하면 응답이 없어 화면이 댈 수 있는 식별자가
       // 토스에서 받은 이 값뿐이다. 문의할 때 사용자가 부르는 번호다
-      failure = { orderId, code: toConfirmFailureCode(error) };
+      failure = { orderId: tossOrderId, code: toConfirmFailureCode(error) };
     }
   }
 
-  return <CheckoutDoneView payment={payment} failure={failure} />;
+  return <CheckoutDoneView payment={payment} failure={failure} orderId={orderId} />;
 }

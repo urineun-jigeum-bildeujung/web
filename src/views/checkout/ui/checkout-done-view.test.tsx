@@ -61,13 +61,23 @@ test("결제 내역과 배송지를 함께 남긴다", () => {
 });
 
 // 방금 한 주문을 바로 볼 수 있어야 주문 내역을 다시 찾아 들어가지 않는다 (paym_002)
-test("주문 상세와 홈으로 갈 수 있다", () => {
-  render(<CheckoutDoneView />);
+test("방금 산 주문의 상세로 갈 수 있다", () => {
+  render(<CheckoutDoneView orderId={77} />);
 
   expect(screen.getByRole("link", { name: "주문 상세 보기" }).getAttribute("href")).toBe(
-    "/mypage/orders/1",
+    "/mypage/orders/77",
   );
   expect(screen.getByRole("link", { name: "홈으로 가기" }).getAttribute("href")).toBe("/");
+});
+
+// 주소창으로 직접 들어온 경우다. 엉뚱한 주문을 여느니 목록이 낫고, 문구도 가는 곳에 맞춘다
+test("주문 id가 없으면 주문 내역으로 보낸다", () => {
+  render(<CheckoutDoneView />);
+
+  expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();
+  expect(screen.getByRole("link", { name: "주문 내역 보기" }).getAttribute("href")).toBe(
+    "/mypage/orders",
+  );
 });
 
 // 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 둔다
