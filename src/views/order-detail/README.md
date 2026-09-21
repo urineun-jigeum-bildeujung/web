@@ -6,13 +6,23 @@
 | --- | --- |
 | `ui/order-detail-view.tsx` | 주문정보·결제상세·배송지 정보 세 카드를 조립한다 |
 | `ui/order-detail-skeleton.tsx` | 불러오는 동안의 뼈대 |
-| `ui/order-detail-view.test.tsx` | 카드 구성, 계산해 만드는 값, 반품·교환 접수 조건을 본다 |
+| `ui/order-detail-view.test.tsx` | 카드 구성, 계산해 만드는 값, 반품·교환 접수 조건과 신청 상태 표시를 본다 |
 | `ui/claim-actions.tsx` | 배송완료 주문의 반품·교환 버튼과 확인창 |
 | `index.ts` | 공개 API |
 
 ## 라우트
 
 `/mypage/orders/[orderId]` — `src/app/mypage/orders/[orderId]/page.tsx`. 주문·배송 화면의 "자세히 보기"가 여기로 온다.
+
+## 신청한 뒤의 상태도 보인다
+
+`items[].claims[]`가 실려 오므로 **그 상품 줄에 "반품 수거 중"처럼 붙인다** (#334). 시안(`mypa_161_배송완료`)은 버튼까지만 그리고 신청한 뒤는 그리지 않아, 새 모양을 만들지 않고 주문 상태 뱃지와 같은 것을 쓴다.
+
+**주문 뱃지는 첫 줄에만, 신청 뱃지는 걸린 줄마다 붙는다.** 앞은 주문 단위 상태고 뒤는 실제로 상품별이다 — 두 상품 중 하나만 반품 중일 수 있다.
+
+**신청할 수 있는 상품이 하나도 없으면 반품·교환 버튼을 감춘다.** 눌러 봐야 신청 화면이 "신청 진행 중"으로 되돌려 보낸다. 끝난 신청(`COMPLETED`·`REJECTED`)만 있으면 다시 신청할 수 있으므로 버튼은 그대로 둔다.
+
+판정과 문구는 [entities/order](../../entities/order/README.md)의 `model/claim-status.ts`에 있다. 신청 화면도 같은 것을 쓴다.
 
 ## 반품·교환은 배송이 끝나야 접수한다
 

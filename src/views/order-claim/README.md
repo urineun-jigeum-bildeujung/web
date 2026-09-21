@@ -10,8 +10,8 @@
 | `ui/order-claim-view.tsx` | 신청 화면. 조회·차단 판단·접수를 조립한다 |
 | `ui/claim-item-row.tsx` | 상품 한 줄. 체크와 수량 조절 |
 | `ui/order-claim-view.test.tsx` | 서버 조건을 화면이 먼저 막는지, 고른 것이 그대로 실려 나가는지 본다 |
-| `model/claim-selection.ts` | 선택 상태와 요청 모양으로 옮기는 계산 |
-| `model/claim-selection.test.ts` | 진행 중인 신청 판정과 선택 토글 |
+| `model/claim-selection.ts` | 고른 상품과 수량. 신청 진행 여부 판정은 `entities/order`에 있다 |
+| `model/claim-selection.test.ts` | 선택 토글과 요청 모양 |
 | `index.ts` | 공개 API |
 
 ## 서버와 주고받는 것

@@ -117,6 +117,71 @@ test("배송완료면 반품·교환을 접수할 수 있다", async () => {
   expect(screen.getByRole("button", { name: "교환하기" })).toBeDefined();
 });
 
+// 접수하고 돌아왔는데 화면이 그대로면 됐는지 알 길이 없다 (#334)
+test("신청이 걸린 상품에는 그 상태가 붙는다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({
+      orderStatus: "DELIVERED",
+      items: [
+        {
+          orderItemId: 2,
+          thumbnailUrl: null,
+          productName: "테스트 상품 A",
+          quantity: 1,
+          unitPrice: 35000,
+          itemStatus: "PAID",
+          claims: [
+            {
+              claimId: 1,
+              claimType: "RETURN",
+              claimStatus: "COLLECTING",
+              requestedAt: "2026-09-21T09:00:00Z",
+              completedAt: null,
+            },
+          ],
+        },
+      ],
+    }),
+  );
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  expect(await screen.findByText("반품 수거 중")).toBeDefined();
+  // 눌러 봐야 신청 화면이 "신청 진행 중"으로 되돌려 보낸다
+  expect(screen.queryByRole("button", { name: "반품하기" })).toBeNull();
+});
+
+// 거절·완료는 끝난 신청이다. 다시 신청할 수 있어야 한다
+test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({
+      orderStatus: "DELIVERED",
+      items: [
+        {
+          orderItemId: 2,
+          thumbnailUrl: null,
+          productName: "테스트 상품 A",
+          quantity: 1,
+          unitPrice: 35000,
+          itemStatus: "PAID",
+          claims: [
+            {
+              claimId: 1,
+              claimType: "RETURN",
+              claimStatus: "REJECTED",
+              requestedAt: "2026-09-20T09:00:00Z",
+              completedAt: "2026-09-21T09:00:00Z",
+            },
+          ],
+        },
+      ],
+    }),
+  );
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  expect(await screen.findByText("반품 거절")).toBeDefined();
+  expect(screen.getByRole("button", { name: "반품하기" })).toBeDefined();
+});
+
 // 확인창에서 바로 접수되면 사유도 사진도 받지 못한다. 신청 화면으로 넘겨야 한다 (MYPA_261)
 test("반품을 확인하면 그 주문의 신청 화면으로 간다", async () => {
   getOrderDetail.mockResolvedValue(makeDetail({ orderId: 7, orderStatus: "DELIVERED" }));

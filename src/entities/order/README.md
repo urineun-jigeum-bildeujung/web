@@ -10,6 +10,9 @@
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다 |
 | `api/claims.ts` | 반품·교환 신청 API. 규격은 로컬 백엔드 소스에서 옮겼다 |
 | `api/use-mutate-claim.ts` | 반품·교환 접수 훅. 끝나면 주문을 다시 받는다 |
+| `model/claim-status.ts` | 신청이 진행 중인지 판정하고 "반품 수거 중" 같은 문구를 만든다 |
+| `model/claim-status.test.ts` | 서버 enum을 그대로 옮겼는지, 모르는 값을 지어내지 않는지 |
+| `ui/claim-status-badge.tsx` | 상품에 걸린 신청 상태 뱃지 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
 | `ui/order-status-badge.tsx` | 주문 상태 뱃지. 결제완료·상품준비·배송중·배송완료·구매확정 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 96 + 이름·뱃지 / 옵션 / 결제 금액 |

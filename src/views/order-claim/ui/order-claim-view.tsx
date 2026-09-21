@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
+  claimableItems,
   toOrderStatus,
   useMutateClaim,
   useQueryOrderDetail,
@@ -39,12 +40,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 
-import {
-  claimableItems,
-  toRequestItems,
-  toggleSelection,
-  type ClaimSelection,
-} from "../model/claim-selection";
+import { toRequestItems, toggleSelection, type ClaimSelection } from "../model/claim-selection";
 import { ClaimItemRow } from "./claim-item-row";
 
 /** 주문 상세가 넘기는 쿼리 값과 서버 `ClaimType`의 대응 */

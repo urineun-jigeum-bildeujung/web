@@ -9,12 +9,14 @@
 "use client";
 
 import {
+  ClaimStatusBadge,
   DeliveryDetail,
   DetailRow,
   DetailSection,
   OrderProductRow,
   OrderStatusBadge,
   PaymentDetail,
+  claimableItems,
   toOrderStatus,
   useQueryOrderDetail,
 } from "@/entities/order";
@@ -86,12 +88,17 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                     // 합이라 수량을 곱해야 그 줄에 낸 돈이 된다
                     amount={item.unitPrice * item.quantity}
                     nameTrailing={
-                      // 뱃지는 첫 줄에만 붙인다. 이것은 주문 단위 상태라 줄마다 반복하면
-                      // 상품별 상태처럼 읽힌다. 응답의 `itemStatus`가 그 자리인데 값 목록을
-                      // 알지 못해 아직 쓰지 않는다 (entities/order/model/order-status.ts)
-                      index === 0 && status ? (
-                        <OrderStatusBadge status={status} className="shrink-0" />
-                      ) : null
+                      // 주문 뱃지는 첫 줄에만 붙인다. 주문 단위 상태라 줄마다 반복하면
+                      // 상품별 상태처럼 읽힌다.
+                      //
+                      // **신청 뱃지는 걸린 줄마다 붙는다.** 그쪽은 실제로 상품별이다 —
+                      // 두 상품 중 하나만 반품 중일 수 있다 (#334)
+                      <>
+                        {index === 0 && status && (
+                          <OrderStatusBadge status={status} className="shrink-0" />
+                        )}
+                        <ClaimStatusBadge item={item} />
+                      </>
                     }
                   />
                 ))}
@@ -101,8 +108,13 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                   주문 취소가 맞는 길이라 이 자리에 두지 않는다.
 
                   **기능명세서는 "배송완료 후 7일 이내"로 더 좁힌다.** 응답에 배송완료 시각이
-                  없어 그 판정을 못 하므로 지금은 배송완료 상태 전체에 내보낸다 (#288) */}
-              {status === "delivered" && <ClaimActions orderId={order.orderId} />}
+                  없어 그 판정을 못 하므로 지금은 배송완료 상태 전체에 내보낸다 (#288).
+
+                  **신청할 수 있는 상품이 하나도 없으면 감춘다.** 눌러 봐야 신청 화면이
+                  "신청 진행 중"으로 되돌려 보낸다 (#334) */}
+              {status === "delivered" && claimableItems(order.items).length > 0 && (
+                <ClaimActions orderId={order.orderId} />
+              )}
             </section>
 
             {/* 결제 전 주문에는 결제 정보가 없다. 빈 카드를 세우면 결제가 끝난 것처럼 보인다 */}
