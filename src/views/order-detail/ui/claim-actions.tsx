@@ -3,11 +3,14 @@
 //
 // 접수는 되돌리기 어렵다. 기사가 상품을 가지러 오고 그 뒤에야 환불이나 교환이 진행된다.
 // 링크를 누르는 순간 접수되는 것처럼 보이면 안 되므로 확인창으로 한 번 막는다.
+//
+// **확인하면 신청 화면으로 간다.** 기능명세서의 접수에는 사유와 사진이 따르므로
+// 이 확인창에서 바로 서버로 보낼 수 없다 (IA `MYPA_161_P01`·`P02` → `MYPA_261`).
 
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -27,20 +30,18 @@ const CLAIMS = {
     title: "반품 접수를 진행할까요?",
     description: "1~2일 안에 기사님이 상품을 수거해요. 상태 확인이 끝나면 바로 환불해 드릴게요",
     confirm: "반품 접수하기",
-    done: "반품 접수가 끝났어요",
   },
   exchange: {
     trigger: "교환하기",
     title: "교환 접수를 진행할까요?",
     description: "1~2일 안에 기사님이 상품을 수거해요. 상태 확인이 끝나면 새 상품을 보내드릴게요",
     confirm: "교환 접수하기",
-    done: "교환 접수가 끝났어요",
   },
 } as const;
 
 type ClaimType = keyof typeof CLAIMS;
 
-export function ClaimActions() {
+export function ClaimActions({ orderId }: { orderId: number }) {
   const [opened, setOpened] = useState<ClaimType | null>(null);
   const claim = opened ? CLAIMS[opened] : null;
 
@@ -66,12 +67,9 @@ export function ClaimActions() {
           <AlertDialogDescription>{claim?.description}</AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
-            {/* 접수 API가 아직 없다. 계약이 정해지면 이 자리에서 부른다 */}
-            <AlertDialogAction
-              className="min-h-11"
-              onClick={() => claim && toast.success(claim.done)}
-            >
-              {claim?.confirm}
+            {/* 여기서 서버를 부르지 않는다. 사유와 사진을 받아야 접수가 되므로 신청 화면에 넘긴다 */}
+            <AlertDialogAction className="min-h-11" asChild>
+              <Link href={`/mypage/orders/${orderId}/claim?type=${opened}`}>{claim?.confirm}</Link>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

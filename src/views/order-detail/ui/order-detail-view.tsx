@@ -6,6 +6,10 @@
 //
 // 결제상세·배송지 내용은 주문 완료(`paym_002`)와 같아 `entities/order`의 조각을 쓴다 (#210).
 
+"use client";
+
+import { format } from "date-fns";
+
 import {
   DeliveryDetail,
   DetailRow,
@@ -13,37 +17,22 @@ import {
   OrderProductRow,
   OrderStatusBadge,
   PaymentDetail,
-  type OrderStatus,
+  toOrderStatus,
+  useQueryOrderDetail,
 } from "@/entities/order";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { ClaimActions } from "./claim-actions";
+import { OrderDetailSkeleton } from "./order-detail-skeleton";
 
-/** API 연동 전까지 화면 확인용 값. 주문마다 달라 보이도록 번호와 상태를 나눠 둔다. */
-const MOCK_ORDERS: Record<string, { orderNo: string; status: OrderStatus }> = {
-  "1": { orderNo: "20260829-1234567", status: "preparing" },
-  "2": { orderNo: "20260829-1234568", status: "shipping" },
-  "3": { orderNo: "20260829-1234569", status: "delivered" },
-  "4": { orderNo: "20260829-1234570", status: "confirmed" },
-};
+export function OrderDetailView({ orderId }: { orderId: string }) {
+  const { order, error, isLoading } = useQueryOrderDetail(orderId);
 
-const MOCK = {
-  productName: "상품명",
-  option: "상품 옵션",
-  paidAt: "26.08.28 15:43",
-  total: 12345,
-  itemPrice: 14345,
-  shippingFee: 3000,
-  card: "신한카드 ****-****-****-1234",
-  receiver: "천경진",
-  phone: "010-1234-5678",
-  address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
-  request: "문 앞에 놓아주세요.",
-};
-
-export function OrderDetailView({ orderId }: { orderId?: string }) {
-  // 주문마다 다른 화면이 나와야 목록에서 무엇을 눌렀는지 알 수 있다.
-  const order = (orderId && MOCK_ORDERS[orderId]) || MOCK_ORDERS["1"];
+  const status = order ? toOrderStatus(order.orderStatus) : null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-surface-tertiary">
@@ -51,57 +40,98 @@ export function OrderDetailView({ orderId }: { orderId?: string }) {
       <PageHeader title="자세히 보기" className="bg-card" />
 
       <main className="flex flex-1 flex-col gap-2 px-5 pt-3 pb-8">
-        {/* 주문정보는 제목·주문번호가 한 덩어리(8px)이고 상품 줄이 12px 뒤에 온다 */}
-        <section className="flex flex-col gap-5 rounded-xl bg-card px-3 py-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-2">
-              <h2 className="text-title-bold-20 text-foreground">주문정보</h2>
-              <dl>
-                <DetailRow
-                  term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
-                  description={
-                    <span className="text-body-regular-14 text-text-body-secondary">
-                      {order.orderNo}
-                    </span>
-                  }
-                />
-              </dl>
-            </div>
+        {isLoading && <OrderDetailSkeleton />}
 
-            <OrderProductRow
-              name={MOCK.productName}
-              option={MOCK.option}
-              amount={MOCK.total}
-              nameTrailing={<OrderStatusBadge status={order.status} className="shrink-0" />}
-            />
-          </div>
+        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다 */}
+        {error && (
+          <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
+        )}
 
-          {/* 배송이 끝나야 반품·교환을 접수할 수 있다(mypa_161_배송완료). 배송 전에는
-              주문 취소가 맞는 길이라 이 자리에 두지 않는다 */}
-          {order.status === "delivered" && <ClaimActions />}
-        </section>
-
-        <DetailSection
-          title="결제상세"
-          titleTrailing={MOCK.paidAt}
-          className="rounded-xl bg-card px-3 py-4"
-        >
-          <PaymentDetail
-            total={MOCK.total}
-            itemPrice={MOCK.itemPrice}
-            shippingFee={MOCK.shippingFee}
-            payMethod={MOCK.card}
+        {/* 숫자가 아닌 주소로 들어오면 서버를 부르지 않아 실패도 아니고 내용도 없다 */}
+        {!isLoading && !error && !order && (
+          <EmptyState
+            icon={<Icon name="delivery" />}
+            title="주문을 찾을 수 없어요"
+            description="주소가 맞는지 확인해 주세요"
           />
-        </DetailSection>
+        )}
 
-        <DetailSection title="배송지 정보" className="rounded-xl bg-card px-3 py-4">
-          <DeliveryDetail
-            receiver={MOCK.receiver}
-            phone={MOCK.phone}
-            address={MOCK.address}
-            request={MOCK.request}
-          />
-        </DetailSection>
+        {order && (
+          <>
+            {/* 주문정보는 제목·주문번호가 한 덩어리(8px)이고 상품 줄이 12px 뒤에 온다 */}
+            <section className="flex flex-col gap-5 rounded-xl bg-card px-3 py-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <h2 className="text-title-bold-20 text-foreground">주문정보</h2>
+                  <dl>
+                    <DetailRow
+                      term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
+                      description={
+                        <span className="text-body-regular-14 text-text-body-secondary">
+                          {order.orderNumber}
+                        </span>
+                      }
+                    />
+                  </dl>
+                </div>
+
+                {order.items.map((item, index) => (
+                  <OrderProductRow
+                    key={item.orderItemId}
+                    name={item.productName}
+                    // 시안의 둘째 줄은 "상품 옵션" 자리인데 응답에 옵션이 없다. 비워 두면 줄만
+                    // 뜨므로 대신 몇 개를 샀는지 넣는다. 옵션은 백엔드에 확인을 요청해 뒀다 (#288)
+                    option={`${item.quantity}개`}
+                    imageUrl={item.thumbnailUrl}
+                    // `unitPrice`는 낱개 값이다. 명세 Example의 `productAmount`가 낱개 값의
+                    // 합이라 수량을 곱해야 그 줄에 낸 돈이 된다
+                    amount={item.unitPrice * item.quantity}
+                    nameTrailing={
+                      // 뱃지는 첫 줄에만 붙인다. 이것은 주문 단위 상태라 줄마다 반복하면
+                      // 상품별 상태처럼 읽힌다. 응답의 `itemStatus`가 그 자리인데 값 목록을
+                      // 알지 못해 아직 쓰지 않는다 (entities/order/model/order-status.ts)
+                      index === 0 && status ? (
+                        <OrderStatusBadge status={status} className="shrink-0" />
+                      ) : null
+                    }
+                  />
+                ))}
+              </div>
+
+              {/* 배송이 끝나야 반품·교환을 접수할 수 있다(mypa_161_배송완료). 배송 전에는
+                  주문 취소가 맞는 길이라 이 자리에 두지 않는다.
+
+                  **기능명세서는 "배송완료 후 7일 이내"로 더 좁힌다.** 응답에 배송완료 시각이
+                  없어 그 판정을 못 하므로 지금은 배송완료 상태 전체에 내보낸다 (#288) */}
+              {status === "delivered" && <ClaimActions orderId={order.orderId} />}
+            </section>
+
+            <DetailSection
+              title="결제상세"
+              titleTrailing={format(new Date(order.payment.paidAt), "yy.MM.dd HH:mm")}
+              className="rounded-xl bg-card px-3 py-4"
+            >
+              <PaymentDetail
+                total={order.totalAmount}
+                itemPrice={order.productAmount}
+                // 배송비 필드가 따로 없다. 기능명세서가 3,000원 고정으로 적어 두었고 명세
+                // Example의 차액도 3,000원이라 결제 금액에서 상품 금액을 뺀다 (#288)
+                shippingFee={order.totalAmount - order.productAmount}
+                payMethod={order.payment.method}
+              />
+            </DetailSection>
+
+            <DetailSection title="배송지 정보" className="rounded-xl bg-card px-3 py-4">
+              <DeliveryDetail
+                receiver={order.deliveryAddress.receiver}
+                phone={order.deliveryAddress.receiverPhone}
+                // 도로명과 상세 주소가 따로 와서 한 줄로 합친다. 시안은 한 덩어리로 보여준다
+                address={`${order.deliveryAddress.address} ${order.deliveryAddress.addressDetail}`.trim()}
+                request={order.deliveryNote}
+              />
+            </DetailSection>
+          </>
+        )}
       </main>
     </div>
   );
