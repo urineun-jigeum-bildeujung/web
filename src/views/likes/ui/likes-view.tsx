@@ -121,7 +121,10 @@ const MOCK: Record<(typeof TABS)[number], Product[]> = {
   ],
 };
 
-/** 목록에서 뺄 때 무엇을 뺀다고 알릴지. 탭마다 부르는 이름이 다르다 */
+/**
+ * 확인창 문구. 찜 탭 하트는 확인 없이 바로 풀려 `liked`는 실제로 쓰이지 않지만,
+ * `tab` 타입이 세 값을 다 가져 레코드 타입을 좁히려면 캐스팅이 필요해 그대로 둔다
+ */
 const REMOVE_TITLE: Record<(typeof TABS)[number], string> = {
   liked: "찜 목록에서 이 상품을 뺄까요?",
   recent: "최근 본 목록에서 이 상품을 뺄까요?",
