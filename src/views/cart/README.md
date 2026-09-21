@@ -49,7 +49,7 @@ DELETE /carts/items/{itemType}/{itemId}
 
 ## 살 수 없는 줄
 
-`available: false`면 **이름·사진·금액이 전부 `null`로 온다.** 고를 수 없게 막고 `unavailableReason`을 우리 문구로 바꿔 한 줄 보여준다. 빼기는 남겨 둔다 — 지울 길이 없으면 장바구니에 계속 걸린다.
+**살 수 없는 줄이라고 내용이 늘 비지는 않는다.** 서버 `unavailableWithoutInfo`가 쓰이는 둘(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`)만 이름·사진·금액이 `null`이고, 상품은 있는데 못 사는 경우(`OUT_OF_STOCK`·`DISCONTINUED`·`DEAL_ENDED`)는 **그 값들이 그대로 온다**(`unavailableWithInfo`). 그래서 내용 필드가 nullable이다. 어느 쪽이든 고를 수 없게 막고 `unavailableReason`을 우리 문구로 바꿔 보여준다 — **이름이 오면 이름 아래에, 안 오면 이름 자리에** 둔다. 빼기는 남겨 둔다 — 지울 길이 없으면 장바구니에 계속 걸린다.
 
 **이 상태는 시안에 없다.** 새로 그리지 않고 화면에 있는 것만 썼다. 명세에 나온 까닭 코드가 `DEAL_ENDED` 하나뿐이라 나머지는 기본 문구로 떨어진다.
 

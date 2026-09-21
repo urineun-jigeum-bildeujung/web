@@ -47,10 +47,19 @@ const SHIPPING_FEE = 3000;
  * 못 사는 까닭을 우리 문구로 바꾼다.
  *
  * 서버가 `DEAL_ENDED` 같은 코드로 주는데 그대로 내보내면 읽을 수 없다.
- * **명세에 나온 코드가 `DEAL_ENDED` 하나뿐이라 나머지는 기본 문구로 떨어진다.**
+ *
+ * **다섯을 소스에서 확인했다** — `CartService`가 `NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`·
+ * `DEAL_ENDED`를 직접 만들고, 상품이 있는데 못 사는 경우는 `ProductAvailability`
+ * (`OUT_OF_STOCK`·`DISCONTINUED`)와 `TimeDealItemAvailability`(`OUT_OF_STOCK`·`DEAL_ENDED`)가
+ * 그대로 넘어온다. 명세에는 하나만 적혀 있었다 (#318).
  */
 const UNAVAILABLE_REASON: Record<string, string> = {
   DEAL_ENDED: "타임딜이 끝났어요",
+  OUT_OF_STOCK: "품절됐어요",
+  DISCONTINUED: "판매가 끝났어요",
+  NOT_FOUND: "더 이상 없는 상품이에요",
+  // 상품 정보를 못 받아 온 경우다. 다시 열면 돌아올 수 있다
+  TEMPORARILY_UNAVAILABLE: "지금은 확인할 수 없어요",
 };
 const UNAVAILABLE_DEFAULT = "지금은 살 수 없어요";
 
@@ -134,12 +143,17 @@ export function CartView() {
             <ul className="flex flex-col gap-2">
               {items.map((item) => {
                 const key = cartItemKey(item);
-                const reason =
-                  (item.unavailableReason && UNAVAILABLE_REASON[item.unavailableReason]) ??
-                  UNAVAILABLE_DEFAULT;
-                // 살 수 없는 줄은 이름이 오지 않는다. **지어내지 않고 까닭을 그 자리에 둔다** —
-                // 없는 이름을 만들면 사용자는 그것을 상품명으로 읽는다
-                const name = item.productName ?? reason;
+                // **못 사는 줄에도 이름이 올 수 있다.** 서버 `unavailableWithInfo`가 상품은
+                // 있는데 못 사는 경우(`OUT_OF_STOCK`·`DISCONTINUED`·`DEAL_ENDED`) 이름·사진·
+                // 가격을 그대로 준다. 이름을 까닭으로 덮어쓰던 동안 그 셋은 까닭이 아예 보이지
+                // 않아, 살 수 없는 줄이 멀쩡한 상품처럼 보였다 (#318)
+                const reason = item.available
+                  ? null
+                  : ((item.unavailableReason && UNAVAILABLE_REASON[item.unavailableReason]) ??
+                    UNAVAILABLE_DEFAULT);
+                // 이름이 안 오는 경우(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`)에만 까닭이 이름
+                // 자리에 선다. 없는 이름을 지어내면 사용자는 그것을 상품명으로 읽는다
+                const name = item.productName ?? reason ?? UNAVAILABLE_DEFAULT;
 
                 return (
                   <li key={key} className="flex items-center gap-2 px-5 py-3">
@@ -185,9 +199,13 @@ export function CartView() {
                         </button>
                       </div>
 
-                      {/* 살 수 없는 줄은 금액도 수량도 뜻이 없어 아랫줄을 비운다. 까닭은 이름 자리가
-                          이미 들고 있고, 빼기는 남겨 둔다 — 지울 길이 없으면 장바구니에 계속 걸린다.
+                      {/* 살 수 없는 줄은 금액도 수량도 뜻이 없어 그 자리에 까닭을 둔다. 빼기는
+                          남겨 둔다 — 지울 길이 없으면 장바구니에 계속 걸린다.
                           **이 상태는 시안(cart_001)에 없어 새로 그리지 않고 있는 것만 썼다** (#214) */}
+                      {!item.available && item.productName && (
+                        <p className="text-body-medium-14 text-text-body-unselect">{reason}</p>
+                      )}
+
                       {item.available && (
                         <div className="flex items-end justify-between gap-2">
                           {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
