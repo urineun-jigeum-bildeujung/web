@@ -1,0 +1,76 @@
+// 상품에 걸린 반품·교환 신청을 읽는다. 주문 상세와 신청 화면이 같은 판정을 쓴다.
+//
+// **값은 백엔드 enum에서 옮겼다** (`order-service`의 `domain/claim`). 문서에 없어 소스를 봤다.
+//
+// ```
+// ClaimType    CANCEL · RETURN · EXCHANGE
+// ClaimStatus  REQUESTED → COLLECTING → INSPECTING → COMPLETED
+//              어느 단계에서든 REJECTED로 끝날 수 있다
+// ```
+
+import type { OrderDetailItem, OrderItemClaim } from "../api/orders";
+
+/**
+ * 아직 끝나지 않은 신청인가.
+ *
+ * 백엔드 `ClaimStatus.terminalStates()`가 `COMPLETED`·`REJECTED` 둘을 끝으로 본다.
+ * 나머지 셋은 진행 중이다.
+ */
+export function isActiveClaim(claim: OrderItemClaim): boolean {
+  return claim.claimStatus !== "COMPLETED" && claim.claimStatus !== "REJECTED";
+}
+
+/**
+ * 이미 신청이 걸린 상품인가.
+ *
+ * **서버가 품목 단위로 막는다.** `OrderItem.activeClaimStatus`가 비어 있을 때만 새 신청을
+ * 받고, 아니면 `ORDER_409_CLAIM_ALREADY_IN_PROGRESS`로 **요청 전체**를 거절한다.
+ */
+export function hasActiveClaim(item: OrderDetailItem): boolean {
+  return item.claims.some(isActiveClaim);
+}
+
+/** 새로 신청할 수 있는 상품만 남긴다 */
+export function claimableItems(items: OrderDetailItem[]): OrderDetailItem[] {
+  return items.filter((item) => !hasActiveClaim(item));
+}
+
+/**
+ * 그 상품에 지금 걸려 있는 신청. 여럿일 수 없다 — 서버가 품목마다 하나만 받는다.
+ *
+ * 진행 중인 것이 없으면 **가장 최근에 끝난 것**을 준다. 반품이 거절됐다는 사실도
+ * 주문 상세에서 알 수 있어야 한다.
+ */
+export function currentClaim(item: OrderDetailItem): OrderItemClaim | undefined {
+  const active = item.claims.find(isActiveClaim);
+  if (active) {
+    return active;
+  }
+  return [...item.claims].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0];
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  CANCEL: "취소",
+  RETURN: "반품",
+  EXCHANGE: "교환",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  REQUESTED: "접수",
+  COLLECTING: "수거 중",
+  INSPECTING: "확인 중",
+  COMPLETED: "완료",
+  REJECTED: "거절",
+};
+
+/**
+ * "반품 수거 중"처럼 읽을 문구로 만든다.
+ *
+ * **모르는 값이면 `null`이다.** 서버가 enum을 늘렸을 때 `undefined 접수`처럼 그리는 것보다
+ * 아무것도 안 보이는 쪽이 낫다 (`toOrderStatus`와 같은 방식).
+ */
+export function claimLabel(claim: OrderItemClaim): string | null {
+  const type = TYPE_LABEL[claim.claimType];
+  const status = STATUS_LABEL[claim.claimStatus];
+  return type && status ? `${type} ${status}` : null;
+}

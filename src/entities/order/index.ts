@@ -23,6 +23,14 @@ export {
   type CreateClaimResult,
 } from "./api/claims";
 export { useMutateClaim } from "./api/use-mutate-claim";
+export {
+  claimableItems,
+  claimLabel,
+  currentClaim,
+  hasActiveClaim,
+  isActiveClaim,
+} from "./model/claim-status";
+export { ClaimStatusBadge } from "./ui/claim-status-badge";
 export { useMutateOrder } from "./api/use-mutate-order";
 export { useQueryOrderDetail } from "./api/use-query-order-detail";
 export { useQueryOrders } from "./api/use-query-orders";
