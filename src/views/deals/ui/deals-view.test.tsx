@@ -30,7 +30,7 @@ describe("DealsView", () => {
     renderWith();
 
     const link = screen.getByText("오리&고구마 소형견 사료 1.5kg").closest("a");
-    expect(link?.getAttribute("href")).toBe("/products/d1");
+    expect(link?.getAttribute("href")).toBe("/products/p101");
   });
 
   it("품절인 딜은 담을 수 없다", () => {
@@ -47,7 +47,7 @@ describe("DealsView", () => {
     // 시트의 담기 버튼은 금액을 함께 읽힌다(기본 수량 1개 기준 목록가)
     fireEvent.click(screen.getByRole("button", { name: "24,000원 장바구니 담기" }));
 
-    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담김")).toBeDefined();
+    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeDefined();
     expect(showSnackbar).toHaveBeenCalledWith("장바구니에 담겼어요");
   });
 
@@ -56,9 +56,9 @@ describe("DealsView", () => {
 
     fireEvent.click(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기"));
     fireEvent.click(screen.getByRole("button", { name: "24,000원 장바구니 담기" }));
-    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담김")).toBeDefined();
+    expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeDefined();
 
-    fireEvent.click(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담김"));
+    fireEvent.click(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기"));
 
     expect(screen.getByLabelText("오리&고구마 소형견 사료 1.5kg 장바구니에 담기")).toBeDefined();
     expect(screen.queryByText("1.5kg (기본 구성)")).toBeNull();

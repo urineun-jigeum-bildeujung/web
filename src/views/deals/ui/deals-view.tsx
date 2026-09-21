@@ -32,7 +32,10 @@ const TAB_LABEL = [
 ] as const;
 
 type LiveDeal = {
+  /** 이 딜 자체의 id. `time_deal_items`의 `deal_item_id`에 대응할 자리 */
   id: string;
+  /** 상품 상세로 이동할 때 쓰는 실제 상품 id. 딜 id와 다른 자원이다 */
+  productId: string;
   name: string;
   price: number;
   originalPrice: number;
@@ -57,6 +60,7 @@ type UpcomingDeal = {
 const LIVE_DEALS: LiveDeal[] = [
   {
     id: "d1",
+    productId: "p101",
     name: "오리&고구마 소형견 사료 1.5kg",
     price: 24_000,
     originalPrice: 32_000,
@@ -67,6 +71,7 @@ const LIVE_DEALS: LiveDeal[] = [
   },
   {
     id: "d2",
+    productId: "p102",
     name: "데일리 루테인 영양제 30정",
     price: 14_400,
     originalPrice: 18_000,
@@ -77,6 +82,7 @@ const LIVE_DEALS: LiveDeal[] = [
   },
   {
     id: "d3",
+    productId: "p103",
     name: "황태 단호박 미니 큐브 20개입",
     price: 13_600,
     originalPrice: 16_000,
@@ -155,14 +161,14 @@ export function DealsView() {
             <Link
               href="/search"
               aria-label="검색"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+              className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
             >
               <Icon name="search" className="size-7" />
             </Link>
             <Link
               href="/cart"
               aria-label="장바구니"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+              className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
             >
               <Icon name="cart" className="size-7" />
             </Link>
@@ -244,7 +250,7 @@ export function DealsView() {
                           두면 "링크 속 버튼"이 되어 눌리지 않으므로 링크 바깥의 절대
                           위치 요소로 따로 둔다(product-grid-card의 imageAction과 같은 방식) */}
                       <Link
-                        href={`/products/${deal.id}`}
+                        href={`/products/${deal.productId}`}
                         className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                       >
                         <ProductSummary
@@ -294,7 +300,7 @@ export function DealsView() {
                           soldOut
                             ? `${deal.name} 품절`
                             : added
-                              ? `${deal.name} 장바구니에 담김`
+                              ? `${deal.name} 장바구니에서 빼기`
                               : `${deal.name} 장바구니에 담기`
                         }
                         onClick={() =>
