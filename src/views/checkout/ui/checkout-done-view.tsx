@@ -22,6 +22,7 @@ import {
   type OrderDetail,
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
@@ -145,7 +146,7 @@ export function CheckoutDoneView({
   amount,
   orderId,
 }: CheckoutDoneViewProps) {
-  const { payment, error, isConfirming } = useQueryPaymentConfirm({
+  const { payment, error, isConfirming, canConfirm } = useQueryPaymentConfirm({
     paymentKey,
     tossOrderId,
     amount,
@@ -153,14 +154,47 @@ export function CheckoutDoneView({
 
   // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 — 복귀 주소에 실어 온
   // 숫자 id가 그 열쇠다 (#301·#308)
-  const { order } = useQueryOrderDetail(orderId ? String(orderId) : "");
+  const { order: fetched, isLoading: isLoadingOrder } = useQueryOrderDetail(
+    orderId ? String(orderId) : "",
+  );
+
+  // **승인 결과와 같은 주문인지 본다.** `?order=`는 주소창에서 바꿀 수 있어, 그대로 믿으면
+  // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞인다 (#308 리뷰).
+  // 승인 전이거나 주문을 못 받았으면 견줄 것이 없어 그대로 둔다
+  const mismatched = Boolean(payment && fetched && payment.orderNumber !== fetched.orderNumber);
+  const order = mismatched ? undefined : fetched;
   const row = order ? toProductRow(order) : null;
 
   // 승인이 실패하면 화면이 댈 수 있는 식별자가 토스에서 받은 주문번호뿐이다
   const failure: PaymentFailure | null =
     error && tossOrderId ? { orderId: tossOrderId, code: toConfirmFailureCode(error) } : null;
 
-  if (isConfirming) {
+  // **결제를 마치고 온 주소가 아니다.** 주소창으로 직접 들어왔거나 쿼리가 빠진 경우인데,
+  // 그대로 두면 아무 일도 없었는데 "주문을 무사히 마쳤어요"가 뜬다 (#308 리뷰)
+  if (!canConfirm) {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <PageHeader leading="none" />
+        <main className="flex flex-1 flex-col">
+          <EmptyState
+            role="alert"
+            className="flex-1"
+            icon={<Icon name="notice" />}
+            title="결제 정보를 찾을 수 없어요"
+            description={"결제를 마치고 돌아온 주소가 아니에요.\n주문 내역에서 확인해 주세요."}
+          />
+        </main>
+        <BottomActionBar className="[&>*]:h-12">
+          <Button asChild>
+            <Link href="/mypage/orders">주문 내역 보기</Link>
+          </Button>
+        </BottomActionBar>
+      </div>
+    );
+  }
+
+  // 승인이 끝나도 주문을 받는 중이면 자리를 잡는다. 먼저 그리면 상품이 비고 금액이 0원이 된다
+  if (isConfirming || isLoadingOrder) {
     return (
       <div className="flex min-h-dvh flex-col">
         <PageHeader leading="none" />

@@ -43,6 +43,13 @@ export function useQueryPaymentConfirm({ paymentKey, tossOrderId, amount }: Conf
     staleTime: Infinity,
     gcTime: Infinity,
     retry: false,
+    // **`retry: false`만으로는 모자라다.** 실패한 쿼리는 데이터가 없어 `staleTime`이
+    // 무한이어도 stale로 남는다. 기본값대로면 다시 마운트될 때, 창으로 돌아올 때,
+    // 네트워크가 붙을 때 저절로 한 번 더 나간다 — 결제 승인에서 그것은 두 번 결제로
+    // 이어질 수 있는 길이다 (#308 리뷰)
+    retryOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   return {
