@@ -80,14 +80,46 @@ const STEPS = ["rating", "detail"] as const;
 const MIN_TEXT = 10;
 const MAX_TEXT = 300;
 
-/** 두 단계 머리의 상품 줄. 받기 전에는 같은 높이의 자리만 잡아 아래가 밀리지 않게 한다 */
+/** 조회에 실패한 자리. 스켈레톤으로 덮어 두면 기다리는 줄 안다 — 까닭과 다시 시도할 길을 준다 */
+function QueryFailed({
+  message,
+  isRetrying,
+  onRetry,
+}: {
+  message: string;
+  isRetrying: boolean;
+  onRetry: () => void;
+}) {
+  return (
+    <div
+      role="alert"
+      className="flex min-h-11 items-center justify-between gap-3 rounded-lg bg-surface-secondary px-3 py-2"
+    >
+      <p className="text-body-medium-14 text-text-body-secondary">{message}</p>
+      <Button variant="outline" size="sm" disabled={isRetrying} onClick={onRetry}>
+        <LoadingSwap loading={isRetrying} label="다시 불러오는 중">
+          다시 시도
+        </LoadingSwap>
+      </Button>
+    </div>
+  );
+}
+
+/** 두 단계 머리의 상품 줄. 받는 동안은 같은 높이의 자리만 잡아 아래가 밀리지 않게 한다 */
 function ProductHeader({ productId }: { productId: string }) {
-  const { product } = useQueryProductSummary(productId);
-  return product ? (
-    <ProductRow name={product.name} imageUrl={product.imageUrl} />
-  ) : (
+  const { product, isLoading, isRetrying, refetch } = useQueryProductSummary(productId);
+  if (product) return <ProductRow name={product.name} imageUrl={product.imageUrl} />;
+  return (
     <div className="px-5 pt-1 pb-3">
-      <Skeleton className="h-16 w-full rounded-lg" />
+      {isLoading ? (
+        <Skeleton className="h-16 w-full rounded-lg" />
+      ) : (
+        <QueryFailed
+          message="상품 정보를 불러오지 못했어요"
+          isRetrying={isRetrying}
+          onRetry={() => void refetch()}
+        />
+      )}
     </div>
   );
 }
@@ -124,7 +156,12 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
   const [done, setDone] = useState(false);
-  const { pets } = useQueryPets();
+  const {
+    pets,
+    isLoading: petsLoading,
+    isRetrying: petsRetrying,
+    refetch: refetchPets,
+  } = useQueryPets();
   const { profile } = useQueryMyProfile();
   const { createReview, isSubmitting } = useMutateCreateReview();
 
@@ -294,13 +331,24 @@ function ReviewWriteForm({ productId }: { productId: string }) {
             <section className="flex flex-1 flex-col bg-background">
               <SectionTitle required>사용 반려동물 프로필 선택</SectionTitle>
               <div className="px-5 pt-2 pb-4">
-                <PetSwitcher
-                  pets={pets ?? []}
-                  selectedId={petId}
-                  onSelect={(id) => patch({ petId: id })}
-                  withNames
-                  className="gap-4 p-0"
-                />
+                {/* 목록을 못 받으면 아이를 고를 수 없어 등록이 막힌다. 빈 줄로 숨기지 않고 알린다 */}
+                {pets ? (
+                  <PetSwitcher
+                    pets={pets}
+                    selectedId={petId}
+                    onSelect={(id) => patch({ petId: id })}
+                    withNames
+                    className="gap-4 p-0"
+                  />
+                ) : petsLoading ? (
+                  <Skeleton className="h-17 w-full rounded-lg" />
+                ) : (
+                  <QueryFailed
+                    message="아이 목록을 불러오지 못했어요"
+                    isRetrying={petsRetrying}
+                    onRetry={() => void refetchPets()}
+                  />
+                )}
               </div>
 
               <ResponseSelect

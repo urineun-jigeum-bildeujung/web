@@ -38,11 +38,21 @@ const PRESIGNED = {
 };
 
 /** 화면이 부르는 조회를 주소로 갈라 답한다. 등록·발급·PUT도 여기서 받는다 */
-function stubApi(create = () => Response.json({ reviewId: 1 }, { status: 201 })) {
+type StubOverrides = {
+  create?: () => Response;
+  pets?: () => Response;
+  product?: () => Response;
+};
+
+function stubApi({
+  create = () => Response.json({ reviewId: 1 }, { status: 201 }),
+  pets = () => Response.json(PETS),
+  product = () => Response.json(PRODUCT),
+}: StubOverrides = {}) {
   const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>((url, init) => {
-    if (url.includes("/members/me/pets")) return Promise.resolve(Response.json(PETS));
+    if (url.includes("/members/me/pets")) return Promise.resolve(pets());
     if (url.includes("/members/me")) return Promise.resolve(Response.json(PROFILE));
-    if (url.includes("/products/")) return Promise.resolve(Response.json(PRODUCT));
+    if (url.includes("/products/")) return Promise.resolve(product());
     if (url.includes("presigned-url")) return Promise.resolve(Response.json(PRESIGNED));
     if (url === PRESIGNED.uploadUrl) return Promise.resolve(new Response(null, { status: 200 }));
     if (url.includes("/reviews") && init?.method === "POST") return Promise.resolve(create());
@@ -116,6 +126,29 @@ describe("ReviewWriteView 진입", () => {
     renderAt();
 
     expect(await screen.findByText("오메가3 피쉬오일 60캡슐")).toBeDefined();
+  });
+
+  // 스켈레톤으로 덮어 두면 기다리는 줄 안다. 못 받았으면 그렇다고 말하고 다시 시도할 길을 준다
+  it("상품 정보를 못 받으면 알리고 다시 시도할 수 있다", async () => {
+    const fetchMock = stubApi({ product: () => Response.json({}, { status: 500 }) });
+    renderAt();
+
+    expect(await screen.findByText("상품 정보를 불러오지 못했어요")).toBeDefined();
+    const before = fetchMock.mock.calls.filter(([url]) => url.includes("/products/")).length;
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.filter(([url]) => url.includes("/products/")).length).toBe(
+        before + 1,
+      ),
+    );
+  });
+
+  it("아이 목록을 못 받으면 빈 줄 대신 그 사실을 알린다", async () => {
+    stubApi({ pets: () => Response.json({}, { status: 500 }) });
+    renderAt("?step=detail");
+
+    expect(await screen.findByText("아이 목록을 불러오지 못했어요")).toBeDefined();
+    expect(screen.queryByRole("radio", { name: "소리" })).toBeNull();
   });
 });
 
@@ -316,7 +349,9 @@ describe("ReviewWriteView 2단계", () => {
 
   // 지우면 두 단계를 처음부터 다시 채워야 한다. 됐다고 알리는 것도 거짓이다
   it("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다", async () => {
-    stubApi(() => Response.json({ errorCode: "REVIEW_409_ALREADY_REVIEWED" }, { status: 409 }));
+    stubApi({
+      create: () => Response.json({ errorCode: "REVIEW_409_ALREADY_REVIEWED" }, { status: 409 }),
+    });
     renderAt();
     goToDetail();
     await fillDetail();
