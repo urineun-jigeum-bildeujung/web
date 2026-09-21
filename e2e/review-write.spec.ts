@@ -1,7 +1,11 @@
 // 리뷰 작성: 두 단계를 거쳐 등록되는지, 사진을 붙였다 뺄 수 있는지 본다.
 import { expect, test } from "@playwright/test";
 
-const PATH = "/mypage/reviews/write?productId=p1";
+import { stubMemberProfile } from "./fixtures/member-profile";
+import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { stubReviewApi } from "./fixtures/review";
+
+const PATH = "/mypage/reviews/write?productId=7";
 
 // 1×1 투명 PNG. 실제 파일 없이 첨부를 시험한다
 const PNG = Buffer.from(
@@ -10,6 +14,13 @@ const PNG = Buffer.from(
 );
 
 type Page = import("@playwright/test").Page;
+
+// 아이 목록·내 정보·상품 요약을 서버에서 받고 등록을 보낸다(#291). 백엔드에 흔들리지 않게 세운다
+test.beforeEach(async ({ page }) => {
+  await stubPetCatalog(page);
+  await stubMemberProfile(page);
+  await stubReviewApi(page);
+});
 
 /** 같은 이름의 보기가 여러 묶음에 있어 묶음을 먼저 좁힌다 */
 async function pickResponse(page: Page, group: string, option: string) {
@@ -20,7 +31,7 @@ async function pickResponse(page: Page, group: string, option: string) {
 async function goToDetail(page: Page) {
   await page.getByRole("radio", { name: "5점 만점에 4.5점" }).click();
   await page.getByLabel("사용 기간").fill("16");
-  // 반응은 선택이다. 하나만 답해 요약 카드에 실리는지 본다
+  // 반응은 선택이지만 서버가 하나 이상을 요구해 하나는 답한다. 요약 카드에 실리는지도 본다
   await pickResponse(page, "잘 먹었나요?", "잘 먹어요");
   await page.getByRole("button", { name: "다음" }).click();
 }
@@ -39,7 +50,8 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
 
   const submit = page.getByRole("button", { name: "등록하기" });
   await expect(submit).toBeDisabled();
-  await page.getByRole("radio", { name: "소리" }).click();
+  // 아이 목록은 `stubPetCatalog`의 것이다
+  await page.getByRole("radio", { name: "코코" }).click();
   await page.getByLabel("후기").fill("확실히 예전보다 계단 오를 때 덜 힘들어해요");
   await expect(submit).toBeEnabled();
 
@@ -48,7 +60,13 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
   await expect(page.getByRole("radiogroup", { name: "상품 만족도" })).toBeVisible();
   await page.goForward();
 
+  // 등록 요청이 실제로 나가는지 함께 본다
+  const posted = page.waitForRequest(
+    (request) => request.url().endsWith("/api/v1/reviews") && request.method() === "POST",
+  );
   await submit.click();
+  const body = (await posted).postDataJSON() as { productId: number; petId: number };
+  expect(body).toMatchObject({ productId: 7, petId: 3 });
   await expect(page.getByText("소중한 리뷰 감사해요!")).toBeVisible();
   await page.getByRole("link", { name: "확인" }).click();
   await expect(page).toHaveURL(/\/mypage\/reviews\?tab=written/);

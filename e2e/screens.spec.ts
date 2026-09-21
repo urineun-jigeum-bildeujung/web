@@ -8,6 +8,7 @@ import { expect, test } from "@playwright/test";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPhoneVerification } from "./fixtures/phone-verification";
+import { stubReviewApi } from "./fixtures/review";
 
 /**
  * 화면이 바깥에 기대는 것을 끊는다.
@@ -114,6 +115,8 @@ test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
   await stubPhoneVerification(page);
   await stubMemberProfile(page);
+  // 리뷰 작성이 상품 요약을 받는다(#291)
+  await stubReviewApi(page);
 });
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다
