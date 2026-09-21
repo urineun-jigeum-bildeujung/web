@@ -40,9 +40,34 @@ export type CreateOrderRequest = {
   deliveryNote?: string | null;
 };
 
-/** 숫자 PK다. 토스에 쓰는 문자열 주문번호(`tossOrderId`)와 다른 값이다 */
+/** 주문에 담긴 줄 하나. 응답이 확정한 이름과 낱개 값이다 */
+export type CreatedOrderItem = {
+  orderItemId: number;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+/**
+ * 주문 생성 응답.
+ *
+ * **`orderId`는 숫자 PK다.** 토스에 쓰는 문자열 주문번호(`tossOrderId`)와 다른 값이다.
+ *
+ * **`shippingFee`가 여기 있다.** 주문 상세 조회(`GET /orders/{orderId}`)에는 그 필드가 없어
+ * 화면이 `totalAmount - productAmount`로 만들고 있는데(#288), 만드는 시점에는 서버가 직접
+ * 준다. 로컬 백엔드로 실측해 확인했다 (#322).
+ *
+ * 지금 화면이 쓰는 것은 `orderId`뿐이다 — **결제 금액은 `[2] POST /payments`가 주는 값을
+ * 쓴다**(#312). 나머지를 타입에 담는 것은 응답을 조용히 버리지 않기 위해서다.
+ */
 export type CreateOrderResult = {
   orderId: number;
+  orderNumber: string;
+  orderStatus: string;
+  productAmount: number;
+  shippingFee: number;
+  totalAmount: number;
+  items: CreatedOrderItem[];
 };
 
 /**

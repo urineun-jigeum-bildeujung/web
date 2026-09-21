@@ -49,6 +49,7 @@ const ORDER: OrderDetail = {
       quantity: 2,
       unitPrice: 4672,
       itemStatus: "PAID",
+      claims: [],
     },
   ],
   deliveryAddress: {
