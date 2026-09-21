@@ -325,9 +325,8 @@ describe("ReviewWriteView 2단계", () => {
     renderAt();
     goToDetail();
     await fillDetail();
-    // aria-label은 label 요소에 있어 그것이 잡힌다. 파일은 그 label이 가리키는 input에 넣는다
-    const pickerLabel = screen.getByLabelText("사진 추가 (0/3)") as HTMLLabelElement;
-    fireEvent.change(document.getElementById(pickerLabel.htmlFor) as HTMLInputElement, {
+    // 시트를 거치지 않고 사진첩 입력에 바로 넣는다. 시트의 동작은 photo-picker 테스트가 본다
+    fireEvent.change(screen.getByLabelText("사진첩에서 고르기"), {
       target: { files: [new File(["bytes"], "coco.jpg", { type: "image/jpeg" })] },
     });
 

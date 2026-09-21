@@ -1,6 +1,6 @@
 // 사진 한 장을 고르고 원형으로 미리 보여준다. 반려동물 프로필 사진에 쓴다.
 // UI 시안 기준(onbo_002)이다.
-// 기본 자리 그림(카메라)은 디자인 시스템 아이콘 세트에 없어 react-icons로 보충한다.
+// 기본 자리 그림은 세트의 카메라 아이콘이다(2026-09-21 PD팀이 세트에 더했다).
 //
 // 고른 파일을 바로 올리지 않고 상위에 넘긴다. 폼을 제출할 때 함께 보내야
 // 작성을 중간에 그만뒀을 때 서버에 파일만 남는 일이 없다.
@@ -8,7 +8,6 @@
 "use client";
 
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { IoCameraOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -31,7 +30,7 @@ export function AvatarUploader({
   onFileChange,
   defaultImageUrl,
   label = "반려동물 사진 등록",
-  placeholder = <IoCameraOutline aria-hidden className="size-8 text-icon-fill-tertiary" />,
+  placeholder = <Icon name="camera" className="size-8 text-icon-fill-tertiary" />,
   size = "md",
   className,
 }: AvatarUploaderProps) {
