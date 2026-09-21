@@ -74,7 +74,7 @@ test("승인은 토스가 돌려준 문자열 주문번호를 보낸다", async 
     paymentStatus: "DONE",
     amount: 48000,
     method: "토스페이",
-    approvedAt: "2026-09-18T15:04:05",
+    approvedAt: "2026-09-18T15:04:05+09:00",
   });
 
   const result = await confirmPayment({

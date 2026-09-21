@@ -22,7 +22,11 @@ test("서버가 주지 않는 도착 예정일은 그리지 않는다", () => {
   expect(screen.queryByText(/도착할 예정이에요/)).toBeNull();
 });
 
-// 승인 응답의 approvedAt을 시안 형식(`26.08.28 15:43`)으로 옮긴다
+// 승인 응답의 approvedAt을 시안 형식(`26.08.28 15:43`)으로 옮긴다.
+//
+// **목에 오프셋을 붙여 둔다.** 백엔드가 `OffsetDateTime`이라 실제 응답에는 `+09:00`이
+// 붙는다. 빼면 `new Date`가 실행 환경의 시간대로 읽어, KST에서 짠 기대값이 UTC로 도는
+// CI에서 깨진다 — 실제로 그렇게 깨졌다 (#295).
 test("결제일시를 승인 응답으로 보인다", () => {
   render(
     <CheckoutDoneView
@@ -32,7 +36,7 @@ test("결제일시를 승인 응답으로 보인다", () => {
         paymentStatus: "DONE",
         amount: 12345,
         method: "토스페이",
-        approvedAt: "2026-09-19T14:30:00",
+        approvedAt: "2026-09-19T14:30:00+09:00",
       }}
     />,
   );
