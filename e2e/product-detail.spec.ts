@@ -1,5 +1,6 @@
 // 상품 상세: 아이를 바꾸면 적합도가 함께 바뀌는지, 탭이 뒤로가기로 되돌아오는지 본다.
 import { expect, test } from "@playwright/test";
+import { stubAddToCart } from "./fixtures/cart";
 
 const PATH = "/products/1";
 
@@ -96,6 +97,8 @@ test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
 });
 
 test("장바구니를 누르면 옵션 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {
+  // 담기가 서버를 부른다. 실패하면 시트가 열린 채 남는 것이 의도된 동작이라 세워 둔다 (#316)
+  await stubAddToCart(page);
   await page.goto(PATH);
 
   await page.getByRole("button", { name: "장바구니", exact: true }).click();

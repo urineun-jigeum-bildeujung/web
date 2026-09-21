@@ -5,6 +5,8 @@
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 import { expect, test } from "@playwright/test";
 
+import { stubAddToCart } from "./fixtures/cart";
+
 test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ page }) => {
   await page.goto("/deals");
   await expect(page.getByText("종료까지 남은 시간")).toBeVisible();
@@ -18,6 +20,8 @@ test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ 
 });
 
 test("목록에서 옵션을 골라 바로 담는다", async ({ page }) => {
+  // 담기는 **브라우저가** 보낸다(목록과 달리 서버 컴포넌트가 아니다). page.route로 세운다 (#316)
+  await stubAddToCart(page);
   await page.goto("/deals");
 
   await page.getByLabel("오리&고구마 소형견 사료 1.5kg 장바구니에 담기").click();
