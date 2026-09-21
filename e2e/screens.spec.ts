@@ -26,27 +26,6 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/carts", (route) =>
     route.fulfill({ json: { memberId: 1, items: [], totalAmount: 0 } }),
   );
-  // 배송지 설정도 같은 이유다. 빈 목록을 주면 "등록된 배송지가 없어요"만 보이므로
-  // 줄이 실제로 그려지는 것까지 보도록 한 건을 돌려준다 (#237)
-  await page.route("**/api/v1/members/me/addresses", (route) =>
-    route.fulfill({
-      json: {
-        addresses: [
-          {
-            addressId: 5,
-            addressName: "집",
-            receiver: "홍길동",
-            phone: "010-1234-5678",
-            zipCode: "06133",
-            address: "서울특별시 강남구 테헤란로 123",
-            addressDetail: "UI타워 4층 404호",
-            deliveryNote: null,
-            isDefault: true,
-          },
-        ],
-      },
-    }),
-  );
   // 끊지 않고 빈 스크립트로 답한다. 끊으면 `net::ERR_FAILED`가 콘솔에 남아 이 테스트가 잡는다.
   // 위젯은 어느 쪽이든 못 떠서 "결제 수단을 불러오지 못했어요"로 내려앉는다
   await page.route("**/*.tosspayments.com/**", (route) =>
@@ -173,6 +152,22 @@ test("주문 상세의 결제수단 로고는 이미지 최적화를 거치지 �
   await expect(page.getByAltText("토스페이")).toBeVisible();
   expect(optimized, `최적화를 거친 이미지 ${optimized.join(" ")}`).toEqual([]);
 });
+
+// **위 루프는 이것을 못 잡는다.** 조회가 실패해도 화면이 오류를 직접 그리므로 콘솔이 깨끗하다.
+// 배송지는 `stubMemberProfile`이 세우는데, 이 파일에도 같은 경로의 스텁이 옛 응답 모양
+// (`{ addresses: [...] }`)으로 남아 있었다. **Playwright는 나중에 건 route가 이겨서**
+// 그것은 한 번도 쓰이지 않았고, 그래서 아무도 알아채지 못했다. 지우고 여기서 값을 겨눈다 (#329)
+for (const route of ["/payment/address", "/mypage/address"]) {
+  test(`${route} — 저장해 둔 배송지가 줄로 그려진다`, async ({ page }) => {
+    test.setTimeout(90_000);
+
+    await page.goto(route, { waitUntil: "networkidle" });
+
+    // `stubMemberProfile`이 돌려주는 한 건이다
+    await expect(page.getByRole("link", { name: /집/ })).toBeVisible();
+    await expect(page.getByText("서울특별시 강남구 테헤란로 123 UI타워 4층")).toBeVisible();
+  });
+}
 
 /** 바텀시트·확인창을 여는 화면. 오버레이는 열어봐야만 보인다 */
 const OVERLAYS = [
