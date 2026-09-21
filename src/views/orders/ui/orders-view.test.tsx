@@ -151,6 +151,8 @@ test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async ()
   );
 
   release?.();
+});
+
 // 한 번에 오는 것은 기본 열 건이다. 첫 쪽만 그리면 열한 번째 주문부터 볼 길이 없다 (#288).
 test("목록 끝이 보이면 다음 쪽을 이어서 가져온다", async () => {
   const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
