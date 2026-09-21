@@ -4,13 +4,8 @@
 // API는 서버가 다루기 좋은 enum과 숫자로 받는다. 옮기는 자리를 화면 안에 두면
 // 테스트할 수 없어 여기로 뺐다.
 
-import {
-  parseAge,
-  parseBirthDate,
-  parseWeight,
-  SPECIES_PARAM,
-  type PetProfileDraft,
-} from "@/entities/pet";
+import { parseAge, parseWeight, SPECIES_PARAM, type PetProfileDraft } from "@/entities/pet";
+import { parseBirthDate } from "@/shared/lib/birth-date";
 
 /** 백엔드 `PetRegisterRequest`와 같은 모양이다 */
 export type PetRegisterRequest = {

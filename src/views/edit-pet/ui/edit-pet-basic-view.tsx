@@ -13,12 +13,12 @@ import {
   GENDER_OPTIONS,
   NEUTERED_OPTIONS,
   parseAge,
-  parseBirthDate,
   SPECIES_PARAM,
   type PetDetail,
   type PetSpecies,
 } from "@/entities/pet";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
+import { parseBirthDate } from "@/shared/lib/birth-date";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";

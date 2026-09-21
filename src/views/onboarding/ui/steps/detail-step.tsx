@@ -7,12 +7,12 @@ import {
   BodyTypeGuide,
   BodyTypeSlider,
   parseAge,
-  parseBirthDate,
   parseWeight,
   SIZE_OPTIONS,
   SizeGuide,
   type PetProfileDraft,
 } from "@/entities/pet";
+import { parseBirthDate } from "@/shared/lib/birth-date";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";

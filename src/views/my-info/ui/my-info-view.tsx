@@ -1,7 +1,8 @@
 // 내 정보. 회원 정보와 배송지를 모아 보여주고 각 항목을 수정 화면으로 잇는다.
 // UI 시안 기준(mypa_011, 1482-27384)이다.
 //
-// 시안은 이름·생년월일 줄에도 화살표가 있으나 고칠 화면이 없어(#64) 화살표 없이 둔다.
+// 시안대로 다섯 줄 모두 화살표가 있다. 이름·생년월일 수정 화면은 시안이 따로 없어
+// 닉네임 변경과 같은 골격으로 맞췄다(#278).
 // "내 아이들" 값 자리는 시안이 닉네임 더미라 아이 이름을 이어 보인다.
 //
 // 값이 전부 서버에서 온다(#266). 아직 받는 자리가 없는 이름·생년월일은 비어 온다.
@@ -91,10 +92,11 @@ export function MyInfoView() {
       <main className="flex flex-1 flex-col gap-3 px-5 pt-3 pb-8">
         <section className="flex flex-col gap-1">
           <InfoRow label="닉네임" value={value(profile?.nickname)} href="/mypage/info/nickname" />
-          <InfoRow label="이름" value={value(profile?.name)} />
+          <InfoRow label="이름" value={value(profile?.name)} href="/mypage/info/name" />
           <InfoRow
             label="생년월일"
             value={value(profile?.birth ? formatBirth(profile.birth) : null)}
+            href="/mypage/info/birth"
           />
           <InfoRow label="휴대폰 번호" value={value(profile?.phone)} href="/mypage/info/phone" />
           <InfoRow

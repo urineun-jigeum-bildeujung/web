@@ -207,3 +207,61 @@ test("숫자가 아닌 인증번호는 보내지 않는다", async () => {
     fetchMock.mock.calls.find(([url]) => String(url).includes("verify-confirm")),
   ).toBeUndefined();
 });
+
+// 인증만 하고 저장하지 않으면 내 정보의 휴대폰 번호가 `등록 전이에요`로 남는다
+test("완료를 누르면 인증한 번호를 통신사·인증번호와 함께 저장한다", async () => {
+  const fetchMock = vi.fn().mockImplementation((url: string) => {
+    if (url.includes("verify-confirm")) return Promise.resolve(Response.json({ verified: true }));
+    if (url.includes("members/me/phone"))
+      return Promise.resolve(new Response(null, { status: 204 }));
+    return Promise.resolve(Response.json({ expiresInSeconds: 180 }));
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  await waitFor(() => expect(submit().disabled).toBe(false));
+  fireEvent.click(submit());
+
+  const saveCall = () =>
+    fetchMock.mock.calls.find(([url]) => String(url).includes("members/me/phone"));
+  await waitFor(() => expect(saveCall()).toBeDefined());
+
+  const [, init] = saveCall() as [string, RequestInit];
+  expect(init.method).toBe("PATCH");
+  // 통신사는 화면 문구가 아니라 백엔드 enum 값으로 나간다
+  expect(JSON.parse(String(init.body))).toEqual({
+    phone: "01012345678",
+    carrier: "SKT",
+    code: 584937,
+  });
+});
+
+// 조용히 돌아가면 저장된 줄 안다
+test("저장에 실패하면 까닭을 알린다", async () => {
+  const fetchMock = vi.fn().mockImplementation((url: string) => {
+    if (url.includes("verify-confirm")) return Promise.resolve(Response.json({ verified: true }));
+    if (url.includes("members/me/phone"))
+      return Promise.resolve(Response.json({}, { status: 500 }));
+    return Promise.resolve(Response.json({ expiresInSeconds: 180 }));
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  await waitFor(() => expect(submit().disabled).toBe(false));
+  toastAppError.mockClear();
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+});

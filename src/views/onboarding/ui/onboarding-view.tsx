@@ -10,14 +10,10 @@ import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
-import {
-  BreedPickerStep,
-  parseBirthDate,
-  type PetProfileDraft,
-  type SpeciesBreed,
-} from "@/entities/pet";
+import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { parseBirthDate } from "@/shared/lib/birth-date";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { StepProgress } from "@/shared/ui/step-progress/step-progress";
 import {
