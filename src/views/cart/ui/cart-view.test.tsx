@@ -171,8 +171,8 @@ describe("CartView", () => {
     expect(screen.queryByText(/전체선택/)).toBeNull();
   });
 
-  // `available: false`면 이름·사진·금액이 전부 비어 온다. 고를 수 없어야 결제 합계가 맞는다
-  it("살 수 없는 줄은 고를 수 없고 까닭을 보여준다", async () => {
+  // 이름이 안 오는 경우다(`unavailableWithoutInfo`). 고를 수 없어야 결제 합계가 맞는다
+  it("이름이 없는 줄은 까닭이 이름 자리에 선다", async () => {
     renderCart([
       makeItem(1, "유산균", 19900),
       makeItem(9, null, null, {
@@ -190,5 +190,53 @@ describe("CartView", () => {
     expect(screen.getByLabelText("타임딜이 끝났어요 고르기")).toHaveProperty("disabled", true);
     // 금액도 수량도 뜻이 없어 아랫줄은 비운다
     expect(screen.queryByLabelText("타임딜이 끝났어요 수량")).toBeNull();
+  });
+
+  /**
+   * **이름이 오는 경우가 따로 있다.**
+   *
+   * 서버 `unavailableWithInfo`가 상품은 있는데 못 사는 경우(`OUT_OF_STOCK`·`DISCONTINUED`·
+   * `DEAL_ENDED`) 이름·사진·가격을 그대로 준다. 이름을 까닭으로 덮어쓰던 동안 그 셋은 까닭이
+   * 아예 보이지 않아, 살 수 없는 줄이 멀쩡한 상품처럼 보였다 (#318).
+   */
+  it("이름이 오는 줄은 이름 아래에 까닭을 둔다", async () => {
+    renderCart([
+      makeItem(3, "관절 영양제", 24000, {
+        available: false,
+        unavailableReason: "OUT_OF_STOCK",
+        subtotal: null,
+      }),
+    ]);
+
+    expect(await screen.findByText("관절 영양제")).toBeDefined();
+    expect(screen.getByText("품절됐어요")).toBeDefined();
+    // 고를 수도, 수량을 만질 수도 없다
+    expect(screen.getByLabelText("관절 영양제 고르기")).toHaveProperty("disabled", true);
+    expect(screen.queryByLabelText("관절 영양제 수량")).toBeNull();
+  });
+
+  // 다섯을 백엔드 소스에서 확인했다. 명세에는 하나만 적혀 있었다 (#318)
+  it("서버가 주는 다섯 까닭을 모두 사람이 읽는 문구로 바꾼다", async () => {
+    const REASONS = [
+      ["NOT_FOUND", "더 이상 없는 상품이에요"],
+      ["TEMPORARILY_UNAVAILABLE", "지금은 확인할 수 없어요"],
+      ["DEAL_ENDED", "타임딜이 끝났어요"],
+      ["OUT_OF_STOCK", "품절됐어요"],
+      ["DISCONTINUED", "판매가 끝났어요"],
+    ] as const;
+
+    renderCart(
+      REASONS.map(([code], index) =>
+        makeItem(index + 1, null, null, {
+          available: false,
+          unavailableReason: code,
+          subtotal: null,
+        }),
+      ),
+    );
+
+    for (const [, text] of REASONS) {
+      expect(await screen.findByText(text)).toBeDefined();
+    }
   });
 });

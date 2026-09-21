@@ -8,7 +8,8 @@ type DeliveryDetailProps = {
   phone: string;
   address: string;
   /** 배송 요청사항. 비어 있을 수 있다 */
-  request?: string;
+  /** 적지 않고 주문할 수 있다 */
+  request?: string | null;
 };
 
 /** 시안은 배송지에서만 이름 쪽도 흐린 색을 쓴다. 굵기로만 값과 가른다 */
