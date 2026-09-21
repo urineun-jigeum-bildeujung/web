@@ -61,6 +61,22 @@ export function getCart(): Promise<Cart> {
 }
 
 /**
+ * 장바구니에 담는다.
+ *
+ * **같은 줄을 다시 담으면 서버가 수량을 더한다.** 화면이 이미 담겼는지 먼저 볼 필요가 없다.
+ *
+ * 응답 본문이 없다 — `201 Created`만 온다. 담긴 결과는 다시 조회해서 맞춘다 (#316).
+ */
+export function addCartItem(item: CartItemRef, quantity: number): Promise<void> {
+  return apiRequest<void>("/carts/items", {
+    method: "POST",
+    // 서버 `AddCartItemRequest`가 `itemType`·`itemId`·`quantity` 셋을 받는다.
+    // **주문 생성과 규격이 다르다** — 그쪽은 `productId`/`dealItemId`로 나뉜다 (#306)
+    body: { ...item, quantity },
+  });
+}
+
+/**
  * 수량을 바꾼다.
  *
  * **바뀐 수량이 아니라 증감을 보낸다.** 스테퍼는 바뀐 값을 들고 있으므로 부르는 쪽이

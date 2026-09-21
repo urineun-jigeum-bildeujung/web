@@ -104,6 +104,12 @@ export const APP_MESSAGE = {
     title: "상품 없음",
     description: "판매가 끝났거나 삭제된 상품이에요.",
   },
+  // 판매 중지·미노출 상태의 상품을 담으려 한 경우다. 재고가 없는 것과 다르다 —
+  // 기다려도 돌아오지 않는다
+  "product.notPurchasable": {
+    title: "지금은 살 수 없는 상품이에요",
+    description: "판매가 멈췄거나 기간이 지났어요.",
+  },
   "product.outOfStock": {
     title: "재고 부족",
     description: "수량을 줄이거나 다른 상품을 골라 주세요.",
@@ -233,6 +239,7 @@ export const APP_MESSAGE_CODE = {
   product: {
     notFound: "product.notFound",
     outOfStock: "product.outOfStock",
+    notPurchasable: "product.notPurchasable",
   },
   order: {
     notCancellable: "order.notCancellable",

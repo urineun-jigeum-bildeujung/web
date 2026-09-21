@@ -1,5 +1,5 @@
 // 적합도가 아이에 따라 갈리는지, 재지 못한 아이를 0점으로 읽히지 않게 하는지 본다.
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -7,6 +7,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
+
+const { add } = vi.hoisted(() => ({ add: vi.fn() }));
+// 담기는 서버를 부른다. 이 화면 테스트의 관심은 담은 뒤의 표시라 호출만 세운다 (#316)
+vi.mock("@/entities/cart", () => ({ useMutateCartItem: () => ({ add, isAdding: false }) }));
 vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
@@ -89,13 +93,20 @@ describe("ProductDetailView", () => {
       expect(screen.getByText("90정 (기본 구성)")).toBeDefined();
     });
 
-    it("옵션 시트에서 담으면 시트가 닫히고 담김 안내가 뜬다", () => {
+    it("옵션 시트에서 담으면 시트가 닫히고 담김 안내가 뜬다", async () => {
       renderWith();
 
       fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
       fireEvent.click(screen.getByRole("button", { name: "21,000원 장바구니 담기" }));
 
-      expect(screen.queryByRole("dialog", { name: "면역 지원 영양제 90정 옵션 선택" })).toBeNull();
+      // 담기가 서버를 기다린다. 응답이 온 뒤에 시트가 닫힌다 (#316)
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("dialog", { name: "면역 지원 영양제 90정 옵션 선택" }),
+        ).toBeNull(),
+      );
+      // **라우트가 준 진짜 상품 id를 보낸다.** 화면의 이름·가격은 아직 목이다 (#123)
+      expect(add).toHaveBeenCalledWith({ itemType: "NORMAL", itemId: 1 }, 1);
       expect(toast.custom).toHaveBeenCalledOnce();
 
       const renderToast = vi.mocked(toast.custom).mock.calls[0][0];

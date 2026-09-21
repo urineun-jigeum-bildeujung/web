@@ -20,6 +20,7 @@ import {
   type OptionSheetProduct,
   type TimeDealList,
 } from "@/entities/product";
+import { useMutateCartItem } from "@/entities/cart";
 import {
   formatDisplayDayHour,
   formatDisplayHour,
@@ -407,9 +408,13 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
   // QA가 빈 상태를 바로 보고 싶을 때 쓰는 개발용 스위치. 실제 딜 종료와는 별개다
   const [devForceEmpty, setDevForceEmpty] = useState(false);
 
-  const addToCart = (productId: string) => {
-    // 실제 장바구니 담기(mutation)는 이번 이슈(#282) 범위 밖이다 — 목업 그대로 로컬 상태만 바꾼다
-    setAddedIds((prev) => (prev.includes(productId) ? prev : [...prev, productId]));
+  const { add, isAdding } = useMutateCartItem();
+
+  const addToCart = async (dealItemId: string, quantity: number) => {
+    // **타임딜은 `TIME_DEAL`로 간다.** 상품과 딜이 id 공간을 따로 써서 종류 없이는
+    // 가리킬 수 없다. 여기 `dealItemId`는 `timeDealItemId`다 (#316)
+    await add({ itemType: "TIME_DEAL", itemId: Number(dealItemId) }, quantity);
+    setAddedIds((prev) => (prev.includes(dealItemId) ? prev : [...prev, dealItemId]));
     setPicked(null);
     // 시안(1905-32431 snackbar)은 수량 설명 없이 한 줄이다
     showSnackbar("장바구니에 담겼어요");
@@ -546,6 +551,7 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
         product={picked}
         onOpenChange={(open) => !open && setPicked(null)}
         onAddToCart={addToCart}
+        adding={isAdding}
       />
     </div>
   );
