@@ -1,7 +1,7 @@
 // 리뷰 작성: 두 단계를 거쳐 등록되는지, 사진을 붙였다 뺄 수 있는지 본다.
 import { expect, test } from "@playwright/test";
 
-const PATH = "/mypage/reviews/write?orderItemId=oi1";
+const PATH = "/mypage/reviews/write?productId=p1";
 
 // 1×1 투명 PNG. 실제 파일 없이 첨부를 시험한다
 const PNG = Buffer.from(
