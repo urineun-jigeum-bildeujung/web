@@ -34,7 +34,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch`, `reviewFilter` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
 | `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `review`, `photo` | 구현됨 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
-| `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked\|recent\|often`, `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭만 UI 시안 반영(#274). 나머지 두 탭은 와이어프레임이고 PD 확인 결과 MVP 범위 밖이라 탭 클릭이 막혀 있다 |
+| `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭만 UI 시안 반영(#274). 나머지 두 탭은 와이어프레임이고 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
 
 ### 장바구니·결제
 
@@ -102,6 +102,8 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 소셜 인증 복귀 | `error` | 인증 실패. 지금은 `login_failed` 하나다 |
 | 나의 상품 후기 | `tab` | `writable`, `written` |
 | 반려동물 프로필 | `tab` | `profile`, `products` |
+| 좋아요 목록 | `tab` | `liked` 하나만 받는다. "최근에 봤어요"·"자주 샀어요" 탭은 화면엔 있지만 MVP 범위 밖이라, `?tab=recent`처럼 주소로 직접 들어와도 `liked`로 떨어진다 |
+| 좋아요 목록 | `category` | `all`, `food`, `snack`, `supplement` — 찜 탭 전용, `/recommendations`와 같은 값 |
 | 상품 비교 | `slot` | 비교할 자리 인덱스 |
 | 상품 비교 | `product` | 고른 상품 ID |
 | 클레임 접수 | `type` | `cancel`, `return`, `exchange` |
