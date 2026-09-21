@@ -96,7 +96,6 @@ const ROUTES = [
   "/deals",
   "/search",
   "/recommendations",
-  "/likes?tab=often",
   "/mypage/pets?tab=products&reviewed=todo",
   "/compare",
   "/products/1",
