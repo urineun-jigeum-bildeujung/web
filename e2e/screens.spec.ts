@@ -126,12 +126,13 @@ test.use({ viewport: { width: 393, height: 852 } });
 
 for (const route of ROUTES) {
   test(`${route} — 오류 없이 그려진다`, async ({ page }) => {
-    // **기본 30초로는 모자란다.** Next dev가 라우트를 그때그때 컴파일하는데, 워커 여럿이
-    // 서로 다른 라우트를 동시에 치면 컴파일이 줄을 선다. 느린 러너에서는 자기 차례를
-    // 기다리는 것만으로 30초를 넘겨, CI에서 되풀이 실패했다 — 같은 커밋을 재실행하면
-    // 통과했다. 30초는 앱에 대해 아무것도 재지 않고 컴파일 대기를 잴 뿐이다.
+    // **기본 30초로는 모자란다.** Next dev가 라우트를 그때그때 컴파일하는데, 느린 러너에서
+    // 첫 컴파일만으로 30초에 가까워진다. 30초는 앱에 대해 아무것도 재지 않고 컴파일 대기를
+    // 잴 뿐이다. 아래 "화면에 걸린 링크가 모두 열린다"가 같은 사정으로 이미 180초를 쓴다.
     //
-    // 아래 "화면에 걸린 링크가 모두 열린다"가 같은 사정으로 이미 180초를 쓴다 (#324).
+    // **이 시간을 늘린 것으로 #324가 고쳐지지는 않았다.** 되풀이 실패의 원인은 컴파일 대기가
+    // 아니라 끝나지 않는 `/_next/image` 요청이었고(아래 "결제수단 로고" 테스트), 90초로도
+    // 넘겼다. 시간 자체는 그대로 둘 값이라 남긴다 (#324).
     test.setTimeout(90_000);
 
     const errors: string[] = [];
@@ -152,6 +153,26 @@ for (const route of ROUTES) {
     expect(overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
   });
 }
+
+// **로고가 이미지 최적화를 거치면 안 된다.**
+//
+// 83×16짜리 6KB PNG인데 `next/image`가 `/_next/image?url=…&w=96&q=75`로 한 번 더 왕복한다.
+// CI에서 그 요청이 **끝나지 않아** 이 화면이 `networkidle`에 걸렸고, 같은 커밋을 재실행하면
+// 통과해 한동안 원인을 못 찾았다. 실패한 회차의 Playwright 트레이스에 응답 없는 요청이
+// 정확히 그것 하나였다 (#324).
+//
+// 최적화를 다시 켜면 여기서 걸린다.
+test("주문 상세의 결제수단 로고는 이미지 최적화를 거치지 않는다", async ({ page }) => {
+  const optimized: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/_next/image")) optimized.push(request.url());
+  });
+
+  await page.goto("/mypage/orders/1", { waitUntil: "networkidle" });
+
+  await expect(page.getByAltText("토스페이")).toBeVisible();
+  expect(optimized, `최적화를 거친 이미지 ${optimized.join(" ")}`).toEqual([]);
+});
 
 /** 바텀시트·확인창을 여는 화면. 오버레이는 열어봐야만 보인다 */
 const OVERLAYS = [

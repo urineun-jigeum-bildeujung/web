@@ -24,6 +24,12 @@ type PaymentDetailProps = {
 //
 // **SVG가 아니라 PNG다.** 파란 심벌이 시안에서 래스터(패턴 채움)라, SVG로 내보내면 1.3MB짜리
 // base64를 물고 나온다. 3배로 받은 PNG가 6KB다.
+//
+// **최적화를 거치지 않는다(`unoptimized`).** 83×16짜리 6KB 파일이라 WebP로 바꿔 얻을 것이
+// 없는데, `next/image`는 그 한 장을 받으려고 `/_next/image?url=…&w=96&q=75`를 한 번 더 왕복한다.
+// CI에서 그 요청이 끝나지 않아 주문 상세가 `networkidle`에 걸려 E2E가 되풀이 실패했다 —
+// 트레이스에 응답 없는 요청이 정확히 그것 하나였다 (#324). 상품 상세의 작은 아이콘들도 같은
+// 이유로 `unoptimized`다.
 const TOSS_PAY_LOGO = { src: "/images/payment/toss-pay.png", width: 83, height: 16 };
 
 /** 시안이 이름 쪽에 굵은 글씨를 쓰는 줄. 결제금액과 결제수단이 그렇다 */
@@ -70,6 +76,7 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
             alt="토스페이"
             width={TOSS_PAY_LOGO.width}
             height={TOSS_PAY_LOGO.height}
+            unoptimized
           />
         }
       />
