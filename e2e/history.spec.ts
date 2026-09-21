@@ -10,17 +10,10 @@ test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
 });
 
-test("좋아요 탭을 옮긴 뒤 뒤로가기로 돌아온다", async ({ page }) => {
-  await page.goto("/likes");
-
-  await page.getByRole("tab", { name: "최근에 봤어요" }).click();
-  await expect(page).toHaveURL(/tab=recent/);
-
-  await page.goBack();
-  await expect(page).not.toHaveURL(/tab=recent/);
-  // 화면을 떠나지 않고 좋아요에 남아 있어야 한다
-  await expect(page).toHaveURL(/\/likes/);
-});
+// 좋아요 화면의 "최근에 봤어요"·"자주 샀어요" 탭은 MVP 범위 밖이라 탭도 주소도
+// 찜 탭 하나로 막혀 있다(#274 리뷰) — 옮겨 갈 다른 탭이 없어 이 화면에서는
+// 탭 전환 뒤로가기를 더 시험할 수 없다. 여러 탭을 오가는 이 패턴은 아래
+// "메인에서 종류를 고른 뒤" 시험이 대신 커버한다
 
 test("메인에서 종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다", async ({ page }) => {
   await page.goto("/");
