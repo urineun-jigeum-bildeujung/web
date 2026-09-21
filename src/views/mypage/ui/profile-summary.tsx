@@ -9,7 +9,19 @@ import { useQueryMyProfile } from "@/entities/member";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 export function ProfileSummary() {
-  const { profile, isLoading } = useQueryMyProfile();
+  const { profile, isLoading, error } = useQueryMyProfile();
+
+  // **못 받은 것과 비어 있는 것은 다른 사실이다.** 빈 줄로 두면 카드가 고장 난 것처럼
+  // 보이고, 보호자는 왜 이름이 없는지 알 수 없다
+  if (error) {
+    return (
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span role="alert" className="truncate text-body-medium-14 text-text-body-secondary">
+          내 정보를 불러오지 못했어요
+        </span>
+      </span>
+    );
+  }
 
   // 두 줄을 처음 그리는 자리라 그릴 내용이 아직 없다. 글자 높이로 자리를 잡아
   // 받아오는 순간 카드가 늘었다 줄지 않게 한다

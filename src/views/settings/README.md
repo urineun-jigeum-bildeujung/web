@@ -7,7 +7,7 @@
 | `ui/settings-view.tsx` | 설정. 알림설정 스위치와 테마·로그아웃·회원탈퇴 줄 |
 | `api/logout.ts` | 로그아웃 요청 |
 | `api/use-mutate-logout.ts` | 서버 세션을 끊고 기기의 토큰·캐시를 비우는 훅 |
-| `ui/settings-view.test.tsx` | 스위치가 있는지, 나머지 줄이 눌리지 않는지 본다 |
+| `ui/settings-view.test.tsx` | 스위치, 테마설정 줄이 눌리지 않는 것, 로그아웃 성공·실패, 회원탈퇴 확인·성공·실패 |
 | `index.ts` | 공개 API |
 
 ## 라우트
