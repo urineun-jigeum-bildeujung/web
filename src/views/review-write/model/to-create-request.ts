@@ -23,8 +23,10 @@ export function answeredValues(
 /**
  * 초안을 요청으로 옮긴다. 필수 값이 하나라도 비면 `null`이다.
  *
- * 반응 문항은 화면에서 전부 선택이지만 **서버가 하나 이상을 요구한다**(`answerValues @NotEmpty`).
- * 백엔드에 확인 중이라 그때까지 여기서도 막는다(#291).
+ * **필수 문항 둘이 서버 조건을 함께 채운다.** 서버가 `answerValues`에 하나 이상을 요구하는데
+ * (`@NotEmpty`), 시안이 기호성과 급여 편의성을 필수로 정해(#302) 화면이 이미 둘을 받는다.
+ * 그전에는 "하나 이상"이라는 임시 규칙으로 막고 백엔드에 제약을 풀어 달라고 물어 둔 상태였다(#291) —
+ * 이제 그럴 필요가 없다. 아래 검사는 화면을 거치지 않는 경로를 위한 안전망으로 남긴다.
  */
 export function toCreateRequest(draft: ReviewDraft, productId: string): ReviewCreateRequest | null {
   const usagePeriod = Number(draft.days);

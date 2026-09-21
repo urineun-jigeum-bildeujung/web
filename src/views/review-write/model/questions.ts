@@ -18,6 +18,13 @@ export type Question = {
   question: string;
   /** 질문 옆에 흐리게 붙는 보충. "(정제 크기 등)" */
   hint?: string;
+  /**
+   * 답하지 않으면 다음으로 갈 수 없다.
+   *
+   * **시안이 문항마다 필수·선택 배지를 그린다**(1884-29158 · 1884-29325). 기호성과 급여
+   * 편의성 둘만 필수다 — 그 둘이 다음 추천의 뼈대라 없으면 추천이 서지 않는다 (#302).
+   */
+  required?: boolean;
   options: readonly ResponseOption[];
 };
 
@@ -27,13 +34,14 @@ const CHANGE_OPTIONS = [
   { value: "POSITIVE", label: "좋아졌어요" },
 ] as const;
 
-/** 1단계 "A 추천을 위해 알려주세요". 전부 선택이다 */
+/** 1단계 "AI 추천을 위해 알려주세요". 기호성만 필수다 (#302) */
 export const RATING_STEP_QUESTIONS: readonly Question[] = [
   {
     key: "PALATABILITY",
     topic: "기호성",
     short: "기호성",
     question: "잘 먹었나요?",
+    required: true,
     options: [
       { value: "NEGATIVE", label: "안 먹어요" },
       { value: "NEUTRAL", label: "보통이에요" },
@@ -75,11 +83,12 @@ export const RATING_STEP_QUESTIONS: readonly Question[] = [
   },
 ];
 
-/** 2단계의 급여 편의성. 이것도 선택이다 */
+/** 2단계의 급여 편의성. 시안이 필수로 그린다 (#302) */
 export const HANDLING_QUESTION: Question = {
   key: "FEEDING_CONVENIENCE",
   topic: "급여 편의성",
   short: "급여 편의성",
+  required: true,
   question: "아이에게 급여하기 편했나요?",
   hint: "(정제 크기 등)",
   options: [

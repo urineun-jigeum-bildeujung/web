@@ -8,6 +8,7 @@
 import { useId } from "react";
 
 import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/ui/badge/badge";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 
 import type { Question } from "../model/questions";
@@ -26,11 +27,17 @@ export function ResponseSelect({ question, value, onValueChange, className }: Re
     <section className={cn("flex flex-col gap-2 px-5 pb-4", className)}>
       <h3 className="flex flex-col">
         <span className="text-label-medium-12 text-text-body-secondary">{question.topic}</span>
-        <span className="text-label-bold-14 text-foreground">
-          {question.question}
-          {question.hint && (
-            <span className="text-body-medium-14 text-text-body-secondary"> {question.hint}</span>
-          )}
+        <span className="flex items-center gap-1.5 text-label-bold-14 text-foreground">
+          <span>
+            {question.question}
+            {question.hint && (
+              <span className="text-body-medium-14 text-text-body-secondary"> {question.hint}</span>
+            )}
+          </span>
+          {/* 시안이 문항마다 배지를 붙인다. 섹션에는 없다 (1884-29158, #302) */}
+          <Badge tone={question.required ? "brand" : "default"}>
+            {question.required ? "필수" : "선택"}
+          </Badge>
         </span>
       </h3>
       <RadioGroup

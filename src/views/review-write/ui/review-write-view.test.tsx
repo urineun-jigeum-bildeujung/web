@@ -92,10 +92,15 @@ function pick(group: string, option: string) {
   );
 }
 
-/** 1단계 필수(별점·사용 기간)를 채우고 2단계로 넘어간다 */
+/**
+ * 1단계 필수를 채우고 2단계로 넘어간다.
+ *
+ * **기호성도 필수다.** 시안이 문항에 "필수" 배지를 붙였다 (#302).
+ */
 function goToDetail() {
   fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
   fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+  pick("잘 먹었나요?", "잘 먹어요");
   fireEvent.click(screen.getByRole("button", { name: "다음" }));
 }
 
@@ -172,7 +177,8 @@ describe("ReviewWriteView 1단계", () => {
     expect(screen.getAllByText("선택").length).toBeGreaterThan(0);
   });
 
-  it("별점과 사용 기간을 채워야 다음으로 간다", () => {
+  // 시안이 기호성에도 "필수" 배지를 붙였다 (#302)
+  it("별점·사용 기간·기호성을 채워야 다음으로 간다", () => {
     renderAt();
 
     const next = screen.getByRole("button", { name: "다음" });
@@ -182,7 +188,22 @@ describe("ReviewWriteView 1단계", () => {
     expect(next.hasAttribute("disabled")).toBe(true);
 
     fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+    // 기호성이 남아 아직 잠겨 있다
+    expect(next.hasAttribute("disabled")).toBe(true);
+
+    pick("잘 먹었나요?", "잘 먹어요");
     expect(next.hasAttribute("disabled")).toBe(false);
+  });
+
+  // 나머지 넷은 시안이 "선택"으로 그린다
+  it("기호성 말고 다른 문항은 비워도 다음으로 간다", () => {
+    renderAt();
+
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+    pick("잘 먹었나요?", "잘 먹어요");
+
+    expect(screen.getByRole("button", { name: "다음" }).hasAttribute("disabled")).toBe(false);
   });
 
   it("별은 반 개 단위로 매기고 화살표 키로 반 개씩 옮긴다", () => {
@@ -206,7 +227,7 @@ describe("ReviewWriteView 1단계", () => {
     resetReviewDraftCache();
 
     renderAt("?step=detail");
-    await fillDetail({ skipAnswer: true });
+    await fillDetail();
 
     // 2단계에서 새로고침한 뒤에도 1단계 값이 살아 있어 등록할 수 있다
     expect(screen.getByText("16일째 사용 중")).toBeDefined();
@@ -256,7 +277,7 @@ describe("ReviewWriteView 2단계", () => {
   });
 
   // 시안은 전부 선택이지만 서버가 하나 이상을 요구한다. 백엔드 확인이 올 때까지 막는다(#291)
-  it("반응 문항을 하나도 안 고르면 등록할 수 없다", async () => {
+  it("급여 편의성을 안 고르면 등록할 수 없다", async () => {
     stubApi();
     renderAt();
     goToDetail();
@@ -295,7 +316,8 @@ describe("ReviewWriteView 2단계", () => {
     fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
     pick("잘 먹었나요?", "잘 먹어요");
     fireEvent.click(screen.getByRole("button", { name: "다음" }));
-    await fillDetail({ skipAnswer: true });
+    // 나머지 넷은 비워 둔다 — 시안이 선택으로 그린 문항들이다 (#302)
+    await fillDetail();
 
     fireEvent.click(submitButton());
 
@@ -314,7 +336,11 @@ describe("ReviewWriteView 2단계", () => {
       petId: 1,
       starRate: 4,
       usagePeriod: 16,
-      answerValues: [{ questionKey: "PALATABILITY", answerValue: "POSITIVE" }],
+      // 필수 둘만 답했다. 선택인 넷은 실리지 않는다
+      answerValues: [
+        { questionKey: "PALATABILITY", answerValue: "POSITIVE" },
+        { questionKey: "FEEDING_CONVENIENCE", answerValue: "POSITIVE" },
+      ],
       text: "확실히 예전보다 계단 오를 때 덜 힘들어해요",
     });
   });

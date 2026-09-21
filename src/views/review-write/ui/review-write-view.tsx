@@ -6,9 +6,13 @@
 // 혼자 추측하던 신호이고, 여기서 모인 것이 다음 추천의 근거가 된다.
 // 어느 아이가 먹었는지를 함께 받는 것도 같은 이유다 — 아이를 모르면 쓸 수 없는 답이다.
 //
-// 필수는 별점·사용 기간·아이·후기 글이고 반응 문항은 전부 선택이다. 문항을 필수로 묶으면
-// 모르는 항목까지 아무 답이나 고르게 되어 근거가 흐려진다. 다만 서버가 반응 문항을 하나 이상
-// 요구해(`answerValues @NotEmpty`) 백엔드 확인이 올 때까지 하나는 받는다(#291).
+// 필수는 별점·사용 기간·아이·후기 글과 **반응 문항 둘**이다 — 기호성(1단계)과 급여 편의성(2단계).
+// 시안이 문항마다 필수·선택 배지를 그렸고 그 둘만 필수다(#302). 나머지 넷은 선택으로 둔다 —
+// 다 묶으면 모르는 항목까지 아무 답이나 고르게 되어 근거가 흐려진다.
+//
+// 그전에는 "반응 문항 하나 이상"이라는 임시 규칙이었다. 서버가 `answerValues`에 하나 이상을
+// 요구해(`@NotEmpty`) 백엔드 확인이 올 때까지 막아 둔 것인데(#291), 시안이 정한 필수 둘이
+// 그 조건을 함께 채운다.
 
 "use client";
 
@@ -44,7 +48,12 @@ import {
   subscribeReviewDraft,
   type ReviewDraft,
 } from "../model/draft-storage";
-import { answeredSummary, HANDLING_QUESTION, RATING_STEP_QUESTIONS } from "../model/questions";
+import {
+  answeredSummary,
+  HANDLING_QUESTION,
+  RATING_STEP_QUESTIONS,
+  type Question,
+} from "../model/questions";
 import { toCreateRequest } from "../model/to-create-request";
 import { PhotoPicker } from "./photo-picker";
 import { ProductRow } from "./product-row";
@@ -168,11 +177,19 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   const answer = (key: string, value: string) =>
     patch({ responses: { ...responses, [key]: value } });
 
-  // 사진과 반응 문항은 선택이다. 나머지는 없으면 다음 추천에 쓸 수 없어 받아야 한다.
-  // 단, 서버가 반응 문항을 하나 이상 요구해 그때까지 여기서도 하나는 받는다(#291)
-  const ratingReady = score > 0 && days.length > 0;
-  const answered = answeredSummary(responses).length > 0;
-  const ready = ratingReady && petId !== undefined && text.trim().length >= MIN_TEXT && answered;
+  // **시안이 정한 필수 문항을 본다.** 그전에는 "반응 문항 하나 이상"이라는 임시 규칙이었다 —
+  // 서버 `answerValues`가 `@NotEmpty`라 그때까지 막아 두었던 것이다(#291). 시안이 기호성과
+  // 급여 편의성을 필수로 정해(#302) 그 임시 규칙을 정식 규칙으로 바꾼다. 둘 중 하나만 있어도
+  // 서버 조건은 채워지므로 백엔드에 제약을 풀어 달라고 할 필요가 없다.
+  const answeredAll = (questions: readonly Question[]) =>
+    questions.every((question) => !question.required || responses[question.key] !== undefined);
+
+  const ratingReady = score > 0 && days.length > 0 && answeredAll(RATING_STEP_QUESTIONS);
+  const ready =
+    ratingReady &&
+    petId !== undefined &&
+    text.trim().length >= MIN_TEXT &&
+    answeredAll([HANDLING_QUESTION]);
 
   /**
    * 등록. 사진이 있으면 훅이 먼저 올린다.
@@ -277,10 +294,9 @@ function ReviewWriteForm({ productId }: { productId: string }) {
             {/* 마지막 섹션은 하단 버튼 줄까지 흰색으로 채운다. 그러지 않으면 바탕색이 드러난다 */}
             <section className="flex flex-1 flex-col bg-background">
               <div className="flex flex-col gap-1 px-5 py-4">
-                <h2 className="flex items-center gap-2 text-title-bold-16 text-foreground">
-                  A 추천을 위해 알려주세요
-                  <Badge>선택</Badge>
-                </h2>
+                {/* **섹션에는 배지가 없다.** 시안(1884-29158)이 문항마다만 붙인다 — 섹션에
+                    "선택"을 달면 그 안의 기호성이 필수인 것과 어긋난다 (#302) */}
+                <h2 className="text-title-bold-16 text-foreground">AI 추천을 위해 알려주세요</h2>
                 <p className="text-label-medium-12 text-text-body-secondary">
                   해당하는 항목만 골라 답변해주세요
                 </p>
