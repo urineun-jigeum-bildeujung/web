@@ -8,11 +8,21 @@ export {
   type OrderDeliveryAddress,
   type OrderDetail,
   type OrderDetailItem,
+  type OrderItemClaim,
   type OrderListItem,
   type OrderListResponse,
   type OrderPayment,
   type OrderSummary,
 } from "./api/orders";
+export {
+  createClaim,
+  CLAIM_TYPES,
+  type ClaimType,
+  type CreateClaimItem,
+  type CreateClaimRequest,
+  type CreateClaimResult,
+} from "./api/claims";
+export { useMutateClaim } from "./api/use-mutate-claim";
 export { useMutateOrder } from "./api/use-mutate-order";
 export { useQueryOrderDetail } from "./api/use-query-order-detail";
 export { useQueryOrders } from "./api/use-query-orders";

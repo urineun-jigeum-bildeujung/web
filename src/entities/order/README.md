@@ -8,6 +8,8 @@
 | `api/use-query-orders.ts` | 주문 목록 조회 훅. 커서로 다음 쪽을 이어 받는다 |
 | `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다 |
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다 |
+| `api/claims.ts` | 반품·교환 신청 API. 규격은 로컬 백엔드 소스에서 옮겼다 |
+| `api/use-mutate-claim.ts` | 반품·교환 접수 훅. 끝나면 주문을 다시 받는다 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
 | `ui/order-status-badge.tsx` | 주문 상태 뱃지. 결제완료·상품준비·배송중·배송완료·구매확정 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 96 + 이름·뱃지 / 옵션 / 결제 금액 |
