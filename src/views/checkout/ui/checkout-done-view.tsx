@@ -3,46 +3,55 @@
 //
 // 흰 바닥에 요약 카드 하나만 떠 있고 결제상세·배송지는 카드 없이 그대로 놓인다.
 // 그 두 블록은 주문 상세(mypa_161)와 같아 `entities/order`의 조각을 쓴다 (#210).
+//
+// **클라이언트 컴포넌트다.** 결제 승인을 여기서 부르는데, 토큰이 브라우저에만 있어
+// 서버 렌더에서는 인증이 실리지 않는다 (#308).
 
+"use client";
+
+import Image from "next/image";
 import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
-import { DeliveryDetail, DetailRow, DetailSection, PaymentDetail } from "@/entities/order";
-import { APP_MESSAGE, type AppMessageCode } from "@/shared/config/app-message";
+import {
+  DeliveryDetail,
+  DetailRow,
+  DetailSection,
+  PaymentDetail,
+  useQueryOrderDetail,
+  type OrderDetail,
+} from "@/entities/order";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
-import type { PaymentConfirmResult } from "../api/payment";
+import { useQueryPaymentConfirm } from "../api/use-query-payment-confirm";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 import { CopyOrderNumber } from "./copy-order-number";
 
 /**
- * 아직 목인 값들.
+ * 대표로 보일 상품 한 줄.
  *
- * **승인 응답으로는 채울 수 없는 것들이다.** 그 응답이 주는 것은 `paymentId`·`orderNumber`·
- * `paymentStatus`·`amount`·`method`·`approvedAt` 여섯뿐이고, 상품과 배송지는 주문 상세
- * 조회(`GET /orders/{orderId}`)가 열려야 온다 — 명세에서 아직 `시작 전`이다 (#262).
- *
- * **완료 화면은 리다이렉트로 들어온다.** 결제 화면이 알던 장바구니·배송지를 그대로 들고
- * 올 수 없어, 다시 조회하지 않는 한 이 자리를 채울 방법이 없다.
+ * 시안(`paym_002`)이 상품 줄을 하나만 그린다. 여럿이면 첫 줄을 세우고 나머지는 수로 알린다 —
+ * 주문 목록과 같은 방식이다 (#297).
  */
-const MOCK = {
-  /** 문의할 때 사용자가 대는 유일한 식별자다. 실제 값은 결제 승인 응답이 준다 */
-  orderNo: "20260829-1234567",
-  /** 주문 상세로 가는 식별자. 승인 응답에는 없어 계약이 정해져야 안다 */
-  productName: "상품명",
-  option: "상품 옵션",
-  total: 12345,
-  itemPrice: 9345,
-  shippingFee: 3000,
-  receiver: "천경진",
-  phone: "010-1234-5678",
-  address: "서울특별시 강남구 테헤란로 123, UI타워 4층 404호",
-  request: "문 앞에 놓아주세요.",
-};
+function toProductRow(order: OrderDetail) {
+  const [first, ...rest] = order.items;
+  if (!first) {
+    return null;
+  }
+
+  return {
+    name: first.productName,
+    caption: rest.length > 0 ? `${first.quantity}개 외 ${rest.length}건` : `${first.quantity}개`,
+    imageUrl: first.thumbnailUrl,
+  };
+}
 
 /**
  * 승인 시각을 화면 형식으로 옮긴다.
@@ -52,6 +61,18 @@ const MOCK = {
  */
 function formatPaidAt(approvedAt: string | undefined) {
   return approvedAt ? formatDisplayDateTime(approvedAt) : null;
+}
+
+/**
+ * 승인 실패를 결제 맥락의 문구로 옮긴다.
+ *
+ * **일반 실패 문구를 그대로 쓰면 안 된다.** 네트워크 오류는 평소에 "네트워크 상태를 확인해
+ * 주세요"로 떨어지는데, 이 화면에서 그 말은 다시 시도하라는 뜻으로 읽힌다. 결제창에서는 이미
+ * 성공한 뒤라 그 행동이 두 번 결제로 이어질 수 있다.
+ */
+function toConfirmFailureCode(error: unknown): AppMessageCode {
+  const code = toAppMessageCode(error);
+  return code.startsWith("payment.") ? code : APP_MESSAGE_CODE.payment.confirmFailed;
 }
 
 /**
@@ -67,10 +88,11 @@ export type PaymentFailure = {
 };
 
 type CheckoutDoneViewProps = {
-  /** 결제창이 성공으로 돌아와 승인까지 끝난 결과. 주소창으로 바로 들어오면 없다 */
-  payment?: PaymentConfirmResult | null;
-  /** 승인이 실패했을 때만 온다. 있으면 완료가 아니라 이 사실부터 알린다 */
-  failure?: PaymentFailure | null;
+  /** 토스가 복귀 쿼리에 실어 보낸 값들. 이것으로 승인을 부른다 */
+  paymentKey?: string;
+  /** 토스가 `orderId`로 붙이는 문자열 주문번호 (`ORD-…`) */
+  tossOrderId?: string;
+  amount: number;
   /**
    * 방금 산 주문의 숫자 id. 복귀 주소에 우리가 실어 보낸 값이다 (#301).
    *
@@ -117,7 +139,44 @@ function ConfirmFailure({ failure }: { failure: PaymentFailure }) {
   );
 }
 
-export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneViewProps) {
+export function CheckoutDoneView({
+  paymentKey,
+  tossOrderId,
+  amount,
+  orderId,
+}: CheckoutDoneViewProps) {
+  const { payment, error, isConfirming } = useQueryPaymentConfirm({
+    paymentKey,
+    tossOrderId,
+    amount,
+  });
+
+  // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 — 복귀 주소에 실어 온
+  // 숫자 id가 그 열쇠다 (#301·#308)
+  const { order } = useQueryOrderDetail(orderId ? String(orderId) : "");
+  const row = order ? toProductRow(order) : null;
+
+  // 승인이 실패하면 화면이 댈 수 있는 식별자가 토스에서 받은 주문번호뿐이다
+  const failure: PaymentFailure | null =
+    error && tossOrderId ? { orderId: tossOrderId, code: toConfirmFailureCode(error) } : null;
+
+  if (isConfirming) {
+    return (
+      <div className="flex min-h-dvh flex-col">
+        <PageHeader leading="none" />
+        <main
+          role="status"
+          aria-label="결제를 확인하는 중"
+          className="flex flex-1 flex-col gap-6 px-5 pt-3 pb-8"
+        >
+          <Skeleton className="mx-auto h-6 w-48" />
+          <Skeleton className="h-30 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full" />
+        </main>
+      </div>
+    );
+  }
+
   if (failure) {
     return (
       <div className="flex min-h-dvh flex-col">
@@ -189,7 +248,7 @@ export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneView
                 term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
                 description={
                   <span className="text-body-regular-14 text-text-body-secondary">
-                    {payment?.orderNumber ?? MOCK.orderNo}
+                    {payment?.orderNumber ?? order?.orderNumber}
                   </span>
                 }
               />
@@ -197,17 +256,22 @@ export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneView
 
             <div className="flex flex-col gap-2">
               <div className="flex items-start gap-2 px-3">
-                {/* 디자인 시스템 icon 43종에 이미지 글리프가 없어 react-icons로 채운다 (AGENTS.md 5.3) */}
+                {/* 사진이 없으면 자리만 잡는다. 디자인 시스템 icon 43종에 이미지 글리프가
+                    없어 react-icons로 채운다 (AGENTS.md 5.3) */}
                 <span
                   aria-hidden
-                  className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-surface-tertiary text-icon-fill-secondary"
+                  className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-tertiary text-icon-fill-secondary"
                 >
-                  <IoImageOutline className="size-8" />
+                  {row?.imageUrl ? (
+                    <Image src={row.imageUrl} alt="" fill sizes="64px" className="object-cover" />
+                  ) : (
+                    <IoImageOutline className="size-8" />
+                  )}
                 </span>
                 <div className="flex min-w-0 flex-col gap-1">
-                  <p className="truncate text-title-bold-16 text-foreground">{MOCK.productName}</p>
+                  <p className="truncate text-title-bold-16 text-foreground">{row?.name}</p>
                   <p className="truncate text-body-medium-14 text-text-body-secondary">
-                    {MOCK.option}
+                    {row?.caption}
                   </p>
                 </div>
               </div>
@@ -222,20 +286,25 @@ export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneView
         <div className="flex flex-col gap-4">
           <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
             <PaymentDetail
-              total={payment?.amount ?? MOCK.total}
-              itemPrice={MOCK.itemPrice}
-              shippingFee={MOCK.shippingFee}
+              total={payment?.amount ?? order?.totalAmount ?? 0}
+              itemPrice={order?.productAmount ?? 0}
+              // 배송비 필드가 따로 없다. 결제 금액에서 상품 금액을 뺀다 (주문 상세와 같은 방식)
+              shippingFee={order ? order.totalAmount - order.productAmount : 0}
             />
           </DetailSection>
 
-          <DetailSection title="배송지 정보">
-            <DeliveryDetail
-              receiver={MOCK.receiver}
-              phone={MOCK.phone}
-              address={MOCK.address}
-              request={MOCK.request}
-            />
-          </DetailSection>
+          {/* 주문을 못 받아 오면 이 블록을 세우지 않는다. 빈 칸을 남기면 배송지가 없는
+              주문처럼 보인다 */}
+          {order && (
+            <DetailSection title="배송지 정보">
+              <DeliveryDetail
+                receiver={order.deliveryAddress.receiver}
+                phone={order.deliveryAddress.receiverPhone}
+                address={`${order.deliveryAddress.address} ${order.deliveryAddress.addressDetail}`.trim()}
+                request={order.deliveryNote}
+              />
+            </DetailSection>
+          )}
         </div>
       </main>
 
