@@ -76,4 +76,4 @@
 
 ## 아직 없는 것
 
-배송지 저장·조회 API. 백엔드 작업 대기 중이라 `/mypage/address/new`의 제출은 아직 아무것도 보내지 않는다.
+없다. 주소 검색은 `/api/juso`로, 배송지 저장·조회는 `useMutateAddress`·`useQueryAddresses`로 붙어 있다 (#237).
