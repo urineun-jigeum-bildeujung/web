@@ -140,6 +140,49 @@ function ConfirmFailure({ failure }: { failure: PaymentFailure }) {
   );
 }
 
+/**
+ * 승인이 막혔을 때의 화면.
+ *
+ * **대기 분기보다 먼저 선다.** 여기까지 온 것은 결제창에서 성공했다는 뜻이고 그 시점엔 이미
+ * 돈이 나갔을 수 있다. 주문 조회가 아직이라고 뼈대로 덮으면 문의할 수단을 못 쥔다 (#308 리뷰).
+ */
+function ConfirmFailureScreen({ failure }: { failure: PaymentFailure }) {
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <PageHeader
+        leading="none"
+        right={
+          <Link
+            href="/"
+            aria-label="닫기"
+            className="flex size-11 items-center justify-center text-foreground"
+          >
+            <Icon name="cancel" />
+          </Link>
+        }
+      />
+
+      <main className="flex flex-1 flex-col">
+        <ConfirmFailure failure={failure} />
+      </main>
+
+      {/* 다시 결제하러 보내지 않는다. 문의와 주문 내역 확인만 남긴다 */}
+      <BottomActionBar className="[&>*]:h-12">
+        <Button
+          variant="secondary"
+          className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
+          asChild
+        >
+          <Link href="/mypage/support">문의하기</Link>
+        </Button>
+        <Button asChild>
+          <Link href="/mypage/orders">주문 내역 보기</Link>
+        </Button>
+      </BottomActionBar>
+    </div>
+  );
+}
+
 export function CheckoutDoneView({
   paymentKey,
   tossOrderId,
@@ -193,6 +236,13 @@ export function CheckoutDoneView({
     );
   }
 
+  // **실패를 대기보다 먼저 본다.** 승인이 막힌 것은 확정된 사실이고 그 시점엔 이미 돈이
+  // 나갔을 수 있다. 주문 조회가 아직 끝나지 않았다고 뼈대로 덮으면, 사용자가 문의할 수단을
+  // 손에 쥐지 못한 채 기다리게 된다 (#308 리뷰)
+  if (failure) {
+    return <ConfirmFailureScreen failure={failure} />;
+  }
+
   // 승인이 끝나도 주문을 받는 중이면 자리를 잡는다. 먼저 그리면 상품이 비고 금액이 0원이 된다
   if (isConfirming || isLoadingOrder) {
     return (
@@ -207,43 +257,6 @@ export function CheckoutDoneView({
           <Skeleton className="h-30 w-full rounded-lg" />
           <Skeleton className="h-40 w-full" />
         </main>
-      </div>
-    );
-  }
-
-  if (failure) {
-    return (
-      <div className="flex min-h-dvh flex-col">
-        <PageHeader
-          leading="none"
-          right={
-            <Link
-              href="/"
-              aria-label="닫기"
-              className="flex size-11 items-center justify-center text-foreground"
-            >
-              <Icon name="cancel" />
-            </Link>
-          }
-        />
-
-        <main className="flex flex-1 flex-col">
-          <ConfirmFailure failure={failure} />
-        </main>
-
-        {/* 다시 결제하러 보내지 않는다. 문의와 주문 내역 확인만 남긴다 */}
-        <BottomActionBar className="[&>*]:h-12">
-          <Button
-            variant="secondary"
-            className="bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80"
-            asChild
-          >
-            <Link href="/mypage/support">문의하기</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/mypage/orders">주문 내역 보기</Link>
-          </Button>
-        </BottomActionBar>
       </div>
     );
   }
@@ -288,42 +301,48 @@ export function CheckoutDoneView({
               />
             </dl>
 
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start gap-2 px-3">
-                {/* 사진이 없으면 자리만 잡는다. 디자인 시스템 icon 43종에 이미지 글리프가
+            {/* 주문을 못 받아 왔거나 다른 주문이면 이 줄을 세우지 않는다. 빈 이름과
+                사진 자리만 남으면 상품이 없는 주문처럼 보인다 (#308 리뷰) */}
+            {row && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-start gap-2 px-3">
+                  {/* 사진이 없으면 자리만 잡는다. 디자인 시스템 icon 43종에 이미지 글리프가
                     없어 react-icons로 채운다 (AGENTS.md 5.3) */}
-                <span
-                  aria-hidden
-                  className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-tertiary text-icon-fill-secondary"
-                >
-                  {row?.imageUrl ? (
-                    <Image src={row.imageUrl} alt="" fill sizes="64px" className="object-cover" />
-                  ) : (
-                    <IoImageOutline className="size-8" />
-                  )}
-                </span>
-                <div className="flex min-w-0 flex-col gap-1">
-                  <p className="truncate text-title-bold-16 text-foreground">{row?.name}</p>
-                  <p className="truncate text-body-medium-14 text-text-body-secondary">
-                    {row?.caption}
-                  </p>
+                  <span
+                    aria-hidden
+                    className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-tertiary text-icon-fill-secondary"
+                  >
+                    {row?.imageUrl ? (
+                      <Image src={row.imageUrl} alt="" fill sizes="64px" className="object-cover" />
+                    ) : (
+                      <IoImageOutline className="size-8" />
+                    )}
+                  </span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <p className="truncate text-title-bold-16 text-foreground">{row?.name}</p>
+                    <p className="truncate text-body-medium-14 text-text-body-secondary">
+                      {row?.caption}
+                    </p>
+                  </div>
                 </div>
-              </div>
 
-              {/* **도착 예정일 줄은 그리지 않는다.** 시안(`paym_002`)에는 있지만 서버가 그 값을
+                {/* **도착 예정일 줄은 그리지 않는다.** 시안(`paym_002`)에는 있지만 서버가 그 값을
                   주지 않는다. 시안 문구를 그대로 두면 오늘이 며칠이든 `9/3`이라 지난 날짜가
                   모든 주문에 뜬다 (#262). 배송일을 받게 되면 `DeliveryNotice`로 되살린다 */}
-            </div>
+              </div>
+            )}
           </section>
         </div>
 
         <div className="flex flex-col gap-4">
           <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
+            {/* **주문이 없으면 세부 금액을 비운다.** 결제 금액만 알고 그 안을 가를 수 없는데
+                `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰) */}
             <PaymentDetail
               total={payment?.amount ?? order?.totalAmount ?? 0}
-              itemPrice={order?.productAmount ?? 0}
+              itemPrice={order?.productAmount}
               // 배송비 필드가 따로 없다. 결제 금액에서 상품 금액을 뺀다 (주문 상세와 같은 방식)
-              shippingFee={order ? order.totalAmount - order.productAmount : 0}
+              shippingFee={order && order.totalAmount - order.productAmount}
             />
           </DetailSection>
 
@@ -354,10 +373,10 @@ export function CheckoutDoneView({
               `orderNumber`(`ORD-…`)뿐인데 이 라우트는 숫자 주문 id를 받는다. 그래서
               [1] 주문 생성이 돌려준 id를 복귀 주소에 실어 건너 온다 (#301).
 
-              **값이 없으면 주문 내역으로 보낸다.** 주소창으로 직접 들어온 경우인데,
-              엉뚱한 주문을 여느니 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
-          <Link href={orderId ? `/mypage/orders/${orderId}` : "/mypage/orders"}>
-            {orderId ? "주문 상세 보기" : "주문 내역 보기"}
+              **그 주문을 실제로 받아 왔을 때만 상세로 보낸다.** 값이 없거나 승인 결과와
+              다른 주문이면 엉뚱한 주문을 여는 셈이라 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
+          <Link href={orderId && order ? `/mypage/orders/${orderId}` : "/mypage/orders"}>
+            {orderId && order ? "주문 상세 보기" : "주문 내역 보기"}
           </Link>
         </Button>
         <Button asChild>

@@ -234,3 +234,48 @@ test("승인이 실패하면 다시 결제하러 보내지 않는다", () => {
   expect(hrefs).toContain("/mypage/support");
   expect(hrefs).toContain("/mypage/orders");
 });
+
+/**
+ * **승인 실패가 대기 표시에 가려지면 안 된다.**
+ *
+ * 승인이 막힌 것은 확정된 사실이고 그 시점엔 이미 돈이 나갔을 수 있다. 주문 조회가 아직
+ * 끝나지 않았다고 뼈대로 덮으면 문의할 수단을 손에 쥐지 못한 채 기다리게 된다 (#308 리뷰).
+ */
+test("주문을 받는 중이어도 승인 실패를 먼저 알린다", () => {
+  failed();
+  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: true });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.getByRole("alert")).toBeDefined();
+  expect(screen.queryByRole("status", { name: "결제를 확인하는 중" })).toBeNull();
+  expect(screen.getByRole("link", { name: "문의하기" })).toBeDefined();
+});
+
+// 결제 금액만 알고 그 안을 가를 수 없는데 `0원`으로 그리면 실제로 0원인 것처럼 보인다
+test("주문이 없으면 상품 줄과 세부 금액을 비운다", () => {
+  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: false });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.queryByText("상품 옵션")).toBeNull();
+  expect(screen.queryByText("배송비")).toBeNull();
+  expect(screen.queryByText("0원")).toBeNull();
+  // 승인 응답만으로 세울 수 있는 것은 남는다
+  expect(screen.getByText("12,345원")).toBeDefined();
+});
+
+// `?order=`는 주소창에서 바꿀 수 있다. 두 주문이 한 화면에 섞이면 안 된다
+test("승인 결과와 다른 주문이면 그 주문 값을 쓰지 않는다", () => {
+  useQueryOrderDetail.mockReturnValue({
+    order: { ...ORDER, orderNumber: "ORD-20260919-999999" },
+    error: null,
+    isLoading: false,
+  });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
+  expect(screen.queryByRole("heading", { name: "배송지 정보" })).toBeNull();
+  expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();
+});
