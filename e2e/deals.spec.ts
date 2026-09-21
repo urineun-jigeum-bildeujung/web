@@ -20,6 +20,6 @@ test("목록에서 옵션을 골라 바로 담는다", async ({ page }) => {
   await page.getByLabel("오리&고구마 소형견 사료 1.5kg 수량 하나 늘리기").click();
   await page.getByRole("button", { name: "48,000원 장바구니 담기" }).click();
 
-  await expect(page.getByLabel("오리&고구마 소형견 사료 1.5kg 장바구니에 담김")).toBeVisible();
+  await expect(page.getByLabel("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeVisible();
   await expect(page.getByText("장바구니에 담겼어요")).toBeVisible();
 });
