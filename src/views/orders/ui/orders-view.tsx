@@ -37,6 +37,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { DeliveryTrackingDialog } from "./delivery-tracking-dialog";
 import { OrdersSkeleton } from "./orders-skeleton";
+import { useLoadMore } from "./use-load-more";
 
 /** 시안의 목록 행동 버튼. 36px에 label/medium_14, 두 개면 같은 폭으로 나눠 갖는다 (287:8551) */
 const ACTION_CLASS =
@@ -66,8 +67,11 @@ function toProductRow(order: OrderSummary) {
 }
 
 export function OrdersView() {
-  const { orders, error, isLoading } = useQueryOrders();
+  const { orders, error, isLoading, hasNext, loadNext, isLoadingNext } = useQueryOrders();
   const { confirm, cancel, confirmingId, cancelingId } = useMutateOrder();
+
+  // 목록 끝이 보이면 다음 쪽을 가져온다. 이미 가져오는 중이면 멈춰 같은 요청이 겹치지 않게 한다
+  const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext);
 
   // 어느 주문을 확정·취소할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
   const [askingConfirmId, setAskingConfirmId] = useState<number | null>(null);
@@ -163,6 +167,10 @@ export function OrdersView() {
               </article>
             );
           })}
+
+        {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
+        {hasNext && <div ref={loadMoreRef} aria-hidden className="h-px" />}
+        {isLoadingNext && <OrdersSkeleton count={1} />}
       </main>
 
       {/* 구매 확정은 되돌릴 수 없지만 무엇을 확정하는지 함께 보여야 해서 시트로 연다.

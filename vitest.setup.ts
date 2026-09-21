@@ -21,3 +21,19 @@ if (!Element.prototype.hasPointerCapture) {
 if (!Element.prototype.releasePointerCapture) {
   Element.prototype.releasePointerCapture = () => {};
 }
+
+// 목록 끝을 지켜보는 IntersectionObserver도 jsdom에 없다. 실제로 교차를 재지 않아도
+// 렌더는 되므로 빈 구현으로 채운다. 교차 시점을 흉내 내야 하는 테스트는 직접 목으로 덮는다.
+if (!globalThis.IntersectionObserver) {
+  globalThis.IntersectionObserver = class {
+    readonly root = null;
+    readonly rootMargin = "";
+    readonly thresholds: number[] = [];
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords(): IntersectionObserverEntry[] {
+      return [];
+    }
+  };
+}

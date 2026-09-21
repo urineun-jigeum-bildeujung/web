@@ -3,8 +3,8 @@
 //
 // **목이 서버처럼 상태를 든다.** 구매 확정·주문 취소는 끝난 뒤 목록을 다시 조회해 맞추므로,
 // 목이 늘 같은 값을 돌려주면 확정한 주문이 그대로 되살아나 통과 여부가 뒤집힌다.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, expect, test, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const { getOrders, confirmOrder, cancelOrder } = vi.hoisted(() => ({
   getOrders: vi.fn(),
@@ -64,6 +64,10 @@ beforeEach(() => {
   cancelOrder.mockImplementation(async (orderId: number) => {
     served = served.filter((o) => o.orderId !== orderId);
   });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
 });
 
 test("서버가 준 주문을 상품명과 주문 일자로 보여준다", async () => {
@@ -147,6 +151,44 @@ test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async ()
   );
 
   release?.();
+// 한 번에 오는 것은 기본 열 건이다. 첫 쪽만 그리면 열한 번째 주문부터 볼 길이 없다 (#288).
+test("목록 끝이 보이면 다음 쪽을 이어서 가져온다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  // 첫 쪽은 커서를 주고, 그 커서로 부르면 마지막 쪽이 온다
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) =>
+    cursor
+      ? { orders: [makeOrder(2, "PAID")], nextCursor: null, hasNext: false }
+      : { orders: [makeOrder(1, "PAID")], nextCursor: "CURSOR-1", hasNext: true },
+  );
+
+  render(<OrdersView />, { wrapper: createQueryWrapper() });
+  expect(await screen.findByText("테스트 상품 1")).toBeDefined();
+
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  // 받은 커서를 그대로 실어 보내야 다음 쪽이 온다
+  await waitFor(() =>
+    expect(getOrders).toHaveBeenLastCalledWith({ size: undefined, cursor: "CURSOR-1" }),
+  );
+  expect(await screen.findByText("테스트 상품 2")).toBeDefined();
+  // 앞 쪽도 그대로 남는다 — 갈아끼우면 스크롤하던 자리가 사라진다
+  expect(screen.getByText("테스트 상품 1")).toBeDefined();
 });
 
 test("주문이 없으면 빈 상태를 안내한다", async () => {
