@@ -67,11 +67,13 @@ function toProductRow(order: OrderSummary) {
 }
 
 export function OrdersView() {
-  const { orders, error, isLoading, hasNext, loadNext, isLoadingNext } = useQueryOrders();
+  const { orders, error, isLoading, hasNext, loadNext, isLoadingNext, nextError } =
+    useQueryOrders();
   const { confirm, cancel, confirmingId, cancelingId } = useMutateOrder();
 
-  // 목록 끝이 보이면 다음 쪽을 가져온다. 이미 가져오는 중이면 멈춰 같은 요청이 겹치지 않게 한다
-  const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext);
+  // 목록 끝이 보이면 다음 쪽을 가져온다. 가져오는 중이거나 방금 실패했으면 멈춘다 —
+  // 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다
+  const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext && !nextError);
 
   // 어느 주문을 확정·취소할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
   const [askingConfirmId, setAskingConfirmId] = useState<number | null>(null);
@@ -89,8 +91,10 @@ export function OrdersView() {
       <main className="flex flex-1 flex-col gap-4 px-5 pt-3 pb-8">
         {isLoading && <OrdersSkeleton />}
 
-        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다 */}
-        {error && (
+        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다.
+            **이미 받아 둔 주문이 있으면 화면을 덮지 않는다** — 둘째 쪽에서 실패했다고 보고 있던
+            목록까지 사라지면 스크롤하던 자리를 잃는다 (#294 리뷰) */}
+        {error && list.length === 0 && (
           <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
         )}
 
@@ -103,7 +107,6 @@ export function OrdersView() {
         )}
 
         {!isLoading &&
-          !error &&
           list.map((order) => {
             const status = toOrderStatus(order.orderStatus);
             const row = toProductRow(order);
@@ -169,8 +172,15 @@ export function OrdersView() {
           })}
 
         {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
-        {hasNext && <div ref={loadMoreRef} aria-hidden className="h-px" />}
+        {hasNext && !nextError && <div ref={loadMoreRef} aria-hidden className="h-px" />}
         {isLoadingNext && <OrdersSkeleton count={1} />}
+
+        {/* 다음 쪽만 실패한 경우다. 저절로 다시 부르면 같은 실패가 되풀이되므로 사용자가 고른다 */}
+        {nextError && (
+          <Button variant="secondary" className={ACTION_CLASS} onClick={() => loadNext()}>
+            주문을 더 불러오지 못했어요. 다시 시도
+          </Button>
+        )}
       </main>
 
       {/* 구매 확정은 되돌릴 수 없지만 무엇을 확정하는지 함께 보여야 해서 시트로 연다.

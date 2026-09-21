@@ -21,9 +21,18 @@ export function useQueryOrders({ size }: Pick<GetOrdersParams, "size"> = {}) {
     queryKey: QUERY_KEYS.order.list(size),
     queryFn: ({ pageParam }) => getOrders({ size, cursor: pageParam }),
     initialPageParam: null as string | null,
-    // `hasNext`와 `nextCursor`를 함께 본다. 커서 없이 `hasNext`만 참이면 같은 쪽을
-    // 끝없이 다시 부르게 된다
-    getNextPageParam: (lastPage) => (lastPage.hasNext ? (lastPage.nextCursor ?? null) : null),
+    getNextPageParam: (lastPage, _pages, lastCursor) => {
+      // `hasNext`와 `nextCursor`를 함께 본다. 커서 없이 `hasNext`만 참이면 멈춘다
+      if (!lastPage.hasNext || !lastPage.nextCursor) {
+        return null;
+      }
+      // **방금 보낸 커서가 그대로 돌아오면 멈춘다.** 그대로 두면 같은 쪽을 끝없이 부르며
+      // 같은 주문이 목록에 계속 쌓인다 (#294 리뷰)
+      if (lastPage.nextCursor === lastCursor) {
+        return null;
+      }
+      return lastPage.nextCursor;
+    },
   });
 
   return {
@@ -33,5 +42,7 @@ export function useQueryOrders({ size }: Pick<GetOrdersParams, "size"> = {}) {
     hasNext: query.hasNextPage,
     loadNext: query.fetchNextPage,
     isLoadingNext: query.isFetchingNextPage,
+    /** 다음 쪽만 실패한 경우. 첫 조회 실패(`error`)와 달리 이미 받은 주문은 그대로 둔다 */
+    nextError: query.isFetchNextPageError,
   };
 }
