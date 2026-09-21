@@ -91,6 +91,9 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const [request, setRequest] = useState(saved?.deliveryNote ?? "");
   const [isDefault, setIsDefault] = useState(saved?.isDefault ?? false);
 
+  // 저장된 값이 기본일 때만 잠근다. 새 배송지나 기본이 아닌 배송지는 자유롭게 켜고 끈다
+  const lockedAsDefault = saved?.isDefault === true;
+
   // 고르고 온 주소가 이미 저장된 값을 덮는다. 고치러 들어와 새로 골랐다는 뜻이다.
   //
   // **도로명과 우편번호는 짝으로 움직인다.** 새로 고른 도로명에 저장돼 있던 옛 우편번호를
@@ -99,6 +102,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const zipCode = roadAddr ? (zipNo ?? "") : (saved?.zipCode ?? "");
 
   const submit = async () => {
+    const note = request.trim();
     const request_ = {
       addressName: label.trim(),
       receiver: receiver.trim(),
@@ -106,8 +110,11 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
       zipCode,
       address,
       addressDetail: detail.trim(),
-      // 적지 않았으면 빈 문자열이 아니라 null이다. 명세에서 유일하게 nullable인 필드다
-      deliveryNote: request.trim() || null,
+      // **등록과 수정에서 빈 값의 뜻이 다르다.** 등록은 적지 않았다는 뜻이라 `null`이지만,
+      // 수정에서 `null`은 서버가 "건드리지 마라"로 읽는다(`mergeWithRequest`). 지우려고
+      // 비웠는데 204로 성공하고 옛 문구가 그대로 남았다 — 수정에는 빈 문자열을 보낸다.
+      // `AddressUpdateRequest.deliveryNote`는 `@Size(max = 100)`뿐이라 받는다 (#314)
+      deliveryNote: saved ? note : note || null,
       isDefault,
     };
 
@@ -124,9 +131,17 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   return (
     <SingleInputScreen
       question={saved ? `${saved.addressName} 주소를 고칠까요?` : "어디로 보내드릴까요?"}
-      // 우편번호도 필수다. 주소를 고르면 함께 오므로 따로 물을 칸은 없다
+      // **여섯이 모두 필수다.** 서버 `AddressRegisterRequest`가 전부 `@NotBlank`인데
+      // 상세주소만 빠져 있었다. 비운 채 누르면 400이고, `COMMON_400`은 "입력한 내용을
+      // 다시 확인해 주세요" 한 줄이라 어느 칸이 문제인지 알 수 없다 (#314).
+      // 우편번호는 주소를 고르면 함께 오므로 따로 물을 칸이 없다
       submitDisabled={
-        !label.trim() || !receiver.trim() || !phone.trim() || !address.trim() || !zipCode
+        !label.trim() ||
+        !receiver.trim() ||
+        !phone.trim() ||
+        !address.trim() ||
+        !zipCode ||
+        !detail.trim()
       }
       submitting={isSaving}
       // 저장이 실패하면 `submit`이 거부된다. `void`는 반환값만 버리고 거부는 남겨서
@@ -196,10 +211,17 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         onClear={() => setRequest("")}
       />
 
+      {/* **이미 기본인 배송지는 끄지 못한다.** 서버가 마지막 기본 배송지를 지키느라
+          `LAST_DEFAULT_ADDRESS`로 저장 전체를 거절해, 같이 고친 이름·연락처까지 무산된다.
+          기본을 옮기는 길은 다른 배송지를 기본으로 지정하는 것뿐이다 (#314) */}
       <CheckboxRow
         label="계속 이 주소로 받을게요"
         checked={isDefault}
         onCheckedChange={setIsDefault}
+        disabled={lockedAsDefault}
+        description={
+          lockedAsDefault ? "다른 배송지를 기본으로 지정하면 해제할 수 있어요" : undefined
+        }
       />
     </SingleInputScreen>
   );

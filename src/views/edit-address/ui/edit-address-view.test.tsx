@@ -173,6 +173,8 @@ test("주소까지 채우면 입력 완료가 켜진다", () => {
     ["배송지 이름", "집"],
     ["받는 분 이름", "전경진"],
     ["연락처", "010-1234-5678"],
+    // 서버가 상세주소도 @NotBlank로 받는다. 비우면 저장이 400으로 막힌다 (#314)
+    ["상세 주소", "101동 1001호"],
   ]);
 
   expect(submit().hasAttribute("disabled")).toBe(false);
@@ -209,6 +211,7 @@ test("배송 요청사항을 비우면 null로 보낸다", async () => {
     ["배송지 이름", "자취방"],
     ["받는 분 이름", "전경진"],
     ["연락처", "010-0000-0000"],
+    ["상세 주소", "2층"],
   ]);
   fireEvent.click(submit());
 
@@ -253,4 +256,65 @@ test("새 배송지면 검색 링크에 place가 없다", () => {
 
   const link = screen.getByRole("link", { name: /주소/ }) as HTMLAnchorElement;
   expect(link.getAttribute("href")).toBe("/mypage/address/search");
+});
+
+// 서버 `AddressRegisterRequest`가 여섯을 모두 `@NotBlank`로 받는다. 비운 채 누르면 400이고
+// `COMMON_400`은 어느 칸이 문제인지 알려주지 않는다 (#314)
+test("상세주소를 비우면 입력 완료가 꺼진다", () => {
+  renderAt(`?${PICKED}`);
+
+  fill([
+    ["배송지 이름", "집"],
+    ["받는 분 이름", "전경진"],
+    ["연락처", "010-1234-5678"],
+    ["상세 주소", "101동 1001호"],
+  ]);
+  expect(submit().hasAttribute("disabled")).toBe(false);
+
+  fill([["상세 주소", "  "]]);
+  expect(submit().hasAttribute("disabled")).toBe(true);
+});
+
+/**
+ * **수정에서 빈 값의 뜻이 등록과 다르다.**
+ *
+ * 서버 `mergeWithRequest`가 `null`을 "건드리지 마라"로 읽어, 지우려고 비웠는데 204로 성공하고
+ * 옛 문구가 그대로 남았다. 수정에는 빈 문자열을 보낸다 (#314).
+ */
+test("수정에서 요청사항을 지우면 빈 문자열을 보낸다", async () => {
+  renderAt("?place=5");
+
+  fill([["배송 요청사항", ""]]);
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(update).toHaveBeenCalled());
+  expect(update.mock.calls[0][0].request.deliveryNote).toBe("");
+});
+
+/**
+ * **이미 기본인 배송지는 체크를 끌 수 없다.**
+ *
+ * 서버가 마지막 기본 배송지를 지키느라 `LAST_DEFAULT_ADDRESS`로 저장 전체를 거절해, 같이
+ * 고친 이름·연락처까지 무산된다 (#314).
+ */
+test("이미 기본인 배송지는 기본 해제를 막고 그 이유를 알린다", () => {
+  renderAt("?place=5");
+
+  const checkbox = screen.getByRole("checkbox", { name: /계속 이 주소로 받을게요/ });
+  expect(checkbox.hasAttribute("disabled")).toBe(true);
+  expect(screen.getByText("다른 배송지를 기본으로 지정하면 해제할 수 있어요")).toBeDefined();
+});
+
+// 기본이 아닌 배송지는 자유롭게 켜고 끈다
+test("기본이 아닌 배송지는 체크를 바꿀 수 있다", () => {
+  useQueryAddresses.mockReturnValue({
+    addresses: [{ ...HOME, isDefault: false }],
+    isLoading: false,
+    error: null,
+  });
+  renderAt("?place=5");
+
+  const checkbox = screen.getByRole("checkbox", { name: /계속 이 주소로 받을게요/ });
+  expect(checkbox.hasAttribute("disabled")).toBe(false);
+  expect(screen.queryByText("다른 배송지를 기본으로 지정하면 해제할 수 있어요")).toBeNull();
 });
