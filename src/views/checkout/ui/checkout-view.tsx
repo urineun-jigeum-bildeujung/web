@@ -227,10 +227,12 @@ export function CheckoutView() {
         // 적지 않았으면 빈 문자열이 아니라 아예 보내지 않는다
         deliveryNote: deliveryNote || null,
       });
-      const { tossOrderId, orderName } = await preparePayment({ orderId });
+      // **`amount`는 서버가 만든 주문의 금액이다.** 화면이 장바구니로 센 `total`과
+      // 갈릴 수 있어 결제창에는 이쪽을 싣는다 (#312)
+      const { tossOrderId, orderName, amount } = await preparePayment({ orderId });
       // 숫자 `orderId`도 함께 넘긴다. 위젯이 그것을 복귀 주소에 실어, 결제가 끝난 뒤
       // 주문 상세로 갈 수 있게 한다 (#301)
-      await requestPayment({ tossOrderId, orderName, orderId });
+      await requestPayment({ tossOrderId, orderName, orderId, amount });
     } catch (error) {
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
       // 결제창이 떴으면 브라우저가 떠나므로 여기로 돌아오지 않는다. 실패했을 때만 되돌린다

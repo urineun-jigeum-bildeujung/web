@@ -34,7 +34,13 @@ afterEach(() => {
 const PROPS = { amount: 12345 };
 
 /** 결제창을 열 때 넘기는 주문. `[2] POST /payments`가 주는 값이다 */
-const ORDER = { tossOrderId: "ORD-20260918-000123", orderName: "상품명", orderId: 77 };
+const ORDER = {
+  tossOrderId: "ORD-20260918-000123",
+  orderName: "상품명",
+  orderId: 77,
+  // 위젯 prop의 금액(장바구니로 센 값)과 일부러 다르게 둔다 — 서버 값이 이겨야 한다 (#312)
+  amount: 48000,
+};
 
 /**
  * **StrictMode가 effect를 두 번 돌린다.** 첫 번째가 정리된 뒤 두 번째가 "이미 띄웠다"며
@@ -156,4 +162,19 @@ test("onReady가 렌더마다 바뀌어도 위젯을 다시 띄우지 않는다"
   // 잠금(null) 한 번과 결제 수단 한 번. effect가 다시 돌았다면 이보다 늘어난다
   expect(first).toHaveBeenCalledTimes(2);
   expect(renderPaymentMethods).toHaveBeenCalledTimes(1);
+});
+
+// **서버가 만든 주문의 금액으로 결제창을 연다.** 장바구니 캐시가 낡으면 화면이 센 값과
+// 갈리고, 그대로 통과하면 승인에서 PAYMENT_409_AMOUNT_MISMATCH로 막힌다 (#312)
+test("결제창을 열기 직전에 서버 금액으로 덮는다", async () => {
+  const onReady = vi.fn();
+
+  render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  await onReady.mock.calls.at(-1)![0](ORDER);
+
+  // 마지막 호출이 서버 값이어야 한다. 그전 호출은 prop으로 받은 화면 계산값이다
+  expect(setAmount).toHaveBeenLastCalledWith({ currency: "KRW", value: ORDER.amount });
+  expect(PROPS.amount).not.toBe(ORDER.amount);
 });
