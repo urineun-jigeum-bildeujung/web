@@ -58,3 +58,38 @@ export function formatDisplayDateTime(iso: string): string | null {
   const parts = toParts(iso);
   return parts && `${parts.year}.${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
 }
+
+/**
+ * 한국 기준 하루 키(`2026-09-25`). 두 시각이 같은 날인지 견줄 때 쓴다.
+ *
+ * date-fns의 `isToday`·`isTomorrow`는 브라우저 시간대로 판정해서, 자정 근처 값이 실제와
+ * 하루 어긋난다. 같은 날인지는 이 키를 견주어 본다.
+ */
+export function toDisplayDayKey(iso: string): string | null {
+  const parts = toParts(iso);
+  return parts && `${parts.year}.${parts.month}.${parts.day}`;
+}
+
+/**
+ * `오후 3시` 꼴.
+ *
+ * `Intl`의 로캘 기본 표기를 그대로 쓰지 않는다. `ko-KR`에 12시간제를 요구하면 실행 환경의
+ * ICU에 따라 `오후`가 아니라 `PM`으로 오기도 한다.
+ */
+export function formatDisplayHour(iso: string): string | null {
+  const parts = toParts(iso);
+  if (!parts) {
+    return null;
+  }
+
+  const hour = Number(parts.hour);
+  // 0시는 `오전 12시`, 12시는 `오후 12시`다
+  return `${hour < 12 ? "오전" : "오후"} ${hour % 12 || 12}시`;
+}
+
+/** `9월 25일 오후 3시` 꼴. 며칠 뒤 일을 말하듯 알릴 때 쓴다 */
+export function formatDisplayDayHour(iso: string): string | null {
+  const parts = toParts(iso);
+  const hour = formatDisplayHour(iso);
+  return parts && hour && `${Number(parts.month)}월 ${Number(parts.day)}일 ${hour}`;
+}
