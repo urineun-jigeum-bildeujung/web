@@ -68,6 +68,12 @@ export const APP_MESSAGE = {
     description: "다시 시도해 주세요.",
   },
 
+  // `@MemberId`를 쓰는 모든 엔드포인트가 이 코드를 낸다. 토큰은 있는데 가입을 마치지
+  // 않아 회원 번호가 없는 상태다 — "권한 없음"으로 덮으면 무엇을 해야 할지 알 수 없다
+  "member.signupRequired": {
+    title: "회원가입이 필요해요",
+    description: "가입을 마치면 바로 이용할 수 있어요.",
+  },
   "member.agreementRequired": {
     title: "필수 약관 동의 필요",
     description: "필수 항목에 모두 동의해야 가입할 수 있어요.",
@@ -125,6 +131,24 @@ export const APP_MESSAGE = {
   },
 
   // 택배사 연동 전이라 아직 갈 곳이 없다. 버튼을 잠가 두면 고장으로 읽히므로 왜 지금은 안 되는지 알린다
+  // 배송이 시작된 뒤 취소를 누른 경우다. 서버 전이 규칙이 PAID·PREPARING에서만 취소를 받는다
+  "order.notCancellable": {
+    title: "지금은 취소할 수 없어요",
+    description: "이미 배송이 시작됐어요. 받으신 뒤 반품으로 신청해 주세요.",
+  },
+  "order.notConfirmable": {
+    title: "지금은 확정할 수 없어요",
+    description: "배송이 끝난 뒤에 구매를 확정할 수 있어요.",
+  },
+  "order.notFound": {
+    title: "주문을 찾을 수 없어요",
+    description: "이미 취소되었거나 주소가 바뀌었을 수 있어요.",
+  },
+  // 결제·주문 사이의 서비스가 잠시 막힌 경우다. 사용자가 고칠 것이 없다
+  "order.temporarilyUnavailable": {
+    title: "잠시 후 다시 시도해 주세요",
+    description: "주문을 처리하는 중에 문제가 생겼어요.",
+  },
   "order.deliveryTrackingPreparing": {
     title: "배송 조회 준비 중",
     description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
@@ -138,6 +162,15 @@ export const APP_MESSAGE = {
   },
 
   // 행정안전부 도로명주소 API가 거절하는 경우다. 무엇을 고쳐야 하는지 알려 줘야 다시 찾을 수 있다
+  // 기본 배송지는 하나는 남아야 한다. 마지막 하나의 체크를 끄면 저장 전체가 거절된다
+  "address.lastDefault": {
+    title: "기본 배송지는 하나가 있어야 해요",
+    description: "다른 배송지를 기본으로 지정하면 해제할 수 있어요.",
+  },
+  "address.notFound": {
+    title: "배송지를 찾을 수 없어요",
+    description: "이미 지워졌을 수 있어요. 목록에서 다시 골라 주세요.",
+  },
   "address.keywordTooBroad": {
     title: "검색어가 너무 넓어요",
     description: "도로명이나 건물번호를 함께 넣어 주세요.",
@@ -189,6 +222,7 @@ export const APP_MESSAGE_CODE = {
     signInFailed: "auth.signInFailed",
   },
   member: {
+    signupRequired: "member.signupRequired",
     agreementRequired: "member.agreementRequired",
     alreadySignedUp: "member.alreadySignedUp",
     nicknameTaken: "member.nicknameTaken",
@@ -201,6 +235,10 @@ export const APP_MESSAGE_CODE = {
     outOfStock: "product.outOfStock",
   },
   order: {
+    notCancellable: "order.notCancellable",
+    notConfirmable: "order.notConfirmable",
+    notFound: "order.notFound",
+    temporarilyUnavailable: "order.temporarilyUnavailable",
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
     claimPreparing: "order.claimPreparing",
   },
@@ -210,6 +248,8 @@ export const APP_MESSAGE_CODE = {
     amountMismatch: "payment.amountMismatch",
   },
   address: {
+    lastDefault: "address.lastDefault",
+    notFound: "address.notFound",
     keywordTooBroad: "address.keywordTooBroad",
     keywordInvalid: "address.keywordInvalid",
   },

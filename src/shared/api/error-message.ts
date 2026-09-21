@@ -21,13 +21,26 @@ import { ImageUploadError } from "./upload-image";
  * 프론트 구현 실수에 가까운 코드(`PRODUCT_400_INVALID_CURSOR`)는 넣지 않았다.
  * 사용자가 볼 일이 없고, 보이더라도 기본 문구가 더 알맞다.
  */
-const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
+// **테스트가 읽는다.** 서버에 없는 죽은 키가 섞이지 않았는지 대조한다 (#310)
+export const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   COMMON_400: APP_MESSAGE_CODE.common.invalidInput,
   COMMON_500: APP_MESSAGE_CODE.common.serverError,
 
-  AUTH_400: APP_MESSAGE_CODE.auth.signInFailed,
+  // 소셜 복귀 화면이 `code`를 토큰으로 바꾸다 막힌 경우다. 60초가 지났거나 이미 쓴 코드다.
+  // **`AUTH_400`이 아니다** — 그 키는 백엔드 어디에도 없어 매핑이 걸리지 않았고, 입력칸이
+  // 하나도 없는 화면에 "입력한 내용을 다시 확인해 주세요"가 떴다 (#310)
+  AUTH_400_INVALID_LOGIN_CODE: APP_MESSAGE_CODE.auth.signInFailed,
+  // 재발급 토큰이 만료·위조된 경우다. 입력 문제가 아니라 세션이 끝난 것이다
+  AUTH_400_INVALID_TOKEN: APP_MESSAGE_CODE.common.unauthorized,
+  AUTH_404_INVALID_AUTH: APP_MESSAGE_CODE.common.unauthorized,
+  AUTH_403_MEMBER_ID_MISMATCH: APP_MESSAGE_CODE.common.forbidden,
   // 인증번호 발송·확인 모두 번호마다 횟수를 센다 — 발송은 1시간에 5회, 확인은 5분에 5회다
   AUTH_429_TOO_MANY_REQUESTS: APP_MESSAGE_CODE.member.tooManyVerifications,
+
+  // **`@MemberId`를 쓰는 모든 엔드포인트가 낸다.** 장바구니·주문·결제·배송지·리뷰 어디서든
+  // 가입 미완료 사용자가 받는 코드인데, 매핑이 없어 "권한 없음"만 떴다 (#310)
+  SECURITY_403_MISSING_MEMBER_ID: APP_MESSAGE_CODE.member.signupRequired,
+  SECURITY_401_UNAUTHORIZED: APP_MESSAGE_CODE.common.unauthorized,
 
   MEMBER_400_REQUIRED_AGREEMENT_NOT_AGREED: APP_MESSAGE_CODE.member.agreementRequired,
   MEMBER_401_UNAUTHORIZED: APP_MESSAGE_CODE.common.unauthorized,
@@ -36,6 +49,12 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   // 사진 발급 요청의 확장자를 서버가 거절한 것이다. 카메라의 HEIC가 여기로 온다
   MEMBER_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
 
+  MEMBER_404_NOT_FOUND: APP_MESSAGE_CODE.common.notFound,
+  // 마지막 기본 배송지의 체크를 끈 경우다. 같이 고친 이름·연락처까지 무산되므로 무엇을
+  // 해야 하는지 알려야 한다 (#310)
+  MEMBER_400_LAST_DEFAULT_ADDRESS: APP_MESSAGE_CODE.address.lastDefault,
+  MEMBER_404_NOT_FOUND_ADDRESS: APP_MESSAGE_CODE.address.notFound,
+
   PRODUCT_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
 
   REVIEW_409_ALREADY_REVIEWED: APP_MESSAGE_CODE.review.alreadyReviewed,
@@ -43,9 +62,29 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   REVIEW_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
 
+  // 주문 화면이 직접 부르는 것들이다. 전이 규칙에 막힌 경우가 가장 흔하다 — 목록에서
+  // 취소·확정 버튼을 누른 사이에 상태가 움직였을 수 있다 (#310)
+  ORDER_409_NOT_CANCELLABLE: APP_MESSAGE_CODE.order.notCancellable,
+  ORDER_409_NOT_CONFIRMABLE: APP_MESSAGE_CODE.order.notConfirmable,
+  ORDER_404_ORDER_NOT_FOUND: APP_MESSAGE_CODE.order.notFound,
+  ORDER_404_ADDRESS_NOT_FOUND: APP_MESSAGE_CODE.address.notFound,
+  ORDER_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
+  ORDER_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
+  // 주문이 딴 서비스를 부르다 막힌 경우다. 사용자가 고칠 것이 없어 다시 시도만 권한다
+  ORDER_503_MEMBER_SERVICE_UNAVAILABLE: APP_MESSAGE_CODE.order.temporarilyUnavailable,
+  ORDER_503_PRODUCT_SERVICE_UNAVAILABLE: APP_MESSAGE_CODE.order.temporarilyUnavailable,
+  ORDER_503_INVENTORY_SERVICE_UNAVAILABLE: APP_MESSAGE_CODE.order.temporarilyUnavailable,
+
   // 결제 승인이 거절되는 경우다. 결제창은 이미 성공한 뒤라 "다시 시도" 계열 문구를 쓰지 않는다.
-  // 계약에 적힌 코드는 둘이고, 나머지는 `payment.confirmFailed`가 받는다 (#260)
-  PAYMENT_400_AMOUNT_MISMATCH: APP_MESSAGE_CODE.payment.amountMismatch,
+  // 나머지는 `payment.confirmFailed`가 받는다 (#260)
+  //
+  // **금액 불일치는 400이 아니라 409다.** `PaymentErrorCode.AMOUNT_MISMATCH`가
+  // `HttpStatus.CONFLICT`에 `"PAYMENT_409_AMOUNT_MISMATCH"`다. 400으로 적어 둔 동안
+  // 이 문구가 한 번도 뜨지 않았고, 백엔드가 자동 취소를 건 사실을 알릴 길이 없었다 (#310)
+  PAYMENT_409_AMOUNT_MISMATCH: APP_MESSAGE_CODE.payment.amountMismatch,
+  PAYMENT_409_NOT_CONFIRMABLE: APP_MESSAGE_CODE.payment.confirmFailed,
+  PAYMENT_409_ORDER_NOT_PAYABLE: APP_MESSAGE_CODE.payment.failed,
+  PAYMENT_404_ORDER_NOT_FOUND: APP_MESSAGE_CODE.order.notFound,
   PAYMENT_502_TOSS_CONFIRM_FAILED: APP_MESSAGE_CODE.payment.confirmFailed,
 
   // 백엔드가 아니라 우리 Route Handler(`/api/juso`)가 붙이는 코드다. 행정안전부 응답을 옮긴 것이라

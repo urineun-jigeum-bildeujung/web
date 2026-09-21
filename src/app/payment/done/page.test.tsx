@@ -69,8 +69,10 @@ test("승인이 실패해도 던지지 않고 화면으로 알린다", async () 
 
 // 금액이 어긋난 것은 사용자가 알아야 할 다른 사실이라 문구를 가른다
 test("금액이 어긋나면 그 사유로 알린다", async () => {
+  // 백엔드 `PaymentErrorCode.AMOUNT_MISMATCH`가 `HttpStatus.CONFLICT`에
+  // `"PAYMENT_409_AMOUNT_MISMATCH"`다. 400으로 적어 둔 목이 죽은 매핑을 가리고 있었다 (#310)
   confirmPayment.mockRejectedValueOnce(
-    new ApiError(400, "금액 불일치", { errorCode: "PAYMENT_400_AMOUNT_MISMATCH" }),
+    new ApiError(409, "금액 불일치", { errorCode: "PAYMENT_409_AMOUNT_MISMATCH" }),
   );
 
   await renderPage(QUERY);

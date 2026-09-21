@@ -113,11 +113,14 @@ test("code 없이 들어오면 안내한다", async () => {
 test("교환이 실패하면 응답 문구로 안내하고 로그인으로 돌아갈 길을 준다", async () => {
   vi.stubGlobal(
     "fetch",
-    vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ errorCode: "AUTH_400", detail: "만료된 코드" }, { status: 400 }),
+    vi.fn().mockResolvedValue(
+      // 백엔드 `AuthErrorCode.INVALID_LOGIN_CODE`가 내는 실제 코드다. 그전 목의 `AUTH_400`은
+      // 어디에도 없는 키라 매핑이 안 걸리는 것을 가리고 있었다 (#310)
+      Response.json(
+        { errorCode: "AUTH_400_INVALID_LOGIN_CODE", detail: "만료된 코드" },
+        { status: 400 },
       ),
+    ),
   );
 
   render(<AuthCallbackView />);
