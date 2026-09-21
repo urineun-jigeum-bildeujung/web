@@ -34,9 +34,8 @@ export type OrderSummary = {
   /**
    * 서버가 주는 주문 상태.
    *
-   * **문자열로 둔 것은 값을 다 알지 못해서다.** 명세에서 확인된 것은 `PAID`·`DELIVERED`와
-   * 구매 확정이 만드는 `CONFIRMED` 셋뿐이고, 배송준비중·배송중·취소에 해당하는 값은
-   * 어디에도 적혀 있지 않다. 좁은 유니온으로 막으면 모르는 값이 올 때 타입만 맞고 화면이
+   * **문자열로 둔다.** 백엔드 `OrderStatus`는 아홉이지만(`order-status.ts` 참고) 화면이
+   * 다섯만 그린다. 좁은 유니온으로 막으면 그리지 않는 값이 올 때 타입만 맞고 화면이
    * 조용히 비므로, 받을 때는 넓게 두고 `toOrderStatus`가 아는 것만 통과시킨다 (#284).
    */
   orderStatus: string;
@@ -80,14 +79,17 @@ export async function getOrders({
 /**
  * 그 상품에 걸린 클레임 한 건. 백엔드 `OrderDetailResponse.ClaimSummary` 그대로다.
  *
- * **아직 화면이 쓰지 않는다.** 신청 화면 시안이 없어 접수를 못 하니 목록도 늘 비어 있다.
- * 로컬 백엔드로 실측해 빈 배열이 오는 것을 확인했고, 모양은 소스에서 옮겼다 (#322).
+ * **신청 화면이 이것을 읽는다.** 진행 중인 신청이 걸린 상품을 고르면 서버가 요청 전체를
+ * 거절하므로(`ORDER_409_CLAIM_ALREADY_IN_PROGRESS`) 미리 뺀다 (#322, #327).
  */
 export type OrderItemClaim = {
   claimId: number;
   /** `CANCEL`·`RETURN`·`EXCHANGE` */
   claimType: string;
-  /** `REQUESTED`·`APPROVED`·`REJECTED`·`COMPLETED` 등 */
+  /**
+   * 백엔드 `ClaimStatus`. `REQUESTED` → `COLLECTING` → `INSPECTING` → `COMPLETED`이고
+   * 어느 단계에서든 `REJECTED`로 끝날 수 있다. 끝난 것은 뒤의 둘이다(`terminalStates`).
+   */
   claimStatus: string;
   /** ISO 8601 */
   requestedAt: string;
@@ -100,7 +102,8 @@ export type OrderDetailItem = OrderListItem & {
   /**
    * 상품별 상태. 주문 전체 상태와 따로 움직인다 — 한 상품만 반품 중일 수 있다.
    *
-   * 주문 상태와 마찬가지로 값 목록을 알지 못해 문자열로 둔다. 화면이 아직 쓰지 않는다.
+   * 백엔드 `OrderItemStatus`는 `PAID`·`CANCELLED`·`PARTIAL_RETURN`·`RETURNED` 넷이다.
+   * 화면이 아직 쓰지 않아 좁히지 않고 문자열로 둔다.
    */
   itemStatus: string;
   /** 그 상품에 걸린 클레임들. 없으면 빈 배열이다 */

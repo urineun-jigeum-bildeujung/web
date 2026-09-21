@@ -160,11 +160,27 @@ export const APP_MESSAGE = {
     description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
   },
 
-  // 신청 화면 시안이 아직 없다. 접수 버튼이 여기로 데려오므로 빈 화면 대신 까닭을 알린다 (#288)
-  "order.claimPreparing": {
-    title: "신청 화면을 준비하고 있어요",
-    description:
-      "준비가 끝나면 사유와 사진을 남겨 바로 접수할 수 있어요.\n그때까지는 고객센터로 문의해 주세요.",
+  // 반품·교환 신청이 서버에 거절되는 네 경우다. 화면이 먼저 막지만 마지막 판단은 서버가 한다 —
+  // 다른 기기에서 먼저 신청했거나 7일이 방금 지났을 수 있다 (#327)
+  "order.claimRequested": {
+    title: "신청 접수",
+    description: "1~2일 안에 기사님이 상품을 수거해요.",
+  },
+  "order.notClaimable": {
+    title: "신청 기간 지남",
+    description: "배송이 끝나고 7일 안에만 반품·교환을 신청할 수 있어요.",
+  },
+  "order.claimInProgress": {
+    title: "신청 진행 중",
+    description: "이미 접수된 신청이 있어요. 처리가 끝난 뒤에 다시 신청해 주세요.",
+  },
+  "order.claimQuantityExceeded": {
+    title: "신청 수량 초과",
+    description: "이미 신청한 수량이 있어요. 화면을 새로 고치면 남은 수량이 보여요.",
+  },
+  "order.itemNotFound": {
+    title: "상품 없음",
+    description: "주문에서 빠진 상품이에요. 화면을 새로 고쳐 주세요.",
   },
 
   // 행정안전부 도로명주소 API가 거절하는 경우다. 무엇을 고쳐야 하는지 알려 줘야 다시 찾을 수 있다
@@ -247,7 +263,11 @@ export const APP_MESSAGE_CODE = {
     notFound: "order.notFound",
     temporarilyUnavailable: "order.temporarilyUnavailable",
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
-    claimPreparing: "order.claimPreparing",
+    claimRequested: "order.claimRequested",
+    notClaimable: "order.notClaimable",
+    claimInProgress: "order.claimInProgress",
+    claimQuantityExceeded: "order.claimQuantityExceeded",
+    itemNotFound: "order.itemNotFound",
   },
   payment: {
     failed: "payment.failed",
