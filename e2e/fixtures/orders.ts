@@ -34,9 +34,43 @@ const ORDERS = [
   },
 ];
 
+/** 주문 상세. 목록보다 배송지·결제가 더 온다 (#288) */
+const DETAIL = {
+  orderId: 1,
+  orderNumber: "ORD-E2E-0001",
+  orderStatus: "DELIVERED",
+  productAmount: 9345,
+  totalAmount: 12345,
+  items: [
+    {
+      orderItemId: 10,
+      thumbnailUrl: null,
+      productName: "테스트 사료",
+      quantity: 1,
+      unitPrice: 9345,
+      itemStatus: "PAID",
+      claims: [],
+    },
+  ],
+  deliveryAddress: {
+    receiver: "홍길동",
+    receiverPhone: "010-1234-5678",
+    zipCode: "06133",
+    address: "서울특별시 강남구 테헤란로 123",
+    addressDetail: "UI타워 4층 404호",
+  },
+  deliveryNote: "문 앞에 놓아주세요.",
+  payment: { paidAt: "2026-09-15T03:00:00.000Z", method: "토스페이먼츠 결제" },
+};
+
 export async function stubOrders(page: Page) {
   // 화면 주소(`/mypage/orders`)까지 잡지 않도록 API 경로를 그대로 적는다
-  await page.route("**/api/v1/orders**", (route) =>
-    route.fulfill({ json: { orders: ORDERS, nextCursor: null, hasNext: false } }),
-  );
+  await page.route("**/api/v1/orders**", (route) => {
+    // 목록과 상세가 같은 패턴에 걸린다. 끝이 숫자면 상세다
+    const { pathname } = new URL(route.request().url());
+    if (/\/orders\/\d+$/.test(pathname)) {
+      return route.fulfill({ json: DETAIL });
+    }
+    return route.fulfill({ json: { orders: ORDERS, nextCursor: null, hasNext: false } });
+  });
 }
