@@ -230,7 +230,9 @@ export function CheckoutView() {
         deliveryNote: deliveryNote || null,
       });
       const { tossOrderId, orderName } = await preparePayment({ orderId });
-      await requestPayment({ orderId: tossOrderId, orderName });
+      // 숫자 `orderId`도 함께 넘긴다. 위젯이 그것을 복귀 주소에 실어, 결제가 끝난 뒤
+      // 주문 상세로 갈 수 있게 한다 (#301)
+      await requestPayment({ tossOrderId, orderName, orderId });
     } catch (error) {
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
       // 결제창이 떴으면 브라우저가 떠나므로 여기로 돌아오지 않는다. 실패했을 때만 되돌린다

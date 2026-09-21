@@ -214,9 +214,12 @@ test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", asy
     deliveryNote: "문 앞에 놓아주세요",
   });
   expect(preparePayment).toHaveBeenCalledWith({ orderId: 77 });
+  // **숫자 id도 함께 넘어간다.** 위젯이 그것을 복귀 주소에 실어, 결제가 끝난 뒤
+  // 방금 산 주문으로 갈 수 있게 한다 (#301)
   expect(requestPayment).toHaveBeenCalledWith({
-    orderId: "ORD-20260918-000123",
+    tossOrderId: "ORD-20260918-000123",
     orderName: "종근당 캣츠벨",
+    orderId: 77,
   });
 });
 

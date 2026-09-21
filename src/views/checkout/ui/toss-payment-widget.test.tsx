@@ -5,7 +5,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const { renderPaymentMethods, requestPayment, setAmount, loadTossPayments } = vi.hoisted(() => ({
   renderPaymentMethods: vi.fn(async () => ({ destroy: vi.fn() })),
-  requestPayment: vi.fn(async () => {}),
+  // 인자 모양을 적어 둔다. 복귀 주소를 꺼내 보는 테스트가 있어 빈 목이면 타입이 막힌다
+  requestPayment: vi.fn<(options: { successUrl: string }) => Promise<void>>(async () => {}),
   setAmount: vi.fn(async () => {}),
   loadTossPayments: vi.fn(),
 }));
@@ -33,7 +34,7 @@ afterEach(() => {
 const PROPS = { amount: 12345 };
 
 /** 결제창을 열 때 넘기는 주문. `[2] POST /payments`가 주는 값이다 */
-const ORDER = { orderId: "ORD-20260918-000123", orderName: "상품명" };
+const ORDER = { tossOrderId: "ORD-20260918-000123", orderName: "상품명", orderId: 77 };
 
 /**
  * **StrictMode가 effect를 두 번 돌린다.** 첫 번째가 정리된 뒤 두 번째가 "이미 띄웠다"며
@@ -63,7 +64,26 @@ test("넘겨받은 수단을 부르면 결제창을 띄운다", async () => {
   // 금액을 알리는 동안 한 번 잠그므로 첫 호출은 `null`이다. 마지막으로 넘겨준 것을 부른다
   await onReady.mock.calls.at(-1)![0](ORDER);
 
-  expect(requestPayment).toHaveBeenCalledWith(expect.objectContaining(ORDER));
+  // **토스에는 문자열 주문번호가 간다.** 숫자 id는 결제창에 쓰이지 않는다
+  expect(requestPayment).toHaveBeenCalledWith(
+    expect.objectContaining({ orderId: ORDER.tossOrderId, orderName: ORDER.orderName }),
+  );
+});
+
+// 이 값이 없으면 결제가 끝난 뒤 방금 산 주문으로 갈 길이 없다 (#301)
+test("복귀 주소에 숫자 주문 id를 실어 보낸다", async () => {
+  const onReady = vi.fn();
+
+  render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  await onReady.mock.calls.at(-1)![0](ORDER);
+
+  const { successUrl } = requestPayment.mock.calls.at(-1)![0];
+  expect(new URL(successUrl).searchParams.get("order")).toBe("77");
+
+  // **토스가 붙이는 `orderId`와 겹치지 않는 이름이어야 한다**
+  expect(successUrl).not.toContain("orderId=");
 });
 
 // 위젯을 못 띄우면 버튼이 잠긴 채로 남아야 한다. 이유는 화면에 내보내지 않는다

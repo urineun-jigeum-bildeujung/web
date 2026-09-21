@@ -11,6 +11,8 @@
 import { ANONYMOUS, loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { useEffect, useRef, useState } from "react";
 
+import { toSuccessUrl } from "../model/return-query";
+
 /**
  * 결제창에 실을 주문. **위젯을 띄울 때가 아니라 결제창을 열 때 받는다.**
  *
@@ -19,9 +21,16 @@ import { useEffect, useRef, useState } from "react";
  * 하므로 이 둘을 prop으로 받을 수 없다 (#255).
  */
 export type TossPaymentOrder = {
-  /** 토스가 6~64자 고유값을 요구한다. 백엔드가 준 `tossOrderId`를 그대로 넘긴다 */
-  orderId: string;
+  /** 토스가 6~64자 고유값을 요구한다. 백엔드 `[2]`가 준 값을 그대로 넘긴다 */
+  tossOrderId: string;
   orderName: string;
+  /**
+   * 우리 주문의 숫자 PK. 백엔드 `[1] POST /orders`가 준 값이다.
+   *
+   * **결제창에 쓰이지 않는다.** 결제가 끝나고 돌아올 주소에 실어, 리다이렉트를 건너
+   * 주문 상세로 갈 수 있게 하려는 것이다 (`model/return-query.ts`, #301).
+   */
+  orderId: number;
 };
 
 type TossPaymentWidgetProps = {
@@ -102,13 +111,14 @@ export function TossPaymentWidget({ amount, onReady, customerKey = "" }: TossPay
           return;
         }
 
-        onReadyRef.current(async ({ orderId, orderName }) => {
-          // Redirect 방식이라 결제가 끝나면 브라우저가 아래 주소로 돌아온다.
-          // 성공 주소에는 paymentKey·orderId·amount가 쿼리로 붙는다
+        onReadyRef.current(async ({ tossOrderId, orderName, orderId }) => {
+          // Redirect 방식이라 결제가 끝나면 브라우저가 아래 주소로 돌아온다. 성공 주소에는
+          // 토스가 paymentType·orderId·paymentKey·amount를 붙이는데, 그 orderId는 문자열
+          // 주문번호라 주문 상세로 갈 수 없다. 숫자 id는 우리가 실어 보낸다 (#301)
           await widgets.requestPayment({
-            orderId,
+            orderId: tossOrderId,
             orderName,
-            successUrl: `${window.location.origin}/payment/done`,
+            successUrl: toSuccessUrl(window.location.origin, orderId),
             failUrl: `${window.location.origin}/payment`,
           });
         });
