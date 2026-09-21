@@ -31,6 +31,14 @@ export type TossPaymentOrder = {
    * 주문 상세로 갈 수 있게 하려는 것이다 (`model/return-query.ts`, #301).
    */
   orderId: number;
+  /**
+   * 서버가 만든 주문의 결제 금액. `[2] POST /payments`가 준다.
+   *
+   * **화면이 센 금액이 아니라 이 값으로 결제창을 연다.** 장바구니 캐시가 낡으면 둘이
+   * 갈리고, 그대로 결제창을 통과하면 승인에서 `PAYMENT_409_AMOUNT_MISMATCH`로 막힌다 —
+   * 그 시점엔 이미 돈이 나간 뒤다 (#312).
+   */
+  amount: number;
 };
 
 type TossPaymentWidgetProps = {
@@ -111,7 +119,11 @@ export function TossPaymentWidget({ amount, onReady, customerKey = "" }: TossPay
           return;
         }
 
-        onReadyRef.current(async ({ tossOrderId, orderName, orderId }) => {
+        onReadyRef.current(async ({ tossOrderId, orderName, orderId, amount: paid }) => {
+          // **열기 직전에 서버 금액으로 덮는다.** prop의 `amount`는 장바구니로 센 값이고,
+          // `paid`는 서버가 만든 주문의 금액이다. 둘이 갈린 채로 열면 승인에서 막힌다 (#312)
+          await widgets.setAmount({ currency: "KRW", value: paid });
+
           // Redirect 방식이라 결제가 끝나면 브라우저가 아래 주소로 돌아온다. 성공 주소에는
           // 토스가 paymentType·orderId·paymentKey·amount를 붙이는데, 그 orderId는 문자열
           // 주문번호라 주문 상세로 갈 수 없다. 숫자 id는 우리가 실어 보낸다 (#301)
