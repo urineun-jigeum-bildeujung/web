@@ -33,7 +33,6 @@ const MOCK = {
   /** 문의할 때 사용자가 대는 유일한 식별자다. 실제 값은 결제 승인 응답이 준다 */
   orderNo: "20260829-1234567",
   /** 주문 상세로 가는 식별자. 승인 응답에는 없어 계약이 정해져야 안다 */
-  orderId: "1",
   productName: "상품명",
   option: "상품 옵션",
   total: 12345,
@@ -73,6 +72,12 @@ type CheckoutDoneViewProps = {
   payment?: PaymentConfirmResult | null;
   /** 승인이 실패했을 때만 온다. 있으면 완료가 아니라 이 사실부터 알린다 */
   failure?: PaymentFailure | null;
+  /**
+   * 방금 산 주문의 숫자 id. 복귀 주소에 우리가 실어 보낸 값이다 (#301).
+   *
+   * 주소창으로 직접 들어오면 없다. 그때는 상세 대신 주문 내역으로 보낸다.
+   */
+  orderId?: number | null;
 };
 
 /**
@@ -113,7 +118,7 @@ function ConfirmFailure({ failure }: { failure: PaymentFailure }) {
   );
 }
 
-export function CheckoutDoneView({ payment, failure }: CheckoutDoneViewProps) {
+export function CheckoutDoneView({ payment, failure, orderId }: CheckoutDoneViewProps) {
   if (failure) {
     return (
       <div className="flex min-h-dvh flex-col">
@@ -245,10 +250,14 @@ export function CheckoutDoneView({ payment, failure }: CheckoutDoneViewProps) {
           asChild
         >
           {/* **승인 응답에는 주문 상세로 갈 식별자가 없다.** 계약이 주는 것은 표시용
-              `orderNumber`(`ORD-…`)뿐인데 이 라우트는 주문 id를 받는다. 그대로 넘기면
-              주문을 찾지 못해 엉뚱한 주문이 열린다 (#256 리뷰). 화면 흐름을 붙일 때
-              [1] 주문 생성이 돌려준 id를 들고 오도록 풀고, 그전까지는 목 값을 쓴다 */}
-          <Link href={`/mypage/orders/${MOCK.orderId}`}>주문 상세 보기</Link>
+              `orderNumber`(`ORD-…`)뿐인데 이 라우트는 숫자 주문 id를 받는다. 그래서
+              [1] 주문 생성이 돌려준 id를 복귀 주소에 실어 건너 온다 (#301).
+
+              **값이 없으면 주문 내역으로 보낸다.** 주소창으로 직접 들어온 경우인데,
+              엉뚱한 주문을 여느니 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
+          <Link href={orderId ? `/mypage/orders/${orderId}` : "/mypage/orders"}>
+            {orderId ? "주문 상세 보기" : "주문 내역 보기"}
+          </Link>
         </Button>
         <Button asChild>
           <Link href="/">홈으로 가기</Link>

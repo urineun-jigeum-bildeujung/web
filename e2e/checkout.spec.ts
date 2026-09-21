@@ -79,9 +79,24 @@ test("직접 입력을 고르면 100자 제한 칸이 열린다", async ({ page 
 
 // 주문번호는 문의할 때 사용자가 대는 유일한 식별자다.
 test("주문 완료에 주문번호와 주문 상세로 가는 길이 있다", async ({ page }) => {
-  await page.goto("/payment/done");
+  // 결제창에 들어가기 전에 우리가 복귀 주소에 실어 둔 숫자 주문 id다 (#301)
+  await page.goto("/payment/done?order=77");
 
   await expect(page.getByText("20260829-1234567")).toBeVisible();
-  await expect(page.getByRole("link", { name: "주문 상세 보기" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "주문 상세 보기" })).toHaveAttribute(
+    "href",
+    "/mypage/orders/77",
+  );
   await expect(page.getByRole("link", { name: "홈으로 가기" })).toBeVisible();
+});
+
+// 주소창으로 직접 들어온 경우다. 엉뚱한 주문을 여느니 목록으로 보낸다 (#301).
+test("주문 id 없이 열면 주문 내역으로 보낸다", async ({ page }) => {
+  await page.goto("/payment/done");
+
+  await expect(page.getByRole("link", { name: "주문 상세 보기" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "주문 내역 보기" })).toHaveAttribute(
+    "href",
+    "/mypage/orders",
+  );
 });
