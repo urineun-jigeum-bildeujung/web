@@ -192,32 +192,34 @@ export function LikesView() {
     <div className="flex min-h-dvh flex-col">
       {/* 시안(header, 1585:18342)은 로고가 아니라 뒤로가기 화살표 + 검색·알림·장바구니고
           제목이 없다. /likes가 바텀내비 탭 루트라 home-view와 같은 로고형이라고 판단해
-          PageHeader를 걷어냈던 게 틀렸다 — 원래대로 되돌린다(leading 기본값 back 그대로) */}
+          PageHeader를 걷어냈던 게 틀렸다 — 원래대로 되돌린다(leading 기본값 back 그대로).
+          오른쪽 아이콘도 home-view 헤더와 같은 조합(아이콘 28px·4px 간격)이라 그 마크업을
+          그대로 쓴다 — deals-view의 44px 터치영역·24px 아이콘은 제목이 있는 다른 헤더 값이다 */}
       <PageHeader
         right={
-          <div className="flex items-center">
+          <nav aria-label="바로 가기" className="flex items-center gap-2.25">
             <Link
               href="/search"
               aria-label="검색"
-              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
             >
-              <Icon name="search" className="size-6" />
+              <Icon name="search" className="size-7" />
             </Link>
             <Link
               href="/mypage/notifications"
               aria-label="알림"
-              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
             >
-              <Icon name="bell_noti" className="size-6" />
+              <Icon name="bell_noti" className="size-7" />
             </Link>
             <Link
               href="/cart"
               aria-label="장바구니"
-              className="flex size-11 items-center justify-center rounded-md transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
             >
-              <Icon name="cart" className="size-6" />
+              <Icon name="cart" className="size-7" />
             </Link>
-          </div>
+          </nav>
         }
       />
 
