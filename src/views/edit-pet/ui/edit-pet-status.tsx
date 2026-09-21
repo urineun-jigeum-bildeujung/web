@@ -4,6 +4,8 @@
 
 import type { ReactNode } from "react";
 
+import { EditPetSkeleton } from "./edit-pet-skeleton";
+
 type EditPetStatusProps = {
   /** 주소에 `petId`가 없다. 어느 아이를 고칠지 모른다 */
   missingPetId: boolean;
@@ -12,13 +14,17 @@ type EditPetStatusProps = {
 };
 
 export function EditPetStatus({ missingPetId, isLoading, error }: EditPetStatusProps) {
+  // 받아오는 중에는 문구 한 줄이 아니라 화면 골격으로 자리를 잡는다. 빈 화면이었다가
+  // 갑자기 차면 눌리는 자리가 밀린다
+  if (isLoading && !missingPetId && !error) {
+    return <EditPetSkeleton />;
+  }
+
   let message: ReactNode = null;
   if (missingPetId) {
     message = "고칠 아이를 찾지 못했어요. 아이 관리에서 다시 들어와 주세요";
   } else if (error) {
     message = "아이 정보를 불러오지 못했어요";
-  } else if (isLoading) {
-    message = "아이 정보를 불러오는 중이에요";
   }
 
   if (!message) {
@@ -26,10 +32,7 @@ export function EditPetStatus({ missingPetId, isLoading, error }: EditPetStatusP
   }
 
   return (
-    <p
-      role={missingPetId || error ? "alert" : "status"}
-      className="px-5 text-body-medium-14 text-text-body-secondary"
-    >
+    <p role="alert" className="px-5 text-body-medium-14 text-text-body-secondary">
       {message}
     </p>
   );
