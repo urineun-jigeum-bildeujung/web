@@ -1,4 +1,8 @@
 // 타임딜: 탭이 주소에 남는지, 목록에서 바로 담기는지 본다.
+//
+// 목록은 서버(product-service)가 조회한다(#282). Next 서버 프로세스가 보내는 요청은
+// 브라우저 page.route()로 못 가로채, `playwright.server-fetch.config.ts`가 이 스펙 전용
+// 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 import { expect, test } from "@playwright/test";
 
 test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ page }) => {
@@ -22,4 +26,23 @@ test("목록에서 옵션을 골라 바로 담는다", async ({ page }) => {
 
   await expect(page.getByLabel("오리&고구마 소형견 사료 1.5kg 장바구니에서 빼기")).toBeVisible();
   await expect(page.getByText("장바구니에 담겼어요")).toBeVisible();
+});
+
+// `screens.spec.ts`의 ROUTES 스모크에서 옮겨왔다 — /deals는 서버 조회를 타서 그 스위트의
+// dev 서버로는 확인할 수 없다. 같은 검사(콘솔 오류·가로 스크롤 없음)를 여기서 한다
+test("/deals — 오류 없이 그려진다", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") errors.push(message.text());
+  });
+  page.on("pageerror", (error) => errors.push(`예외: ${error.message}`));
+
+  await page.goto("/deals", { waitUntil: "networkidle" });
+
+  expect(errors, `콘솔 오류\n${errors.join("\n")}`).toEqual([]);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
 });

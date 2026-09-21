@@ -82,6 +82,70 @@ function searchProducts(url) {
   return { items, nextCursor: null, hasNext: false, totalCount: items.length };
 }
 
+// 타임딜 목데이터. 옛 mock의 이름·가격을 그대로 옮겨 e2e/deals.server-fetch.spec.ts와 맞춘다
+const NOW = () => new Date();
+function hoursFromNow(hours) {
+  return new Date(NOW().getTime() + hours * 3_600_000).toISOString();
+}
+
+function timeDeals(status) {
+  if (status === "ACTIVE") {
+    return {
+      deals: [
+        {
+          dealId: 1,
+          dealName: "타임딜",
+          startAt: hoursFromNow(-1),
+          endAt: hoursFromNow(11),
+          items: [
+            {
+              productId: 101,
+              timeDealItemId: 1,
+              thumbnailUrl: null,
+              productName: "오리&고구마 소형견 사료 1.5kg",
+              normalPrice: 32000,
+              discountedPrice: 24000,
+              discountRate: 25,
+              unitPrice: 960,
+              unitLabel: "1kg당",
+              stockBadge: "NONE",
+            },
+          ],
+        },
+      ],
+      serverTime: NOW().toISOString(),
+    };
+  }
+  if (status === "SCHEDULED") {
+    return {
+      deals: [
+        {
+          dealId: 2,
+          dealName: "다음 타임딜",
+          startAt: hoursFromNow(24),
+          endAt: hoursFromNow(34),
+          items: [
+            {
+              productId: 201,
+              timeDealItemId: 2,
+              thumbnailUrl: null,
+              productName: "사슴고기&현미 소형견 사료 1.2kg",
+              normalPrice: 20000,
+              discountedPrice: 15600,
+              discountRate: 22,
+              unitPrice: 1300,
+              unitLabel: "1kg당",
+              stockBadge: "NONE",
+            },
+          ],
+        },
+      ],
+      serverTime: NOW().toISOString(),
+    };
+  }
+  return { deals: [], serverTime: NOW().toISOString() };
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
 
@@ -92,6 +156,13 @@ const server = createServer((req, res) => {
 
   if (url.pathname === "/api/v1/products/search") {
     const body = JSON.stringify(searchProducts(url));
+    res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  if (url.pathname === "/api/v1/time-deals") {
+    const status = url.searchParams.get("status");
+    const body = JSON.stringify(timeDeals(status));
     res.writeHead(200, { "content-type": "application/json" }).end(body);
     return;
   }
