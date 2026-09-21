@@ -17,9 +17,14 @@
 
 import type { OrderStatus } from "../ui/order-status-badge";
 
-/** 백엔드 enum에서 확인한 값만 둔다. 추측으로 늘리지 않는다 */
+/**
+ * 백엔드 enum에서 확인한 값만 둔다. 추측으로 늘리지 않는다.
+ *
+ * **`PAID`와 `PREPARING`이 한 자리로 간다.** 시안에 "결제완료" 뱃지가 없어 PD팀에 물었더니
+ * 결제 직후부터 상품 준비까지 배송 준비 중으로 묶어도 된다고 했다 (#297).
+ */
 const SERVER_TO_VIEW: Record<string, OrderStatus> = {
-  PAID: "paid",
+  PAID: "preparing",
   PREPARING: "preparing",
   SHIPPING: "shipping",
   DELIVERED: "delivered",

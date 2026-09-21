@@ -5,11 +5,13 @@ import type { ComponentProps } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
-export const ORDER_STATUSES = ["paid", "preparing", "shipping", "delivered", "confirmed"] as const;
+// **결제완료는 따로 두지 않는다.** 시안에 그 뱃지가 없고, PD팀도 "결제 직후~상품 준비까지
+// 배송 준비 중으로 묶어도 된다"고 확인해 줬다 (2026-09-21). 서버는 `PAID`와 `PREPARING`을
+// 나누지만 화면은 한 단계로 보여준다 (#297).
+export const ORDER_STATUSES = ["preparing", "shipping", "delivered", "confirmed"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
-  paid: "결제완료",
   preparing: "배송준비중",
   shipping: "배송중",
   delivered: "배송완료",

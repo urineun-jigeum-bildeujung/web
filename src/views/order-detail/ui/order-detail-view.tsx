@@ -79,8 +79,8 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                   <OrderProductRow
                     key={item.orderItemId}
                     name={item.productName}
-                    // 시안의 둘째 줄은 "상품 옵션" 자리인데 응답에 옵션이 없다. 비워 두면 줄만
-                    // 뜨므로 대신 몇 개를 샀는지 넣는다. 옵션은 백엔드에 확인을 요청해 뒀다 (#288)
+                    // 시안의 둘째 줄은 "상품 옵션" 자리인데 옵션이라는 데이터가 없다. PD팀이
+                    // "옵션은 빼고 수량은 있어도 괜찮다"고 확인해 줬다 (#297)
                     option={`${item.quantity}개`}
                     imageUrl={item.thumbnailUrl}
                     // `unitPrice`는 낱개 값이다. 명세 Example의 `productAmount`가 낱개 값의

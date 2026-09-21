@@ -66,7 +66,8 @@ test("서버가 준 주문번호와 상품을 보여준다", async () => {
 
   expect(await screen.findByText("ORD-TEST-DETAIL-01")).toBeDefined();
   expect(screen.getByText("테스트 상품 A")).toBeDefined();
-  expect(screen.getByText("결제완료")).toBeDefined();
+  // 결제 직후 주문도 배송준비중으로 보인다 (#297)
+  expect(screen.getByText("배송준비중")).toBeDefined();
 });
 
 // 응답에 배송비 필드가 없다. 결제 금액에서 상품 금액을 빼 만드는 값이라 틀리면 바로 돈이 안 맞는다
@@ -156,7 +157,7 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
   // 낱개 값에 수량을 곱한 것이 그 줄에 낸 돈이다
   expect(screen.getByText("20,000원")).toBeDefined();
   // 주문 단위 상태라 줄마다 반복하지 않는다
-  expect(screen.getAllByText("결제완료")).toHaveLength(1);
+  expect(screen.getAllByText("배송준비중")).toHaveLength(1);
 });
 
 // 주문은 결제 전에도 만들어진다. 그때 `payment`가 null로 오는데 빈 카드를 세우면

@@ -58,8 +58,8 @@ function toProductRow(order: OrderSummary) {
     return null;
   }
 
-  // 시안의 둘째 줄은 "상품 옵션" 자리인데 목록 응답에 옵션이 없다. 비워 두면 줄만 뜨므로
-  // 대신 몇 개를 샀는지 넣는다. 옵션은 백엔드에 확인을 요청해 뒀다 (#284)
+  // 시안의 둘째 줄은 "상품 옵션" 자리인데 옵션이라는 데이터가 없다. PD팀이 "옵션은 빼고
+  // 수량은 있어도 괜찮다"고 확인해 줘서 몇 개를 샀는지 넣는다 (#297)
   const caption =
     rest.length > 0 ? `${first.quantity}개 외 ${rest.length}건` : `${first.quantity}개`;
 
@@ -144,8 +144,9 @@ export function OrdersView() {
                       배송 위치 보기
                     </Button>
                   )}
-                  {/* 배송이 시작되기 전까지만 취소할 수 있다 (mypa_061) */}
-                  {(status === "paid" || status === "preparing") && (
+                  {/* 배송이 시작되기 전까지만 취소할 수 있다 (mypa_061). 백엔드 전이 규칙도
+                      `PAID`·`PREPARING`에서만 취소를 허용하는데, 화면은 그 둘을 한 단계로 묶는다 */}
+                  {status === "preparing" && (
                     <Button
                       variant="secondary"
                       className={ACTION_CLASS}

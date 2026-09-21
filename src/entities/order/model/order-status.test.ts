@@ -3,8 +3,9 @@ import { expect, test } from "vitest";
 
 import { toOrderStatus } from "./order-status";
 
-test("화면이 그리는 다섯 상태를 서버 값에서 옮긴다", () => {
-  expect(toOrderStatus("PAID")).toBe("paid");
+test("화면이 그리는 네 상태를 서버 값에서 옮긴다", () => {
+  // 결제완료와 상품 준비는 한 단계로 묶인다 (#297)
+  expect(toOrderStatus("PAID")).toBe("preparing");
   expect(toOrderStatus("PREPARING")).toBe("preparing");
   expect(toOrderStatus("SHIPPING")).toBe("shipping");
   expect(toOrderStatus("DELIVERED")).toBe("delivered");
@@ -12,7 +13,7 @@ test("화면이 그리는 다섯 상태를 서버 값에서 옮긴다", () => {
 });
 
 test("대소문자가 달라도 같은 값으로 읽는다", () => {
-  expect(toOrderStatus("paid")).toBe("paid");
+  expect(toOrderStatus("paid")).toBe("preparing");
   expect(toOrderStatus("Delivered")).toBe("delivered");
 });
 
