@@ -2,3 +2,4 @@
 export { EditPetBasicView } from "./ui/edit-pet-basic-view";
 export { EditPetBodyView } from "./ui/edit-pet-body-view";
 export { EditPetHealthView } from "./ui/edit-pet-health-view";
+export { EditPetSkeleton } from "./ui/edit-pet-skeleton";

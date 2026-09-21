@@ -61,10 +61,19 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
   const [neutered, setNeutered] = useState(pet.neutered ? "yes" : "no");
 
   const parsedAge = parseAge(age);
-  // 생일은 선택이다. 비었으면 보내지 않고, 적었는데 못 알아들으면 저장을 막는다 —
-  // 조용히 빼고 보내면 적은 사람은 저장된 줄 안다
+  /**
+   * 생일은 선택이다. 적었는데 못 알아들으면 저장을 막는다 — 조용히 빼고 보내면 적은
+   * 사람은 저장된 줄 안다.
+   *
+   * **한 번 적은 생일은 이 화면에서 지울 수 없다.** 서버가 `null`을 "안 고침"으로
+   * 읽어(`birthDate != null ? birthDate : this.birthDate`) 빈 칸을 보내도 옛 값이
+   * 남는다. 지운 줄 알게 두는 것보다 못 지우게 막는 편이 낫다 (#268 리뷰).
+   */
   const parsedBirth = parseBirthDate(birthday);
-  const birthdayBroken = birthday.trim().length > 0 && parsedBirth === null;
+  const hadBirthDate = pet.birthDate !== null;
+  const birthdayBroken =
+    (birthday.trim().length > 0 && parsedBirth === null) ||
+    (hadBirthDate && birthday.trim().length === 0);
 
   const submit = () => {
     if (parsedAge === null || birthdayBroken) return;
@@ -157,6 +166,11 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
               placeholder="0000. 00. 00"
               value={birthday}
               onChange={(event) => setBirthday(event.target.value)}
+              error={
+                hadBirthDate && birthday.trim().length === 0
+                  ? "생일은 지울 수 없어요. 고치려면 새 날짜를 적어주세요"
+                  : undefined
+              }
             />
           </div>
         </div>
