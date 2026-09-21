@@ -4,7 +4,8 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 조회(`searchProducts`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282) |
+| `api/products.ts` | 검색 결과 조회(`searchProducts`)와 상품 요약 조회(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282) |
+| `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
 | `api/products.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
 | `api/time-deals.ts` | 타임딜 목록 조회(`getTimeDeals`). 백엔드가 딜 묶음 개수를 제한하지 않아 배열 그대로 보존한다(#282) |
 | `api/time-deals.test.ts` | 요청 파라미터·다중 딜 묶음 보존·`stockBadge` 매핑 단위 테스트 |

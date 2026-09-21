@@ -1,4 +1,14 @@
 // review 슬라이스 공개 API. 바깥에서는 이 파일로만 들어온다.
+export {
+  createReview,
+  getMyReviews,
+  issueReviewImageUpload,
+  type MyReviewItem,
+  type MyReviewList,
+  type ReviewCreateRequest,
+} from "./api/reviews";
+export { useMutateCreateReview } from "./api/use-mutate-create-review";
+export { useQueryMyReviews } from "./api/use-query-my-reviews";
 export { ReviewCard, type Review } from "./ui/review-card";
 export {
   MOCK_REVIEWS,

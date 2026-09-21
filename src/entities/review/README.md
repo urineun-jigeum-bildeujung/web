@@ -7,6 +7,10 @@
 | `ui/review-card.tsx` | 리뷰 한 장. 작성자·아이 프로필·별점·사진·옵션·사용 기간 칩·본문·신고·도움돼요 |
 | `ui/review-card.test.tsx` | 아이 프로필과 칩이 읽히는지, 도움돼요가 눌리는지 본다 |
 | `model/mock-reviews.ts` | 리뷰 목데이터·정렬 목록·사진 달린 후기 |
+| `api/reviews.ts` | 리뷰 등록·리뷰 사진 발급·내 후기 목록 조회와 `ReviewCreateRequest`·`MyReviewItem` 타입 |
+| `api/reviews.test.ts` | 무엇을 부르는지, 응답을 화면 모양으로 옮기는 것 |
+| `api/use-mutate-create-review.ts` | 사진을 올린 뒤 등록하는 훅. 성공하면 내 후기·상품 리뷰 캐시를 비운다 |
+| `api/use-query-my-reviews.ts` | 내가 쓴 후기 첫 쪽을 받는 훅 |
 | `index.ts` | 공개 API |
 
 ## 왜 별점만 두지 않았나

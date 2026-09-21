@@ -17,6 +17,11 @@ const nextConfig: NextConfig = {
         protocol: "http",
         hostname: "localhost",
       }, // 로컬호스트 이미지 사용
+      // 업로드한 사진과 상품 이미지의 CDN. 여기 없으면 next/image가 그리다가 throw 한다
+      {
+        protocol: "https",
+        hostname: "image.leechs.shop",
+      },
     ],
   },
 };

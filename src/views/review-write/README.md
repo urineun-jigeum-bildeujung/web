@@ -3,27 +3,29 @@
 구매한 상품의 리뷰를 두 단계로 작성한다. 별점과 함께 아이의 실제 반응을 받는다.
 
 - **라우트**: `/mypage/reviews/write?productId=&step=` — `src/app/mypage/reviews/write/page.tsx`
-- **조립**: `entities/pet`(`PetSwitcher`) · `shared/ui`의 `page-header` · `badge` · `rating` · `bottom-action-bar` · `input` · `textarea` · `button`
-- **상태**: URL 쿼리 `productId`·`step`(rating · detail)과 작성 폼 상태. `productId`가 없으면 작성 화면 대신 나의 상품 후기로 안내한다. 등록 API 미연동
+- **조립**: `entities/pet`(`PetSwitcher`·`useQueryPets`) · `entities/member`(`useQueryMyProfile`) · `entities/product`(`useQueryProductSummary`) · `entities/review`(`useMutateCreateReview`) · `shared/ui`의 `page-header` · `badge` · `rating` · `bottom-action-bar` · `input` · `textarea` · `button`
+- **상태**: URL 쿼리 `productId`·`step`(rating · detail)과 작성 폼 상태. `productId`가 없으면 작성 화면 대신 나의 상품 후기로 안내한다. 아이 목록·닉네임·상품 요약은 서버 조회, 등록은 `entities/review`의 `useMutateCreateReview`
 - **참고**: UI 시안 기준(리뷰작성 1884-29158·29400 1단계, 1884-29257·29325 2단계, 1884-29801 완료 — Figma에는 "타임딜"로 이름이 잘못 붙어 있다). 백엔드가 회원+상품당 리뷰 한 건만 받아 `productId`가 단위다
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/review-write-view.tsx` | 두 단계 조립과 완료 화면. 1단계 별점·사용 기간·반응 5문항, 2단계 요약·아이·급여 편의성·사진·후기 |
 | `ui/review-write-view.test.tsx` | 단계별 필수 조건, 반 개 별점, 요약 카드, 완료 화면 |
-| `ui/product-row.tsx` | 리뷰를 다는 상품 줄. 사진 64 · 이름 · 재구매 배지 · 옵션 |
+| `ui/product-row.tsx` | 리뷰를 다는 상품 줄. 사진 64 · 이름 · 재구매 배지 · 옵션. 옵션·재구매는 상품 요약 응답에 없어 비어 있다 |
 | `ui/rating-input.tsx` | 별을 눌러 반 개 단위로 점수를 매긴다 |
 | `ui/response-select.tsx` | 반응 한 문항. 붙은 세그먼트로 고른다 |
 | `ui/photo-picker.tsx` | 사진을 최대 세 장 붙이고 뺀다 |
 | `ui/photo-picker.test.tsx` | 장수 제한·빼기·미리보기 주소 정리 |
 | `model/questions.ts` | 반응 문항과 보기, 답한 것만 추리는 요약. 키와 값은 백엔드 `ReviewQuestionType`·`ReviewAnswer` |
+| `model/to-create-request.ts` | 초안을 등록 요청으로 옮긴다. 답한 문항만 싣고 필수가 비면 `null` |
+| `model/to-create-request.test.ts` | 값 변환과 필수가 빌 때 |
 | `model/draft-storage.ts` | 작성 중인 값을 상품별로 기기에 남긴다. 등록하면 지운다 |
 | `model/draft-storage.test.ts` | 되읽기, 항목별 분리, 깨진 값 버리기, 지우기 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것
 
-**필수는 별점 · 사용 기간 · 아이 · 후기 글이고 반응 문항은 전부 선택이다.** 와이어프레임은 반응 3문항을 필수로 묶었는데 시안이 선택으로 바꿨다. 모르는 항목까지 아무 답이나 고르게 하면 추천 근거가 흐려진다. 어느 아이가 먹었는지는 여전히 필수다 — 아이를 모르면 그 답을 다음 추천에 쓸 수 없다.
+**필수는 별점 · 사용 기간 · 아이 · 후기 글이고 반응 문항은 전부 선택이다.** 와이어프레임은 반응 3문항을 필수로 묶었는데 시안이 선택으로 바꿨다. 모르는 항목까지 아무 답이나 고르게 하면 추천 근거가 흐려진다. 어느 아이가 먹었는지는 여전히 필수다 — 아이를 모르면 그 답을 다음 추천에 쓸 수 없다. **다만 서버가 반응 문항을 하나 이상 요구한다**(`answerValues @NotEmpty`). 백엔드 확인이 올 때까지 등록 버튼이 하나는 받도록 막는다(#291).
 
 **단계는 URL에, 입력값은 기기에 둔다.** 온보딩과 같은 판단으로 단계를 `push`해서 기기 뒤로가기가 1단계로 돌아오고, 별점·사용 기간·반응·아이·후기 글은 `localStorage`에 상품별로 남겨 2단계에서 새로고침해도 등록할 수 있다. 사진은 `File`이라 남기지 않는다. 등록을 마치면 지운다.
 
@@ -31,6 +33,8 @@
 
 **반응 문항 세그먼트와 상품 줄은 이 화면에만 있어 여기 둔다.** `shared/ui/chip-select`는 떨어진 칩이라 시안(붙은 상자)과 다르다. 상품명은 시안이 15px semibold인데 토큰에 없어 `title/bold_16`을 쓴다.
 
-**사진은 고르는 즉시 올리지 않고 파일만 들고 있는다.** 등록 요청에 함께 실어 보낼 자리다. 시안에는 빼는 버튼이 없지만 잘못 고른 사진을 되돌릴 길이 있어야 해 24px X를 둔다.
+**사진은 고르는 즉시 올리지 않고 파일만 들고 있는다.** 등록할 때 `useMutateCreateReview`가 `shared/api/upload-image`로 먼저 올리고 그 주소를 `images`에 싣는다. 훅 안에서 하므로 "등록하기"의 대기 표시가 업로드 시간까지 덮는다. 시안에는 빼는 버튼이 없지만 잘못 고른 사진을 되돌릴 길이 있어야 해 24px X를 둔다.
 
-**등록하면 완료 화면으로 넘어간다.** 시안(1884-29801)대로 연한 브랜드 원 안의 체크와 "소중한 리뷰 감사해요!"이고, 확인을 누르면 작성한 리뷰 목록으로 간다. 설명의 닉네임은 회원 API가 붙으면 그 값을 쓴다.
+**등록되면 완료 화면으로 넘어간다.** 시안(1884-29801)대로 연한 브랜드 원 안의 체크와 "소중한 리뷰 감사해요!"이고, 확인을 누르면 작성한 리뷰 목록으로 간다. 실패하면 초안을 지우지 않고 그 자리에 남는다. 이미 쓴 상품(`ALREADY_REVIEWED`)과 구매 확정 전(`PURCHASE_NOT_CONFIRMED`)은 왜인지를 알린다.
+
+**작성 화면으로 들어오는 실제 경로는 아직 없다.** 나의 상품 후기의 "작성 가능한 리뷰" 탭이 유일한 진입인데 그 목록 API가 백엔드에 없다. 백엔드에 요청해 뒀다(#291).

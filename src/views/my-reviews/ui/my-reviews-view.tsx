@@ -1,29 +1,33 @@
 // 나의 상품 후기. 작성 가능한 리뷰와 작성한 리뷰를 탭으로 나눈다.
 // UI 시안 기준(mypa_041_작성가능 1117-7739, mypa_041_작성한 1117-8369)이다.
 // 탭은 알약 세그먼트(48px 트랙·흰 알약), 항목은 구매일·사진 64·이름 title/bold_16이다.
+//
+// 작성한 리뷰는 서버에서 받는다. 작성 가능한 리뷰는 그 목록 API가 아직 없어 라우트가 목데이터를 넘긴다(#291).
 
 "use client";
 
+import { format, parseISO } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 
+import { useQueryMyReviews, type MyReviewItem } from "@/entities/review";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Rating } from "@/shared/ui/rating/rating";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
-import type { WritableReview, WrittenReview } from "../model/mock-reviews";
-import { Icon } from "@/shared/ui/icon/icon";
+import type { WritableReview } from "../model/mock-reviews";
 
 const TABS = ["writable", "written"] as const;
 
 type MyReviewsViewProps = {
   /** 아직 후기를 안 쓴 구매 항목 */
   writable: WritableReview[];
-  /** 이미 쓴 후기 */
-  written: WrittenReview[];
 };
 
 /** 시안 segment_control의 알약. 고른 쪽만 흰 바탕에 검은 글자다 */
@@ -39,7 +43,95 @@ function Thumbnail({ src }: { src?: string }) {
   );
 }
 
-export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
+/** 응답의 `YYYY-MM-DD`를 시안의 `26.07.20` 꼴로. 날짜만 있는 값이라 시간대에 밀리지 않게 parseISO로 읽는다 */
+function shortDate(isoDate: string) {
+  return format(parseISO(isoDate), "yy.MM.dd");
+}
+
+/** 받는 동안 잡아 둘 자리. 목록 한 줄과 같은 높이(날짜 한 줄 + 68px)다 */
+function WrittenSkeleton() {
+  return (
+    <ul aria-label="작성한 리뷰를 불러오는 중" className="flex flex-col gap-5">
+      {[0, 1, 2].map((index) => (
+        <li key={index} className="flex flex-col gap-3">
+          <Skeleton className="h-4 w-24" />
+          <div className="flex h-17 items-center gap-3">
+            <Skeleton className="size-16 rounded-lg" />
+            <div className="flex flex-1 flex-col gap-2">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-4 w-full" />
+            </div>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function WrittenList({ items }: { items: MyReviewItem[] }) {
+  return items.map((item) => (
+    <Link
+      key={item.id}
+      href={`/mypage/reviews/${item.id}`}
+      className="flex flex-col gap-3 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      {/* 응답에 구매일이 없다. 시안의 그 자리에 작성일을 보인다 */}
+      <p className="text-caption-regular-13 text-text-body-secondary">
+        작성일 {shortDate(item.createdAt)}
+      </p>
+      <div className="flex h-17 items-center gap-3">
+        <Thumbnail src={item.imageUrl} />
+        <div className="flex h-full min-w-0 flex-1 flex-col gap-1">
+          <div className="flex items-center justify-between gap-2">
+            <p className="min-w-0 flex-1 truncate text-title-bold-16 text-foreground">
+              {item.name}
+            </p>
+            <Rating value={item.rating} size="md" />
+          </div>
+          <p className="line-clamp-2 text-caption-regular-13 text-text-body-secondary">
+            {item.content}
+          </p>
+        </div>
+      </div>
+    </Link>
+  ));
+}
+
+/** 작성한 탭. 받는 중 · 실패 · 비어 있음 · 목록을 가른다 */
+function WrittenTab() {
+  const { reviews, isLoading, isRetrying, error, refetch } = useQueryMyReviews();
+
+  // 처음 그릴 때라 Skeleton이 자리를 잡는다
+  if (isLoading) return <WrittenSkeleton />;
+  if (error || !reviews) {
+    return (
+      <EmptyState
+        icon={<Icon name="review" />}
+        title="후기를 불러오지 못했어요"
+        description="잠시 후 다시 시도해 주세요"
+        action={
+          <Button variant="outline" disabled={isRetrying} onClick={() => void refetch()}>
+            <LoadingSwap loading={isRetrying} label="후기를 다시 불러오는 중">
+              다시 시도
+            </LoadingSwap>
+          </Button>
+        }
+      />
+    );
+  }
+  if (reviews.length === 0) {
+    return (
+      <EmptyState
+        icon={<Icon name="review" />}
+        title="아직 작성한 후기가 없어요"
+        description="다른 보호자들을 위해 아이의 경험을 나눠주세요"
+      />
+    );
+  }
+  return <WrittenList items={reviews} />;
+}
+
+export function MyReviewsView({ writable }: MyReviewsViewProps) {
   const [tab, setTab] = useQueryState(
     "tab",
     // 작성 가능·작성한이 서로 다른 목록이라 뒤로가기로 되돌아와야 한다
@@ -93,40 +185,9 @@ export function MyReviewsView({ writable, written }: MyReviewsViewProps) {
             )}
           </TabsContent>
 
+          {/* 탭을 열 때만 받는다. 작성 가능 탭에서 머무는 동안 안 쓰는 목록을 부르지 않는다 */}
           <TabsContent value="written" className="flex flex-col gap-5 pt-5">
-            {written.length > 0 ? (
-              written.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/mypage/reviews/${item.id}`}
-                  className="flex flex-col gap-3 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <p className="text-caption-regular-13 text-text-body-secondary">
-                    구매일 {item.purchasedAt}
-                  </p>
-                  <div className="flex h-17 items-center gap-3">
-                    <Thumbnail src={item.imageUrl} />
-                    <div className="flex h-full min-w-0 flex-1 flex-col gap-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="min-w-0 flex-1 truncate text-title-bold-16 text-foreground">
-                          {item.name}
-                        </p>
-                        <Rating value={item.rating} size="md" />
-                      </div>
-                      <p className="line-clamp-2 text-caption-regular-13 text-text-body-secondary">
-                        {item.content}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
-              ))
-            ) : (
-              <EmptyState
-                icon={<Icon name="review" />}
-                title="아직 작성한 후기가 없어요"
-                description="다른 보호자들을 위해 아이의 경험을 나눠주세요"
-              />
-            )}
+            {tab === "written" && <WrittenTab />}
           </TabsContent>
         </Tabs>
       </main>
