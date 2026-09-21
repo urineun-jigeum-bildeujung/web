@@ -30,7 +30,8 @@ const QUESTIONS = [...RATING_STEP_QUESTIONS, HANDLING_QUESTION];
 let cache: { key: string; draft: ReviewDraft } | null = null;
 const listeners = new Set<() => void>();
 
-const storageKey = (productId: string) => `review-draft:${productId}`;
+// 예전에는 구매 항목(orderItemId)으로 저장했다. 같은 값이 겹쳐 다른 상품의 초안이 되살아나지 않게 자리를 나눈다
+const storageKey = (productId: string) => `review-draft:product:${productId}`;
 
 /** 저장된 값을 한 칸씩 확인해 옮긴다. 모양이 맞지 않는 칸은 버리고 기본값을 쓴다 */
 function normalize(raw: unknown): ReviewDraft {

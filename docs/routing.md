@@ -75,7 +75,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/mypage/orders/[orderId]` | 주문 상세 | 인증 필요 | `orderId` | 구현됨 |
 | `/mypage/orders/[orderId]/claim?type=` | 취소·반품·교환 접수 | 인증·주문 권한 필요 | `orderId`, `type=cancel\|return\|exchange` | `type` 필수 검증 보완 필요 |
 | `/mypage/reviews?tab=` | 나의 상품 후기 | 인증 필요 | `tab=writable\|written` | 구현됨 |
-| `/mypage/reviews/write?orderItemId=` | 리뷰 작성 | 인증·구매 확정 필요 | `orderItemId` | 필수값 처리 방식 보완 필요 |
+| `/mypage/reviews/write?productId=` | 리뷰 작성 | 인증·구매 확정 필요 | `productId` | 구현됨. 없으면 나의 상품 후기로 안내 |
 | `/mypage/reviews/[reviewId]` | 작성한 리뷰 상세 | 인증·작성자 권한 필요 | `reviewId` | 스캐폴딩 |
 
 ### 고객지원·서비스 안내
@@ -105,7 +105,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 상품 비교 | `slot` | 비교할 자리 인덱스 |
 | 상품 비교 | `product` | 고른 상품 ID |
 | 클레임 접수 | `type` | `cancel`, `return`, `exchange` |
-| 리뷰 작성 | `orderItemId` | 리뷰를 작성할 구매 항목의 임시 식별자 |
+| 리뷰 작성 | `productId` | 리뷰를 작성할 상품. 백엔드가 회원+상품당 한 건만 받는다 |
 | 상품 상세 | `tab` | `info`, `review`, `qna` |
 | 상품 상세 | `reviewSort` | `recommend`, `recent`, `rating-high`, `rating-low` |
 | 상품 상세 | `reviewMatch` | `on`, `off` — 고른 아이와 같은 품종의 후기만 |

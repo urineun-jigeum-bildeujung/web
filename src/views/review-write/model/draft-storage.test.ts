@@ -15,7 +15,7 @@ describe("review draft-storage", () => {
   });
 
   it("저장한 값을 캐시를 비워도 다시 읽는다", () => {
-    setReviewDraft("oi1", {
+    setReviewDraft("p1", {
       score: 4.5,
       days: "7",
       responses: { PALATABILITY: "NEUTRAL" },
@@ -24,7 +24,7 @@ describe("review draft-storage", () => {
     });
     resetReviewDraftCache();
 
-    expect(getReviewDraft("oi1")).toEqual({
+    expect(getReviewDraft("p1")).toEqual({
       score: 4.5,
       days: "7",
       responses: { PALATABILITY: "NEUTRAL" },
@@ -33,15 +33,15 @@ describe("review draft-storage", () => {
     });
   });
 
-  it("구매 항목이 다르면 서로 섞이지 않는다", () => {
-    setReviewDraft("oi1", { score: 3, days: "1", responses: {}, text: "" });
+  it("상품이 다르면 서로 섞이지 않는다", () => {
+    setReviewDraft("p1", { score: 3, days: "1", responses: {}, text: "" });
 
-    expect(getReviewDraft("oi2").score).toBe(0);
+    expect(getReviewDraft("p2").score).toBe(0);
   });
 
   it("보기에 없는 답과 범위 밖 점수는 버린다", () => {
     window.localStorage.setItem(
-      "review-draft:oi1",
+      "review-draft:product:p1",
       JSON.stringify({
         score: 9,
         days: "1a2",
@@ -49,17 +49,17 @@ describe("review draft-storage", () => {
       }),
     );
 
-    const draft = getReviewDraft("oi1");
+    const draft = getReviewDraft("p1");
     expect(draft.score).toBe(0);
     expect(draft.days).toBe("12");
     expect(draft.responses).toEqual({ DIGESTION: "POSITIVE" });
   });
 
   it("지우면 빈 초안으로 돌아간다", () => {
-    setReviewDraft("oi1", { score: 3, days: "1", responses: {}, text: "" });
-    clearReviewDraft("oi1");
+    setReviewDraft("p1", { score: 3, days: "1", responses: {}, text: "" });
+    clearReviewDraft("p1");
 
-    expect(getReviewDraft("oi1").score).toBe(0);
-    expect(window.localStorage.getItem("review-draft:oi1")).toBeNull();
+    expect(getReviewDraft("p1").score).toBe(0);
+    expect(window.localStorage.getItem("review-draft:product:p1")).toBeNull();
   });
 });
