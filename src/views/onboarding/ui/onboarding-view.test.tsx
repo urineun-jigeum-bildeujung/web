@@ -231,6 +231,38 @@ test("작성 완료를 누르면 프로필을 등록하고 완료 단계로 간�
   });
 });
 
+// 사진은 URL로 보내야 해서 등록 전에 S3에 먼저 올린다. 발급 → PUT → 등록 순서와,
+// 등록 본문에 그 주소가 실리는 것을 본다
+test("사진을 골랐으면 먼저 올리고 그 주소와 함께 등록한다", async () => {
+  const presigned = {
+    uploadUrl: "https://bucket.s3.amazonaws.com/profiles/member-1/uuid.jpg?X-Amz-Signature=sig",
+    fileUrl: "https://image.leechs.shop/profiles/member-1/uuid.jpg",
+  };
+  const fetchMock = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>((url) => {
+    if (url.includes("presigned-url")) return Promise.resolve(Response.json(presigned));
+    if (url === presigned.uploadUrl) return Promise.resolve(new Response(null, { status: 200 }));
+    return Promise.resolve(Response.json({ petId: 1, name: "코코" }, { status: 201 }));
+  });
+  vi.stubGlobal("fetch", fetchMock);
+  fillDraft();
+  // 사진은 기기에 남지 않아 캐시에 직접 넣는다. 화면에서 고른 것과 같은 상태다
+  setDraft({ ...getDraft(), photo: new File(["bytes"], "coco.jpg", { type: "image/jpeg" }) });
+  renderAt("?step=health");
+
+  fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
+
+  const register = () =>
+    fetchMock.mock.calls.find(([url]) => String(url).includes("/members/me/pets"));
+  await waitFor(() => expect(register()).toBeDefined());
+
+  const urls = fetchMock.mock.calls.map(([url]) => String(url));
+  expect(urls.indexOf(presigned.uploadUrl)).toBeGreaterThan(
+    urls.findIndex((url) => url.includes("presigned-url")),
+  );
+  const [, init] = register() as [string, RequestInit];
+  expect(JSON.parse(String(init.body))).toMatchObject({ image: presigned.fileUrl });
+});
+
 // 지우면 여섯 단계를 처음부터 다시 채워야 한다.
 // 실패가 실제로 처리된 뒤를 보지 않으면 요청 전에 통과할 수 있다
 test("등록에 실패하면 초안을 지우지 않고 그 자리에 남는다", async () => {

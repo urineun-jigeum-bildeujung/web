@@ -139,6 +139,15 @@ export const APP_MESSAGE = {
     title: "검색어를 다시 확인해 주세요",
     description: "숫자만으로는 찾을 수 없어요. 도로명이나 동 이름과 함께 넣어 주세요.",
   },
+  // 사진은 우리 서버가 아니라 S3로 바로 올린다. 실패해도 입력한 나머지는 그대로라 사진만 다시 고르면 된다
+  "image.uploadFailed": {
+    title: "사진을 올리지 못했어요",
+    description: "사진을 다시 골라 시도해 주세요.",
+  },
+  "image.unsupportedType": {
+    title: "쓸 수 없는 사진 형식",
+    description: "JPG · PNG · WEBP · GIF 사진을 골라 주세요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -186,5 +195,9 @@ export const APP_MESSAGE_CODE = {
   address: {
     keywordTooBroad: "address.keywordTooBroad",
     keywordInvalid: "address.keywordInvalid",
+  },
+  image: {
+    uploadFailed: "image.uploadFailed",
+    unsupportedType: "image.unsupportedType",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;

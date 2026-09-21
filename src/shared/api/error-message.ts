@@ -11,6 +11,7 @@
 import { APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 
 import { ApiError } from "./client";
+import { ImageUploadError } from "./upload-image";
 
 /**
  * 백엔드 errorCode에 우리 문구를 붙인다.
@@ -32,6 +33,8 @@ const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   MEMBER_401_UNAUTHORIZED: APP_MESSAGE_CODE.common.unauthorized,
   MEMBER_409_ALREADY_SIGNED_UP: APP_MESSAGE_CODE.member.alreadySignedUp,
   MEMBER_409_ALREADY_HAVE_NICKNAME: APP_MESSAGE_CODE.member.nicknameTaken,
+  // 사진 발급 요청의 확장자를 서버가 거절한 것이다. 카메라의 HEIC가 여기로 온다
+  MEMBER_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
 
   PRODUCT_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
@@ -78,6 +81,10 @@ function messageByStatus(status: number): AppMessageCode {
  * 서버에 닿지도 못한 것이라 "연결 실패"로 구분해 알린다 — 사용자가 할 수 있는 일이 다르다.
  */
 export function toAppMessageCode(error: unknown): AppMessageCode {
+  // S3가 거절한 것이다. 우리 서버 응답이 아니라 `ApiError`가 아니고, 연결 실패도 아니다
+  if (error instanceof ImageUploadError) {
+    return APP_MESSAGE_CODE.image.uploadFailed;
+  }
   if (!(error instanceof ApiError)) {
     return error instanceof TypeError
       ? APP_MESSAGE_CODE.common.networkError

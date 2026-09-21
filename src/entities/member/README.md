@@ -29,4 +29,4 @@
 
 `name`·`birth`는 서버가 주지만 **받는 자리가 화면에 없다.** 회원가입도 온보딩도 묻지 않아 늘 비어 온다. 시안에 그 입력 화면이 없어 PD 확인 대상이다(#64).
 
-`image`는 `POST /members/me/profile-image/presigned-url`로 올린 뒤 `PATCH /members/me`에 실어 보낸다. 별도 이슈로 다룬다(#269).
+`image`는 `shared/api/upload-image`의 `uploadImage`로 올린 뒤(`POST /members/me/profile-image/presigned-url` → S3 PUT) `PATCH /members/me`에 실어 보낸다. 프로필 사진을 바꾸는 화면은 아직 없다 — 시안이 오면 그때 붙인다(#269).

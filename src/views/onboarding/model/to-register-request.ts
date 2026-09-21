@@ -24,6 +24,8 @@ export type PetRegisterRequest = {
   healthConcerns: string[];
   /** `CHICKEN` 같은 코드다 */
   allergies: string[];
+  /** 올린 사진의 CDN 주소. 등록 훅이 업로드를 마친 뒤 채운다 */
+  image?: string;
 };
 
 const SEX = { male: "MALE", female: "FEMALE" } as const;
@@ -32,8 +34,8 @@ const SIZE = { small: "SMALL", medium: "MEDIUM", large: "LARGE" } as const;
 /**
  * 초안을 요청으로 옮긴다. 필수 값이 하나라도 비면 `null`이다.
  *
- * **사진은 보내지 않는다.** 요청의 `image`는 URL 문자열인데 파일을 올려 URL을 받는
- * 엔드포인트가 백엔드에 없다. 업로드 방법이 정해지면 이 자리를 채운다(#226).
+ * **사진은 여기서 다루지 않는다.** 요청의 `image`는 URL이라 먼저 S3에 올려야 하는데 그것은
+ * 비동기 왕복이다. 등록 훅이 올린 뒤 `image`를 채운다(#269).
  *
  * "해당 없음"을 켠 항목은 빈 배열로 보낸다. 안 고른 것과 없다고 답한 것을 서버가
  * 가릴 수는 없지만, 적어도 앞서 골라 둔 것이 남아 흘러가지는 않는다.
