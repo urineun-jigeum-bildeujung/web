@@ -9,6 +9,7 @@ import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPhoneVerification } from "./fixtures/phone-verification";
 import { stubReviewApi } from "./fixtures/review";
+import { stubOrders } from "./fixtures/orders";
 
 /**
  * 화면이 바깥에 기대는 것을 끊는다.
@@ -114,6 +115,7 @@ const ROUTES = [
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
   await stubPhoneVerification(page);
+  await stubOrders(page);
   await stubMemberProfile(page);
   // 리뷰 작성이 상품 요약을 받는다(#291)
   await stubReviewApi(page);
