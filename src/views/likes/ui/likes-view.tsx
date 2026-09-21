@@ -30,6 +30,9 @@ import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 const TABS = ["liked", "recent", "often"] as const;
+// 최근에 봤어요·자주 샀어요는 탭을 눌러도 안 바뀌지만, 주소로 ?tab=recent를 직접
+// 치고 들어오면 그건 막지 못했다(CodeRabbit 지적) — URL이 받는 값도 찜 탭 하나로 좁힌다
+const REACHABLE_TABS = ["liked"] as const;
 
 // 찜 탭 전용 필터. PD가 알림 상태 대신 상품 카테고리로 거르는 걸로 바꿨다
 // (#274 QA 답변, 1117-4972 chip 줄 갱신). /recommendations와 같은 값 체계를 쓴다.
@@ -143,7 +146,7 @@ export function LikesView() {
     "tab",
     // 세 탭이 서로 다른 목록이라 뒤로가기로 되돌아올 수 있어야 한다.
     // nuqs 기본값 replace는 히스토리에 쌓지 않아 화면을 통째로 떠난다
-    parseAsStringLiteral(TABS).withDefault("liked").withOptions({ history: "push" }),
+    parseAsStringLiteral(REACHABLE_TABS).withDefault("liked").withOptions({ history: "push" }),
   );
   const [category, setCategory] = useQueryState(
     "category",
@@ -152,10 +155,9 @@ export function LikesView() {
   const [items, setItems] = useState(MOCK);
   const [removing, setRemoving] = useState<Product | null>(null);
 
+  // tab은 이제 URL로도 "liked" 하나뿐이라 다른 탭으로 걸러질 일이 없다
   const visible =
-    tab === "liked" && category !== "all"
-      ? items.liked.filter((item) => item.category === category)
-      : items[tab];
+    category === "all" ? items.liked : items.liked.filter((item) => item.category === category);
 
   const remove = (id: string) => {
     setItems((prev) => ({ ...prev, [tab]: prev[tab].filter((item) => item.id !== id) }));
@@ -224,7 +226,10 @@ export function LikesView() {
       />
 
       <main className="flex flex-1 flex-col pb-8">
-        <Tabs value={tab} onValueChange={(next) => void setTab(next as (typeof TABS)[number])}>
+        <Tabs
+          value={tab}
+          onValueChange={(next) => void setTab(next as (typeof REACHABLE_TABS)[number])}
+        >
           {/* 시안(1117-4999)은 3등분 밑줄 탭이다 — 고른 탭만 굵게+검정 밑줄, 나머지는
               회색 글자다. variant="line"의 밑줄을 시안 두께(1.5px)·위치(바로 아래)로 옮긴다 */}
           <TabsList variant="line" className="h-auto w-full gap-0 rounded-none bg-transparent p-0">
@@ -271,10 +276,22 @@ export function LikesView() {
               )}
 
               {visible.length === 0 ? (
+                // 찜한 상품은 있는데 고른 카테고리에만 없는 경우와, 찜한 상품 자체가
+                // 없는 경우는 다르다(CodeRabbit 지적) — 전자에 "아직 담아둔 상품이
+                // 없어요"를 그대로 쓰면 다른 칩엔 상품이 있는데도 하나도 없는 것처럼
+                // 읽힌다. 문구 자체는 확정 시안이 없어 임시로 채운다
                 <EmptyState
                   icon={<Icon name="heart_fill" />}
-                  title="아직 담아둔 상품이 없어요"
-                  description="마음에 드는 상품을 발견하면 하트를 꾹 눌러주세요"
+                  title={
+                    value === "liked" && items.liked.length > 0
+                      ? "이 카테고리엔 담아둔 상품이 없어요"
+                      : "아직 담아둔 상품이 없어요"
+                  }
+                  description={
+                    value === "liked" && items.liked.length > 0
+                      ? "다른 카테고리도 확인해보세요"
+                      : "마음에 드는 상품을 발견하면 하트를 꾹 눌러주세요"
+                  }
                   className="flex-1"
                 />
               ) : (

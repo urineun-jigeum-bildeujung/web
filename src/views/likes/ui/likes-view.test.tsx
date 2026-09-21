@@ -19,13 +19,9 @@ function renderWith(search = "") {
 }
 
 describe("LikesView", () => {
-  it("찜 탭에만 카테고리 거르기가 있다", () => {
-    const { unmount } = renderWith();
+  it("찜 탭에 카테고리 거르기가 있다", () => {
+    renderWith();
     expect(screen.getByLabelText("상품 분류")).toBeDefined();
-    unmount();
-
-    renderWith("?tab=recent");
-    expect(screen.queryByLabelText("상품 분류")).toBeNull();
   });
 
   it("찜 탭에서 사료만 고르면 그것만 남는다", () => {
@@ -49,22 +45,17 @@ describe("LikesView", () => {
     expect(screen.getByLabelText("상품 분류")).toBeDefined();
   });
 
-  it("자주 산 탭에는 구매 횟수와 살 수 있는 버튼이 붙는다", () => {
-    renderWith("?tab=often");
-
-    expect(screen.getByText("마지막 구매 2주 전")).toBeDefined();
-    expect(screen.getByText("4회 구매")).toBeDefined();
-    // 이제 이동이라 버튼이 아니라 링크다
-    expect(screen.getAllByRole("link", { name: "구매하기" })).toHaveLength(4);
-    expect(screen.getAllByRole("link", { name: "장바구니" })[0].getAttribute("href")).toBe("/cart");
-  });
-
-  it("빼기는 확인창을 거친다", () => {
+  // disabled는 클릭만 막는다. 주소로 ?tab=recent를 직접 치고 들어오는 건 별도로 막아야
+  // 한다(CodeRabbit 지적) — tab 쿼리 파서가 liked 밖의 값을 안 받게 좁혔다
+  it("주소로 최근에 봤어요·자주 샀어요에 들어가도 찜 탭으로 떨어진다", () => {
     renderWith("?tab=recent");
 
-    // 최근 본 탭은 X로 지운다. 누르자마자 사라지면 되돌릴 수 없다
-    expect(screen.getAllByLabelText(/목록에서 빼기/)).toHaveLength(4);
+    expect(screen.queryByLabelText(/목록에서 빼기/)).toBeNull();
+    expect(screen.getByLabelText("상품 분류")).toBeDefined();
   });
+
+  // 최근에 봤어요·자주 샀어요는 탭도 주소도 막혀 있어 그 안의 목록·지우기 로직(코드에는
+  // 남아 있다)을 사용자 관점에서 도달할 방법이 없다 — 재활성화 전까지는 직접 테스트하지 않는다
 
   it("찜을 풀면 확인 없이 바로 목록에서 빠진다", () => {
     renderWith("?tab=liked");
@@ -86,6 +77,20 @@ describe("LikesView", () => {
 
     expect(screen.queryByLabelText("상품 분류")).toBeNull();
     expect(screen.getByText("아직 담아둔 상품이 없어요")).toBeDefined();
+  });
+
+  // 고른 카테고리에만 없는 것과 찜 목록 자체가 빈 것은 다르다(CodeRabbit 지적) — 전자에
+  // "아직 담아둔 상품이 없어요"를 그대로 쓰면 다른 칩엔 상품이 있는데도 다 지운 것처럼 읽힌다
+  it("찜한 상품은 있는데 고른 카테고리에만 없으면 문구가 다르다", () => {
+    renderWith("?tab=liked&category=food");
+
+    // 사료 둘을 다 풀어도 찜 목록엔 간식·영양제 상품이 남는다
+    for (const button of screen.getAllByLabelText(/찜 풀기/)) {
+      fireEvent.click(button);
+    }
+
+    expect(screen.getByText("이 카테고리엔 담아둔 상품이 없어요")).toBeDefined();
+    expect(screen.getByLabelText("상품 분류")).toBeDefined();
   });
 
   // 시안(header, 1585:18342)은 뒤로가기 화살표 + 검색·알림·장바구니고 제목이 없다(#274).
