@@ -178,10 +178,14 @@ shared/lib/
 | --- | --- |
 | `formatDisplayDate` | `26.08.28` |
 | `formatDisplayDateTime` | `26.08.28 15:43` |
+| `formatDisplayHour` | `오후 3시` |
+| `formatDisplayDayHour` | `9월 25일 오후 3시` |
+| `toDisplayDayKey` | `26.09.25` — 두 시각이 같은 날인지 견줄 때 |
 
 - **`new Date(iso)`를 그대로 `format`에 넘기지 않는다.** 그러면 표시 기준이 실행 환경을 따라, 같은 주문이 기기마다 다른 날짜로 보인다. 국내 사용자만 쓰는 서비스라 대개 KST와 같지만 자정 근처 값이 하루 어긋난다 (#295).
 - 두 함수는 읽을 수 없는 값에 `null`을 준다. **호출부가 그 줄을 통째로 비운다** — 라벨만 남으면 값을 잃은 것이 아니라 빈 날짜가 있는 것처럼 보인다.
 - 시간대를 지정하려고 `@date-fns/tz`를 들이지 않는다. `Intl.DateTimeFormat`의 `timeZone`이 이미 하는 일이다 ([library-convention](./library-convention.md)의 "이미 되는지 먼저 본다").
+- **date-fns의 `isToday`·`isTomorrow`를 쓰지 않는다.** 그 둘도 브라우저 시간대로 판정한다. 오늘·내일인지는 `toDisplayDayKey`를 견주어 본다.
 - **사용자가 치는 날짜는 다른 문제다.** 생년월일처럼 입력으로 들어오는 값은 `shared/lib/birth-date.ts`가 맡고 시간대와 무관하다.
 
 ## 포맷

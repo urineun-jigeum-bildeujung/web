@@ -10,8 +10,6 @@
 
 "use client";
 
-import { format, isToday, isTomorrow } from "date-fns";
-import { ko } from "date-fns/locale";
 import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useState } from "react";
@@ -22,6 +20,11 @@ import {
   type OptionSheetProduct,
   type TimeDealList,
 } from "@/entities/product";
+import {
+  formatDisplayDayHour,
+  formatDisplayHour,
+  toDisplayDayKey,
+} from "@/shared/lib/date/display-date";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
@@ -47,14 +50,30 @@ const STOCK_BADGE = {
   none: { label: "품절", className: "bg-primary text-primary-foreground" },
 } as const;
 
-/** "내일 오전 10시"처럼. 오늘·내일이면 날짜 대신 그 말을 쓴다 */
-function formatOpenAt(at: Date) {
-  const day = isToday(at)
-    ? "오늘"
-    : isTomorrow(at)
-      ? "내일"
-      : format(at, "M월 d일", { locale: ko });
-  return `${day} ${format(at, "a h'시'", { locale: ko })}`;
+/** 하루. 내일 열리는 딜인지 견줄 때 쓴다 */
+const DAY_MS = 86_400_000;
+
+/**
+ * "내일 오전 10시"처럼. 오늘·내일이면 날짜 대신 그 말을 쓴다.
+ *
+ * **date-fns의 `isToday`·`isTomorrow`를 쓰지 않는다.** 그 둘은 브라우저 시간대로 판정해서,
+ * 자정 근처에 열리는 딜이 기기에 따라 하루 어긋난다 (#295).
+ */
+function formatOpenAt(startAt: string) {
+  const openDay = toDisplayDayKey(startAt);
+  if (!openDay) {
+    return null;
+  }
+
+  const now = Date.now();
+  const nearby =
+    openDay === toDisplayDayKey(new Date(now).toISOString())
+      ? "오늘"
+      : openDay === toDisplayDayKey(new Date(now + DAY_MS).toISOString())
+        ? "내일"
+        : null;
+
+  return nearby ? `${nearby} ${formatDisplayHour(startAt)}` : formatDisplayDayHour(startAt);
 }
 
 /** 결과 영역이 대기 중일 때 자리를 잡는다. 카운트다운 자리 하나 + 카드 3장 자리 */
@@ -292,7 +311,7 @@ function UpcomingDealsSection({
       {groups.map((group) => {
         const notified = notifiedDealIds.includes(group.dealId);
         const openAt = new Date(group.startAt);
-        const openLabel = formatOpenAt(openAt);
+        const openLabel = formatOpenAt(group.startAt);
 
         return (
           <div key={group.dealId}>
@@ -302,7 +321,7 @@ function UpcomingDealsSection({
                 endsAt={openAt}
                 fallback={<p className="text-2xl font-bold text-foreground">곧 열려요</p>}
               />
-              <p className="text-sm text-muted-foreground">{openLabel}에 봬요!</p>
+              {openLabel && <p className="text-sm text-muted-foreground">{openLabel}에 봬요!</p>}
             </div>
 
             <ul className="flex flex-col">
