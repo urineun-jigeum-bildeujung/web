@@ -217,6 +217,12 @@ test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
       // 소셜 로그인 시작 주소가 그렇다. 백엔드 없이 여는 이 테스트로는 판단할 수 없다
       if (key.startsWith("/api/")) continue;
 
+      // **`/deals`는 ROUTES에서 뺀 것과 같은 이유로 여기서도 건너뛴다.** 서버에서 실제 API를
+      // 조회하는데(#282) 이 스위트에는 그 서버가 없어, 요청할 때마다 Next 서버가 오류를 던진다.
+      // 그 오류 처리가 dev 서버를 붙들어 같은 회차의 다른 테스트까지 느려졌다 (#324).
+      // 이 라우트의 스모크는 `e2e/deals.server-fetch.spec.ts`가 전용 목 API 서버로 맡는다
+      if (key === "/deals") continue;
+
       // dev 서버는 라우트를 첫 요청에 컴파일한다. 다른 테스트와 겹치면
       // 그 사이에 실패할 수 있어 한 번 더 확인하고 판단한다.
       let status = (await page.request.get(key)).status();
