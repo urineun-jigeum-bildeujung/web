@@ -42,15 +42,21 @@ export function VerifyPhoneView() {
   const [phone, setPhone] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [code, setCode] = useState("");
-  // **인증을 "했다/안 했다"로 들면 안 된다.** 010-1111로 인증한 뒤 010-2222로 고치면
-  // 켜진 채로 남아, 인증하지 않은 번호로 완료할 수 있다. 어느 번호를 인증했는지 들고
-  // 지금 번호와 견준다 — 늦게 도착한 응답도 옛 번호를 적어 두므로 저절로 어긋난다
-  const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+  /**
+   * **인증을 "했다/안 했다"로 들면 안 된다.** 010-1111로 인증한 뒤 010-2222로 고치면
+   * 켜진 채로 남아, 인증하지 않은 번호로 완료할 수 있다.
+   *
+   * **인증번호도 같다.** 저장할 때 서버가 그 번호를 다시 검증하므로, 맞는 번호로 인증한
+   * 뒤 딴 값으로 고치면 저장이 거절된다. 무엇으로 인증했는지 함께 들고 지금 값과 견준다 —
+   * 늦게 도착한 응답도 옛 값을 적어 두므로 저절로 어긋난다.
+   */
+  const [verifiedWith, setVerifiedWith] = useState<{ phone: string; code: string } | null>(null);
 
   const { requestCode, isRequesting, confirmCode, isConfirming, savePhone, isSaving } =
     useMutatePhoneVerification();
 
-  const verified = verifiedPhone !== null && verifiedPhone === digitsOf(phone);
+  const verified =
+    verifiedWith !== null && verifiedWith.phone === digitsOf(phone) && verifiedWith.code === code;
   const canRequestCode = Boolean(carrier) && digitsOf(phone).length >= 10;
 
   const sendCode = () => {
@@ -78,13 +84,13 @@ export function VerifyPhoneView() {
   };
 
   const checkCode = () => {
-    // 요청을 건 시점의 번호를 잡아 둔다. 확인하는 동안 번호를 고쳐도 옛 번호에만 붙는다
-    const requested = digitsOf(phone);
+    // 요청을 건 시점의 값을 잡아 둔다. 확인하는 동안 고쳐도 옛 값에만 붙는다
+    const requested = { phone: digitsOf(phone), code };
 
     confirmCode({ phone, code })
       .then((ok) => {
         if (ok) {
-          setVerifiedPhone(requested);
+          setVerifiedWith(requested);
           return;
         }
         // 서버가 200에 `verified: false`로 답한다. 틀렸다는 것을 알려야 다시 칠 수 있다
