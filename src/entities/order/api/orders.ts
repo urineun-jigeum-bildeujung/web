@@ -1,4 +1,4 @@
-// 주문 API. 지금은 목록 조회 하나를 부른다.
+// 주문 API. 목록·상세를 가져오고 구매 확정·주문 취소를 보낸다.
 //
 // **화면은 이 파일의 타입과 함수만 본다.** 응답 규격이 바뀌면 여기만 고치면 되도록
 // 필드 이름을 화면 쪽으로 옮기지 않고 명세 그대로 둔다 (`entities/cart/api/cart.ts`와 같은 방식).
@@ -69,6 +69,69 @@ export async function getOrders({
   cursor,
 }: GetOrdersParams = {}): Promise<OrderListResponse> {
   return apiRequest<OrderListResponse>(ORDERS_PATH, { query: { size, cursor } });
+}
+
+/**
+ * 상세에만 오는 상품 필드.
+ *
+ * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
+ * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
+ */
+export type OrderDetailItem = OrderListItem & {
+  unitPrice: number;
+  /**
+   * 상품별 상태. 주문 전체 상태와 따로 움직인다 — 한 상품만 반품 중일 수 있다.
+   *
+   * 주문 상태와 마찬가지로 값 목록을 알지 못해 문자열로 둔다. 화면이 아직 쓰지 않는다.
+   */
+  itemStatus: string;
+};
+
+/** 주문에 붙은 배송지. 배송지 등록 API와 달리 연락처 이름이 `receiverPhone`이다 */
+export type OrderDeliveryAddress = {
+  receiver: string;
+  receiverPhone: string;
+  zipCode: string;
+  /** 도로명 주소. 상세 주소는 `addressDetail`에 따로 온다 */
+  address: string;
+  addressDetail: string;
+};
+
+export type OrderPayment = {
+  /** ISO 8601 */
+  paidAt: string;
+  /** `"토스페이먼츠 결제"`처럼 이미 다듬어진 문자열 */
+  method: string;
+};
+
+/**
+ * 주문 상세.
+ *
+ * **배송비 필드가 없다.** 명세가 주는 것은 상품 금액(`productAmount`)과 결제 금액
+ * (`totalAmount`) 둘뿐이라 차액이 배송비다. 기능명세서가 배송비를 3,000원 고정으로
+ * 적어 두었고 Example의 차액도 3,000원이라 맞지만, 계산해 쓰는 것이라 화면 쪽에서
+ * 한 번만 빼도록 둔다.
+ *
+ * **`orderedAt`이 없다.** 목록에는 오지만 상세 응답에는 없다. 시안(`mypa_161`)도
+ * 주문 일자를 그리지 않아 지금은 모자라지 않는다.
+ */
+export type OrderDetail = {
+  orderId: number;
+  orderNumber: string;
+  orderStatus: string;
+  /** 배송비를 뺀 상품 금액의 합 */
+  productAmount: number;
+  totalAmount: number;
+  items: OrderDetailItem[];
+  deliveryAddress: OrderDeliveryAddress;
+  /** 배송 요청사항. 남기지 않고 주문할 수 있다 */
+  deliveryNote: string;
+  payment: OrderPayment;
+};
+
+/** 주문 하나를 배송지·결제 정보까지 가져온다 */
+export async function getOrderDetail(orderId: number): Promise<OrderDetail> {
+  return apiRequest<OrderDetail>(`${ORDERS_PATH}/${orderId}`);
 }
 
 /**
