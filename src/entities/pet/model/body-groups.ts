@@ -103,13 +103,8 @@ export type BodySizeGroup<T> = {
   breeds: T[];
 };
 
-/**
- * 품종을 체구그룹으로 나눈다.
- *
- * 표에 없는 품종(표기 차이·신규 품종)은 사라지지 않도록 맨 뒤 "기타" 그룹에 모은다 —
- * 실제로 남는 품종이 있을 때만 그 그룹을 만든다. 나머지 다섯(넷) 그룹은 매칭되는
- * 품종이 없어도 시안대로 항상 보인다.
- */
+/** 표에 없는 품종(표기 차이·신규 품종)은 사라지지 않도록 맨 뒤 "기타" 그룹에 모은다 —
+    실제로 남는 품종이 있을 때만 그 그룹을 만든다 */
 export function groupBreedsByBodySize<T extends { breedName: string }>(
   species: PetSpecies,
   breeds: T[],

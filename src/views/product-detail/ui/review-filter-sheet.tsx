@@ -184,8 +184,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
   const [breedSpecies, setBreedSpecies] = useState<PetSpecies>(draft.species ?? "dog");
   const { breeds, isLoading: breedsLoading } = useQueryBreeds();
   // #264: 체구그룹(초소형·소형·중형·대형·믹스)은 `GET /pets/breeds`에 없는 값이라
-  // `entities/pet`의 화면 쪽 상수(body-groups.ts)로 나눈다. 표에 없는 품종은
-  // groupBreedsByBodySize가 "기타" 그룹으로 모아 사라지지 않게 한다
+  // `entities/pet`의 화면 쪽 상수(body-groups.ts)로 나눈다
   const breedGroups: PickerGroup[] = groupBreedsByBodySize(
     breedSpecies,
     breeds.filter((breed) => breed.species === breedSpecies),
