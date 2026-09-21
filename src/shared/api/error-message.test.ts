@@ -6,6 +6,7 @@ import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 import { ApiError } from "./client";
 import { toAppMessageCode } from "./error-message";
+import { ImageUploadError } from "./upload-image";
 
 const apiError = (status: number, errorCode?: string) =>
   new ApiError(status, "실패", errorCode ? { status, errorCode } : { status });
@@ -17,6 +18,14 @@ describe("toAppMessageCode", () => {
     );
     expect(toAppMessageCode(apiError(409, "MEMBER_409_ALREADY_HAVE_NICKNAME"))).toBe(
       APP_MESSAGE_CODE.member.nicknameTaken,
+    );
+  });
+
+  // S3 응답은 ProblemDetail이 아니다. "요청 실패"로 떨어뜨리면 무엇을 다시 해야 하는지 모른다
+  it("S3 업로드 실패는 사진을 다시 고르라는 문구로 간다", () => {
+    expect(toAppMessageCode(new ImageUploadError(403))).toBe(APP_MESSAGE_CODE.image.uploadFailed);
+    expect(toAppMessageCode(apiError(400, "MEMBER_400_INVALID_IMAGE_EXTENSION"))).toBe(
+      APP_MESSAGE_CODE.image.unsupportedType,
     );
   });
 

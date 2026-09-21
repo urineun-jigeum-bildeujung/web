@@ -21,9 +21,9 @@ export function useEditPet() {
   const { pet, isLoading, error } = useQueryPetDetail(petId);
   const { updatePet, isSaving } = useMutateUpdatePet(petId);
 
-  /** 고친 것만 보낸다. 저장되면 앞 화면으로 돌아간다 */
-  const save = (patch: PetUpdate) => {
-    updatePet(patch)
+  /** 고친 것만 보낸다. 새 사진이 있으면 올린 뒤 함께 보낸다. 저장되면 앞 화면으로 돌아간다 */
+  const save = (patch: PetUpdate, photo?: File | null) => {
+    updatePet({ patch, photo })
       .then(() => router.back())
       .catch((causedBy: unknown) => toastAppError(toAppMessageCode(causedBy), causedBy));
   };

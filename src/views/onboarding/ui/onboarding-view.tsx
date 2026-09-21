@@ -96,7 +96,7 @@ export function OnboardingView() {
       return;
     }
 
-    registerPet(request)
+    registerPet({ request, photo: draft.photo })
       .then(() => void setStep("done"))
       .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
   };

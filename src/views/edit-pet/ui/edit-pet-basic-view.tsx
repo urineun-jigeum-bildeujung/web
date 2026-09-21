@@ -35,15 +35,18 @@ function FieldTitle({ children }: { children: React.ReactNode }) {
 type BasicFormProps = {
   pet: PetDetail;
   isSaving: boolean;
-  onSave: (patch: {
-    name: string;
-    species: "DOG" | "CAT";
-    breedId: number;
-    age: number;
-    birthDate?: string;
-    sex: "MALE" | "FEMALE";
-    isNeutered: boolean;
-  }) => void;
+  onSave: (
+    patch: {
+      name: string;
+      species: "DOG" | "CAT";
+      breedId: number;
+      age: number;
+      birthDate?: string;
+      sex: "MALE" | "FEMALE";
+      isNeutered: boolean;
+    },
+    photo: File | null,
+  ) => void;
 };
 
 function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
@@ -59,6 +62,8 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
   const [birthday, setBirthday] = useState(pet.birthDate ?? "");
   const [gender, setGender] = useState<string>(pet.gender);
   const [neutered, setNeutered] = useState(pet.neutered ? "yes" : "no");
+  // 새로 고른 사진. 저장할 때 올린다. 안 골랐으면 `image`를 보내지 않아 저장된 사진이 남는다
+  const [photo, setPhoto] = useState<File | null>(null);
 
   const parsedAge = parseAge(age);
   /**
@@ -77,15 +82,18 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
 
   const submit = () => {
     if (parsedAge === null || birthdayBroken) return;
-    onSave({
-      name: name.trim(),
-      species: SPECIES_PARAM[species],
-      breedId,
-      age: parsedAge,
-      ...(parsedBirth && { birthDate: parsedBirth }),
-      sex: gender === "female" ? "FEMALE" : "MALE",
-      isNeutered: neutered === "yes",
-    });
+    onSave(
+      {
+        name: name.trim(),
+        species: SPECIES_PARAM[species],
+        breedId,
+        age: parsedAge,
+        ...(parsedBirth && { birthDate: parsedBirth }),
+        sex: gender === "female" ? "FEMALE" : "MALE",
+        isNeutered: neutered === "yes",
+      },
+      photo,
+    );
   };
 
   if (picking === "breed") {
@@ -119,7 +127,8 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
           size="lg"
           label="아이 사진"
           placeholder={<Icon name="dog" className="size-12 text-icon-fill-tertiary" />}
-          onFileChange={() => {}}
+          defaultImageUrl={pet.photoUrl}
+          onFileChange={setPhoto}
         />
       </div>
 
