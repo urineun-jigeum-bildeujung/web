@@ -130,6 +130,13 @@ export const APP_MESSAGE = {
     description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
   },
 
+  // 신청 화면 시안이 아직 없다. 접수 버튼이 여기로 데려오므로 빈 화면 대신 까닭을 알린다 (#288)
+  "order.claimPreparing": {
+    title: "신청 화면을 준비하고 있어요",
+    description:
+      "준비가 끝나면 사유와 사진을 남겨 바로 접수할 수 있어요.\n그때까지는 고객센터로 문의해 주세요.",
+  },
+
   // 행정안전부 도로명주소 API가 거절하는 경우다. 무엇을 고쳐야 하는지 알려 줘야 다시 찾을 수 있다
   "address.keywordTooBroad": {
     title: "검색어가 너무 넓어요",
@@ -195,6 +202,7 @@ export const APP_MESSAGE_CODE = {
   },
   order: {
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
+    claimPreparing: "order.claimPreparing",
   },
   payment: {
     failed: "payment.failed",
