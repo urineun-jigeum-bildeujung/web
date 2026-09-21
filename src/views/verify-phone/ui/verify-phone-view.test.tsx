@@ -265,3 +265,33 @@ test("저장에 실패하면 까닭을 알린다", async () => {
 
   await waitFor(() => expect(toastAppError).toHaveBeenCalled());
 });
+
+// 저장할 때 서버가 인증번호를 다시 검증한다. 인증한 뒤 번호를 고치면 저장이 거절되는데,
+// 확인 버튼도 `verified`로 잠겨 있어 같은 화면에서 다시 인증할 수도 없었다
+test("인증한 뒤 인증번호를 고치면 완료가 다시 잠기고 재인증할 수 있다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation((url: string) =>
+      url.includes("verify-confirm")
+        ? Promise.resolve(Response.json({ verified: true }))
+        : Promise.resolve(Response.json({ expiresInSeconds: 180 })),
+    );
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+  await waitFor(() => expect(screen.getByText("인증 번호를 입력해주세요")).toBeDefined());
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 확인" }));
+
+  const submit = () => screen.getByRole("button", { name: "입력 완료" }) as HTMLButtonElement;
+  await waitFor(() => expect(submit().disabled).toBe(false));
+
+  fireEvent.change(screen.getByLabelText("인증 번호"), { target: { value: "111111" } });
+
+  expect(submit().disabled).toBe(true);
+  // 확인 버튼이 다시 열려야 새 번호로 인증할 수 있다
+  expect(
+    (screen.getByRole("button", { name: "인증 번호 확인" }) as HTMLButtonElement).disabled,
+  ).toBe(false);
+});
