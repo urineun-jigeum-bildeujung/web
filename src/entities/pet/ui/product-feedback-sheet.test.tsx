@@ -1,5 +1,5 @@
 // 답변과 보류가 무엇으로 나가는지, 보내는 동안 막히는지, 실패하면 완료로 안 가는지 본다.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { expect, it, vi } from "vitest";
 
 import { ProductFeedbackSheet } from "./product-feedback-sheet";
@@ -51,6 +51,21 @@ it("보내다 실패하면 완료로 가지 않고 그 자리에 남는다", asy
   await waitFor(() => expect(onSubmit).toHaveBeenCalled());
   expect(screen.queryByText("반응이 등록됐어요")).toBeNull();
   expect(screen.getByRole("radio", { name: "그냥 그랬어요" })).toBeDefined();
+});
+
+// 끌어내리기·덮개 누르기는 보내는 중에도 닫힌다. 그 뒤 온 완료가 다음에 열리는 시트에 남으면 안 된다
+it("보내는 중에 닫으면 늦게 온 완료를 버린다", async () => {
+  let finish = () => {};
+  const onSubmit = vi.fn(() => new Promise<void>((resolve) => (finish = resolve)));
+  renderSheet({ variant: "full", onSubmit });
+
+  fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+  fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+  fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+  await act(async () => finish());
+
+  expect(screen.queryByText("반응이 등록됐어요")).toBeNull();
+  expect(screen.getByRole("radio", { name: "잘 맞았어요" })).toBeDefined();
 });
 
 it("보내는 동안 등록이 막힌다", () => {

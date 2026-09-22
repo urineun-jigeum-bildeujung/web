@@ -162,6 +162,19 @@ test("시트 제목의 아이는 항목의 아이, 없으면 대표 아이다", 
   expect(screen.getByText("보리에게 잘 맞았나요?")).toBeDefined();
 });
 
+// 지운 아이의 구매도 목록에 남을 수 있다. 그때 대표 아이로 바꿔 보내면 반응이 다른 아이에게 섞인다
+test("항목의 아이가 목록에 없어도 그 id 그대로 보낸다", () => {
+  query.items = [{ orderProductId: "14", productId: "9", name: "연어 트릿", petId: "99" }];
+  renderView("?tab=products");
+  fireEvent.click(screen.getByRole("button", { name: "연어 트릿 반응 남기기" }));
+  expect(screen.getByText("우리 아이에게 잘 맞았나요?")).toBeDefined();
+
+  fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+  fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+
+  expect(submitFeedback).toHaveBeenCalledWith(expect.objectContaining({ petId: "99" }));
+});
+
 test("답을 고르고 등록하면 그 구매 항목으로 서버에 보내고 완료를 보인다", async () => {
   renderView("?tab=products");
   fireEvent.click(screen.getByRole("button", { name: "베터 글루코사민 반응 남기기" }));
