@@ -97,7 +97,8 @@ export function OnboardingView() {
     }
 
     registerPet({ request, photo: draft.photo })
-      .then(() => void setStep("done"))
+      // 마지막 입력 단계를 완료로 바꿔 끼운다. push면 홈에서 뒤로가기가 완료 단계로 돌아온다(#371)
+      .then(() => void setStep("done", { history: "replace" }))
       .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
   };
 
@@ -147,7 +148,7 @@ export function OnboardingView() {
       {step === "done" && (
         <DoneStep
           petName={draft.name}
-          onGoHome={() => finish(() => router.push("/"))}
+          onGoHome={() => finish(() => router.replace("/"))}
           // 시안에 이어지는 화면이 없어 같은 흐름을 처음부터 다시 돈다
           onAddProfile={() => finish(() => void setStep("basic"))}
         />

@@ -30,7 +30,8 @@ const toastAppError = vi.fn();
 vi.mock("@/shared/lib/app-toast", () => ({
   toastAppError: (...args: unknown[]) => toastAppError(...args),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace, back: vi.fn() }) }));
 // 도입부 목업 이미지. jsdom에는 이미지 최적화가 없어 img로 대신한다
 type MockImageProps = ComponentProps<"img"> & { fill?: boolean; priority?: boolean };
 vi.mock("next/image", () => ({
@@ -399,4 +400,44 @@ test("나이를 비우면 다음 단계로 못 간다", () => {
   expect(
     (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
   ).toBe(false);
+});
+
+// 완료 뒤 홈에서 뒤로가기를 눌러도 완료 단계나 빈 폼으로 돌아오면 안 된다(#371).
+// 단계 전환은 push지만 등록 성공 → 완료는 마지막 입력 단계를 바꿔 끼운다
+test("등록에 성공하면 완료 단계로 바꿔 끼운다", async () => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue(Response.json({ petId: 1, name: "코코" }, { status: 201 })),
+  );
+  fillDraft();
+  const updates: { queryString: string; history?: string }[] = [];
+  render(
+    <NuqsTestingAdapter
+      searchParams="?step=health"
+      onUrlUpdate={(update) =>
+        updates.push({ queryString: update.queryString, history: update.options.history })
+      }
+    >
+      <OnboardingView />
+    </NuqsTestingAdapter>,
+    { wrapper: createQueryWrapper() },
+  );
+
+  fireEvent.click(screen.getByRole("button", { name: "작성 완료" }));
+
+  await waitFor(() =>
+    expect(updates.find((update) => update.queryString.includes("step=done"))).toBeDefined(),
+  );
+  expect(updates.find((update) => update.queryString.includes("step=done"))?.history).toBe(
+    "replace",
+  );
+});
+
+test("완료 화면의 홈으로는 replace로 가서 홈에서 뒤로가기가 여기로 돌아오지 않는다", () => {
+  renderAt("?step=done");
+
+  fireEvent.click(screen.getByRole("button", { name: "홈으로 이동" }));
+
+  expect(replace).toHaveBeenCalledWith("/");
+  expect(push).not.toHaveBeenCalledWith("/");
 });
