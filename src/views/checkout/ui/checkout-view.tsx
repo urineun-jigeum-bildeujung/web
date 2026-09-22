@@ -152,6 +152,9 @@ function Section({
   );
 }
 
+/** 만들어 둔 주문과 그때 보낸 본문. 본문이 같을 때만 다시 쓴다 */
+type MadeOrder = { orderId: number; signature: string };
+
 export function CheckoutView() {
   const [request, setRequest] = useState(REQUEST_OPTIONS[0]);
   const [directRequest, setDirectRequest] = useState("");
@@ -160,6 +163,8 @@ export function CheckoutView() {
   const [requestPayment, setRequestPayment] = useState<RequestPayment | null>(null);
   // 주문 생성부터 결제창이 뜨기까지의 왕복. 결제는 되돌릴 수 없어 두 번 눌리면 안 된다
   const [paying, setPaying] = useState(false);
+  // 이미 만들어 둔 주문. 결제 준비나 결제창에서 실패한 뒤 다시 누를 때 쓴다 (#361)
+  const [madeOrder, setMadeOrder] = useState<MadeOrder | null>(null);
 
   const searchParams = useSearchParams();
   // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다
@@ -180,6 +185,22 @@ export function CheckoutView() {
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
   const total = itemPrice + SHIPPING_FEE;
   const deliveryNote = request === REQUEST_DIRECT ? directRequest.trim() : request;
+
+  // **보내려는 주문 본문을 렌더 단계에서 만든다.** `pay` 안에서 만들면 지문과 실제 요청이
+  // 갈릴 수 있고, React Compiler가 try 블록 안의 값 계산을 만나면 최적화를 포기한다 (#223)
+  const orderRequest = {
+    addressId: address ? address.addressId : null,
+    // 장바구니 규격(`itemType`+`itemId`)을 주문 규격으로 옮긴다. 서버가 상품과
+    // 타임딜을 다른 필드로 받는다 (#306)
+    items: items.map(toOrderItem),
+    // 적지 않았으면 빈 문자열이 아니라 아예 보내지 않는다
+    deliveryNote: deliveryNote || null,
+  };
+  // 만들어 둔 주문을 다시 쓸 수 있는가. **본문이 한 글자라도 다르면 쓰지 않는다** —
+  // 배송지를 바꾸거나 요청사항을 고쳤는데 옛 주문으로 결제하면 엉뚱한 곳으로 간다
+  const orderSignature = JSON.stringify(orderRequest);
+  const reusableOrderId =
+    madeOrder !== null && madeOrder.signature === orderSignature ? madeOrder.orderId : null;
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =
@@ -206,6 +227,14 @@ export function CheckoutView() {
    * 하고, 미리 부르면 결제하지 않고 떠난 주문이 쌓인다. 그래서 버튼을 누른 이 자리에서 세
    * 단계를 잇는다 (#255).
    *
+   * **`[1]`은 다시 눌러도 한 번만 만든다.** `[2]`·`[3]`에서 막힌 뒤 다시 누를 때 처음부터
+   * 가면 `PENDING` 주문이 누를 때마다 하나씩 쌓이고, 그것들이 주문 내역에 "결제 대기" 줄로
+   * 남는다. 한 번 사려던 것이 목록에 여러 줄로 보인다. 그래서 만든 주문을 들고 있다가 보내려는
+   * 본문이 그대로면 `[2]`부터 다시 한다 (#361).
+   *
+   * 같은 주문으로 `[2]`를 다시 부르는 것은 서버가 받아 준다 — `RequestPaymentService`가
+   * 중복 저장에서 기존 결제를 찾아 **같은 `tossOrderId`(주문번호)** 와 그 금액을 돌려준다.
+   *
    * **실패가 두 갈래라 여기서도 받아야 한다.** 결제창이 뜬 뒤의 실패·취소는 토스가 `failUrl`로
    * 되돌려 보내 `?code=`로 알 수 있지만, 창을 띄우기도 전에 막히면(주문 생성 실패, 파라미터
    * 오류 등) 리다이렉트가 일어나지 않고 약속만 깨진다. 놓치면 눌러도 아무 일이 없어 보인다.
@@ -219,14 +248,12 @@ export function CheckoutView() {
 
     setPaying(true);
     try {
-      const { orderId } = await createOrder({
-        addressId: address.addressId,
-        // 장바구니 규격(`itemType`+`itemId`)을 주문 규격으로 옮긴다. 서버가 상품과
-        // 타임딜을 다른 필드로 받는다 (#306)
-        items: items.map(toOrderItem),
-        // 적지 않았으면 빈 문자열이 아니라 아예 보내지 않는다
-        deliveryNote: deliveryNote || null,
-      });
+      let orderId = reusableOrderId;
+      if (orderId === null) {
+        const created = await createOrder({ ...orderRequest, addressId: address.addressId });
+        orderId = created.orderId;
+        setMadeOrder({ orderId, signature: orderSignature });
+      }
       // **`amount`는 서버가 만든 주문의 금액이다.** 화면이 장바구니로 센 `total`과
       // 갈릴 수 있어 결제창에는 이쪽을 싣는다 (#312)
       const { tossOrderId, orderName, amount } = await preparePayment({ orderId });

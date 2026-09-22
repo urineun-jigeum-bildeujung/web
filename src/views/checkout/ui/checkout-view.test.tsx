@@ -292,6 +292,64 @@ test("결제창을 띄우지 못하면 실패를 알린다", async () => {
   expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false);
 });
 
+const PREPARED = {
+  tossOrderId: "ORD-20260918-000123",
+  amount: 12345,
+  orderName: "종근당 캣츠벨",
+  customerKey: "3f29a1d0",
+};
+
+/**
+ * 실패한 뒤 다시 누르는 길이다.
+ *
+ * 처음부터 다시 가면 `PENDING` 주문이 누를 때마다 하나씩 쌓이고, 그것들이 주문 내역에
+ * "결제 대기" 줄로 남는다 (#361). 같은 주문으로 결제 준비를 다시 부르는 것은 서버가
+ * 받아 준다 — 중복 저장에서 기존 결제를 찾아 같은 `tossOrderId`를 돌려준다.
+ */
+test("결제가 실패한 뒤 다시 눌러도 주문을 또 만들지 않는다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(requestPayment).toHaveBeenCalledTimes(2));
+
+  expect(createOrder).toHaveBeenCalledTimes(1);
+  // 결제 준비부터 다시 한다 — 만들어 둔 주문을 그대로 쓴다
+  expect(preparePayment).toHaveBeenCalledTimes(2);
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 77 });
+});
+
+// 옛 주문으로 결제하면 고친 내용이 반영되지 않는다. 본문이 달라지면 새로 만들어야 한다
+test("요청사항을 고치면 주문을 새로 만든다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("INVALID_PARAMETERS"));
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(createOrder).toHaveBeenCalledTimes(1);
+
+  // 드롭다운을 직접 입력으로 바꾼다. 적은 것이 없으므로 요청사항이 `null`로 달라진다
+  fireEvent.click(screen.getByLabelText("배송 요청사항"));
+  fireEvent.click(screen.getByRole("option", { name: "직접 입력" }));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  expect(createOrder).toHaveBeenLastCalledWith({
+    addressId: HOME.addressId,
+    items: [{ productId: 1, quantity: 1 }],
+    deliveryNote: null,
+  });
+});
+
 // 살 수 없는 줄은 이름·금액이 `null`이라 셀 수도 주문에 실을 수도 없다
 test("살 수 없는 줄만 남으면 결제할 수 없다", () => {
   const soldOut: CartItem = {
