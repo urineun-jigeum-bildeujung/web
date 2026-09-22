@@ -2,7 +2,7 @@
 // UI 시안 기준(mypa_081, 1117-7999)이다. 줄 높이 40, 아이콘 24, 제목 label/bold_14, 줄 사이 12px.
 //
 // 시안은 네 줄 다 화살표인데 갈 곳이 있는 줄이 없다. 갈 곳이 없는 줄은 화살표 없는 정적 줄로 둔다(#194의 선례).
-// 알림설정은 하위 화면 시안이 없어 줄 오른쪽에 스위치를 둔다.
+// 알림설정은 하위 화면 시안이 없어 줄 오른쪽에 스위치를 둔다. 스위치의 뜻은 "이 기기의 푸시 허용"이다(#354).
 //
 // 로그아웃과 회원탈퇴가 그 자리에서 동작하는 줄이다(#247, #266). 테마설정만 정적 줄로 남는다.
 
@@ -31,10 +31,16 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Switch } from "@/shared/ui/switch";
 
 import { useMutateLogout } from "../api/use-mutate-logout";
+import { useMutatePushSetting } from "../api/use-mutate-push-setting";
 
 export function SettingsView() {
   const pushId = useId();
-  const [pushEnabled, setPushEnabled] = useState(true);
+  const {
+    enabled: pushEnabled,
+    supported: pushSupported,
+    isChanging: pushChanging,
+    setPushEnabled,
+  } = useMutatePushSetting();
   const { logout, isLoggingOut } = useMutateLogout();
   const { withdraw, isWithdrawing } = useMutateWithdraw();
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
@@ -61,9 +67,25 @@ export function SettingsView() {
           htmlFor={pushId}
           className="flex min-h-10 cursor-pointer items-center gap-2 px-5 transition-colors hover:bg-muted"
         >
-          <Icon name="bell_fill" className="size-6 shrink-0 text-icon-fill-accent" />
-          <span className="flex-1 text-label-bold-14 text-foreground">알림설정</span>
-          <Switch id={pushId} checked={pushEnabled} onCheckedChange={setPushEnabled} />
+          {/* 권한을 묻고 서버에 알리는 동안 아이콘 자리에 대기 표시. 스위치는 라벨이 없어 여기서 보인다 */}
+          <LoadingSwap loading={pushChanging} label="알림 설정을 바꾸는 중">
+            <Icon name="bell_fill" className="size-6 shrink-0 text-icon-fill-accent" />
+          </LoadingSwap>
+          <span className="flex flex-1 flex-col text-label-bold-14 text-foreground">
+            알림설정
+            {/* 서비스 워커·알림 API가 없거나 Firebase 설정이 빈 환경. 켤 수 없는 까닭을 보인다 */}
+            {!pushSupported && (
+              <span className="text-caption-regular-13 font-normal text-text-body-tertiary">
+                이 환경에서는 켤 수 없어요
+              </span>
+            )}
+          </span>
+          <Switch
+            id={pushId}
+            checked={pushEnabled}
+            disabled={!pushSupported || pushChanging}
+            onCheckedChange={setPushEnabled}
+          />
         </label>
         <ListRowStatic size="sm" title="테마설정" icon={<Icon name="mode" />} />
         <ListRowButton
