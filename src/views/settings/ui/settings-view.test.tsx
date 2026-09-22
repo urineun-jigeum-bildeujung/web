@@ -111,6 +111,23 @@ test("켜져 있던 스위치를 끄면 이 기기의 토큰을 지우고 꺼진
   expect(window.localStorage.getItem("push-enabled")).toBeNull();
 });
 
+// 표시 없이 서버에만 토큰이 남으면 화면은 꺼짐인데 푸시는 온다. 저장이 막히면 토큰을 되돌린다
+test("켰다는 표시를 저장하지 못하면 등록한 토큰을 지우고 꺼진 채로 둔다", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+  const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("QuotaExceededError");
+  });
+  renderView();
+
+  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+
+  await waitFor(() => expect(push.deletePushToken).toHaveBeenCalled());
+  expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+    "false",
+  );
+  setItem.mockRestore();
+});
+
 test("푸시를 받을 수 없는 환경이면 스위치를 잠그고 까닭을 보인다", () => {
   push.supported = false;
   renderView();

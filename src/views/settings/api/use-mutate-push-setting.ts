@@ -8,7 +8,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
 
 import { registerFcmToken } from "@/entities/notification";
-import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { deletePushToken, isPushSupported, requestPushToken } from "@/shared/lib/push/fcm";
@@ -18,10 +17,13 @@ import {
   writePushEnabled,
 } from "@/shared/lib/push/push-preference";
 
-/** 권한이 없어 켜지 못했다. 서버 실패와 다른 문구가 필요해 가른다 */
-class PushPermissionError extends Error {
+/** 스위치 동작의 결과. 권한 거부는 서버 실패가 아니라 던지지 않고 결과로 돌려준다 */
+type PushSettingResult = { enabled: boolean } | { denied: true };
+
+/** 저장이 막힌 브라우저다. 서버 실패와 같은 문구("요청 실패")로 알린다 */
+class PushPreferenceStorageError extends Error {
   constructor() {
-    super("push permission not granted");
+    super("push preference storage unavailable");
   }
 }
 
@@ -31,24 +33,32 @@ export function useMutatePushSetting() {
   const enabled = useSyncExternalStore(subscribePushPreference, readPushEnabled, () => false);
   const supported = useSyncExternalStore(subscribePushPreference, isPushSupported, () => true);
 
+  // 서버 실패 토스트는 AppProviders의 MutationCache가 한 번 띄운다. 여기서 또 띄우지 않는다
   const mutation = useMutation({
-    mutationFn: async (next: boolean) => {
+    mutationFn: async (next: boolean): Promise<PushSettingResult> => {
       if (!next) {
-        await deletePushToken();
-        return false;
+        // 표시를 먼저 지운다. 지우지 못하면 토큰도 그대로 두어 화면과 기기가 어긋나지 않는다
+        if (!writePushEnabled(false)) throw new PushPreferenceStorageError();
+        try {
+          await deletePushToken();
+        } catch (error) {
+          writePushEnabled(true);
+          throw error;
+        }
+        return { enabled: false };
       }
       const result = await requestPushToken();
-      if (result.status !== "granted") throw new PushPermissionError();
+      if (result.status !== "granted") return { denied: true };
       await registerFcmToken(result.token);
-      return true;
-    },
-    onSuccess: writePushEnabled,
-    onError: (error: unknown) => {
-      if (error instanceof PushPermissionError) {
-        toastAppError(APP_MESSAGE_CODE.notification.pushPermissionDenied);
-        return;
+      // 표시를 못 남기면 서버에만 토큰이 남아 화면은 꺼짐인데 푸시는 온다. 토큰을 되돌리고 실패로 알린다
+      if (!writePushEnabled(true)) {
+        await deletePushToken().catch(() => {});
+        throw new PushPreferenceStorageError();
       }
-      toastAppError(toAppMessageCode(error), error);
+      return { enabled: true };
+    },
+    onSuccess: (result) => {
+      if ("denied" in result) toastAppError(APP_MESSAGE_CODE.notification.pushPermissionDenied);
     },
   });
 

@@ -9,6 +9,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import { QUERY_KEYS } from "@/shared/config/query-keys";
 import { toastPushMessage } from "@/shared/lib/app-toast";
+import { reportError } from "@/shared/lib/report-error";
 import { subscribePushMessages } from "@/shared/lib/push/fcm";
 import { readPushEnabled, subscribePushPreference } from "@/shared/lib/push/push-preference";
 
@@ -27,10 +28,13 @@ export function PushMessageListener() {
       if (message.title) toastPushMessage(message.title, message.body);
       // 새 알림이 왔으니 알림함이 다시 받아야 한다
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notification.all });
-    }).then((off) => {
-      if (cancelled) off();
-      else unsubscribe = off;
-    });
+    })
+      .then((off) => {
+        if (cancelled) off();
+        else unsubscribe = off;
+      })
+      // firebase 모듈을 못 받았거나 초기화가 깨진 것이다. 사용자가 한 일이 없어 토스트는 띄우지 않고 남긴다
+      .catch((error: unknown) => reportError("push.subscribe", error));
 
     return () => {
       cancelled = true;
