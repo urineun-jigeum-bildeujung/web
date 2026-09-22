@@ -1,7 +1,7 @@
 // 리뷰 등록·내 후기 조회 테스트. 무엇을 부르고 응답을 화면 모양으로 어떻게 옮기는지 본다.
 import { afterEach, expect, test, vi } from "vitest";
 
-import { createReview, getMyReviews, issueReviewImageUpload } from "./reviews";
+import { createReview, getMyReviews, getWritableReviews, issueReviewImageUpload } from "./reviews";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -79,4 +79,35 @@ test("내 후기는 쪽을 쿼리로 보내고 화면 모양으로 옮긴다", a
   });
   // 사진이 없으면 키 자체를 두지 않는다. `undefined`가 들어가면 화면이 있는 줄 안다
   expect("imageUrl" in list.items[0]).toBe(false);
+});
+
+test("작성 가능한 상품 목록을 받아 화면 모양으로 옮긴다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(
+    Response.json({
+      content: [
+        {
+          orderProductId: 12,
+          productId: 7,
+          productName: "저자극 덴탈껌 14개입",
+          thumbnailUrl: null,
+          confirmedAt: "2026-08-28T15:43:00+09:00",
+        },
+      ],
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const items = await getWritableReviews();
+
+  expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/reviews/writable");
+  expect(items).toEqual([
+    {
+      orderProductId: "12",
+      productId: "7",
+      name: "저자극 덴탈껌 14개입",
+      confirmedAt: "2026-08-28T15:43:00+09:00",
+    },
+  ]);
+  // 사진이 없으면 키 자체를 두지 않는다. `undefined`가 들어가면 화면이 있는 줄 안다
+  expect("imageUrl" in items[0]).toBe(false);
 });

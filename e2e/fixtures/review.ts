@@ -34,6 +34,10 @@ export async function stubReviewApi(page: Page) {
   await page.route("**/api/v1/reviews/feedbacks/pending", (route) =>
     route.fulfill({ json: { content: [] } }),
   );
+  // 나의 상품 후기의 작성 가능 탭이 구매확정했는데 안 쓴 상품을 받는다(#349)
+  await page.route("**/api/v1/reviews/writable", (route) =>
+    route.fulfill({ json: { content: [] } }),
+  );
   await page.route("**/api/v1/reviews/me*", (route) =>
     route.fulfill({ json: { content: [], hasNext: false } }),
   );
