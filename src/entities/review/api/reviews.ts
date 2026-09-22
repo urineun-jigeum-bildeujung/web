@@ -67,6 +67,40 @@ export type MyReviewList = {
   hasNext: boolean;
 };
 
+/** 백엔드 `WritableProductListResponse`와 같은 모양이다 */
+type WritableReviewListResponse = {
+  content: {
+    orderProductId: number;
+    productId: number;
+    productName: string;
+    thumbnailUrl: string | null;
+    /** 구매확정 시각. ISO(`+09:00`) */
+    confirmedAt: string;
+  }[];
+};
+
+/** 구매확정했는데 아직 후기를 안 쓴 상품 한 줄. 상품 단위라 같은 상품은 한 번만 온다 */
+export type WritableReview = {
+  orderProductId: string;
+  productId: string;
+  name: string;
+  imageUrl?: string;
+  /** 구매확정 시각(ISO). 시안의 "구매일" 자리를 이것이 채운다 — 응답에 주문일은 없다 */
+  confirmedAt: string;
+};
+
+export function getWritableReviews(): Promise<WritableReview[]> {
+  return apiRequest<WritableReviewListResponse>("/reviews/writable").then((response) =>
+    response.content.map((item) => ({
+      orderProductId: String(item.orderProductId),
+      productId: String(item.productId),
+      name: item.productName,
+      ...(item.thumbnailUrl && { imageUrl: item.thumbnailUrl }),
+      confirmedAt: item.confirmedAt,
+    })),
+  );
+}
+
 export function getMyReviews(params: { page: number; size: number }): Promise<MyReviewList> {
   return apiRequest<MyReviewListResponse>("/reviews/me", { query: params }).then((response) => ({
     items: response.content.map((item) => ({
