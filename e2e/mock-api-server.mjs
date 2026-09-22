@@ -82,6 +82,47 @@ function searchProducts(url) {
   return { items, nextCursor: null, hasNext: false, totalCount: items.length };
 }
 
+// 홈 카테고리 그리드(#289) 전용 목데이터. FOOD 카테고리만 두 페이지로 나눠 두어
+// "더 보기" 커서 이어받기를 확인한다. 그 밖의 조합은 빈 목록을 준다
+const FOOD_PAGE_1 = [
+  {
+    productId: 1,
+    productName: "중소형견 소포장 사료 1kg",
+    price: 31500,
+    discountRate: 0,
+    unitPrice: 1050,
+    unitLabel: "1kg당",
+    thumbnailUrl: null,
+    avgRating: 4.8,
+    reviewCount: 108,
+  },
+];
+const FOOD_PAGE_2 = [
+  {
+    productId: 2,
+    productName: "노령견 저지방 소화케어 사료 1kg",
+    price: 27200,
+    discountRate: 0,
+    unitPrice: 1050,
+    unitLabel: "1kg당",
+    thumbnailUrl: null,
+    avgRating: 4.5,
+    reviewCount: 108,
+  },
+];
+
+function getProducts(url) {
+  const category = url.searchParams.get("category");
+  const cursor = url.searchParams.get("cursor");
+  if (category === "FOOD" && !cursor) {
+    return { items: FOOD_PAGE_1, nextCursor: "page-2", hasNext: true };
+  }
+  if (category === "FOOD" && cursor === "page-2") {
+    return { items: FOOD_PAGE_2, nextCursor: null, hasNext: false };
+  }
+  return { items: [], nextCursor: null, hasNext: false };
+}
+
 // 타임딜 목데이터. 옛 mock의 이름·가격을 그대로 옮겨 e2e/deals.server-fetch.spec.ts와 맞춘다
 const NOW = () => new Date();
 function hoursFromNow(hours) {
@@ -148,6 +189,9 @@ function timeDeals(status) {
 
 const server = createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
+  // "더 보기"(#289)는 브라우저(Next 앱과 다른 포트)에서 직접 이 서버를 부른다 —
+  // CORS 헤더가 없으면 응답이 와도 브라우저가 막는다
+  res.setHeader("Access-Control-Allow-Origin", "*");
 
   if (url.pathname === "/health") {
     res.writeHead(200).end("ok");
@@ -156,6 +200,12 @@ const server = createServer((req, res) => {
 
   if (url.pathname === "/api/v1/products/search") {
     const body = JSON.stringify(searchProducts(url));
+    res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  if (url.pathname === "/api/v1/products") {
+    const body = JSON.stringify(getProducts(url));
     res.writeHead(200, { "content-type": "application/json" }).end(body);
     return;
   }

@@ -4,6 +4,12 @@
 // 설정은 기존 dev 서버(3000)를 재사용하지 않고, 목 API 서버와 전용 포트의 Next 서버를
 // 새로 띄워 API_BASE_URL_INTERNAL이 목 서버를 가리키게 한다 — 기존 `playwright.config.ts`
 // 스위트(브라우저 레벨 스텁)와 절대 섞이지 않는다.
+//
+// NEXT_PUBLIC_API_BASE_URL도 같은 목 서버를 가리킨다(#289). 홈 카테고리 그리드의
+// "더 보기"는 브라우저에서 직접 getProducts를 다시 부르는데, 이 값이 없으면
+// shared/api/client의 same-origin 기본값(/api/v1)으로 가 이 Next 앱 자신에게 요청을
+// 보내 404가 난다 — 실제 배포에서는 같은 오리진 뒤에 게이트웨이가 있다고 가정하는
+// 값이라, 로컬 목 서버 환경에서는 명시적으로 채워 줘야 한다.
 import { defineConfig, devices } from "@playwright/test";
 
 const MOCK_API_PORT = 4010;
@@ -35,7 +41,10 @@ export default defineConfig({
       command: `npm run dev -- -p ${APP_PORT}`,
       url: `http://localhost:${APP_PORT}`,
       reuseExistingServer: false,
-      env: { API_BASE_URL_INTERNAL: `http://127.0.0.1:${MOCK_API_PORT}/api/v1` },
+      env: {
+        API_BASE_URL_INTERNAL: `http://127.0.0.1:${MOCK_API_PORT}/api/v1`,
+        NEXT_PUBLIC_API_BASE_URL: `http://127.0.0.1:${MOCK_API_PORT}/api/v1`,
+      },
     },
   ],
 });
