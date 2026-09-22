@@ -19,6 +19,7 @@
 | `ui/checkout-done-view.tsx` | 주문 완료 (`paym_002`). 결제상세·배송지는 `entities/order` 조각을 쓴다 |
 | `ui/delivery-notice.tsx` | 언제 도착하는지 알리는 한 줄. **지금 쓰는 곳이 없다** — 아래 "도착 예정일" 절 |
 | `ui/toss-payment-widget.tsx` | 토스 결제 UI와 결제창 (#212) |
+| `ui/toss-payment-widget.test.tsx` | 위젯을 한 번만 띄우는지, 금액이 바뀌는 동안 잠그는지, 복귀 주소에 무엇을 싣는지 |
 | `ui/copy-order-number.tsx` | 승인 실패 화면의 주문번호 복사 버튼. 이 조각만 클라이언트 컴포넌트다 |
 | `api/orders.ts` | `[1]` 주문 생성. `Idempotency-Key`를 실어 두 번 만들어지지 않게 한다 |
 | `api/payment.ts` | `[2]` 결제 요청과 `[5]` 승인 |
@@ -29,6 +30,8 @@
 | `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301). 배송지를 등록하러 갔다 돌아올 경로도 여기서 만든다 (#369) |
 | `model/return-query.test.ts` | 복귀 주소 모양, 토스 쿼리와의 충돌, 읽을 수 없는 값 |
 | `model/order-items.test.ts` | 고른 값이 없을 때·살 수 없는 줄·종류가 다른 같은 id |
+| `model/pending-order.ts` | 만들어 둔 주문을 탭 안에서 들고 있는다. 결제창 리다이렉트를 건너 살아남아야 한다 (#367) |
+| `model/pending-order.test.ts` | 모양이 깨진 값, 막힌 저장소 |
 | `index.ts` | 공개 API |
 
 ## 라우트

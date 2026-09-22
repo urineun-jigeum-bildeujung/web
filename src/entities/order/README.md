@@ -14,10 +14,13 @@
 | `model/claim-status.test.ts` | 서버 enum을 그대로 옮겼는지, 모르는 값을 지어내지 않는지 |
 | `ui/claim-status-badge.tsx` | 상품에 걸린 신청 상태 뱃지 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
+| `model/order-status.test.ts` | 아는 값만 옮기는지, 모르는 값에 `null`을 주는지 |
 | `ui/order-status-badge.tsx` | 주문 상태 뱃지. 결제완료·상품준비·배송중·배송완료·구매확정 |
+| `ui/order-status-badge.test.tsx` | 다섯 상태의 문구 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 96 + 이름·뱃지 / 옵션 / 결제 금액 |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
+| `ui/payment-detail.test.tsx` | 상품 금액·배송비·결제 금액의 합이 맞는지 |
 | `ui/payment-detail.tsx` | 결제 내역 줄들. 결제금액·상품 옵션·배송비·결제수단. **결제수단은 글자가 아니라 토스페이 로고다** (#304) |
 | `ui/delivery-detail.tsx` | 배송지 줄들. 받는 사람·연락처·주소·요청사항 |
 | `index.ts` | 공개 API |

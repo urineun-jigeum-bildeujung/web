@@ -7,8 +7,7 @@ type DeliveryDetailProps = {
   receiver: string;
   phone: string;
   address: string;
-  /** 배송 요청사항. 비어 있을 수 있다 */
-  /** 적지 않고 주문할 수 있다 */
+  /** 배송 요청사항. 적지 않고 주문할 수 있어 비어 있을 수 있다 */
   request?: string | null;
 };
 
