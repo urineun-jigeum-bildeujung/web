@@ -86,7 +86,6 @@ cp .env.example .env.local
 | 아이콘 (메인) | `shared/ui/icon` (Figma 51종) | — |
 | 아이콘 (보충) | react-icons | 5.7.0 |
 | 아이콘 (shadcn 내부) | lucide-react | 1.31.0 |
-| 애니메이션 | motion | 13.1.0 |
 
 ### 상태·폼·데이터
 
@@ -100,8 +99,6 @@ cp .env.example .env.local
 | 폼 | react-hook-form | 7.85.0 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 |
 | 스키마 검증 | zod | 4.4.3 |
-| 날짜 | date-fns | 4.4.0 |
-| 차트 | recharts | 3.10.1 |
 
 ### 결제
 

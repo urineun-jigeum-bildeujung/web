@@ -161,12 +161,12 @@ React Compiler가 켜져 있다(`next.config.ts`의 `reactCompiler: true`). `use
 
 ```
 shared/lib/
-├── motion/       # motion 프리셋 (variants, transition 상수)
 ├── date/         # 날짜·시각 표시 함수 (아래 "날짜와 시각 표시")
+├── push/         # FCM 토큰 발급·삭제 (firebase 동적 import)
 └── utils.ts      # 예외 — shadcn CLI 소유 (cn). 위치·이름을 바꾸지 않는다
 ```
 
-- 폴더명은 라이브러리 이름(`motion`, `date`)이나 주제(`format`)로 짓는다.
+- 폴더명은 라이브러리 이름(`push`)이나 주제(`date`·`format`)로 짓는다.
 - `utils.ts`는 shadcn CLI가 `components.json`의 alias로 참조하고 덮어쓰는 파일이라 **예외로 현 위치를 유지한다.** cn 외의 유틸을 이 파일에 추가하지 않는다.
 - 폴더를 미리 만들지 않는다. 첫 파일이 생길 때 폴더를 만든다.
 
@@ -184,8 +184,8 @@ shared/lib/
 
 - **`new Date(iso)`를 그대로 `format`에 넘기지 않는다.** 그러면 표시 기준이 실행 환경을 따라, 같은 주문이 기기마다 다른 날짜로 보인다. 국내 사용자만 쓰는 서비스라 대개 KST와 같지만 자정 근처 값이 하루 어긋난다 (#295).
 - 두 함수는 읽을 수 없는 값에 `null`을 준다. **호출부가 그 줄을 통째로 비운다** — 라벨만 남으면 값을 잃은 것이 아니라 빈 날짜가 있는 것처럼 보인다.
-- 시간대를 지정하려고 `@date-fns/tz`를 들이지 않는다. `Intl.DateTimeFormat`의 `timeZone`이 이미 하는 일이다 ([library-convention](./library-convention.md)의 "이미 되는지 먼저 본다").
-- **date-fns의 `isToday`·`isTomorrow`를 쓰지 않는다.** 그 둘도 브라우저 시간대로 판정한다. 오늘·내일인지는 `toDisplayDayKey`를 견주어 본다.
+- **날짜 라이브러리를 들이지 않는다.** `date-fns`가 설치돼 있었지만 한 번도 쓰이지 않아 걷어냈다(#340). 시간대를 지정하려면 `@date-fns/tz`를 따로 들여야 하는데 `Intl.DateTimeFormat`의 `timeZone`이 이미 하는 일이다 ([library-convention](./library-convention.md)의 "이미 되는지 먼저 본다").
+- **오늘·내일인지는 `toDisplayDayKey`를 견주어 본다.** 라이브러리의 `isToday`류는 대개 브라우저 시간대로 판정해서 자정 근처가 어긋난다.
 - **사용자가 치는 날짜는 다른 문제다.** 생년월일처럼 입력으로 들어오는 값은 `shared/lib/birth-date.ts`가 맡고 시간대와 무관하다.
 
 ## 포맷

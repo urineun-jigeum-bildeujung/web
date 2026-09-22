@@ -162,7 +162,6 @@
 | 프리미티브 | radix-ui | 1.6.7 | shadcn 기반. 단일 패키지 |
 | 아이콘 | react-icons | 5.7.0 | `shared/ui/icon`에 없는 글리프를 보충할 때만 |
 | 아이콘 | lucide-react | 1.31.0 | shadcn 생성 컴포넌트 내부 전용 |
-| 애니메이션 | motion | 13.1.0 | 애니메이션 |
 | 결제 | @tosspayments/tosspayments-sdk | 2.8.1 | 결제 UI와 결제창. 승인은 백엔드가 맡는다 |
 | 푸시 | firebase | 12.19.0 | FCM 웹 푸시 토큰 발급·삭제. `app`·`messaging`만 `shared/lib/push`에서 동적 import. 전송은 백엔드가 맡는다 |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
@@ -173,8 +172,6 @@
 | 폼 | react-hook-form | 7.85.0 | 다단계 온보딩·구독 설정 폼 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 | react-hook-form과 zod 연결 |
 | 스키마 검증 | zod | 4.4.3 | 폼·서버 응답 유효성 검증 |
-| 날짜 | date-fns | 4.4.0 | 소진일 계산, D-day, 배송일 |
-| 차트 | recharts | 3.10.1 | 소비 리포트, 예측 신뢰구간 |
 | 포매터 | prettier | 3.9.6 | prettier-plugin-tailwindcss 포함 |
 | 단위 테스트 | vitest | 4.1.10 | jsdom 환경, `@testing-library/react` 16.3.2 병용 |
 | E2E 테스트 | @playwright/test | 1.62.1 | chromium 프로젝트, 루트 `e2e/` |
@@ -185,7 +182,7 @@
 | 개발 도구 | @tanstack/react-query-devtools | 5.101.4 | 캐시 상태 확인. 개발 빌드에만 포함 |
 | 훅 | husky | 9.1.7 | pre-commit 린트·포맷, prepare-commit-msg 이슈번호 삽입, commit-msg 형식 검사, pre-push 이력 보호. lint-staged는 Windows에서 멈춰 걷어냈다 (#53) |
 
-**`overrides`의 두 항목을 제거하지 마십시오.** `react-is`는 React와 동일한 19.2.8로 고정합니다. Recharts v3가 `react-is`에 의존하는데 버전이 어긋나면 렌더링 단계에서 깨집니다. `@swc/helpers`는 0.5.23으로 고정합니다. next가 `0.5.15`를 정확히 고정하고 `@vitejs/plugin-react-swc`가 끌어오는 `@swc/core`는 `>=0.5.17`을 optional peer로 요구해, 고정하지 않으면 중첩 설치가 생깁니다. 의존성 갱신 도구나 npm 구현체가 lockfile을 다시 쓸 때 그 중첩 엔트리를 지우면 `npm ci`가 깨집니다 (#29).
+**`overrides`의 두 항목을 제거하지 마십시오.** `react-is`는 React와 동일한 19.2.8로 고정합니다. 원래 근거는 Recharts v3였는데 **그 패키지를 걷어냈습니다(#340).** 지금은 `@testing-library/dom`과 `eslint-config-next`가 끌어오는 것을 고정하고 있어, 손대려면 테스트 도구 쪽 영향을 먼저 재 봐야 합니다. `@swc/helpers`는 0.5.23으로 고정합니다. next가 `0.5.15`를 정확히 고정하고 `@vitejs/plugin-react-swc`가 끌어오는 `@swc/core`는 `>=0.5.17`을 optional peer로 요구해, 고정하지 않으면 중첩 설치가 생깁니다. 의존성 갱신 도구나 npm 구현체가 lockfile을 다시 쓸 때 그 중첩 엔트리를 지우면 `npm ci`가 깨집니다 (#29).
 
 **Tailwind CSS v4에는 설정 파일이 없습니다.** `tailwind.config.js`를 만들지 마십시오. 설정은 `src/app/globals.css`의 `@theme` 지시어로 합니다. v3 문서나 예제를 그대로 옮기면 동작하지 않습니다.
 

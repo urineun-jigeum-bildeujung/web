@@ -81,6 +81,9 @@ Notion 라이브러리 문서에 이유와 함께 남기고, 저장소 안에서
 | `react-daum-postcode` | 다음이 만든 UI를 통째로 띄워 커스텀 불가. 행안부 도로명주소 API로 대체 |
 | `orval` | 훅까지 생성해 FSD `boundaries` 규칙과 부딪힌다. `openapi-typescript`로 타입만 뽑는다 |
 | `@storybook/nextjs` | 3인 팀에 유지 비용이 더 크다 |
+| `date-fns` | 화면에 쓰는 날짜는 전부 한국 기준으로 고정해야 하는데, v4에서 시간대를 지정하려면 `@date-fns/tz`를 따로 들여야 한다. `Intl.DateTimeFormat`이 플랫폼 기능으로 이미 한다 (#295 · #340) |
+| `motion` | UI 시안에 애니메이션이 없다. 한 번도 쓰이지 않아 걷어냈다 (#340) |
+| `recharts` | 차트를 그리는 화면이 없다. 소비 리포트가 생기면 그때 다시 본다 (#340) |
 | 포트원 | 결제는 토스페이먼츠 직연동. 단일 PG에 미들웨어를 얹지 않는다 |
 | 브라우저 Web Push API 단독 | 백엔드가 Firebase Admin으로 **FCM 등록 토큰**에 보내 표준 `PushManager.subscribe`의 VAPID 구독을 받지 못한다. `firebase`의 `app`·`messaging`만 동적 import로 쓰고 접점은 `shared/lib/push` 하나다 (#354) |
 | shadcn `pagination` | 쪽 번호 링크가 핵심인데 우리는 번호를 안 쓴다(검색어 하나가 쪽 천 개를 넘김). 링크 기반이라 클라이언트 상태와도 맞지 않아 속을 다 들어내야 한다 |
