@@ -12,6 +12,27 @@ test("카테고리 탭을 옮기면 주소에 남고 서버가 그 카테고리 
   await page.getByRole("button", { name: "사료" }).click();
   await expect(page).toHaveURL(/category=food/);
   await expect(page.getByText("중소형견 소포장 사료 1kg")).toBeVisible();
+
+  // 큐레이션 자리가 사라지고 정렬이 나온다
+  await expect(page.getByText(/AI가 골라주는/)).toBeHidden();
+  await expect(page.getByLabel("정렬")).toBeVisible();
+
+  // 지금 어느 것을 보고 있는지 알린다
+  await expect(page.getByRole("button", { name: "사료", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+});
+
+test("종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다", async ({ page }) => {
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "사료", exact: true }).click();
+  await expect(page).toHaveURL(/category=food/);
+
+  await page.goBack();
+  // 전체 탭은 큐레이션이라 종류 목록과 구성이 다르다
+  await expect(page.getByText(/AI가 골라주는/)).toBeVisible();
 });
 
 test("더 보기를 누르면 다음 페이지를 이어 붙이고, 다 받으면 버튼이 사라진다", async ({ page }) => {
