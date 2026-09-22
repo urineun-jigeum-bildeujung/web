@@ -1,10 +1,5 @@
-// 홈 카테고리 탭 정렬 값. search-result와 값·순서가 같지만, views 슬라이스는
-// 같은 레이어끼리 서로 import할 수 없어(FSD) 따로 둔다. 서버 페이지(page.tsx)와
-// 클라이언트 화면이 함께 쓰므로 "use client" 경계 밖의 이 파일에 둔다.
-//
-// 기존 화면은 추천순·최신순·별점 높은순·별점 낮은순(4종) 목업이었지만, 백엔드
-// `ProductSortType`은 최신순·별점순을 지원하지 않는다(#289) — 화면을 백엔드 5종에
-// 맞춰 바꾼다.
+// 홈 정렬의 URL 값과 API 매핑.
+// 같은 views 레이어인 search-result를 참조할 수 없어(FSD) 홈 모델로 따로 둔다.
 
 import type { ProductSort } from "@/entities/product";
 

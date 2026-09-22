@@ -1,12 +1,6 @@
-// 메인 라우트. 화면 조립은 views/home에 있다.
-//
-// 카테고리 탭 상품 그리드와 "전체" 탭 타임딜 미리보기를 서버에서 조회한다(#289).
-// 둘 다 await하지 않고 그대로 HomeView에 넘긴다 — 화면 안의 해당 영역이 `use()`로
-// 풀면서 그 부분만 Suspense로 대기하고, 헤더·아이 고르기 등은 기다리지 않는다.
-//
-// "전체" 탭에서는 상품 목록 자체가 안 그려지고, 카테고리 탭에서는 타임딜 미리보기가
-// 안 그려진다 — 그래서 필요 없는 쪽은 실제 조회를 생략하고(#282, #289) 빈 값으로
-// 채운 Promise만 넘긴다(search-result/page.tsx의 키워드 없음 처리와 같은 패턴).
+// 메인 라우트. 카테고리에 맞는 상품 또는 타임딜 조회 Promise를 HomeView에 전달한다.
+// 둘 다 await하지 않는다 — 화면 안의 해당 영역이 `use()`+`Suspense`로 그 부분만
+// 대기하고, 헤더·아이 고르기 등은 기다리지 않는다.
 
 import { Suspense } from "react";
 
@@ -39,11 +33,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const category = normalizeCategory(toSearchParam(params.category));
   const sort = normalizeSort(toSearchParam(params.sort));
 
+  // "전체" 탭은 상품 그리드를 안 그려 조회를 생략한다
   const productsPromise: Promise<ProductListResult> =
     category === "all"
       ? Promise.resolve({ items: [], nextCursor: null, hasNext: false })
       : getProducts({ category: CATEGORY_TO_API[category], sort: SORT_TO_API[sort] });
 
+  // 카테고리 탭은 타임딜 미리보기를 안 그려 조회를 생략한다
   const dealsPromise: Promise<TimeDealList> =
     category === "all"
       ? getTimeDeals("ACTIVE")
