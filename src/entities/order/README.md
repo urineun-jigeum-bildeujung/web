@@ -20,7 +20,7 @@
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 96 + 이름·뱃지 / 옵션 / 결제 금액 |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
-| `ui/payment-detail.test.tsx` | 상품 금액·배송비·결제 금액의 합이 맞는지 |
+| `ui/payment-detail.test.tsx` | `dl` 아래에 이름·값 짝만 오는지(#341), 세부 항목이 없으면 그 줄을 만들지 않는지 |
 | `ui/payment-detail.tsx` | 결제 내역 줄들. 결제금액·상품 옵션·배송비·결제수단. **결제수단은 글자가 아니라 토스페이 로고다** (#304) |
 | `ui/delivery-detail.tsx` | 배송지 줄들. 받는 사람·연락처·주소·요청사항 |
 | `index.ts` | 공개 API |
