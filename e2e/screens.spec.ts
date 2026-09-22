@@ -10,6 +10,7 @@ import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPhoneVerification } from "./fixtures/phone-verification";
 import { stubReviewApi } from "./fixtures/review";
 import { stubNotifications } from "./fixtures/notifications";
+import { stubCart } from "./fixtures/cart";
 import { stubOrders } from "./fixtures/orders";
 
 /**
@@ -94,6 +95,8 @@ test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
   await stubPhoneVerification(page);
   await stubOrders(page);
+  // 세우지 않으면 /cart가 빈 화면으로 서서 스모크가 아무것도 보지 않는다 (#379)
+  await stubCart(page);
   await stubMemberProfile(page);
   // 리뷰 작성이 상품 요약을 받는다(#291)
   await stubReviewApi(page);

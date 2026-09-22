@@ -95,6 +95,8 @@ type StubOptions = {
   detail?: Partial<OrderDetailStub>;
   /** 접수한 요청 본문을 담아 둔다. 무엇을 보냈는지 보는 테스트가 쓴다 */
   claims?: unknown[];
+  /** 나간 상태 변경 요청(`구매확정`·`주문취소`)을 담아 둔다 */
+  calls?: string[];
 };
 
 export async function stubOrders(page: Page, options: StubOptions = {}) {
@@ -108,6 +110,12 @@ export async function stubOrders(page: Page, options: StubOptions = {}) {
     if (/\/orders\/\d+\/claims$/.test(pathname)) {
       options.claims?.push(route.request().postDataJSON());
       return route.fulfill({ status: 201, json: CLAIM });
+    }
+    // 구매확정·주문취소는 `204 No Content`다. 바뀐 주문은 응답으로 오지 않아
+    // 부르는 쪽이 목록을 다시 조회해 맞춘다
+    if (/\/orders\/\d+\/(confirm|cancel)$/.test(pathname)) {
+      options.calls?.push(pathname.replace(/^.*\/orders\//, "orders/"));
+      return route.fulfill({ status: 204, body: "" });
     }
     // 목록과 상세가 같은 패턴에 걸린다. 끝이 숫자면 상세다
     if (/\/orders\/\d+$/.test(pathname)) {
