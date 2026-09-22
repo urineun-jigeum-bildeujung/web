@@ -1,7 +1,13 @@
 // 리뷰 등록·내 후기 조회 테스트. 무엇을 부르고 응답을 화면 모양으로 어떻게 옮기는지 본다.
 import { afterEach, expect, test, vi } from "vitest";
 
-import { createReview, getMyReviews, getWritableReviews, issueReviewImageUpload } from "./reviews";
+import {
+  createReview,
+  getMyReviews,
+  getReviewDetail,
+  getWritableReviews,
+  issueReviewImageUpload,
+} from "./reviews";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -110,4 +116,44 @@ test("작성 가능한 상품 목록을 받아 화면 모양으로 옮긴다", a
   ]);
   // 사진이 없으면 키 자체를 두지 않는다. `undefined`가 들어가면 화면이 있는 줄 안다
   expect("imageUrl" in items[0]).toBe(false);
+});
+
+test("리뷰 상세를 받아 화면 모양으로 옮기고, 비어 있는 목록은 빈 배열로 둔다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(
+    Response.json({
+      reviewId: 1,
+      isMine: true,
+      product: { productId: 1, name: "오메가3 피쉬오일 60캡슐", image: null },
+      petId: 3,
+      rating: 4,
+      usagePeriod: 16,
+      answerValues: [{ questionKey: "PALATABILITY", answerValue: "POSITIVE" }],
+      goodPoints: ["기호성 좋음"],
+      badPoints: null,
+      matchScore: null,
+      text: "확실히 잘 먹어요",
+      images: null,
+      createdAt: "2026-09-21",
+    }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+
+  const review = await getReviewDetail("1");
+
+  expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/reviews/1");
+  expect(review).toEqual({
+    id: "1",
+    isMine: true,
+    product: { id: "1", name: "오메가3 피쉬오일 60캡슐" },
+    petId: "3",
+    rating: 4,
+    usageDays: 16,
+    goodPoints: ["기호성 좋음"],
+    badPoints: [],
+    content: "확실히 잘 먹어요",
+    images: [],
+    createdAt: "2026-09-21",
+  });
+  // 사진이 없으면 키 자체를 두지 않는다. `undefined`가 들어가면 화면이 있는 줄 안다
+  expect("imageUrl" in review.product).toBe(false);
 });
