@@ -164,6 +164,7 @@
 | 아이콘 | lucide-react | 1.31.0 | shadcn 생성 컴포넌트 내부 전용 |
 | 애니메이션 | motion | 13.1.0 | 애니메이션 |
 | 결제 | @tosspayments/tosspayments-sdk | 2.8.1 | 결제 UI와 결제창. 승인은 백엔드가 맡는다 |
+| 푸시 | firebase | 12.19.0 | FCM 웹 푸시 토큰 발급·삭제. `app`·`messaging`만 `shared/lib/push`에서 동적 import. 전송은 백엔드가 맡는다 |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |
