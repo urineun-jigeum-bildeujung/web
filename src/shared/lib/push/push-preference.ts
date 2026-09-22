@@ -26,12 +26,17 @@ export function readPushEnabled(): boolean {
   }
 }
 
-export function writePushEnabled(next: boolean) {
+/**
+ * 표시를 저장한다. **저장이 막힌 브라우저면 `false`를 돌려주고 아무에게도 알리지 않는다.**
+ * 부르는 쪽이 토큰 쪽을 되돌려야 한다 — 표시 없이 서버에만 토큰이 남으면 화면은 꺼짐인데 푸시는 온다.
+ */
+export function writePushEnabled(next: boolean): boolean {
   try {
     if (next) window.localStorage.setItem(STORAGE_KEY, "1");
     else window.localStorage.removeItem(STORAGE_KEY);
   } catch {
-    // 저장이 막힌 브라우저면 새로고침 뒤 꺼짐으로 돌아온다. 그 이상은 할 것이 없다
+    return false;
   }
   listeners.forEach((listener) => listener());
+  return true;
 }
