@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryState } from "nuqs";
@@ -24,6 +25,7 @@ import { Icon } from "@/shared/ui/icon/icon";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 import { Skeleton } from "@/shared/ui/skeleton";
 
+import { clearAddressDraft, readAddressDraft, writeAddressDraft } from "../model/address-draft";
 import { addressFormSchema, type AddressFormValues } from "../model/address-form-schema";
 import { toInternalPath } from "../model/return-to";
 
@@ -118,7 +120,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const zipCode = roadAddr ? (zipNo ?? "") : (saved?.zipCode ?? "");
 
   // 값은 스키마가 이미 다듬는다 — `z.string().trim()`이라 여기서 따로 `trim()`하지 않는다
-  const { control, handleSubmit } = useForm<AddressFormValues>({
+  const { control, handleSubmit, reset } = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
     defaultValues: {
       addressName: saved?.addressName ?? "",
@@ -139,6 +141,27 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const values = useWatch({ control });
   const isFilled = addressFormSchema.safeParse(values).success;
 
+  // 무엇을 고치던 중인지. 대상이 같을 때만 적어 둔 것을 되살린다
+  const draftTarget = place ?? "new";
+
+  /**
+   * **검색을 다녀왔으면 적다 만 것을 되살린다.** `roadAddr`가 그 표시다 (#370).
+   *
+   * 그냥 다시 들어온 경우까지 되살리면 지웠다고 생각한 값이 돌아온다.
+   *
+   * **렌더가 아니라 마운트 뒤에 읽는다.** `sessionStorage`는 서버에 없어, 렌더 중에 읽으면
+   * 서버가 그린 빈 칸과 어긋나 하이드레이션에서 깨진다.
+   */
+  useEffect(() => {
+    if (roadAddr === null) {
+      return;
+    }
+    const draft = readAddressDraft(draftTarget);
+    if (draft) {
+      reset(draft);
+    }
+  }, [roadAddr, draftTarget, reset]);
+
   const submit = async (values: AddressFormValues) => {
     const request_ = {
       ...values,
@@ -158,6 +181,9 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
     } else {
       await create(request_);
     }
+
+    // 저장됐으니 적다 만 것은 쓸모가 없다. 남겨 두면 다음에 새로 넣을 때 되살아난다
+    clearAddressDraft();
 
     // **한 칸 되돌리면 주소 검색 화면이다.** 주소는 거기서만 고르는데 쪽 이동이 history를
     // 쌓아 몇 칸인지 셀 수 없다. 들어온 화면을 알면 그리로 곧장 간다 (#369).
@@ -229,6 +255,10 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
             시안이 오른쪽에 돋보기를 놓아 누르면 찾으러 간다는 것을 보인다 */}
         <Link
           href={searchHref}
+          // **떠나기 직전에 적어 둔다.** 라우트가 바뀌면 폼이 언마운트돼 적던 값이 사라진다 (#370).
+          // 키보드로 링크를 눌러도 이 자리를 지난다. 새 탭으로 열면 지나지 않지만 그쪽은
+          // 저장소가 따로라 잃을 것이 없다 — 이 탭의 폼은 그대로 서 있다
+          onClick={() => writeAddressDraft(draftTarget, values)}
           className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-input px-3 text-body-medium-14 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className={address ? "truncate text-foreground" : "text-text-body-tertiary"}>

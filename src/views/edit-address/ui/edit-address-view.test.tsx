@@ -21,6 +21,7 @@ vi.mock("@/entities/address", () => ({
   useMutateAddress: () => ({ create, update, isSaving: false }),
 }));
 
+import { readAddressDraft, writeAddressDraft } from "../model/address-draft";
 import { EditAddressView } from "./edit-address-view";
 
 /** 명세 예시 JSON을 옮긴 값 */
@@ -42,6 +43,8 @@ const PICKED =
 const PICKED_ROAD = "서울특별시 마포구 양화로 45";
 
 beforeEach(() => {
+  // 적다 만 값이 테스트 사이에 남으면 다음 테스트의 폼이 그것으로 선다
+  sessionStorage.clear();
   back.mockClear();
   replace.mockClear();
   create.mockReset().mockResolvedValue(12);
@@ -345,4 +348,57 @@ test("기본이 아닌 배송지는 체크를 바꿀 수 있다", () => {
   const checkbox = screen.getByRole("checkbox", { name: /계속 이 주소로 받을게요/ });
   expect(checkbox.hasAttribute("disabled")).toBe(false);
   expect(screen.queryByText("다른 배송지를 기본으로 지정하면 해제할 수 있어요")).toBeNull();
+});
+
+/**
+ * **주소 검색은 별도 라우트라 다녀오면 폼이 언마운트된다.** 고른 주소는 주소창에 실려 오지만
+ * 이름·연락처는 컴포넌트 상태라 사라진다. 새 배송지는 반드시 검색을 거치므로, 주소보다
+ * 이름을 먼저 적은 사람은 매번 다시 적어야 했다 (#370).
+ */
+test("검색을 다녀오면 적다 만 값이 남아 있다", () => {
+  writeAddressDraft("new", { addressName: "본가", receiver: "전지호" });
+
+  const input = renderAt(`?${PICKED}`);
+
+  expect(input.value).toBe("본가");
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("전지호");
+});
+
+// 그냥 다시 들어온 경우까지 되살리면 지웠다고 생각한 값이 돌아온다. `roadAddr`가 다녀온 표시다
+test("검색을 다녀오지 않았으면 되살리지 않는다", () => {
+  writeAddressDraft("new", { addressName: "본가" });
+
+  const input = renderAt("");
+
+  expect(input.value).toBe("");
+});
+
+// `집`을 고치다 나가서 새 배송지를 넣으면 집 값이 새 폼에 들어찬다
+test("다른 배송지에 적던 것은 되살리지 않는다", () => {
+  writeAddressDraft("5", { addressName: "본가" });
+
+  const input = renderAt(`?${PICKED}`);
+
+  expect(input.value).toBe("");
+});
+
+// 떠나기 직전이 적어 둘 마지막 기회다. 라우트가 바뀌면 폼이 사라진다
+test("검색하러 갈 때 적던 값을 적어 둔다", () => {
+  renderAt("");
+  fill([["배송지 이름", "본가"]]);
+
+  fireEvent.click(screen.getByRole("link", { name: /주소/ }));
+
+  expect(readAddressDraft("new")?.addressName).toBe("본가");
+});
+
+// 저장됐으니 쓸모가 없다. 남겨 두면 다음에 새로 넣을 때 되살아난다
+test("저장하면 적어 둔 것을 비운다", async () => {
+  writeAddressDraft("5", { addressName: "본가" });
+  renderAt("?place=5");
+
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(update).toHaveBeenCalled());
+  expect(readAddressDraft("5")).toBeNull();
 });
