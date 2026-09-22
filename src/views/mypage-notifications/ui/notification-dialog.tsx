@@ -21,14 +21,14 @@ import {
 type NotificationDialogProps = {
   item: NotificationItem | null;
   onOpenChange: (open: boolean) => void;
-  /** 배송 알림에서 주문을 보러 간다. 없으면 그 버튼을 그리지 않는다. */
-  onConfirm?: () => void;
+  /** 이어 가기 버튼. 갈 곳이 있는 알림만 준다. 없으면 그 버튼을 그리지 않는다 */
+  action?: { label: string; onSelect: () => void } | null;
 };
 
 /** 시안 dialog의 action_button. 40px에 굵은 14px */
 const ACTION_CLASS = "h-10 flex-1 text-label-bold-14";
 
-export function NotificationDialog({ item, onOpenChange, onConfirm }: NotificationDialogProps) {
+export function NotificationDialog({ item, onOpenChange, action }: NotificationDialogProps) {
   return (
     <Dialog open={item !== null} onOpenChange={onOpenChange}>
       <DialogContent showCloseButton={false} className="gap-4 rounded-2xl">
@@ -55,10 +55,10 @@ export function NotificationDialog({ item, onOpenChange, onConfirm }: Notificati
               닫기
             </Button>
           </DialogClose>
-          {/* 배송 알림에만 이어지는 곳이 있다 */}
-          {onConfirm && (
-            <Button className={ACTION_CLASS} onClick={onConfirm}>
-              배송 확인
+          {/* 이어지는 곳이 있는 알림에만 있다. 문구는 갈 곳이 정한다(배송 확인·주문 확인·상품 보기…) */}
+          {action && (
+            <Button className={ACTION_CLASS} onClick={action.onSelect}>
+              {action.label}
             </Button>
           )}
         </div>
