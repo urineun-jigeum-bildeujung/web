@@ -22,6 +22,7 @@ import { IoImageOutline } from "react-icons/io5";
 
 import { useQueryAddresses } from "@/entities/address";
 import { cartItemKey, useQueryCart, type CartItem } from "@/entities/cart";
+import { ApiError } from "@/shared/api/client";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
@@ -40,6 +41,7 @@ import { Textarea } from "@/shared/ui/textarea";
 import { createOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { ITEMS_PARAM, pickOrderItems, toOrderItem } from "../model/order-items";
+import { clearPendingOrder, readPendingOrder, writePendingOrder } from "../model/pending-order";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -152,8 +154,14 @@ function Section({
   );
 }
 
-/** 만들어 둔 주문과 그때 보낸 본문. 본문이 같을 때만 다시 쓴다 */
-type MadeOrder = { orderId: number; signature: string };
+/**
+ * 서버가 "결제 가능한 상태의 주문이 아니다"로 거절했는가.
+ *
+ * 들고 있던 주문이 이미 결제됐거나 취소된 경우다 (`RequestPaymentService`가 `PENDING`만 받는다).
+ */
+function isOrderNotPayable(error: unknown): boolean {
+  return error instanceof ApiError && error.problem?.errorCode === "PAYMENT_409_ORDER_NOT_PAYABLE";
+}
 
 export function CheckoutView() {
   const [request, setRequest] = useState(REQUEST_OPTIONS[0]);
@@ -163,8 +171,6 @@ export function CheckoutView() {
   const [requestPayment, setRequestPayment] = useState<RequestPayment | null>(null);
   // 주문 생성부터 결제창이 뜨기까지의 왕복. 결제는 되돌릴 수 없어 두 번 눌리면 안 된다
   const [paying, setPaying] = useState(false);
-  // 이미 만들어 둔 주문. 결제 준비나 결제창에서 실패한 뒤 다시 누를 때 쓴다 (#361)
-  const [madeOrder, setMadeOrder] = useState<MadeOrder | null>(null);
 
   const searchParams = useSearchParams();
   // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다
@@ -196,11 +202,9 @@ export function CheckoutView() {
     // 적지 않았으면 빈 문자열이 아니라 아예 보내지 않는다
     deliveryNote: deliveryNote || null,
   };
-  // 만들어 둔 주문을 다시 쓸 수 있는가. **본문이 한 글자라도 다르면 쓰지 않는다** —
+  // 만들어 둔 주문을 다시 쓸 수 있는지 가르는 값. **본문이 한 글자라도 다르면 쓰지 않는다** —
   // 배송지를 바꾸거나 요청사항을 고쳤는데 옛 주문으로 결제하면 엉뚱한 곳으로 간다
   const orderSignature = JSON.stringify(orderRequest);
-  const reusableOrderId =
-    madeOrder !== null && madeOrder.signature === orderSignature ? madeOrder.orderId : null;
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =
@@ -246,13 +250,20 @@ export function CheckoutView() {
       return;
     }
 
+    // **저장소는 렌더가 아니라 여기서 읽는다.** 서버 렌더에는 `sessionStorage`가 없고,
+    // 눌린 순간의 값을 봐야 다른 탭이 지운 것도 반영된다.
+    // 삼항은 `try` 밖에 둔다 — React Compiler가 try 안의 값 계산을 만나면 최적화를 포기한다 (#223)
+    const stored = readPendingOrder();
+    const reusableOrderId =
+      stored !== null && stored.signature === orderSignature ? stored.orderId : null;
+
     setPaying(true);
     try {
       let orderId = reusableOrderId;
       if (orderId === null) {
         const created = await createOrder({ ...orderRequest, addressId: address.addressId });
         orderId = created.orderId;
-        setMadeOrder({ orderId, signature: orderSignature });
+        writePendingOrder({ orderId, signature: orderSignature });
       }
       // **`amount`는 서버가 만든 주문의 금액이다.** 화면이 장바구니로 센 `total`과
       // 갈릴 수 있어 결제창에는 이쪽을 싣는다 (#312)
@@ -261,6 +272,12 @@ export function CheckoutView() {
       // 주문 상세로 갈 수 있게 한다 (#301)
       await requestPayment({ tossOrderId, orderName, orderId, amount });
     } catch (error) {
+      // **재사용한 주문이 더는 결제할 수 없는 상태다.** 이미 결제됐거나 취소된 주문을 물고
+      // 있으면 다시 눌러도 같은 자리에서 막힌다. 비워 두면 다음에 새 주문으로 간다.
+      // 여기서 곧바로 다시 만들지는 않는다 — 실패를 알린 뒤 사용자가 누르는 편이 예측 가능하다
+      if (reusableOrderId !== null && isOrderNotPayable(error)) {
+        clearPendingOrder();
+      }
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
       // 결제창이 떴으면 브라우저가 떠나므로 여기로 돌아오지 않는다. 실패했을 때만 되돌린다
       setPaying(false);
