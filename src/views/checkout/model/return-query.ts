@@ -14,12 +14,34 @@
 // 토스 문서가 이 방법을 안내한다 — "적은 양의 데이터라면 successUrl의 쿼리 파라미터로
 // 추가하세요" (주문서형 결제 연동하기).
 
+import { ITEMS_PARAM } from "./order-items";
+
 /**
  * 우리 주문의 숫자 PK를 싣는 쿼리 이름.
  *
  * **`orderId`로 지으면 안 된다.** 토스가 같은 이름으로 문자열 주문번호를 붙여 둘이 겹친다.
  */
 export const ORDER_PARAM = "order";
+
+/**
+ * 결제창이 실패·취소로 돌아올 주소. **고른 상품을 되돌려 싣는다.**
+ *
+ * 그전에는 `${origin}/payment` 한 줄이었다. 그러면 `items`가 빠진 채 돌아와 고른 것이
+ * 장바구니 전체로 읽히고, 실패 안내를 보고 다시 누른 사용자가 **고르지 않은 상품까지**
+ * 주문하게 된다 (#364).
+ *
+ * **토스가 붙인 값은 옮기지 않는다.** 복귀 주소에는 `code`·`message`·`orderId`가 붙는데
+ * 그것까지 실어 돌면 실패 안내가 옛 값으로 다시 뜨고 주소가 회차마다 길어진다.
+ */
+export function toFailUrl(origin: string, search: string) {
+  const url = new URL("/payment", origin);
+  const items = new URLSearchParams(search).get(ITEMS_PARAM);
+  // **빈 문자열도 값이다.** `?items=`는 전체가 아니라 빈 선택이라 그대로 되돌려야 한다
+  if (items !== null) {
+    url.searchParams.set(ITEMS_PARAM, items);
+  }
+  return url.toString();
+}
 
 /** 결제창이 성공으로 돌아올 주소. 숫자 주문 id를 실어 둔다 */
 export function toSuccessUrl(origin: string, orderId: number) {
