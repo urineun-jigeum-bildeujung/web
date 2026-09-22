@@ -71,12 +71,6 @@ export async function getOrders({
 }
 
 /**
- * 상세에만 오는 상품 필드.
- *
- * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
- * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
- */
-/**
  * 그 상품에 걸린 클레임 한 건. 백엔드 `OrderDetailResponse.ClaimSummary` 그대로다.
  *
  * **신청 화면이 이것을 읽는다.** 진행 중인 신청이 걸린 상품을 고르면 서버가 요청 전체를
@@ -97,6 +91,12 @@ export type OrderItemClaim = {
   completedAt: string | null;
 };
 
+/**
+ * 상세에만 오는 상품 필드.
+ *
+ * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
+ * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
+ */
 export type OrderDetailItem = OrderListItem & {
   unitPrice: number;
   /**
@@ -166,8 +166,7 @@ export type OrderDetail = {
   totalAmount: number;
   items: OrderDetailItem[];
   deliveryAddress: OrderDeliveryAddress;
-  /** 배송 요청사항. 남기지 않고 주문할 수 있다 */
-  /** 요청사항 없이 주문할 수 있다. 서버 `OrderDetailResponse`가 그대로 `null`을 담는다 (#318) */
+  /** 배송 요청사항. 남기지 않고 주문할 수 있다 — 서버가 그대로 `null`을 담는다 (#318) */
   deliveryNote: string | null;
   /**
    * 결제 정보. **아직 결제되지 않은 주문에는 없다.**

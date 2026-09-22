@@ -5,6 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/orders-view.tsx` | 주문·배송 확인 |
+| `ui/orders-view.test.tsx` | 상태별 행동 버튼, 구매확정·주문취소가 서버까지 가는지, 이어 부르기 |
 | `ui/orders-skeleton.tsx` | 불러오는 동안의 뼈대. 이어 부를 때는 한 장만 |
 | `ui/use-load-more.ts` | 목록 끝이 보이면 다음 쪽을 부른다 |
 | `ui/delivery-tracking-dialog.tsx` | 배송 조회 준비중 안내 |

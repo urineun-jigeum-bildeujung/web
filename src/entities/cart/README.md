@@ -9,6 +9,7 @@
 | `api/cart.ts` | 조회·**담기**·수량 변경·빼기 요청 함수와 `Cart`·`CartItem` 타입 |
 | `api/use-query-cart.ts` | 장바구니를 가져오는 훅 |
 | `api/use-mutate-cart-item.ts` | 담기·수량 변경·빼기 훅. **담기만 낙관적 갱신을 걸지 않는다** — 서버가 줄을 만들어야 짝이 확정된다. 빼기는 `remove`(낙관적)와 `removeAsync`(기다림) 둘을 낸다 — 서버에서 빠진 것을 확인한 뒤 화면 상태를 바꿔야 하는 자리가 뒤쪽을 쓴다 (#316) |
+| `index.ts` | 공개 API |
 
 ## 알아둘 것
 
