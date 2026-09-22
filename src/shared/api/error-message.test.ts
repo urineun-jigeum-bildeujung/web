@@ -39,6 +39,12 @@ describe("toAppMessageCode", () => {
     expect(toAppMessageCode(apiError(403, "REVIEW_403_PURCHASE_NOT_CONFIRMED"))).toBe(
       APP_MESSAGE_CODE.review.purchaseNotConfirmed,
     );
+    expect(toAppMessageCode(apiError(409, "REVIEW_409_ALREADY_ANSWERED_FEEDBACK"))).toBe(
+      APP_MESSAGE_CODE.review.feedbackAlreadyAnswered,
+    );
+    expect(toAppMessageCode(apiError(400, "REVIEW_400_FEEDBACK_NOT_AVAILABLE_YET"))).toBe(
+      APP_MESSAGE_CODE.review.feedbackNotAvailableYet,
+    );
   });
 
   // 백엔드가 새 코드를 추가하면 우리는 나중에 안다. 그동안에도 화면은 무언가를 보여줘야 한다
@@ -171,6 +177,8 @@ describe("서버 에러 코드와의 대조", () => {
     "REVIEW_403_PURCHASE_NOT_CONFIRMED",
     "REVIEW_404_NOT_FOUND",
     "REVIEW_409_ALREADY_REVIEWED",
+    "REVIEW_409_ALREADY_ANSWERED_FEEDBACK",
+    "REVIEW_400_FEEDBACK_NOT_AVAILABLE_YET",
     "SECURITY_401_MISSING_AUTH_ID",
     "SECURITY_401_UNAUTHORIZED",
     "SECURITY_403_MISSING_MEMBER_ID",

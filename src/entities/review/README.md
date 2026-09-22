@@ -11,6 +11,10 @@
 | `api/reviews.test.ts` | 무엇을 부르는지, 응답을 화면 모양으로 옮기는 것 |
 | `api/use-mutate-create-review.ts` | 사진을 올린 뒤 등록하는 훅. 성공하면 내 후기·상품 리뷰 캐시를 비운다 |
 | `api/use-query-my-reviews.ts` | 내가 쓴 후기 첫 쪽을 받는 훅 |
+| `api/feedbacks.ts` | 구매 후 상태 체크(반응). 남길 수 있는 항목 조회와 등록(답변·보류), `PendingFeedback`·`FeedbackSubmission` 타입 |
+| `api/feedbacks.test.ts` | 응답 옮기기, 답변과 보류가 어떻게 실리는지 |
+| `api/use-query-pending-feedbacks.ts` | 남길 수 있는 항목을 받는 훅 |
+| `api/use-mutate-submit-feedback.ts` | 반응을 등록하는 훅. 성공하면 남길 수 있는 목록을 비운다 |
 | `index.ts` | 공개 API |
 
 ## 왜 별점만 두지 않았나

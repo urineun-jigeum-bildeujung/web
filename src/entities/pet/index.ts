@@ -3,7 +3,13 @@ export { BodyTypeGuide } from "./ui/body-type-guide";
 export { BodyTypeSlider } from "./ui/body-type-slider";
 export { SizeGuide } from "./ui/size-guide";
 export { BreedPicker } from "./ui/breed-picker";
-export { ProductFeedbackSheet, FEEDBACKS, type FeedbackTarget } from "./ui/product-feedback-sheet";
+export {
+  ProductFeedbackSheet,
+  FEEDBACKS,
+  type FeedbackChoice,
+  type FeedbackTarget,
+  type FeedbackValue,
+} from "./ui/product-feedback-sheet";
 export { BreedPickerStep } from "./ui/breed-picker-step";
 export { PetSwitcher, type PetSummary } from "./ui/pet-switcher";
 export {

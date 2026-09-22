@@ -219,6 +219,15 @@ export const APP_MESSAGE = {
     title: "구매 확정 후에 쓸 수 있어요",
     description: "주문 내역에서 구매 확정을 먼저 해 주세요.",
   },
+  // 반응(상태 체크)은 구매 항목마다 한 번이고 정해진 기간이 지나야 남길 수 있다
+  "review.feedbackAlreadyAnswered": {
+    title: "이미 반응을 남긴 제품이에요",
+    description: "반응은 구매마다 한 번만 남길 수 있어요.",
+  },
+  "review.feedbackNotAvailableYet": {
+    title: "아직 반응을 남길 수 없어요",
+    description: "받은 뒤 며칠 써 본 다음에 남길 수 있어요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -287,5 +296,7 @@ export const APP_MESSAGE_CODE = {
   review: {
     alreadyReviewed: "review.alreadyReviewed",
     purchaseNotConfirmed: "review.purchaseNotConfirmed",
+    feedbackAlreadyAnswered: "review.feedbackAlreadyAnswered",
+    feedbackNotAvailableYet: "review.feedbackNotAvailableYet",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;

@@ -14,12 +14,12 @@ export type PetProduct = {
   id: string;
   name: string;
   imageUrl?: string;
-  /** "26.08.28" */
-  boughtAt: string;
-  /** "구매 후 6일" */
-  sinceLabel: string;
-  /** "3번째 구매" */
-  countLabel: string;
+  /** "26.08.28". 서버 응답에 없으면 줄을 그리지 않는다 */
+  boughtAt?: string;
+  /** "구매 후 6일". 서버 응답에 없으면 비운다 */
+  sinceLabel?: string;
+  /** "3번째 구매". 서버 응답에 없으면 비운다 */
+  countLabel?: string;
   /** 반응을 남겼는지. 거르기와 버튼 모양의 기준이다 */
   reviewed: boolean;
 };
@@ -32,7 +32,11 @@ type PetProductCardProps = {
 export function PetProductCard({ product, onFeedback }: PetProductCardProps) {
   return (
     <article className="flex flex-col gap-3">
-      <p className="text-caption-regular-13 text-text-body-secondary">구매일 {product.boughtAt}</p>
+      {product.boughtAt && (
+        <p className="text-caption-regular-13 text-text-body-secondary">
+          구매일 {product.boughtAt}
+        </p>
+      )}
 
       <div className="flex items-center gap-3">
         <span
@@ -45,10 +49,12 @@ export function PetProductCard({ product, onFeedback }: PetProductCardProps) {
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h3 className="truncate text-title-bold-16 text-foreground">{product.name}</h3>
-          <p className="flex gap-2">
-            <Badge>{product.sinceLabel}</Badge>
-            <Badge tone="positive">{product.countLabel}</Badge>
-          </p>
+          {(product.sinceLabel || product.countLabel) && (
+            <p className="flex gap-2">
+              {product.sinceLabel && <Badge>{product.sinceLabel}</Badge>}
+              {product.countLabel && <Badge tone="positive">{product.countLabel}</Badge>}
+            </p>
+          )}
         </div>
       </div>
 

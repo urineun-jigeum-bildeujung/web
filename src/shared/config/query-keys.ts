@@ -98,6 +98,8 @@ const reviewKeys = {
   myAll: () => [...reviewKeys.all, "my"] as const,
   myList: () => [...reviewKeys.myAll(), "list"] as const,
   myWritable: () => [...reviewKeys.myAll(), "writable"] as const,
+  /** 반응을 남길 수 있는 구매 항목. 답하거나 보류하면 서버가 목록을 바꾸므로 등록 뒤 비운다 */
+  feedbackPending: () => [...reviewKeys.all, "feedback-pending"] as const,
 };
 
 const paymentKeys = {
