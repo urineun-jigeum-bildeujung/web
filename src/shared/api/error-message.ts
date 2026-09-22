@@ -62,6 +62,7 @@ export const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   REVIEW_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
   REVIEW_409_ALREADY_ANSWERED_FEEDBACK: APP_MESSAGE_CODE.review.feedbackAlreadyAnswered,
   REVIEW_400_FEEDBACK_NOT_AVAILABLE_YET: APP_MESSAGE_CODE.review.feedbackNotAvailableYet,
+  NOTIFICATION_404_NOT_FOUND: APP_MESSAGE_CODE.common.notFound,
   PRODUCT_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
 
   // 주문 화면이 직접 부르는 것들이다. 전이 규칙에 막힌 경우가 가장 흔하다 — 목록에서

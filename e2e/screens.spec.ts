@@ -9,6 +9,7 @@ import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPhoneVerification } from "./fixtures/phone-verification";
 import { stubReviewApi } from "./fixtures/review";
+import { stubNotifications } from "./fixtures/notifications";
 import { stubOrders } from "./fixtures/orders";
 
 /**
@@ -96,6 +97,8 @@ test.beforeEach(async ({ page }) => {
   await stubMemberProfile(page);
   // 리뷰 작성이 상품 요약을 받는다(#291)
   await stubReviewApi(page);
+  // 알림함이 목록을 받는다(#354)
+  await stubNotifications(page);
 });
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다

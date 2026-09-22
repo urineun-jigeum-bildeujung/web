@@ -45,6 +45,6 @@ entities/
 | [order](order/README.md) | 주문. 상태 뱃지 |
 | [product](product/README.md) | 상품 표현. 지금은 적합도 배지만 있다 |
 | [review](review/README.md) | 상품 후기. 작성자의 아이 프로필과 사용 기간을 함께 보인다 |
-| [notification](notification/README.md) | 알림. 지금은 이 기기의 푸시 토큰을 서버에 알리는 것만 있다 |
+| [notification](notification/README.md) | 알림. 알림함 목록·읽음 처리와 이 기기의 푸시 토큰 등록 |
 
 구독은 백엔드 API 계약이 정해지면 만든다.
