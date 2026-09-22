@@ -46,9 +46,8 @@ test("각 메뉴가 제 경로로 이어진다", () => {
   );
   // 시안에서 빠진 메뉴. 화면은 남아 있지만 여기서 들어가지 않는다
   expect(screen.queryByRole("link", { name: /최근 본 상품/ })).toBeNull();
-  expect(screen.getByRole("link", { name: /결제 수단 관리/ }).getAttribute("href")).toBe(
-    "/mypage/payment",
-  );
+  // 화면을 지워 진입점도 없앴다. 시안에는 남아 있어 PD 확인 대기다 (#348)
+  expect(screen.queryByRole("link", { name: /결제 수단 관리/ })).toBeNull();
   expect(screen.getByRole("link", { name: "장바구니" }).getAttribute("href")).toBe("/cart");
 });
 

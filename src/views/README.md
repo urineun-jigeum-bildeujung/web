@@ -69,7 +69,6 @@ views/
 | `restock-alarm` | `/mypage/restock` | 재입고 알림 목록·선택 모드 |
 | `recently-viewed` | `/mypage/recently-viewed` | 최근 본 상품 목록 (자리 표시) |
 | `my-reviews` | `/mypage/reviews` | 나의 상품 후기 (탭) |
-| `payment-methods` | `/mypage/payment` | 간편결제 카드 관리 |
 | `orders` | `/mypage/orders` | 주문·배송 확인 |
 | `order-detail` | `/mypage/orders/[orderId]` | 주문 상세 |
 | `support` | `/mypage/support` | 고객지원 · FAQ |

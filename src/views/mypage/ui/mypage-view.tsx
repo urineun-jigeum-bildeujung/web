@@ -2,6 +2,10 @@
 // UI 시안 기준(mypa_001, 1474-23129)이다.
 //
 // 시안에서 "최근 본 상품" 메뉴가 빠졌다. 화면(/mypage/recently-viewed)은 남기고 진입점만 뺀다.
+//
+// **"결제 수단 관리"는 시안에 있지만 뺐다.** 그 화면 자체를 지웠기 때문이다 (#348) — 확정 UI에
+// `mypa_05` 계열이 없고, 결제수단 기억은 토스페이먼츠가 `customerKey`로 맡아 우리가 보관할
+// 것이 없다. 시안(mypa_001)의 "혜택과 결제"에는 아직 그 줄이 남아 있어 PD 확인이 필요하다.
 // 머리말의 로고 자리는 시안이 "로고" 자리 표시라 서비스 이름을 글자로 둔다.
 // 메뉴 아이콘은 항목마다 색이 다르다(시안 자산의 채움색을 icon/fill 토큰으로 옮겼다).
 
@@ -37,12 +41,6 @@ const MENU_GROUPS = [
   {
     title: "혜택과 결제",
     items: [
-      {
-        href: "/mypage/payment",
-        title: "결제 수단 관리",
-        description: "간편결제 등록 · 관리",
-        icon: <Icon name="card" className="text-icon-fill-blue" />,
-      },
       {
         href: "/mypage/orders",
         title: "주문·배송 확인",
