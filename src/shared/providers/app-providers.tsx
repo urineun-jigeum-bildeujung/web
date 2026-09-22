@@ -12,6 +12,7 @@ import { Toaster } from "@/shared/ui/sonner";
 import { Tooltip } from "radix-ui";
 import { useState } from "react";
 
+import { PushMessageListener } from "./push-message-listener";
 import { SessionExpiryRedirect } from "./session-expiry-redirect";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
@@ -49,6 +50,8 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <QueryClientProvider client={queryClient}>
         {/* 재발급까지 실패해 세션이 끝나면 로그인으로 보낸다. 화면마다 두면 빠뜨린 곳이 생긴다 */}
         <SessionExpiryRedirect />
+        {/* 탭이 보이는 동안 온 푸시는 서비스 워커가 띄우지 않는다. 여기서 받아 토스트로 알린다(#354) */}
+        <PushMessageListener />
         {/* 툴팁은 앱 전체가 한 Provider를 공유해야 열림 상태가 겹치지 않는다 */}
         <Tooltip.Provider delayDuration={200}>{children}</Tooltip.Provider>
         {/* 시안 snackbar(디자인 시스템 `information` 324:5419)에 맞춘다.

@@ -5,9 +5,7 @@
 // 이름(`firebase/messaging`)을 직접 mock하면 소스 쪽 동적 import에는 걸리지 않았다.
 
 export async function loadFirebase() {
-  const [{ getApps, initializeApp }, { deleteToken, getMessaging, getToken }] = await Promise.all([
-    import("firebase/app"),
-    import("firebase/messaging"),
-  ]);
-  return { getApps, initializeApp, deleteToken, getMessaging, getToken };
+  const [{ getApps, initializeApp }, { deleteToken, getMessaging, getToken, onMessage }] =
+    await Promise.all([import("firebase/app"), import("firebase/messaging")]);
+  return { getApps, initializeApp, deleteToken, getMessaging, getToken, onMessage };
 }
