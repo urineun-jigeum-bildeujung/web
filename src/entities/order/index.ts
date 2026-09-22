@@ -28,6 +28,7 @@ export {
   claimLabel,
   currentClaim,
   hasActiveClaim,
+  isWithinClaimPeriod,
   isActiveClaim,
 } from "./model/claim-status";
 export { ClaimStatusBadge } from "./ui/claim-status-badge";

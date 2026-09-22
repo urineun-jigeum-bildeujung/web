@@ -23,6 +23,7 @@ import { useState } from "react";
 
 import {
   claimableItems,
+  isWithinClaimPeriod,
   toOrderStatus,
   useMutateClaim,
   useQueryOrderDetail,
@@ -74,9 +75,11 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
   const claimType = type ? TYPE_BY_QUERY[type] : undefined;
   const label = claimType ? TYPE_LABEL[claimType] : "반품·교환";
 
-  // 서버가 보는 조건은 배송완료 **그리고** 7일 이내인데 응답에 배송일이 없다.
-  // 화면은 상태까지만 보고 기간은 서버가 `ORDER_409_NOT_CLAIMABLE`로 알린다
-  const delivered = order ? toOrderStatus(order.orderStatus) === "delivered" : false;
+  // 서버가 보는 조건은 배송완료 **그리고** 배송완료 뒤 7일 이내다(`Order.isClaimable`).
+  // 둘 다 화면에서 막는다 — 안 막으면 사유까지 다 적고 나서 거절당한다 (#374)
+  const delivered = order
+    ? toOrderStatus(order.orderStatus) === "delivered" && isWithinClaimPeriod(order.deliveredAt)
+    : false;
   const items = order ? claimableItems(order.items) : [];
   const picked = toRequestItems(selection);
 

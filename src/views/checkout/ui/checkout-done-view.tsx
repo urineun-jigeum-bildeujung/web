@@ -207,14 +207,18 @@ export function CheckoutDoneView({
     }
   }, [canConfirm]);
 
-  // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 — 복귀 주소에 실어 온
-  // 숫자 id가 그 열쇠다 (#301·#308)
+  // **숫자 주문 id는 승인 응답이 준다.** 주소창의 `?order=`는 사용자가 바꿀 수 있으므로
+  // 승인이 끝나면 그쪽을 믿지 않는다. 승인을 기다리는 동안에는 쿼리로 먼저 조회를 걸어
+  // 왕복을 겹쳐 둔다 — 값이 다르면 키가 바뀌며 다시 조회한다 (#374)
+  const resolvedOrderId = payment?.orderId ?? orderId;
+
+  // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 (#301·#308)
   const { order: fetched, isLoading: isLoadingOrder } = useQueryOrderDetail(
-    orderId ? String(orderId) : "",
+    resolvedOrderId ? String(resolvedOrderId) : "",
   );
 
-  // **승인 결과와 같은 주문인지 본다.** `?order=`는 주소창에서 바꿀 수 있어, 그대로 믿으면
-  // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞인다 (#308 리뷰).
+  // **승인 결과와 같은 주문인지 본다.** 승인 전에는 주소창의 `?order=`로 조회하므로 그 사이에
+  // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞일 수 있다 (#308 리뷰).
   // 승인 전이거나 주문을 못 받았으면 견줄 것이 없어 그대로 둔다
   const mismatched = Boolean(payment && fetched && payment.orderNumber !== fetched.orderNumber);
   const order = mismatched ? undefined : fetched;
@@ -387,8 +391,10 @@ export function CheckoutDoneView({
 
               **그 주문을 실제로 받아 왔을 때만 상세로 보낸다.** 값이 없거나 승인 결과와
               다른 주문이면 엉뚱한 주문을 여는 셈이라 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
-          <Link href={orderId && order ? `/mypage/orders/${orderId}` : "/mypage/orders"}>
-            {orderId && order ? "주문 상세 보기" : "주문 내역 보기"}
+          <Link
+            href={resolvedOrderId && order ? `/mypage/orders/${resolvedOrderId}` : "/mypage/orders"}
+          >
+            {resolvedOrderId && order ? "주문 상세 보기" : "주문 내역 보기"}
           </Link>
         </Button>
         <Button asChild>

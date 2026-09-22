@@ -34,6 +34,14 @@ import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import { OrderClaimView } from "./order-claim-view";
 
+/**
+ * 배송완료 시각. **오늘에서 거슬러 잡는다.**
+ *
+ * 반품·교환은 배송완료 뒤 7일까지만 받으므로, 고정 날짜로 박아 두면 그날이 지나는 순간
+ * 테스트가 저절로 깨진다 (#374).
+ */
+const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+
 function makeItem(over: Partial<OrderDetailItem> = {}): OrderDetailItem {
   return {
     orderItemId: 11,
@@ -42,6 +50,9 @@ function makeItem(over: Partial<OrderDetailItem> = {}): OrderDetailItem {
     quantity: 2,
     unitPrice: 20000,
     itemStatus: "PAID",
+    cancelledQuantity: 0,
+    returnedQuantity: 0,
+    effectiveQuantity: 2,
     claims: [],
     ...over,
   };
@@ -51,8 +62,9 @@ function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
   return {
     orderId: 1,
     orderNumber: "ORD-CLAIM-01",
-    // 서버 `Order.claimable`이 배송완료만 받는다
+    // 서버 `Order.isClaimable`이 배송완료 **그리고** 그로부터 7일 이내만 받는다
     orderStatus: "DELIVERED",
+    deliveredAt: daysAgo(1),
     productAmount: 40000,
     totalAmount: 43000,
     items: [makeItem()],
@@ -201,7 +213,7 @@ test("하나도 고르지 않으면 신청 버튼이 잠긴다", async () => {
 });
 
 // 스테퍼 상한이 주문 수량이다. 넘겨 보내면 서버가 CLAIM_ITEM_QUANTITY_EXCEEDED로 거절한다
-test("수량은 주문 수량을 넘지 못한다", async () => {
+test("수량은 남은 수량을 넘지 못한다", async () => {
   renderView("return");
 
   fireEvent.click(await screen.findByRole("checkbox"));
@@ -210,6 +222,54 @@ test("수량은 주문 수량을 넘지 못한다", async () => {
   fireEvent.click(plus);
   expect(screen.getByText("2")).toBeDefined();
   expect(plus.hasAttribute("disabled")).toBe(true);
+});
+
+/**
+ * **주문 수량이 아니라 남은 수량이 상한이다.**
+ *
+ * 2개 산 상품을 1개 반품하면 서버는 1개까지만 받는데(`CreateClaimService`), 주문 수량으로
+ * 상한을 잡으면 2개를 고를 수 있어 사유까지 다 적고 거절당한다 (#374).
+ */
+test("이미 반품한 몫은 상한에서 빠진다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ items: [makeItem({ returnedQuantity: 1, effectiveQuantity: 1 })] }),
+  );
+  renderView("return");
+
+  fireEvent.click(await screen.findByRole("checkbox"));
+  const plus = screen.getByRole("button", { name: "테스트 사료 신청 수량 하나 늘리기" });
+
+  expect(screen.getByText("1")).toBeDefined();
+  expect(plus.hasAttribute("disabled")).toBe(true);
+});
+
+// 전부 취소·반품된 줄은 고를 수량이 없다. 남겨 두면 수량 1로 신청했다가 거절당한다
+test("남은 수량이 없는 상품은 고를 수 없다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ items: [makeItem({ returnedQuantity: 2, effectiveQuantity: 0 })] }),
+  );
+  renderView("return");
+
+  expect(await screen.findByText("신청 진행 중")).toBeDefined();
+});
+
+/**
+ * 서버 `Order.isClaimable`이 `deliveredAt.plusDays(7).isAfter(now())`로 막는다.
+ * 화면이 같이 막지 않으면 사유까지 다 적고 나서 거절당한다 (#374).
+ */
+test("배송완료 7일이 지나면 신청할 수 없다", async () => {
+  getOrderDetail.mockResolvedValue(makeDetail({ deliveredAt: daysAgo(8) }));
+  renderView("return");
+
+  expect(await screen.findByText("신청 기간 지남")).toBeDefined();
+});
+
+// 배송완료인데 시각이 없으면 언제부터 7일인지 알 수 없다. 받지 않는 쪽이 맞다
+test("배송완료 시각이 없으면 신청할 수 없다", async () => {
+  getOrderDetail.mockResolvedValue(makeDetail({ deliveredAt: null }));
+  renderView("return");
+
+  expect(await screen.findByText("신청 기간 지남")).toBeDefined();
 });
 
 test("고른 상품과 사유가 그대로 실려 나가고 주문 상세로 돌아간다", async () => {

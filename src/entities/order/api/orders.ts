@@ -106,6 +106,18 @@ export type OrderDetailItem = OrderListItem & {
    * 화면이 아직 쓰지 않아 좁히지 않고 문자열로 둔다.
    */
   itemStatus: string;
+  /** 취소된 수량 */
+  cancelledQuantity: number;
+  /** 반품된 수량 */
+  returnedQuantity: number;
+  /**
+   * 아직 살아 있는 수량 — `quantity - cancelledQuantity - returnedQuantity`.
+   *
+   * **새 신청의 상한이다.** 서버 `CreateClaimService`가 이 값으로 막으므로 화면도 같이 막는다.
+   * 그전에는 응답에 없어 주문 수량을 상한으로 썼고, 2개 산 상품을 1개 반품한 뒤에도
+   * 2개를 고를 수 있었다 (#374).
+   */
+  effectiveQuantity: number;
   /** 그 상품에 걸린 클레임들. 없으면 빈 배열이다 */
   claims: OrderItemClaim[];
 };
@@ -142,6 +154,13 @@ export type OrderDetail = {
   orderId: number;
   orderNumber: string;
   orderStatus: string;
+  /**
+   * 배송이 끝난 시각. 끝나지 않았으면 `null`이다.
+   *
+   * **반품·교환은 이 시각부터 7일 안에만 받는다.** 서버 `Order.isClaimable`이
+   * `deliveredAt.plusDays(7).isAfter(now())`로 막는다 (#374).
+   */
+  deliveredAt: string | null;
   /** 배송비를 뺀 상품 금액의 합 */
   productAmount: number;
   totalAmount: number;

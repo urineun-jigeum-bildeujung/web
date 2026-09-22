@@ -51,6 +51,13 @@ export type PaymentConfirmRequest = {
 
 export type PaymentConfirmResult = {
   paymentId: number;
+  /**
+   * 승인된 주문의 **숫자 PK**. 주문 상세 라우트가 받는 값이다.
+   *
+   * 그전에는 응답에 없어 우리가 `successUrl`에 실어 건너보냈다(#301). 주소창 값은 사용자가
+   * 바꿀 수 있어, 승인이 끝나면 이쪽을 믿는다 (#374)
+   */
+  orderId: number;
   /** 사용자에게 보여주는 주문번호 */
   orderNumber: string;
   /** 즉시 승인되는 수단만 다루므로 성공이면 `DONE`이다 */
