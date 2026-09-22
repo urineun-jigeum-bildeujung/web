@@ -23,6 +23,15 @@ namespace NodeJS {
     // 승인에 쓰는 시크릿 키는 여기 두지 않는다 — 그것은 백엔드가 쥔다.
     NEXT_PUBLIC_TOSS_CLIENT_KEY?: string;
 
+    // Firebase 웹 앱 설정과 웹 푸시 VAPID 공개키. 클라이언트용 값이라 노출되는 것이 정상이다(#354).
+    NEXT_PUBLIC_FIREBASE_API_KEY?: string;
+    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?: string;
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID?: string;
+    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?: string;
+    NEXT_PUBLIC_FIREBASE_APP_ID?: string;
+    NEXT_PUBLIC_FIREBASE_VAPID_KEY?: string;
+
     // DEMO — 선언 방식을 보여주는 예시. 이렇게 선언하면 process.env.DEMO를 타입 안전하게 읽을 수 있다.
     DEMO: string;
   }

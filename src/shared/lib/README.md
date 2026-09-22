@@ -13,6 +13,9 @@
 | `typo/typo-tokens.ts` | `globals.css` 타이포 토큰 이름 목록. tailwind-merge가 `text-title-bold-20`을 글자색으로 오인하지 않게, 또 shadcn의 `font-medium`에 굵기가 죽지 않게 `cn`에 알려 준다 |
 | `utils.ts` | `cn` — clsx와 tailwind-merge로 className을 병합한다. 타이포 토큰을 전용 그룹으로 등록하고 굵기·행간과 충돌시키는 설정이 얹혀 있다 (#176, #219) |
 | `utils.test.ts` | `cn` 단위 테스트. 타이포 토큰이 색과 겹쳐도 남는지, 목록이 `globals.css`와 같은지 본다 |
+| `push/fcm.ts` | 브라우저 푸시(FCM) 토큰 발급·삭제. **Firebase를 부르는 유일한 곳** (#354) |
+| `push/firebase-sdk.ts` | `firebase/app`·`firebase/messaging`을 함수 안에서 동적으로 불러오는 얇은 층. 첫 화면 번들·서버 렌더에 들어가지 않고, 테스트는 이 파일을 바꿔 끼운다 |
+| `push/fcm.test.ts` | 미지원 환경에서 물러나는지, 권한 거부·허용에 따라 토큰을 받는지, 끄면 지우는지 |
 | `app-toast.ts` | 토스트를 띄우는 유일한 통로(`toastAppSuccess`·`toastAppError`) — 호출부는 메시지 코드만 넘긴다 |
 | `report-error.ts` | 오류를 바깥으로 알리는 유일한 통로(`reportError`) — 민감정보를 걸러낸 요약만 남긴다. 관측 도구 접점 |
 | `report-error.test.ts` | 무엇이 남고 무엇이 남지 않는지 단위 테스트 |

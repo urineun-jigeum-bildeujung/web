@@ -228,6 +228,12 @@ export const APP_MESSAGE = {
     title: "아직 반응을 남길 수 없어요",
     description: "받은 뒤 며칠 써 본 다음에 남길 수 있어요.",
   },
+
+  // 알림. 푸시 권한은 브라우저가 쥐고 있어 화면이 대신 켜 줄 수 없다
+  "notification.pushPermissionDenied": {
+    title: "알림 권한이 꺼져 있어요",
+    description: "브라우저 설정에서 이 사이트의 알림을 허용한 뒤 다시 켜 주세요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -298,5 +304,8 @@ export const APP_MESSAGE_CODE = {
     purchaseNotConfirmed: "review.purchaseNotConfirmed",
     feedbackAlreadyAnswered: "review.feedbackAlreadyAnswered",
     feedbackNotAvailableYet: "review.feedbackNotAvailableYet",
+  },
+  notification: {
+    pushPermissionDenied: "notification.pushPermissionDenied",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;
