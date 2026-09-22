@@ -7,22 +7,9 @@ test("메인이 렌더링된다", async ({ page }) => {
   await expect(page.getByText(/AI가 골라주는/)).toBeVisible();
 });
 
-test("종류를 고르면 상품 목록으로 바뀐다", async ({ page }) => {
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "사료", exact: true }).click();
-  await expect(page).toHaveURL(/category=food/);
-
-  // 큐레이션 자리가 사라지고 정렬이 나온다
-  await expect(page.getByText(/AI가 골라주는/)).toBeHidden();
-  await expect(page.getByLabel("정렬")).toBeVisible();
-
-  // 지금 어느 것을 보고 있는지 알린다
-  await expect(page.getByRole("button", { name: "사료", exact: true })).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
-});
+// "종류를 고르면 상품 목록으로 바뀐다"는 카테고리 탭이 서버 조회를 타면서(#289)
+// `home.server-fetch.spec.ts`로 옮겼다 — 이 파일이 쓰는 일반 E2E 잡은 백엔드가
+// 없어 실제 조회가 실패하고, 그 결과를 이 스펙으로는 더 이상 확인할 수 없다
 
 test("반응을 남기면 어디에 쓰이는지 알린다", async ({ page }) => {
   await page.goto("/");

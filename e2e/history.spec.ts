@@ -12,19 +12,10 @@ test.beforeEach(async ({ page }) => {
 
 // 좋아요 화면의 "최근에 봤어요"·"자주 샀어요" 탭은 MVP 범위 밖이라 탭도 주소도
 // 찜 탭 하나로 막혀 있다(#274 리뷰) — 옮겨 갈 다른 탭이 없어 이 화면에서는
-// 탭 전환 뒤로가기를 더 시험할 수 없다. 여러 탭을 오가는 이 패턴은 아래
-// "메인에서 종류를 고른 뒤" 시험이 대신 커버한다
-
-test("메인에서 종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다", async ({ page }) => {
-  await page.goto("/");
-
-  await page.getByRole("button", { name: "사료", exact: true }).click();
-  await expect(page).toHaveURL(/category=food/);
-
-  await page.goBack();
-  // 전체 탭은 큐레이션이라 종류 목록과 구성이 다르다
-  await expect(page.getByText(/AI가 골라주는/)).toBeVisible();
-});
+// 탭 전환 뒤로가기를 더 시험할 수 없다. 여러 탭을 오가는 이 패턴은
+// `home.server-fetch.spec.ts`의 "종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다"가
+// 대신 커버한다 — 메인이 카테고리 탭에서 서버 조회를 타서(#289) 이 파일이 쓰는
+// 일반 E2E 잡(백엔드 없음)으로는 더 이상 확인할 수 없다
 
 test("온보딩에서 입력하다 뒤로가기를 눌러도 입력값이 남는다", async ({ page }) => {
   await page.goto("/onboarding");
