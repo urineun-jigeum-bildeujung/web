@@ -65,7 +65,8 @@ function ReviewDetailSkeleton() {
 
 /**
  * 시안의 정사각 사진 자리. 여러 장이면 옆으로 밀어 넘기고 아래 점이 어느 장인지 보인다.
- * 시안에는 화살표가 없어 스크롤 스냅으로 넘기고, 점을 눌러도 그 장으로 간다.
+ * 시안(943-15517)의 점은 표시용이라 누르지 않는다 — 6px 점을 10px 간격으로 두면 터치 영역이 겹쳐
+ * 엉뚱한 장으로 간다. 넘기기는 스크롤 스냅이 맡고, 키보드에는 초점이 올 때만 보이는 이전·다음 버튼을 둔다.
  */
 function PhotoCarousel({ images }: { images: string[] }) {
   const [current, setCurrent] = useState(0);
@@ -102,29 +103,44 @@ function PhotoCarousel({ images }: { images: string[] }) {
       </ul>
 
       {images.length > 1 && (
+        <>
+          {/* 시안에 없는 버튼이라 평소엔 화면 밖에 두고, 키보드 초점이 올 때만 보인다 */}
+          <button
+            type="button"
+            aria-label="이전 사진"
+            disabled={current === 0}
+            onClick={() => goTo(current - 1)}
+            className="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
+          >
+            <Icon name="left" aria-hidden className="size-5" />
+          </button>
+          <button
+            type="button"
+            aria-label="다음 사진"
+            disabled={current === images.length - 1}
+            onClick={() => goTo(current + 1)}
+            className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
+          >
+            <Icon name="right" aria-hidden className="size-5" />
+          </button>
+        </>
+      )}
+
+      {images.length > 1 && (
         // 시안(943-15517)의 점. 6px 원과 4px 간격
         <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">
           <span className="sr-only" aria-live="polite">
             {`${images.length}장 중 ${current + 1}번째`}
           </span>
           {images.map((src, index) => (
-            <button
+            <span
               key={src}
-              type="button"
-              aria-label={`${index + 1}번째 사진 보기`}
-              aria-current={index === current ? "true" : undefined}
-              onClick={() => goTo(index)}
-              // 6px 점만으로는 누르기 어렵다. 보이는 점은 그대로 두고 누르는 자리만 넓힌다
-              className="relative flex size-1.5 items-center justify-center rounded-full after:absolute after:-inset-2.5"
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "size-1.5 rounded-full",
-                  index === current ? "bg-foreground" : "bg-foreground/30",
-                )}
-              />
-            </button>
+              aria-hidden
+              className={cn(
+                "size-1.5 rounded-full",
+                index === current ? "bg-foreground" : "bg-foreground/30",
+              )}
+            />
           ))}
         </div>
       )}
@@ -132,8 +148,6 @@ function PhotoCarousel({ images }: { images: string[] }) {
   );
 }
 
-/** 시안(943-15543)의 신고하기·도움돼요. `ReviewCard`와 같은 모양·같은 결정이다 — 신고 접수 API와 도움돼요 API가
-    아직 없어 화면 안에서만 움직인다. 응답에 `likeCount`가 없어 내가 누른 것만 센다 */
 function ReactionRow() {
   const [liked, setLiked] = useState(false);
   const [reporting, setReporting] = useState(false);

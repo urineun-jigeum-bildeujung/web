@@ -65,12 +65,16 @@ test("사진·닉네임·별점·날짜·칩(아이 프로필·사용 기간·�
   expect(screen.getByText("확실히 잘 먹어요")).toBeDefined();
 });
 
-test("사진이 여러 장이면 점이 장수만큼 있고 몇 번째인지 읽힌다", () => {
+// 점은 시안대로 표시용이다. 버튼으로 두면 10px 간격에 터치 영역이 겹쳐 엉뚱한 장으로 간다(#365 리뷰)
+test("사진이 여러 장이면 몇 번째인지 읽히고, 점은 누르는 것이 아니다", () => {
   render(<ReviewDetailView reviewId="1" />);
 
   expect(screen.getByText("2장 중 1번째")).toBeDefined();
-  expect(screen.getAllByRole("button", { name: /번째 사진 보기/ })).toHaveLength(2);
+  expect(screen.queryByRole("button", { name: /사진 보기/ })).toBeNull();
   expect(screen.getByAltText("후기 사진 2번째")).toBeDefined();
+  // 키보드로도 넘길 수 있게 초점이 올 때만 보이는 이전·다음 버튼이 있다
+  expect(screen.getByRole("button", { name: "이전 사진" }).hasAttribute("disabled")).toBe(true);
+  expect(screen.getByRole("button", { name: "다음 사진" }).hasAttribute("disabled")).toBe(false);
 });
 
 test("X로 닫으면 앞 화면으로 돌아간다", () => {
