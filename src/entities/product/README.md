@@ -4,8 +4,10 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 조회(`searchProducts`)와 상품 요약 조회(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282) |
+| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 요약 조회(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289) |
 | `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
+| `api/use-product-list.ts` | `getProducts`의 커서 페이지네이션("더 보기") 상태를 관리하는 훅. 첫 페이지는 서버가 준 값을 받고 다음 페이지만 이어 붙입니다(#289) |
+| `api/use-product-list.test.ts` | 커서 이어 붙이기·중복 제거·실패 시 기존 목록 보존 단위 테스트 |
 | `api/products.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
 | `api/time-deals.ts` | 타임딜 목록 조회(`getTimeDeals`). 백엔드가 딜 묶음 개수를 제한하지 않아 배열 그대로 보존한다(#282) |
 | `api/time-deals.test.ts` | 요청 파라미터·다중 딜 묶음 보존·`stockBadge` 매핑 단위 테스트 |
@@ -19,11 +21,14 @@
 
 ## 아직 없는 것
 
-`api/products.ts`는 검색 목록 조회만 있다. 상품 상세·목록(비검색) 조회, 정가(`originalPrice`) 표시 정책은
-아직 없다 — 서버 응답에 정가 필드가 없고 `discountRate`에서 역산하면 반올림 오차로 실제 값과
-어긋날 수 있어(#282) 만들어내지 않았다. 조회 훅(React Query)은 만들지 않았다 — 상품·타임딜은
-공개 데이터라 서버 컴포넌트에서 직접 fetch하고, 진짜 클라이언트 재조회가 필요한 지점(더보기 등)이
-생기면 그때 훅을 얹는다.
+상품 상세 조회(`getProductDetail`류)는 아직 없습니다 — `getProductSummary`는 리뷰 작성 줄처럼 이름·대표 사진만
+필요한 자리용이고, 상품 상세 화면 전체가 쓸 조회는 별도입니다. 정가(`originalPrice`) 표시도 없습니다 — 서버 응답에
+필드가 없고 `discountRate`에서 역산하면 반올림 오차로 실제 값과 어긋날 수 있어(#282) 만들어내지 않았습니다.
+백엔드가 필드를 추가하는 PR을 올려 뒀고(#289), 머지되면 `products.ts`·`search-result`·`home` 화면에 함께 반영합니다.
+
+**`use-product-list.ts`는 TanStack Query로 감싸지 않았습니다.** 상품 목록은 공개 데이터라 서버 컴포넌트가
+첫 페이지를 직접 fetch하고, "더 보기"는 캐싱·무효화가 필요 없는 단순 이어 붙이기라 Query 캐시를 쓸 이유가
+없어서입니다(#289). Query가 필요해지는 지점(찜 여부처럼 사용자별로 갈리는 값 등)이 생기면 그때 다시 봅니다.
 
 상품 카드는 두지 않는다. 화면마다 보여주는 항목이 아홉 가지로 갈려, 조각(`shared/ui`의 `Price`·`ProductSummary`)을 화면에서 조립한다. 근거는 [component-convention](../../../docs/conventions/component-convention.md)의 "공용으로 올리는 기준"을 본다.
 

@@ -1,16 +1,5 @@
 // 상품 조회 API. 검색 결과 목록·카테고리별 목록·상품 한 건의 요약(이름·대표 사진)을 부른다.
-//
-// **일반 async 함수다.** React를 몰라도 되고, 반환하는 Promise를 그대로 화면에 넘기면
-// 서버 컴포넌트(await)에서도, `use()`로 클라이언트에 흘려보내는 곳에서도 똑같이 쓸 수 있다.
-//
-// 규격 출처는 실행 중인 백엔드(product-service)의 실제 OpenAPI(`/v3/api-docs`)와
-// 컨트롤러 소스로 직접 확인했다(2026-09-21, #282·#289). 정가(originalPrice)는 응답에 없고
-// `discountRate`만 있는데, 반올림된 값에서 역산하면 실제 정가와 어긋날 수 있어 이번
-// 연동에서는 만들어내지 않는다 — 취소선 정가 표시 여부는 제품 정책 확인 후 정한다.
-//
-// `getProducts`(목록)의 `petId` 파라미터는 백엔드가 받기만 하고 실제 조회에 반영하지
-// 않는다(`ProductListCriteria`에 필드 자체가 없음, #289) — 그래서 이 함수는 petId를
-// 아예 받지 않는다. 개인화가 실제로 동작하기 전까지 없는 척하지 않는다.
+// 일반 async 함수라 서버 컴포넌트(await)·클라이언트(use()) 어디서나 쓸 수 있다.
 
 import { apiRequest } from "@/shared/api/client";
 
@@ -158,6 +147,7 @@ export type ProductListResult = {
  * `category`는 백엔드 `CategoryCode`만 받는다 — "전체"에 대응하는 값이 없으므로
  * 그 경우엔 아예 undefined로 두고 호출한다(쿼리에서 빠진다).
  */
+// petId를 받지 않는다 — 백엔드가 받기만 하고 실제 조회에 반영하지 않는다(#289)
 export function getProducts(params: {
   category?: ProductCategory;
   sort: ProductSort;

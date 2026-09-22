@@ -1,7 +1,5 @@
-// 홈 카테고리 탭 값. 서버 페이지(page.tsx)와 클라이언트 화면(home-view.tsx)이 함께
-// 쓰는데, 뷰 파일은 "use client"라 순수 상수를 내보내도 서버 쪽에서는 실제 값을
-// 받지 못한다("use client" 경계를 넘는 건 컴포넌트 참조뿐이다) — 그래서 이 파일은
-// 어느 쪽에도 속하지 않는 중립 위치에 둔다.
+// 홈 카테고리의 URL 값과 API 매핑.
+// 서버 page.tsx와 클라이언트 view가 공유하므로 "use client" 경계 밖의 model에 둔다.
 
 import type { ProductCategory } from "@/entities/product";
 

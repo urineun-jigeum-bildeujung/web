@@ -122,16 +122,11 @@ function SectionTitle({
 }
 
 /**
- * 상품 그리드·타임딜 미리보기 둘 다 이 실패 화면을 쓴다. 공용 `ErrorBoundary`의 기본
- * 재시도는 TanStack Query 리셋만 한다 — 이 화면의 상품·타임딜은 Query가 아니라
- * `page.tsx`가 만든 일반 Promise를 `use()`로 읽으므로, 그 리셋만으로는 이미 reject된
- * 같은 Promise를 다시 읽어 즉시 같은 오류가 재발한다.
- *
- * `retry`(공용 `ErrorBoundary`가 넘기는 react-error-boundary의 리셋)는 일부러 안 부른다.
- * 지금 이 화면에서 그걸 먼저 부르면, 아직 `router.refresh()`의 새 Promise가 오기 전이라
- * 같은(이미 reject된) Promise를 즉시 한 번 더 읽어 불필요하게 다시 실패한다. 대신
- * `router.refresh()`만 부르고, 새 Promise가 실제로 도착하면 `resetKeys`가 경계를
- * 자동으로 푼다(코드 리뷰 반영, #289)
+ * 상품 그리드·타임딜 미리보기 둘 다 이 실패 화면을 쓴다. 상품·타임딜은 Query가 아니라
+ * `page.tsx`가 만든 일반 Promise를 `use()`로 읽으므로, `retry`(Query 리셋)를 불러도
+ * 아직 오지 않은 새 Promise 대신 같은(이미 reject된) Promise를 다시 읽어 즉시
+ * 재실패한다 — 그래서 `retry`는 부르지 않고 `router.refresh()`만 부른다. 실제 재요청은
+ * 그 결과로 온 새 Promise를 `resetKeys`가 감지해 자동으로 처리한다(#289)
  */
 function PromiseErrorFallback({ router }: { router: ReturnType<typeof useRouter> }) {
   return (
@@ -383,12 +378,9 @@ type HomeViewProps = {
 
 export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeViewProps) {
   const router = useRouter();
-  // category·sort를 바꾸면 서버가 다시 조회하는 동안(shallow:false) 이 트랜지션이
-  // 계속 진행 중임을 안다 — 탭 활성 표시·정렬 라벨은 클라이언트 상태라 즉시 바뀌는데,
-  // 그 아래 그리드는 새 Promise가 올 때까지 이전 카테고리의 상품을 그대로 들고 있다.
-  // isPending으로 그 구간을 흐리게 표시하고 클릭도 막아, "새 탭인데 이전 상품"으로
-  // 잘못 읽히거나 그 틈에 더 보기를 눌러 새 category/sort에 이전 cursor가 섞이는
-  // 걸 막는다(코드 리뷰 반영, #289)
+  // 그리드는 서버가 새 Promise를 줄 때까지 이전 카테고리의 상품을 들고 있다.
+  // isPending인 동안 Skeleton으로 교체해 숨긴다 — 안 그러면 더 보기가 새
+  // category/sort에 이전 cursor를 섞어 보낼 수 있다(#289)
   const [isPending, startTransition] = useTransition();
   const [category, setCategory] = useQueryState(
     "category",
@@ -626,15 +618,10 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               </ErrorBoundary>
             </section>
           </>
-        ) : // isPending인 동안(category·sort를 막 바꿔 서버가 다시 조회하는 중)은 그리드
-        // 대신 Skeleton을 그린다 — 탭·정렬 라벨은 클라이언트 상태라 이미 새 값을
-        // 보여주는데, 그 아래에 흐리게라도 이전 카테고리의 상품을 남겨 두면 "새
-        // 탭인데 이전 상품"으로 잘못 읽힌다. 그 틈에 더 보기를 누를 수도 없어진다
-        // (코드 리뷰 반영, #289).
-        //
-        // isPending이 아닐 때는 productsKey(서버가 productsPromise와 같은 렌더에서
-        // 만든 값)로 다시 마운트한다 — ProductGrid 안의 누적 목록·커서·오류 상태가
-        // 필터 전환 때 자동으로 비워진다(#289)
+        ) : // isPending 중 Skeleton으로 바꾸는 이유는 위 useTransition 자리에 적어 뒀다.
+        // isPending이 아닐 때는 productsKey(서버가 productsPromise와 같은 렌더에서 만든
+        // 값)로 다시 마운트한다 — ProductGrid 안의 누적 목록·커서·오류 상태가 필터
+        // 전환 때 자동으로 비워진다(#289)
         isPending ? (
           <ProductGridSkeleton />
         ) : (
