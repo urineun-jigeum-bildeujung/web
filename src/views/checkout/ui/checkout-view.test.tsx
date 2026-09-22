@@ -3,6 +3,8 @@
 // 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/cart`와
 // `entities/address`가 본다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+
+import { ApiError } from "@/shared/api/client";
 import { useEffect } from "react";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -60,6 +62,8 @@ import { CheckoutView } from "./checkout-view";
 beforeEach(() => {
   vi.clearAllMocks();
   searchParams = new URLSearchParams();
+  // 만들어 둔 주문이 테스트 사이에 남으면 다음 테스트가 그것을 다시 쓴다
+  sessionStorage.clear();
 });
 
 /** 명세 예시를 옮긴 배송지 */
@@ -348,6 +352,68 @@ test("요청사항을 고치면 주문을 새로 만든다", async () => {
     items: [{ productId: 1, quantity: 1 }],
     deliveryNote: null,
   });
+});
+
+/**
+ * 결제창에서 취소하고 돌아오는 길이다.
+ *
+ * 브라우저가 `failUrl`로 이동해 화면이 통째로 다시 선다. 만들어 둔 주문을 컴포넌트 상태로
+ * 들고 있으면 그때 사라져서, 다시 누를 때 `PENDING` 주문을 하나 더 만든다 (#367).
+ */
+test("결제창에서 돌아와 다시 눌러도 주문을 또 만들지 않는다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  expect(createOrder).toHaveBeenCalledTimes(1);
+
+  // 리다이렉트로 화면이 다시 서는 것을 흉내낸다
+  first.unmount();
+  renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(preparePayment).toHaveBeenCalledTimes(2));
+  expect(createOrder).toHaveBeenCalledTimes(1);
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 77 });
+});
+
+// 들고 있던 주문이 이미 결제됐거나 취소된 경우다. 비우지 않으면 눌러도 같은 자리에서 막힌다
+test("들고 있던 주문을 서버가 거절하면 비우고 다음에 새로 만든다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  // 두 번째 — 들고 있던 주문으로 결제 준비를 부르는데 서버가 막는다
+  first.unmount();
+  preparePayment.mockRejectedValueOnce(
+    new ApiError(409, "결제 가능한 상태의 주문이 아닙니다.", {
+      errorCode: "PAYMENT_409_ORDER_NOT_PAYABLE",
+    } as never),
+  );
+  const second = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(preparePayment).toHaveBeenCalledTimes(2));
+
+  // 세 번째 — 비워졌으니 주문을 새로 만든다
+  second.unmount();
+  createOrder.mockResolvedValue({ orderId: 88 });
+  renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 88 });
 });
 
 // 살 수 없는 줄은 이름·금액이 `null`이라 셀 수도 주문에 실을 수도 없다

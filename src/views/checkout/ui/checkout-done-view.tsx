@@ -9,6 +9,8 @@
 
 "use client";
 
+import { useEffect } from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
@@ -27,6 +29,7 @@ import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/con
 import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
 import { useQueryPaymentConfirm } from "../api/use-query-payment-confirm";
+import { clearPendingOrder } from "../model/pending-order";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -194,6 +197,15 @@ export function CheckoutDoneView({
     tossOrderId,
     amount,
   });
+
+  // **결제창을 통과한 주문은 더 이상 재사용 대상이 아니다.** 들고 있던 것을 비우지 않으면
+  // 다음 장바구니에서 그 주문으로 결제를 시도한다 (#367). 승인 실패도 마찬가지다 —
+  // 그 주문은 이미 결제창을 거쳤으므로 새 결제를 붙일 자리가 아니다
+  useEffect(() => {
+    if (canConfirm) {
+      clearPendingOrder();
+    }
+  }, [canConfirm]);
 
   // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 — 복귀 주소에 실어 온
   // 숫자 id가 그 열쇠다 (#301·#308)
