@@ -1,8 +1,11 @@
 // 만들어 둔 화면을 모두 열어 콘솔 오류와 가로 스크롤을 확인한다.
 // 눈으로 훑을 때 놓치는 종류(하이드레이션 오류, 화면 폭 넘침)를 기계가 잡게 한다.
 //
-// `/deals`는 서버에서 실제 API를 조회해(#282) 이 스위트의 dev 서버로는 확인할 수
-// 없다 — 같은 스모크를 `e2e/deals.server-fetch.spec.ts`로 옮겼다.
+// `/deals`·`/`(카테고리 탭)는 서버에서 실제 API를 조회해(#282, #289) 이 스위트의 dev
+// 서버로는 확인할 수 없다 — 같은 스모크를 각각 `e2e/deals.server-fetch.spec.ts`·
+// `e2e/home.server-fetch.spec.ts`로 옮겼다. "전체" 탭(`/`)은 카테고리 그리드를 안 그려
+// 그대로 남긴다 — 타임딜 미리보기만 서버 조회인데, ROUTES 스모크는 API_BASE_URL_INTERNAL
+// 없이 도는 dev 서버라 "전체" 탭도 이 스위트로는 확인할 수 없어 함께 옮긴다.
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
@@ -37,8 +40,6 @@ test.beforeEach(async ({ page }) => {
 
 /** 홈에 걸어 둔 화면 목록과 같은 순서다 */
 const ROUTES = [
-  "/",
-  "/?category=food",
   "/dev/screens",
   "/onboarding",
   "/onboarding?step=basic",
