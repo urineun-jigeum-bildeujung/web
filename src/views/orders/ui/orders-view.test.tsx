@@ -152,6 +152,11 @@ test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async ()
     ),
   );
 
+  // **Escape로도 닫히지 않는다.** 버튼을 잠그는 것만으로는 모자라다 — 바깥을 누르거나
+  // Escape를 치는 길이 남아 있고, 그리로 닫히면 어느 주문을 확정하는지 잃는다
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.getByText("무사히 잘 도착했나요?")).toBeDefined();
+
   release?.();
 });
 
