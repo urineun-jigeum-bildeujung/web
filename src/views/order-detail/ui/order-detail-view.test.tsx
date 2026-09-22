@@ -17,12 +17,21 @@ import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import { OrderDetailView } from "./order-detail-view";
 
+/**
+ * 배송완료 시각. **오늘에서 거슬러 잡는다.**
+ *
+ * 반품·교환은 배송완료 뒤 7일까지만 받으므로, 고정 날짜로 박아 두면 그날이 지나는 순간
+ * 테스트가 저절로 깨진다 (#374).
+ */
+const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+
 /** 명세 Example을 그대로 옮긴 값. 배송비는 없고 38,000 - 35,000이 그 자리다 */
 function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
   return {
     orderId: 1,
     orderNumber: "ORD-TEST-DETAIL-01",
     orderStatus: "PAID",
+    deliveredAt: null,
     productAmount: 35000,
     totalAmount: 38000,
     items: [
@@ -33,6 +42,9 @@ function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
         quantity: 1,
         unitPrice: 35000,
         itemStatus: "PAID",
+        cancelledQuantity: 0,
+        returnedQuantity: 0,
+        effectiveQuantity: 1,
         claims: [],
       },
     ],
@@ -110,7 +122,9 @@ test("배송완료가 아니면 반품·교환 버튼이 없다", async () => {
 });
 
 test("배송완료면 반품·교환을 접수할 수 있다", async () => {
-  getOrderDetail.mockResolvedValue(makeDetail({ orderStatus: "DELIVERED" }));
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
+  );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   expect(await screen.findByRole("button", { name: "반품하기" })).toBeDefined();
@@ -122,6 +136,7 @@ test("신청이 걸린 상품에는 그 상태가 붙는다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({
       orderStatus: "DELIVERED",
+      deliveredAt: daysAgo(1),
       items: [
         {
           orderItemId: 2,
@@ -130,6 +145,9 @@ test("신청이 걸린 상품에는 그 상태가 붙는다", async () => {
           quantity: 1,
           unitPrice: 35000,
           itemStatus: "PAID",
+          cancelledQuantity: 0,
+          returnedQuantity: 0,
+          effectiveQuantity: 1,
           claims: [
             {
               claimId: 1,
@@ -155,6 +173,7 @@ test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다
   getOrderDetail.mockResolvedValue(
     makeDetail({
       orderStatus: "DELIVERED",
+      deliveredAt: daysAgo(1),
       items: [
         {
           orderItemId: 2,
@@ -163,6 +182,9 @@ test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다
           quantity: 1,
           unitPrice: 35000,
           itemStatus: "PAID",
+          cancelledQuantity: 0,
+          returnedQuantity: 0,
+          effectiveQuantity: 1,
           claims: [
             {
               claimId: 1,
@@ -184,7 +206,9 @@ test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다
 
 // 확인창에서 바로 접수되면 사유도 사진도 받지 못한다. 신청 화면으로 넘겨야 한다 (MYPA_261)
 test("반품을 확인하면 그 주문의 신청 화면으로 간다", async () => {
-  getOrderDetail.mockResolvedValue(makeDetail({ orderId: 7, orderStatus: "DELIVERED" }));
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ orderId: 7, orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
+  );
   render(<OrderDetailView orderId="7" />, { wrapper: createQueryWrapper() });
 
   fireEvent.click(await screen.findByRole("button", { name: "반품하기" }));
@@ -204,6 +228,9 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
           quantity: 2,
           unitPrice: 10000,
           itemStatus: "PAID",
+          cancelledQuantity: 0,
+          returnedQuantity: 0,
+          effectiveQuantity: 2,
           claims: [],
         },
         {
@@ -213,6 +240,9 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
           quantity: 1,
           unitPrice: 15000,
           itemStatus: "PAID",
+          cancelledQuantity: 0,
+          returnedQuantity: 0,
+          effectiveQuantity: 1,
           claims: [],
         },
       ],

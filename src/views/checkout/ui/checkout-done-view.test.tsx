@@ -26,6 +26,8 @@ import { CheckoutDoneView } from "./checkout-done-view";
 
 const PAYMENT = {
   paymentId: 1,
+  // 승인 응답이 주는 숫자 주문 id. 주소창 값보다 이쪽이 이긴다 (#374)
+  orderId: 77,
   orderNumber: "ORD-20260919-000001",
   paymentStatus: "DONE",
   amount: 12345,
@@ -39,6 +41,7 @@ const ORDER: OrderDetail = {
   orderId: 77,
   orderNumber: "ORD-20260919-000001",
   orderStatus: "PAID",
+  deliveredAt: null,
   productAmount: 9345,
   totalAmount: 12345,
   items: [
@@ -49,6 +52,9 @@ const ORDER: OrderDetail = {
       quantity: 2,
       unitPrice: 4672,
       itemStatus: "PAID",
+      cancelledQuantity: 0,
+      returnedQuantity: 0,
+      effectiveQuantity: 2,
       claims: [],
     },
   ],
@@ -171,8 +177,37 @@ test("방금 산 주문의 상세로 갈 수 있다", () => {
   expect(screen.getByRole("link", { name: "홈으로 가기" }).getAttribute("href")).toBe("/");
 });
 
-// 주소창으로 직접 들어온 경우다. 엉뚱한 주문을 여느니 목록이 낫고, 문구도 가는 곳에 맞춘다
-test("주문 id가 없으면 주문 내역으로 보낸다", () => {
+/**
+ * **승인 응답의 주문 id가 주소창 값을 이긴다.**
+ *
+ * `?order=`는 사용자가 바꿀 수 있어, 그대로 믿으면 이 결제와 상관없는 주문으로 보낸다.
+ * 그전에는 응답에 숫자 id가 없어 우리가 실어 보내는 수밖에 없었다 (#301 → #374).
+ */
+test("주소창을 고쳐도 승인 응답이 준 주문으로 간다", () => {
+  render(<CheckoutDoneView {...QUERY} orderId={999} />);
+
+  expect(screen.getByRole("link", { name: "주문 상세 보기" }).getAttribute("href")).toBe(
+    "/mypage/orders/77",
+  );
+});
+
+// 승인 응답이 주므로 주소창에 없어도 상세로 갈 수 있다
+test("주소창에 주문 id가 없어도 상세로 갈 수 있다", () => {
+  render(<CheckoutDoneView {...QUERY} />);
+
+  expect(screen.getByRole("link", { name: "주문 상세 보기" }).getAttribute("href")).toBe(
+    "/mypage/orders/77",
+  );
+});
+
+// 주소창으로 직접 들어와 승인도 안 된 경우다. 엉뚱한 주문을 여느니 목록이 낫다
+test("승인 결과가 없으면 주문 내역으로 보낸다", () => {
+  useQueryPaymentConfirm.mockReturnValue({
+    payment: undefined,
+    error: null,
+    isConfirming: false,
+    canConfirm: true,
+  });
   render(<CheckoutDoneView {...QUERY} />);
 
   expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();

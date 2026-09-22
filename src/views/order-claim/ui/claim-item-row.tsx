@@ -45,9 +45,9 @@ export function ClaimItemRow({ item, quantity, onToggle, onQuantityChange }: Cla
             label={`${item.productName} 신청 수량`}
             value={quantity}
             onChange={onQuantityChange}
-            // 주문 수량이 상한이다. 이미 취소·반품된 몫을 뺀 값(`effectiveQuantity`)은 응답에
-            // 오지 않아 그보다 크게 잡히는데, 넘으면 서버가 거절한다 (#327)
-            max={item.quantity}
+            // **남은 수량이 상한이다.** 주문 수량으로 잡으면 이미 취소·반품한 몫까지
+            // 고를 수 있어 서버가 거절한다 (#374)
+            max={item.effectiveQuantity}
           />
         </div>
       )}

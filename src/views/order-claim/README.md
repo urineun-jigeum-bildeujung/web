@@ -27,9 +27,9 @@ POST /orders/{orderId}/claims   { claimType, reason?, items: [{ orderItemId, qua
 
 | 조건 | 화면이 하는 것 |
 | --- | --- |
-| 배송완료 + 7일 이내 | 상태까지만 막는다. **배송일이 응답에 없어** 기간은 서버가 `ORDER_409_NOT_CLAIMABLE`로 알린다 |
+| 배송완료 + 7일 이내 | 둘 다 화면에서 막는다. `deliveredAt`으로 `isWithinClaimPeriod`가 판정하고, 서버 `Order.isClaimable`과 같은 규칙이다 (#374) |
 | 품목마다 진행 중인 신청 없음 | 진행 중인 상품을 목록에서 뺀다. 하나만 걸려도 **요청 전체**가 거절된다 |
-| 수량 ≤ 남은 수량 | 주문 수량을 상한으로 둔다. `effectiveQuantity`가 응답에 없어 그보다 크게 잡힌다 |
+| 수량 ≤ 남은 수량 | `effectiveQuantity`를 상한으로 둔다. 남은 수량이 0인 줄은 목록에서 뺀다 (#374) |
 | 같은 품목 중복 금지 | 선택을 `orderItemId → 수량` 표로 들어 중복이 생기지 않는다 |
 | 사유 1000자 이하, 선택 | `maxLength`로 막고, 안 쓰면 보내지 않는다 |
 
@@ -58,5 +58,4 @@ POST /orders/{orderId}/claims   { claimType, reason?, items: [{ orderItemId, qua
 ## 백엔드에 요청해 둘 것
 
 - **클레임 사진용 presigned URL 엔드포인트** — 없으면 `imageUrls`를 채울 방법이 없다
-- **주문 상세 응답에 `effectiveQuantity`** — 지금은 이미 신청한 몫을 화면이 알 수 없어 상한이 헐겁다
 - **사유 코드 체계** — 기능명세서의 라디오 네 개를 살릴지, 자유 문자열로 갈지

@@ -37,9 +37,36 @@ export function hasActiveClaim(item: OrderDetailItem): boolean {
   return item.claims.some(isActiveClaim);
 }
 
-/** 새로 신청할 수 있는 상품만 남긴다 */
+/**
+ * 새로 신청할 수 있는 상품만 남긴다.
+ *
+ * **남은 수량이 0이면 뺀다.** 전부 취소·반품된 줄은 고를 수 있는 수량이 없어, 남겨 두면
+ * 수량 1로 신청했다가 서버가 거절한다 (#374).
+ */
 export function claimableItems(items: OrderDetailItem[]): OrderDetailItem[] {
-  return items.filter((item) => !hasActiveClaim(item));
+  return items.filter((item) => !hasActiveClaim(item) && item.effectiveQuantity > 0);
+}
+
+/** 반품·교환을 받는 기간. 기능명세서와 서버 `Order.isClaimable`이 같은 값이다 */
+const CLAIM_DAYS = 7;
+
+/**
+ * 아직 반품·교환을 받는 기간인가.
+ *
+ * **배송완료 시각이 없으면 받지 않는다.** 배송이 끝나지 않았다는 뜻이다.
+ *
+ * 절대 시각으로 견준다. 표시와 달리 이 판정에는 시간대를 맞출 것이 없다 — 서버가 오프셋을
+ * 붙여 주므로 `new Date`가 같은 순간으로 읽는다.
+ */
+export function isWithinClaimPeriod(deliveredAt: string | null): boolean {
+  if (!deliveredAt) {
+    return false;
+  }
+  const delivered = new Date(deliveredAt);
+  if (Number.isNaN(delivered.getTime())) {
+    return false;
+  }
+  return delivered.getTime() + CLAIM_DAYS * 24 * 60 * 60 * 1000 > Date.now();
 }
 
 /**
