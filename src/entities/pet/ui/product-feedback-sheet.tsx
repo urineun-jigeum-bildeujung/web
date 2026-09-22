@@ -12,7 +12,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge/badge";
@@ -71,9 +71,14 @@ export function ProductFeedbackSheet({
   const [picked, setPicked] = useState<FeedbackValue>();
   const [tooEarly, setTooEarly] = useState(false);
   const [done, setDone] = useState(false);
+  // 등록 버튼만 막히고 끌어내리기·덮개 누르기로는 보내는 중에도 닫힌다. 닫힌 뒤 도착한
+  // 응답이 완료로 바꾸면, 같은 인스턴스가 다른 제품으로 다시 열릴 때 그 완료 화면부터
+  // 보인다. 닫을 때 번호를 올려 그 전에 보낸 요청의 완료를 버린다
+  const submitId = useRef(0);
 
   const close = (open: boolean) => {
     if (!open) {
+      submitId.current += 1;
       setPicked(undefined);
       setTooEarly(false);
       setDone(false);
@@ -95,9 +100,12 @@ export function ProductFeedbackSheet({
       setDone(true);
       return;
     }
+    const id = submitId.current;
     // 실패는 부르는 쪽이 알린다. 여기서는 완료로 넘어가지 않는 것으로 충분하다
     onSubmit(choice).then(
-      () => setDone(true),
+      () => {
+        if (submitId.current === id) setDone(true);
+      },
       () => {},
     );
   };

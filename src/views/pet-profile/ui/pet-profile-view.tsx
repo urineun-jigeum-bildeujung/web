@@ -113,17 +113,19 @@ export function PetProfileView() {
   /**
    * 시트의 아이. 항목의 `petId`가 그 제품을 사 준 아이인데 **백엔드가 아직 `null`로 둔다**
    * (주문 서비스 내부 응답에 없어 "추후 연동"). 그때까지는 대표 아이(목록 첫 번째)다.
-   * 제목에 이름을 보이고 등록 요청에 id를 싣는다. 채워지면 코드 변경 없이 그 아이로 바뀐다
+   * 채워지면 코드 변경 없이 그 아이로 바뀐다. 등록 요청에는 이 id를 그대로 싣고, 이름은
+   * 목록에서 찾는다 — 목록에 없는 아이(지운 아이·아직 못 받음)라도 id를 대표 아이로 바꿔
+   * 보내지 않는다. 그 제품을 사 준 아이가 아니면 반응이 다른 아이의 적합도에 섞인다
    */
-  const feedbackPet =
-    (feedback && pets?.find((candidate) => candidate.id === feedback.item.petId)) ?? pets?.[0];
+  const feedbackPetId = feedback ? (feedback.item.petId ?? pets?.[0]?.id ?? null) : null;
+  const feedbackPetName = pets?.find((candidate) => candidate.id === feedbackPetId)?.name;
 
   const submit = (choice: FeedbackChoice) =>
     feedback
       ? submitFeedback({
           productId: feedback.item.productId,
           orderProductId: feedback.item.orderProductId,
-          petId: feedbackPet?.id ?? null,
+          petId: feedbackPetId,
           submission: choice,
         }).catch((causedBy: unknown) => {
           toastAppError(toAppMessageCode(causedBy), causedBy);
@@ -254,7 +256,7 @@ export function PetProfileView() {
 
       <ProductFeedbackSheet
         target={feedback?.target ?? null}
-        petName={feedbackPet?.name ?? ""}
+        petName={feedbackPetName ?? "우리 아이"}
         onOpenChange={(open) => !open && setFeedback(null)}
         onSeeProduct={(productId) => router.push(`/products/${productId}`)}
         onSubmit={submit}
