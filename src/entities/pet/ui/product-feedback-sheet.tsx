@@ -5,9 +5,9 @@
 // 모양뿐 아니라 안쪽 타이포·버튼 크기·배지 모양도 다르다 — 한쪽 시안에 맞춰 고친
 // 값을 다른 쪽에도 그대로 적용하지 않도록 variant별로 나눠 그린다.
 //
-// 이 서비스가 "근거 있는 판단"으로 가는 자리다. 여기서 받은 반응은 API 연동 후
-// 다음 추천 적합도에 반영될 예정이다 — 지금은 화면에만 등록 완료로 표시하고 서버에
-// 저장하지 않는다.
+// 이 서비스가 "근거 있는 판단"으로 가는 자리다. 여기서 받은 반응은 다음 추천 적합도에
+// 반영된다. 부르는 쪽이 `onSubmit`으로 서버에 보내고, 없으면(메인 상태 체크의 목데이터)
+// 화면에만 등록 완료로 표시한다.
 
 "use client";
 
@@ -21,21 +21,28 @@ import { Button } from "@/shared/ui/button";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { DrawerClose, DrawerTitle } from "@/shared/ui/drawer";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
+/** 값은 백엔드 `FeedbackCheckAnswer` 그대로다. 등록 요청에 그대로 실린다 */
 export const FEEDBACKS = [
-  { value: "good", label: "잘 맞았어요", icon: "good" },
-  { value: "soso", label: "그냥 그랬어요", icon: "soso" },
-  { value: "bad", label: "안 맞았어요", icon: "bad" },
+  { value: "GOOD", label: "잘 맞았어요", icon: "good" },
+  { value: "NEUTRAL", label: "그냥 그랬어요", icon: "soso" },
+  { value: "BAD", label: "안 맞았어요", icon: "bad" },
 ] as const;
+
+export type FeedbackValue = (typeof FEEDBACKS)[number]["value"];
+
+/** 답을 골랐거나 아직 이르다고 보류했거나 둘 중 하나다 */
+export type FeedbackChoice = { answer: FeedbackValue } | { postpone: true };
 
 export type FeedbackTarget = {
   productId: string;
   productName: string;
   imageUrl?: string;
-  /** "구매 후 6일" 같은 표시 */
-  sinceLabel: string;
-  /** "3번째 구매" 같은 표시 */
-  countLabel: string;
+  /** "구매 후 6일" 같은 표시. 서버 응답에 없으면 비운다 */
+  sinceLabel?: string;
+  /** "3번째 구매" 같은 표시. 서버 응답에 없으면 비운다 */
+  countLabel?: string;
 };
 
 type ProductFeedbackSheetProps = {
@@ -46,6 +53,10 @@ type ProductFeedbackSheetProps = {
   onSeeProduct?: (productId: string) => void;
   /** 감싸는 시트 모양. 메인 상태 체크는 `full`, 마이페이지 반응 시트는 기본값(`floating`) */
   variant?: "floating" | "full";
+  /** 서버에 보낸다. 끝나면 완료 화면으로 간다. 실패는 부르는 쪽이 알리고 거부하면 그 자리에 남는다. 없으면 화면만 완료로 바꾼다 */
+  onSubmit?: (choice: FeedbackChoice) => Promise<unknown>;
+  /** 보내는 중. 등록 버튼의 대기 표시가 본다 */
+  isSubmitting?: boolean;
 };
 
 export function ProductFeedbackSheet({
@@ -54,8 +65,10 @@ export function ProductFeedbackSheet({
   onOpenChange,
   onSeeProduct,
   variant = "floating",
+  onSubmit,
+  isSubmitting = false,
 }: ProductFeedbackSheetProps) {
-  const [picked, setPicked] = useState<string>();
+  const [picked, setPicked] = useState<FeedbackValue>();
   const [tooEarly, setTooEarly] = useState(false);
   const [done, setDone] = useState(false);
 
@@ -69,6 +82,25 @@ export function ProductFeedbackSheet({
   };
 
   const pickedLabel = FEEDBACKS.find((item) => item.value === picked)?.label;
+
+  /** 보류가 켜져 있으면 답을 보지 않는다. 둘 다 없으면 버튼이 막혀 있어 여기 오지 않는다 */
+  const submit = () => {
+    const choice: FeedbackChoice | null = tooEarly
+      ? { postpone: true }
+      : picked
+        ? { answer: picked }
+        : null;
+    if (!choice) return;
+    if (!onSubmit) {
+      setDone(true);
+      return;
+    }
+    // 실패는 부르는 쪽이 알린다. 여기서는 완료로 넘어가지 않는 것으로 충분하다
+    onSubmit(choice).then(
+      () => setDone(true),
+      () => {},
+    );
+  };
 
   return (
     <BottomSheet open={target !== null} onOpenChange={close} variant={variant}>
@@ -144,10 +176,12 @@ export function ProductFeedbackSheet({
                   <p className="truncate text-body-medium-16 text-foreground">
                     {target.productName}
                   </p>
-                  <p className="flex gap-2">
-                    <Badge>{target.sinceLabel}</Badge>
-                    <Badge variant="outline">{target.countLabel}</Badge>
-                  </p>
+                  {(target.sinceLabel || target.countLabel) && (
+                    <p className="flex gap-2">
+                      {target.sinceLabel && <Badge>{target.sinceLabel}</Badge>}
+                      {target.countLabel && <Badge variant="outline">{target.countLabel}</Badge>}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -222,10 +256,10 @@ export function ProductFeedbackSheet({
 
             <Button
               className="mt-1 h-11 text-label-bold-16 disabled:bg-surface-disable disabled:text-text-label-disable disabled:opacity-100"
-              disabled={!picked && !tooEarly}
-              onClick={() => setDone(true)}
+              disabled={(!picked && !tooEarly) || isSubmitting}
+              onClick={submit}
             >
-              등록하기
+              <LoadingSwap loading={isSubmitting}>등록하기</LoadingSwap>
             </Button>
           </div>
         )
@@ -281,10 +315,12 @@ export function ProductFeedbackSheet({
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p className="truncate text-title-bold-16 text-foreground">{target.productName}</p>
-                <p className="flex gap-2">
-                  <Badge>{target.sinceLabel}</Badge>
-                  <Badge tone="positive">{target.countLabel}</Badge>
-                </p>
+                {(target.sinceLabel || target.countLabel) && (
+                  <p className="flex gap-2">
+                    {target.sinceLabel && <Badge>{target.sinceLabel}</Badge>}
+                    {target.countLabel && <Badge tone="positive">{target.countLabel}</Badge>}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -343,10 +379,10 @@ export function ProductFeedbackSheet({
 
           <Button
             className="h-10 text-label-bold-14 disabled:bg-surface-disable disabled:text-text-label-disable disabled:opacity-100"
-            disabled={!picked && !tooEarly}
-            onClick={() => setDone(true)}
+            disabled={(!picked && !tooEarly) || isSubmitting}
+            onClick={submit}
           >
-            등록하기
+            <LoadingSwap loading={isSubmitting}>등록하기</LoadingSwap>
           </Button>
         </div>
       )}

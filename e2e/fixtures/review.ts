@@ -30,6 +30,10 @@ const UPLOAD_PATH = "/e2e-s3-stub/reviews/member-1/uuid.jpg";
 
 export async function stubReviewApi(page: Page) {
   await page.route("**/api/v1/products/*", (route) => route.fulfill({ json: PRODUCT }));
+  // 아이 제품 관리 탭이 반응을 남길 수 있는 항목을 받는다(#345)
+  await page.route("**/api/v1/reviews/feedbacks/pending", (route) =>
+    route.fulfill({ json: { content: [] } }),
+  );
   await page.route("**/api/v1/reviews/me*", (route) =>
     route.fulfill({ json: { content: [], hasNext: false } }),
   );
