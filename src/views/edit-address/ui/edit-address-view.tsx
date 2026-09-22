@@ -9,8 +9,10 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryState } from "nuqs";
-import { useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { useQueryAddresses, useMutateAddress, type Address } from "@/entities/address";
 import { toAppMessageCode } from "@/shared/api/error-message";
@@ -21,6 +23,8 @@ import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 import { Skeleton } from "@/shared/ui/skeleton";
+
+import { addressFormSchema, type AddressFormValues } from "../model/address-form-schema";
 
 export function EditAddressView() {
   // 새 배송지와 이미 있는 곳의 수정을 한 화면이 맡는다. 어느 쪽인지는 주소창이 들고 있다.
@@ -84,13 +88,6 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const [roadAddr] = useQueryState("roadAddr");
   const [zipNo] = useQueryState("zipNo");
 
-  const [label, setLabel] = useState(saved?.addressName ?? "");
-  const [receiver, setReceiver] = useState(saved?.receiver ?? "");
-  const [phone, setPhone] = useState(saved?.phone ?? "");
-  const [detail, setDetail] = useState(saved?.addressDetail ?? "");
-  const [request, setRequest] = useState(saved?.deliveryNote ?? "");
-  const [isDefault, setIsDefault] = useState(saved?.isDefault ?? false);
-
   // 저장된 값이 기본일 때만 잠근다. 새 배송지나 기본이 아닌 배송지는 자유롭게 켜고 끈다
   const lockedAsDefault = saved?.isDefault === true;
 
@@ -101,21 +98,38 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const address = roadAddr ?? saved?.address ?? "";
   const zipCode = roadAddr ? (zipNo ?? "") : (saved?.zipCode ?? "");
 
-  const submit = async () => {
-    const note = request.trim();
+  // 값은 스키마가 이미 다듬는다 — `z.string().trim()`이라 여기서 따로 `trim()`하지 않는다
+  const { control, handleSubmit } = useForm<AddressFormValues>({
+    resolver: zodResolver(addressFormSchema),
+    defaultValues: {
+      addressName: saved?.addressName ?? "",
+      receiver: saved?.receiver ?? "",
+      phone: saved?.phone ?? "",
+      addressDetail: saved?.addressDetail ?? "",
+      deliveryNote: saved?.deliveryNote ?? "",
+      isDefault: saved?.isDefault ?? false,
+    },
+  });
+
+  // **`formState.isValid`를 쓰지 않는다.** resolver 검증이 비동기라 한 박자 늦게 따라온다.
+  // 마지막 칸을 채운 직후 버튼이 아직 잠겨 있으면 사용자는 고장으로 읽는다.
+  // 같은 스키마로 지금 값을 그 자리에서 판정한다.
+  //
+  // `watch()`가 아니라 `useWatch`인 이유 — `watch()`는 렌더마다 새 함수라 React Compiler가
+  // 메모이제이션을 포기한다(`react-hooks/incompatible-library`). `useWatch`는 구독 훅이다
+  const values = useWatch({ control });
+  const isFilled = addressFormSchema.safeParse(values).success;
+
+  const submit = async (values: AddressFormValues) => {
     const request_ = {
-      addressName: label.trim(),
-      receiver: receiver.trim(),
-      phone: phone.trim(),
+      ...values,
       zipCode,
       address,
-      addressDetail: detail.trim(),
       // **등록과 수정에서 빈 값의 뜻이 다르다.** 등록은 적지 않았다는 뜻이라 `null`이지만,
       // 수정에서 `null`은 서버가 "건드리지 마라"로 읽는다(`mergeWithRequest`). 지우려고
       // 비웠는데 204로 성공하고 옛 문구가 그대로 남았다 — 수정에는 빈 문자열을 보낸다.
       // `AddressUpdateRequest.deliveryNote`는 `@Size(max = 100)`뿐이라 받는다 (#314)
-      deliveryNote: saved ? note : note || null,
-      isDefault,
+      deliveryNote: saved ? values.deliveryNote : values.deliveryNote || null,
     };
 
     // 실패 토스트는 `MutationCache.onError`가 전역으로 띄운다. 여기서 또 잡지 않는다.
@@ -135,43 +149,50 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
       // 상세주소만 빠져 있었다. 비운 채 누르면 400이고, `COMMON_400`은 "입력한 내용을
       // 다시 확인해 주세요" 한 줄이라 어느 칸이 문제인지 알 수 없다 (#314).
       // 우편번호는 주소를 고르면 함께 오므로 따로 물을 칸이 없다
-      submitDisabled={
-        !label.trim() ||
-        !receiver.trim() ||
-        !phone.trim() ||
-        !address.trim() ||
-        !zipCode ||
-        !detail.trim()
-      }
+      //
+      // 넷은 `addressFormSchema`가 본다. 주소와 우편번호는 이 화면의 입력칸이 아니라
+      // 주소창에서 실려 오는 값이라 폼 밖에 있어 여기서 함께 확인한다
+      submitDisabled={!isFilled || !address.trim() || !zipCode}
       submitting={isSaving}
       // 저장이 실패하면 `submit`이 거부된다. `void`는 반환값만 버리고 거부는 남겨서
       // 처리되지 않은 Promise 거부가 콘솔에 찍힌다. 문구는 전역 토스트가 이미 띄운다 (#239 리뷰)
-      onSubmit={() => void submit().catch(() => undefined)}
+      onSubmit={() => void handleSubmit(submit)().catch(() => undefined)}
     >
       {/* 시안은 예시를 별도 줄이 아니라 placeholder로 넣는다 */}
-      <FormField
-        label="배송지 이름"
-        placeholder="ex) 집, 회사"
-        value={label}
-        onChange={(event) => setLabel(event.target.value)}
-        onClear={() => setLabel("")}
+      <Controller
+        control={control}
+        name="addressName"
+        render={({ field }) => (
+          <FormField
+            label="배송지 이름"
+            placeholder="ex) 집, 회사"
+            {...field}
+            onClear={() => field.onChange("")}
+          />
+        )}
       />
 
-      <FormField
-        label="받는 분 이름"
-        value={receiver}
-        onChange={(event) => setReceiver(event.target.value)}
-        onClear={() => setReceiver("")}
+      <Controller
+        control={control}
+        name="receiver"
+        render={({ field }) => (
+          <FormField label="받는 분 이름" {...field} onClear={() => field.onChange("")} />
+        )}
       />
 
       {/* 기사가 부재 시 연락할 곳이다. 받는 사람이 나와 다른 경우가 배송지를 따로 만드는 이유라
           가입 때 받은 번호로 대신할 수 없다 (mypa_311 "연락처 추가") */}
-      <FormField
-        label="연락처"
-        inputMode="numeric"
-        value={phone}
-        onChange={(event) => setPhone(event.target.value)}
-        onClear={() => setPhone("")}
+      <Controller
+        control={control}
+        name="phone"
+        render={({ field }) => (
+          <FormField
+            label="연락처"
+            inputMode="numeric"
+            {...field}
+            onClear={() => field.onChange("")}
+          />
+        )}
       />
 
       {/* 시안은 라벨 하나 아래 주소 줄과 상세주소 줄을 묶는다 */}
@@ -194,34 +215,50 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
           </span>
           <Icon name="search" label="주소 검색" className="size-5 text-icon-stroke-tertiary" />
         </Link>
-        <FormField
-          label="상세 주소"
-          className="[&>label]:sr-only"
-          placeholder="상세주소를 입력해주세요"
-          value={detail}
-          onChange={(event) => setDetail(event.target.value)}
+        <Controller
+          control={control}
+          name="addressDetail"
+          render={({ field }) => (
+            <FormField
+              label="상세 주소"
+              className="[&>label]:sr-only"
+              placeholder="상세주소를 입력해주세요"
+              {...field}
+            />
+          )}
         />
       </div>
 
-      <FormField
-        label="배송 요청사항"
-        placeholder="요청사항을 적어주세요."
-        value={request}
-        onChange={(event) => setRequest(event.target.value)}
-        onClear={() => setRequest("")}
+      <Controller
+        control={control}
+        name="deliveryNote"
+        render={({ field }) => (
+          <FormField
+            label="배송 요청사항"
+            placeholder="요청사항을 적어주세요."
+            {...field}
+            onClear={() => field.onChange("")}
+          />
+        )}
       />
 
       {/* **이미 기본인 배송지는 끄지 못한다.** 서버가 마지막 기본 배송지를 지키느라
           `LAST_DEFAULT_ADDRESS`로 저장 전체를 거절해, 같이 고친 이름·연락처까지 무산된다.
           기본을 옮기는 길은 다른 배송지를 기본으로 지정하는 것뿐이다 (#314) */}
-      <CheckboxRow
-        label="계속 이 주소로 받을게요"
-        checked={isDefault}
-        onCheckedChange={setIsDefault}
-        disabled={lockedAsDefault}
-        description={
-          lockedAsDefault ? "다른 배송지를 기본으로 지정하면 해제할 수 있어요" : undefined
-        }
+      <Controller
+        control={control}
+        name="isDefault"
+        render={({ field }) => (
+          <CheckboxRow
+            label="계속 이 주소로 받을게요"
+            checked={field.value}
+            onCheckedChange={field.onChange}
+            disabled={lockedAsDefault}
+            description={
+              lockedAsDefault ? "다른 배송지를 기본으로 지정하면 해제할 수 있어요" : undefined
+            }
+          />
+        )}
       />
     </SingleInputScreen>
   );
