@@ -79,7 +79,6 @@ const ROUTES = [
   "/likes",
   "/search",
   "/recommendations",
-  "/mypage/pets?tab=products&reviewed=todo",
   "/compare",
   "/products/1",
   "/products/1/photos",

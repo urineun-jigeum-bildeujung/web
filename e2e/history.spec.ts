@@ -51,19 +51,21 @@ test("온보딩에서 입력하다 뒤로가기를 눌러도 입력값이 남는
   await expect(page.getByLabel("아이의 이름을 알려주세요")).toHaveValue("보리");
 });
 
+// 아이 제품 관리의 거르기 칩(전체·미입력·입력)은 답한 항목을 주는 API가 없어 빠졌다(#345).
+// 같은 목록을 좁히는 필터가 히스토리에 안 쌓이는지는 추천 화면의 분류로 본다
 test("필터는 히스토리에 쌓이지 않는다", async ({ page }) => {
-  await page.goto("/mypage/pets?tab=products");
+  await page.goto("/");
+  await page.goto("/recommendations");
 
-  // 칩은 라디오를 숨기고 레이블을 누르게 되어 있다
-  const filters = page.getByRole("radiogroup", { name: "반응 입력 여부로 거르기" });
-  await filters.getByText("미입력", { exact: true }).click();
-  await expect(page).toHaveURL(/reviewed=todo/);
-  await filters.getByText("입력", { exact: true }).click();
-  await expect(page).toHaveURL(/reviewed=done/);
+  const categories = page.getByRole("navigation", { name: "상품 분류" });
+  await categories.getByRole("button", { name: "사료", exact: true }).click();
+  await expect(page).toHaveURL(/category=food/);
+  await categories.getByRole("button", { name: "간식", exact: true }).click();
+  await expect(page).toHaveURL(/category=snack/);
 
-  // 같은 목록을 좁히는 것이라 한 번에 탭 전환 이전으로 돌아가야 한다
+  // 같은 목록을 좁히는 것이라 한 번에 추천 화면에 들어오기 전으로 돌아가야 한다
   await page.goBack();
-  await expect(page).not.toHaveURL(/tab=products/);
+  await expect(page).not.toHaveURL(/recommendations/);
 });
 
 test("주소에 없는 아이 id가 와도 화면이 한 아이를 가리킨다", async ({ page }) => {
