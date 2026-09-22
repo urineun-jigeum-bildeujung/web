@@ -7,6 +7,13 @@
 // ClaimStatus  REQUESTED → COLLECTING → INSPECTING → COMPLETED
 //              어느 단계에서든 REJECTED로 끝날 수 있다
 // ```
+//
+// **MVP에서 실제로 오는 것은 `REQUESTED` 하나다.** 백엔드 회신(2026-09-21) — "현재 관리자 권한
+// 개발이 생략되어서 COMPLETED 등으로 넘어갈 일이 없을 것 같습니다". 시연에 필요하면 DB에서
+// 직접 바꾼다고 했다.
+//
+// **그래도 나머지 문구를 지우지 않는다.** 단계를 그리는 화면을 만든 것이 아니라 문구 표 한 장뿐이라
+// 비용이 없고, 관리자 기능이 붙으면 그대로 쓰인다. 모르는 값은 `claimLabel`이 `null`을 돌린다.
 
 import type { OrderDetailItem, OrderItemClaim } from "../api/orders";
 
