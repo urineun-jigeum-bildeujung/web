@@ -15,8 +15,8 @@
 | `ui/claim-status-badge.tsx` | 상품에 걸린 신청 상태 뱃지 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
 | `model/order-status.test.ts` | 아는 값만 옮기는지, 모르는 값에 `null`을 주는지 |
-| `ui/order-status-badge.tsx` | 주문 상태 뱃지. 결제완료·상품준비·배송중·배송완료·구매확정 |
-| `ui/order-status-badge.test.tsx` | 다섯 상태의 문구 |
+| `ui/order-status-badge.tsx` | 주문 상태 뱃지 넷. 배송준비중·배송중·배송완료·구매확정 — **결제완료는 따로 두지 않는다**, 서버 `PAID`·`PREPARING`을 한 단계로 묶었다 (#297) |
+| `ui/order-status-badge.test.tsx` | 상태마다 문구가 있는지, 뱃지가 그 문구를 그리는지 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 96 + 이름·뱃지 / 옵션 / 결제 금액 |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
@@ -27,7 +27,7 @@
 
 상태 값은 IA의 "주문/배송 내역" 단위기능을 따른다.
 
-**다섯 상태가 모두 같은 색이다.** UI 시안(mypa_061)이 그렇게 정했다. 어느 단계인지는
+**네 뱃지가 모두 같은 색이다.** UI 시안(mypa_061)이 그렇게 정했다. 어느 단계인지는
 색이 아니라 문구가 알리므로 문구를 지우거나 아이콘으로 대체하지 않는다.
 
 `payment-detail`·`delivery-detail`은 주문 상세(`mypa_161`)와 주문 완료(`paym_002`)가 **타이포·간격까지 같은 블록**을 쓰기 때문에 올라왔다 (#210). 주문 상세는 흰 카드 안에, 주문 완료는 흰 바닥에 그대로 놓이므로 **카드 껍데기는 `DetailSection`이 갖지 않고 쓰는 쪽이 `className`으로 얹는다.**

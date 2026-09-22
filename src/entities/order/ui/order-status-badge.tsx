@@ -25,7 +25,7 @@ type OrderStatusBadgeProps = {
 export function OrderStatusBadge({ status, className, ...props }: OrderStatusBadgeProps) {
   return (
     <span
-      // 시안은 다섯 상태를 모두 같은 색으로 둔다. 어느 단계인지는 색이 아니라 문구가 알린다
+      // 시안은 네 상태를 모두 같은 색으로 둔다. 어느 단계인지는 색이 아니라 문구가 알린다
       className={cn(
         "inline-flex items-center rounded-sm bg-surface-tertiary px-2 py-1 text-label-medium-12 text-foreground",
         className,
