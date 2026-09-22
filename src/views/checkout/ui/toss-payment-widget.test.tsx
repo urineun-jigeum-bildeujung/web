@@ -6,7 +6,9 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 const { renderPaymentMethods, requestPayment, setAmount, loadTossPayments } = vi.hoisted(() => ({
   renderPaymentMethods: vi.fn(async () => ({ destroy: vi.fn() })),
   // 인자 모양을 적어 둔다. 복귀 주소를 꺼내 보는 테스트가 있어 빈 목이면 타입이 막힌다
-  requestPayment: vi.fn<(options: { successUrl: string }) => Promise<void>>(async () => {}),
+  requestPayment: vi.fn<(options: { successUrl: string; failUrl: string }) => Promise<void>>(
+    async () => {},
+  ),
   setAmount: vi.fn(async () => {}),
   loadTossPayments: vi.fn(),
 }));
@@ -90,6 +92,22 @@ test("복귀 주소에 숫자 주문 id를 실어 보낸다", async () => {
 
   // **토스가 붙이는 `orderId`와 겹치지 않는 이름이어야 한다**
   expect(successUrl).not.toContain("orderId=");
+});
+
+// 실패로 돌아온 주소에 고른 것이 빠져 있으면 장바구니 전체로 읽혀 고르지 않은 상품까지
+// 주문된다. 지금 주소의 `items`를 그대로 실어 보내야 한다 (#364)
+test("실패 복귀 주소에 고른 상품을 실어 보낸다", async () => {
+  window.history.replaceState({}, "", "/payment?items=NORMAL%3A1%2CNORMAL%3A2");
+  const onReady = vi.fn();
+
+  render(<TossPaymentWidget {...PROPS} onReady={onReady} />);
+
+  await waitFor(() => expect(onReady).toHaveBeenCalledWith(expect.any(Function)));
+  await onReady.mock.calls.at(-1)![0](ORDER);
+
+  const { failUrl } = requestPayment.mock.calls.at(-1)![0];
+  expect(new URL(failUrl).pathname).toBe("/payment");
+  expect(new URL(failUrl).searchParams.get("items")).toBe("NORMAL:1,NORMAL:2");
 });
 
 // 위젯을 못 띄우면 버튼이 잠긴 채로 남아야 한다. 이유는 화면에 내보내지 않는다

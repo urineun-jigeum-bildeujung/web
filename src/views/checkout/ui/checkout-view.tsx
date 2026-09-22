@@ -39,7 +39,7 @@ import { Textarea } from "@/shared/ui/textarea";
 
 import { createOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
-import { pickOrderItems, toOrderItem } from "../model/order-items";
+import { ITEMS_PARAM, pickOrderItems, toOrderItem } from "../model/order-items";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -181,7 +181,7 @@ export function CheckoutView() {
   // 기본 배송지가 없는 계정도 있다. 그때는 목록 맨 앞을 쓴다 — 조회가 기본을 앞으로 정렬한다
   const address = addresses?.find((place) => place.isDefault) ?? addresses?.[0];
 
-  const items = pickOrderItems(cart?.items, searchParams.get("items"));
+  const items = pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
   const total = itemPrice + SHIPPING_FEE;
   const deliveryNote = request === REQUEST_DIRECT ? directRequest.trim() : request;

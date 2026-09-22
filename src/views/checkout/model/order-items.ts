@@ -16,6 +16,15 @@ import type { OrderItemRequest } from "../api/orders";
  * **`?items=`처럼 비어 있는 것은 전체가 아니라 빈 선택이다.** 둘을 같이 다루면 고른 것이
  * 없는데 장바구니가 통째로 결제된다 (#259 리뷰). 빈 목록이면 결제 버튼이 잠긴다.
  */
+/**
+ * 고른 장바구니 줄을 싣는 쿼리 이름.
+ *
+ * 값을 만드는 곳은 장바구니 화면이고(`/payment?items=NORMAL:1,…`), 읽는 곳이 여기다.
+ * **결제창에서 실패로 돌아올 때도 이 값을 되돌려 실어야 한다** — 빠지면 고른 것이
+ * 장바구니 전체로 넓어져 고르지 않은 상품까지 주문된다 (#364).
+ */
+export const ITEMS_PARAM = "items";
+
 export function pickOrderItems(items: CartItem[] | undefined, selected: string | null): CartItem[] {
   const sellable = items?.filter((item) => item.available) ?? [];
   if (selected === null) {

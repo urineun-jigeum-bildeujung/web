@@ -11,7 +11,7 @@
 import { ANONYMOUS, loadTossPayments } from "@tosspayments/tosspayments-sdk";
 import { useEffect, useRef, useState } from "react";
 
-import { toSuccessUrl } from "../model/return-query";
+import { toFailUrl, toSuccessUrl } from "../model/return-query";
 
 /**
  * 결제창에 실을 주문. **위젯을 띄울 때가 아니라 결제창을 열 때 받는다.**
@@ -131,7 +131,8 @@ export function TossPaymentWidget({ amount, onReady, customerKey = "" }: TossPay
             orderId: tossOrderId,
             orderName,
             successUrl: toSuccessUrl(window.location.origin, orderId),
-            failUrl: `${window.location.origin}/payment`,
+            // **고른 상품을 되돌려 싣는다.** 빠지면 전체로 읽혀 고르지 않은 것까지 주문된다 (#364)
+            failUrl: toFailUrl(window.location.origin, window.location.search),
           });
         });
       })
