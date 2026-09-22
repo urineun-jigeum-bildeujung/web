@@ -50,18 +50,29 @@ test("남길 수 있는 항목을 화면 모양으로 옮기고 사진·아이�
   expect("imageUrl" in items[0]).toBe(false);
 });
 
-test("답을 고르면 answer와 함께, 보류면 postpone만 보낸다", async () => {
+test("답을 고르면 answer와 함께, 보류면 postpone만 보내고, 아이는 알 때만 싣는다", async () => {
   const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }));
   vi.stubGlobal("fetch", fetchMock);
 
-  await submitFeedback({ productId: "7", orderProductId: "12", submission: { answer: "GOOD" } });
-  await submitFeedback({ productId: "7", orderProductId: "12", submission: { postpone: true } });
+  await submitFeedback({
+    productId: "7",
+    orderProductId: "12",
+    petId: "3",
+    submission: { answer: "GOOD" },
+  });
+  await submitFeedback({
+    productId: "7",
+    orderProductId: "12",
+    petId: null,
+    submission: { postpone: true },
+  });
 
   const [answerUrl, answerInit] = fetchMock.mock.calls[0] as [string, RequestInit];
   expect(answerUrl).toContain("/reviews/products/7/feedbacks");
   expect(answerInit.method).toBe("POST");
   expect(JSON.parse(String(answerInit.body))).toEqual({
     orderProductId: 12,
+    petId: 3,
     postpone: false,
     answer: "GOOD",
   });

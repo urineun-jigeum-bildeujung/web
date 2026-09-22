@@ -51,16 +51,23 @@ export type FeedbackSubmission = { answer: FeedbackAnswer } | { postpone: true }
 export type SubmitFeedbackInput = {
   productId: string;
   orderProductId: string;
+  /** 어느 아이의 반응인지. 항목의 아이가 없으면 화면이 대표 아이를 넣는다 */
+  petId: string | null;
   submission: FeedbackSubmission;
 };
 
 /**
  * 반응을 남긴다. 백엔드 `FeedbackSubmitRequest`는 `postpone`과 `answer`를 함께 받는데
  * 보류면 답을 보지 않으므로 `answer`는 보류가 아닐 때만 싣는다.
+ *
+ * **`petId`는 미리 싣는다.** 백엔드 요청 레코드에 아직 그 필드가 없어 지금은 버려지지만
+ * (Spring 기본이 모르는 필드 무시), 아이 단위 적합도 반영을 위해 받아 달라고 요청해 뒀다.
+ * 필드가 생기는 순간 프론트 변경 없이 저장된다.
  */
 export function submitFeedback({
   productId,
   orderProductId,
+  petId,
   submission,
 }: SubmitFeedbackInput): Promise<void> {
   const postpone = "postpone" in submission;
@@ -68,6 +75,7 @@ export function submitFeedback({
     method: "POST",
     body: {
       orderProductId: Number(orderProductId),
+      ...(petId !== null && { petId: Number(petId) }),
       postpone,
       ...(!postpone && { answer: submission.answer }),
     },
