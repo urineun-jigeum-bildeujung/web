@@ -189,7 +189,14 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
 
       {!isLoading && !blocked && (
         <BottomActionBar>
-          <Button disabled={picked.length === 0 || isRequesting} onClick={submit}>
+          {/* **거부를 여기서 받는다.** `request`가 `mutateAsync`라 실패하면 던지는데,
+              `onClick`에 그대로 넘기면 받아 줄 곳이 없어 처리되지 않은 거부가 된다.
+              접수는 서버가 세 가지로 막는다 — 진행 중인 신청·수량 초과·기간 경과 (#358).
+              문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다 */}
+          <Button
+            disabled={picked.length === 0 || isRequesting}
+            onClick={() => void submit().catch(() => undefined)}
+          >
             <LoadingSwap loading={isRequesting} label={`${label} 신청을 보내는 중`}>
               {label} 신청하기
             </LoadingSwap>
