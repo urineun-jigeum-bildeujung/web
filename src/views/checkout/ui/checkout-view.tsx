@@ -156,12 +156,25 @@ function Section({
 }
 
 /**
- * 서버가 "결제 가능한 상태의 주문이 아니다"로 거절했는가.
+ * 서버가 이 주문으로는 결제할 수 없다고 한 코드들. `PaymentErrorCode`에서 옮겼다.
  *
- * 들고 있던 주문이 이미 결제됐거나 취소된 경우다 (`RequestPaymentService`가 `PENDING`만 받는다).
+ * **`RequestPaymentService`가 주문을 셋으로 거른다** — 못 찾거나, 남의 것이거나, `PENDING`이
+ * 아니거나. 들고 있어 봐야 다음에도 같은 자리에서 막히므로 비워야 한다.
  */
-function isOrderNotPayable(error: unknown): boolean {
-  return error instanceof ApiError && error.problem?.errorCode === "PAYMENT_409_ORDER_NOT_PAYABLE";
+const UNUSABLE_ORDER_CODES = new Set([
+  "PAYMENT_404_ORDER_NOT_FOUND",
+  "PAYMENT_403_ORDER_OWNER_MISMATCH",
+  "PAYMENT_409_ORDER_NOT_PAYABLE",
+]);
+
+/**
+ * 들고 있던 주문을 버려야 하는 실패인가.
+ *
+ * **상태 코드로 뭉뚱그리지 않는다.** 429처럼 잠깐 막힌 것까지 버리면 다시 누를 때 주문이
+ * 하나 더 생긴다 — 그게 #361에서 고친 문제다. 5xx·네트워크 실패에서도 그대로 들고 있는다.
+ */
+function isOrderUnusable(error: unknown): boolean {
+  return error instanceof ApiError && UNUSABLE_ORDER_CODES.has(error.problem?.errorCode ?? "");
 }
 
 export function CheckoutView() {
@@ -273,10 +286,11 @@ export function CheckoutView() {
       // 주문 상세로 갈 수 있게 한다 (#301)
       await requestPayment({ tossOrderId, orderName, orderId, amount });
     } catch (error) {
-      // **재사용한 주문이 더는 결제할 수 없는 상태다.** 이미 결제됐거나 취소된 주문을 물고
-      // 있으면 다시 눌러도 같은 자리에서 막힌다. 비워 두면 다음에 새 주문으로 간다.
+      // **재사용한 주문을 서버가 거절했다.** 이미 결제됐거나 취소됐거나 사라진 주문을 물고
+      // 있으면 다시 눌러도 같은 자리에서 막힌다 — 탭을 닫기 전까지 결제할 수 없고, 사용자는
+      // 탭을 닫으면 풀린다는 것을 알 길이 없다 (#388). 비워 두면 다음에 새 주문으로 간다.
       // 여기서 곧바로 다시 만들지는 않는다 — 실패를 알린 뒤 사용자가 누르는 편이 예측 가능하다
-      if (reusableOrderId !== null && isOrderNotPayable(error)) {
+      if (reusableOrderId !== null && isOrderUnusable(error)) {
         clearPendingOrder();
       }
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
