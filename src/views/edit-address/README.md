@@ -29,7 +29,7 @@
 
 `FormField`·`CheckboxRow`는 제어 컴포넌트라 `Controller`로 잇는다.
 
-**잠금 판정에 `formState.isValid`를 쓰지 않는다.** resolver 검증이 비동기라 한 박자 늦게 따라와, 마지막 칸을 채운 직후에도 버튼이 잠겨 보인다. 같은 스키마로 `watch()` 값을 그 자리에서 `safeParse`한다.
+**잠금 판정에 `formState.isValid`를 쓰지 않는다.** resolver 검증이 비동기라 한 박자 늦게 따라와, 마지막 칸을 채운 직후에도 버튼이 잠겨 보인다. 같은 스키마로 `useWatch({ control })`이 준 값을 그 자리에서 `safeParse`한다. `watch()`가 아닌 이유는 렌더마다 새 함수라 React Compiler가 메모이제이션을 포기하기 때문이다(`react-hooks/incompatible-library`).
 
 ## 무엇을 보내는가
 
