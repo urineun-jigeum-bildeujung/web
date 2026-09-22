@@ -62,7 +62,6 @@ const ROUTES = [
   "/mypage/reviews",
   "/mypage/reviews/write?productId=0",
   "/mypage/reviews/1",
-  "/mypage/payment",
   "/mypage/orders",
   "/mypage/orders/1",
   "/mypage/orders/1/claim?type=cancel",
@@ -177,12 +176,6 @@ const OVERLAYS = [
     name: "주문 구매확정 바텀시트",
   },
   {
-    route: "/mypage/payment",
-    open: /KB국민카드/,
-    slot: "drawer-overlay",
-    name: "결제수단 바텀시트",
-  },
-  {
     // 온보딩 이탈 확인창이 사라져(#115) 확인창은 여기서 본다
     route: "/mypage/orders",
     open: /^주문 취소$/,
@@ -272,8 +265,11 @@ test.describe("넓은 화면", () => {
   }
 
   test("바텀시트가 화면 폭을 넘지 않는다", async ({ page }) => {
-    await page.goto("/mypage/payment", { waitUntil: "networkidle" });
-    await page.getByRole("button", { name: /KB국민카드/ }).click();
+    await page.goto("/mypage/orders", { waitUntil: "networkidle" });
+    await page
+      .getByRole("button", { name: /구매 확정/ })
+      .first()
+      .click();
 
     const sheet = page.locator("[data-slot=drawer-content]");
     await expect(sheet).toBeVisible();

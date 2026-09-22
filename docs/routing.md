@@ -59,7 +59,6 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/mypage/notifications` | 알림 목록 | 인증 필요 | 없음 | 스캐폴딩 |
 | `/mypage/recently-viewed` | 최근 본 상품 | 인증 필요 | 없음 | 스캐폴딩 |
 | `/mypage/restock` | 재입고 알림 | 인증 필요 | 선택 모드는 로컬 상태 | 구현됨 |
-| `/mypage/payment` | 결제 수단 관리 | 인증 필요 | 없음 | 카드 등록 방식 확인 필요 |
 | `/mypage/settings` | 설정 | 인증 필요 | 없음 | 구현됨 |
 
 ### 반려동물·주문·리뷰

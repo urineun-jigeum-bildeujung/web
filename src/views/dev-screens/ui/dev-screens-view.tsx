@@ -41,7 +41,6 @@ const SCREEN_GROUPS = [
       { href: "/mypage/reviews", label: "나의 상품 후기", hint: "mypa_041" },
       { href: "/mypage/reviews/write?productId=0", label: "리뷰 작성", hint: "IA_v0.6" },
       { href: "/mypage/reviews/1", label: "리뷰 상세", hint: "IA_v0.6" },
-      { href: "/mypage/payment", label: "결제 수단 관리", hint: "mypa_051" },
       { href: "/mypage/orders", label: "주문·배송 확인", hint: "mypa_061" },
       { href: "/mypage/orders/1", label: "주문 상세", hint: "mypa_161" },
       { href: "/mypage/orders/1/claim?type=cancel", label: "취소·반품·교환", hint: "IA_v0.6" },
