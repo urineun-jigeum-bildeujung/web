@@ -38,6 +38,26 @@ export async function stubReviewApi(page: Page) {
   await page.route("**/api/v1/reviews/writable", (route) =>
     route.fulfill({ json: { content: [] } }),
   );
+  // 작성한 리뷰 상세가 한 건을 받는다(#363). 스모크 목록의 `/mypage/reviews/1`
+  await page.route("**/api/v1/reviews/1", (route) =>
+    route.fulfill({
+      json: {
+        reviewId: 1,
+        isMine: true,
+        product: { productId: 1, name: PRODUCT.summary.productName, image: null },
+        petId: 3,
+        rating: 4,
+        usagePeriod: 16,
+        answerValues: [],
+        goodPoints: ["기호성 좋음"],
+        badPoints: null,
+        matchScore: null,
+        text: "확실히 잘 먹어요",
+        images: null,
+        createdAt: "2026-09-21",
+      },
+    }),
+  );
   await page.route("**/api/v1/reviews/me*", (route) =>
     route.fulfill({ json: { content: [], hasNext: false } }),
   );

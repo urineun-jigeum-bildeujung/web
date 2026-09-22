@@ -1,4 +1,4 @@
-// 리뷰 등록·리뷰 사진 발급·내 후기 목록 조회. 작성 화면과 내 후기 화면이 쓴다.
+// 리뷰 등록·리뷰 사진 발급·내 후기 목록·작성 가능 목록·리뷰 상세 조회. 작성 화면과 내 후기 화면들이 쓴다.
 //
 // 값 형식은 백엔드 열거형 그대로다(#281). 문항 키는 `ReviewQuestionType`, 답은 `ReviewAnswer`.
 // 백엔드는 회원+상품당 리뷰를 한 건만 받고(`ALREADY_REVIEWED`), 구매 확정한 상품만 허용한다.
@@ -113,5 +113,66 @@ export function getMyReviews(params: { page: number; size: number }): Promise<My
       createdAt: item.createdAt,
     })),
     hasNext: response.hasNext,
+  }));
+}
+
+/** 백엔드 `ReviewDetailResponse`와 같은 모양이다. 비어 있는 목록을 `null`로 준다 */
+type ReviewDetailResponse = {
+  reviewId: number;
+  isMine: boolean;
+  product: { productId: number; name: string; image: string | null };
+  petId: number;
+  /** 반올림 정수 */
+  rating: number;
+  /** 일 단위 */
+  usagePeriod: number;
+  answerValues: { questionKey: string; answerValue: string }[];
+  /** "기호성 좋음" 같은 문구. 하나도 없으면 `null` */
+  goodPoints: string[] | null;
+  badPoints: string[] | null;
+  /** 아직 값이 없다(항상 `null`) */
+  matchScore: number | null;
+  text: string;
+  images: string[] | null;
+  /** `YYYY-MM-DD` */
+  createdAt: string;
+};
+
+/** 리뷰 한 건의 상세. 닉네임·아이 스냅샷·도움돼요 수는 응답에 없다(백엔드 요청 중) */
+export type ReviewDetail = {
+  id: string;
+  /** 로그인한 회원이 쓴 것인가. 비로그인이면 `false` */
+  isMine: boolean;
+  product: { id: string; name: string; imageUrl?: string };
+  petId: string;
+  /** 0~5 정수 */
+  rating: number;
+  usageDays: number;
+  /** "기호성 좋음"처럼 문항 이름과 답을 붙인 문구 */
+  goodPoints: string[];
+  badPoints: string[];
+  content: string;
+  images: string[];
+  /** `YYYY-MM-DD` */
+  createdAt: string;
+};
+
+export function getReviewDetail(reviewId: string): Promise<ReviewDetail> {
+  return apiRequest<ReviewDetailResponse>(`/reviews/${reviewId}`).then((response) => ({
+    id: String(response.reviewId),
+    isMine: response.isMine,
+    product: {
+      id: String(response.product.productId),
+      name: response.product.name,
+      ...(response.product.image && { imageUrl: response.product.image }),
+    },
+    petId: String(response.petId),
+    rating: response.rating,
+    usageDays: response.usagePeriod,
+    goodPoints: response.goodPoints ?? [],
+    badPoints: response.badPoints ?? [],
+    content: response.text,
+    images: response.images ?? [],
+    createdAt: response.createdAt,
   }));
 }
