@@ -169,9 +169,11 @@ test("답을 고르고 등록하면 그 구매 항목으로 서버에 보내고 
   fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
   fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
 
+  // 항목에 아이가 없으면 대표 아이(코코)를 실어 보낸다
   expect(submitFeedback).toHaveBeenCalledWith({
     productId: "7",
     orderProductId: "12",
+    petId: "3",
     submission: { answer: "GOOD" },
   });
   expect(await screen.findByText("반응이 등록됐어요")).toBeDefined();
