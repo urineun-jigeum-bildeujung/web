@@ -42,6 +42,7 @@ import { createOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { ITEMS_PARAM, pickOrderItems, toOrderItem } from "../model/order-items";
 import { clearPendingOrder, readPendingOrder, writePendingOrder } from "../model/pending-order";
+import { toCheckoutPath } from "../model/return-query";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -303,7 +304,15 @@ export function CheckoutView() {
             !addressLoading &&
             !addressError && (
               <Link
-                href={address ? "/payment/address" : "/mypage/address/new"}
+                href={
+                  address
+                    ? "/payment/address"
+                    : // 등록을 마치면 이 화면으로 돌아온다. **고른 것을 들고 간다** —
+                      // 빠뜨리면 돌아왔을 때 장바구니 전체로 읽힌다 (#364와 같은 자리다)
+                      `/mypage/address/new?${new URLSearchParams({
+                        from: toCheckoutPath(searchParams.toString()),
+                      })}`
+                }
                 className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-secondary"
               >
                 {address ? "배송지 변경" : "배송지 등록"}

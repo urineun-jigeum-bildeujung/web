@@ -10,11 +10,12 @@ import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
 
 const back = vi.fn();
+const replace = vi.fn();
 const create = vi.fn();
 const update = vi.fn();
 const useQueryAddresses = vi.fn();
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ back }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ back, replace }) }));
 vi.mock("@/entities/address", () => ({
   useQueryAddresses: () => useQueryAddresses(),
   useMutateAddress: () => ({ create, update, isSaving: false }),
@@ -42,6 +43,7 @@ const PICKED_ROAD = "서울특별시 마포구 양화로 45";
 
 beforeEach(() => {
   back.mockClear();
+  replace.mockClear();
   create.mockReset().mockResolvedValue(12);
   update.mockReset().mockResolvedValue(undefined);
   useQueryAddresses.mockReturnValue({ addresses: [HOME], isLoading: false, error: null });
@@ -243,12 +245,38 @@ test("저장이 끝난 뒤에 화면을 떠난다", async () => {
   await waitFor(() => expect(back).toHaveBeenCalled());
 });
 
-// 고치던 대상을 들고 검색하러 가야 돌아올 때 그 배송지로 복귀한다
-test("고치는 중이면 검색 링크가 place를 들고 간다", () => {
-  renderAt("?place=5");
+/**
+ * 주소는 검색 화면에서만 고른다. 그 화면의 쪽 이동이 history를 쌓아, 저장을 마치고 한 칸
+ * 되돌리면 검색 화면으로 돌아간다. 몇 칸인지 셀 수 없어 돌아갈 곳을 주소창이 들고 다닌다 (#369).
+ */
+test("돌아갈 곳을 받았으면 저장한 뒤 그리로 간다", async () => {
+  renderAt("?from=%2Fpayment%2Faddress&place=5");
+
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/payment/address"));
+  expect(back).not.toHaveBeenCalled();
+});
+
+// 주소창에 실려 오는 값이라 손으로 고칠 수 있다. 그대로 믿으면 남의 사이트로 보내게 된다
+test("돌아갈 곳이 바깥을 가리키면 쓰지 않는다", async () => {
+  renderAt("?from=https%3A%2F%2Fevil.example&place=5");
+
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(back).toHaveBeenCalled());
+  expect(replace).not.toHaveBeenCalled();
+});
+
+// 고치던 대상을 들고 검색하러 가야 돌아올 때 그 배송지로 복귀한다.
+// 돌아갈 곳도 함께 간다 — 검색 화면에서 잃으면 저장 뒤 그리로 되돌아온다 (#369)
+test("고치는 중이면 검색 링크가 place와 돌아갈 곳을 들고 간다", () => {
+  renderAt("?place=5&from=%2Fmypage%2Faddress");
 
   const link = screen.getByRole("link", { name: /주소/ }) as HTMLAnchorElement;
-  expect(link.getAttribute("href")).toBe("/mypage/address/search?place=5");
+  const query = new URLSearchParams(link.getAttribute("href")!.split("?")[1]);
+  expect(query.get("place")).toBe("5");
+  expect(query.get("from")).toBe("/mypage/address");
 });
 
 test("새 배송지면 검색 링크에 place가 없다", () => {

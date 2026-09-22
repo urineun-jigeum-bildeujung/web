@@ -30,8 +30,10 @@ test("등록해 둔 배송지를 보여주고 고치러 갈 수 있다", () => {
   render(<AddressesView />);
 
   expect(screen.getByRole("heading", { name: "배송지 관리" })).toBeDefined();
+  // 고치고 나면 이 화면으로 돌아와야 한다. 주소를 다시 고르면 검색 화면이 history에 쌓여
+  // 한 칸 되돌리기로는 돌아오지 못한다 (#369)
   expect(screen.getByRole("link", { name: /집/ }).getAttribute("href")).toBe(
-    "/mypage/address/new?place=5",
+    "/mypage/address/new?place=5&from=%2Fmypage%2Faddress",
   );
 });
 
