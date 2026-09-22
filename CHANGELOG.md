@@ -33,6 +33,8 @@
 
 ### 개발 환경
 
+- **배송지 폼이 `react-hook-form`과 `zod`를 쓴다.** `AGENTS.md` 기술 스택 표가 폼 도구로 둘을 적어 두었는데 **저장소 이력에서 한 번도 import된 적이 없었다** — 폼이 전부 `useState`였다. 규칙과 코드가 어긋난 채 폼만 늘고 있어 우리 담당인 이 화면부터 옮겼다. 검증 규칙은 `model/address-form-schema.ts` 한 곳에 모았고 **서버 `AddressRegisterRequest`의 제약을 그대로 옮긴 것**이라, 저장 버튼 잠금 조건을 손으로 나열하다 상세주소를 빠뜨려 400이 나던 종류(#314)가 다시 생기지 않는다. 화면 동작은 그대로다 — 기존 테스트 21개를 고치지 않고 통과한다. **잠금 판정에 `formState.isValid`를 쓰지 않는다**: resolver 검증이 비동기라 마지막 칸을 채운 직후에도 버튼이 한 박자 늦게 풀려, 같은 스키마로 `useWatch` 값을 그 자리에서 `safeParse`한다 (#355)
+
 - `shadcn`을 `devDependencies`로 옮겼다. CLI인데 `dependencies`에 있어 **배포 의존성 트리에 express와 MCP SDK가 딸려 들어와 있었다.** 런타임 코드가 `shadcn`을 import하지 않고 CI도 부르지 않는다 — `npx shadcn add`는 `devDependencies`에서도 그대로 동작한다. 배포 의존성의 취약점이 4건에서 1건으로 줄었다. `overrides` 두 항목이 그대로인지, `npm ci`가 깨끗하게 끝나는지 확인했다 (#332)
 
 ## 2026-09-21
