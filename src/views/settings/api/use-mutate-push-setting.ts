@@ -10,6 +10,7 @@ import { useSyncExternalStore } from "react";
 import { registerFcmToken } from "@/entities/notification";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
+import { reportError } from "@/shared/lib/report-error";
 import { deletePushToken, isPushSupported, requestPushToken } from "@/shared/lib/push/fcm";
 import {
   readPushEnabled,
@@ -42,7 +43,9 @@ export function useMutatePushSetting() {
         try {
           await deletePushToken();
         } catch (error) {
-          writePushEnabled(true);
+          // 표시를 되살려 켜짐으로 돌아간다. 그것마저 실패하면 표시는 꺼짐인데 토큰은 살아 있다 —
+          // 다음에 켤 때 새 토큰을 등록하고 저장이 또 막히면 토큰을 지우므로 스스로 맞춰진다. 기록만 남긴다
+          if (!writePushEnabled(true)) reportError("push.restore", error);
           throw error;
         }
         return { enabled: false };

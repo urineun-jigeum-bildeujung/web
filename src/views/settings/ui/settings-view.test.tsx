@@ -11,6 +11,11 @@ vi.mock("@/shared/lib/app-toast", () => ({
   toastAppError: (...args: unknown[]) => toastAppError(...args),
 }));
 
+const reportError = vi.fn();
+vi.mock("@/shared/lib/report-error", () => ({
+  reportError: (...args: unknown[]) => reportError(...args),
+}));
+
 // 브라우저 권한·Firebase는 `shared/lib/push/fcm.test.ts`가 본다. 여기서는 결과만 세운다
 const push = {
   supported: true,
@@ -125,6 +130,30 @@ test("켰다는 표시를 저장하지 못하면 등록한 토큰을 지우고 �
   expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
     "false",
   );
+  setItem.mockRestore();
+});
+
+// 끄다가 토큰을 못 지우면 표시를 되살린다. 그것마저 막히면 기록만 남기고 실패로 끝난다
+test("끄다가 토큰 삭제가 실패하면 켜짐으로 되돌리고, 되돌리기도 막히면 기록을 남긴다", async () => {
+  window.localStorage.setItem("push-enabled", "1");
+  push.granted = true;
+  push.deletePushToken.mockRejectedValue(new Error("network"));
+  renderView();
+
+  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  await waitFor(() => expect(push.deletePushToken).toHaveBeenCalled());
+  // 표시가 되살아나 켜진 채다
+  await waitFor(() =>
+    expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+      "true",
+    ),
+  );
+
+  const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new Error("QuotaExceededError");
+  });
+  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  await waitFor(() => expect(reportError).toHaveBeenCalledWith("push.restore", expect.any(Error)));
   setItem.mockRestore();
 });
 
