@@ -236,8 +236,11 @@ function ReviewWriteForm({ productId }: { productId: string }) {
         </main>
 
         <BottomActionBar>
+          {/* 작성 화면을 히스토리에서 뺀다. push면 목록에서 뒤로가기가 빈 작성 폼으로 돌아온다(#371) */}
           <Button asChild>
-            <Link href="/mypage/reviews?tab=written">확인</Link>
+            <Link href="/mypage/reviews?tab=written" replace>
+              확인
+            </Link>
           </Button>
         </BottomActionBar>
       </div>

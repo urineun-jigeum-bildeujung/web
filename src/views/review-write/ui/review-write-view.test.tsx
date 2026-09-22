@@ -6,6 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+// `replace`는 DOM에 남지 않아 확인할 길이 없다. 링크를 대신 그려 그 값을 속성으로 드러낸다
+vi.mock("next/link", () => ({
+  default: ({
+    href,
+    replace,
+    children,
+    ...rest
+  }: React.ComponentProps<"a"> & { href: string; replace?: boolean }) => (
+    <a href={href} data-replace={replace ? "true" : undefined} {...rest}>
+      {children}
+    </a>
+  ),
+}));
 const toastAppError = vi.fn();
 vi.mock("@/shared/lib/app-toast", () => ({
   toastAppError: (...args: unknown[]) => toastAppError(...args),
@@ -324,9 +337,10 @@ describe("ReviewWriteView 2단계", () => {
     expect(await screen.findByText("소중한 리뷰 감사해요!")).toBeDefined();
     // 완료 문구의 이름은 회원 정보에서 온다
     expect(screen.getByText(/소리맘님의 후기가/)).toBeDefined();
-    expect(screen.getByRole("link", { name: "확인" }).getAttribute("href")).toBe(
-      "/mypage/reviews?tab=written",
-    );
+    const confirm = screen.getByRole("link", { name: "확인" });
+    expect(confirm.getAttribute("href")).toBe("/mypage/reviews?tab=written");
+    // 작성 화면을 히스토리에서 뺀다. 목록에서 뒤로가기가 빈 작성 폼으로 돌아오면 안 된다(#371)
+    expect(confirm.getAttribute("data-replace")).toBe("true");
 
     const [, init] = fetchMock.mock.calls.find(
       ([url, options]) => url.endsWith("/reviews") && options?.method === "POST",
