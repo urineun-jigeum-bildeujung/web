@@ -384,6 +384,78 @@ test("결제창에서 돌아와 다시 눌러도 주문을 또 만들지 않는�
 });
 
 // 들고 있던 주문이 이미 결제됐거나 취소된 경우다. 비우지 않으면 눌러도 같은 자리에서 막힌다
+/**
+ * **서버가 주문을 셋으로 거른다** — 못 찾거나(404), 남의 것이거나(403), `PENDING`이 아니거나(409).
+ *
+ * 409만 보고 있던 동안 앞의 둘이 오면 저장소를 비우지 않아, 다시 눌러도 같은 자리에서 막혔다.
+ * 탭을 닫기 전까지 결제할 수 없고 사용자는 그것을 알 길이 없다 (#388).
+ */
+test.each([
+  ["PAYMENT_404_ORDER_NOT_FOUND", 404],
+  ["PAYMENT_403_ORDER_OWNER_MISMATCH", 403],
+])("%s가 오면 들고 있던 주문을 비운다", async (errorCode, status) => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  first.unmount();
+  preparePayment.mockRejectedValueOnce(new ApiError(status, "거절", { errorCode } as never));
+  const second = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(preparePayment).toHaveBeenCalledTimes(2));
+
+  // 비워졌으니 다음에는 새로 만든다
+  second.unmount();
+  createOrder.mockResolvedValue({ orderId: 88 });
+  renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 88 });
+});
+
+/**
+ * **잠깐 막힌 것까지 버리면 안 된다.** 다시 누를 때 주문이 하나 더 생긴다 — 그게 #361에서
+ * 고친 문제다. 상태 코드로 뭉뚱그리지 않고 서버가 준 코드를 보는 이유다.
+ */
+test("잠깐 막힌 실패에서는 들고 있던 주문을 그대로 쓴다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  // 429는 4xx지만 주문이 잘못된 것이 아니다
+  first.unmount();
+  preparePayment.mockRejectedValueOnce(
+    new ApiError(429, "잠시 후 다시 시도해 주세요", { errorCode: "COMMON_429" } as never),
+  );
+  const second = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(preparePayment).toHaveBeenCalledTimes(2));
+
+  // 그대로 들고 있으므로 주문을 또 만들지 않는다
+  second.unmount();
+  renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(preparePayment).toHaveBeenCalledTimes(3));
+  expect(createOrder).toHaveBeenCalledTimes(1);
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 77 });
+});
+
 test("들고 있던 주문을 서버가 거절하면 비우고 다음에 새로 만든다", async () => {
   createOrder.mockResolvedValue({ orderId: 77 });
   preparePayment.mockResolvedValue(PREPARED);
