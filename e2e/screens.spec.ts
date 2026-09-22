@@ -264,7 +264,16 @@ test.describe("넓은 화면", () => {
     });
   }
 
-  test("바텀시트가 화면 폭을 넘지 않는다", async ({ page }) => {
+  // 시트가 앱 기둥(`layout.tsx`의 max-w-105 = 420px)을 벗어나 넓은 화면 전체로 퍼지지
+  // 않는지 본다. 그전에는 결제수단 화면의 시트로 쟀는데 그 화면을 지워(#348) 주문 목록의
+  // 구매확정 시트로 옮겼다.
+  //
+  // **두 시트는 모양이 다르다.** `shared/ui/bottom-sheet`의 `full`은 기둥을 꽉 채우고
+  // (지운 화면이 그것), 기본값 `floating`은 양옆 8px을 띄운 카드다(mypa_061_구매확정).
+  // 그래서 여기서 맞는 값은 기둥 폭이 아니라 기둥에서 16px을 뺀 값이다.
+  const FLOATING_INSET_X = 8;
+
+  test("바텀시트가 앱 기둥을 벗어나지 않는다", async ({ page }) => {
     await page.goto("/mypage/orders", { waitUntil: "networkidle" });
     await page
       .getByRole("button", { name: /구매 확정/ })
@@ -278,7 +287,7 @@ test.describe("넓은 화면", () => {
     const screenWidth = await page.evaluate(() =>
       Math.round(document.querySelector("main")!.getBoundingClientRect().width),
     );
-    expect(sheetWidth).toBe(screenWidth);
+    expect(sheetWidth).toBe(screenWidth - FLOATING_INSET_X * 2);
   });
 });
 
