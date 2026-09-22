@@ -6,7 +6,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { Suspense, use, useRef, useState } from "react";
+import { Suspense, use, useRef, useState, useTransition } from "react";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
 import {
@@ -117,6 +117,29 @@ function SectionTitle({
           더보기
         </Link>
       )}
+    </div>
+  );
+}
+
+/**
+ * 상품 그리드·타임딜 미리보기 둘 다 이 실패 화면을 쓴다. 공용 `ErrorBoundary`의 기본
+ * 재시도는 TanStack Query 리셋만 한다 — 이 화면의 상품·타임딜은 Query가 아니라
+ * `page.tsx`가 만든 일반 Promise를 `use()`로 읽으므로, 그 리셋만으로는 이미 reject된
+ * 같은 Promise를 다시 읽어 즉시 같은 오류가 재발한다.
+ *
+ * `retry`(공용 `ErrorBoundary`가 넘기는 react-error-boundary의 리셋)는 일부러 안 부른다.
+ * 지금 이 화면에서 그걸 먼저 부르면, 아직 `router.refresh()`의 새 Promise가 오기 전이라
+ * 같은(이미 reject된) Promise를 즉시 한 번 더 읽어 불필요하게 다시 실패한다. 대신
+ * `router.refresh()`만 부르고, 새 Promise가 실제로 도착하면 `resetKeys`가 경계를
+ * 자동으로 푼다(코드 리뷰 반영, #289)
+ */
+function PromiseErrorFallback({ router }: { router: ReturnType<typeof useRouter> }) {
+  return (
+    <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <p className="text-sm text-muted-foreground">잠시 문제가 생겼어요. 다시 시도해 주세요.</p>
+      <Button variant="outline" className="min-h-11 px-4" onClick={() => router.refresh()}>
+        다시 시도
+      </Button>
     </div>
   );
 }
@@ -360,6 +383,13 @@ type HomeViewProps = {
 
 export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeViewProps) {
   const router = useRouter();
+  // category·sort를 바꾸면 서버가 다시 조회하는 동안(shallow:false) 이 트랜지션이
+  // 계속 진행 중임을 안다 — 탭 활성 표시·정렬 라벨은 클라이언트 상태라 즉시 바뀌는데,
+  // 그 아래 그리드는 새 Promise가 올 때까지 이전 카테고리의 상품을 그대로 들고 있다.
+  // isPending으로 그 구간을 흐리게 표시하고 클릭도 막아, "새 탭인데 이전 상품"으로
+  // 잘못 읽히거나 그 틈에 더 보기를 눌러 새 category/sort에 이전 cursor가 섞이는
+  // 걸 막는다(코드 리뷰 반영, #289)
+  const [isPending, startTransition] = useTransition();
   const [category, setCategory] = useQueryState(
     "category",
     // 전체 탭은 큐레이션, 종류 탭은 상품 목록으로 구성이 통째로 다르다.
@@ -446,7 +476,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
             key={value}
             type="button"
             aria-current={category === value ? "page" : undefined}
-            onClick={() => void setCategory(value)}
+            onClick={() => startTransition(() => void setCategory(value))}
             className={
               category === value
                 ? "min-h-11 border-b border-border-strong px-2 text-label-bold-14 text-text-label-default"
@@ -586,17 +616,33 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                 타임딜은 실제 API로 연동했다(#289) — 진행 중인 딜이 여러 개일 수 있고,
                 묶음이 끝나면 다음 묶음으로 넘어가는 흐름은 TimeDealPreview가 맡는다 */}
             <section className="flex flex-col gap-6 pt-5 pb-8 pl-5">
-              <ErrorBoundary>
+              <ErrorBoundary
+                fallback={() => <PromiseErrorFallback router={router} />}
+                resetKeys={[dealsPromise]}
+              >
                 <Suspense fallback={<TimeDealSkeleton />}>
                   <TimeDealPreview dealsPromise={dealsPromise} />
                 </Suspense>
               </ErrorBoundary>
             </section>
           </>
+        ) : // isPending인 동안(category·sort를 막 바꿔 서버가 다시 조회하는 중)은 그리드
+        // 대신 Skeleton을 그린다 — 탭·정렬 라벨은 클라이언트 상태라 이미 새 값을
+        // 보여주는데, 그 아래에 흐리게라도 이전 카테고리의 상품을 남겨 두면 "새
+        // 탭인데 이전 상품"으로 잘못 읽힌다. 그 틈에 더 보기를 누를 수도 없어진다
+        // (코드 리뷰 반영, #289).
+        //
+        // isPending이 아닐 때는 productsKey(서버가 productsPromise와 같은 렌더에서
+        // 만든 값)로 다시 마운트한다 — ProductGrid 안의 누적 목록·커서·오류 상태가
+        // 필터 전환 때 자동으로 비워진다(#289)
+        isPending ? (
+          <ProductGridSkeleton />
         ) : (
-          // productsKey(서버가 productsPromise와 같은 렌더에서 만든 값)로 다시 마운트한다.
-          // ProductGrid 안의 누적 목록·커서·오류 상태가 필터 전환 때 자동으로 비워진다(#289)
-          <ErrorBoundary key={productsKey}>
+          <ErrorBoundary
+            key={productsKey}
+            fallback={() => <PromiseErrorFallback router={router} />}
+            resetKeys={[productsPromise]}
+          >
             <Suspense fallback={<ProductGridSkeleton />}>
               <ProductGrid
                 productsPromise={productsPromise}
@@ -605,7 +651,10 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                 sortSelect={
                   // 시안(dropdown)은 테두리 안쪽에 4px 여백을 두고 그 안에 항목을 채운다.
                   // 트리거 아래로 열리는 일반 드롭다운이라 position="popper"·오른쪽 정렬을 쓴다
-                  <Select value={sort} onValueChange={(next) => void setSort(next as HomeSort)}>
+                  <Select
+                    value={sort}
+                    onValueChange={(next) => startTransition(() => void setSort(next as HomeSort))}
+                  >
                     <SelectTrigger
                       aria-label="정렬"
                       // 보이는 크기는 시안대로 두고, 누르는 자리만 after:로 시안 프레임
