@@ -3,6 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const getToken = vi.fn();
 const deleteToken = vi.fn();
+const onMessage = vi.fn();
 // firebase 자체가 아니라 그것을 불러오는 우리 층을 바꿔 끼운다
 vi.mock("./firebase-sdk", () => ({
   loadFirebase: async () => ({
@@ -11,6 +12,7 @@ vi.mock("./firebase-sdk", () => ({
     getMessaging: () => ({}),
     getToken: (...args: unknown[]) => getToken(...args),
     deleteToken: (...args: unknown[]) => deleteToken(...args),
+    onMessage: (...args: unknown[]) => onMessage(...args),
   }),
 }));
 
@@ -23,7 +25,8 @@ vi.stubEnv("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID", "s");
 vi.stubEnv("NEXT_PUBLIC_FIREBASE_APP_ID", "a");
 vi.stubEnv("NEXT_PUBLIC_FIREBASE_VAPID_KEY", "vapid");
 
-const { deletePushToken, isPushSupported, requestPushToken } = await import("./fcm");
+const { deletePushToken, isPushSupported, requestPushToken, subscribePushMessages } =
+  await import("./fcm");
 
 const register = vi.fn();
 const requestPermission = vi.fn();
@@ -42,6 +45,7 @@ function stubBrowserPush(permission: NotificationPermission) {
 beforeEach(() => {
   getToken.mockReset().mockResolvedValue("fcm-token-1");
   deleteToken.mockReset().mockResolvedValue(true);
+  onMessage.mockReset().mockReturnValue(() => {});
   register.mockReset();
 });
 
@@ -82,4 +86,19 @@ test("끄면 이 기기의 토큰을 지운다", async () => {
 
   await deletePushToken();
   expect(deleteToken).toHaveBeenCalledTimes(1);
+});
+
+test("포그라운드 푸시는 제목과 본문만 뽑아 넘기고, 돌려준 함수로 구독을 끊는다", async () => {
+  stubBrowserPush("granted");
+  const off = vi.fn();
+  onMessage.mockReturnValue(off);
+  const handler = vi.fn();
+
+  const unsubscribe = await subscribePushMessages(handler);
+  const listener = onMessage.mock.calls[0][1] as (payload: unknown) => void;
+  listener({ notification: { title: "테스트", body: "본문" }, data: { targetType: "ORDER" } });
+  unsubscribe();
+
+  expect(handler).toHaveBeenCalledWith({ title: "테스트", body: "본문" });
+  expect(off).toHaveBeenCalledTimes(1);
 });

@@ -9,6 +9,16 @@ import { APP_MESSAGE, type AppMessage, type AppMessageCode } from "@/shared/conf
 
 import { reportError } from "./report-error";
 
+/**
+ * 포그라운드로 온 푸시를 알린다. **문구를 직접 받는 유일한 토스트다.**
+ *
+ * 다른 토스트는 코드로 문구를 찾지만 푸시 제목·본문은 서버가 그때그때 정하는 값이라 여기 둘 수 없다.
+ * 탭이 보이는 동안은 서비스 워커가 알림을 띄우지 않아, 이것이 없으면 그 푸시는 어디에도 보이지 않는다.
+ */
+export function toastPushMessage(title: string, description?: string) {
+  toast.info(title, { description });
+}
+
 export function toastAppSuccess(code: AppMessageCode) {
   // description이 없는 문구가 섞여 있어 좁은 타입으로 받는다. 단언 없이 union이 풀린다.
   const { title, description }: AppMessage = APP_MESSAGE[code];

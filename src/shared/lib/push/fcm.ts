@@ -71,3 +71,25 @@ export async function deletePushToken(): Promise<void> {
   const { firebase, messaging } = await loadMessaging();
   await firebase.deleteToken(messaging);
 }
+
+/** 포그라운드로 온 푸시. 화면이 보이는 동안은 서비스 워커가 띄우지 않고 페이지로 넘긴다 */
+export type PushMessage = {
+  title?: string;
+  body?: string;
+};
+
+/**
+ * 탭이 보이는 동안 도착하는 푸시를 받는다. 돌려주는 함수로 구독을 끊는다.
+ *
+ * 서비스 워커는 보이는 탭이 있으면 알림을 띄우지 않고 페이지에 넘긴다(Firebase SDK 동작).
+ * 여기서 받지 않으면 그 알림은 어디에도 보이지 않는다.
+ */
+export async function subscribePushMessages(
+  handler: (message: PushMessage) => void,
+): Promise<() => void> {
+  if (!isPushSupported()) return () => {};
+  const { firebase, messaging } = await loadMessaging();
+  return firebase.onMessage(messaging, (payload) => {
+    handler({ title: payload.notification?.title, body: payload.notification?.body });
+  });
+}
