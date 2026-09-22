@@ -27,6 +27,8 @@ vi.mock("@/shared/lib/app-toast", () => ({
   toastAppError: vi.fn(),
 }));
 
+import { toastAppSuccess } from "@/shared/lib/app-toast";
+
 import type { OrderDetail, OrderDetailItem } from "@/entities/order";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
@@ -227,6 +229,32 @@ test("고른 상품과 사유가 그대로 실려 나가고 주문 상세로 돌
   });
   // 뒤로가기로 방금 접수한 화면에 돌아오면 두 번 보내게 된다
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+});
+
+// 서버가 막는 세 가지(진행 중인 신청·수량 초과·기간 경과)는 접수를 눌러야 드러난다.
+// 실패해도 적어 둔 것이 남아 다시 낼 수 있어야 한다 (#358).
+test("접수가 실패하면 화면에 남고 성공을 알리지 않는다", async () => {
+  createClaim.mockRejectedValue(new Error("CLAIM_ITEM_QUANTITY_EXCEEDED"));
+  renderView("return");
+
+  fireEvent.click(await screen.findByRole("checkbox"));
+  fireEvent.change(screen.getByLabelText("사유 (선택)"), {
+    target: { value: "포장이 찢어져 있었어요" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청하기" }));
+
+  await waitFor(() => expect(createClaim).toHaveBeenCalled());
+
+  // 떠나지 않는다 — 떠나면 적어 둔 사유가 사라진다
+  expect(replace).not.toHaveBeenCalled();
+  expect(toastAppSuccess).not.toHaveBeenCalled();
+  // 적어 둔 것이 그대로 있고 다시 낼 수 있다
+  expect((screen.getByLabelText("사유 (선택)") as HTMLTextAreaElement).value).toBe(
+    "포장이 찢어져 있었어요",
+  );
+  expect(screen.getByRole("button", { name: "반품 신청하기" }).hasAttribute("disabled")).toBe(
+    false,
+  );
 });
 
 // 빈 문자열을 보내면 서버가 사유를 남긴 것으로 저장한다
