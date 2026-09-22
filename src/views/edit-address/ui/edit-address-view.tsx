@@ -25,6 +25,7 @@ import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-
 import { Skeleton } from "@/shared/ui/skeleton";
 
 import { addressFormSchema, type AddressFormValues } from "../model/address-form-schema";
+import { toInternalPath } from "../model/return-to";
 
 export function EditAddressView() {
   // 새 배송지와 이미 있는 곳의 수정을 한 화면이 맡는다. 어느 쪽인지는 주소창이 들고 있다.
@@ -88,6 +89,24 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const [roadAddr] = useQueryState("roadAddr");
   const [zipNo] = useQueryState("zipNo");
 
+  // 저장을 마치고 돌아갈 곳. 들어온 화면이 실어 보낸다 (#369)
+  const [from] = useQueryState("from");
+  const returnTo = toInternalPath(from);
+
+  // 고칠 대상(place)과 돌아갈 곳(from)을 검색 화면에 들려 보낸다. `place`를 빠뜨리면 돌아올 때
+  // `집 수정`이 `새 배송지`로 바뀌어 고치던 배송지를 잃고(#187), `from`을 빠뜨리면 돌아갈 곳을 잃는다
+  const searchQuery = new URLSearchParams();
+  if (place) {
+    searchQuery.set("place", place);
+  }
+  if (returnTo) {
+    searchQuery.set("from", returnTo);
+  }
+  // `URLSearchParams.size`는 Safari 17부터라 쓰지 않는다. 옛 기기에서 조용히 거짓이 되어
+  // `place`와 `from`이 통째로 빠진 링크가 된다
+  const searchSuffix = searchQuery.toString();
+  const searchHref = `/mypage/address/search${searchSuffix ? `?${searchSuffix}` : ""}`;
+
   // 저장된 값이 기본일 때만 잠근다. 새 배송지나 기본이 아닌 배송지는 자유롭게 켜고 끈다
   const lockedAsDefault = saved?.isDefault === true;
 
@@ -139,7 +158,15 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
     } else {
       await create(request_);
     }
-    router.back();
+
+    // **한 칸 되돌리면 주소 검색 화면이다.** 주소는 거기서만 고르는데 쪽 이동이 history를
+    // 쌓아 몇 칸인지 셀 수 없다. 들어온 화면을 알면 그리로 곧장 간다 (#369).
+    // `push`가 아니라 `replace`인 것은 저장을 마친 폼으로 되돌아갈 일이 없어서다
+    if (returnTo) {
+      router.replace(returnTo);
+    } else {
+      router.back();
+    }
   };
 
   return (
@@ -200,14 +227,8 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         <p className="text-title-bold-16 text-foreground">받을 곳 주소</p>
         {/* 주소는 직접 적지 않고 검색 화면에서 고른다. 그래서 입력칸이 아니라 링크다.
             시안이 오른쪽에 돋보기를 놓아 누르면 찾으러 간다는 것을 보인다 */}
-        {/* 고칠 대상(place)을 들고 간다. 안 그러면 검색에서 돌아올 때 "집 수정"이
-            "새 배송지"로 바뀌어 먼저 적어 둔 값이 사라진다 (CodeRabbit 리뷰, #187) */}
         <Link
-          href={
-            place
-              ? `/mypage/address/search?place=${encodeURIComponent(place)}`
-              : "/mypage/address/search"
-          }
+          href={searchHref}
           className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-input px-3 text-body-medium-14 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <span className={address ? "truncate text-foreground" : "text-text-body-tertiary"}>

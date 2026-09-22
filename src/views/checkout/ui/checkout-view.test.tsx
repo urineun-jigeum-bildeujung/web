@@ -163,8 +163,9 @@ test("등록된 배송지가 없으면 등록하러 보낸다", () => {
   renderView({ addresses: [] });
 
   expect(screen.getByText("아직 등록된 배송지가 없어요")).toBeDefined();
+  // 등록을 마치면 이 화면으로 돌아와야 결제를 이어갈 수 있다 (#369)
   expect(screen.getByRole("link", { name: "배송지 등록" }).getAttribute("href")).toBe(
-    "/mypage/address/new",
+    "/mypage/address/new?from=%2Fpayment",
   );
   // 보낼 곳을 모르면 주문을 만들 수 없다
   agreeRequired();
@@ -465,6 +466,17 @@ test("쿼리가 없으면 실패를 알리지 않는다", () => {
   renderView();
 
   expect(toastAppError).not.toHaveBeenCalled();
+});
+
+// 배송지를 등록하러 갔다 돌아올 때 고른 것을 잃으면 장바구니 전체로 읽혀 고르지 않은
+// 상품까지 주문된다 (#364와 같은 자리다)
+test("배송지 등록하러 갈 때 고른 상품을 들고 간다", () => {
+  searchParams = new URLSearchParams("items=NORMAL:1");
+  renderView({ addresses: [] });
+
+  const href = screen.getByRole("link", { name: "배송지 등록" }).getAttribute("href");
+  const from = new URLSearchParams(href!.split("?")[1]).get("from");
+  expect(from).toBe("/payment?items=NORMAL%3A1");
 });
 
 // 장바구니가 고른 줄을 `?items=`로 넘긴다. 맞는 줄만 결제 대상이 된다

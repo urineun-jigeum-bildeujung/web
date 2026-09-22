@@ -201,6 +201,18 @@ test("고치던 배송지(place)를 그대로 돌려준다", async () => {
   expect(url.searchParams.get("place")).toBe("home");
 });
 
+// 이 화면은 history에 쌓이는 쪽이라, 돌아갈 곳을 잃으면 저장을 마친 사용자가 여기로 온다 (#369)
+test("돌아갈 곳(from)을 그대로 돌려준다", async () => {
+  renderAt("?from=%2Fpayment%2Faddress");
+
+  searchFor("테헤란로");
+  fireEvent.click(firstResult());
+  fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
+
+  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  expect(url.searchParams.get("from")).toBe("/payment/address");
+});
+
 test("새 배송지면 place를 붙이지 않는다", async () => {
   renderAt();
 

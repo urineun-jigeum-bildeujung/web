@@ -20,8 +20,14 @@ export function CheckoutAddressView() {
       <PageHeader title="배송지 설정" />
 
       <main className="flex flex-1 flex-col gap-5 px-5 pt-3 pb-8">
-        <AddressPlaceList addresses={addresses} isLoading={isLoading} error={error} />
-        <AddPlaceLink />
+        {/* 등록·수정을 마치면 이 화면으로 돌아온다. 결제를 이어가야 해서다 (#369) */}
+        <AddressPlaceList
+          addresses={addresses}
+          isLoading={isLoading}
+          error={error}
+          from="/payment/address"
+        />
+        <AddPlaceLink from="/payment/address" />
       </main>
     </div>
   );

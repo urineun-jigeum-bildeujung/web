@@ -26,7 +26,7 @@
 | `api/use-query-payment-confirm.test.tsx` | StrictMode 이중 마운트와 실패 후 재마운트에서 승인이 한 번만 나가는지 |
 | `api/payment.test.ts` | 무엇을 어떤 모양으로 보내는지, `orderId` 두 값이 제자리에 가는지 |
 | `model/order-items.ts` | 장바구니에서 결제할 줄만 고른다 |
-| `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301) |
+| `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301). 배송지를 등록하러 갔다 돌아올 경로도 여기서 만든다 (#369) |
 | `model/return-query.test.ts` | 복귀 주소 모양, 토스 쿼리와의 충돌, 읽을 수 없는 값 |
 | `model/order-items.test.ts` | 고른 값이 없을 때·살 수 없는 줄·종류가 다른 같은 id |
 | `index.ts` | 공개 API |

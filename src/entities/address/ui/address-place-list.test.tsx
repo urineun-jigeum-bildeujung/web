@@ -33,7 +33,13 @@ const STUDIO: Address = {
 
 function renderList(props: Partial<Parameters<typeof AddressPlaceList>[0]> = {}) {
   return render(
-    <AddressPlaceList addresses={undefined} isLoading={false} error={null} {...props} />,
+    <AddressPlaceList
+      addresses={undefined}
+      isLoading={false}
+      error={null}
+      from="/mypage/address"
+      {...props}
+    />,
   );
 }
 
@@ -65,12 +71,16 @@ test("집·회사에만 아이콘이 붙고 사용자가 지은 이름에는 없
   expect(custom?.querySelectorAll("svg").length).toBe(1);
 });
 
-// 고른 줄의 addressId를 들고 가야 그 배송지를 고칠 수 있다
-test("줄을 누르면 그 배송지를 들고 간다", () => {
-  renderList({ addresses: [HOME] });
+// 고른 줄의 addressId를 들고 가야 그 배송지를 고칠 수 있다.
+// **돌아올 곳도 함께 간다** — 주소를 다시 고르면 검색 화면이 history에 쌓여,
+// 저장 뒤 한 칸 되돌리면 그리로 간다 (#369)
+test("줄을 누르면 그 배송지와 돌아올 곳을 들고 간다", () => {
+  renderList({ addresses: [HOME], from: "/payment/address" });
 
   const row = screen.getByRole("link", { name: /집/ }) as HTMLAnchorElement;
-  expect(row.getAttribute("href")).toBe("/mypage/address/new?place=5");
+  const query = new URLSearchParams(row.getAttribute("href")!.split("?")[1]);
+  expect(query.get("place")).toBe("5");
+  expect(query.get("from")).toBe("/payment/address");
 });
 
 // 픽스처의 집이 기본이면서 이름 묶음이기도 해서, 묶음을 먼저 그리는 회귀가 있어도
@@ -113,9 +123,10 @@ test("찾는 동안 뼈대를 보여준다", () => {
   expect(screen.getByRole("status")).toBeDefined();
 });
 
-test("장소를 더 넣을 수 있다", () => {
-  render(<AddPlaceLink />);
+test("장소를 더 넣을 수 있고 돌아올 곳을 들고 간다", () => {
+  render(<AddPlaceLink from="/payment/address" />);
 
   const link = screen.getByRole("link", { name: /장소 추가하기/ });
-  expect(link.getAttribute("href")).toBe("/mypage/address/new");
+  const query = new URLSearchParams(link.getAttribute("href")!.split("?")[1]);
+  expect(query.get("from")).toBe("/payment/address");
 });

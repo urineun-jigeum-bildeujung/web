@@ -1,7 +1,7 @@
 // 복귀 쿼리. 토스가 붙이는 이름과 겹치면 주문 상세로 갈 값을 잃는다.
 import { expect, test } from "vitest";
 
-import { ORDER_PARAM, readOrderId, toFailUrl, toSuccessUrl } from "./return-query";
+import { ORDER_PARAM, readOrderId, toCheckoutPath, toFailUrl, toSuccessUrl } from "./return-query";
 
 test("복귀 주소에 숫자 주문 id를 싣는다", () => {
   expect(toSuccessUrl("https://leechs.shop", 12)).toBe("https://leechs.shop/payment/done?order=12");
@@ -67,4 +67,20 @@ test("토스가 붙인 값은 다음 복귀 주소로 옮기지 않는다", () =
   expect(url.searchParams.get("code")).toBeNull();
   expect(url.searchParams.get("message")).toBeNull();
   expect(url.searchParams.get("orderId")).toBeNull();
+});
+
+// 배송지를 등록하러 갔다 돌아올 곳이다. 고른 것을 잃으면 장바구니 전체로 읽힌다 (#369)
+test("결제 화면 경로에 고른 상품을 그대로 싣는다", () => {
+  expect(toCheckoutPath("?items=NORMAL%3A1%2CNORMAL%3A2")).toBe(
+    "/payment?items=NORMAL%3A1%2CNORMAL%3A2",
+  );
+  expect(toCheckoutPath("?items=")).toBe("/payment?items=");
+  expect(toCheckoutPath("")).toBe("/payment");
+});
+
+// 토스가 붙인 값까지 옮기면 실패 안내가 옛 값으로 다시 뜬다
+test("결제 화면 경로에 토스가 붙인 값은 옮기지 않는다", () => {
+  expect(toCheckoutPath("?items=NORMAL%3A1&code=PAY_PROCESS_CANCELED&orderId=ORD-1")).toBe(
+    "/payment?items=NORMAL%3A1",
+  );
 });

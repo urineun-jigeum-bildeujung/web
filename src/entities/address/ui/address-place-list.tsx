@@ -20,12 +20,17 @@ import type { Address } from "../api/addresses";
 import { groupAddresses } from "../model/group-addresses";
 import { ICON_BY_NAME } from "./place-icon";
 
-function PlaceRow({ place }: { place: Address }) {
+/**
+ * 배송지 하나를 여는 줄. **고치고 돌아올 곳을 함께 들려 보낸다.**
+ *
+ * 주소를 다시 고르면 검색 화면이 history에 쌓여, 저장 뒤 한 칸 되돌리면 그리로 간다 (#369).
+ */
+function PlaceRow({ place, from }: { place: Address; from: string }) {
   const icon = ICON_BY_NAME[place.addressName];
 
   return (
     <Link
-      href={`/mypage/address/new?place=${place.addressId}`}
+      href={`/mypage/address/new?${new URLSearchParams({ place: String(place.addressId), from })}`}
       className="flex flex-col gap-2 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <span className="flex items-center gap-2">
@@ -69,9 +74,11 @@ type AddressPlaceListProps = {
   addresses: Address[] | undefined;
   isLoading: boolean;
   error: unknown;
+  /** 배송지를 고치고 돌아올 이 화면의 경로. 두 화면이 같은 목록을 써서 받아 둔다 (#369) */
+  from: string;
 };
 
-export function AddressPlaceList({ addresses, isLoading, error }: AddressPlaceListProps) {
+export function AddressPlaceList({ addresses, isLoading, error, from }: AddressPlaceListProps) {
   const { top, rest } = groupAddresses(addresses);
 
   return (
@@ -102,7 +109,7 @@ export function AddressPlaceList({ addresses, isLoading, error }: AddressPlaceLi
             {top.length > 0 && (
               <div className="flex flex-col gap-3">
                 {top.map((place) => (
-                  <PlaceRow key={place.addressId} place={place} />
+                  <PlaceRow key={place.addressId} place={place} from={from} />
                 ))}
               </div>
             )}
@@ -111,7 +118,7 @@ export function AddressPlaceList({ addresses, isLoading, error }: AddressPlaceLi
             {top.length > 0 && rest.length > 0 && <hr className="-mx-5 border-border" />}
 
             {rest.map((place) => (
-              <PlaceRow key={place.addressId} place={place} />
+              <PlaceRow key={place.addressId} place={place} from={from} />
             ))}
           </>
         ))}
@@ -119,11 +126,15 @@ export function AddressPlaceList({ addresses, isLoading, error }: AddressPlaceLi
   );
 }
 
-/** 목록 아래의 "장소 추가하기". 두 화면 모두 같은 자리에 둔다 */
-export function AddPlaceLink() {
+/**
+ * 목록 아래의 "장소 추가하기". 두 화면 모두 같은 자리에 둔다.
+ *
+ * `from`은 등록을 마치고 돌아올 이 화면의 경로다 (#369).
+ */
+export function AddPlaceLink({ from }: { from: string }) {
   return (
     <Link
-      href="/mypage/address/new"
+      href={`/mypage/address/new?${new URLSearchParams({ from })}`}
       className={cn(
         "flex min-h-11 items-center justify-center gap-1 rounded-lg text-body-medium-14 text-text-body-secondary transition-colors",
         "hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
