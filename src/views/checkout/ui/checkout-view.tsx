@@ -213,6 +213,19 @@ export function CheckoutView() {
   // 주문 생성부터 결제창이 뜨기까지의 왕복. 결제는 되돌릴 수 없어 두 번 눌리면 안 된다
   const [paying, setPaying] = useState(false);
 
+  // **결제창에서 기기 뒤로가기로 돌아오면 대기를 푼다.** 토스가 창 전체를 결제 페이지로 옮긴 뒤
+  // 뒤로가기를 누르면, iOS Safari 같은 브라우저는 이 화면을 뒤로·앞으로 캐시에서 상태째 되살린다.
+  // 결제창 약속은 끝나지 않아 `pay`의 되돌림이 돌지 않으니, 두면 새로고침 전까지 결제할 수 없다 (#430)
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setPaying(false);
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다.
