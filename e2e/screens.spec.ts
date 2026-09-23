@@ -73,6 +73,7 @@ const ROUTES = [
   "/mypage/orders",
   "/mypage/orders/1",
   "/mypage/orders/1/claim?type=cancel",
+  "/mypage/orders/1/claim?type=return",
   "/mypage/support",
   "/mypage/support/inquiries",
   "/mypage/support/notices",
