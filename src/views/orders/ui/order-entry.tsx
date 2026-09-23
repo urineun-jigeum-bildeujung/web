@@ -14,10 +14,12 @@ import {
   OrderProductRow,
   OrderStatusBadge,
   toOrderStatus,
+  type OrderListItem,
   type OrderSummary,
 } from "@/entities/order";
 import { formatDisplayMonthDayTime } from "@/shared/lib/date/display-date";
 import { Button } from "@/shared/ui/button";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
 /** 시안의 목록 행동 버튼. 40px에 굵은 14px, 연한 회색 바탕이다. 하나면 가득, 둘이면 나눈다 */
 const ACTION_CLASS = "h-10 flex-1 rounded-lg text-label-bold-14";
@@ -26,10 +28,18 @@ type OrderEntryProps = {
   order: OrderSummary;
   onConfirm: (orderId: number) => void;
   onTrack: () => void;
-  onReorder: () => void;
+  onReorder: (item: OrderListItem) => void;
+  /** 장바구니에 담는 중인 상품 줄. 그 줄 버튼이 대기를 보이고, 끝날 때까지 다른 줄도 잠근다 */
+  reorderingId: number | null;
 };
 
-export function OrderEntry({ order, onConfirm, onTrack, onReorder }: OrderEntryProps) {
+export function OrderEntry({
+  order,
+  onConfirm,
+  onTrack,
+  onReorder,
+  reorderingId,
+}: OrderEntryProps) {
   const status = toOrderStatus(order.orderStatus);
   // **목록에는 결제 시각이 없어 주문 시각을 쓴다.** 결제는 주문을 만든 직후라 같다.
   // 결제 시각(`payment.paidAt`)은 상세 응답에만 온다
@@ -51,10 +61,11 @@ export function OrderEntry({ order, onConfirm, onTrack, onReorder }: OrderEntryP
                 엉뚱한 단계가 확정처럼 보인다 (entities/order/model/order-status.ts) */}
             {status && <OrderStatusBadge status={status} className="self-start" />}
 
-            {/* 목록 응답에 상품별 금액이 없어 금액 줄을 비운다. 받으면 채운다 (#405) */}
+            {/* 금액은 그 줄에 낸 값이다 — 할인을 뺀 단가 × 수량 (#418) */}
             <OrderProductRow
               name={item.productName}
               quantity={item.quantity}
+              amount={item.amount}
               imageUrl={item.thumbnailUrl}
             />
 
@@ -76,8 +87,16 @@ export function OrderEntry({ order, onConfirm, onTrack, onReorder }: OrderEntryP
                   구매확정 하기
                 </Button>
               )}
-              <Button variant="secondary" className={ACTION_CLASS} onClick={onReorder}>
-                장바구니 담기
+              <Button
+                variant="secondary"
+                className={ACTION_CLASS}
+                // 담는 동안 또 누르면 서버가 같은 줄에 수량을 한 번 더 더한다
+                disabled={reorderingId !== null}
+                onClick={() => onReorder(item)}
+              >
+                <LoadingSwap loading={reorderingId === item.orderItemId} label="장바구니에 담는 중">
+                  장바구니 담기
+                </LoadingSwap>
               </Button>
             </div>
           </li>
