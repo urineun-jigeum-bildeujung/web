@@ -32,6 +32,11 @@ namespace NodeJS {
     NEXT_PUBLIC_FIREBASE_APP_ID?: string;
     NEXT_PUBLIC_FIREBASE_VAPID_KEY?: string;
 
+    // Grafana Faro 수집 주소와 키. 둘 다 있을 때만 관측을 켠다. 키는 브라우저가 헤더로 보내므로
+    // 번들에 실리는 것이 정상이다(#396). 로컬에서는 비워 둔다.
+    NEXT_PUBLIC_FARO_URL?: string;
+    NEXT_PUBLIC_FARO_API_KEY?: string;
+
     // DEMO — 선언 방식을 보여주는 예시. 이렇게 선언하면 process.env.DEMO를 타입 안전하게 읽을 수 있다.
     DEMO: string;
   }
