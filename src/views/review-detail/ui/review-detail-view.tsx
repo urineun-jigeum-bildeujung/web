@@ -13,7 +13,7 @@ import { toast } from "sonner";
 
 import { useQueryMyProfile } from "@/entities/member";
 import { useQueryPetDetail } from "@/entities/pet";
-import { useQueryReviewDetail, type ReviewDetail } from "@/entities/review";
+import { useQueryReviewDetail, type ReviewDetail, type ReviewPet } from "@/entities/review";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -234,22 +234,29 @@ function PurchaseBar({ productId }: { productId: string }) {
   );
 }
 
+/**
+ * 아이 칩 하나. 응답 스냅샷에는 품종명·몸무게가 없어 내 아이면 상세를 받아 "말티즈 · 8세 · 4kg"으로,
+ * 못 받으면(남의 아이·지운 아이) 스냅샷의 이름과 나이로 "코코 · 8세"로 보인다
+ */
+function PetChip({ pet }: { pet: ReviewPet }) {
+  const { pet: detail } = useQueryPetDetail(pet.id);
+  return (
+    <li className="rounded-sm bg-surface-secondary px-1.5 py-0.5 text-label-medium-12 text-text-body-secondary">
+      {detail ? toReviewPetProfile(detail) : `${pet.name} · ${pet.age}세`}
+    </li>
+  );
+}
+
 function ReviewDetailContent({
   review,
   showReactions,
   showPurchaseBar,
 }: ReviewDetailOptions & { review: ReviewDetail }) {
-  // 응답에 닉네임·아이 프로필이 없다(백엔드 요청 중). 마이페이지 아래라 내 리뷰가 전제이니 내 정보와
-  // 내 아이에서 채운다. `isMine`으로 가리지 않는다 — 새로고침 직후엔 액세스 토큰이 아직 메모리에 없어
-  // 이 조회가 인증 없이 나가고 `isMine`이 `false`로 온다. 내 아이가 아니면 조회가 실패해 칩이 빠진다
+  // 응답에 닉네임이 없다(백엔드 요청 중). 마이페이지 아래라 내 리뷰가 전제이니 내 정보에서 채운다.
+  // 아이 칩은 `isMine`으로 가리지 않는다 — 새로고침 직후엔 액세스 토큰이 아직 메모리에 없어 이 조회가
+  // 인증 없이 나가고 `isMine`이 `false`로 온다. 내 아이가 아니면 스냅샷 값으로만 그린다
   const { profile } = useQueryMyProfile();
-  const { pet } = useQueryPetDetail(review.petId);
-  const chips = [
-    ...(pet ? [toReviewPetProfile(pet)] : []),
-    toUsageLabel(review.usageDays),
-    ...review.goodPoints,
-    ...review.badPoints,
-  ];
+  const chips = [toUsageLabel(review.usageDays), ...review.goodPoints, ...review.badPoints];
 
   return (
     <>
@@ -268,6 +275,9 @@ function ReviewDetailContent({
 
         {/* 시안의 "[옵션] …" 줄은 응답에 옵션이 없어 두지 않는다 */}
         <ul aria-label="아이와 사용 기간, 반응" className="flex flex-wrap gap-2">
+          {review.pets.map((pet) => (
+            <PetChip key={pet.id} pet={pet} />
+          ))}
           {chips.map((chip) => (
             <li
               key={chip}

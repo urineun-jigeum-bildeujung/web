@@ -122,8 +122,16 @@ type ReviewDetailResponse = {
   reviewId: number;
   isMine: boolean;
   product: { productId: number; name: string; image: string | null };
-  petId: number;
-  /** 반올림 정수 */
+  /** 함께 먹인 아이들의 스냅샷(쓸 당시 값). 고양이는 `breedSize`가 `null` */
+  pets: {
+    petId: number;
+    name: string;
+    sex: "MALE" | "FEMALE";
+    age: number;
+    breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
+    species: "DOG" | "CAT";
+  }[];
+  /** 저장값 그대로. 0.5 단위 */
   rating: number;
   /** 일 단위 */
   usagePeriod: number;
@@ -139,14 +147,25 @@ type ReviewDetailResponse = {
   createdAt: string;
 };
 
-/** 리뷰 한 건의 상세. 닉네임·아이 스냅샷·도움돼요 수는 응답에 없다(백엔드 요청 중) */
+/** 리뷰를 쓸 당시의 아이. 품종명·몸무게는 응답에 없어 내 아이면 상세를 따로 받는다 */
+export type ReviewPet = {
+  id: string;
+  name: string;
+  age: number;
+  species: "DOG" | "CAT";
+  /** 고양이는 체구가 없다 */
+  breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
+};
+
+/** 리뷰 한 건의 상세. 닉네임·도움돼요 수는 응답에 없다(백엔드 요청 중) */
 export type ReviewDetail = {
   id: string;
   /** 로그인한 회원이 쓴 것인가. 비로그인이면 `false` */
   isMine: boolean;
   product: { id: string; name: string; imageUrl?: string };
-  petId: string;
-  /** 0~5 정수 */
+  /** 함께 먹인 아이들. 한 마리 이상 */
+  pets: ReviewPet[];
+  /** 0~5, 0.5 단위 */
   rating: number;
   usageDays: number;
   /** "기호성 좋음"처럼 문항 이름과 답을 붙인 문구 */
@@ -167,7 +186,13 @@ export function getReviewDetail(reviewId: string): Promise<ReviewDetail> {
       name: response.product.name,
       ...(response.product.image && { imageUrl: response.product.image }),
     },
-    petId: String(response.petId),
+    pets: response.pets.map((pet) => ({
+      id: String(pet.petId),
+      name: pet.name,
+      age: pet.age,
+      species: pet.species,
+      breedSize: pet.breedSize,
+    })),
     rating: response.rating,
     usageDays: response.usagePeriod,
     goodPoints: response.goodPoints ?? [],

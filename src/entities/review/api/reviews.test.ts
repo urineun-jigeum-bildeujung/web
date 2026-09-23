@@ -118,14 +118,17 @@ test("작성 가능한 상품 목록을 받아 화면 모양으로 옮긴다", a
   expect("imageUrl" in items[0]).toBe(false);
 });
 
-test("리뷰 상세를 받아 화면 모양으로 옮기고, 비어 있는 목록은 빈 배열로 둔다", async () => {
+test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리·0.5 별점), 비어 있는 목록은 빈 배열로 둔다", async () => {
   const fetchMock = vi.fn().mockResolvedValue(
     Response.json({
       reviewId: 1,
       isMine: true,
       product: { productId: 1, name: "오메가3 피쉬오일 60캡슐", image: null },
-      petId: 3,
-      rating: 4,
+      pets: [
+        { petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" },
+        { petId: 5, name: "나비", sex: "MALE", age: 2, breedSize: null, species: "CAT" },
+      ],
+      rating: 4.5,
       usagePeriod: 16,
       answerValues: [{ questionKey: "PALATABILITY", answerValue: "POSITIVE" }],
       goodPoints: ["기호성 좋음"],
@@ -145,8 +148,11 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고, 비어 있는 목�
     id: "1",
     isMine: true,
     product: { id: "1", name: "오메가3 피쉬오일 60캡슐" },
-    petId: "3",
-    rating: 4,
+    pets: [
+      { id: "3", name: "코코", age: 4, species: "DOG", breedSize: "SMALL" },
+      { id: "5", name: "나비", age: 2, species: "CAT", breedSize: null },
+    ],
+    rating: 4.5,
     usageDays: 16,
     goodPoints: ["기호성 좋음"],
     badPoints: [],

@@ -9,6 +9,7 @@ export {
   type MyReviewList,
   type ReviewCreateRequest,
   type ReviewDetail,
+  type ReviewPet,
   type WritableReview,
 } from "./api/reviews";
 export { useMutateCreateReview } from "./api/use-mutate-create-review";
