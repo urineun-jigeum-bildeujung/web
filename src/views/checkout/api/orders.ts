@@ -3,11 +3,13 @@
 // **결제 흐름의 첫 단계다.** 이 응답의 `orderId`(숫자 PK)를 `POST /payments`에 넘겨야
 // 토스에 쓸 주문번호가 나온다. 순서를 건너뛰면 위젯은 떠도 승인에서 막힌다.
 //
-// **`Idempotency-Key`를 매번 새로 만든다.** 결제 버튼을 두 번 눌렀을 때 주문이 두 건
-// 생기는 것을 서버가 막을 수 있게 하는 값이다. 프론트가 UUID를 만들 자리는
-// 주문번호가 아니라 여기다.
+// **`Idempotency-Key`는 부르는 쪽이 준다.** 서버는 같은 키로 온 요청에 처음 만든 주문을
+// 돌려준다(`findExistingResult`). 응답을 잃고 다시 누를 때 같은 키를 실어야 주문이 두 건
+// 생기지 않으므로, 결제 화면이 본문의 지문과 함께 탭에 들고 있다가 준다 (#412).
 
+import { cancelOrder, getOrderDetail } from "@/entities/order";
 import { apiRequest } from "@/shared/api/client";
+import { reportError } from "@/shared/lib/report-error";
 
 const ORDERS_PATH = "/orders";
 
@@ -78,13 +80,40 @@ export type CreateOrderResult = {
 /**
  * 주문을 만들고 그 id를 돌려준다.
  *
- * **같은 주문을 두 번 만들지 않게 `Idempotency-Key`를 싣는다.** 사용자가 결제 버튼을
- * 연타하거나 네트워크가 끊겨 재시도가 일어나도 서버가 같은 요청으로 알아본다.
+ * **같은 키로 다시 부르면 서버가 처음 만든 주문을 돌려준다.** 본문은 견주지 않는다 — 본문이
+ * 바뀌었으면 부르는 쪽이 키도 바꿔야 한다 (#412).
  */
-export function createOrder(request: CreateOrderRequest): Promise<CreateOrderResult> {
+export function createOrder(
+  request: CreateOrderRequest,
+  idempotencyKey: string,
+): Promise<CreateOrderResult> {
   return apiRequest<CreateOrderResult>(ORDERS_PATH, {
     method: "POST",
     body: request,
-    headers: { "Idempotency-Key": crypto.randomUUID() },
+    headers: { "Idempotency-Key": idempotencyKey },
   });
+}
+
+/**
+ * 더 쓰지 않을 결제 대기 주문을 취소해 재고 예약을 푼다.
+ *
+ * 주문을 만들면 서버가 재고를 예약한다. 결제하지 않은 주문의 예약이 풀리는 길은 결제 실패
+ * 알림과 취소뿐이다 — `reservationExpiresAt`은 기록만 되고 읽는 곳이 없다. 본문이 바뀌어 새
+ * 주문을 만들 때 들고 있던 것을 그냥 두면 그 예약이 끝내 풀리지 않는다 (#412).
+ *
+ * **결제 대기일 때만 취소한다.** 서버는 결제된 주문도 취소를 받는다(`PAID → CANCELLED`).
+ * 탭을 복제하면 `sessionStorage`도 복제되어, 다른 탭에서 이미 결제한 주문을 들고 있을 수 있다.
+ *
+ * **실패해도 던지지 않는다.** 이 누름의 목적은 새 주문으로 결제하는 것이다. 예약을 못 풀었다고
+ * 결제까지 막으면 사용자가 얻는 것이 없다.
+ */
+export async function releaseOrder(orderId: number): Promise<void> {
+  try {
+    const order = await getOrderDetail(orderId);
+    if (order.orderStatus === "PENDING") {
+      await cancelOrder(orderId);
+    }
+  } catch (error) {
+    reportError("checkout.releaseOrder", error);
+  }
 }

@@ -12,12 +12,15 @@ import type { CartItem } from "@/entities/cart";
 
 import type { TossPaymentOrder } from "./toss-payment-widget";
 
-const { requestPayment, toastAppError, createOrder, preparePayment } = vi.hoisted(() => ({
-  requestPayment: vi.fn(),
-  toastAppError: vi.fn(),
-  createOrder: vi.fn(),
-  preparePayment: vi.fn(),
-}));
+const { requestPayment, toastAppError, createOrder, releaseOrder, preparePayment } = vi.hoisted(
+  () => ({
+    requestPayment: vi.fn(),
+    toastAppError: vi.fn(),
+    createOrder: vi.fn(),
+    releaseOrder: vi.fn(),
+    preparePayment: vi.fn(),
+  }),
+);
 
 const useQueryCart = vi.fn();
 const useQueryAddresses = vi.fn();
@@ -41,7 +44,7 @@ vi.mock("@/entities/cart", async (importOriginal) => ({
 vi.mock("@/entities/address", () => ({ useQueryAddresses: () => useQueryAddresses() }));
 vi.mock("@/entities/pet", () => ({ useQueryPets: () => useQueryPets() }));
 
-vi.mock("../api/orders", () => ({ createOrder }));
+vi.mock("../api/orders", () => ({ createOrder, releaseOrder }));
 vi.mock("../api/payment", () => ({ preparePayment }));
 
 // 위젯은 토스 서버에서 스크립트를 받아 온다. 테스트에서는 준비됐다고만 알린다
@@ -221,16 +224,20 @@ test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", asy
 
   await waitFor(() => expect(requestPayment).toHaveBeenCalled());
 
-  expect(createOrder).toHaveBeenCalledWith({
-    addressId: HOME.addressId,
-    // **서버가 필수로 받는다.** 빠지면 본문 검증에서 400이다. 기본 아이가 실린다 (#393)
-    petId: 3,
-    // **장바구니 규격이 아니라 주문 규격이다.** 서버가 상품과 타임딜을 다른 필드로
-    // 받아, itemType·itemId를 그대로 보내면 매번 400이었다 (#306)
-    items: [{ productId: 1, quantity: 1 }],
-    // 드롭다운 기본값이 그대로 실린다
-    deliveryNote: "문 앞에 놓아주세요",
-  });
+  expect(createOrder).toHaveBeenCalledWith(
+    {
+      addressId: HOME.addressId,
+      // **서버가 필수로 받는다.** 빠지면 본문 검증에서 400이다. 기본 아이가 실린다 (#393)
+      petId: 3,
+      // **장바구니 규격이 아니라 주문 규격이다.** 서버가 상품과 타임딜을 다른 필드로
+      // 받아, itemType·itemId를 그대로 보내면 매번 400이었다 (#306)
+      items: [{ productId: 1, quantity: 1 }],
+      // 드롭다운 기본값이 그대로 실린다
+      deliveryNote: "문 앞에 놓아주세요",
+    },
+    // 생성 키. 응답을 잃고 다시 보낼 때 서버가 같은 요청으로 알아본다 (#412)
+    expect.any(String),
+  );
   expect(preparePayment).toHaveBeenCalledWith({ orderId: 77 });
   // **숫자 id도 함께 넘어간다.** 위젯이 그것을 복귀 주소에 실어, 결제가 끝난 뒤
   // 방금 산 주문으로 갈 수 있게 한다 (#301)
@@ -339,6 +346,8 @@ test("결제가 실패한 뒤 다시 눌러도 주문을 또 만들지 않는다
   // 결제 준비부터 다시 한다 — 만들어 둔 주문을 그대로 쓴다
   expect(preparePayment).toHaveBeenCalledTimes(2);
   expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 77 });
+  // 같은 주문을 다시 쓰므로 풀 것이 없다
+  expect(releaseOrder).not.toHaveBeenCalled();
 });
 
 // 옛 주문으로 결제하면 고친 내용이 반영되지 않는다. 본문이 달라지면 새로 만들어야 한다
@@ -359,12 +368,101 @@ test("요청사항을 고치면 주문을 새로 만든다", async () => {
   fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
 
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
-  expect(createOrder).toHaveBeenLastCalledWith({
-    addressId: HOME.addressId,
-    petId: 3,
-    items: [{ productId: 1, quantity: 1 }],
-    deliveryNote: null,
-  });
+  expect(createOrder).toHaveBeenLastCalledWith(
+    {
+      addressId: HOME.addressId,
+      petId: 3,
+      items: [{ productId: 1, quantity: 1 }],
+      deliveryNote: null,
+    },
+    expect.any(String),
+  );
+  // **본문이 바뀌면 키도 새로 만든다.** 서버는 같은 키에 본문을 견주지 않고 처음 주문을
+  // 돌려줘서, 키를 그대로 쓰면 고친 요청사항이 빠진 옛 주문이 온다 (#412)
+  const [[, firstKey], [, secondKey]] = createOrder.mock.calls;
+  expect(secondKey).not.toBe(firstKey);
+  // 새로 만들기 전에 들고 있던 주문을 푼다. 두면 결제 대기로 남아 재고 예약을 쥔다 (#412)
+  expect(releaseOrder).toHaveBeenCalledWith(77);
+  expect(releaseOrder.mock.invocationCallOrder[0]).toBeLessThan(
+    createOrder.mock.invocationCallOrder[1],
+  );
+});
+
+/**
+ * 같은 배송지의 주소를 고치고 돌아온 경우다.
+ *
+ * **서버는 주문을 만들 때 주소를 복사해 두고 바꾸지 않는다.** 배송지 id가 같다고 옛 주문을
+ * 다시 쓰면 화면에는 새 주소가 보이는데 옛 주소로 결제·배송된다 (#412).
+ */
+test("배송지 주소를 고치면 주문을 새로 만든다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  // 배송지 변경에서 상세주소를 고치고 돌아온다. 배송지 id는 그대로다
+  first.unmount();
+  createOrder.mockResolvedValue({ orderId: 88 });
+  renderView({ addresses: [{ ...HOME, addressDetail: "UI타워 5층 501호" }] });
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 88 });
+});
+
+/**
+ * 서버가 주문을 만든 뒤 응답만 잃은 경우다(네트워크 끊김·게이트웨이 시간 초과).
+ *
+ * 새 키로 다시 보내면 서버가 같은 요청으로 못 알아봐 결제 대기 주문이 둘 된다. 같은 키로
+ * 물으면 서버가 처음 만든 주문을 돌려준다 (#412).
+ */
+test("주문 생성 응답을 잃고 다시 누르면 같은 키로 묻는다", async () => {
+  createOrder
+    .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    .mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  const [[, firstKey], [, secondKey]] = createOrder.mock.calls;
+  expect(secondKey).toBe(firstKey);
+});
+
+/**
+ * 서버가 요청을 보고 거절한 경우다.
+ *
+ * **재고 부족은 주문을 저장한 뒤에 막힌다.** 그 주문은 취소된 채 키에 남아, 같은 키로 다시
+ * 보내면 그 취소된 주문이 와서 결제 준비에서 또 막힌다 (#412).
+ */
+test("주문 생성을 서버가 거절하면 다음에는 새 키로 만든다", async () => {
+  createOrder
+    .mockRejectedValueOnce(
+      new ApiError(409, "재고가 부족합니다.", {
+        errorCode: "ORDER_409_INSUFFICIENT_STOCK",
+      } as never),
+    )
+    .mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  const [[, firstKey], [, secondKey]] = createOrder.mock.calls;
+  expect(secondKey).not.toBe(firstKey);
 });
 
 // 서버가 `petId`를 필수로 받는다. 모르는 채로 누르면 본문 검증에서 400이다 (#393)
@@ -400,7 +498,10 @@ test("기본 아이가 바뀌면 주문을 새로 만든다", async () => {
   fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
 
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
-  expect(createOrder).toHaveBeenLastCalledWith(expect.objectContaining({ petId: 7 }));
+  expect(createOrder).toHaveBeenLastCalledWith(
+    expect.objectContaining({ petId: 7 }),
+    expect.any(String),
+  );
 });
 
 // 기본 아이를 정하지 않은 계정도 있다. 그때 버튼이 잠기면 결제할 길이 없다 (#394 리뷰)
@@ -420,7 +521,10 @@ test("기본 아이가 없으면 맨 앞 아이로 주문을 만든다", async (
   fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
 
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1));
-  expect(createOrder).toHaveBeenCalledWith(expect.objectContaining({ petId: 3 }));
+  expect(createOrder).toHaveBeenCalledWith(
+    expect.objectContaining({ petId: 3 }),
+    expect.any(String),
+  );
 });
 
 /**
