@@ -85,6 +85,11 @@ test.each([
   ["E0006", 400, "JUSO_400_KEYWORD_TOO_BROAD"],
   ["E0008", 400, "JUSO_400_KEYWORD_TOO_SHORT"],
   ["E0009", 400, "JUSO_400_KEYWORD_INVALID"],
+  // 입력이 잘못된 것이라 400이다. 502로 두면 같은 요청을 한 번 더 보낸다 (#423)
+  ["E0010", 400, "JUSO_400_KEYWORD_TOO_LONG"],
+  ["E0011", 400, "JUSO_400_KEYWORD_TOO_LONG"],
+  ["E0012", 400, "JUSO_400_KEYWORD_INVALID"],
+  ["E0013", 400, "JUSO_400_KEYWORD_FORBIDDEN_CHAR"],
   ["E9999", 502, "JUSO_502_UPSTREAM"],
 ])("행안부 %s를 %s %s로 옮긴다", async (errorCode, status, mapped) => {
   fetchMock.mockResolvedValue(

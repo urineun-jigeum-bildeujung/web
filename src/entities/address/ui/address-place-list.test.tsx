@@ -71,6 +71,24 @@ test("집·회사에만 아이콘이 붙고 사용자가 지은 이름에는 없
   expect(custom?.querySelectorAll("svg").length).toBe(1);
 });
 
+/**
+ * **이름은 사용자가 짓고 서버도 막지 않는다.** 아이콘 표가 일반 객체라 `toString` 같은 이름으로
+ * 찾으면 물려받은 함수가 아이콘 이름으로 흘러가, `Icon`이 모양을 못 찾아 목록이 통째로 깨졌다.
+ * 다시 시도해도 같은 데이터로 또 깨져 그 배송지를 고칠 길이 없었다 (#423)
+ */
+test.each(["toString", "constructor", "__proto__", "hasOwnProperty"])(
+  "이름이 %s여도 목록이 깨지지 않고 아이콘 없이 그린다",
+  (addressName) => {
+    const { container } = renderList({ addresses: [HOME, { ...STUDIO, addressName }] });
+
+    const row = [...container.querySelectorAll("a")].find((link) =>
+      link.textContent?.includes(addressName),
+    );
+    expect(row).toBeDefined();
+    expect(row?.querySelectorAll("svg").length).toBe(1);
+  },
+);
+
 // 고른 줄의 addressId를 들고 가야 그 배송지를 고칠 수 있다.
 // **돌아올 곳도 함께 간다** — 주소를 다시 고르면 검색 화면이 history에 쌓여,
 // 저장 뒤 한 칸 되돌리면 그리로 간다 (#369)

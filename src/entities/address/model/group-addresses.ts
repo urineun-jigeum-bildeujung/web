@@ -3,7 +3,7 @@
 // UI 시안 기준(`paym_011` 532:17911)이다. 아이콘이 붙는 곳이 위, 구분선 아래가 나머지다.
 
 import type { Address } from "../api/addresses";
-import { ICON_BY_NAME } from "../ui/place-icon";
+import { placeIconOf } from "../ui/place-icon";
 
 export type GroupedAddresses = {
   /** 구분선 위. 기본 배송지와 집·회사 */
@@ -21,8 +21,8 @@ export type GroupedAddresses = {
 export function groupAddresses(addresses: Address[] | undefined): GroupedAddresses {
   const primary = addresses?.find((place) => place.isDefault);
   const others = addresses?.filter((place) => !place.isDefault) ?? [];
-  const named = others.filter((place) => ICON_BY_NAME[place.addressName]);
-  const rest = others.filter((place) => !ICON_BY_NAME[place.addressName]);
+  const named = others.filter((place) => placeIconOf(place.addressName));
+  const rest = others.filter((place) => !placeIconOf(place.addressName));
 
   return { top: primary ? [primary, ...named] : named, rest };
 }

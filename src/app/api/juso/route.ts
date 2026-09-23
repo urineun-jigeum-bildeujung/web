@@ -48,6 +48,15 @@ const PROBLEM_BY_JUSO_CODE: Record<string, { status: number; errorCode: string }
   E0008: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_SHORT" },
   // 문자와 숫자를 같이 넣어야 한다 (`123` 등)
   E0009: { status: 400, errorCode: "JUSO_400_KEYWORD_INVALID" },
+  // **아래 넷도 입력이 잘못된 것이다.** 옮기지 않으면 502가 되어, 결과가 뻔한 요청을 한 번 더
+  // 보내고 "일시적인 오류"를 띄운다 (#423).
+  // 특수문자와 숫자만 (`42-18` 등). 위와 같은 안내("숫자만으로는 찾을 수 없어요")가 맞다
+  E0012: { status: 400, errorCode: "JUSO_400_KEYWORD_INVALID" },
+  // 한글 40자·숫자 10자를 넘었거나 `%`·`=`·`<>`·`[]`·SQL 예약어가 들었다. 따로 문구를 두지 않아
+  // 400 기본 문구("입력한 내용을 다시 확인해 주세요")로 떨어진다
+  E0010: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_LONG" },
+  E0011: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_LONG" },
+  E0013: { status: 400, errorCode: "JUSO_400_KEYWORD_FORBIDDEN_CHAR" },
 };
 
 /**
