@@ -206,8 +206,9 @@ test("구매 확정은 서버를 부르고 끝난 뒤 목록에서 그 버튼이
 
   fireEvent.click(await screen.findByRole("button", { name: "구매확정 하기" }));
   const sheet = screen.getByRole("dialog", { name: "무사히 잘 도착했나요?" });
-  // 무엇을 확정하는지 보여 준다
+  // 무엇을 확정하는지 보여 준다. 금액도 목록과 같이 그 줄에 낸 값이다 (#418)
   expect(sheet.textContent).toContain("테스트 상품 2");
+  expect(sheet.textContent).toContain("2,500");
   fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
 
   // 로컬 배열만 바꾸면 새로고침에 되돌아온다. 서버를 부른 뒤 다시 조회해 맞춘다

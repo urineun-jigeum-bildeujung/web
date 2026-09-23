@@ -14,7 +14,16 @@ const ORDERS = [
     orderedAt: "2026-09-15T03:00:00.000Z",
     orderStatus: "PAID",
     totalAmount: 12345,
-    items: [{ orderItemId: 10, thumbnailUrl: null, productName: "테스트 사료", quantity: 1 }],
+    items: [
+      {
+        orderItemId: 10,
+        productId: 100,
+        thumbnailUrl: null,
+        productName: "테스트 사료",
+        quantity: 1,
+        amount: 9345,
+      },
+    ],
   },
   {
     orderId: 2,
@@ -22,7 +31,16 @@ const ORDERS = [
     orderedAt: "2026-09-14T03:00:00.000Z",
     orderStatus: "DELIVERED",
     totalAmount: 23456,
-    items: [{ orderItemId: 20, thumbnailUrl: null, productName: "테스트 간식", quantity: 2 }],
+    items: [
+      {
+        orderItemId: 20,
+        productId: 200,
+        thumbnailUrl: null,
+        productName: "테스트 간식",
+        quantity: 2,
+        amount: 20456,
+      },
+    ],
   },
   {
     orderId: 3,
@@ -30,7 +48,16 @@ const ORDERS = [
     orderedAt: "2026-09-13T03:00:00.000Z",
     orderStatus: "CONFIRMED",
     totalAmount: 34567,
-    items: [{ orderItemId: 30, thumbnailUrl: null, productName: "테스트 영양제", quantity: 1 }],
+    items: [
+      {
+        orderItemId: 30,
+        productId: 300,
+        thumbnailUrl: null,
+        productName: "테스트 영양제",
+        quantity: 1,
+        amount: 31567,
+      },
+    ],
   },
 ];
 
