@@ -130,16 +130,17 @@ function ConfirmFailure({ failure }: { failure: PaymentFailure }) {
       )}
 
       {/* 문의할 때 대는 유일한 식별자다. 손으로 옮겨 적지 않게 복사까지 붙인다.
-          고르기(`select-all`)도 남겨 둔다 — 클립보드가 막히는 맥락이 있다 (#261 리뷰) */}
-      <dl className="mt-8 flex w-full items-center justify-between gap-2 rounded-lg bg-surface-secondary py-2 pr-2 pl-4">
-        <div className="flex min-w-0 flex-col gap-1 text-left">
+          고르기(`select-all`)도 남겨 둔다 — 클립보드가 막히는 맥락이 있다 (#261 리뷰).
+          **복사 버튼은 dl 밖에 둔다.** dl 아래에는 이름·값 짝만 올 수 있다 (#422) */}
+      <div className="mt-8 flex w-full items-center justify-between gap-2 rounded-lg bg-surface-secondary py-2 pr-2 pl-4">
+        <dl className="flex min-w-0 flex-col gap-1 text-left">
           <dt className="text-label-bold-14 text-foreground">주문번호</dt>
           <dd className="truncate text-body-regular-14 text-text-body-secondary select-all">
             {failure.orderId}
           </dd>
-        </div>
+        </dl>
         <CopyOrderNumber orderNumber={failure.orderId} />
-      </dl>
+      </div>
     </div>
   );
 }

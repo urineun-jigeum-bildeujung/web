@@ -382,3 +382,18 @@ test("승인이 끝나기 전에는 표시하지 않는다", () => {
 
   expect(useMarkOrdersStale).toHaveBeenLastCalledWith(false);
 });
+
+// **dl 아래에는 이름·값 짝만 온다.** 복사 버튼이 dl 바로 아래에 있으면 보조기기가 목록 구조를
+// 잘못 읽는다(`definition-list`). 승인 실패 화면에만 그려지는 자리다 (#422)
+test("승인 실패 화면의 주문번호 dl에는 이름·값만 있고 복사 버튼은 그 밖에 있다", () => {
+  failed();
+  const { container } = render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  const list = container.querySelector("dl");
+  expect(list).not.toBeNull();
+  for (const child of [...list!.children]) {
+    expect(["DT", "DD", "DIV"]).toContain(child.tagName);
+  }
+  expect(list!.querySelector("button")).toBeNull();
+  expect(screen.getByRole("button", { name: /복사/ })).toBeDefined();
+});
