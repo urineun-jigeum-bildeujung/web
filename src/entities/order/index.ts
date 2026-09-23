@@ -16,6 +16,7 @@ export {
 } from "./api/orders";
 export {
   createClaim,
+  issueOrderImageUpload,
   CLAIM_TYPES,
   type ClaimType,
   type CreateClaimItem,

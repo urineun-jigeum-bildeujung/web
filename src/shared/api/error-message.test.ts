@@ -30,6 +30,13 @@ describe("toAppMessageCode", () => {
     expect(toAppMessageCode(apiError(400, "REVIEW_400_INVALID_IMAGE_EXTENSION"))).toBe(
       APP_MESSAGE_CODE.image.unsupportedType,
     );
+    // 반품·교환 첨부 사진. 소유 확인에 걸린 것도 다시 골라 올리면 풀린다 (#408)
+    expect(toAppMessageCode(apiError(400, "ORDER_400_INVALID_IMAGE_EXTENSION"))).toBe(
+      APP_MESSAGE_CODE.image.unsupportedType,
+    );
+    expect(toAppMessageCode(apiError(403, "ORDER_403_FORBIDDEN_IMAGE"))).toBe(
+      APP_MESSAGE_CODE.image.uploadFailed,
+    );
   });
 
   it("리뷰 규칙에 걸린 것은 왜인지를 알리는 문구로 간다", () => {
@@ -131,6 +138,9 @@ describe("서버 에러 코드와의 대조", () => {
     "MEMBER_409_ALREADY_SIGNED_UP",
     "ORDER_400_INVALID_CLAIM_TYPE",
     "ORDER_400_INVALID_CURSOR",
+    // 2026-09-23 주문 사진 업로드(백엔드 #132)로 더해졌다. 같은 날 소스에서 확인했다
+    "ORDER_400_INVALID_IMAGE_EXTENSION",
+    "ORDER_403_FORBIDDEN_IMAGE",
     "ORDER_403_OWNER_MISMATCH",
     "ORDER_404_ADDRESS_NOT_FOUND",
     "ORDER_404_CART_ITEM_NOT_FOUND",

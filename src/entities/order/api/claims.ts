@@ -14,6 +14,7 @@
 // ```
 
 import { apiRequest } from "@/shared/api/client";
+import type { PresignedUpload } from "@/shared/api/upload-image";
 
 /**
  * 신청 유형. 백엔드 `ClaimType` 그대로다.
@@ -35,6 +36,13 @@ export type CreateClaimRequest = {
   /** 선택이다. 서버가 `@Size(max = 1000)`만 건다 */
   reason?: string;
   items: CreateClaimItem[];
+  /**
+   * 올려 둔 사진의 `fileUrl`. 선택이고 서버에 장수 제한은 없다.
+   *
+   * 서버가 본인이 올린 파일인지 확인하고(`ORDER_403_FORBIDDEN_IMAGE`), 접수가 저장된 뒤에
+   * 확정한다. 빈 배열 대신 빼고 보낸다
+   */
+  imageUrls?: string[];
 };
 
 export type CreateClaimResult = {
@@ -47,12 +55,20 @@ export type CreateClaimResult = {
 };
 
 /**
- * 반품·교환을 접수한다. 성공하면 `201`과 접수 번호가 온다.
+ * 반품·교환 첨부 사진을 올릴 주소를 받는다. `shared/api/upload-image`의 `uploadImage`에 넘긴다.
  *
- * **`imageUrls`를 아직 보내지 않는다.** 만들 때는 클레임용 업로드 주소가 없었다(#327). 2026-09-23
- * 백엔드가 `POST /orders/images/presigned-url`을 머지했고 같은 날 신청 화면 시안에도 사진 칸(최대
- * 3장)이 들어와, 신청 화면을 새 시안으로 바꿀 때 붙인다 (#405).
+ * 회원·리뷰 사진과 같은 방식이다 — 받은 주소로 10분 안에 `x-amz-tagging: status=pending`을
+ * 붙여 PUT한다. 확장자(`jpg`·`jpeg`·`png`·`webp`·`gif`)는 서버가 거른다
+ * (`ORDER_400_INVALID_IMAGE_EXTENSION`). 백엔드 #125로 2026-09-23에 열렸다 (#408).
  */
+export function issueOrderImageUpload(extension: string): Promise<PresignedUpload> {
+  return apiRequest<PresignedUpload>("/orders/images/presigned-url", {
+    method: "POST",
+    body: { extension },
+  });
+}
+
+/** 반품·교환을 접수한다. 성공하면 `201`과 접수 번호가 온다. */
 export async function createClaim(
   orderId: number,
   request: CreateClaimRequest,
