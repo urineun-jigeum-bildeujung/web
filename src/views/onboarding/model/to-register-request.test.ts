@@ -154,3 +154,17 @@ describe("toRegisterRequest", () => {
     });
   });
 });
+
+// 고양이는 체구를 묻지 않는다(#391). 서버도 고양이의 size는 받지 않는다
+describe("고양이", () => {
+  test("체구 없이도 요청이 되고 size를 싣지 않는다", () => {
+    const request = toRegisterRequest({ ...FILLED, species: "cat", size: "" });
+    expect(request).not.toBeNull();
+    expect(request?.species).toBe("CAT");
+    expect("size" in (request ?? {})).toBe(false);
+  });
+
+  test("체구를 골라 뒀어도 싣지 않는다", () => {
+    expect("size" in (toRegisterRequest({ ...FILLED, species: "cat" }) ?? {})).toBe(false);
+  });
+});

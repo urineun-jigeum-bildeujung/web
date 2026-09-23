@@ -181,11 +181,8 @@ async function goToHealthAsCat(page: import("@playwright/test").Page) {
   // 줄을 누르면 바로 확정된다(시안 onbo_011)
   await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
 
-  // 체구와 몸무게를 채워야 다음으로 넘어간다
-  await page
-    .getByRole("radiogroup", { name: "아이의 체구" })
-    .getByText("소형", { exact: true })
-    .click();
+  // 고양이는 체구를 묻지 않는다(#391). 그 질문이 없어야 하고 몸무게는 바로 묻는다
+  await expect(page.getByRole("radiogroup", { name: "아이의 체구" })).toHaveCount(0);
   // 나이도 등록에 필수라 채워야 다음으로 간다(#226)
   await page.getByLabel("나이").fill("4");
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
@@ -218,10 +215,8 @@ test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
   // 줄을 누르면 바로 확정된다(시안 onbo_011)
   await page.getByRole("button", { name: "코리안 숏헤어", exact: true }).click();
 
-  await page
-    .getByRole("radiogroup", { name: "아이의 체구" })
-    .getByText("소형", { exact: true })
-    .click();
+  // 고양이로 바뀌면 체구 질문이 사라진다(#391)
+  await expect(page.getByRole("radiogroup", { name: "아이의 체구" })).toHaveCount(0);
   await page.getByLabel("나이").fill("4");
   await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();

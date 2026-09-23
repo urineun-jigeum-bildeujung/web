@@ -14,7 +14,8 @@
 | `ui/edit-pet-status.tsx` | 받는 중에는 골격을, 못 받았을 때는 까닭을 보인다 |
 | `ui/edit-pet-skeleton.tsx` | 저장된 값을 기다리는 동안 잡아 둘 자리. 라우트의 `Suspense` fallback도 이것이다 |
 | `ui/edit-pet-basic-view.tsx` | 사진·이름·종·나이·성별·중성화 |
-| `ui/edit-pet-body-view.tsx` | 체구·몸무게·체형 |
+| `ui/edit-pet-body-view.tsx` | 체구(강아지만)·몸무게·체형. 고양이는 체구 줄이 없고 `size`를 보내지 않는다(#391) |
+| `ui/edit-pet-body-view.test.tsx` | 강아지는 체구까지, 고양이는 체구 없이 저장하는지 |
 | `ui/edit-pet-health-view.tsx` | 걱정되는 질환·알러지 |
 | `ui/edit-pet-health-view.test.tsx` | 무엇을 답으로 세는지, 해당 없음이 고르기를 잠그는지 본다 |
 | `index.ts` | 공개 API |
