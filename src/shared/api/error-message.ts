@@ -73,6 +73,10 @@ export const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   ORDER_409_NOT_CLAIMABLE: APP_MESSAGE_CODE.order.notClaimable,
   ORDER_409_CLAIM_ALREADY_IN_PROGRESS: APP_MESSAGE_CODE.order.claimInProgress,
   ORDER_409_CLAIM_ITEM_QUANTITY_EXCEEDED: APP_MESSAGE_CODE.order.claimQuantityExceeded,
+  // 반품·교환 첨부 사진. 확장자 거절은 카메라의 HEIC가 여기로 오고, 소유 확인 실패는 올린
+  // 사진이 이 회원 것으로 확인되지 않은 경우다 — 둘 다 다시 골라 올리면 풀린다 (#408)
+  ORDER_400_INVALID_IMAGE_EXTENSION: APP_MESSAGE_CODE.image.unsupportedType,
+  ORDER_403_FORBIDDEN_IMAGE: APP_MESSAGE_CODE.image.uploadFailed,
   ORDER_404_ITEM_NOT_FOUND: APP_MESSAGE_CODE.order.itemNotFound,
   ORDER_404_ORDER_NOT_FOUND: APP_MESSAGE_CODE.order.notFound,
   ORDER_404_ADDRESS_NOT_FOUND: APP_MESSAGE_CODE.address.notFound,
