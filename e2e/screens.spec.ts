@@ -24,6 +24,10 @@ import { stubOrders } from "./fixtures/orders";
  * 장바구니는 `GET /carts`를 부르는데 백엔드 주소가 비어 있어 같은 오리진으로 가고,
  * 그 자리에 아무것도 없어 404가 콘솔에 찍힌다. 빈 장바구니를 돌려줘 화면만 보게 한다.
  *
+ * 좋아요도 같은 까닭으로 `GET /members/me/wishlist`를 막는다 — 찜은 브라우저가
+ * 직접 부르는 클라이언트 조회라(#390) `page.route()`로 가로챌 수 있다. 서버가 조회하는
+ * `/deals`·`/`(카테고리 탭)와 달리 별도 서버 조회 스위트로 옮길 필요가 없다.
+ *
  * 토스 결제위젯은 키가 있는 환경에서만 바깥으로 요청을 내보낸다. 막지 않으면 키를 넣어 둔
  * 로컬에서만 `networkidle`에 닿지 못해 같은 테스트가 CI와 다르게 돈다.
  */
@@ -31,6 +35,7 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/v1/carts", (route) =>
     route.fulfill({ json: { memberId: 1, items: [], totalAmount: 0 } }),
   );
+  await page.route("**/api/v1/members/me/wishlist**", (route) => route.fulfill({ json: [] }));
   // 끊지 않고 빈 스크립트로 답한다. 끊으면 `net::ERR_FAILED`가 콘솔에 남아 이 테스트가 잡는다.
   // 위젯은 어느 쪽이든 못 떠서 "결제 수단을 불러오지 못했어요"로 내려앉는다
   await page.route("**/*.tosspayments.com/**", (route) =>
