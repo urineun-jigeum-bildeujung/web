@@ -6,8 +6,8 @@
 | --- | --- |
 | `session-expiry-redirect.tsx` | 재발급까지 실패해 세션이 끝나면 로그인으로 보낸다 |
 | `session-expiry-redirect.test.tsx` | 만료·로그인 화면·세션 없던 경우 |
-| `push-message-listener.tsx` | 푸시를 켠 기기에서 탭이 보이는 동안 온 푸시를 토스트로 알리고 알림 캐시를 비운다 (#354) |
-| `push-message-listener.test.tsx` | 켜 두지 않으면 구독하지 않는 것, 토스트, 내려갈 때 끊는 것 |
+| `push-message-listener.tsx` | 푸시를 켠 기기에서 탭이 보이는 동안 온 푸시로 알림 캐시를 비운다. 토스트는 `widgets/notification-bell`의 폴링 토스터가 한 번만 띄운다 (#354, #395) |
+| `push-message-listener.test.tsx` | 켜 두지 않으면 구독하지 않는 것, 캐시 무효화, 내려갈 때 끊는 것 |
 | `app-providers.tsx` | `QueryClientProvider` 조립. Provider가 늘어나면 이 파일 안에서 중첩한다 |
 
 - **참고**: `QueryClient`를 `useState(() => new QueryClient())`로 고정하는 이유는 요청마다 새 인스턴스를 만들되 리렌더 시 재생성되지 않게 하기 위함이다. React Compiler가 켜져 있어도 이건 메모이제이션이 아니라 인스턴스 고정이므로 유지한다.

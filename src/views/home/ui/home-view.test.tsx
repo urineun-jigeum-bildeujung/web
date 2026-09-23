@@ -15,6 +15,14 @@ import type {
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
+
+// 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 QueryClient가 없어 링크만 대신 그린다(#395)
+vi.mock("@/widgets/notification-bell", () => ({
+  NotificationBell: ({ className }: { className?: string }) => (
+    <a href="/mypage/notifications" aria-label="알림" className={className} />
+  ),
+  NewNotificationToaster: () => null,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, back: vi.fn(), refresh: refreshMock }),
   usePathname: () => "/",

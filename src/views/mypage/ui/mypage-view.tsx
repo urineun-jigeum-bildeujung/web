@@ -11,6 +11,7 @@
 
 import Link from "next/link";
 
+import { NotificationBell } from "@/widgets/notification-bell";
 import { Icon } from "@/shared/ui/icon/icon";
 import { ListRowLink } from "@/shared/ui/list-row/list-row";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -85,9 +86,7 @@ export function MypageView() {
         left={<span className="px-2 text-title-bold-18 text-foreground">골라주개냥</span>}
         right={
           <>
-            <Link href="/mypage/notifications" aria-label="알림" className={HEADER_ICON}>
-              <Icon name="bell" className="size-7" />
-            </Link>
+            <NotificationBell className={HEADER_ICON} />
             <Link href="/cart" aria-label="장바구니" className={HEADER_ICON}>
               <Icon name="cart" className="size-7" />
             </Link>

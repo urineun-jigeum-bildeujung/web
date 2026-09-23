@@ -12,6 +12,7 @@ import { useState } from "react";
 import { IoClose } from "react-icons/io5";
 
 import { BottomNav } from "@/widgets/bottom-nav";
+import { NotificationBell } from "@/widgets/notification-bell";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -207,13 +208,7 @@ export function LikesView() {
             >
               <Icon name="search" className="size-7" />
             </Link>
-            <Link
-              href="/mypage/notifications"
-              aria-label="알림"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="bell_noti" className="size-7" />
-            </Link>
+            <NotificationBell />
             <Link
               href="/cart"
               aria-label="장바구니"

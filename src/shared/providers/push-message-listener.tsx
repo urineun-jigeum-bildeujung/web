@@ -1,14 +1,15 @@
 "use client";
-// 탭이 보이는 동안 도착한 푸시를 토스트로 알리고 알림 목록 캐시를 비운다.
+// 탭이 보이는 동안 도착한 푸시를 받아 알림 목록 캐시를 비운다.
 //
 // 서비스 워커는 보이는 탭이 있으면 알림을 띄우지 않고 페이지로 넘긴다(Firebase SDK 동작). 그래서
 // 앱 전역에 하나 두고, 설정에서 푸시를 켠 기기에서만 구독한다. 화면마다 두면 빠뜨린 곳이 생긴다.
+// 토스트는 여기서 띄우지 않는다 — 캐시를 비우면 `widgets/notification-bell`의 폴링 토스터가 새 알림을
+// 보고 한 번만 알린다(#395). 여기서도 띄우면 두 번 뜬다.
 
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useSyncExternalStore } from "react";
 
 import { QUERY_KEYS } from "@/shared/config/query-keys";
-import { toastPushMessage } from "@/shared/lib/app-toast";
 import { reportError } from "@/shared/lib/report-error";
 import { subscribePushMessages } from "@/shared/lib/push/fcm";
 import { readPushEnabled, subscribePushPreference } from "@/shared/lib/push/push-preference";
@@ -24,9 +25,8 @@ export function PushMessageListener() {
     // 구독이 비동기로 걸리므로, 걸리기 전에 꺼지면 걸린 직후 바로 끊는다
     let cancelled = false;
     let unsubscribe = () => {};
-    void subscribePushMessages((message) => {
-      if (message.title) toastPushMessage(message.title, message.body);
-      // 새 알림이 왔으니 알림함이 다시 받아야 한다
+    void subscribePushMessages(() => {
+      // 새 알림이 왔으니 알림함이 다시 받아야 한다. 토스트는 그 결과를 본 폴링 토스터가 띄운다
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notification.all });
     })
       .then((off) => {

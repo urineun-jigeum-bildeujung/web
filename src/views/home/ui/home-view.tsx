@@ -31,6 +31,7 @@ import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { NotificationBell } from "@/widgets/notification-bell";
 
 import { CATEGORIES, CATEGORY_LABEL, CATEGORY_TO_API, type HomeCategory } from "../model/category";
 import { SORT_LABEL, SORT_TO_API, SORTS, type HomeSort } from "../model/sort";
@@ -435,13 +436,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
           >
             <Icon name="search" className="size-7" />
           </Link>
-          <Link
-            href="/mypage/notifications"
-            aria-label="알림"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-          >
-            <Icon name="bell_noti" className="size-7" />
-          </Link>
+          <NotificationBell />
           <Link
             href="/cart"
             aria-label="장바구니에 5개"

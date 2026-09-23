@@ -8,7 +8,8 @@
 | `api/fcm-tokens.test.ts` | 무엇을 어디로 보내는지 |
 | `api/notifications.ts` | 내 알림 목록 조회·읽음 처리와 `AppNotification`·`NotificationTarget` 타입 |
 | `api/notifications.test.ts` | 응답을 화면 모양으로 옮기는 것, 읽음이 어디로 가는지 |
-| `api/use-query-notifications.ts` | 내 알림 첫 쪽(50건)을 받는 훅 |
+| `api/use-query-notifications.ts` | 내 알림 첫 쪽(50건)을 받는 훅. 로그인 전에는 부르지 않고, `pollingInterval`을 주면 문서가 보이는 동안 그 간격으로 다시 받는다(#395) |
+| `api/use-query-unread-notification-count.ts` | 읽지 않은 알림 수. 목록과 같은 캐시라 읽으면 바로 줄어든다 |
 | `api/use-mutate-read-notification.ts` | 읽음으로 바꾸는 훅. 목록 캐시를 먼저 바꾸고(낙관적) 실패하면 되돌린다 |
 | `index.ts` | 공개 API |
 
