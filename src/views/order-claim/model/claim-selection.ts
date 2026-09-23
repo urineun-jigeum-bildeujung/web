@@ -18,6 +18,23 @@ export function toggleSelection(selection: ClaimSelection, orderItemId: number):
 }
 
 /**
+ * "전체선택". 켜면 고를 수 있는 상품을 모두 고르고, 끄면 모두 뺀다.
+ *
+ * **이미 고른 상품의 수량은 그대로 둔다.** 하나를 고르고 ②에서 수량을 올린 뒤 ①로 돌아와
+ * 전체선택을 켜도 그 수량이 1로 돌아가지 않는다 (#408).
+ */
+export function selectAll(
+  selection: ClaimSelection,
+  orderItemIds: number[],
+  checked: boolean,
+): ClaimSelection {
+  if (!checked) {
+    return {};
+  }
+  return Object.fromEntries(orderItemIds.map((id) => [id, selection[id] ?? 1]));
+}
+
+/**
  * 요청 본문의 `items`로 옮긴다.
  *
  * 서버가 `@NotEmpty`와 품목 중복 금지를 걸지만, 키가 하나인 표에서 옮기므로 중복은 생기지
