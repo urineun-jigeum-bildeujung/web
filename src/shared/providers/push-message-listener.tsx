@@ -3,6 +3,7 @@
 //
 // 서비스 워커는 보이는 탭이 있으면 알림을 띄우지 않고 페이지로 넘긴다(Firebase SDK 동작). 그래서
 // 앱 전역에 하나 두고, 설정에서 푸시를 켠 기기에서만 구독한다. 화면마다 두면 빠뜨린 곳이 생긴다.
+// 앱(웹뷰) 안에서는 앱이 열려 있을 때 받은 푸시를 `push-received` 신호로 넘겨 준다(#403). 같은 일을 한다.
 // 토스트는 여기서 띄우지 않는다 — 캐시를 비우면 `widgets/notification-bell`의 폴링 토스터가 새 알림을
 // 보고 한 번만 알린다(#395). 여기서도 띄우면 두 번 뜬다.
 
@@ -12,6 +13,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { QUERY_KEYS } from "@/shared/config/query-keys";
 import { reportError } from "@/shared/lib/report-error";
 import { subscribePushMessages } from "@/shared/lib/push/fcm";
+import { subscribeNativePushReceived } from "@/shared/lib/push/native-bridge";
 import { readPushEnabled, subscribePushPreference } from "@/shared/lib/push/push-preference";
 
 export function PushMessageListener() {
@@ -22,13 +24,16 @@ export function PushMessageListener() {
   useEffect(() => {
     if (!enabled) return;
 
+    // 새 알림이 왔으니 알림함이 다시 받아야 한다. 토스트는 그 결과를 본 폴링 토스터가 띄운다
+    const refresh = () => {
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notification.all });
+    };
+    const unsubscribeNative = subscribeNativePushReceived(refresh);
+
     // 구독이 비동기로 걸리므로, 걸리기 전에 꺼지면 걸린 직후 바로 끊는다
     let cancelled = false;
     let unsubscribe = () => {};
-    void subscribePushMessages(() => {
-      // 새 알림이 왔으니 알림함이 다시 받아야 한다. 토스트는 그 결과를 본 폴링 토스터가 띄운다
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notification.all });
-    })
+    void subscribePushMessages(refresh)
       .then((off) => {
         if (cancelled) off();
         else unsubscribe = off;
@@ -39,6 +44,7 @@ export function PushMessageListener() {
     return () => {
       cancelled = true;
       unsubscribe();
+      unsubscribeNative();
     };
   }, [enabled, queryClient]);
 

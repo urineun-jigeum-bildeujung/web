@@ -5,7 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/settings-view.tsx` | 설정. 알림설정 스위치(이 기기의 푸시 허용)와 테마·로그아웃·회원탈퇴 줄 |
-| `api/use-mutate-push-setting.ts` | 알림 스위치. 권한 → FCM 토큰 → 서버 등록 → 켰다는 표시 저장을 묶는다 |
+| `api/use-mutate-push-setting.ts` | 알림 스위치. 권한 → FCM 토큰 → 서버 등록 → 켰다는 표시 저장을 묶는다. 앱 안에서는 토큰을 앱에 요청한다 (#403) |
 | `api/logout.ts` | 로그아웃 요청 |
 | `api/use-mutate-logout.ts` | 서버 세션을 끊고 기기의 토큰·캐시를 비우는 훅 |
 | `ui/settings-view.test.tsx` | 스위치 켜기(권한·등록)·거부·끄기·미지원, 테마설정 줄이 눌리지 않는 것, 로그아웃 성공·실패, 회원탈퇴 확인·성공·실패 |
@@ -30,6 +30,8 @@
 **켤 수 없는 환경은 스위치를 잠근다.** 서비스 워커·`Notification`·`PushManager`가 없거나 `NEXT_PUBLIC_FIREBASE_*`가 비었을 때다. 권한을 거부하면 브라우저 설정에서 풀어야 한다고 알린다.
 
 Firebase 접점은 `shared/lib/push/fcm.ts` 하나고, 서비스 워커는 `app/firebase-messaging-sw.js/route.ts`가 내려 준다. 해제 API(`DELETE`)는 백엔드가 아직 안 만들어 서버는 꺼진 기기의 토큰을 계속 들고 있다 — 나중에 보탄다.
+
+앱(웹뷰) 안에서는 Push API가 없어 `fcm.ts`가 물러나고, 앱이 푸시를 받아 줄 수 있으면(`window.golajuNative.pushSupported`, 지금은 Android만) `shared/lib/push/native-bridge`로 앱에 토큰을 요청해 같은 API에 등록한다(#403). 끌 때는 표시만 지운다 — 앱 토큰을 무효화할 길이 없어 서버 해제 API가 올 때까지 OS 알림은 계속 온다.
 
 ## 아직 없는 것
 

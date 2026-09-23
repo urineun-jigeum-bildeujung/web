@@ -2,9 +2,10 @@
 //
 // 설정의 알림 스위치가 쓰고, 앱 전역의 포그라운드 수신(`PushMessageListener`)이 켜져 있을 때만
 // 구독하려고 함께 본다. 켜짐 = 권한이 허용돼 있고 이 표시가 있을 때. 브라우저 설정에서 권한을
-// 거두면 표시가 남아 있어도 꺼짐이다.
+// 거두면 표시가 남아 있어도 꺼짐이다. 앱 안에서는 권한을 앱이 쥐고 있어 알 수 없으니 표시만 본다(#403).
 
 import { isPushPermissionGranted } from "./fcm";
+import { isNativePushSupported } from "./native-bridge";
 
 const STORAGE_KEY = "push-enabled";
 
@@ -20,7 +21,10 @@ export function subscribePushPreference(listener: () => void) {
 
 export function readPushEnabled(): boolean {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === "1" && isPushPermissionGranted();
+    return (
+      window.localStorage.getItem(STORAGE_KEY) === "1" &&
+      (isNativePushSupported() || isPushPermissionGranted())
+    );
   } catch {
     return false;
   }
