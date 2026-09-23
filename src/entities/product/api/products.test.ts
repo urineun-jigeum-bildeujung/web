@@ -1,7 +1,8 @@
-// searchProducts·getProducts·getProductSummary 단위 테스트. 요청 파라미터 조립과 응답 필드 매핑을 본다.
+// searchProducts·getProducts·getProductDetail·getProductSummary 단위 테스트.
+// 요청 파라미터 조립과 응답 필드 매핑을 본다.
 import { afterEach, describe, expect, it, test, vi } from "vitest";
 
-import { getProducts, getProductSummary, searchProducts } from "./products";
+import { getProductDetail, getProducts, getProductSummary, searchProducts } from "./products";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -87,6 +88,92 @@ test("상품 요약은 이름과 첫 사진만 옮기고 사진이 없으면 키
   expect(summary).toEqual({ productId: 7, name: "오메가3 피쉬오일 60캡슐" });
   expect("imageUrl" in summary).toBe(false);
   vi.unstubAllGlobals();
+});
+
+describe("getProductDetail", () => {
+  const response = {
+    productId: 7,
+    timeDealItemId: 42,
+    summary: {
+      images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+      productName: "오메가3 피쉬오일 60캡슐",
+      price: 21000,
+      originalPrice: 30000,
+      discountRate: 30,
+      avgRating: 4.8,
+      reviewCount: 108,
+      soldOut: false,
+    },
+    detailInfo: {
+      manufacturer: "대한펫푸드",
+      brandName: "포포도그",
+      originCountry: "대한민국",
+      netQuantityValue: 90,
+      netQuantityUnit: "정",
+      ingredients: ["타우린", "글루코사민"],
+      feedingTarget: "노령견",
+      targetBreedSize: "소형·중형",
+      targetAgeGroup: "SENIOR",
+      targetSpecies: ["DOG"],
+      feedingMethod: "1일 1정, 사료와 함께 급여",
+      allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
+      cautions: ["HIGH_SODIUM"],
+      consumptionPeriodDisplay: "제조일로부터 18개월",
+      shelfLifeAfterOpeningDays: 60,
+      storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
+    },
+  };
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("토큰 없이 상품 한 건을 부른다", async () => {
+    const fetchMock = stubFetch(Response.json(response));
+
+    await getProductDetail("7");
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/products/7");
+    expect(new Headers(init.headers).has("Authorization")).toBe(false);
+  });
+
+  it("응답을 화면 모델로 옮긴다. 할인율은 서버 값을 그대로 쓴다", async () => {
+    stubFetch(Response.json(response));
+
+    const product = await getProductDetail("7");
+
+    expect(product).toEqual({
+      productId: 7,
+      timeDealItemId: 42,
+      images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+      name: "오메가3 피쉬오일 60캡슐",
+      price: 21000,
+      originalPrice: 30000,
+      discountRate: 30,
+      rating: 4.8,
+      reviewCount: 108,
+      soldOut: false,
+      detail: response.detailInfo,
+    });
+  });
+
+  it("타임딜이 아니면 timeDealItemId가 null로 남는다", async () => {
+    stubFetch(Response.json({ ...response, timeDealItemId: null }));
+
+    const product = await getProductDetail("7");
+
+    expect(product.timeDealItemId).toBeNull();
+  });
+
+  // 지금 화면엔 그릴 자리가 없지만 경고·추천 제외로 쓸 값이다 (#414)
+  it("cautions를 떨어뜨리지 않는다", async () => {
+    stubFetch(Response.json(response));
+
+    const product = await getProductDetail("7");
+
+    expect(product.detail.cautions).toEqual(["HIGH_SODIUM"]);
+  });
 });
 
 describe("getProducts", () => {

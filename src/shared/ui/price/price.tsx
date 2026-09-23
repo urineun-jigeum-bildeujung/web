@@ -10,6 +10,13 @@ type PriceProps = {
   amount: number;
   /** 할인 전 금액. amount보다 클 때만 취소선과 할인율을 보여준다 */
   originalAmount?: number;
+  /**
+   * 서버가 계산해 준 할인율. 주면 이 값을 쓰고, 없으면 두 금액에서 계산한다.
+   *
+   * 상품 상세는 응답에 `discountRate`가 있어 그대로 쓴다 — 계약이 있는 값을 화면에서
+   * 다시 만들면 서버 표기와 어긋날 수 있다.
+   */
+  discountRate?: number;
   /** "하루 급여 480원"처럼 아래 붙는 보조 표기 */
   unitLabel?: string;
   unitAmount?: number;
@@ -35,13 +42,15 @@ export function formatWon(amount: number) {
 export function Price({
   amount,
   originalAmount,
+  discountRate: givenDiscountRate,
   unitLabel,
   unitAmount,
   size = "md",
   className,
   ...props
 }: PriceProps) {
-  const discountRate = originalAmount ? calcDiscountRate(amount, originalAmount) : 0;
+  const discountRate =
+    givenDiscountRate ?? (originalAmount ? calcDiscountRate(amount, originalAmount) : 0);
 
   return (
     <div className={cn("flex flex-col gap-0.5", className)} {...props}>

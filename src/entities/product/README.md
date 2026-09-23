@@ -4,7 +4,7 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 요약 조회(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289) |
+| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
 | `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
 | `api/use-product-list.ts` | `getProducts`의 커서 페이지네이션("더 보기") 상태를 관리하는 훅. 첫 페이지는 서버가 준 값을 받고 다음 페이지만 이어 붙입니다(#289) |
 | `api/use-product-list.test.ts` | 커서 이어 붙이기·중복 제거·실패 시 기존 목록 보존 단위 테스트 |
@@ -21,12 +21,18 @@
 | `ui/product-option-sheet.tsx` | 목록에서 바로 구성과 수량을 골라 담는 바텀시트 (타임딜_옵션 선택 바텀시트) |
 | `index.ts` | 공개 API |
 
-## 아직 없는 것
+## 상세 조회가 요약의 원본이다
 
-상품 상세 조회(`getProductDetail`류)는 아직 없습니다 — `getProductSummary`는 리뷰 작성 줄처럼 이름·대표 사진만
-필요한 자리용이고, 상품 상세 화면 전체가 쓸 조회는 별도입니다. 정가(`originalPrice`) 표시도 없습니다 — 서버 응답에
-필드가 없고 `discountRate`에서 역산하면 반올림 오차로 실제 값과 어긋날 수 있어(#282) 만들어내지 않았습니다.
-백엔드가 필드를 추가하는 PR을 올려 뒀고(#289), 머지되면 `products.ts`·`search-result`·`home` 화면에 함께 반영합니다.
+`getProductDetail`이 `GET /products/{productId}`를 부르고, `getProductSummary`는 그 결과에서 이름과 첫 사진만
+남깁니다(#413). 따로 부르면 같은 엔드포인트를 두 벌로 다루게 되고, `QUERY_KEYS.product.detail`을 이미 공유하고
+있어 캐시도 한 자리입니다.
+
+**`cautions`를 떨어뜨리지 않고 담아 둡니다.** 지금 화면에 그릴 자리가 없지만 경고·추천 제외로 쓰기로 되어 있는
+값이라(#414), 여기서 버리면 그 작업이 이 레이어부터 다시 열어야 합니다.
+
+**할인율은 서버 `discountRate`를 그대로 씁니다.** 정가(`originalPrice`)도 상세 응답에는 있습니다 — 목록·검색
+카드(`ProductCard`)는 여전히 정가가 없어 두 금액에서 할인율을 계산하므로, 같은 상품이 목록과 상세에서 다른
+%로 보일 수 있습니다. 실데이터로 확인이 필요한 항목입니다.
 
 **`use-product-list.ts`는 TanStack Query로 감싸지 않았습니다.** 상품 목록은 공개 데이터라 서버 컴포넌트가
 첫 페이지를 직접 fetch하고, "더 보기"는 캐싱·무효화가 필요 없는 단순 이어 붙이기라 Query 캐시를 쓸 이유가
