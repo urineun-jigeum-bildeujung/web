@@ -40,6 +40,8 @@ export {
   type OrderStatus,
 } from "./ui/order-status-badge";
 export { OrderProductRow } from "./ui/order-product-row";
+export { OrderProductThumbnail } from "./ui/order-product-thumbnail";
+export { TossPayLogo } from "./ui/toss-pay-logo";
 export { DetailSection } from "./ui/detail-section";
 export { DetailRow } from "./ui/detail-row";
 export { PaymentDetail } from "./ui/payment-detail";

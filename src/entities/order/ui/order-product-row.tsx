@@ -9,9 +9,7 @@
 // 시안은 오른쪽 열이 세 줄로 갈린다. prop을 늘려 맞추면 component-convention이 경계하는
 // "화면마다 다른 상품 카드를 하나로 묶은" 모양이 된다.
 
-import Image from "next/image";
-
-import { Icon } from "@/shared/ui/icon/icon";
+import { OrderProductThumbnail } from "./order-product-thumbnail";
 
 type OrderProductRowProps = {
   name: string;
@@ -31,23 +29,7 @@ type OrderProductRowProps = {
 export function OrderProductRow({ name, quantity, amount, imageUrl }: OrderProductRowProps) {
   return (
     <div className="flex items-center gap-3">
-      {imageUrl ? (
-        <Image
-          src={imageUrl}
-          alt=""
-          width={80}
-          height={80}
-          // 상품명이 옆에 글자로 있으므로 이미지는 장식으로 둔다
-          className="size-20 shrink-0 rounded-lg object-cover"
-        />
-      ) : (
-        <span
-          aria-hidden
-          className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-surface-disable text-icon-fill-secondary"
-        >
-          <Icon name="image" />
-        </span>
-      )}
+      <OrderProductThumbnail imageUrl={imageUrl} />
 
       {/* 시안은 세 줄을 80px 안에 위아래로 벌린다. 금액이 빠진 목록에서도 두 줄이 한가운데
           모이도록 벌리지 않고 가운데로 모은다 */}
