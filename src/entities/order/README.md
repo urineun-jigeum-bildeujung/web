@@ -8,8 +8,8 @@
 | `api/use-query-orders.ts` | 주문 목록 조회 훅. 커서로 다음 쪽을 이어 받는다 |
 | `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다 |
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다 |
-| `api/claims.ts` | 반품·교환 신청 API. 규격은 로컬 백엔드 소스에서 옮겼다 |
-| `api/use-mutate-claim.ts` | 반품·교환 접수 훅. 끝나면 주문을 다시 받는다 |
+| `api/claims.ts` | 반품·교환 신청 API와 첨부 사진 업로드 주소 발급. 규격은 로컬 백엔드 소스에서 옮겼다 |
+| `api/use-mutate-claim.ts` | 반품·교환 접수 훅. 사진이 있으면 먼저 올리고 그 주소를 싣는다. 끝나면 주문을 다시 받는다 (#408) |
 | `model/claim-status.ts` | 신청이 진행 중인지, 새로 신청할 수 있는 상품과 기간인지 판정한다 |
 | `model/claim-status.test.ts` | 서버 `ClaimStatus`의 끝 판정과 7일·남은 수량 규칙을 그대로 옮겼는지 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
@@ -17,10 +17,12 @@
 | `ui/order-status-badge.tsx` | 주문 상태 뱃지 넷. 배송준비중·배송중·배송완료·구매확정 — **결제완료는 따로 두지 않는다**, 서버 `PAID`·`PREPARING`을 한 단계로 묶었다 (#297). 색은 공용 `Badge`의 톤 셋 (#405) |
 | `ui/order-status-badge.test.tsx` | 상태마다 문구가 있는지, 상태마다 시안의 색을 쓰는지 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 80 + 이름 / 수량 / 금액. 금액은 없을 수 있다(목록 응답) |
+| `ui/order-product-thumbnail.tsx` | 주문 상품 썸네일 80. 이미지가 없으면 회색 칸에 아이콘. 상품 줄과 반품 신청 수량 카드가 함께 쓴다 (#408) |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다. 지금은 주문 완료만 쓴다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
 | `ui/payment-detail.test.tsx` | `dl` 아래에 이름·값 짝만 오는지(#341), 세부 항목이 없으면 그 줄을 만들지 않는지 |
 | `ui/payment-detail.tsx` | 결제 내역 줄들. 결제금액·상품 옵션·배송비·결제수단. **결제수단은 글자가 아니라 토스페이 로고다** (#304) |
+| `ui/toss-pay-logo.tsx` | 토스페이 로고 83×16. 결제수단 줄과 반품 신청의 환불 수단 줄이 쓴다. `unoptimized`인 까닭이 파일에 있다 (#408) |
 | `ui/delivery-detail.tsx` | 배송지 줄들. 받는 사람·연락처·주소·요청사항. 지금은 주문 완료만 쓴다 |
 | `index.ts` | 공개 API |
 
@@ -64,7 +66,8 @@
 주문 상세 응답에는 상품마다 `itemStatus`(`PAID`·`CANCELLED`·`PARTIAL_RETURN`·`RETURNED`)가 따로
 온다. 한 상품만 반품 중인 주문을 그리려면 이것이 필요한데 그 화면이 아직 없어 쓰지 않는다.
 
-## 아직 없는 것
+## 반품·교환 첨부 사진
 
-반품·교환 신청(`POST /orders/{orderId}/claims`). 명세상 완료지만 신청 화면 시안이 없어 부를 자리가
-없다. 자세한 것은 [views/order-detail](../../views/order-detail/README.md)을 본다.
+신청 화면([views/order-claim](../../views/order-claim/README.md))이 접수할 때 `useMutateClaim`이 사진을 먼저 올리고
+`imageUrls`에 싣는다. 발급은 `POST /orders/images/presigned-url`(`issueOrderImageUpload`)이고 회원·리뷰 사진과
+같은 방식이다. 서버가 본인이 올린 파일인지 확인해 아니면 `ORDER_403_FORBIDDEN_IMAGE`로 거절한다 (#408).
