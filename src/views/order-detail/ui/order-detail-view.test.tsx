@@ -311,8 +311,29 @@ test("조회가 실패하면 토스트 대신 화면에서 알린다", async () 
 test("주문 번호가 숫자가 아니면 서버를 부르지 않는다", async () => {
   render(<OrderDetailView orderId="abc" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByText("주문을 찾을 수 없어요")).toBeDefined();
+  // 서버 404(`ORDER_404_ORDER_NOT_FOUND`)와 같은 문구다. 갈리면 같은 화면이 두 말을 한다 (#426)
+  expect(await screen.findByText("주문 없음")).toBeDefined();
   await waitFor(() => expect(getOrderDetail).not.toHaveBeenCalled());
+});
+
+/**
+ * **받아 둔 주문이 있으면 오류 화면으로 덮지 않는다.** 다시 받기가 실패해도 v5는 받아 둔 것을
+ * 남긴 채 오류를 채워, 오류 화면 아래에 옛 주문과 그 버튼이 함께 그려졌다. 목록과 같다 (#426)
+ */
+test("다시 받기가 실패해도 받아 둔 주문을 오류 화면으로 덮지 않는다", async () => {
+  cancelOrder.mockImplementation(async () => {
+    // 취소는 됐는데 다시 받기가 실패한다
+    getOrderDetail.mockRejectedValue(new Error("server down"));
+  });
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "주문 취소하기" }));
+  fireEvent.click(screen.getByRole("button", { name: "주문 취소하기" }));
+
+  await waitFor(() => expect(cancelOrder).toHaveBeenCalledWith(1));
+  await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
+  expect(screen.getByText("ORD-TEST-DETAIL-01")).toBeDefined();
+  expect(screen.queryByRole("alert")).toBeNull();
 });
 
 // 서버는 주문 전체만 취소한다. PD가 취소를 목록의 상품마다가 아니라 주문 전체가 보이는

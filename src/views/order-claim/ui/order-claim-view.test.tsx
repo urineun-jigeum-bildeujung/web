@@ -508,3 +508,82 @@ test("값 없이 뒤 단계 주소로 들어오면 첫 단계로 돌린다", asy
   await waitFor(() => expect(updates.at(-1)?.options.history).toBe("replace"));
   expect(updates.at(-1)?.queryString).not.toContain("step=pickup");
 });
+
+// 표를 대괄호로 찾으면 `constructor` 같은 이름에 물려받은 값이 나와 유형 검사를 통과했다 (#426)
+test.each(["constructor", "toString"])(
+  "유형 자리에 %s가 오면 신청할 수 없다고 알린다",
+  async (type) => {
+    renderView(type);
+
+    expect(await screen.findByText("신청 유형 없음")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /신청하기/ })).toBeNull();
+  },
+);
+
+/**
+ * **접수 뒤 다시 받은 주문에는 방금 신청한 상품이 진행 중인 신청으로 걸려 있다.** 막기 판정을
+ * 그대로 두면 주문 상세로 넘어가기 전 한순간 "신청 진행 중"이 떴다 (#426)
+ */
+test("접수한 뒤 주문 상세로 넘어가기 전에 신청 진행 중 안내가 뜨지 않는다", async () => {
+  createClaim.mockImplementation(async () => {
+    getOrderDetail.mockResolvedValue(
+      makeDetail({ items: [makeItem({ claims: [makeClaim("REQUESTED")] })] }),
+    );
+    return {
+      claimId: 5,
+      claimType: "RETURN",
+      claimStatus: "REQUESTED",
+      requestedAt: "2026-09-23T09:00:00Z",
+    };
+  });
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+  // 다시 받기까지 끝난 뒤에도 안내로 바뀌지 않는다
+  await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
+  expect(screen.queryByText("신청 진행 중")).toBeNull();
+});
+
+// 실패 알림은 전역(MutationCache.onError)이 맡는다. 적은 것을 그대로 두고 다시 보낼 수 있어야 한다
+test("접수가 실패하면 그 단계에 남아 다시 보낼 수 있다", async () => {
+  createClaim.mockRejectedValueOnce(new Error("server down"));
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  await waitFor(() => expect(createClaim).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "반품 신청 완료하기" }).hasAttribute("disabled"),
+    ).toBe(false),
+  );
+  expect(replace).not.toHaveBeenCalled();
+});
+
+// 다른 기기에서 먼저 신청했으면 서버가 거절한다. 되돌리지 않으면 다시 받은 주문이 "진행 중"이어도
+// 막기 판정이 멈춘 채라 같은 신청을 또 보내게 둔다 (#426)
+test("접수가 거절되면 다시 받은 주문대로 신청할 수 없다고 알린다", async () => {
+  createClaim.mockImplementation(async () => {
+    getOrderDetail.mockResolvedValue(
+      makeDetail({ items: [makeItem({ claims: [makeClaim("REQUESTED")] })] }),
+    );
+    throw new Error("이미 접수된 신청");
+  });
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  expect(await screen.findByText("신청 진행 중")).toBeDefined();
+  expect(replace).not.toHaveBeenCalled();
+});
