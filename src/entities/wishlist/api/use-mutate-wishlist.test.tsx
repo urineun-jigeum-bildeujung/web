@@ -120,6 +120,34 @@ describe("useMutateWishlist", () => {
     expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual(ITEMS);
   });
 
+  // 먼저 끝난 해제가 곧장 무효화를 걸면, 아직 반영되지 않은 뒤 상품이 담긴 목록을
+  // 받아 덮어써 그 상품이 되살아난다 (CodeRabbit 지적)
+  it("다른 해제가 진행 중이면 재동기화하지 않고 마지막 하나가 끝난 뒤에 한다", async () => {
+    let resolveSecond!: (value: { wished: boolean }) => void;
+    toggleWishlist.mockResolvedValueOnce({ wished: false });
+    toggleWishlist.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSecond = resolve;
+        }),
+    );
+
+    const { client, wrapper } = setup();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.remove(1); // 먼저 끝난다
+    result.current.remove(2); // 아직 진행 중이다
+
+    await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(2));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(invalidate).not.toHaveBeenCalled();
+
+    resolveSecond({ wished: false });
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(1));
+  });
+
   it("재시도하지 않는다", async () => {
     toggleWishlist.mockRejectedValue(new Error("네트워크 오류"));
     const { wrapper } = setup();

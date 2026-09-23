@@ -299,7 +299,7 @@ export function LikesView() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="min-h-10 px-3"
+                        className="min-h-11 px-3"
                         disabled={isFetching}
                         onClick={refetchLiked}
                       >
