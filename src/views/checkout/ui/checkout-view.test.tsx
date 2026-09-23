@@ -1,7 +1,7 @@
 // 결제하기 테스트. 금액 표시와 결제 잠금, 주문 생성부터 결제창까지의 순서를 본다.
 //
-// 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/cart`와
-// `entities/address`가 본다.
+// 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/cart`·
+// `entities/address`·`entities/pet`이 본다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { ApiError } from "@/shared/api/client";
@@ -21,6 +21,7 @@ const { requestPayment, toastAppError, createOrder, preparePayment } = vi.hoiste
 
 const useQueryCart = vi.fn();
 const useQueryAddresses = vi.fn();
+const useQueryPets = vi.fn();
 
 vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 
@@ -38,6 +39,7 @@ vi.mock("@/entities/cart", async (importOriginal) => ({
   useQueryCart: () => useQueryCart(),
 }));
 vi.mock("@/entities/address", () => ({ useQueryAddresses: () => useQueryAddresses() }));
+vi.mock("@/entities/pet", () => ({ useQueryPets: () => useQueryPets() }));
 
 vi.mock("../api/orders", () => ({ createOrder }));
 vi.mock("../api/payment", () => ({ preparePayment }));
@@ -81,6 +83,10 @@ const HOME = {
 
 const STUDIO = { ...HOME, addressId: 9, addressName: "자취방", isDefault: false };
 
+/** 아이 조회는 기본 아이를 앞으로 정렬해 준다(`getPets`). 그 결과를 그대로 흉내 낸다 */
+const COCO = { id: "3", name: "코코", isDefault: true };
+const BORI = { id: "7", name: "보리", isDefault: false };
+
 const ITEM: CartItem = {
   itemType: "NORMAL",
   itemId: 1,
@@ -102,11 +108,13 @@ function renderView({
   addresses = [HOME],
   cartState = {},
   addressState = {},
+  petState = {},
 }: {
   items?: CartItem[];
   addresses?: (typeof HOME)[];
   cartState?: Record<string, unknown>;
   addressState?: Record<string, unknown>;
+  petState?: Record<string, unknown>;
 } = {}) {
   useQueryCart.mockReturnValue({
     cart: { memberId: 1, items, totalAmount: 9345 },
@@ -120,6 +128,7 @@ function renderView({
     error: null,
     ...addressState,
   });
+  useQueryPets.mockReturnValue({ pets: [COCO, BORI], isLoading: false, error: null, ...petState });
   return render(<CheckoutView />);
 }
 
@@ -214,6 +223,8 @@ test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", asy
 
   expect(createOrder).toHaveBeenCalledWith({
     addressId: HOME.addressId,
+    // **서버가 필수로 받는다.** 빠지면 본문 검증에서 400이다. 기본 아이가 실린다 (#393)
+    petId: 3,
     // **장바구니 규격이 아니라 주문 규격이다.** 서버가 상품과 타임딜을 다른 필드로
     // 받아, itemType·itemId를 그대로 보내면 매번 400이었다 (#306)
     items: [{ productId: 1, quantity: 1 }],
@@ -350,9 +361,46 @@ test("요청사항을 고치면 주문을 새로 만든다", async () => {
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
   expect(createOrder).toHaveBeenLastCalledWith({
     addressId: HOME.addressId,
+    petId: 3,
     items: [{ productId: 1, quantity: 1 }],
     deliveryNote: null,
   });
+});
+
+// 서버가 `petId`를 필수로 받는다. 모르는 채로 누르면 본문 검증에서 400이다 (#393)
+test("아이 목록을 알기 전에는 결제할 수 없다", () => {
+  renderView({ petState: { pets: undefined, isLoading: true } });
+
+  agreeRequired();
+
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+});
+
+// 기본 아이를 바꾸고 돌아왔는데 옛 주문으로 결제하면 그 주문이 다른 아이 몫으로 남는다 (#393)
+test("기본 아이가 바뀌면 주문을 새로 만든다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  requestPayment.mockRejectedValueOnce(new Error("USER_CANCEL"));
+
+  const first = renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+
+  first.unmount();
+  renderView({
+    petState: {
+      pets: [
+        { ...BORI, isDefault: true },
+        { ...COCO, isDefault: false },
+      ],
+    },
+  });
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
+  expect(createOrder).toHaveBeenLastCalledWith(expect.objectContaining({ petId: 7 }));
 });
 
 /**
