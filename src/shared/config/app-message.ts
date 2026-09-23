@@ -155,6 +155,14 @@ export const APP_MESSAGE = {
     title: "주문 처리 실패",
     description: "주문을 처리하는 중에 문제가 생겼어요.",
   },
+  // 주문 취소·구매 확정이 끝났을 때다. 취소 설명은 취소 확인창 시안(3337:49344)의 문구다 (#430)
+  "order.cancelled": {
+    title: "주문 취소 완료",
+    description: "결제하신 금액은 안전하게 환불 처리돼요.",
+  },
+  "order.purchaseConfirmed": {
+    title: "구매 확정 완료",
+  },
   "order.deliveryTrackingPreparing": {
     title: "배송 조회 준비 중",
     description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
@@ -282,6 +290,8 @@ export const APP_MESSAGE_CODE = {
     notConfirmable: "order.notConfirmable",
     notFound: "order.notFound",
     temporarilyUnavailable: "order.temporarilyUnavailable",
+    cancelled: "order.cancelled",
+    purchaseConfirmed: "order.purchaseConfirmed",
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
     claimHistoryPreparing: "order.claimHistoryPreparing",
     claimRequested: "order.claimRequested",
