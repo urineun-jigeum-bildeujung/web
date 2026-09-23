@@ -5,7 +5,8 @@
 // 적합도를 가격 바로 아래 두는 것이 이 화면의 뜻이다. 스펙을 다 읽고 나서야
 // 판단하게 하지 않고, 살지 말지를 정하는 자리에서 근거를 먼저 보인다.
 //
-// 적합도·영양 분석은 서버가 계산해 내려줄 값이라 지금은 `model/mock-product`의 목이다(#123).
+// 상품 자체(이름·가격·별점·품절·스펙)는 `GET /products/{id}`의 실데이터다(#413).
+// 적합도·영양 분석은 서버가 계산해 내려줄 값이라 지금도 `model/mock-product`의 목이다(#123).
 
 "use client";
 
@@ -18,6 +19,7 @@ import { toast } from "sonner";
 
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useMutateCartItem } from "@/entities/cart";
+import type { ProductDetail } from "@/entities/product";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -47,8 +49,11 @@ import { ReviewPanel } from "./review-panel";
 
 const TABS = ["info", "review", "qna"] as const;
 
-// QA용. 목 데이터라 상태를 바꾸려면 코드를 고쳐야 했다. `?status=`로 덮어써
-// 일반/타임딜/품절을 새로고침 없이 확인한다. 값이 없으면 목의 상태를 그대로 쓴다
+// QA용. `?status=`로 덮어써 일반/타임딜/품절을 새로고침 없이 확인한다.
+//
+// **개발 빌드에서만 듣는다.** 서버가 품절이라고 해도 `?status=normal`을 붙이면 구매
+// 버튼이 되살아나므로, 실데이터가 붙은 뒤로는 운영에 나가면 안 되는 장치다
+// (views/deals의 개발용 버튼과 같은 판단이다)
 const STATUS_OVERRIDES = ["normal", "deal", "soldout"] as const;
 
 const TAB_LABEL = [
@@ -94,6 +99,61 @@ function RatingSummary({
   );
 }
 
+/** 상품 사진. 좌우로 넘기고 아래 점이 지금 몇 번째인지 알린다 */
+function ProductImages({ images, name }: { images: string[]; name: string }) {
+  const [index, setIndex] = useState(0);
+
+  if (images.length === 0) {
+    return (
+      <div className="flex aspect-square items-center justify-center bg-muted">
+        <span className="text-sm text-muted-foreground">상품 이미지</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <div
+        // 스냅으로 한 장씩 멈춘다. 지금 몇 번째인지는 스크롤 위치에서 되읽는다 —
+        // 따로 상태를 굴리면 손가락으로 넘긴 것과 점이 어긋난다
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          setIndex(Math.round(el.scrollLeft / el.clientWidth));
+        }}
+        className="flex aspect-square snap-x snap-mandatory overflow-x-auto"
+      >
+        {images.map((src, imageIndex) => (
+          <div key={src} className="relative aspect-square w-full shrink-0 snap-center">
+            <Image
+              src={src}
+              // 첫 장이 이 화면의 LCP다. 나머지는 넘겨야 보이므로 lazy로 둔다
+              priority={imageIndex === 0}
+              alt={imageIndex === 0 ? name : `${name} 사진 ${imageIndex + 1}`}
+              fill
+              sizes="(max-width: 420px) 100vw, 420px"
+              className="object-cover"
+            />
+          </div>
+        ))}
+      </div>
+
+      {images.length > 1 && (
+        <span aria-hidden className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {images.map((src, dotIndex) => (
+            <span
+              key={src}
+              className={cn(
+                "size-1.5 rounded-full",
+                dotIndex === index ? "bg-foreground" : "bg-muted-foreground/40",
+              )}
+            />
+          ))}
+        </span>
+      )}
+    </div>
+  );
+}
+
 /** 한 화면 높이만큼 내려야 나타나는 맨 위로 가기 버튼. 하단 버튼 바로 위 20px에 뜬다 */
 function ScrollTopButton() {
   const [visible, setVisible] = useState(false);
@@ -133,9 +193,11 @@ function ScrollTopButton() {
 
 type ProductDetailViewProps = {
   productId: string;
+  /** 라우트가 서버에서 받아 온 상품 한 건 */
+  product: ProductDetail;
 };
 
-export function ProductDetailView({ productId }: ProductDetailViewProps) {
+export function ProductDetailView({ productId, product }: ProductDetailViewProps) {
   const router = useRouter();
   const { add, isAdding } = useMutateCartItem();
   // 고른 탭에 따라 보이는 것이 통째로 달라진다. nuqs 기본은 replace라
@@ -152,13 +214,29 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
   // 상품 상태와 타임딜 종료 시각을 서버가 준다(#123)
   const [dealOver, setDealOver] = useState(false);
   const [statusOverride] = useQueryState("status", parseAsStringLiteral(STATUS_OVERRIDES));
-  const status = statusOverride ?? MOCK_PRODUCT.status;
+  // 운영 빌드에서는 주소에 무엇을 적든 듣지 않는다
+  const devStatusOverride = process.env.NODE_ENV === "production" ? null : statusOverride;
+  // 타임딜 배지·카운트다운은 종료 시각이 상세 응답에 없어 아직 목이다(#413 범위 밖).
+  // 그래서 실데이터로는 정상·품절만 판정하고, 타임딜 화면은 개발 오버라이드로만 본다.
+  // **장바구니에 담는 식별자는 다르다** — 그건 아래에서 timeDealItemId로 가린다
+  const status = devStatusOverride ?? (product.soldOut ? "soldout" : "normal");
   const isDealActive = status === "deal" && !dealOver;
   const isSoldOut = status === "soldout";
 
   // 이름도 여기서 함께 온다. 아이 목록에서 따로 찾으면 폴백이 걸렸을 때
   // 이름과 근거가 서로 다른 아이 것이 된다
   const match = PET_MATCHES.find((item) => item.petId === petId) ?? PET_MATCHES[0];
+
+  // 타임딜 진행 중인 상품은 장바구니가 딜 아이템으로 받아야 딜가가 붙는다.
+  // 상세에서 담을 때만 정가로 들어가던 자리다
+  const cartItemRef = product.timeDealItemId
+    ? ({ itemType: "TIME_DEAL", itemId: product.timeDealItemId } as const)
+    : ({ itemType: "NORMAL", itemId: product.productId } as const);
+
+  // 옵션은 없는 개념이다(#137). 고르는 값이 아니라 지금 담는 것이 무엇인지 알리는 표기다
+  const netQuantityLabel = product.detail.netQuantityValue
+    ? `${product.detail.netQuantityValue}${product.detail.netQuantityUnit}`
+    : undefined;
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -187,21 +265,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
       />
 
       <main className="flex flex-1 flex-col">
-        {/* 이미지가 아직 없다. 몇 장인지만 알고 자리와 점을 잡아 둔다 */}
-        <div className="relative flex aspect-square items-center justify-center bg-muted">
-          <span className="text-sm text-muted-foreground">상품 이미지</span>
-          <span aria-hidden className="absolute bottom-4 flex gap-1.5">
-            {Array.from({ length: MOCK_PRODUCT.imageCount }, (_, index) => (
-              <span
-                key={index}
-                className={cn(
-                  "size-1.5 rounded-full",
-                  index === 0 ? "bg-foreground" : "bg-muted-foreground/40",
-                )}
-              />
-            ))}
-          </span>
-        </div>
+        <ProductImages images={product.images} name={product.name} />
 
         <section aria-labelledby="product-heading" className="flex flex-col gap-4 p-5">
           {/* 제목 줄과 가격 줄 사이는 12px, 이 둘 다음(타임딜 배너나 배송표)까지는
@@ -220,12 +284,12 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
                   </span>
                 )}
                 <h1 id="product-heading" className="text-title-bold-20 text-text-body-default">
-                  {MOCK_PRODUCT.name}
+                  {product.name}
                 </h1>
                 {/* 리뷰는 이 화면의 탭이다. 다른 화면으로 보내지 않고 탭만 바꾼다 */}
                 <RatingSummary
-                  rating={MOCK_PRODUCT.rating}
-                  reviewCount={MOCK_PRODUCT.reviewCount}
+                  rating={product.rating}
+                  reviewCount={product.reviewCount}
                   onReviewClick={() => void setTab("review")}
                 />
               </div>
@@ -251,8 +315,9 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
 
             <div className="flex items-center justify-between gap-3">
               <Price
-                amount={MOCK_PRODUCT.price}
-                originalAmount={MOCK_PRODUCT.originalPrice}
+                amount={product.price}
+                originalAmount={product.originalPrice}
+                discountRate={product.discountRate}
                 size="lg"
               />
               <Button
@@ -404,14 +469,19 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           </div>
 
           <TabsContent value="info">
-            <ProductInfoPanel match={match} petName={match.petName} />
+            <ProductInfoPanel
+              detail={product.detail}
+              productName={product.name}
+              match={match}
+              petName={match.petName}
+            />
           </TabsContent>
 
           <TabsContent value="review">
             <ReviewPanel
               productId={productId}
-              rating={MOCK_PRODUCT.rating}
-              reviewCount={MOCK_PRODUCT.reviewCount}
+              rating={product.rating}
+              reviewCount={product.reviewCount}
               petProfileLabel={match.profileLabel}
             />
           </TabsContent>
@@ -499,15 +569,15 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
         onOpenChange={setOptionSheetOpen}
         adding={isAdding}
         onAddToCart={async (quantity) => {
-          // **라우트가 준 진짜 상품 id다.** 화면의 이름·가격은 아직 목이지만(#123) 이
-          // 값은 주소에서 온 것이라 그대로 보낼 수 있다
-          await add({ itemType: "NORMAL", itemId: Number(productId) }, quantity);
+          // **타임딜 중인 상품은 담는 식별자가 다르다.** 딜 아이템으로 담아야 딜가가
+          // 적용된다 — 그냥 상품으로 담으면 정가로 들어간다 (views/deals와 같은 방식)
+          await add(cartItemRef, quantity);
           setOptionSheetOpen(false);
           showSnackbar("상품이 장바구니에 담겼어요");
         }}
-        productName={MOCK_PRODUCT.name}
-        optionLabel={MOCK_PRODUCT.optionLabel}
-        price={MOCK_PRODUCT.price}
+        productName={product.name}
+        quantityLabel={netQuantityLabel}
+        price={product.price}
       />
 
       <ScrollTopButton />

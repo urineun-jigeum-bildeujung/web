@@ -5,20 +5,20 @@
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
 - **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬·맞춤보기·거르기 조건은 `reviewSort` · `reviewMatch` · `reviewFilter`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
-- **참고**: 확정 UI 시안 기준(#229). 상품·적합도·영양 분석은 전부 목데이터고 API 계약(#123) 확정 전 미연동
+- **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로 연동했고(#413) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
 | --- | --- |
-| `model/mock-product.ts` | 상품·아이별 적합도·영양 성분·함께 보면 좋은 상품 목데이터와 그 타입 |
+| `model/mock-product.ts` | 아이별 적합도·영양 성분·함께 보면 좋은 상품과, 아직 응답에 자리가 없는 배송·판매자·제공고시 |
 | `model/mock-inquiries.ts` | 상품 문의 목데이터와 답변 상태 |
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
 | `ui/product-detail-view.test.tsx` | 적합도 자리·지켜볼 점·탭 전환 |
-| `ui/detail-option-sheet.tsx` | 상품 상세 옵션 선택 시트. 구성·수량과 장바구니 담기 버튼 |
-| `ui/detail-option-sheet.test.tsx` | 옵션 시트의 수량 변경과 담기 동작 |
+| `ui/detail-option-sheet.tsx` | 수량 시트. 용량 표기·수량과 장바구니 담기 버튼. 고를 옵션은 없다 |
+| `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기 동작 |
 | `ui/match-panel.tsx` | 적합도 블록. 아이 고르기, 점수, 근거 세 줄 |
-| `ui/product-info-panel.tsx` | 상품 정보 탭. 상세 설명 표·영양 분석·상품 설명 자리·제공고시 |
+| `ui/product-info-panel.tsx` | 상품 정보 탭. 상세 설명 표(응답의 `detailInfo`)·영양 분석·상품 설명 자리·제공고시 |
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지 |
 | `ui/description-collapse.tsx` | 상품 설명 이미지 자리. 402px를 미리 보여주고 눌러서 전체를 펼치는 더보기/접기 |
 | `ui/description-collapse.test.tsx` | 눌렀을 때 접힘·펼침 상태와 라벨이 바뀌는지 |
@@ -32,6 +32,31 @@
 | `ui/nutrient-bar.tsx` | 영양 성분 하나가 부족–적정–과다 중 어디인지 |
 | `ui/nutrient-bar.test.tsx` | 구간 경계 판정과 글자 표기 |
 | `index.ts` | 공개 API |
+
+## 무엇이 실데이터고 무엇이 목인가
+
+`GET /products/{productId}` 한 번으로 아래 왼쪽을 받는다 (#413).
+
+| 실데이터 | 목 | 까닭 |
+| --- | --- | --- |
+| 사진·이름·판매가·정가·할인율·별점·후기 수·품절 | — | `summary` |
+| 상세 설명 표 아홉 줄, 제공고시 품명 | — | `detailInfo`·`productName` |
+| — | 적합도·영양 성분 분석 | 서버가 계산해 내려줄 값이다 (#123) |
+| — | 리뷰 목록 | #339 |
+| — | 문의 목록 | API가 없다 |
+| — | 함께 보면 좋은 상품 | 응답에 없다. 카드가 눌리지 않는 까닭도 그대로다 |
+| — | 배송·판매자·제공고시 두 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
+| — | 타임딜 종료 시각 | `timeDealItemId`는 오지만 `endAt`이 없다 (아래) |
+
+**배송비 `"3,000원"`은 목이 아니라 확정된 고정 정책이다.** 백엔드가 "MVP 단계에선 배송비는 정적으로 고정한다"고 답했고(2026-09-21) 장바구니·결제도 같은 값을 물린다(#214). 예전 문구("무료배송 · 조건 미충족 시 3,000원")는 근거가 없어 두 화면과 어긋났다.
+
+**타임딜은 반만 붙었다.** 상태 판정(배지·카운트다운)은 종료 시각이 응답에 없어 목이고, `?status=deal`로만 볼 수 있다. 반면 **장바구니에 담는 식별자는 실데이터다** — `timeDealItemId`가 있으면 `TIME_DEAL`로 담는다. 그냥 상품으로 담으면 딜가가 아니라 정가로 들어가서, 이쪽은 미룰 수 없었다.
+
+**`?status=`는 개발 빌드에서만 듣는다.** 목일 때는 QA가 세 상태를 보기 위한 장치였는데, 실데이터가 붙은 뒤로는 서버가 품절이라고 해도 `?status=normal`이 구매 버튼을 되살릴 수 있다. `views/deals`의 개발용 버튼과 같은 판단이다.
+
+**고를 옵션은 없다.** 옵션은 없는 것으로 합의했고(2026-09-14) 시안에서도 옵션변경 화면이 지워졌다(#137). 시트에 남은 용량 표기는 지금 담는 것이 무엇인지 알리는 글일 뿐 고르는 값이 아니다.
+
+**`allergens`는 들어 있는 성분으로 읽는다.** 예전 목 문구는 "계란 · 유제품 불포함"이라 뜻이 반대였다. 백엔드 확인 요청 중이다.
 
 ## 짚어둘 것
 

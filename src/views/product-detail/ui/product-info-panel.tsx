@@ -15,15 +15,58 @@ import {
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { Icon } from "@/shared/ui/icon/icon";
 
+import type { ProductDetailInfo } from "@/entities/product";
+
 import type { PetMatch } from "../model/mock-product";
 import { MOCK_PRODUCT } from "../model/mock-product";
 import { DescriptionCollapse } from "./description-collapse";
 import { NutrientBar } from "./nutrient-bar";
 
 type ProductInfoPanelProps = {
+  /** 상세 설명 표가 그대로 쓰는 응답값 */
+  detail: ProductDetailInfo;
+  /** 제공고시의 품명. 응답의 상품명을 그대로 쓴다 */
+  productName: string;
   match: PetMatch;
   petName?: string;
 };
+
+/**
+ * 응답을 상세 설명 표의 아홉 줄로 옮긴다. 항목명은 시안의 말이라 화면이 쥔다.
+ *
+ * **빈 값은 줄째로 뺀다.** "제조국 —"처럼 항목명만 남은 줄은 알려주는 것이 없다.
+ * `cautions`는 이 표에 자리가 없다 — 경고로 쓸 값이라 따로 다룬다(#414).
+ */
+function toSpecRows(detail: ProductDetailInfo): [string, string][] {
+  const feedingTarget = [detail.feedingTarget, detail.targetBreedSize, detail.targetAgeGroup]
+    .filter(Boolean)
+    .join(" · ");
+  const shelfLife = [
+    detail.consumptionPeriodDisplay,
+    detail.shelfLifeAfterOpeningDays && `개봉 후 ${detail.shelfLifeAfterOpeningDays}일`,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  const rows: [string, string][] = [
+    ["제조사/브랜드", [detail.manufacturer, detail.brandName].filter(Boolean).join(" / ")],
+    ["제조국", detail.originCountry],
+    [
+      "제품 용량",
+      detail.netQuantityValue ? `${detail.netQuantityValue}${detail.netQuantityUnit}` : "",
+    ],
+    ["원재료명", detail.ingredients?.join(", ") ?? ""],
+    ["급여 대상", feedingTarget],
+    ["급여 방법", detail.feedingMethod],
+    // 응답의 allergens는 **들어 있는** 알레르기 유발 성분이다. 예전 목 문구는
+    // "계란 · 유제품 불포함"이었는데 뜻이 반대라 그대로 쓰지 않는다
+    ["알레르기 정보", detail.allergens?.map((allergen) => allergen.displayName).join(" · ") ?? ""],
+    ["소비기한", shelfLife],
+    ["보관방법", detail.storageMethod],
+  ];
+
+  return rows.filter(([, description]) => description !== "");
+}
 
 const GUIDE_TRIGGER_CLASS =
   "h-11 items-center rounded-none border-0 py-0 text-body-medium-14 text-text-body-default hover:no-underline [&_svg[data-slot=accordion-trigger-icon]]:hidden!";
@@ -39,7 +82,8 @@ const NUTRIENT_LEGEND = [
   { label: "과다", src: "/images/product-detail/nutrient-legend-high.svg" },
 ] as const;
 
-export function ProductInfoPanel({ match, petName }: ProductInfoPanelProps) {
+export function ProductInfoPanel({ detail, productName, match, petName }: ProductInfoPanelProps) {
+  const specRows = toSpecRows(detail);
   return (
     <div className="flex flex-col">
       <section aria-labelledby="spec-heading" className="p-5">
@@ -47,7 +91,7 @@ export function ProductInfoPanel({ match, petName }: ProductInfoPanelProps) {
           상세 설명
         </h3>
         <dl className="flex flex-col">
-          {MOCK_PRODUCT.spec.map(([term, description]) => (
+          {specRows.map(([term, description]) => (
             <DefinitionRow
               key={term}
               term={term}
@@ -130,16 +174,18 @@ export function ProductInfoPanel({ match, petName }: ProductInfoPanelProps) {
           </AccordionTrigger>
           <AccordionContent>
             <dl className="flex flex-col">
-              {MOCK_PRODUCT.notice.map(([term, description]) => (
-                <DefinitionRow
-                  key={term}
-                  term={term}
-                  description={description}
-                  className="min-h-0 items-start gap-4 border-b border-border px-0 last:border-b-0 [&>dd]:whitespace-normal"
-                  termClassName="w-22 text-label-medium-14 text-text-body-default"
-                  descriptionClassName="text-body-medium-14 text-text-body-secondary"
-                />
-              ))}
+              {[["품명 및 모델명", productName] as const, ...MOCK_PRODUCT.notice].map(
+                ([term, description]) => (
+                  <DefinitionRow
+                    key={term}
+                    term={term}
+                    description={description}
+                    className="min-h-0 items-start gap-4 border-b border-border px-0 last:border-b-0 [&>dd]:whitespace-normal"
+                    termClassName="w-22 text-label-medium-14 text-text-body-default"
+                    descriptionClassName="text-body-medium-14 text-text-body-secondary"
+                  />
+                ),
+              )}
             </dl>
           </AccordionContent>
         </AccordionItem>
