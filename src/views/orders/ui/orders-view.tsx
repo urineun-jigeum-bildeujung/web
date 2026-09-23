@@ -7,7 +7,6 @@
 
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Fragment, useState } from "react";
-import { toast } from "sonner";
 
 import { useMutateCartItem } from "@/entities/cart";
 import {
@@ -18,6 +17,7 @@ import {
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
+import { toastAppSuccess } from "@/shared/lib/app-toast";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { DrawerDescription, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
@@ -211,7 +211,8 @@ function OrderHistory() {
               try {
                 await confirm(askingConfirmId);
                 setAskingConfirmId(null);
-                toast.success("구매를 확정했어요");
+                // 문구는 문구 표에서 찾는다. 호출부가 조립하지 않는다 (app-message-convention, #430)
+                toastAppSuccess(APP_MESSAGE_CODE.order.purchaseConfirmed);
               } catch {
                 // 실패 알림은 MutationCache.onError가 맡는다. 시트는 열어 두어 다시 누를 수 있게 한다
               }

@@ -9,9 +9,10 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { useMutateOrder } from "@/entities/order";
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppSuccess } from "@/shared/lib/app-toast";
 import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog,
@@ -78,7 +79,8 @@ export function CancelOrderAction({ orderId }: { orderId: number }) {
                 try {
                   await cancel(orderId);
                   setOpen(false);
-                  toast.success("주문을 취소했어요");
+                  // 문구는 문구 표에서 찾는다. 호출부가 조립하지 않는다 (app-message-convention, #430)
+                  toastAppSuccess(APP_MESSAGE_CODE.order.cancelled);
                 } catch {
                   // 실패 알림은 MutationCache.onError가 맡는다. 모달은 열어 두어 다시 누를 수 있게 한다
                 }

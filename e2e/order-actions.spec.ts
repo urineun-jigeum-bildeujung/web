@@ -24,7 +24,7 @@ test("구매 확정을 누르면 서버까지 가고 확정됐다고 알린다",
 
   await page.getByRole("button", { name: "확정하기" }).click();
 
-  await expect(page.getByText("구매를 확정했어요")).toBeVisible();
+  await expect(page.getByText("구매 확정 완료")).toBeVisible();
   expect(calls).toEqual(["orders/2/confirm"]);
 });
 
@@ -58,6 +58,6 @@ test("주문 상세에서 주문 취소를 누르면 서버까지 가고 취소�
 
   await dialog.getByRole("button", { name: "주문 취소하기" }).click();
 
-  await expect(page.getByText("주문을 취소했어요")).toBeVisible();
+  await expect(page.getByText("주문 취소 완료")).toBeVisible();
   expect(calls).toEqual(["orders/1/cancel"]);
 });
