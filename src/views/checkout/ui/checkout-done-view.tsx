@@ -28,6 +28,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
+import { useMarkOrdersStale } from "../api/use-mark-orders-stale";
 import { useQueryPaymentConfirm } from "../api/use-query-payment-confirm";
 import { clearPendingOrder } from "../model/pending-order";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -216,6 +217,11 @@ export function CheckoutDoneView({
   const { order: fetched, isLoading: isLoadingOrder } = useQueryOrderDetail(
     resolvedOrderId ? String(resolvedOrderId) : "",
   );
+
+  // **승인과 조회가 끝나면 주문 캐시를 낡은 것으로 표시한다.** 이 화면이 받은 상세는 승인 전
+  // 모습이라, 두면 60초 동안 주문 상세가 결제상세와 취소 버튼이 빠진 채 뜬다 (#416).
+  // 대기 표시 없음 — 화면이 아니라 캐시를 다루는 자리다. 이 화면의 대기는 아래 뼈대가 맡는다
+  useMarkOrdersStale(Boolean(payment) && !isLoadingOrder);
 
   // **승인 결과와 같은 주문인지 본다.** 승인 전에는 주소창의 `?order=`로 조회하므로 그 사이에
   // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞일 수 있다 (#308 리뷰).
