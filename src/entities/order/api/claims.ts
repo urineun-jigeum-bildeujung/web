@@ -49,8 +49,9 @@ export type CreateClaimResult = {
 /**
  * 반품·교환을 접수한다. 성공하면 `201`과 접수 번호가 온다.
  *
- * **`imageUrls`를 보내지 않는다.** 요청 필드에는 있지만 클레임용 presigned URL 엔드포인트가
- * 없어 주소를 만들 방법이 없다. 있는 것은 회원 프로필과 리뷰 둘뿐이다 (#327).
+ * **`imageUrls`를 아직 보내지 않는다.** 만들 때는 클레임용 업로드 주소가 없었다(#327). 2026-09-23
+ * 백엔드가 `POST /orders/images/presigned-url`을 머지했고 같은 날 신청 화면 시안에도 사진 칸(최대
+ * 3장)이 들어와, 신청 화면을 새 시안으로 바꿀 때 붙인다 (#405).
  */
 export async function createClaim(
   orderId: number,
