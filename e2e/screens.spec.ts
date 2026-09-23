@@ -178,7 +178,7 @@ for (const route of ["/payment/address", "/mypage/address"]) {
 const OVERLAYS = [
   {
     route: "/mypage/orders",
-    open: /구매 확정/,
+    open: /구매확정/,
     slot: "drawer-overlay",
     name: "주문 구매확정 바텀시트",
   },
@@ -283,7 +283,7 @@ test.describe("넓은 화면", () => {
   test("바텀시트가 앱 기둥을 벗어나지 않는다", async ({ page }) => {
     await page.goto("/mypage/orders", { waitUntil: "networkidle" });
     await page
-      .getByRole("button", { name: /구매 확정/ })
+      .getByRole("button", { name: /구매확정/ })
       .first()
       .click();
 

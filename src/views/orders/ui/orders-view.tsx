@@ -27,7 +27,9 @@ import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
-import { OrderGroup } from "./order-group";
+import { groupByPaidDate } from "../model/group-by-paid-date";
+
+import { OrderEntry } from "./order-entry";
 import { OrdersSkeleton } from "./orders-skeleton";
 import { PreparingDialog } from "./preparing-dialog";
 import { useLoadMore } from "./use-load-more";
@@ -55,6 +57,8 @@ function OrderHistory() {
 
   const list = orders ?? [];
   const asking = list.find((order) => order.orderId === askingConfirmId) ?? null;
+  // 같은 날 결제한 주문은 한 머리 아래 모은다. 다음 쪽이 이어 붙어도 같은 날이면 한 묶음이다
+  const groups = groupByPaidDate(list);
 
   return (
     <>
@@ -75,19 +79,32 @@ function OrderHistory() {
         />
       )}
 
-      {/* 주문 사이에 구분선(border/default)이 들어가고 위아래로 16px씩 띄운다 (3324:36908) */}
-      {!isLoading && list.length > 0 && (
+      {/* 결제일마다 머리를 달고 날짜 사이에 구분선(border/default)을 넣는다. 위아래로 16px씩 띄운다.
+          PD 메모 — "결제일 별로 분리 시키기 위해 divider를 추가"했고, 한 날짜 안은 결제 시간으로
+          나뉜다 (3326:33455·3326:33463) */}
+      {!isLoading && groups.length > 0 && (
         <div className="flex flex-col gap-4">
-          {list.map((order, index) => (
-            <Fragment key={order.orderId}>
+          {groups.map((group, index) => (
+            <Fragment key={group.key}>
               {index > 0 && <hr className="border-border-default" />}
-              <OrderGroup
-                order={order}
-                onCancel={setAskingCancelId}
-                onConfirm={setAskingConfirmId}
-                onTrack={() => setPreparing(APP_MESSAGE_CODE.order.deliveryTrackingPreparing)}
-                onReorder={() => setPreparing(APP_MESSAGE_CODE.order.reorderPreparing)}
-              />
+              <section className="flex flex-col gap-3">
+                {/* 읽을 수 없는 값이면 머리를 비운다. 지어낸 날짜를 보이느니 낫다 */}
+                {group.day && (
+                  <h2 className="text-body-medium-18 text-foreground">결제일 {group.day}</h2>
+                )}
+                <div className="flex flex-col gap-4">
+                  {group.orders.map((order) => (
+                    <OrderEntry
+                      key={order.orderId}
+                      order={order}
+                      onCancel={setAskingCancelId}
+                      onConfirm={setAskingConfirmId}
+                      onTrack={() => setPreparing(APP_MESSAGE_CODE.order.deliveryTrackingPreparing)}
+                      onReorder={() => setPreparing(APP_MESSAGE_CODE.order.reorderPreparing)}
+                    />
+                  ))}
+                </div>
+              </section>
             </Fragment>
           ))}
         </div>
@@ -284,8 +301,9 @@ export function OrdersView() {
             {tab === "orders" && <OrderHistory />}
           </TabsContent>
 
-          {/* **탭 화면 시안이 완성본에 없고 신청 목록 API도 없다.** 작업 영역에 초안만 있어
-              PD팀 확인 중이다. 그때까지 준비 중으로 둔다 (#405) */}
+          {/* **시안은 있는데 API가 없다.** 탭 화면(mypa_061_취소·반품·교환 3326:33002)은 신청 건마다
+              접수일·"환불" 같은 뱃지·상품·자세히 보기를 보이는데, 신청 건을 모아 주는 API가 없다.
+              받기 전까지 준비 중으로 둔다 (#405) */}
           <TabsContent value="claims" className="flex flex-col">
             <EmptyState
               icon={<Icon name="delivery" />}
