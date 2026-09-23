@@ -17,6 +17,11 @@ test("카테고리 탭을 옮기면 주소에 남고 서버가 그 카테고리 
   await expect(page.getByText(/AI가 골라주는/)).toBeHidden();
   await expect(page.getByLabel("정렬")).toBeVisible();
 
+  // 정렬을 바꾸면 주소에 남는다
+  await page.getByLabel("정렬").click();
+  await page.getByRole("option", { name: "낮은 가격순" }).click();
+  await expect(page).toHaveURL(/category=food.*sort=price-low/);
+
   // 지금 어느 것을 보고 있는지 알린다
   await expect(page.getByRole("button", { name: "사료", exact: true })).toHaveAttribute(
     "aria-current",
