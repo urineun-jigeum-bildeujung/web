@@ -9,11 +9,12 @@ import { getProductSummary } from "./products";
 /**
  * 리뷰 작성의 상품 줄처럼 상품이 무엇인지만 보이면 되는 자리가 쓴다.
  *
- * 상세 화면과 같은 키(`product.detail`)를 쓴다. 상세를 보고 후기를 쓰러 오면 이미 받은 것을 쓴다.
+ * **상세와 키를 나눈다.** 같은 엔드포인트를 부르지만 캐시에 넣는 것은 이름·대표 사진만
+ * 남긴 축약본이라, 상세 키에 얹으면 나중에 같은 키로 상세를 담을 때 모양이 어긋난다.
  */
 export function useQueryProductSummary(productId: string) {
   const query = useQuery({
-    queryKey: QUERY_KEYS.product.detail(productId),
+    queryKey: QUERY_KEYS.product.summary(productId),
     queryFn: () => getProductSummary(productId),
   });
 

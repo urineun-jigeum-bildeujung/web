@@ -41,6 +41,8 @@ const productKeys = {
   detailAll: () => [...productKeys.all, "detail"] as const,
   detail: (productId: ResourceId, petId?: ResourceId) =>
     [...productKeys.detailAll(), productId, { petId }] as const,
+  /** 이름·대표 사진만 담은 축약본. 상세와 담는 것이 달라 키를 나눈다 (#413) */
+  summary: (productId: ResourceId) => [...productKeys.detailAll(), productId, "summary"] as const,
   personalizeAll: () => [...productKeys.all, "personalize"] as const,
   personalize: (filters: PersonalizeFilters) => [...productKeys.personalizeAll(), filters] as const,
   banners: () => [...productKeys.all, "banners"] as const,

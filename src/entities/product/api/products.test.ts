@@ -113,11 +113,12 @@ describe("getProductDetail", () => {
       ingredients: ["타우린", "글루코사민"],
       feedingTarget: "노령견",
       targetBreedSize: "소형·중형",
-      targetAgeGroup: "SENIOR",
-      targetSpecies: ["DOG"],
+      targetAgeGroup: "노령",
+      targetSpecies: ["강아지"],
       feedingMethod: "1일 1정, 사료와 함께 급여",
       allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
-      cautions: ["HIGH_SODIUM"],
+      // 서버가 CautionIngredientCode.getDisplayName()을 거쳐 내보낸다. 코드가 아니다
+      cautions: ["나트륨 과다"],
       consumptionPeriodDisplay: "제조일로부터 18개월",
       shelfLifeAfterOpeningDays: 60,
       storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
@@ -166,13 +167,28 @@ describe("getProductDetail", () => {
     expect(product.timeDealItemId).toBeNull();
   });
 
-  // 지금 화면엔 그릴 자리가 없지만 경고·추천 제외로 쓸 값이다 (#414)
-  it("cautions를 떨어뜨리지 않는다", async () => {
+  // 지금 화면엔 그릴 자리가 없지만 경고로 쓸 값이다 (#414).
+  // 위험 등급(CautionLevel)은 이 응답에 없어 독성과 섭취 주의를 가를 수 없다
+  it("cautions를 표시명 그대로 담아 둔다", async () => {
     stubFetch(Response.json(response));
 
     const product = await getProductDetail("7");
 
-    expect(product.detail.cautions).toEqual(["HIGH_SODIUM"]);
+    expect(product.detail.cautions).toEqual(["나트륨 과다"]);
+  });
+
+  it("정가·별점이 비어 오는 상품을 견딘다", async () => {
+    stubFetch(
+      Response.json({
+        ...response,
+        summary: { ...response.summary, originalPrice: null, avgRating: null, discountRate: 0 },
+      }),
+    );
+
+    const product = await getProductDetail("7");
+
+    expect(product.originalPrice).toBeNull();
+    expect(product.rating).toBeNull();
   });
 });
 

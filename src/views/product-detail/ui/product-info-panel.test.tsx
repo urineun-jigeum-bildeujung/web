@@ -16,11 +16,11 @@ const DETAIL: ProductDetailInfo = {
   ingredients: ["타우린", "글루코사민"],
   feedingTarget: "8세 이상",
   targetBreedSize: "소형·중형견",
-  targetAgeGroup: "SENIOR",
-  targetSpecies: ["DOG"],
+  targetAgeGroup: "노령",
+  targetSpecies: ["강아지"],
   feedingMethod: "1일 1정, 사료와 함께 급여",
   allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
-  cautions: ["HIGH_SODIUM"],
+  cautions: ["나트륨 과다"],
   consumptionPeriodDisplay: "제조일로부터 18개월",
   shelfLifeAfterOpeningDays: 60,
   storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
@@ -36,6 +36,29 @@ const BASE: PetMatch = {
   functions: "관절 건강",
   summary: "꾸준히 급여하기 좋은 상품이에요",
 };
+
+describe("상세 설명 표", () => {
+  // 종을 빼면 이 상품이 누구 것인지가 사라진다. 응답은 "강아지"·"고양이" 표시명으로 온다
+  it("급여 대상에 종·대상·체구·연령을 함께 적는다", () => {
+    render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
+
+    expect(screen.getByText("강아지 · 8세 이상 · 소형·중형견 · 노령")).toBeDefined();
+  });
+
+  it("비어 오는 항목은 줄째로 빼고 그린다", () => {
+    render(
+      <ProductInfoPanel
+        detail={{ ...DETAIL, originCountry: null, storageMethod: null }}
+        productName="면역 지원 영양제 90정"
+        match={BASE}
+      />,
+    );
+
+    expect(screen.queryByText("제조국")).toBeNull();
+    expect(screen.queryByText("보관방법")).toBeNull();
+    expect(screen.getByText("대한펫푸드 / 포포도그")).toBeDefined();
+  });
+});
 
 describe("종합 점수 카드", () => {
   it("영양 성분 상태의 부족·적정·과다 범례를 보여준다", () => {

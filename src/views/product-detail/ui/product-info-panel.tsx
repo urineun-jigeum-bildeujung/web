@@ -38,7 +38,14 @@ type ProductInfoPanelProps = {
  * `cautions`는 이 표에 자리가 없다 — 경고로 쓸 값이라 따로 다룬다(#414).
  */
 function toSpecRows(detail: ProductDetailInfo): [string, string][] {
-  const feedingTarget = [detail.feedingTarget, detail.targetBreedSize, detail.targetAgeGroup]
+  // 급여 대상은 네 갈래를 한 줄로 잇는다. 종부터 적는 것은 "강아지 · 8세 이상 · 소형 · 노령"처럼
+  // 넓은 것에서 좁은 것으로 읽히기 때문이다. 종을 빼면 이 상품이 누구 것인지가 사라진다
+  const feedingTarget = [
+    detail.targetSpecies?.join(" · "),
+    detail.feedingTarget,
+    detail.targetBreedSize,
+    detail.targetAgeGroup,
+  ]
     .filter(Boolean)
     .join(" · ");
   const shelfLife = [
@@ -50,22 +57,23 @@ function toSpecRows(detail: ProductDetailInfo): [string, string][] {
 
   const rows: [string, string][] = [
     ["제조사/브랜드", [detail.manufacturer, detail.brandName].filter(Boolean).join(" / ")],
-    ["제조국", detail.originCountry],
+    ["제조국", detail.originCountry ?? ""],
     [
       "제품 용량",
       detail.netQuantityValue ? `${detail.netQuantityValue}${detail.netQuantityUnit}` : "",
     ],
     ["원재료명", detail.ingredients?.join(", ") ?? ""],
     ["급여 대상", feedingTarget],
-    ["급여 방법", detail.feedingMethod],
+    ["급여 방법", detail.feedingMethod ?? ""],
     // 응답의 allergens는 **들어 있는** 알레르기 유발 성분이다. 예전 목 문구는
     // "계란 · 유제품 불포함"이었는데 뜻이 반대라 그대로 쓰지 않는다
     ["알레르기 정보", detail.allergens?.map((allergen) => allergen.displayName).join(" · ") ?? ""],
     ["소비기한", shelfLife],
-    ["보관방법", detail.storageMethod],
+    ["보관방법", detail.storageMethod ?? ""],
   ];
 
-  return rows.filter(([, description]) => description !== "");
+  // null·빈 문자열 둘 다 걸러낸다. 응답의 절반 가까이가 빌 수 있는 열이다
+  return rows.filter(([, description]) => Boolean(description));
 }
 
 const GUIDE_TRIGGER_CLASS =
