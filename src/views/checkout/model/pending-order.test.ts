@@ -20,6 +20,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 test("적어 둔 주문을 그대로 읽는다", () => {
@@ -47,6 +48,19 @@ test("새로 시작할 때마다 다른 키를 만든다", () => {
 
   expect(first.orderId).toBeNull();
   expect(first.idempotencyKey).not.toBe(second.idempotencyKey);
+});
+
+// 앱을 Android 에뮬레이터로 열면 `http://10.0.2.2:3000`이라 보안 출처가 아니고, 그곳에는
+// `crypto.randomUUID`가 없다. 키를 못 만들면 결제하기가 통째로 던진다 (#432)
+test("보안 출처가 아니어서 randomUUID가 없어도 UUID 모양의 키를 만든다", () => {
+  const real = globalThis.crypto;
+  vi.stubGlobal("crypto", { getRandomValues: real.getRandomValues.bind(real) });
+
+  const { idempotencyKey } = newPendingOrder("a");
+
+  expect(idempotencyKey).toMatch(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+  );
 });
 
 test("지우면 없어진다", () => {

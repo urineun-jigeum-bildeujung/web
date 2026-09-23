@@ -32,8 +32,8 @@
 | `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301). 배송지를 등록하러 갔다 돌아올 경로도 여기서 만든다 (#369) |
 | `model/return-query.test.ts` | 복귀 주소 모양, 토스 쿼리와의 충돌, 읽을 수 없는 값 |
 | `model/order-items.test.ts` | 고른 값이 없을 때·살 수 없는 줄·종류가 다른 같은 id |
-| `model/pending-order.ts` | 만들어 둔 주문과 그 생성 키를 탭 안에서 들고 있는다. 결제창 리다이렉트를 건너 살아남아야 한다 (#367·#412) |
-| `model/pending-order.test.ts` | 모양이 깨진 값(키 없는 옛 모양 포함), 막힌 저장소, 새로 시작할 때의 키 |
+| `model/pending-order.ts` | 만들어 둔 주문과 그 생성 키를 탭 안에서 들고 있는다. 결제창 리다이렉트를 건너 살아남아야 한다. 키는 `getRandomValues`로 만든다 — `randomUUID`는 보안 출처에만 있어 앱 에뮬레이터(`http://10.0.2.2`)에서 던진다 (#367·#412·#432) |
+| `model/pending-order.test.ts` | 모양이 깨진 값(키 없는 옛 모양 포함), 막힌 저장소, 새로 시작할 때의 키, `randomUUID`가 없는 출처 |
 | `index.ts` | 공개 API |
 
 ## 라우트

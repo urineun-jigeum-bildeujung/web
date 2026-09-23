@@ -32,7 +32,22 @@ export type PendingOrder = {
 
 /** 이 본문으로 처음 주문을 만들 때. 키는 여기서 한 번만 만든다 */
 export function newPendingOrder(signature: string): PendingOrder {
-  return { signature, idempotencyKey: crypto.randomUUID(), orderId: null };
+  return { signature, idempotencyKey: newIdempotencyKey(), orderId: null };
+}
+
+/**
+ * UUID v4 모양의 키. 백엔드 명세가 "UUID 권장"이다(서버는 100자 이하 문자열을 받는다).
+ *
+ * **`crypto.randomUUID`를 쓰지 않는다.** 보안 출처(https·localhost)에서만 있는 함수라, 앱을
+ * Android 에뮬레이터로 열 때의 `http://10.0.2.2:3000`에서는 결제하기가 여기서 던진다.
+ * `getRandomValues`는 어느 출처에서나 있다 (#432).
+ */
+function newIdempotencyKey(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // 버전 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // RFC 9562 변형
+  const hex = Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 /**
