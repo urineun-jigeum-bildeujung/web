@@ -9,7 +9,7 @@
 | `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다. 다시 받는 중인지(`isFetching`)도 준다 |
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다. 확정은 작성할 수 있는 리뷰 목록도 낡은 것으로 둔다 — 서버가 그 목록을 확정된 주문으로 만든다 (#416) |
 | `api/use-mutate-order.test.tsx` | 확정·취소 뒤 어느 캐시를 낡은 것으로 두는지 |
-| `api/claims.ts` | 반품·교환 신청 API와 첨부 사진 업로드 주소 발급. 규격은 로컬 백엔드 소스에서 옮겼다 |
+| `api/claims.ts` | 반품·교환 신청 API와 첨부 사진 업로드 주소 발급. 규격은 로컬 백엔드 소스에서 옮겼다. 사유 코드(`reasonCode`)는 필수다 (#417) |
 | `api/use-mutate-claim.ts` | 반품·교환 접수 훅. 사진이 있으면 먼저 올리고 그 주소를 싣는다. 끝나면 주문을 다시 받는다 (#408) |
 | `model/claim-status.ts` | 신청이 진행 중인지, 새로 신청할 수 있는 상품과 기간인지 판정한다 |
 | `model/claim-status.test.ts` | 서버 `ClaimStatus`의 끝 판정과 7일·남은 수량 규칙을 그대로 옮겼는지 |
