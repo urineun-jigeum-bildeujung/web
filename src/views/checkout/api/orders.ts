@@ -35,6 +35,11 @@ export type OrderItemRequest = { quantity: number } & (
 
 export type CreateOrderRequest = {
   addressId: number;
+  /**
+   * 어느 아이 몫으로 사는지. **서버가 필수로 받는다**(`@NotNull`) — 빠지면 본문 검증에서
+   * 400이다. 서버는 이 값을 주문 줄마다 저장한다 (#393).
+   */
+  petId: number;
   items: OrderItemRequest[];
   /** 적지 않으면 빈 문자열이 아니라 보내지 않는다 */
   deliveryNote?: string | null;

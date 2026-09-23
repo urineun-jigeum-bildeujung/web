@@ -12,6 +12,9 @@
 //
 // **결제할 줄은 장바구니에서 고른 것이다.** `?items=NORMAL:1,TIME_DEAL:3`으로 받고,
 // 없으면 살 수 있는 줄 전부를 본다 — 주소창으로 바로 들어와도 화면이 성립해야 한다.
+//
+// **주문에는 기본 아이를 싣는다.** 서버가 `petId`를 필수로 받는데, 여러 아이 중 고르는 자리는
+// 시안에 없다. 대표 아이를 둘지 정해지기 전까지 기본 아이로 간다 (#393).
 
 "use client";
 
@@ -22,6 +25,7 @@ import { IoImageOutline } from "react-icons/io5";
 
 import { useQueryAddresses } from "@/entities/address";
 import { cartItemKey, useQueryCart, type CartItem } from "@/entities/cart";
+import { useQueryPets } from "@/entities/pet";
 import { ApiError } from "@/shared/api/client";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
@@ -197,9 +201,12 @@ export function CheckoutView() {
 
   const { cart, isLoading: cartLoading, error: cartError } = useQueryCart();
   const { addresses, isLoading: addressLoading, error: addressError } = useQueryAddresses();
+  const { pets } = useQueryPets();
 
   // 기본 배송지가 없는 계정도 있다. 그때는 목록 맨 앞을 쓴다 — 조회가 기본을 앞으로 정렬한다
   const address = addresses?.find((place) => place.isDefault) ?? addresses?.[0];
+  // 아이 조회도 기본 아이를 앞으로 정렬한다(`getPets`). 기본이 없으면 맨 앞 아이다
+  const pet = pets?.[0];
 
   const items = pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
@@ -210,6 +217,8 @@ export function CheckoutView() {
   // 갈릴 수 있고, React Compiler가 try 블록 안의 값 계산을 만나면 최적화를 포기한다 (#223)
   const orderRequest = {
     addressId: address ? address.addressId : null,
+    // 지문에 들어가야 한다 — 아이가 바뀌었는데 옛 주문을 다시 쓰면 다른 아이 몫으로 남는다
+    petId: pet ? Number(pet.id) : null,
     // 장바구니 규격(`itemType`+`itemId`)을 주문 규격으로 옮긴다. 서버가 상품과
     // 타임딜을 다른 필드로 받는다 (#306)
     items: items.map(toOrderItem),
@@ -225,6 +234,8 @@ export function CheckoutView() {
     requiredIds.every((id) => agreed.includes(id)) &&
     requestPayment !== null &&
     address !== undefined &&
+    // 아이를 모르는 채로 누르면 `petId` 없이 나가 400이다
+    pet !== undefined &&
     items.length > 0 &&
     !paying;
   const allAgreed = TERMS.every((term) => agreed.includes(term.id));
@@ -260,7 +271,7 @@ export function CheckoutView() {
   const pay = async () => {
     // **`try` 안에서 옵셔널 체이닝을 쓰지 않는다.** React Compiler가 try/catch 안의
     // 값 블록(옵셔널 체이닝·조건식 등)을 만나면 이 컴포넌트 최적화를 통째로 포기한다 (#223).
-    if (!requestPayment || !address) {
+    if (!requestPayment || !address || !pet) {
       return;
     }
 
@@ -275,7 +286,11 @@ export function CheckoutView() {
     try {
       let orderId = reusableOrderId;
       if (orderId === null) {
-        const created = await createOrder({ ...orderRequest, addressId: address.addressId });
+        const created = await createOrder({
+          ...orderRequest,
+          addressId: address.addressId,
+          petId: Number(pet.id),
+        });
         orderId = created.orderId;
         writePendingOrder({ orderId, signature: orderSignature });
       }
