@@ -9,7 +9,8 @@ import type { PresignedUpload } from "@/shared/api/upload-image";
 /** 백엔드 `ReviewCreateRequest`와 같은 모양이다 */
 export type ReviewCreateRequest = {
   productId: number;
-  petId: number;
+  /** 함께 먹인 아이들. 한 마리 이상 */
+  petIds: number[];
   /** 1.0~5.0. 반 개 단위 */
   starRate: number;
   /** 일 단위 양수 */

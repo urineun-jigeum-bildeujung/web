@@ -24,6 +24,9 @@ type PetSwitcherProps = {
   pets: PetSummary[];
   selectedId?: string;
   onSelect?: (id: string) => void;
+  /** 여러 마리를 고르는 모드. 주면 라디오가 아니라 체크박스로 동작한다(리뷰 작성 — 한 상품을 두 아이에게 함께 먹인다) */
+  selectedIds?: string[];
+  onToggle?: (id: string) => void;
   /** 새 아이를 들이는 자리를 누른다. 없으면 그 칸을 그리지 않는다. */
   onAdd?: () => void;
   /** 원 아래에 이름을 함께 보인다. 메인처럼 처음 보는 화면에서는 이름이 있어야 고를 수 있다 */
@@ -38,6 +41,8 @@ export function PetSwitcher({
   pets,
   selectedId,
   onSelect,
+  selectedIds,
+  onToggle,
   onAdd,
   withNames,
   variant = "default",
@@ -45,6 +50,7 @@ export function PetSwitcher({
 }: PetSwitcherProps) {
   const hero = variant === "hero";
   const main = variant === "main";
+  const multiple = selectedIds !== undefined;
 
   const circleSize = (selected: boolean) => {
     if (hero) return selected ? "size-22.5" : "size-12";
@@ -55,7 +61,7 @@ export function PetSwitcher({
 
   return (
     <div
-      role="radiogroup"
+      role={multiple ? "group" : "radiogroup"}
       aria-label="아이 고르기"
       className={cn(
         "flex items-center gap-3 px-4 py-3",
@@ -66,15 +72,15 @@ export function PetSwitcher({
       )}
     >
       {pets.map((pet) => {
-        const selected = pet.id === selectedId;
+        const selected = multiple ? selectedIds.includes(pet.id) : pet.id === selectedId;
         return (
           <button
             key={pet.id}
             type="button"
-            role="radio"
+            role={multiple ? "checkbox" : "radio"}
             aria-checked={selected}
             aria-label={pet.name}
-            onClick={() => onSelect?.(pet.id)}
+            onClick={() => (multiple ? onToggle?.(pet.id) : onSelect?.(pet.id))}
             className={cn(
               "flex flex-col items-center gap-1 rounded-full transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",

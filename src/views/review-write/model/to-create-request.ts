@@ -1,6 +1,6 @@
 // 리뷰 초안을 등록 요청으로 옮긴다.
 //
-// 화면은 문자열(사용 기간·아이 id)로 들고 API는 숫자로 받는다. 옮기는 자리를 화면 안에 두면
+// 화면은 문자열(사용 기간·아이 id들)로 들고 API는 숫자로 받는다. 옮기는 자리를 화면 안에 두면
 // 테스트할 수 없어 여기로 뺐다. 온보딩의 `to-register-request`와 같은 판단이다.
 
 import type { ReviewCreateRequest } from "@/entities/review";
@@ -30,18 +30,19 @@ export function answeredValues(
  */
 export function toCreateRequest(draft: ReviewDraft, productId: string): ReviewCreateRequest | null {
   const usagePeriod = Number(draft.days);
-  const petId = Number(draft.petId);
+  const petIds = draft.petIds.map(Number);
   const productIdNumber = Number(productId);
   const text = draft.text.trim();
   const answerValues = answeredValues(draft.responses);
 
   if (draft.score <= 0 || !Number.isInteger(usagePeriod) || usagePeriod <= 0) return null;
-  if (!draft.petId || !Number.isInteger(petId) || !Number.isInteger(productIdNumber)) return null;
+  if (petIds.length === 0 || !petIds.every(Number.isInteger) || !Number.isInteger(productIdNumber))
+    return null;
   if (text.length === 0 || answerValues.length === 0) return null;
 
   return {
     productId: productIdNumber,
-    petId,
+    petIds,
     starRate: draft.score,
     usagePeriod,
     answerValues,

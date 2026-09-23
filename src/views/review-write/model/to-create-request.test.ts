@@ -8,7 +8,7 @@ const FULL: ReviewDraft = {
   score: 4.5,
   days: "16",
   responses: { PALATABILITY: "POSITIVE", FEEDING_CONVENIENCE: "NEUTRAL" },
-  petId: "3",
+  petIds: ["3", "5"],
   text: "  확실히 예전보다 계단 오를 때 덜 힘들어해요  ",
 };
 
@@ -23,7 +23,7 @@ test("답한 문항만 열거형 값 그대로 싣는다", () => {
 test("문자열로 든 값을 숫자로 옮기고 후기 앞뒤 공백을 지운다", () => {
   expect(toCreateRequest(FULL, "7")).toEqual({
     productId: 7,
-    petId: 3,
+    petIds: [3, 5],
     starRate: 4.5,
     usagePeriod: 16,
     answerValues: [
@@ -37,7 +37,7 @@ test("문자열로 든 값을 숫자로 옮기고 후기 앞뒤 공백을 지운
 test("필수가 비면 요청을 만들지 않는다", () => {
   expect(toCreateRequest({ ...FULL, score: 0 }, "7")).toBeNull();
   expect(toCreateRequest({ ...FULL, days: "" }, "7")).toBeNull();
-  expect(toCreateRequest({ ...FULL, petId: undefined }, "7")).toBeNull();
+  expect(toCreateRequest({ ...FULL, petIds: [] }, "7")).toBeNull();
   expect(toCreateRequest({ ...FULL, text: "   " }, "7")).toBeNull();
   // 서버가 반응 문항을 하나 이상 요구한다
   expect(toCreateRequest({ ...FULL, responses: {} }, "7")).toBeNull();

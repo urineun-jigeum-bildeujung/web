@@ -14,7 +14,8 @@ export type ReviewDraft = {
   score: number;
   days: string;
   responses: Record<string, string | undefined>;
-  petId?: string;
+  /** 함께 먹인 아이들. 한 상품을 두 아이에게 먹이기도 해 여러 마리다 */
+  petIds: string[];
   text: string;
 };
 
@@ -22,6 +23,7 @@ export const EMPTY_REVIEW_DRAFT: ReviewDraft = {
   score: 0,
   days: "",
   responses: {},
+  petIds: [],
   text: "",
 };
 
@@ -58,7 +60,12 @@ function normalize(raw: unknown): ReviewDraft {
     score,
     days: typeof saved.days === "string" ? saved.days.replace(/\D/g, "").slice(0, 3) : "",
     responses,
-    petId: typeof saved.petId === "string" ? saved.petId : undefined,
+    // 아이 여러 마리로 바뀌기 전(#391)에 저장한 초안은 `petId` 하나다. 배열로 옮겨 잃지 않는다
+    petIds: Array.isArray(saved.petIds)
+      ? saved.petIds.filter((id): id is string => typeof id === "string")
+      : typeof (saved as { petId?: unknown }).petId === "string"
+        ? [(saved as { petId: string }).petId]
+        : [],
     text: typeof saved.text === "string" ? saved.text : "",
   };
 }

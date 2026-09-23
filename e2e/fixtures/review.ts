@@ -45,8 +45,10 @@ export async function stubReviewApi(page: Page) {
         reviewId: 1,
         isMine: true,
         product: { productId: 1, name: PRODUCT.summary.productName, image: null },
-        petId: 3,
-        rating: 4,
+        pets: [
+          { petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" },
+        ],
+        rating: 4.5,
         usagePeriod: 16,
         answerValues: [],
         goodPoints: ["기호성 좋음"],

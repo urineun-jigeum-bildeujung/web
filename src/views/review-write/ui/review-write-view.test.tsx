@@ -120,8 +120,8 @@ function goToDetail() {
 /** 2단계에서 필수를 다 채운다. skipPet이면 아이만, skipAnswer면 반응 문항만 비워 둔다 */
 async function fillDetail({ skipPet = false, skipAnswer = false } = {}) {
   // 아이 목록은 서버에서 온다
-  await screen.findByRole("radio", { name: "소리" });
-  if (!skipPet) fireEvent.click(screen.getByRole("radio", { name: "소리" }));
+  await screen.findByRole("checkbox", { name: "소리" });
+  if (!skipPet) fireEvent.click(screen.getByRole("checkbox", { name: "소리" }));
   if (!skipAnswer) pick("아이에게 급여하기 편했나요?", "편해요");
   fireEvent.change(screen.getByLabelText("후기"), {
     target: { value: "확실히 예전보다 계단 오를 때 덜 힘들어해요" },
@@ -285,7 +285,7 @@ describe("ReviewWriteView 2단계", () => {
 
     expect(submitButton().hasAttribute("disabled")).toBe(true);
 
-    fireEvent.click(screen.getByRole("radio", { name: "소리" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "소리" }));
     expect(submitButton().hasAttribute("disabled")).toBe(false);
   });
 
@@ -347,7 +347,7 @@ describe("ReviewWriteView 2단계", () => {
     ) as [string, RequestInit];
     expect(JSON.parse(String(init.body))).toEqual({
       productId: 7,
-      petId: 1,
+      petIds: [1],
       starRate: 4,
       usagePeriod: 16,
       // 필수 둘만 답했다. 선택인 넷은 실리지 않는다

@@ -18,7 +18,7 @@ test("등록 요청을 그대로 보내고 reviewId를 받는다", async () => {
   vi.stubGlobal("fetch", fetchMock);
   const request = {
     productId: 7,
-    petId: 1,
+    petIds: [1, 2],
     starRate: 4.5,
     usagePeriod: 16,
     answerValues: [{ questionKey: "PALATABILITY", answerValue: "POSITIVE" }],

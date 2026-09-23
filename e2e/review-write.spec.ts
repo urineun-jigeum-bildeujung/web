@@ -51,7 +51,7 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
   const submit = page.getByRole("button", { name: "등록하기" });
   await expect(submit).toBeDisabled();
   // 아이 목록은 `stubPetCatalog`의 것이다
-  await page.getByRole("radio", { name: "코코" }).click();
+  await page.getByRole("checkbox", { name: "코코" }).click();
   await page.getByLabel("후기").fill("확실히 예전보다 계단 오를 때 덜 힘들어해요");
   // 급여 편의성이 남아 아직 잠겨 있다 — 시안이 필수로 그린다 (#302)
   await expect(submit).toBeDisabled();
@@ -69,8 +69,8 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
     (request) => request.url().endsWith("/api/v1/reviews") && request.method() === "POST",
   );
   await submit.click();
-  const body = (await posted).postDataJSON() as { productId: number; petId: number };
-  expect(body).toMatchObject({ productId: 7, petId: 3 });
+  const body = (await posted).postDataJSON() as { productId: number; petIds: number[] };
+  expect(body).toMatchObject({ productId: 7, petIds: [3] });
   await expect(page.getByText("소중한 리뷰 감사해요!")).toBeVisible();
   await page.getByRole("link", { name: "확인" }).click();
   await expect(page).toHaveURL(/\/mypage\/reviews\?tab=written/);
