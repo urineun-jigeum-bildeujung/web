@@ -9,14 +9,31 @@
 //
 // **주소창에 싣지 않는다.** `failUrl`에 주문 id를 실으면 사용자가 바꿀 수 있어 남의 주문으로
 // 결제를 시도하게 된다. 서버가 소유자를 보고 막지만 그 앞에서 막는 편이 낫다.
+//
+// **주문 생성 키도 함께 든다.** 주문 생성은 `Idempotency-Key`로 같은 요청을 알아본다. 응답을
+// 잃고 다시 누를 때 같은 키를 실어야 서버가 이미 만든 주문을 돌려준다 — 키를 새로 만들면
+// 주문이 하나 더 생긴다 (#412).
 
 const KEY = "checkout.pendingOrder";
 
-/** 만들어 둔 주문과 그때 보낸 본문의 지문. 지문이 같을 때만 다시 쓴다 */
+/**
+ * 만들려는(또는 만든) 주문과 그때 보낸 본문의 지문. 지문이 같을 때만 다시 쓴다.
+ *
+ * **키는 지문과 한 쌍이다.** 서버는 같은 키로 온 요청에 본문을 견주지 않고 처음 만든 주문을
+ * 돌려준다. 본문이 바뀌었는데 키를 그대로 쓰면 옛 주문이 온다 (#412).
+ */
 export type PendingOrder = {
-  orderId: number;
   signature: string;
+  /** 주문 생성에 실은 `Idempotency-Key` */
+  idempotencyKey: string;
+  /** 서버가 만든 주문. 생성 응답을 받기 전에는 없다 */
+  orderId: number | null;
 };
+
+/** 이 본문으로 처음 주문을 만들 때. 키는 여기서 한 번만 만든다 */
+export function newPendingOrder(signature: string): PendingOrder {
+  return { signature, idempotencyKey: crypto.randomUUID(), orderId: null };
+}
 
 /**
  * `sessionStorage`는 막힐 수 있다.
@@ -53,11 +70,21 @@ export function clearPendingOrder(): void {
   }
 }
 
-/** 손으로 고쳤거나 옛 모양이 남아 있을 수 있다. 모양이 맞을 때만 쓴다 */
+/**
+ * 손으로 고쳤거나 옛 모양이 남아 있을 수 있다. 모양이 맞을 때만 쓴다.
+ *
+ * 키가 없는 #412 전 모양도 여기서 걸러진다. 배포 뒤 처음 한 번 새 주문을 만드는 것으로 끝난다.
+ */
 function isPendingOrder(value: unknown): value is PendingOrder {
   if (typeof value !== "object" || value === null) {
     return false;
   }
-  const { orderId, signature } = value as Record<string, unknown>;
-  return Number.isInteger(orderId) && (orderId as number) > 0 && typeof signature === "string";
+  const { orderId, signature, idempotencyKey } = value as Record<string, unknown>;
+  const validOrderId = orderId === null || (Number.isInteger(orderId) && (orderId as number) > 0);
+  return (
+    validOrderId &&
+    typeof signature === "string" &&
+    typeof idempotencyKey === "string" &&
+    idempotencyKey.length > 0
+  );
 }

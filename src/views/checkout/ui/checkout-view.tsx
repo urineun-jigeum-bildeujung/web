@@ -42,10 +42,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Textarea } from "@/shared/ui/textarea";
 
-import { createOrder } from "../api/orders";
+import { createOrder, releaseOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { ITEMS_PARAM, pickOrderItems, toOrderItem } from "../model/order-items";
-import { clearPendingOrder, readPendingOrder, writePendingOrder } from "../model/pending-order";
+import {
+  clearPendingOrder,
+  newPendingOrder,
+  readPendingOrder,
+  writePendingOrder,
+} from "../model/pending-order";
 import { toCheckoutPath } from "../model/return-query";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
@@ -172,13 +177,24 @@ const UNUSABLE_ORDER_CODES = new Set([
 ]);
 
 /**
- * 들고 있던 주문을 버려야 하는 실패인가.
+ * 들고 있던 주문과 그 생성 키를 버려야 하는 실패인가.
  *
- * **상태 코드로 뭉뚱그리지 않는다.** 429처럼 잠깐 막힌 것까지 버리면 다시 누를 때 주문이
- * 하나 더 생긴다 — 그게 #361에서 고친 문제다. 5xx·네트워크 실패에서도 그대로 들고 있는다.
+ * **주문을 만들다 막혔으면** 서버가 요청을 보고 거절했는지(4xx)를 본다. 같은 키로 다시 보내면
+ * 서버가 그 키로 남긴 주문을 돌려주는데, 재고 부족처럼 저장한 뒤에 막힌 주문은 취소된 채 남아
+ * 있다 — 다시 눌러도 그 취소된 주문이 온다. 5xx·네트워크 실패는 서버가 만들고 응답만 잃었을
+ * 수 있어 그대로 든다 (#412).
+ *
+ * **만든 주문으로 결제를 준비하다 막혔으면** 서버가 준 코드를 본다. 상태 코드로 뭉뚱그리지
+ * 않는다 — 429처럼 잠깐 막힌 것까지 버리면 다시 누를 때 주문이 하나 더 생긴다 (#361).
  */
-function isOrderUnusable(error: unknown): boolean {
-  return error instanceof ApiError && UNUSABLE_ORDER_CODES.has(error.problem?.errorCode ?? "");
+function shouldForgetOrder(error: unknown, creating: boolean): boolean {
+  if (!(error instanceof ApiError)) {
+    return false;
+  }
+  if (creating) {
+    return error.status < 500;
+  }
+  return UNUSABLE_ORDER_CODES.has(error.problem?.errorCode ?? "");
 }
 
 export function CheckoutView() {
@@ -226,8 +242,10 @@ export function CheckoutView() {
     deliveryNote: deliveryNote || null,
   };
   // 만들어 둔 주문을 다시 쓸 수 있는지 가르는 값. **본문이 한 글자라도 다르면 쓰지 않는다** —
-  // 배송지를 바꾸거나 요청사항을 고쳤는데 옛 주문으로 결제하면 엉뚱한 곳으로 간다
-  const orderSignature = JSON.stringify(orderRequest);
+  // 배송지를 바꾸거나 요청사항을 고쳤는데 옛 주문으로 결제하면 엉뚱한 곳으로 간다.
+  // **배송지는 id만이 아니라 내용까지 넣는다.** 서버는 주문을 만들 때 주소를 복사해 두고 바꾸지
+  // 않아서, 같은 배송지의 주소를 고친 뒤 옛 주문을 쓰면 옛 주소로 간다 (#412)
+  const orderSignature = JSON.stringify({ ...orderRequest, address });
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =
@@ -264,6 +282,9 @@ export function CheckoutView() {
    * 같은 주문으로 `[2]`를 다시 부르는 것은 서버가 받아 준다 — `RequestPaymentService`가
    * 중복 저장에서 기존 결제를 찾아 **같은 `tossOrderId`(주문번호)** 와 그 금액을 돌려준다.
    *
+   * **`[1]`의 응답을 잃어도 한 번만 만든다.** 생성 키를 지문과 함께 들고 있다가, 같은 본문이면
+   * 같은 키로 다시 묻는다. 서버가 이미 만든 주문을 돌려준다 (#412).
+   *
    * **실패가 두 갈래라 여기서도 받아야 한다.** 결제창이 뜬 뒤의 실패·취소는 토스가 `failUrl`로
    * 되돌려 보내 `?code=`로 알 수 있지만, 창을 띄우기도 전에 막히면(주문 생성 실패, 파라미터
    * 오류 등) 리다이렉트가 일어나지 않고 약속만 깨진다. 놓치면 눌러도 아무 일이 없어 보인다.
@@ -279,20 +300,32 @@ export function CheckoutView() {
     // 눌린 순간의 값을 봐야 다른 탭이 지운 것도 반영된다.
     // 삼항은 `try` 밖에 둔다 — React Compiler가 try 안의 값 계산을 만나면 최적화를 포기한다 (#223)
     const stored = readPendingOrder();
-    const reusableOrderId =
-      stored !== null && stored.signature === orderSignature ? stored.orderId : null;
+    // 본문이 같으면 그때의 주문과 키를 그대로 쓰고, 다르면 새 키로 새 주문을 만든다
+    const pending =
+      stored !== null && stored.signature === orderSignature
+        ? stored
+        : newPendingOrder(orderSignature);
+    // 새로 만들면 들고 있던 주문은 쓸 일이 없다. 결제 대기로 남아 재고 예약을 붙잡지 않게
+    // 먼저 푼다 (#412)
+    const superseded = stored !== null && stored !== pending ? stored.orderId : null;
+    // `catch`가 주문 생성에서 막혔는지 가르는 데도 쓴다
+    let orderId = pending.orderId;
 
     setPaying(true);
     try {
-      let orderId = reusableOrderId;
+      if (superseded !== null) {
+        await releaseOrder(superseded);
+      }
       if (orderId === null) {
-        const created = await createOrder({
-          ...orderRequest,
-          addressId: address.addressId,
-          petId: Number(pet.id),
-        });
+        // **보내기 전에 적어 둔다.** 응답을 잃어도 다음 누름이 같은 키로 물어, 서버가 이미
+        // 만든 주문을 돌려받는다 (#412)
+        writePendingOrder(pending);
+        const created = await createOrder(
+          { ...orderRequest, addressId: address.addressId, petId: Number(pet.id) },
+          pending.idempotencyKey,
+        );
         orderId = created.orderId;
-        writePendingOrder({ orderId, signature: orderSignature });
+        writePendingOrder({ ...pending, orderId });
       }
       // **`amount`는 서버가 만든 주문의 금액이다.** 화면이 장바구니로 센 `total`과
       // 갈릴 수 있어 결제창에는 이쪽을 싣는다 (#312)
@@ -301,11 +334,11 @@ export function CheckoutView() {
       // 주문 상세로 갈 수 있게 한다 (#301)
       await requestPayment({ tossOrderId, orderName, orderId, amount });
     } catch (error) {
-      // **재사용한 주문을 서버가 거절했다.** 이미 결제됐거나 취소됐거나 사라진 주문을 물고
-      // 있으면 다시 눌러도 같은 자리에서 막힌다 — 탭을 닫기 전까지 결제할 수 없고, 사용자는
+      // **들고 있던 주문이나 키로는 더 갈 수 없다.** 이미 결제됐거나 취소됐거나 사라진 주문을
+      // 물고 있으면 다시 눌러도 같은 자리에서 막힌다 — 탭을 닫기 전까지 결제할 수 없고, 사용자는
       // 탭을 닫으면 풀린다는 것을 알 길이 없다 (#388). 비워 두면 다음에 새 주문으로 간다.
       // 여기서 곧바로 다시 만들지는 않는다 — 실패를 알린 뒤 사용자가 누르는 편이 예측 가능하다
-      if (reusableOrderId !== null && isOrderUnusable(error)) {
+      if (shouldForgetOrder(error, orderId === null)) {
         clearPendingOrder();
       }
       toastAppError(APP_MESSAGE_CODE.payment.failed, error);
