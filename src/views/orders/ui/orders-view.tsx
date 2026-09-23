@@ -170,8 +170,7 @@ function OrderHistory() {
           </DrawerDescription>
         </DrawerHeader>
 
-        {/* 확정은 주문 단위라 그 주문의 상품을 모두 보인다. 목록 응답에 상품별 금액이 없어
-            금액 줄은 비운다 */}
+        {/* 확정은 주문 단위라 그 주문의 상품을 모두 보인다. 금액은 목록과 같이 그 줄에 낸 값이다 (#418) */}
         {asking && (
           <ul className="mt-1 flex flex-col gap-3">
             {asking.items.map((item) => (
@@ -179,6 +178,7 @@ function OrderHistory() {
                 <OrderProductRow
                   name={item.productName}
                   quantity={item.quantity}
+                  amount={item.amount}
                   imageUrl={item.thumbnailUrl}
                 />
               </li>
