@@ -214,14 +214,18 @@ export function CheckoutDoneView({
   const resolvedOrderId = payment?.orderId ?? orderId;
 
   // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 (#301·#308)
-  const { order: fetched, isLoading: isLoadingOrder } = useQueryOrderDetail(
-    resolvedOrderId ? String(resolvedOrderId) : "",
-  );
+  const {
+    order: fetched,
+    isLoading: isLoadingOrder,
+    isFetching: isFetchingOrder,
+  } = useQueryOrderDetail(resolvedOrderId ? String(resolvedOrderId) : "");
 
   // **승인과 조회가 끝나면 주문 캐시를 낡은 것으로 표시한다.** 이 화면이 받은 상세는 승인 전
   // 모습이라, 두면 60초 동안 주문 상세가 결제상세와 취소 버튼이 빠진 채 뜬다 (#416).
+  // 처음 받기뿐 아니라 받아 둔 것을 뒤에서 다시 받는 중에도 기다린다 — 그 응답이 끝나며 표시를
+  // 지운다 (#419 리뷰).
   // 대기 표시 없음 — 화면이 아니라 캐시를 다루는 자리다. 이 화면의 대기는 아래 뼈대가 맡는다
-  useMarkOrdersStale(Boolean(payment) && !isLoadingOrder);
+  useMarkOrdersStale(Boolean(payment) && !isFetchingOrder);
 
   // **승인 결과와 같은 주문인지 본다.** 승인 전에는 주소창의 `?order=`로 조회하므로 그 사이에
   // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞일 수 있다 (#308 리뷰).

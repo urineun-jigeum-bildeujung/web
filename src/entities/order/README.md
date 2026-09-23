@@ -6,7 +6,7 @@
 | --- | --- |
 | `api/orders.ts` | 주문 API. 목록·상세 조회와 구매 확정·주문 취소 |
 | `api/use-query-orders.ts` | 주문 목록 조회 훅. 커서로 다음 쪽을 이어 받는다 |
-| `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다 |
+| `api/use-query-order-detail.ts` | 주문 상세 조회 훅. 숫자가 아닌 주소면 서버를 부르지 않는다. 다시 받는 중인지(`isFetching`)도 준다 |
 | `api/use-mutate-order.ts` | 구매 확정·주문 취소 훅. 끝나면 목록을 다시 받는다. 확정은 작성할 수 있는 리뷰 목록도 낡은 것으로 둔다 — 서버가 그 목록을 확정된 주문으로 만든다 (#416) |
 | `api/use-mutate-order.test.tsx` | 확정·취소 뒤 어느 캐시를 낡은 것으로 두는지 |
 | `api/claims.ts` | 반품·교환 신청 API와 첨부 사진 업로드 주소 발급. 규격은 로컬 백엔드 소스에서 옮겼다 |

@@ -28,5 +28,7 @@ export function useQueryOrderDetail(orderId: string) {
     error: query.error,
     // `enabled`가 꺼져 있으면 `isPending`은 계속 참이다. 그대로 내보내면 뼈대가 영영 남는다
     isLoading: isValidId && query.isPending,
+    /** 받아 오는 중인지. 받아 둔 것을 뒤에서 다시 받는 중에도 참이다 (#419 리뷰) */
+    isFetching: query.isFetching,
   };
 }
