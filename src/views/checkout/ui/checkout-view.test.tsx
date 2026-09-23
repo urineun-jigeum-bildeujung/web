@@ -403,6 +403,26 @@ test("기본 아이가 바뀌면 주문을 새로 만든다", async () => {
   expect(createOrder).toHaveBeenLastCalledWith(expect.objectContaining({ petId: 7 }));
 });
 
+// 기본 아이를 정하지 않은 계정도 있다. 그때 버튼이 잠기면 결제할 길이 없다 (#394 리뷰)
+test("기본 아이가 없으면 맨 앞 아이로 주문을 만든다", async () => {
+  createOrder.mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValueOnce(PREPARED);
+  renderView({
+    petState: {
+      pets: [
+        { ...COCO, isDefault: false },
+        { ...BORI, isDefault: false },
+      ],
+    },
+  });
+
+  agreeRequired();
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1));
+  expect(createOrder).toHaveBeenCalledWith(expect.objectContaining({ petId: 3 }));
+});
+
 /**
  * 결제창에서 취소하고 돌아오는 길이다.
  *
