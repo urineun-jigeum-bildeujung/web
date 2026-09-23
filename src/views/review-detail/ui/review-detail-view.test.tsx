@@ -29,8 +29,11 @@ const REVIEW: ReviewDetail = {
   id: "1",
   isMine: true,
   product: { id: "7", name: "오메가3 피쉬오일 60캡슐" },
-  petId: "3",
-  rating: 4,
+  pets: [
+    { id: "3", name: "코코", age: 8, species: "DOG", breedSize: "SMALL" },
+    { id: "9", name: "나비", age: 2, species: "CAT", breedSize: null },
+  ],
+  rating: 4.5,
   usageDays: 16,
   goodPoints: ["기호성 좋음"],
   badPoints: ["소화·배변 나쁨"],
@@ -53,15 +56,16 @@ beforeEach(() => {
   useQueryReviewDetail.mockReturnValue(loaded(REVIEW));
 });
 
-test("사진·닉네임·별점·날짜·칩(아이 프로필·사용 기간·반응)·글을 시안 꼴로 보인다", () => {
+test("사진·닉네임·0.5 별점·날짜·칩(아이마다·사용 기간·반응)·글을 시안 꼴로 보인다", () => {
   render(<ReviewDetailView reviewId="1" />);
 
   expect(screen.getByAltText("후기 사진 1번째")).toBeDefined();
   expect(screen.getByText("보리엄마")).toBeDefined();
-  expect(screen.getByText("5점 만점에 4점")).toBeDefined();
+  expect(screen.getByText("5점 만점에 4.5점")).toBeDefined();
   expect(screen.getByText("2026. 09. 21")).toBeDefined();
   const chips = screen.getByRole("list", { name: "아이와 사용 기간, 반응" });
-  expect(chips.textContent).toBe("말티즈 · 8세 · 4kg사용 2주째기호성 좋음소화·배변 나쁨");
+  // 내 아이(3)는 상세로 품종·몸무게까지, 상세를 못 받는 아이(9)는 스냅샷의 이름·나이로
+  expect(chips.textContent).toBe("말티즈 · 8세 · 4kg나비 · 2세사용 2주째기호성 좋음소화·배변 나쁨");
   expect(screen.getByText("확실히 잘 먹어요")).toBeDefined();
 });
 
