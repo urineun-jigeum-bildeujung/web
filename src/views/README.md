@@ -79,8 +79,8 @@ views/
 | `cart` | `/cart` | 장바구니. 옵션 변경·삭제 확인을 포함한다 |
 | `checkout` | `/payment`, `/payment/{address,done}` | 결제하기·배송지 설정·주문 완료 |
 | `mypage-notifications` | `/mypage/notifications` | 알림 목록. 공지와 배송 알림을 걸러 보고 눌러 상세를 연다 |
-| `addresses` | `/mypage/address` | 배송지 관리 목록 (자리 표시) |
-| `order-claim` | `/mypage/orders/[orderId]/claim` | 취소·반품·교환 접수 (자리 표시) |
+| `addresses` | `/mypage/address` | 배송지 관리 목록. 기본 배송지와 집·회사를 위로, 나머지를 구분선 아래로 가른다 |
+| `order-claim` | `/mypage/orders/[orderId]/claim` | 반품·교환 신청. 상품 고르기 → 사유·사진 → 수거 세 단계 (#408). 취소는 주문 상세에서 한다 |
 | `review-write` | `/mypage/reviews/write` | 리뷰 작성. 별점과 함께 아이의 실제 반응을 받는다 |
 | `review-detail` | `/mypage/reviews/[reviewId]` | 리뷰 상세 (자리 표시) |
 | `support-inquiries` | `/mypage/support/inquiries` | 1:1 문의 내역 (자리 표시) |

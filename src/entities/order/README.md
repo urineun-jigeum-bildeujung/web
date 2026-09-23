@@ -62,7 +62,7 @@
 `PAID`까지 이 한 뱃지로 모았다 (#297).
 
 상태 전이 규칙도 enum에 있다 — `PAID`·`PREPARING`에서만 취소되고 `SHIPPING`은 `DELIVERED`로만
-간다. 목록 화면이 취소 버튼을 띄우는 조건과 같다.
+간다. 주문 상세가 "주문 취소하기"를 띄우는 조건과 같다(#410).
 
 주문 상세 응답에는 상품마다 `itemStatus`(`PAID`·`CANCELLED`·`PARTIAL_RETURN`·`RETURNED`)가 따로
 온다. 한 상품만 반품 중인 주문을 그리려면 이것이 필요한데 그 화면이 아직 없어 쓰지 않는다.
