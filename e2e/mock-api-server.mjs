@@ -187,6 +187,68 @@ function timeDeals(status) {
   return { deals: [], serverTime: NOW().toISOString() };
 }
 
+/**
+ * 상품 상세(#413). 화면이 그리는 값이 **이 응답에서 왔다는 것을 보이려고** 목록 목데이터와
+ * 다른 이름·가격을 쓴다 — 같은 값을 쓰면 옛 목데이터가 남아 있어도 테스트가 통과한다.
+ *
+ * 비어 올 수 있는 열도 일부러 섞는다. 제조국·보관방법을 null로 두어 표가 그 줄을 통째로
+ * 빼는지 본다. 별점은 값이 있는 쪽으로 둔다 — 별점 없는 상품은 단위 테스트가 맡는다.
+ */
+const PRODUCT_DETAIL = {
+  productId: 1,
+  timeDealItemId: null,
+  summary: {
+    images: [],
+    productName: "관절 튼튼 영양제 90정",
+    price: 18000,
+    originalPrice: 24000,
+    discountRate: 25,
+    avgRating: 4.7,
+    reviewCount: 312,
+    soldOut: false,
+  },
+  detailInfo: {
+    manufacturer: "이엠펫푸드",
+    brandName: "조인트케어",
+    originCountry: null,
+    netQuantityValue: 90,
+    netQuantityUnit: "정",
+    ingredients: ["글루코사민", "MSM"],
+    feedingTarget: "8세 이상",
+    targetBreedSize: "소형",
+    targetAgeGroup: "노령",
+    targetSpecies: ["강아지"],
+    feedingMethod: "1일 1정, 사료와 함께 급여",
+    allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
+    cautions: ["나트륨 과다"],
+    consumptionPeriodDisplay: "제조일로부터 18개월",
+    shelfLifeAfterOpeningDays: 60,
+    storageMethod: null,
+  },
+};
+
+/** 타임딜로 파는 상품. 담을 때 식별자가 딜 아이템으로 바뀌는지 본다 */
+const TIME_DEAL_PRODUCT = {
+  ...PRODUCT_DETAIL,
+  productId: 101,
+  timeDealItemId: 77,
+  summary: { ...PRODUCT_DETAIL.summary, productName: "타임딜 관절 영양제 90정" },
+};
+
+/** 실제 백엔드가 주는 ProblemDetail 그대로. 라우트가 이 404를 받아 notFound()로 넘긴다 */
+const PRODUCT_NOT_FOUND = {
+  detail: "상품이 존재하지 않습니다.",
+  status: 404,
+  title: "PRODUCT_404_PRODUCT_NOT_FOUND",
+  errorCode: "PRODUCT_404_PRODUCT_NOT_FOUND",
+};
+
+function productDetail(productId) {
+  if (productId === "1") return PRODUCT_DETAIL;
+  if (productId === "101") return TIME_DEAL_PRODUCT;
+  return null;
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   // "더 보기"(#289)는 브라우저(Next 앱과 다른 포트)에서 직접 이 서버를 부른다 —
@@ -201,6 +263,19 @@ const server = createServer((req, res) => {
   if (url.pathname === "/api/v1/products/search") {
     const body = JSON.stringify(searchProducts(url));
     res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  const detailMatch = /^\/api\/v1\/products\/([^/]+)$/.exec(url.pathname);
+  if (detailMatch) {
+    const product = productDetail(detailMatch[1]);
+    if (!product) {
+      res
+        .writeHead(404, { "content-type": "application/json" })
+        .end(JSON.stringify(PRODUCT_NOT_FOUND));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(product));
     return;
   }
 

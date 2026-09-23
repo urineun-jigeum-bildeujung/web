@@ -1,8 +1,70 @@
-// 상품 상세: 아이를 바꾸면 적합도가 함께 바뀌는지, 탭이 뒤로가기로 되돌아오는지 본다.
+// 상품 상세: 응답이 화면에 그대로 닿는지, 아이를 바꾸면 적합도가 함께 바뀌는지,
+// 탭이 뒤로가기로 되돌아오는지 본다.
+//
+// 상품 상세는 서버 컴포넌트가 직접 부른다(#413). Next 서버 프로세스가 보내는 요청은
+// 브라우저 page.route()로 못 가로채, `playwright.server-fetch.config.ts`가 이 스펙 전용
+// 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
+//
+// 적합도·영양 분석·문의는 아직 목이고(#123, #339), 배송·판매자·제공고시 두 줄도
+// 응답에 자리가 없어 고정 목데이터다.
 import { expect, test } from "@playwright/test";
 import { stubAddToCart } from "./fixtures/cart";
 
 const PATH = "/products/1";
+/** 목 API 서버가 주는 값. 목록 목데이터와 일부러 다른 이름·가격이다 */
+const NAME = "관절 튼튼 영양제 90정";
+
+// 화면이 목이던 시절엔 어느 상품을 열어도 같은 값이었다. 응답에서 온 값인지 보려고
+// 목 API 서버가 목록 목데이터와 다른 이름·가격을 준다.
+test("응답의 상품이 상단 요약에 그대로 그려진다", async ({ page }) => {
+  await page.goto(PATH);
+
+  // 별점·후기 수는 리뷰 탭에도 같은 값이 있다. 상단 요약 안으로 좁혀 본다
+  const summary = page.getByRole("region", { name: NAME });
+
+  await expect(page.getByRole("heading", { name: NAME, level: 1 })).toBeVisible();
+  await expect(summary.getByText("18,000원")).toBeVisible();
+  await expect(summary.getByText("24,000원")).toBeVisible();
+  // 서버가 준 할인율을 쓴다. 두 금액으로 다시 계산하지 않는다
+  await expect(summary.getByText("25%")).toBeVisible();
+  await expect(summary.getByText("4.7")).toBeVisible();
+  await expect(summary.getByRole("button", { name: "후기 312" })).toBeVisible();
+});
+
+test("상세 설명 표가 응답으로 채워지고 빈 항목은 줄째로 빠진다", async ({ page }) => {
+  await page.goto(PATH);
+
+  const spec = page.getByRole("region", { name: "상세 설명" });
+
+  await expect(spec.getByText("이엠펫푸드 / 조인트케어")).toBeVisible();
+  // 급여 대상은 종부터 적는다. 종을 빼면 이 상품이 누구 것인지가 사라진다
+  await expect(spec.getByText("강아지 · 8세 이상 · 소형 · 노령")).toBeVisible();
+  await expect(spec.getByText("글루코사민, MSM")).toBeVisible();
+  // 응답의 allergens는 들어 있는 성분이다. 옛 목 문구("계란 · 유제품 불포함")와 뜻이 반대다
+  await expect(spec.getByText("계란", { exact: true })).toBeVisible();
+  await expect(spec.getByText("제조일로부터 18개월 · 개봉 후 60일")).toBeVisible();
+
+  // 제조국·보관방법은 목 응답에서 비어 온다. 항목명만 남은 줄을 그리지 않는다
+  await expect(spec.getByText("제조국")).toHaveCount(0);
+  await expect(spec.getByText("보관방법")).toHaveCount(0);
+});
+
+test("제공고시 품명은 응답의 상품명을 쓴다", async ({ page }) => {
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "상품정보 제공고시" }).click();
+
+  await expect(page.getByText("품명 및 모델명")).toBeVisible();
+  // 배송·판매자·수입식품 여부·상담 전화는 응답에 자리가 없어 아직 고정 목데이터다
+  await expect(page.getByText("해당 없음")).toBeVisible();
+});
+
+test("없는 상품은 404 화면으로 간다", async ({ page }) => {
+  const response = await page.goto("/products/9999");
+
+  expect(response?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: NAME, level: 1 })).toHaveCount(0);
+});
 
 test("아이를 바꾸면 적합도가 그 아이 기준으로 바뀐다", async ({ page }) => {
   await page.goto(PATH);
@@ -96,21 +158,39 @@ test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
   );
 });
 
-test("장바구니를 누르면 옵션 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {
+test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {
   // 담기가 서버를 부른다. 실패하면 시트가 열린 채 남는 것이 의도된 동작이라 세워 둔다 (#316)
   await stubAddToCart(page);
   await page.goto(PATH);
 
   await page.getByRole("button", { name: "장바구니", exact: true }).click();
-  const sheet = page.getByRole("dialog", { name: "면역 지원 영양제 90정 옵션 선택" });
+  const sheet = page.getByRole("dialog", { name: `${NAME} 수량 고르기` });
   await expect(sheet).toBeVisible();
-  await expect(sheet.getByText("90정 (기본 구성)")).toBeVisible();
+  // 고를 옵션은 없다(#137). 남는 것은 지금 담는 것이 무엇인지 알리는 용량뿐이다
+  // 상품명에도 "90정"이 들어 있어 정확히 일치하는 것만 본다
+  await expect(sheet.getByText("90정", { exact: true })).toBeVisible();
 
-  await sheet.getByRole("button", { name: "면역 지원 영양제 90정 수량 하나 늘리기" }).click();
-  await sheet.getByRole("button", { name: "42,000원 장바구니 담기" }).click();
+  await sheet.getByRole("button", { name: `${NAME} 수량 하나 늘리기` }).click();
+  await sheet.getByRole("button", { name: "36,000원 장바구니 담기" }).click();
 
   await expect(sheet).toBeHidden();
   await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
+});
+
+// 타임딜 상품을 그냥 상품으로 담으면 딜가가 아니라 정가로 들어간다(#413).
+test("타임딜 상품은 딜 아이템 식별자로 담는다", async ({ page }) => {
+  const sent: string[] = [];
+  await page.route("**/api/v1/carts/items", (route) => {
+    sent.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 201, body: "" });
+  });
+  await page.goto("/products/101");
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  await page.getByRole("button", { name: "18,000원 장바구니 담기" }).click();
+
+  await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
+  expect(JSON.parse(sent[0])).toMatchObject({ itemType: "TIME_DEAL", itemId: 77 });
 });
 
 // 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
