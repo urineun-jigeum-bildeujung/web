@@ -22,13 +22,14 @@ export function PushMessageListener() {
   const enabled = useSyncExternalStore(subscribePushPreference, readPushEnabled, () => false);
 
   useEffect(() => {
-    if (!enabled) return;
-
     // 새 알림이 왔으니 알림함이 다시 받아야 한다. 토스트는 그 결과를 본 폴링 토스터가 띄운다
     const refresh = () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notification.all });
     };
+    // 앱 신호는 스위치와 무관하게 듣는다. 앱 토큰은 스위치를 꺼도 서버에 남아 신호가 계속 오는데,
+    // 그때도 종의 점과 알림함은 최신이어야 한다. 토스트 여부는 토스터가 스위치를 보고 정한다
     const unsubscribeNative = subscribeNativePushReceived(refresh);
+    if (!enabled) return unsubscribeNative;
 
     // 구독이 비동기로 걸리므로, 걸리기 전에 꺼지면 걸린 직후 바로 끊는다
     let cancelled = false;
