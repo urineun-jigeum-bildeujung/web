@@ -13,11 +13,27 @@ import {
   changeCartItemQuantity,
   removeCartItem,
   type Cart,
+  type CartItem,
   type CartItemRef,
 } from "./cart";
 
 /** 낙관적 갱신을 되돌릴 때 쓰는 직전 캐시 */
 type Rollback = { previous: Cart | undefined };
+
+/**
+ * 수량을 바꾼 줄. **합계(`subtotal`)도 같이 바꾼다.**
+ *
+ * 수량만 먼저 그리면 다시 받기 전까지 그 줄의 합계가 옛 값이라, 결제 화면처럼 합계를 더해 금액을
+ * 세는 곳이 수량과 다른 금액을 보인다 (#427). 합계는 장바구니 화면이 세는 방식과 같이
+ * `price × quantity`다. 살 수 없는 줄은 값이 `null`이라 그대로 둔다.
+ */
+function withQuantity(row: CartItem, quantity: number): CartItem {
+  return {
+    ...row,
+    quantity,
+    subtotal: row.price === null ? row.subtotal : row.price * quantity,
+  };
+}
 
 /**
  * 수량을 바꾸거나 줄을 뺀다.
@@ -47,17 +63,29 @@ export function useMutateCartItem() {
     }
   }
 
-  // 성공이든 실패든 서버가 가진 것으로 맞춘다. 재고 제한처럼 서버가 다르게 정할 수 있다
-  const settle = () => queryClient.invalidateQueries({ queryKey });
+  /**
+   * 성공이든 실패든 서버가 가진 것으로 맞춘다. 재고 제한처럼 서버가 다르게 정할 수 있다.
+   *
+   * **장바구니를 바꾸는 요청이 아직 날아가는 중이면 다시 받지 않는다.** 앞 요청의 재조회가 뒤
+   * 요청을 서버가 받기 전 값을 가져와, 먼저 그려 둔 숫자를 한 칸 되돌렸다가 다시 올렸다(3 → 2 → 3).
+   * 마지막 요청이 끝날 때 한 번만 맞춘다. 자기 자신은 이 시점에 아직 진행 중이라 1이다 —
+   * 찜 훅(`use-mutate-wishlist`)과 같은 방식이다 (#427)
+   */
+  const settle = () => {
+    if (queryClient.isMutating({ mutationKey: queryKey }) === 1) {
+      return queryClient.invalidateQueries({ queryKey });
+    }
+  };
 
   const quantity = useMutation({
+    mutationKey: queryKey,
     mutationFn: ({ item, delta }: { item: CartItemRef; delta: number }) =>
       changeCartItemQuantity(item, delta),
     onMutate: ({ item, delta }) =>
       applyNow((cart) => ({
         ...cart,
         items: cart.items.map((row) =>
-          cartItemKey(row) === cartItemKey(item) ? { ...row, quantity: row.quantity + delta } : row,
+          cartItemKey(row) === cartItemKey(item) ? withQuantity(row, row.quantity + delta) : row,
         ),
       })),
     onError: (_error, _variables, context) => rollback(context),
@@ -65,6 +93,7 @@ export function useMutateCartItem() {
   });
 
   const removal = useMutation({
+    mutationKey: queryKey,
     mutationFn: (item: CartItemRef) => removeCartItem(item),
     onMutate: (item) =>
       applyNow((cart) => ({
@@ -83,6 +112,7 @@ export function useMutateCartItem() {
    * 만지면 없는 줄을 고치려 든다. 대신 부르는 쪽이 `isAdding`으로 대기를 보인다 (#316).
    */
   const addition = useMutation({
+    mutationKey: queryKey,
     mutationFn: ({ item, quantity: count }: { item: CartItemRef; quantity: number }) =>
       addCartItem(item, count),
     onSettled: settle,
