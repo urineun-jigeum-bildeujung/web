@@ -7,7 +7,7 @@
 // 서버가 거는 조건이라 화면이 먼저 막아 주는 편이 낫다.
 //
 // ```
-// 배송완료 + 7일 이내      Order.java:147  DELIVERED && deliveredAt + 7일 > now
+// 배송완료 + 7일 이내      Order.isClaimableForReturn  DELIVERED && deliveredAt + 7일 > now
 // 품목 중복 금지            CreateClaimRequest.isItemsDistinct
 // 수량 ≤ 남은 수량          CLAIM_ITEM_QUANTITY_EXCEEDED
 // 진행 중인 신청 없음        CLAIM_ALREADY_IN_PROGRESS

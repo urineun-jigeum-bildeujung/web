@@ -157,7 +157,7 @@ export type OrderDetail = {
   /**
    * 배송이 끝난 시각. 끝나지 않았으면 `null`이다.
    *
-   * **반품·교환은 이 시각부터 7일 안에만 받는다.** 서버 `Order.isClaimable`이
+   * **반품·교환은 이 시각부터 7일 안에만 받는다.** 서버 `Order.isClaimableForReturn`이
    * `deliveredAt.plusDays(7).isAfter(now())`로 막는다 (#374).
    */
   deliveredAt: string | null;

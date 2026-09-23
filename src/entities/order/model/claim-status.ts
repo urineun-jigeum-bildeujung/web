@@ -47,7 +47,7 @@ export function claimableItems(items: OrderDetailItem[]): OrderDetailItem[] {
   return items.filter((item) => !hasActiveClaim(item) && item.effectiveQuantity > 0);
 }
 
-/** 반품·교환을 받는 기간. 기능명세서와 서버 `Order.isClaimable`이 같은 값이다 */
+/** 반품·교환을 받는 기간. 기능명세서와 서버 `Order.isClaimableForReturn`이 같은 값이다 */
 const CLAIM_DAYS = 7;
 
 /**

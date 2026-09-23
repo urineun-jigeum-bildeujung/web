@@ -104,7 +104,7 @@ test("모르는 값이면 문구를 만들지 않는다", () => {
 });
 
 /**
- * 서버 `Order.isClaimable`이 `deliveredAt.plusDays(7).isAfter(now())`로 막는다.
+ * 서버 `Order.isClaimableForReturn`이 `deliveredAt.plusDays(7).isAfter(now())`로 막는다.
  * 화면이 같이 막지 않으면 사유까지 다 적고 나서 거절당한다 (#374).
  */
 const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
