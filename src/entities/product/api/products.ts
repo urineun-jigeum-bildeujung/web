@@ -95,14 +95,103 @@ export function searchProducts(params: {
   }));
 }
 
-/** 백엔드 `ProductDetailResponse` 중 요약에 쓰는 부분만 */
+/** 백엔드 `AllergenInfo` 그대로. `severity`는 `CRITICAL`·`SEVERE`·`MODERATE` 셋이다 */
+type AllergenInfo = {
+  code: string;
+  displayName: string;
+  severity: string;
+};
+
+/** 백엔드 `ProductDetailResponse` 그대로 */
 type ProductDetailApiResponse = {
   productId: number;
+  /** 타임딜 진행 중일 때만 온다 */
+  timeDealItemId: number | null;
   summary: {
     images: string[];
     productName: string;
+    price: number;
+    originalPrice: number;
+    discountRate: number;
+    avgRating: number;
+    reviewCount: number;
+    soldOut: boolean;
+  };
+  detailInfo: {
+    manufacturer: string;
+    brandName: string;
+    originCountry: string;
+    netQuantityValue: number;
+    netQuantityUnit: string;
+    ingredients: string[];
+    feedingTarget: string;
+    targetBreedSize: string;
+    targetAgeGroup: string;
+    targetSpecies: string[];
+    feedingMethod: string;
+    allergens: AllergenInfo[];
+    cautions: string[];
+    consumptionPeriodDisplay: string;
+    shelfLifeAfterOpeningDays: number;
+    storageMethod: string;
   };
 };
+
+/** 상품 상세의 스펙 표가 쓰는 값. 표의 항목명은 화면이 붙인다 */
+export type ProductDetailInfo = ProductDetailApiResponse["detailInfo"];
+
+/**
+ * 상품 상세 화면이 그대로 쓰는 모델.
+ *
+ * **`cautions`를 버리지 않고 담아 둔다.** 지금 화면에 그릴 자리가 없지만 경고·추천 제외로
+ * 쓰기로 되어 있는 값이다 (#414). 여기서 떨어뜨리면 그 작업이 이 레이어부터 다시 열어야 한다.
+ */
+export type ProductDetail = {
+  productId: number;
+  /**
+   * 타임딜 진행 중이면 그 딜 아이템 id. 장바구니에 담을 때 식별자가 달라진다 —
+   * 일반 상품은 `NORMAL`+`productId`, 타임딜은 `TIME_DEAL`+`timeDealItemId`다.
+   */
+  timeDealItemId: number | null;
+  images: string[];
+  name: string;
+  price: number;
+  originalPrice: number;
+  /** 서버가 계산해 준 값을 그대로 쓴다. 화면에서 두 금액으로 다시 계산하지 않는다 */
+  discountRate: number;
+  rating: number;
+  reviewCount: number;
+  soldOut: boolean;
+  detail: ProductDetailInfo;
+};
+
+function toProductDetail(response: ProductDetailApiResponse): ProductDetail {
+  return {
+    productId: response.productId,
+    timeDealItemId: response.timeDealItemId,
+    images: response.summary.images,
+    name: response.summary.productName,
+    price: response.summary.price,
+    originalPrice: response.summary.originalPrice,
+    discountRate: response.summary.discountRate,
+    rating: response.summary.avgRating,
+    reviewCount: response.summary.reviewCount,
+    soldOut: response.summary.soldOut,
+    detail: response.detailInfo,
+  };
+}
+
+/**
+ * 상품 한 건의 상세. 공개 엔드포인트라 토큰을 붙이지 않는다.
+ *
+ * 없는 상품이면 404가 오고 `apiRequest`가 `ApiError`를 던진다 — 라우트가 받아
+ * `notFound()`로 넘긴다.
+ */
+export function getProductDetail(productId: string): Promise<ProductDetail> {
+  return apiRequest<ProductDetailApiResponse>(`/products/${productId}`, { auth: false }).then(
+    toProductDetail,
+  );
+}
 
 /** 리뷰 작성 화면의 상품 줄처럼 이름과 대표 사진만 필요한 자리가 쓴다 */
 export type ProductSummary = {
@@ -113,18 +202,19 @@ export type ProductSummary = {
 };
 
 /**
- * 상품 한 건의 요약. 상세 응답에서 이름과 첫 사진만 옮긴다.
+ * 상품 한 건의 요약. 상세를 받아 이름과 첫 사진만 남긴다.
+ *
+ * **상세와 같은 요청이다.** 따로 부르면 같은 엔드포인트를 두 벌로 다루게 되고,
+ * `QUERY_KEYS.product.detail`을 이미 공유하고 있어 캐시도 한 자리다.
  *
  * 옵션명·재구매 횟수 같은 값은 응답에 없다. 화면이 그 자리를 비워 두는 이유다.
  */
 export function getProductSummary(productId: string): Promise<ProductSummary> {
-  return apiRequest<ProductDetailApiResponse>(`/products/${productId}`, { auth: false }).then(
-    (response) => ({
-      productId: response.productId,
-      name: response.summary.productName,
-      ...(response.summary.images[0] && { imageUrl: response.summary.images[0] }),
-    }),
-  );
+  return getProductDetail(productId).then((product) => ({
+    productId: product.productId,
+    name: product.name,
+    ...(product.images[0] && { imageUrl: product.images[0] }),
+  }));
 }
 
 /** 백엔드 `ProductListResponse` 그대로. 검색과 달리 `totalCount`가 없다 */
