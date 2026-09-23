@@ -52,11 +52,11 @@ test("켜 둔 기기에서는 온 푸시로 알림 캐시를 비우고, 내려�
   expect(push.unsubscribe).toHaveBeenCalledTimes(1);
 });
 
-// 앱(웹뷰) 안에서는 브라우저 권한이 없어도 앱이 대신 받아 준다(#403)
-test("앱이 보낸 수신 신호로도 알림 캐시를 비운다", () => {
+// 앱(웹뷰) 안에서는 브라우저 권한이 없어도 앱이 대신 받아 준다(#403).
+// 스위치를 꺼도 앱 토큰은 서버에 남아 신호가 오므로, 꺼진 채로도 종의 점·알림함은 갱신돼야 한다
+test("앱이 보낸 수신 신호로는 스위치가 꺼져 있어도 알림 캐시를 비운다", () => {
   push.granted = false;
   window.golajuNative = { pushSupported: true };
-  window.localStorage.setItem("push-enabled", "1");
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   queryClient.setQueryData(QUERY_KEYS.notification.list(), []);
   const view = render(
@@ -67,6 +67,8 @@ test("앱이 보낸 수신 신호로도 알림 캐시를 비운다", () => {
 
   window.dispatchEvent(new CustomEvent("golaju:push-received"));
   expect(queryClient.getQueryState(QUERY_KEYS.notification.list())?.isInvalidated).toBe(true);
+  // 브라우저 푸시 구독은 스위치를 켜야 건다
+  expect(push.subscribe).not.toHaveBeenCalled();
 
   view.unmount();
   delete window.golajuNative;
