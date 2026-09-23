@@ -14,8 +14,8 @@ import { useMutateWishlist } from "./use-mutate-wishlist";
 import type { WishlistItem } from "./wishlist";
 
 const ITEMS: WishlistItem[] = [
-  { productId: 1, name: "사료", thumbnailUrl: null, price: 10000 },
-  { productId: 2, name: "간식", thumbnailUrl: null, price: 5000 },
+  { productId: 1, name: "사료", thumbnailUrl: null, price: 10000, originalPrice: 12000 },
+  { productId: 2, name: "간식", thumbnailUrl: null, price: 5000, originalPrice: 5000 },
 ];
 
 function setup() {
