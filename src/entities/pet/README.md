@@ -21,7 +21,8 @@
 | `api/use-query-pets.ts` | 아이 목록을 가져오는 훅 |
 | `api/use-query-pet-detail.ts` | 고른 아이의 상세를 가져오는 훅 |
 | `api/use-mutate-update-pet.ts` | 고친 값을 저장하는 훅. 새 사진이 있으면 `shared/api/upload-image`로 올린 뒤 `image`를 실어 보낸다 |
-| `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다 (`mypa_021`, 리뷰 작성, 메인 홈화면) |
+| `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다. `selectedIds`·`onToggle`을 주면 여러 마리를 고르는 체크박스 모드(리뷰 작성) (`mypa_021`, 리뷰 작성, 메인 홈화면) |
+| `ui/pet-switcher.test.tsx` | 단일 선택은 라디오, 다중 선택은 체크박스로 읽히고 각각 고른 아이를 알리는지 |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다. `onSubmit`을 주면 서버에 보내고 없으면 화면만 완료로 바꾼다 |
 | `ui/product-feedback-sheet.test.tsx` | 답변·보류가 무엇으로 나가는지, 실패하면 완료로 안 가는지 |
 | `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터 |

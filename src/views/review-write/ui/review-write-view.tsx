@@ -160,7 +160,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
     () => getReviewDraft(productId),
     getReviewDraftOnServer,
   );
-  const { score, days, responses, petId, text } = draft;
+  const { score, days, responses, petIds, text } = draft;
   const patch = (next: Partial<ReviewDraft>) => setReviewDraft(productId, { ...draft, ...next });
   // 사진은 File이라 기기에 남기지 않는다. 다시 고르는 것이 한 번의 탭이다
   const [photos, setPhotos] = useState<File[]>([]);
@@ -187,7 +187,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   const ratingReady = score > 0 && days.length > 0 && answeredAll(RATING_STEP_QUESTIONS);
   const ready =
     ratingReady &&
-    petId !== undefined &&
+    petIds.length > 0 &&
     text.trim().length >= MIN_TEXT &&
     answeredAll([HANDLING_QUESTION]);
 
@@ -352,10 +352,17 @@ function ReviewWriteForm({ productId }: { productId: string }) {
               <div className="px-5 pt-2 pb-4">
                 {/* 목록을 못 받으면 아이를 고를 수 없어 등록이 막힌다. 빈 줄로 숨기지 않고 알린다 */}
                 {pets ? (
+                  // 한 상품을 두 아이에게 함께 먹이기도 한다. 여러 마리를 고르고 한 마리 이상이면 등록된다(#391)
                   <PetSwitcher
                     pets={pets}
-                    selectedId={petId}
-                    onSelect={(id) => patch({ petId: id })}
+                    selectedIds={petIds}
+                    onToggle={(id) =>
+                      patch({
+                        petIds: petIds.includes(id)
+                          ? petIds.filter((picked) => picked !== id)
+                          : [...petIds, id],
+                      })
+                    }
                     withNames
                     className="gap-4 p-0"
                   />
