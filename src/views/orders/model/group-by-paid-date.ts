@@ -9,7 +9,12 @@ import type { OrderSummary } from "@/entities/order";
 import { toDisplayDayKey } from "@/shared/lib/date/display-date";
 
 export type PaidDateGroup = {
-  /** 한국 기준 하루 키. 읽을 수 없는 시각이면 그 주문만 따로 묶이는 자리 키다 */
+  /**
+   * 묶음마다 다른 키. 화면이 목록 `key`로 쓴다.
+   *
+   * **날짜만으로는 겹친다.** 떨어진 같은 날은 따로 묶이므로(아래 함수) 둘이 같은 날짜를 갖는다.
+   * 그래서 묶음 첫 주문 번호를 붙인다 — 다음 쪽이 이어 붙어도 첫 주문은 그대로라 키가 바뀌지 않는다
+   */
   key: string;
   /** 머리에 적을 날짜(`26.09.03`). 읽을 수 없으면 `null`이라 머리를 비운다 */
   day: string | null;
@@ -33,7 +38,7 @@ export function groupByPaidDate(orders: OrderSummary[]): PaidDateGroup[] {
       last.orders.push(order);
       continue;
     }
-    groups.push({ key: day ?? `order-${order.orderId}`, day, orders: [order] });
+    groups.push({ key: `${day ?? "unknown"}-${order.orderId}`, day, orders: [order] });
   }
 
   return groups;

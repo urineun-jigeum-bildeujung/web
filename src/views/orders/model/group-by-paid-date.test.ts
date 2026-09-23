@@ -50,6 +50,8 @@ test("붙어 있는 같은 날만 묶는다", () => {
   ]);
 
   expect(ids(groups)).toEqual([[3], [2], [1]]);
+  // 떨어진 같은 날 둘이 같은 키를 가지면 화면의 목록 key가 겹친다 (#407 리뷰)
+  expect(new Set(groups.map((group) => group.key)).size).toBe(3);
 });
 
 // 날짜를 지어내느니 머리를 비운다. 읽을 수 없는 주문끼리도 묶지 않는다
