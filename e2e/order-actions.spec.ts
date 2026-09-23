@@ -17,7 +17,7 @@ test("구매 확정을 누르면 서버까지 가고 확정됐다고 알린다",
 
   // 되돌릴 수 없는 동작이라 무엇을 확정하는지 보여주는 시트를 한 번 거친다
   await page
-    .getByRole("button", { name: /구매 확정/ })
+    .getByRole("button", { name: /구매확정/ })
     .first()
     .click();
   await expect(page.getByText("무사히 잘 도착했나요?")).toBeVisible();
@@ -35,7 +35,7 @@ test("나중에 할게요를 누르면 확정하지 않고 닫는다", async ({ 
 
   await page.goto("/mypage/orders");
   await page
-    .getByRole("button", { name: /구매 확정/ })
+    .getByRole("button", { name: /구매확정/ })
     .first()
     .click();
   await page.getByRole("button", { name: "나중에 할게요" }).click();

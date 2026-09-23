@@ -1,6 +1,6 @@
 // 주문·배송 확인 테스트. 서버가 준 주문을 그리는지, 상태별 행동이 맞는지,
 // 모르는 상태 값이 왔을 때 조용히 엉뚱한 뱃지를 붙이지 않는지 본다.
-// 구성은 2026-09-23 시안(mypa_061, #405)을 따른다 — 탭 둘, 주문마다 결제일, 상품마다 뱃지·버튼.
+// 구성은 2026-09-23 시안(mypa_061, #405)을 따른다 — 탭 둘, 결제일 묶음 아래 결제 시각, 상품마다 뱃지·버튼.
 //
 // **목이 서버처럼 상태를 든다.** 구매 확정·주문 취소는 끝난 뒤 목록을 다시 조회해 맞추므로,
 // 목이 늘 같은 값을 돌려주면 확정한 주문이 그대로 되살아나 통과 여부가 뒤집힌다.
@@ -82,21 +82,36 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("주문마다 결제일과 시각을 머리에 달고 상품을 보여준다", async () => {
+// PD 메모 — 최상위는 결제일, 그 다음은 결제 시간으로 나뉜다 (3326:33463)
+test("같은 날 결제한 주문은 결제일 하나 아래 결제 시각으로 나뉜다", async () => {
   renderView();
 
   expect(await screen.findByText("테스트 상품 1")).toBeDefined();
   // ISO로 오는 값을 시안 형식으로 옮긴다. 03:00Z는 한국 12:00이다
-  expect(screen.getAllByRole("heading", { name: "결제일 26.09.15" })).toHaveLength(3);
+  expect(screen.getAllByRole("heading", { name: "결제일 26.09.15" })).toHaveLength(1);
   expect(screen.getAllByText("09.15 12:00")).toHaveLength(3);
+  expect(screen.getAllByRole("link", { name: "주문 상세" })).toHaveLength(3);
+});
+
+// 결제일 사이에만 구분선이 들어간다 (3326:33455)
+test("결제일이 다르면 머리를 따로 달고 사이에 구분선을 넣는다", async () => {
+  served = [
+    makeOrder(1, "PAID", { orderedAt: "2026-09-15T03:00:00.000Z" }),
+    makeOrder(2, "PAID", { orderedAt: "2026-09-14T03:00:00.000Z" }),
+  ];
+  renderView();
+
+  expect(await screen.findByRole("heading", { name: "결제일 26.09.15" })).toBeDefined();
+  expect(screen.getByRole("heading", { name: "결제일 26.09.14" })).toBeDefined();
+  expect(screen.getAllByRole("separator")).toHaveLength(1);
 });
 
 // 결제 직후 주문도 배송준비중으로 보인다. 시안에 "결제완료" 뱃지가 없다 (#297)
-test("결제 직후 주문에는 주문 취소가, 배송완료에는 구매 확정하기가 나온다", async () => {
+test("결제 직후 주문에는 주문 취소가, 배송완료에는 구매확정 하기가 나온다", async () => {
   renderView();
 
   expect(await screen.findByRole("button", { name: "주문 취소" })).toBeDefined();
-  expect(screen.getByRole("button", { name: "구매 확정하기" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "구매확정 하기" })).toBeDefined();
   expect(screen.getByText("배송준비중")).toBeDefined();
   expect(screen.queryByText("결제완료")).toBeNull();
   // 장바구니 담기는 상태와 상관없이 상품마다 붙는다
@@ -122,7 +137,7 @@ test("배송 중이면 배송 위치 보기가 나오고 누르면 준비 중이
 test("구매 확정은 서버를 부르고 끝난 뒤 목록에서 그 버튼이 사라진다", async () => {
   renderView();
 
-  fireEvent.click(await screen.findByRole("button", { name: "구매 확정하기" }));
+  fireEvent.click(await screen.findByRole("button", { name: "구매확정 하기" }));
   const sheet = screen.getByRole("dialog", { name: "무사히 잘 도착했나요?" });
   // 무엇을 확정하는지 보여 준다
   expect(sheet.textContent).toContain("테스트 상품 2");
@@ -130,7 +145,7 @@ test("구매 확정은 서버를 부르고 끝난 뒤 목록에서 그 버튼이
 
   // 로컬 배열만 바꾸면 새로고침에 되돌아온다. 서버를 부른 뒤 다시 조회해 맞춘다
   await waitFor(() => expect(confirmOrder).toHaveBeenCalledWith(2));
-  await waitFor(() => expect(screen.queryByRole("button", { name: "구매 확정하기" })).toBeNull());
+  await waitFor(() => expect(screen.queryByRole("button", { name: "구매확정 하기" })).toBeNull());
 });
 
 test("주문을 취소하면 서버를 부르고 그 주문이 목록에서 사라진다", async () => {
@@ -173,7 +188,7 @@ test("명세에 없는 상태 값이 오면 뱃지와 행동 버튼을 내보내
   expect(await screen.findByText("테스트 상품 9")).toBeDefined();
   expect(screen.queryByText("배송준비중")).toBeNull();
   expect(screen.queryByRole("button", { name: "주문 취소" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "구매 확정하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "구매확정 하기" })).toBeNull();
   // 상세로 가는 길은 남는다
   expect(screen.getByRole("link", { name: "주문 상세" })).toBeDefined();
 });
@@ -189,7 +204,7 @@ test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async ()
   );
 
   renderView();
-  fireEvent.click(await screen.findByRole("button", { name: "구매 확정하기" }));
+  fireEvent.click(await screen.findByRole("button", { name: "구매확정 하기" }));
   fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
 
   await waitFor(() =>
