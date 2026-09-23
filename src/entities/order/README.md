@@ -17,7 +17,7 @@
 | `model/order-status.test.ts` | 아는 값만 옮기는지, 모르는 값에 `null`을 주는지 |
 | `ui/order-status-badge.tsx` | 주문 상태 뱃지 넷. 배송준비중·배송중·배송완료·구매확정 — **결제완료는 따로 두지 않는다**, 서버 `PAID`·`PREPARING`을 한 단계로 묶었다 (#297). 색은 공용 `Badge`의 톤 셋 (#405) |
 | `ui/order-status-badge.test.tsx` | 상태마다 문구가 있는지, 상태마다 시안의 색을 쓰는지 |
-| `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 80 + 이름 / 수량 / 금액. 금액은 없을 수 있다(목록 응답) |
+| `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 80 + 이름 / 수량 / 금액. 금액은 넘겨받을 때만 그린다 — 목록은 백엔드 #141부터 준다 (#418) |
 | `ui/order-product-thumbnail.tsx` | 주문 상품 썸네일 80. 이미지가 없으면 회색 칸에 아이콘. 상품 줄과 반품 신청 수량 카드가 함께 쓴다 (#408) |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다. 지금은 주문 완료만 쓴다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
