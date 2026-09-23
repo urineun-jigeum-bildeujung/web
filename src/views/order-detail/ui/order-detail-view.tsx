@@ -1,8 +1,8 @@
 // 주문 상세. 결제일·주문 상품·결제상세·배송지 정보를 카드로 나눠 보여준다.
-// UI 시안 기준(mypa_161_주문상세 3324:37275, mypa_161_주문상세_배송완료 3324:36679)이다 (#405).
+// UI 시안 기준(mypa_161_준비중_주문상세 3324:37275, mypa_161_주문상세_배송완료 3324:36679)이다 (#405).
 //
 // 회색 바닥 위에 흰 카드 넷이 8px 간격으로 놓이고, 그 아래에 1:1 문의 안내가 온다.
-// 배송이 끝난 주문이면 맨 아래에 반품·교환 버튼이 붙는다.
+// 맨 아래에는 배송 전이면 주문 취소(#410), 배송이 끝났으면 반품·교환 버튼이 붙는다.
 //
 // **카드 머리를 이 화면에서 직접 그린다.** 결제상세·배송지 블록은 주문 완료(`paym_002`)와
 // 함께 쓰던 것인데, 2026-09-23 시안부터 제목·결제 일시·배송지 항목 이름의 글자가 주문 완료와
@@ -30,6 +30,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
+import { CancelOrderAction } from "./cancel-order-action";
 import { ClaimActions } from "./claim-actions";
 import { OrderDetailSkeleton } from "./order-detail-skeleton";
 
@@ -73,6 +74,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
       <PageHeader title="주문 내역" />
 
       <main className="flex flex-1 flex-col gap-4 px-5 pt-4 pb-8">
+        {/* 처음 그릴 때라 뼈대를 둔다. 버튼의 대기 표시(LoadingSwap)는 취소 버튼(CancelOrderAction)이 든다 */}
         {isLoading && <OrderDetailSkeleton />}
 
         {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다 */}
@@ -210,6 +212,11 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
             {status === "delivered" &&
               isWithinClaimPeriod(order.deliveredAt) &&
               claimableItems(order.items).length > 0 && <ClaimActions orderId={order.orderId} />}
+
+            {/* 배송이 시작되기 전까지만 취소할 수 있다. 백엔드 전이 규칙도 `PAID`·`PREPARING`에서만
+                취소를 허용하는데, 화면은 그 둘을 한 단계로 묶는다. 취소는 주문 전체라 목록이 아니라
+                주문 전체가 보이는 이 자리에 둔다 — PD 시안(mypa_161_준비중_주문상세, #410) */}
+            {status === "preparing" && <CancelOrderAction orderId={order.orderId} />}
           </>
         )}
       </main>

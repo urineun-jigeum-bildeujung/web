@@ -2,9 +2,11 @@
 // UI 시안 기준(mypa_061 3324:36866 한 건 · 3324:36871 상품 하나 · 3324:36887 action_button)이다 (#405).
 //
 // **상태와 행동은 상품마다 그리지만 서버에서는 주문 단위다.** 목록 응답에 상품별 상태가 없고
-// 취소·구매 확정도 주문에 걸려 있어, 같은 주문의 상품은 늘 같은 뱃지를 달고 어느 줄에서
-// "주문 취소"를 눌러도 주문 전체가 취소된다. PD팀은 **상품마다 따로 취소하는 것이 맞다**고
-// 답했다(2026-09-23). 서버에 상품 단위 취소가 없어 백엔드 요청 대상이다.
+// 구매 확정도 주문에 걸려 있어, 같은 주문의 상품은 늘 같은 뱃지를 단다.
+//
+// **주문 취소는 여기 없다.** 서버는 주문 전체만 취소하는데(PM 검토까지 끝난 제약, 2026-09-23
+// 백엔드 답) 상품마다 버튼이 있으면 한 상품만 취소되는 줄 안다. PD팀이 취소를 주문 상세 맨
+// 아래로 옮겼고 목록의 배송준비중 상품에는 "장바구니 담기"만 남겼다 (#410).
 
 import Link from "next/link";
 
@@ -22,13 +24,12 @@ const ACTION_CLASS = "h-10 flex-1 rounded-lg text-label-bold-14";
 
 type OrderEntryProps = {
   order: OrderSummary;
-  onCancel: (orderId: number) => void;
   onConfirm: (orderId: number) => void;
   onTrack: () => void;
   onReorder: () => void;
 };
 
-export function OrderEntry({ order, onCancel, onConfirm, onTrack, onReorder }: OrderEntryProps) {
+export function OrderEntry({ order, onConfirm, onTrack, onReorder }: OrderEntryProps) {
   const status = toOrderStatus(order.orderStatus);
   // **목록에는 결제 시각이 없어 주문 시각을 쓴다.** 결제는 주문을 만든 직후라 같다.
   // 결제 시각(`payment.paidAt`)은 상세 응답에만 온다
@@ -58,17 +59,6 @@ export function OrderEntry({ order, onCancel, onConfirm, onTrack, onReorder }: O
             />
 
             <div className="flex gap-2">
-              {/* 배송이 시작되기 전까지만 취소할 수 있다. 백엔드 전이 규칙도 `PAID`·`PREPARING`에서만
-                  취소를 허용하는데, 화면은 그 둘을 한 단계로 묶는다 */}
-              {status === "preparing" && (
-                <Button
-                  variant="secondary"
-                  className={ACTION_CLASS}
-                  onClick={() => onCancel(order.orderId)}
-                >
-                  주문 취소
-                </Button>
-              )}
               {/* 시안은 활성이지만 택배사 연동 전이라 갈 곳이 없다. 준비중임을 알린다 */}
               {status === "shipping" && (
                 <Button variant="secondary" className={ACTION_CLASS} onClick={onTrack}>

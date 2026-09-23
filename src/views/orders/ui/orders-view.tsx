@@ -1,5 +1,7 @@
 // 주문·배송 확인. "주문내역"·"취소·반품·교환" 두 탭이고, 주문내역은 주문마다 상품 줄을 세운다.
-// UI 시안 기준(mypa_061 3324:36861, mypa_061_구매확정_시트 3324:36993, mypa_061_주문취소_모달 3324:37141)이다 (#405).
+// UI 시안 기준(mypa_061 3324:36861, mypa_061_구매확정_시트 3324:36993)이다 (#405).
+//
+// **주문 취소는 여기 없다.** 서버가 주문 전체만 취소해 PD팀이 취소를 주문 상세 맨 아래로 옮겼다 (#410).
 
 "use client";
 
@@ -10,14 +12,6 @@ import { toast } from "sonner";
 import { OrderProductRow, useMutateOrder, useQueryOrders } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
-import { cn } from "@/shared/lib/utils";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogTitle,
-} from "@/shared/ui/alert-dialog";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { DrawerDescription, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
@@ -37,22 +31,21 @@ import { useLoadMore } from "./use-load-more";
 const TABS = ["orders", "claims"] as const;
 type Tab = (typeof TABS)[number];
 
-/** 시트·확인창의 action_button. 40px에 굵은 14px, 둘이 같은 폭으로 나눈다 (3324:37140·3324:37274) */
+/** 시트의 action_button. 40px에 굵은 14px, 둘이 같은 폭으로 나눈다 (3324:37140) */
 const DIALOG_BUTTON = "h-10 flex-1 rounded-lg text-label-bold-14";
 
-/** 주문내역 탭. 받는 중 · 실패 · 비어 있음 · 목록과, 목록에서 여는 시트·확인창을 든다 */
+/** 주문내역 탭. 받는 중 · 실패 · 비어 있음 · 목록과, 목록에서 여는 구매확정 시트를 든다 */
 function OrderHistory() {
   const { orders, error, isLoading, hasNext, loadNext, isLoadingNext, nextError } =
     useQueryOrders();
-  const { confirm, cancel, confirmingId, cancelingId } = useMutateOrder();
+  const { confirm, confirmingId } = useMutateOrder();
 
   // 목록 끝이 보이면 다음 쪽을 가져온다. 가져오는 중이거나 방금 실패했으면 멈춘다 —
   // 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다
   const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext && !nextError);
 
-  // 어느 주문을 확정·취소할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
+  // 어느 주문을 확정할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
   const [askingConfirmId, setAskingConfirmId] = useState<number | null>(null);
-  const [askingCancelId, setAskingCancelId] = useState<number | null>(null);
   const [preparing, setPreparing] = useState<AppMessageCode | null>(null);
 
   const list = orders ?? [];
@@ -97,7 +90,6 @@ function OrderHistory() {
                     <OrderEntry
                       key={order.orderId}
                       order={order}
-                      onCancel={setAskingCancelId}
                       onConfirm={setAskingConfirmId}
                       onTrack={() => setPreparing(APP_MESSAGE_CODE.order.deliveryTrackingPreparing)}
                       onReorder={() => setPreparing(APP_MESSAGE_CODE.order.reorderPreparing)}
@@ -195,74 +187,6 @@ function OrderHistory() {
           </Button>
         </div>
       </BottomSheet>
-
-      {/* 주문 취소는 되돌릴 수 없어 확인 창으로 막는다 */}
-      <AlertDialog
-        open={askingCancelId !== null}
-        // 시트와 같은 이유로 보내는 중에는 닫히지 않는다 (#293 리뷰)
-        onOpenChange={(open) => {
-          if (!open && cancelingId === null) {
-            setAskingCancelId(null);
-          }
-        }}
-      >
-        <AlertDialogContent
-          className="rounded-2xl"
-          // Escape는 `onOpenChange`를 거치지 않고 바로 닫는 경로라 따로 막는다
-          onEscapeKeyDown={(event) => {
-            if (cancelingId !== null) {
-              event.preventDefault();
-            }
-          }}
-        >
-          {/* 제목과 설명은 4px로 붙는다. 기본 Header는 모바일에서 가운데 정렬이라 쓰지 않는다 */}
-          <div className="flex flex-col gap-1">
-            <AlertDialogTitle className="text-title-bold-18 text-foreground">
-              주문을 취소할까요?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-body-medium-14 break-keep text-text-body-secondary">
-              결제하신 금액은 안전하게 환불 처리돼요.
-            </AlertDialogDescription>
-          </div>
-          {/* 기본 Footer는 회색 띠를 두르는데 시안은 카드 안에 버튼만 놓는다 */}
-          <div className="flex gap-2">
-            <AlertDialogCancel
-              variant="secondary"
-              className={DIALOG_BUTTON}
-              disabled={cancelingId !== null}
-            >
-              닫기
-            </AlertDialogCancel>
-            {/* **`AlertDialogAction`을 쓰지 않는다.** 그쪽은 버튼 모양을 `asChild`로 얹어 클래스를
-                겹칠 때 충돌 정리를 거치지 않아, 빨간 바탕을 줘도 기본 진한 바탕이 이긴다. 누르면
-                닫히는 기본 동작도 여기서는 막아야 해서(서버가 끝날 때까지 열어 둔다) 쓸 까닭이 없다.
-                시안의 button/bg/danger(3324:37274) — 되돌릴 수 없는 동작이라 빨간색이다 */}
-            <Button
-              className={cn(
-                DIALOG_BUTTON,
-                "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-              )}
-              disabled={cancelingId !== null}
-              onClick={async () => {
-                if (askingCancelId === null) {
-                  return;
-                }
-                try {
-                  await cancel(askingCancelId);
-                  setAskingCancelId(null);
-                  toast.success("주문을 취소했어요");
-                } catch {
-                  // 실패 알림은 MutationCache.onError가 맡는다
-                }
-              }}
-            >
-              <LoadingSwap loading={cancelingId !== null} label="주문을 취소하는 중">
-                주문 취소하기
-              </LoadingSwap>
-            </Button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <PreparingDialog code={preparing} onClose={() => setPreparing(null)} />
     </>

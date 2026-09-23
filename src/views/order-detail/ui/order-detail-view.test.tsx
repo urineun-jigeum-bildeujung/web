@@ -1,15 +1,20 @@
 // 주문 상세 테스트. 서버가 준 주문을 그리는지, 응답에 없어 계산해 만드는 값이 맞는지,
-// 배송완료일 때만 반품·교환으로 갈 수 있는지 본다. 구성은 2026-09-23 시안(mypa_161, #405)을 따른다.
+// 배송 전에만 주문을 취소하고 배송완료일 때만 반품·교환으로 갈 수 있는지 본다.
+// 구성은 2026-09-23 시안(mypa_161, #405·#410)을 따른다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
-const { getOrderDetail } = vi.hoisted(() => ({ getOrderDetail: vi.fn() }));
+const { getOrderDetail, cancelOrder } = vi.hoisted(() => ({
+  getOrderDetail: vi.fn(),
+  cancelOrder: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
 vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
   getOrderDetail,
+  cancelOrder,
 }));
 
 import type { OrderDetail } from "@/entities/order";
@@ -308,4 +313,60 @@ test("주문 번호가 숫자가 아니면 서버를 부르지 않는다", async
 
   expect(await screen.findByText("주문을 찾을 수 없어요")).toBeDefined();
   await waitFor(() => expect(getOrderDetail).not.toHaveBeenCalled());
+});
+
+// 서버는 주문 전체만 취소한다. PD가 취소를 목록의 상품마다가 아니라 주문 전체가 보이는
+// 상세 맨 아래로 옮겼다(mypa_161_준비중_주문상세 3324:37275, #410)
+test("배송 전 주문이면 맨 아래 주문 취소하기로 확인을 거쳐 주문을 취소한다", async () => {
+  cancelOrder.mockImplementation(async () => {
+    // 취소가 끝나면 다시 받은 상세는 취소된 주문이다
+    getOrderDetail.mockResolvedValue(makeDetail({ orderStatus: "CANCELLED" }));
+  });
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "주문 취소하기" }));
+  expect(screen.getByText("주문을 취소할까요?")).toBeDefined();
+  // 모달이 열리면 뒤의 버튼은 가려져 모달 안의 확인 버튼만 잡힌다
+  fireEvent.click(screen.getByRole("button", { name: "주문 취소하기" }));
+
+  await waitFor(() => expect(cancelOrder).toHaveBeenCalledWith(1));
+  // 취소된 주문에는 다시 취소할 길이 없다
+  await waitFor(() => expect(screen.queryByRole("button", { name: "주문 취소하기" })).toBeNull());
+});
+
+// 서버 전이 규칙이 `PAID`·`PREPARING`에서만 취소를 받는다. 배송이 시작되면 눌러 봐야 409다
+test.each(["SHIPPING", "DELIVERED", "CONFIRMED"])(
+  "%s 주문에는 주문 취소하기가 없다",
+  async (orderStatus) => {
+    getOrderDetail.mockResolvedValue(makeDetail({ orderStatus, deliveredAt: daysAgo(1) }));
+    render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+    expect(await screen.findByText("ORD-TEST-DETAIL-01")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "주문 취소하기" })).toBeNull();
+  },
+);
+
+// 시안은 되돌릴 수 없는 취소를 빨간 버튼으로 둔다. 확인창 기본 버튼(`AlertDialogAction`)에
+// 빨간 바탕을 얹었더니 진한 바탕 클래스가 함께 남아 진한 색으로 그려졌다 (#405)
+test("주문 취소 확인 버튼은 빨간 바탕 하나만 쓴다", async () => {
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "주문 취소하기" }));
+  const confirm = screen.getByRole("button", { name: "주문 취소하기" });
+  expect(confirm.className).toContain("bg-destructive");
+  expect(confirm.className).not.toContain("bg-primary");
+});
+
+// 보내는 중에 모달이 닫히면 요청만 남아 끝났을 때 취소됐는지 알 수 없다 (#293 리뷰)
+test("취소를 보내는 동안에는 모달을 닫을 수 없다", async () => {
+  cancelOrder.mockImplementation(() => new Promise(() => {}));
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "주문 취소하기" }));
+  fireEvent.click(screen.getByRole("button", { name: "주문 취소하기" }));
+  await waitFor(() => expect(cancelOrder).toHaveBeenCalled());
+
+  fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+  expect(screen.getByText("주문을 취소할까요?")).toBeDefined();
+  expect(screen.getByRole("button", { name: "닫기" }).hasAttribute("disabled")).toBe(true);
 });
