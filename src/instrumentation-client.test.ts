@@ -13,6 +13,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.resetModules();
   vi.clearAllMocks();
+  vi.restoreAllMocks();
 });
 
 /** 진입점은 불러오는 순간 한 번 돈다. 값을 채운 뒤 새로 불러온다 */
@@ -32,6 +33,20 @@ test("설정이 없으면 SDK를 불러오지 않는다", async () => {
 
 test("설정이 있으면 SDK를 불러와 켠다", async () => {
   await boot("https://example.test/collect", "key");
+
+  await vi.waitFor(() => expect(startFaro).toHaveBeenCalledTimes(1));
+});
+
+// 곧바로 부르면 첫 화면의 스크립트·이미지와 대역을 다툰다. 페이지가 다 뜬 뒤에 받는다 (#396 리뷰)
+test("페이지가 다 뜨기 전에는 SDK를 불러오지 않는다", async () => {
+  const readyState = vi.spyOn(document, "readyState", "get").mockReturnValue("loading");
+
+  await boot("https://example.test/collect", "key");
+  await vi.dynamicImportSettled();
+  expect(startFaro).not.toHaveBeenCalled();
+
+  readyState.mockReturnValue("complete");
+  window.dispatchEvent(new Event("load"));
 
   await vi.waitFor(() => expect(startFaro).toHaveBeenCalledTimes(1));
 });
