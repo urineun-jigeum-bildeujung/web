@@ -18,7 +18,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 
 import type { Address } from "../api/addresses";
 import { groupAddresses } from "../model/group-addresses";
-import { ICON_BY_NAME } from "./place-icon";
+import { placeIconOf } from "./place-icon";
 
 /**
  * 배송지 하나를 여는 줄. **고치고 돌아올 곳을 함께 들려 보낸다.**
@@ -26,7 +26,7 @@ import { ICON_BY_NAME } from "./place-icon";
  * 주소를 다시 고르면 검색 화면이 history에 쌓여, 저장 뒤 한 칸 되돌리면 그리로 간다 (#369).
  */
 function PlaceRow({ place, from }: { place: Address; from: string }) {
-  const icon = ICON_BY_NAME[place.addressName];
+  const icon = placeIconOf(place.addressName);
 
   return (
     <Link
