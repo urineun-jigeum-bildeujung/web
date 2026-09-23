@@ -108,7 +108,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
               {/* 배송이 끝나야 반품·교환을 접수할 수 있다(mypa_161_배송완료). 배송 전에는
                   주문 취소가 맞는 길이라 이 자리에 두지 않는다.
 
-                  **배송완료 뒤 7일까지만이다.** 기능명세서와 서버 `Order.isClaimable`이 같은
+                  **배송완료 뒤 7일까지만이다.** 기능명세서와 서버 `Order.isClaimableForReturn`이 같은
                   규칙이라, 화면이 안 막으면 눌러 놓고 접수에서 거절당한다 (#374).
 
                   **신청할 수 있는 상품이 하나도 없으면 감춘다.** 눌러 봐야 신청 화면이

@@ -62,7 +62,7 @@ function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
   return {
     orderId: 1,
     orderNumber: "ORD-CLAIM-01",
-    // 서버 `Order.isClaimable`이 배송완료 **그리고** 그로부터 7일 이내만 받는다
+    // 서버 `Order.isClaimableForReturn`이 배송완료 **그리고** 그로부터 7일 이내만 받는다
     orderStatus: "DELIVERED",
     deliveredAt: daysAgo(1),
     productAmount: 40000,
@@ -254,7 +254,7 @@ test("남은 수량이 없는 상품은 고를 수 없다", async () => {
 });
 
 /**
- * 서버 `Order.isClaimable`이 `deliveredAt.plusDays(7).isAfter(now())`로 막는다.
+ * 서버 `Order.isClaimableForReturn`이 `deliveredAt.plusDays(7).isAfter(now())`로 막는다.
  * 화면이 같이 막지 않으면 사유까지 다 적고 나서 거절당한다 (#374).
  */
 test("배송완료 7일이 지나면 신청할 수 없다", async () => {

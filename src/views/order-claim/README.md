@@ -27,7 +27,7 @@ POST /orders/{orderId}/claims   { claimType, reason?, items: [{ orderItemId, qua
 
 | 조건 | 화면이 하는 것 |
 | --- | --- |
-| 배송완료 + 7일 이내 | 둘 다 화면에서 막는다. `deliveredAt`으로 `isWithinClaimPeriod`가 판정하고, 서버 `Order.isClaimable`과 같은 규칙이다 (#374) |
+| 배송완료 + 7일 이내 | 둘 다 화면에서 막는다. `deliveredAt`으로 `isWithinClaimPeriod`가 판정하고, 서버 `Order.isClaimableForReturn`과 같은 규칙이다 (#374) |
 | 품목마다 진행 중인 신청 없음 | 진행 중인 상품을 목록에서 뺀다. 하나만 걸려도 **요청 전체**가 거절된다 |
 | 수량 ≤ 남은 수량 | `effectiveQuantity`를 상한으로 둔다. 남은 수량이 0인 줄은 목록에서 뺀다 (#374) |
 | 같은 품목 중복 금지 | 선택을 `orderItemId → 수량` 표로 들어 중복이 생기지 않는다 |
