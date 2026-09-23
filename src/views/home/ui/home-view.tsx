@@ -10,6 +10,7 @@ import { Suspense, use, useRef, useState, useTransition } from "react";
 
 import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
 import {
+  CATEGORY_TO_API,
   MatchScoreBadge,
   useProductList,
   type ProductCard as ApiProductCard,
@@ -33,7 +34,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { BottomNav } from "@/widgets/bottom-nav";
 import { NotificationBell } from "@/widgets/notification-bell";
 
-import { CATEGORIES, CATEGORY_LABEL, CATEGORY_TO_API, type HomeCategory } from "../model/category";
+import { CATEGORIES, CATEGORY_LABEL, type HomeCategory } from "../model/category";
 import { SORT_LABEL, SORT_TO_API, SORTS, type HomeSort } from "../model/sort";
 
 /** API 연동 전까지 화면 확인용 값 */

@@ -1,8 +1,8 @@
-// normalizeCategory·CATEGORY_TO_API 단위 테스트. 서버 페이지가 잘못된 쿼리를
-// 그대로 API에 보내지 않는지, 카테고리 매핑이 맞는지 본다.
+// normalizeCategory 단위 테스트. 서버 페이지가 잘못된 쿼리를 그대로 API에 보내지
+// 않는지 본다. CATEGORY_TO_API 매핑 테스트는 entities/product로 옮겼다(#390).
 import { describe, expect, it } from "vitest";
 
-import { CATEGORY_TO_API, normalizeCategory } from "./category";
+import { normalizeCategory } from "./category";
 
 describe("normalizeCategory", () => {
   it("유효한 값은 그대로 돌려준다", () => {
@@ -15,13 +15,5 @@ describe("normalizeCategory", () => {
     expect(normalizeCategory(undefined)).toBe("all");
     expect(normalizeCategory("")).toBe("all");
     expect(normalizeCategory("존재하지않는값")).toBe("all");
-  });
-});
-
-describe("CATEGORY_TO_API", () => {
-  it("snack은 단순 대문자 변환이 아니라 TREAT로 매핑한다", () => {
-    expect(CATEGORY_TO_API.snack).toBe("TREAT");
-    expect(CATEGORY_TO_API.food).toBe("FOOD");
-    expect(CATEGORY_TO_API.supplement).toBe("SUPPLEMENT");
   });
 });

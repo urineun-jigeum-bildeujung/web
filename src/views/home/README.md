@@ -6,8 +6,8 @@
 | --- | --- |
 | `ui/home-view.tsx` | 메인 (`메인`, `메인_사료 탭`, `메인_타임딜 없을 때`) |
 | `ui/home-view.test.tsx` | 탭에 따라 화면이 바뀌는지, 상태 체크가 무엇을 약속하는지 본다 |
-| `model/category.ts` | 카테고리 탭 값·라벨·백엔드 `CategoryCode` 매핑·정규화. 서버 페이지(`page.tsx`)도 같이 써서 `"use client"`가 아닌 이 파일에 둡니다 |
-| `model/category.test.ts` | 정규화·카테고리 매핑을 봅니다 |
+| `model/category.ts` | 카테고리 탭 URL 값·라벨·정규화. 서버 페이지(`page.tsx`)도 같이 써서 `"use client"`가 아닌 이 파일에 둡니다. 백엔드 `CategoryCode` 매핑은 `entities/product`가 갖고 있습니다(#390) |
+| `model/category.test.ts` | 정규화를 봅니다 |
 | `model/sort.ts` | 정렬 값·라벨·백엔드 `ProductSort` 매핑·정규화 |
 | `index.ts` | 공개 API |
 
@@ -50,7 +50,7 @@
 
 **정렬 UI를 백엔드 5종(`RECOMMEND`·`POPULAR`·`REVIEW`·`PRICE_ASC`·`PRICE_DESC`)에 맞춰 바꿨습니다.** 기존 목업엔 최신순·별점순이 있었지만, Figma("메인_사료 탭_드롭다운")를 직접 확인해 보니 펼쳐진 옵션 목록 자체가 시안에 없고 닫힌 상태("추천순")만 있었습니다 — 근거 없이 채워져 있던 목업이라 백엔드 계약값으로 교체했습니다(`search-result`와 같은 5개 값).
 
-**카테고리 매핑은 API 계층이 아니라 `model/category.ts`가 합니다.** `entities/product/api/products.ts`의 `getProducts`는 백엔드 `CategoryCode`(`FOOD`·`TREAT`·`SUPPLEMENT`)만 받습니다 — API 함수가 화면의 URL 값(`food`·`snack`·`supplement`)을 알면 API 계층이 화면 상태에 결합되기 때문입니다. `snack→TREAT`는 단순 대문자 변환이 아닙니다(`CategoryCode.java`로 직접 확인).
+**카테고리 매핑은 `entities/product`가 갖고 있습니다.** `getProducts`는 백엔드 `CategoryCode`(`FOOD`·`TREAT`·`SUPPLEMENT`)만 받습니다 — API 함수가 화면의 URL 값(`food`·`snack`·`supplement`)을 알면 API 계층이 화면 상태에 결합되기 때문입니다. `snack→TREAT`는 단순 대문자 변환이 아닙니다(`CategoryCode.java`로 직접 확인). 좋아요 화면도 같은 매핑을 쓰게 되면서(#390) `entities/product/model/category.ts`로 내렸습니다 — 여러 화면이 쓰는 값이라 한 곳에 둡니다.
 
 **정가·적합도 배지는 카테고리 그리드에서 뺐습니다.** 실제 `ProductCardResponse`엔 정가·적합도(matchScore) 필드가 없습니다(`search-result`와 같은 공백). Figma 시안(1758-69075)은 취소선 정가를 보여주는데 백엔드엔 없습니다 — 제품 정책 확인 후 백엔드에 필드 추가를 요청할 수 있는 후보로 남깁니다.
 
