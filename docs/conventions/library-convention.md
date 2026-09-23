@@ -88,3 +88,4 @@ Notion 라이브러리 문서에 이유와 함께 남기고, 저장소 안에서
 | 브라우저 Web Push API 단독 | 백엔드가 Firebase Admin으로 **FCM 등록 토큰**에 보내 표준 `PushManager.subscribe`의 VAPID 구독을 받지 못한다. `firebase`의 `app`·`messaging`만 동적 import로 쓰고 접점은 `shared/lib/push` 하나다 (#354) |
 | shadcn `pagination` | 쪽 번호 링크가 핵심인데 우리는 번호를 안 쓴다(검색어 하나가 쪽 천 개를 넘김). 링크 기반이라 클라이언트 상태와도 맞지 않아 속을 다 들어내야 한다 |
 | `@grafana/faro-react` | 핵심이 React Router 계측이라 Next.js 라우터에는 쓸 데가 없다. `faro-web-sdk`·`faro-web-tracing`만 들이고 진입점은 `src/instrumentation-client.ts`다. SDK와 OpenTelemetry가 gzip 71KB라 첫 화면에 싣지 않고 동적 import한다 (#396) |
+| 지표 텍스트 직접 작성 | 메모리·CPU는 Node 기본 API로 읽히지만, Grafana 대시보드가 기대하는 표준 이름(`process_*`·`nodejs_*`)과 이벤트 루프·GC 지표를 맞추려면 결국 `prom-client`를 다시 만든다. `prom-client`는 서버 라우트(`/metrics`)에서만 쓰여 브라우저 번들에 들어가지 않는다 (#401) |
