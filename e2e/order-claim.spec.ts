@@ -63,11 +63,17 @@ test("주문 상세에서 반품을 세 단계로 접수하고 돌아온다", as
   // 접수하면 주문 상세로 돌아간다
   await expect(page).toHaveURL(/\/mypage\/orders\/1$/);
   expect(claims).toHaveLength(1);
-  const [claim] = claims as { claimType: string; reason: string; items: unknown[] }[];
+  const [claim] = claims as {
+    claimType: string;
+    reasonCode: string;
+    reason: string;
+    items: unknown[];
+  }[];
   expect(claim.claimType).toBe("RETURN");
   expect(claim.items).toEqual([{ orderItemId: 10, quantity: 2 }]);
-  // 서버가 받지 않는 사유 보기·수거 희망일은 사유 글에 묶여 나간다
-  expect(claim.reason).toContain("[사유] 상품 파손 · 불량");
+  // 고른 사유는 코드로 간다. 서버가 필수로 받아 빠지면 400이다 (#417)
+  expect(claim.reasonCode).toBe("DAMAGED");
+  // 서버에 필드가 없는 상세 사유·수거 희망일은 사유 글에 묶여 나간다
   expect(claim.reason).toContain("[상세 사유] 포장이 찢어져 왔어요");
   expect(claim.reason).toMatch(/\[수거 희망일\] \d{4}-\d{2}-\d{2}/);
   // 사진을 붙이지 않았으면 필드째 뺀다

@@ -383,8 +383,9 @@ test("고른 상품·수량과 적은 것이 사유 글로 묶여 나가고 주�
   await waitFor(() => expect(createClaim).toHaveBeenCalled());
   expect(createClaim).toHaveBeenCalledWith(1, {
     claimType: "RETURN",
+    // 고른 보기는 코드로 간다. 서버가 필수로 받는다 (백엔드 #141 · #417)
+    reasonCode: "DAMAGED",
     reason: [
-      "[사유] 상품 파손 · 불량",
       "[상세 사유] 포장이 찢어져 있었어요",
       "[수거 희망일] 2026-09-25",
       "[수거 요청사항] 문 앞에 두었어요",
