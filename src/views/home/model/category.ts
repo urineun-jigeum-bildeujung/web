@@ -1,7 +1,7 @@
-// 홈 카테고리의 URL 값과 API 매핑.
+// 홈 카테고리의 URL 값과 라벨, 잘못된 쿼리 정규화.
 // 서버 page.tsx와 클라이언트 view가 공유하므로 "use client" 경계 밖의 model에 둔다.
-
-import type { ProductCategory } from "@/entities/product";
+// API 매핑(CATEGORY_TO_API)은 entities/product가 갖고 있다 — 홈·좋아요 등 여러
+// 화면이 같은 매핑을 쓴다(#390).
 
 export const CATEGORIES = ["all", "food", "snack", "supplement"] as const;
 export type HomeCategory = (typeof CATEGORIES)[number];
@@ -11,15 +11,6 @@ export const CATEGORY_LABEL: Record<HomeCategory, string> = {
   food: "사료",
   snack: "간식",
   supplement: "영양제",
-};
-
-/** 화면 카테고리 → 백엔드 `CategoryCode`. "전체"는 대응하는 백엔드 값이 없어
- *  이 맵에 없다 — 호출부가 "all"이면 category 자체를 안 보낸다.
- *  snack→TREAT는 단순 대문자 변환이 아니다(CategoryCode.java로 직접 확인, #289) */
-export const CATEGORY_TO_API: Record<Exclude<HomeCategory, "all">, ProductCategory> = {
-  food: "FOOD",
-  snack: "TREAT",
-  supplement: "SUPPLEMENT",
 };
 
 /** 클라이언트의 `parseAsStringLiteral`만 믿지 않는다. 서버 페이지가 searchParams를

@@ -5,18 +5,13 @@
 import { Suspense } from "react";
 
 import {
+  CATEGORY_TO_API,
   getProducts,
   getTimeDeals,
   type ProductListResult,
   type TimeDealList,
 } from "@/entities/product";
-import {
-  CATEGORY_TO_API,
-  HomeView,
-  normalizeCategory,
-  normalizeSort,
-  SORT_TO_API,
-} from "@/views/home";
+import { HomeView, normalizeCategory, normalizeSort, SORT_TO_API } from "@/views/home";
 
 function toSearchParam(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;

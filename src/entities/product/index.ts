@@ -12,6 +12,7 @@ export {
 } from "./api/products";
 export { useQueryProductSummary } from "./api/use-query-product-summary";
 export { useProductList } from "./api/use-product-list";
+export { CATEGORY_TO_API, CATEGORY_VALUES, type CategoryValue } from "./model/category";
 export {
   getTimeDeals,
   type DealItem,
