@@ -2,7 +2,7 @@
 //
 // 조회는 가짜로 둔다. 무엇을 보내고 받은 것을 어떻게 다루는지는 `entities/cart`·
 // `entities/address`·`entities/pet`이 본다.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 
 import { ApiError } from "@/shared/api/client";
 import { useEffect } from "react";
@@ -823,4 +823,39 @@ test("고른 줄만 결제 대상으로 센다", () => {
   expect(screen.queryByText("다른 상품")).toBeNull();
   // 고른 줄 9,345 + 배송비 3,000
   expect(screen.getByText("12,345원")).toBeDefined();
+});
+
+/** 뒤로·앞으로 캐시에서 되살아난 것처럼 `pageshow`를 쏜다 */
+function firePageShow(persisted: boolean) {
+  const event = new Event("pageshow");
+  Object.defineProperty(event, "persisted", { value: persisted });
+  act(() => {
+    window.dispatchEvent(event);
+  });
+}
+
+/**
+ * **결제창에서 기기 뒤로가기로 돌아온 경우다.** iOS Safari 같은 브라우저는 이 화면을 상태째
+ * 되살린다. 결제창 약속은 끝나지 않아 되돌림이 돌지 않고, 버튼이 대기로 굳었다 (#430)
+ */
+test("결제창에서 캐시로 되살아나 돌아오면 결제 버튼을 다시 누를 수 있다", async () => {
+  createOrder.mockResolvedValueOnce({ orderId: 77 });
+  preparePayment.mockResolvedValueOnce(PREPARED);
+  // 결제창으로 떠나 돌아오지 않는다
+  requestPayment.mockImplementationOnce(() => new Promise<void>(() => {}));
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+
+  // 처음 불러온 것이면 그대로 둔다
+  firePageShow(false);
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+
+  firePageShow(true);
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false),
+  );
 });
