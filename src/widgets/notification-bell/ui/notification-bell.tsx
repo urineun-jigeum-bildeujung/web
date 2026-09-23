@@ -26,17 +26,18 @@ export function NotificationBell({ className }: NotificationBellProps) {
         className,
       )}
     >
-      <Icon name="bell" className="size-7" />
-      {/* 점만으로는 무엇인지 알 수 없어 읽히는 문장을 함께 둔다. 아이 관리 탭의 점(#345)과 같은 모양 */}
-      {unread > 0 && (
-        <>
+      {/* 점은 링크가 아니라 아이콘 모서리에 붙인다 — 링크 자리가 44px인 헤더에서도 같은 자리다 */}
+      <span className="relative size-7">
+        <Icon name="bell" className="size-7" />
+        {unread > 0 && (
           <span
             aria-hidden
             className="absolute top-0 right-0 size-1.5 rounded-full bg-surface-brand"
           />
-          <span className="sr-only">(읽지 않은 알림 {unread}개)</span>
-        </>
-      )}
+        )}
+      </span>
+      {/* 점만으로는 무엇인지 알 수 없어 읽히는 문장을 함께 둔다. 아이 관리 탭의 점(#345)과 같은 모양 */}
+      {unread > 0 && <span className="sr-only">(읽지 않은 알림 {unread}개)</span>}
     </Link>
   );
 }
