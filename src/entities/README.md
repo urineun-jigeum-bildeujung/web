@@ -46,5 +46,6 @@ entities/
 | [product](product/README.md) | 상품 표현. 지금은 적합도 배지만 있다 |
 | [review](review/README.md) | 상품 후기. 작성자의 아이 프로필과 사용 기간을 함께 보인다 |
 | [notification](notification/README.md) | 알림. 알림함 목록·읽음 처리와 이 기기의 푸시 토큰 등록 |
+| [wishlist](wishlist/README.md) | 찜한 상품. 카테고리별 조회·토글. 좋아요 화면이 쓴다 |
 
 구독은 백엔드 API 계약이 정해지면 만든다.
