@@ -23,7 +23,14 @@ export function useMutateOrder() {
   // 테스트가 모듈을 갈아끼워도 옛 함수가 불린다 (`use-mutate-cart-item`도 같은 이유로 감싼다).
   const confirmation = useMutation({
     mutationFn: (orderId: number) => confirmOrder(orderId),
-    onSettled: settle,
+    // **구매 확정이 리뷰를 쓸 자격을 연다.** 서버가 작성할 수 있는 리뷰 목록을 확정된 주문으로
+    // 만든다(`findConfirmedPurchaseItems`). 받아 둔 목록을 그대로 두면 60초 동안 방금 확정한
+    // 상품이 빠져 보인다 (#416)
+    onSettled: () =>
+      Promise.all([
+        settle(),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.review.myWritable() }),
+      ]),
   });
 
   const cancellation = useMutation({

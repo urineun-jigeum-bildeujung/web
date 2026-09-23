@@ -9,12 +9,15 @@ import type { OrderDetail } from "@/entities/order";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
-const { useQueryPaymentConfirm, useQueryOrderDetail } = vi.hoisted(() => ({
+const { useQueryPaymentConfirm, useQueryOrderDetail, useMarkOrdersStale } = vi.hoisted(() => ({
   useQueryPaymentConfirm: vi.fn(),
   useQueryOrderDetail: vi.fn(),
+  useMarkOrdersStale: vi.fn(),
 }));
 
 vi.mock("../api/use-query-payment-confirm", () => ({ useQueryPaymentConfirm }));
+// 캐시를 실제로 어떻게 건드리는지는 훅 테스트가 본다. 여기서는 언제 켜는지만 본다
+vi.mock("../api/use-mark-orders-stale", () => ({ useMarkOrdersStale }));
 vi.mock("@/entities/order", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order")>()),
   useQueryOrderDetail,
@@ -314,4 +317,38 @@ test("승인 결과와 다른 주문이면 그 주문 값을 쓰지 않는다", 
   expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
   expect(screen.queryByRole("heading", { name: "배송지 정보" })).toBeNull();
   expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();
+});
+
+/**
+ * **이 화면이 받은 상세는 승인 전 모습이다.** 서버는 승인 뒤 이벤트를 거쳐 결제 완료를 1초 남짓
+ * 늦게 적는다. 낡았다고 표시하지 않으면 60초 동안 주문 상세가 그 모습을 써서 결제상세와 취소
+ * 버튼이 빠진다 (#416).
+ */
+test("승인과 주문 조회가 끝나면 주문 캐시를 낡은 것으로 표시한다", () => {
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(useMarkOrdersStale).toHaveBeenLastCalledWith(true);
+});
+
+// 조회가 아직이면 표시해 봐야 뒤이어 도착한 응답이 표시를 지운다. 끝난 뒤에 해야 남는다
+test("주문 조회가 끝나기 전에는 표시하지 않는다", () => {
+  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: true });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(useMarkOrdersStale).toHaveBeenLastCalledWith(false);
+});
+
+// 승인이 끝나지 않았으면 바뀐 것이 없다
+test("승인이 끝나기 전에는 표시하지 않는다", () => {
+  useQueryPaymentConfirm.mockReturnValue({
+    payment: undefined,
+    error: null,
+    isConfirming: true,
+    canConfirm: true,
+  });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(useMarkOrdersStale).toHaveBeenLastCalledWith(false);
 });
