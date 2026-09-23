@@ -25,6 +25,15 @@ import type { PresignedUpload } from "@/shared/api/upload-image";
 export const CLAIM_TYPES = ["RETURN", "EXCHANGE"] as const;
 export type ClaimType = (typeof CLAIM_TYPES)[number];
 
+/**
+ * 신청 사유 코드. 백엔드 `ClaimReasonCode` 다섯 이름 그대로다.
+ *
+ * 이 밖의 값은 서버가 `ORDER_400_INVALID_CLAIM_REASON_CODE`로 막는다. 코드는 우리가 넘긴 사유
+ * 보기 다섯을 백엔드가 받아 만든 것이다 (백엔드 #141, 2026-09-23).
+ */
+export type ClaimReasonCode =
+  "CHANGE_OF_MIND" | "DAMAGED" | "WRONG_ITEM" | "NOT_AS_DESCRIBED" | "OTHER";
+
 export type CreateClaimItem = {
   orderItemId: number;
   /** 1 이상. 서버 `@Positive` */
@@ -33,6 +42,8 @@ export type CreateClaimItem = {
 
 export type CreateClaimRequest = {
   claimType: ClaimType;
+  /** 고른 사유. **필수다**(`@NotBlank`) — 빠지면 본문 검증에서 400이다 (백엔드 #141) */
+  reasonCode: ClaimReasonCode;
   /** 선택이다. 서버가 `@Size(max = 1000)`만 건다 */
   reason?: string;
   items: CreateClaimItem[];

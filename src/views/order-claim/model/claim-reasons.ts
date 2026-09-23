@@ -1,15 +1,18 @@
 // 반품·교환 사유 보기 다섯. 문구는 시안(mypa_261 3333:37439, mypa_262 3333:37668) 그대로다.
 //
-// **서버에는 사유 코드가 없다.** `CreateClaimRequest.reason`은 자유 문자열 하나라, 고른 보기의
-// 문구를 사유 글 첫 줄에 싣는다(to-claim-request). 코드는 화면 안에서만 쓴다 (#408).
+// **이름이 서버 사유 코드다.** 백엔드가 이 다섯 이름을 `ClaimReasonCode`로 받아(#141) 고른
+// 보기가 `reasonCode`로 나간다(to-claim-request). 문구는 화면에만 쓴다 (#417).
 
+import type { ClaimReasonCode } from "@/entities/order";
+
+// 서버 코드와 하나라도 어긋나면 여기서 타입 오류가 난다. 서버에 없는 이름을 보내면 400이다
 export const CLAIM_REASON_LABEL = {
   CHANGE_OF_MIND: "단순 변심",
   DAMAGED: "상품 파손 · 불량",
   WRONG_ITEM: "오배송 (다른 상품이 왔어요)",
   NOT_AS_DESCRIBED: "상품 설명과 달라요",
   OTHER: "기타",
-} as const;
+} as const satisfies Record<ClaimReasonCode, string>;
 
 export type ClaimReason = keyof typeof CLAIM_REASON_LABEL;
 

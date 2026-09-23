@@ -18,6 +18,7 @@ export {
   createClaim,
   issueOrderImageUpload,
   CLAIM_TYPES,
+  type ClaimReasonCode,
   type ClaimType,
   type CreateClaimItem,
   type CreateClaimRequest,
