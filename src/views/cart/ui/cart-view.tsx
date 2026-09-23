@@ -40,7 +40,7 @@ import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
 import { CartSkeleton } from "./cart-skeleton";
 
-// 응답에 `deliveryFee`가 없어 고정값을 유지한다. 백엔드에 확인을 요청해 뒀다 (#214)
+// 응답에 `deliveryFee`가 없어 고정값을 쓴다. 백엔드가 MVP에서는 배송비를 고정한다고 답했다(2026-09-21) (#214)
 const SHIPPING_FEE = 3000;
 
 /**
