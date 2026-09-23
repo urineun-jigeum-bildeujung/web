@@ -116,7 +116,7 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
               </section>
 
               {/* **상태 뱃지를 붙이지 않는다.** 2026-09-23 시안에서 빠졌다. 반품·교환 신청 상태
-                  뱃지(#334)도 같이 걷었다 — 신청 건은 목록의 "취소·환불·교환" 탭이 보일 자리다 */}
+                  뱃지(#334)도 같이 걷었다 — 신청 건은 목록의 "취소·반품·교환" 탭이 보일 자리다 */}
               <SectionCard title={`주문 상품 ${order.items.length}개`}>
                 <ul className="flex flex-col gap-4">
                   {order.items.map((item) => (
