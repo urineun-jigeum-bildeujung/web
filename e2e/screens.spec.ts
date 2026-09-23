@@ -189,16 +189,20 @@ const OVERLAYS = [
     name: "주문 구매확정 바텀시트",
   },
   {
-    // 온보딩 이탈 확인창이 사라져(#115) 확인창은 여기서 본다
-    route: "/mypage/orders",
-    open: /^주문 취소$/,
+    // 온보딩 이탈 확인창이 사라져(#115) 확인창은 여기서 본다. 주문 취소는 목록에서 주문 상세
+    // 맨 아래로 옮겼고(#410) 배송 전 주문에만 서서, 그 상태의 상세를 세운다
+    route: "/mypage/orders/1",
+    open: /^주문 취소하기$/,
     slot: "alert-dialog-overlay",
     name: "주문 취소 확인창",
+    detail: { orderStatus: "PAID" },
   },
 ];
 
-for (const { route, open, slot, name } of OVERLAYS) {
+for (const { route, open, slot, name, detail } of OVERLAYS) {
   test(`${name} — 뒤 배경이 충분히 덮인다`, async ({ page }) => {
+    // 나중에 건 route가 이겨서 beforeEach의 기본 주문 위에 덮인다
+    if (detail) await stubOrders(page, { detail });
     await page.goto(route, { waitUntil: "networkidle" });
     await page.getByRole("button", { name: open }).first().click();
 
@@ -259,8 +263,9 @@ test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
 test.describe("넓은 화면", () => {
   test.use({ viewport: { width: 1920, height: 1080 } });
 
-  for (const { route, open, slot, name } of OVERLAYS) {
+  for (const { route, open, slot, name, detail } of OVERLAYS) {
     test(`${name} — 열어도 뒤 화면이 짜부라지지 않는다`, async ({ page }) => {
+      if (detail) await stubOrders(page, { detail });
       await page.goto(route, { waitUntil: "networkidle" });
       const before = await page.evaluate(() =>
         Math.round(document.querySelector("main")!.getBoundingClientRect().width),

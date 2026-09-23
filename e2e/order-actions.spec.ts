@@ -1,9 +1,9 @@
-// 주문 목록의 구매확정과 주문취소. 눌러서 서버까지 가고 화면이 그 결과대로 바뀌는지 본다.
+// 주문 목록의 구매확정과 주문 상세의 주문취소. 눌러서 서버까지 가고 화면이 그 결과대로 바뀌는지 본다.
 //
 // **시연에서 실제로 누를 두 동작이다.** 그런데 그전에는 시트를 열어 폭만 재고 확인창이
 // 뜨는지만 봤고, `POST /orders/{id}/confirm`·`/cancel`은 한 번도 나가지 않았다 (#379).
 //
-// 무엇을 그리는지는 단위 테스트(`orders-view.test.tsx`)가 본다.
+// 무엇을 그리는지는 단위 테스트(`orders-view.test.tsx`·`order-detail-view.test.tsx`)가 본다.
 
 import { expect, test } from "@playwright/test";
 
@@ -44,16 +44,19 @@ test("나중에 할게요를 누르면 확정하지 않고 닫는다", async ({ 
   expect(calls).toEqual([]);
 });
 
-test("주문 취소를 누르면 서버까지 가고 취소됐다고 알린다", async ({ page }) => {
+// 서버가 주문 전체만 취소해 PD가 취소를 목록에서 빼고 주문 상세 맨 아래로 옮겼다 (#410)
+test("주문 상세에서 주문 취소를 누르면 서버까지 가고 취소됐다고 알린다", async ({ page }) => {
   const calls: string[] = [];
-  await stubOrders(page, { calls });
+  // 취소는 배송이 시작되기 전 주문에만 선다
+  await stubOrders(page, { calls, detail: { orderStatus: "PAID" } });
 
-  await page.goto("/mypage/orders");
-
-  await page.getByRole("button", { name: "주문 취소", exact: true }).first().click();
-  await expect(page.getByText("주문을 취소할까요?")).toBeVisible();
+  await page.goto("/mypage/orders/1");
 
   await page.getByRole("button", { name: "주문 취소하기" }).click();
+  const dialog = page.getByRole("alertdialog");
+  await expect(dialog.getByText("주문을 취소할까요?")).toBeVisible();
+
+  await dialog.getByRole("button", { name: "주문 취소하기" }).click();
 
   await expect(page.getByText("주문을 취소했어요")).toBeVisible();
   expect(calls).toEqual(["orders/1/cancel"]);
