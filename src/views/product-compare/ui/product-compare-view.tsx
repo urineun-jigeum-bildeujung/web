@@ -23,6 +23,7 @@ import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { NotificationBell } from "@/widgets/notification-bell";
 
 /**
  * 고르기 화면에서 담아 올 수 있는 상품. 검색 결과 목록과 같은 id·이름을 쓴다.
@@ -263,13 +264,7 @@ export function ProductCompareView() {
           // 공용 header 컴포넌트 값(20px·9px)으로 맞춰 주므로 여기선 아이콘만 놓는다
           <>
             <span aria-hidden className="size-7" />
-            <Link
-              href="/mypage/notifications"
-              aria-label="알림"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="bell_noti" className="size-7" />
-            </Link>
+            <NotificationBell />
             <Link
               href="/cart"
               aria-label="장바구니"

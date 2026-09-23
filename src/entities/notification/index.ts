@@ -8,4 +8,5 @@ export {
   type NotificationType,
 } from "./api/notifications";
 export { useQueryNotifications } from "./api/use-query-notifications";
+export { useQueryUnreadNotificationCount } from "./api/use-query-unread-notification-count";
 export { useMutateReadNotification } from "./api/use-mutate-read-notification";

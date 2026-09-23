@@ -3,6 +3,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
 
+// 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 QueryClient가 없어 링크만 대신 그린다(#395)
+vi.mock("@/widgets/notification-bell", () => ({
+  NotificationBell: ({ className }: { className?: string }) => (
+    <a href="/mypage/notifications" aria-label="알림" className={className} />
+  ),
+  NewNotificationToaster: () => null,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
   usePathname: () => "/likes",

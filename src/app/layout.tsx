@@ -6,6 +6,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { cn } from "@/shared/lib/utils";
 import { AppProviders } from "@/shared/providers/app-providers";
+import { NewNotificationToaster } from "@/widgets/notification-bell";
 
 // Figma 타이포 토큰이 전부 typo/pretendard를 참조한다. Google Fonts에 없어 파일을 직접 들고 있다.
 // weight 셋만 받는 이유는 토큰이 400(label/regular_13)·500(medium)·700(bold)만 쓰기 때문이다.
@@ -47,7 +48,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             포털로 body 바로 아래에 붙는데, body가 flex 컨테이너이면서 폭까지
             제한하면 그 포털이 폭 계산에 끼어들어 뒤에 깔린 화면이 짜부라진다. */}
         <div className="mx-auto flex min-h-full w-full max-w-105 flex-col">
-          <AppProviders>{children}</AppProviders>
+          <AppProviders>
+            {/* 열려 있는 동안 새 알림을 토스트로. shared/providers는 entities를 못 써 여기 둔다(#395) */}
+            <NewNotificationToaster />
+            {children}
+          </AppProviders>
         </div>
       </body>
     </html>

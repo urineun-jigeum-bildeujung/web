@@ -6,6 +6,8 @@
 | --- | --- |
 | `client.ts` | 공통 fetch 래퍼(`apiRequest`)와 `ApiError`·`ProblemDetail`, `isValidationError`·`shouldRetryQuery` — base URL·헤더·쿼리 조립·401 재발급을 한 곳으로 모음 |
 | `client.test.ts` | `apiRequest` 단위 테스트 |
+| `use-has-session.ts` | 로그인돼 있는지를 렌더에 맞춰 읽는 훅. 세션이 끊기면 따라온다 |
+| `use-has-session.test.tsx` | 토큰 유무와 끊김 반영 |
 | `token-store.ts` | 인증 토큰 보관소 — accessToken 메모리, refreshToken localStorage. `hasSession`·`subscribeTokensCleared` 포함 |
 | `token-store.test.ts` | 토큰 보관소 단위 테스트 |
 | `error-message.ts` | 실패 응답을 문구 코드로 옮긴다(`toAppMessageCode`) — `errorCode` 매핑, 없으면 상태 코드 기준 |

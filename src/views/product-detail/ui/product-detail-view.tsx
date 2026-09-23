@@ -16,6 +16,7 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { NotificationBell } from "@/widgets/notification-bell";
 import { useMutateCartItem } from "@/entities/cart";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -166,13 +167,7 @@ export function ProductDetailView({ productId }: ProductDetailViewProps) {
           // 시안(공용 header)이 알림·장바구니 두 아이콘을 함께 둔다. 홈 화면 헤더와
           // 같은 아이콘·터치 영역 방식이다(보이는 자리 28px, 안 보이는 자리만 넓힘)
           <>
-            <Link
-              href="/mypage/notifications"
-              aria-label="알림"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="bell_noti" className="size-7" />
-            </Link>
+            <NotificationBell />
             <Link
               href="/cart"
               aria-label="장바구니에 5개"

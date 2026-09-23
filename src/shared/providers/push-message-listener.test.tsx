@@ -1,13 +1,10 @@
-// 켜진 기기에서만 구독하는지, 온 푸시를 토스트로 알리고 알림 캐시를 비우는지 본다.
+// 켜진 기기에서만 구독하는지, 온 푸시로 알림 캐시를 비우는지(토스트는 폴링 토스터 몫) 본다.
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
+import { QUERY_KEYS } from "@/shared/config/query-keys";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
-
-const toastPushMessage = vi.fn();
-vi.mock("@/shared/lib/app-toast", () => ({
-  toastPushMessage: (...args: unknown[]) => toastPushMessage(...args),
-}));
 
 const push = { granted: true, subscribe: vi.fn(), unsubscribe: vi.fn() };
 vi.mock("@/shared/lib/push/fcm", () => ({
@@ -18,7 +15,6 @@ vi.mock("@/shared/lib/push/fcm", () => ({
 import { PushMessageListener } from "./push-message-listener";
 
 beforeEach(() => {
-  toastPushMessage.mockClear();
   push.granted = true;
   push.unsubscribe.mockReset();
   push.subscribe.mockReset().mockResolvedValue(push.unsubscribe);
@@ -33,9 +29,15 @@ test("푸시를 켜 두지 않은 기기에서는 구독하지 않는다", () =>
   expect(push.subscribe).not.toHaveBeenCalled();
 });
 
-test("켜 둔 기기에서는 온 푸시를 토스트로 알리고, 내려가면 구독을 끊는다", async () => {
+test("켜 둔 기기에서는 온 푸시로 알림 캐시를 비우고, 내려가면 구독을 끊는다", async () => {
   window.localStorage.setItem("push-enabled", "1");
-  const view = render(<PushMessageListener />, { wrapper: createQueryWrapper() });
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  queryClient.setQueryData(QUERY_KEYS.notification.list(), []);
+  const view = render(
+    <QueryClientProvider client={queryClient}>
+      <PushMessageListener />
+    </QueryClientProvider>,
+  );
 
   await waitFor(() => expect(push.subscribe).toHaveBeenCalledTimes(1));
   const handler = push.subscribe.mock.calls[0][0] as (message: {
@@ -43,7 +45,8 @@ test("켜 둔 기기에서는 온 푸시를 토스트로 알리고, 내려가면
     body?: string;
   }) => void;
   handler({ title: "골라주개냥 테스트 알림", body: "본문" });
-  expect(toastPushMessage).toHaveBeenCalledWith("골라주개냥 테스트 알림", "본문");
+  // 토스트는 폴링 토스터 몫이다. 여기서는 캐시만 비워 그쪽이 새 알림을 보게 한다
+  expect(queryClient.getQueryState(QUERY_KEYS.notification.list())?.isInvalidated).toBe(true);
 
   view.unmount();
   expect(push.unsubscribe).toHaveBeenCalledTimes(1);
