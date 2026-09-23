@@ -80,7 +80,12 @@ function ready() {
     isConfirming: false,
     canConfirm: true,
   });
-  useQueryOrderDetail.mockReturnValue({ order: ORDER, error: null, isLoading: false });
+  useQueryOrderDetail.mockReturnValue({
+    order: ORDER,
+    error: null,
+    isLoading: false,
+    isFetching: false,
+  });
 }
 
 beforeEach(() => {
@@ -282,7 +287,12 @@ test("승인이 실패하면 다시 결제하러 보내지 않는다", () => {
  */
 test("주문을 받는 중이어도 승인 실패를 먼저 알린다", () => {
   failed();
-  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: true });
+  useQueryOrderDetail.mockReturnValue({
+    order: undefined,
+    error: null,
+    isLoading: true,
+    isFetching: true,
+  });
 
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
@@ -332,7 +342,27 @@ test("승인과 주문 조회가 끝나면 주문 캐시를 낡은 것으로 표
 
 // 조회가 아직이면 표시해 봐야 뒤이어 도착한 응답이 표시를 지운다. 끝난 뒤에 해야 남는다
 test("주문 조회가 끝나기 전에는 표시하지 않는다", () => {
-  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: true });
+  useQueryOrderDetail.mockReturnValue({
+    order: undefined,
+    error: null,
+    isLoading: true,
+    isFetching: true,
+  });
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(useMarkOrdersStale).toHaveBeenLastCalledWith(false);
+});
+
+// 받아 둔 주문이 있으면 다시 받는 동안 `isLoading`은 거짓이다. 그때 표시하면 끝나며 도착한 응답이
+// 표시를 지워, 주문 상세가 결제 전 모습을 다시 쓴다 (#419 리뷰)
+test("받아 둔 주문을 뒤에서 다시 받는 중에도 표시하지 않는다", () => {
+  useQueryOrderDetail.mockReturnValue({
+    order: ORDER,
+    error: null,
+    isLoading: false,
+    isFetching: true,
+  });
 
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
