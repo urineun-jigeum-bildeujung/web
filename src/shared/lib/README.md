@@ -14,7 +14,7 @@
 | `utils.ts` | `cn` — clsx와 tailwind-merge로 className을 병합한다. 타이포 토큰을 전용 그룹으로 등록하고 굵기·행간과 충돌시키는 설정이 얹혀 있다 (#176, #219) |
 | `utils.test.ts` | `cn` 단위 테스트. 타이포 토큰이 색과 겹쳐도 남는지, 목록이 `globals.css`와 같은지 본다 |
 | `push/fcm.ts` | 브라우저 푸시(FCM) 토큰 발급·삭제. **Firebase를 부르는 유일한 곳** (#354) |
-| `push/push-preference.ts` | "이 기기에서 푸시를 켰다"는 표시. 설정 스위치와 전역 수신기가 같이 본다. 켜짐 = 표시 + 권한 허용(앱 안에서는 앱 지원 여부) |
+| `push/push-preference.ts` | "이 기기에서 알림을 켰다"는 표시. 설정 스위치·전역 수신기·폴링 토스터가 같이 본다. 켜짐 = 표시 + (앱 안이거나 브라우저 권한 허용) |
 | `push/native-bridge.ts` | 앱 셸(RN 웹뷰)과 주고받는 푸시 신호. 앱이 FCM 토큰을 대신 받아 주고 열려 있을 때 온 푸시를 알린다. 이름은 mobile 저장소 `src/lib/web-event.ts`와 맞춘다 (#403) |
 | `push/native-bridge.test.ts` | 앱이 없으면 물러나는지, 토큰·거부·무응답을 결과로 바꾸는지, 수신 신호를 듣는지 |
 | `push/firebase-sdk.ts` | `firebase/app`·`firebase/messaging`을 함수 안에서 동적으로 불러오는 얇은 층. 첫 화면 번들·서버 렌더에 들어가지 않고, 테스트는 이 파일을 바꿔 끼운다 |

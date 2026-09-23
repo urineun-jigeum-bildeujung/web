@@ -1,10 +1,12 @@
-// 설정의 알림 스위치. 뜻은 "이 기기의 푸시 허용"이다 — 권한 → 토큰 → 서버 등록 → 표시 저장을 여기서 묶는다.
+// 설정의 알림 스위치. 뜻은 "이 기기에서 알림 받기"다 — 권한 → 토큰 → 서버 등록 → 표시 저장을 여기서 묶는다.
+// 열려 있을 때의 토스트는 이 표시가 있을 때만 뜨고, 앱 밖 OS 알림은 토큰을 등록한 기기만 받는다.
 //
 // 서버 구독(`subscriptions/{category}`)은 쓰지 않는다. 카테고리가 `TIME_DEAL` 하나라 "알림설정"과
 // 뜻이 안 맞는다(#354). 켜짐 판정과 표시 저장은 `shared/lib/push/push-preference`가 맡는다 — 앱 전역의
 // 포그라운드 수신기가 같은 값을 본다.
 // 앱(웹뷰) 안에서는 토큰을 앱이 대신 받는다(#403). 등록하는 서버 API는 같다. 끌 때는 표시만 지운다 —
 // 앱 쪽 토큰을 무효화할 길이 없고 서버 해제 API도 아직 없어, 그때까지 OS 알림은 계속 온다.
+// iOS 앱은 토큰을 못 받아(APNs 없음) 표시만 남긴다 — 켜면 앱 안 토스트만 받는다.
 
 import { useMutation } from "@tanstack/react-query";
 import { useSyncExternalStore } from "react";
@@ -14,7 +16,11 @@ import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { reportError } from "@/shared/lib/report-error";
 import { deletePushToken, isPushSupported, requestPushToken } from "@/shared/lib/push/fcm";
-import { isNativePushSupported, requestNativePushToken } from "@/shared/lib/push/native-bridge";
+import {
+  isNativeApp,
+  isNativePushSupported,
+  requestNativePushToken,
+} from "@/shared/lib/push/native-bridge";
 import {
   readPushEnabled,
   subscribePushPreference,
@@ -24,9 +30,9 @@ import {
 /** 스위치 동작의 결과. 권한 거부는 서버 실패가 아니라 던지지 않고 결과로 돌려준다 */
 type PushSettingResult = { enabled: boolean } | { denied: true };
 
-/** 이 기기에서 푸시를 받을 수 있는가. 브라우저 자체가 되거나, 앱이 대신 받아 준다 */
+/** 이 기기에서 켤 수 있는가. 브라우저는 Push API가 있어야 하고, 앱 안에서는 늘 켤 수 있다 */
 function isDevicePushSupported(): boolean {
-  return isPushSupported() || isNativePushSupported();
+  return isPushSupported() || isNativeApp();
 }
 
 /** 저장이 막힌 브라우저다. 서버 실패와 같은 문구("요청 실패")로 알린다 */
@@ -49,7 +55,7 @@ export function useMutatePushSetting() {
   // 서버 실패 토스트는 AppProviders의 MutationCache가 한 번 띄운다. 여기서 또 띄우지 않는다
   const mutation = useMutation({
     mutationFn: async (next: boolean): Promise<PushSettingResult> => {
-      const native = isNativePushSupported();
+      const native = isNativeApp();
       if (!next) {
         // 표시를 먼저 지운다. 지우지 못하면 토큰도 그대로 두어 화면과 기기가 어긋나지 않는다
         if (!writePushEnabled(false)) throw new PushPreferenceStorageError();
@@ -64,6 +70,11 @@ export function useMutatePushSetting() {
           throw error;
         }
         return { enabled: false };
+      }
+      // 토큰을 받을 수 없는 앱(iOS)은 묻지 않고 표시만 남긴다. 앱 안 토스트는 그것으로 켜진다
+      if (native && !isNativePushSupported()) {
+        if (!writePushEnabled(true)) throw new PushPreferenceStorageError();
+        return { enabled: true };
       }
       const result = native ? await requestNativePushToken() : await requestPushToken();
       if (result.status !== "granted") return { denied: true };
