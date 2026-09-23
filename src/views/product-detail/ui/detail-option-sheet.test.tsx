@@ -1,4 +1,4 @@
-// 상품 상세 옵션 시트의 수량과 담기 동작을 확인한다.
+// 상품 상세 수량 시트의 수량과 담기 동작을 확인한다.
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -14,7 +14,7 @@ describe("DetailOptionSheet", () => {
         onOpenChange={vi.fn()}
         onAddToCart={onAddToCart}
         productName="면역 지원 영양제 90정"
-        optionLabel="90정 (기본 구성)"
+        quantityLabel="90정"
         price={21_000}
       />,
     );
