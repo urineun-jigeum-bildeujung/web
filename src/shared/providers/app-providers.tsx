@@ -71,6 +71,9 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
           }}
           style={
             {
+              // sonner는 자기 글꼴 스택(ui-sans-serif, system-ui …)을 쓴다. 페이지와 같은 Pretendard로 맞춘다.
+              // 시스템 글꼴에 맡기면 한글 글리프가 없는 환경(iOS 시뮬레이터 웹뷰)에서 토스트만 깨진다
+              fontFamily: "var(--font-sans)",
               "--normal-bg": "var(--surface-primary)",
               "--normal-text": "var(--text-body-inverse)",
               "--normal-border": "transparent",
