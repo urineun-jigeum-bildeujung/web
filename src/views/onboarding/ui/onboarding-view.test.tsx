@@ -159,11 +159,21 @@ test("체구를 고르면 몸무게와 체질 항목이 나타난다", () => {
   expect(screen.getByText("보통")).toBeDefined();
 });
 
+// 고양이는 체구를 묻지 않는다(#391). 그 질문 없이 몸무게·체질을 바로 묻는다
+test("고양이면 체구 질문이 없고 몸무게를 바로 묻는다", () => {
+  setDraft({ ...EMPTY_PROFILE_DRAFT, species: "cat", breedId: 36, breedName: "코리안 숏헤어" });
+  renderAt("?step=detail");
+
+  expect(screen.queryByText("아이의 체구는 어느 정도인가요?")).toBeNull();
+  expect(screen.getByLabelText("대략적인 몸무게")).toBeDefined();
+});
+
 test("체구 물음표를 누르면 몇 kg으로 가르는지 보인다", () => {
   renderAt("?step=detail");
 
   fireEvent.click(screen.getByRole("button", { name: "체구 기준 보기" }));
-  expect(screen.getByText("소형은 10kg 미만")).toBeDefined();
+  expect(screen.getByText("초소형견은 4kg 미만")).toBeDefined();
+  expect(screen.getByText("대형견은 25kg 이상이에요")).toBeDefined();
 });
 
 test("품종 선택 단계에는 진행 표시 대신 품종선택 머리말이 있다", () => {

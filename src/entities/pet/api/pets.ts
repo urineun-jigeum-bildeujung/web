@@ -27,7 +27,8 @@ type PetDetailResponse = {
   birthDate: string | null;
   sex: "MALE" | "FEMALE";
   isNeutered: boolean;
-  size: "SMALL" | "MEDIUM" | "LARGE";
+  /** 고양이는 체구가 없어 `null`이다(#391) */
+  size: "SMALL" | "MEDIUM" | "LARGE" | null;
   weight: number;
   bcs: number;
   healthConcerns: string[];
@@ -64,7 +65,8 @@ export type PetDetail = {
   birthDate: string | null;
   gender: "male" | "female";
   neutered: boolean;
-  size: "small" | "medium" | "large";
+  /** 고양이는 체구를 묻지 않아 `null`이다 */
+  size: "small" | "medium" | "large" | null;
   weight: number;
   /** 체형 1~5. 화면 슬라이더는 0부터 세므로 옮길 때 하나를 뺀다 */
   bcs: number;
@@ -115,7 +117,7 @@ export async function getPetDetail(petId: string): Promise<PetDetail> {
     birthDate: pet.birthDate,
     gender: GENDER_OF[pet.sex],
     neutered: pet.isNeutered,
-    size: SIZE_OF[pet.size],
+    size: pet.size === null ? null : SIZE_OF[pet.size],
     weight: pet.weight,
     bcs: pet.bcs,
     healthConcerns: pet.healthConcerns,

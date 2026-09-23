@@ -47,9 +47,11 @@ export function DetailStep({
   const birthdayError =
     digitsOnly(draft.birthday).length === 8 && parseBirthDate(draft.birthday) === null;
 
+  // 고양이는 체구를 묻지 않는다(#391). 체구가 없어도 몸무게·체질은 묻고 다음으로 간다
+  const isCat = draft.species === "cat";
   const canProceed = Boolean(
     draft.breedId &&
-    draft.size &&
+    (isCat || draft.size) &&
     draft.weight &&
     draft.age &&
     !weightError &&
@@ -112,21 +114,23 @@ export function DetailStep({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-1">
-              <p className="text-title-bold-16 text-foreground">아이의 체구는 어느 정도인가요?</p>
-              {/* 몇 kg부터 중형인지 모르면 고를 수 없다 */}
-              <SizeGuide />
+          {!isCat && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-1">
+                <p className="text-title-bold-16 text-foreground">아이의 체구는 어느 정도인가요?</p>
+                {/* 몇 kg부터 중형인지 모르면 고를 수 없다 */}
+                <SizeGuide />
+              </div>
+              <ChipSelect
+                label="아이의 체구"
+                options={[...SIZE_OPTIONS]}
+                value={draft.size}
+                onValueChange={(size) => onChange({ size })}
+              />
             </div>
-            <ChipSelect
-              label="아이의 체구"
-              options={[...SIZE_OPTIONS]}
-              value={draft.size}
-              onValueChange={(size) => onChange({ size })}
-            />
-          </div>
+          )}
 
-          {draft.size && (
+          {(isCat || draft.size) && (
             <>
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">

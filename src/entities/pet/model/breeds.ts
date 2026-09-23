@@ -34,8 +34,16 @@ export const SIZE_OPTIONS = [
   { value: "large", label: "대형" },
 ] as const;
 
-/** 체구를 무엇으로 가르는지. 시안(onbo_003_체구툴팁)의 물음표를 누르면 보인다 */
-export const SIZE_GUIDE = ["소형은 10kg 미만", "중형은 10~25kg", "대형은 25kg 이상이에요"] as const;
+/**
+ * 체구를 무엇으로 가르는지. 물음표를 누르면 보인다. 강아지 기준이다 — 고양이는 체구를 묻지 않는다(#391).
+ * 초소형견은 안내에만 있고 선택지는 소형·중형·대형 셋이라, 4kg 미만은 소형을 고르면 된다
+ */
+export const SIZE_GUIDE = [
+  "초소형견은 4kg 미만",
+  "소형견은 4~10kg",
+  "중형견은 10~25kg",
+  "대형견은 25kg 이상이에요",
+] as const;
 
 /** 시안 onbo_003_체구선택후의 슬라이더 5단계 */
 export const BODY_TYPE_OPTIONS = ["매우 마름", "마름", "보통", "통통", "비만"] as const;

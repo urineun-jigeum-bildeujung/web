@@ -30,10 +30,12 @@ const SIZE_PARAM = { small: "SMALL", medium: "MEDIUM", large: "LARGE" } as const
 type BodyFormProps = {
   pet: PetDetail;
   isSaving: boolean;
-  onSave: (patch: { size: "SMALL" | "MEDIUM" | "LARGE"; weight: number; bcs: number }) => void;
+  onSave: (patch: { size?: "SMALL" | "MEDIUM" | "LARGE"; weight: number; bcs: number }) => void;
 };
 
 function BodyForm({ pet, isSaving, onSave }: BodyFormProps) {
+  // 고양이는 체구를 묻지 않는다(#391). 서버도 고양이의 size를 null로 둔다
+  const isCat = pet.species === "cat";
   const [size, setSize] = useState(pet.size);
   const [weight, setWeight] = useState(String(pet.weight));
   // 서버는 체형을 1부터, 화면 눈금은 0부터 센다
@@ -43,27 +45,33 @@ function BodyForm({ pet, isSaving, onSave }: BodyFormProps) {
 
   return (
     <EditPetScreen
-      submitDisabled={!size || parsedWeight === null}
+      submitDisabled={(!isCat && !size) || parsedWeight === null}
       submitting={isSaving}
       onSubmit={() =>
         parsedWeight !== null &&
-        onSave({ size: SIZE_PARAM[size], weight: parsedWeight, bcs: bodyType + 1 })
+        onSave({
+          ...(!isCat && size && { size: SIZE_PARAM[size] }),
+          weight: parsedWeight,
+          bcs: bodyType + 1,
+        })
       }
     >
       <div className="flex flex-col gap-4 px-5">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-1">
-            <p className="text-title-bold-16 text-foreground">아이의 체구는 어느 정도인가요?</p>
-            {/* 몇 kg이 소형인지 보호자가 알 수 없어 기준을 열어 보인다 */}
-            <SizeGuide />
+        {!isCat && (
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-1">
+              <p className="text-title-bold-16 text-foreground">아이의 체구는 어느 정도인가요?</p>
+              {/* 몇 kg이 소형인지 보호자가 알 수 없어 기준을 열어 보인다 */}
+              <SizeGuide />
+            </div>
+            <ChipSelect
+              label="아이의 체구"
+              options={[...SIZE_OPTIONS]}
+              value={size ?? ""}
+              onValueChange={(next) => setSize(next as PetDetail["size"])}
+            />
           </div>
-          <ChipSelect
-            label="아이의 체구"
-            options={[...SIZE_OPTIONS]}
-            value={size}
-            onValueChange={(next) => setSize(next as PetDetail["size"])}
-          />
-        </div>
+        )}
 
         <FormField
           label={`${pet.name}의 대략적인 몸무게를 알려주세요`}

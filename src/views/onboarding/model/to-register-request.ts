@@ -16,7 +16,8 @@ export type PetRegisterRequest = {
   age: number;
   /** `YYYY-MM-DD`. 안 적었으면 보내지 않는다 */
   birthDate?: string;
-  size: "SMALL" | "MEDIUM" | "LARGE";
+  /** 강아지는 필수(`MEMBER_400_SIZE_REQUIRED`), 고양이는 싣지 않는다(#391) */
+  size?: "SMALL" | "MEDIUM" | "LARGE";
   weight: number;
   /** 체형 1~5 */
   bcs: number;
@@ -47,7 +48,11 @@ export function toRegisterRequest(draft: PetProfileDraft): PetRegisterRequest | 
   const weight = parseWeight(draft.weight);
   const birthDate = parseBirthDate(draft.birthday);
 
-  if (!draft.name.trim() || !sex || !size || !draft.neutered || draft.breedId === null) {
+  if (!draft.name.trim() || !sex || !draft.neutered || draft.breedId === null) {
+    return null;
+  }
+  // 체구는 강아지만 필수다. 고양이는 서버도 받지 않는다(#391)
+  if (draft.species === "dog" && !size) {
     return null;
   }
   if (age === null || weight === null) {
@@ -61,7 +66,7 @@ export function toRegisterRequest(draft: PetProfileDraft): PetRegisterRequest | 
     species: SPECIES_PARAM[draft.species],
     age,
     ...(birthDate && { birthDate }),
-    size,
+    ...(draft.species === "dog" && size && { size }),
     weight,
     // 화면 슬라이더는 0부터, API는 1부터 센다
     bcs: draft.bodyTypeIndex + 1,
