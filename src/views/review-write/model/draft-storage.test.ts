@@ -19,7 +19,7 @@ describe("review draft-storage", () => {
       score: 4.5,
       days: "7",
       responses: { PALATABILITY: "NEUTRAL" },
-      petIds: ["p1", "p2"],
+      petIds: ["1", "2"],
       text: "잘 먹어요",
     });
     resetReviewDraftCache();
@@ -28,20 +28,31 @@ describe("review draft-storage", () => {
       score: 4.5,
       days: "7",
       responses: { PALATABILITY: "NEUTRAL" },
-      petIds: ["p1", "p2"],
+      petIds: ["1", "2"],
       text: "잘 먹어요",
     });
   });
 
   // 아이 여러 마리로 바뀌기 전에 저장해 둔 초안을 잃지 않는다(#391)
-  it("옛 초안의 petId 하나는 petIds 배열로 읽는다", () => {
+  // 손댄 저장값이 남으면 등록 버튼은 열리는데 요청 변환이 실패해 아무 일도 안 일어난다(#392 리뷰)
+  it("숫자 id가 아닌 petIds는 버린다", () => {
     window.localStorage.setItem(
       "review-draft:product:p1",
-      JSON.stringify({ score: 3, days: "5", responses: {}, petId: "p1", text: "" }),
+      JSON.stringify({ score: 3, days: "5", responses: {}, petIds: ["3", "abc", "", 7], text: "" }),
     );
     resetReviewDraftCache();
 
-    expect(getReviewDraft("p1").petIds).toEqual(["p1"]);
+    expect(getReviewDraft("p1").petIds).toEqual(["3"]);
+  });
+
+  it("옛 초안의 petId 하나는 petIds 배열로 읽는다", () => {
+    window.localStorage.setItem(
+      "review-draft:product:p1",
+      JSON.stringify({ score: 3, days: "5", responses: {}, petId: "1", text: "" }),
+    );
+    resetReviewDraftCache();
+
+    expect(getReviewDraft("p1").petIds).toEqual(["1"]);
   });
 
   it("상품이 다르면 서로 섞이지 않는다", () => {
