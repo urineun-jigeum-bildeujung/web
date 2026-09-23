@@ -15,6 +15,8 @@
 | `ui/claim-photo-picker.tsx` | 사진 세 장까지 붙이고 빼기. 파일은 위로 넘기고 접수할 때 올린다 |
 | `ui/claim-pickup-step.tsx` | ③ 수거. 수거 희망일·안내·요청사항, 반품은 환불 안내·교환은 교환 상품 안내 |
 | `ui/claim-section.tsx` | ②·③의 흰 카드 한 장. 제목 옆에 필수·선택 뱃지 |
+| `lib/use-object-urls.ts` | 사진 미리보기 주소(blob:)를 만들고 거두는 훅. 개발 모드 StrictMode에서도 쓰는 주소를 거두지 않게 `useSyncExternalStore`로 든다 (#409 리뷰) |
+| `lib/use-object-urls.test.ts` | 만든 주소를 거두는지, StrictMode가 effect를 다시 돌려도 쓰는 주소가 살아 있는지 |
 | `model/claim-steps.ts` | 세 단계와, 지금 값으로 그릴 수 있는 단계(`reachableStep`) |
 | `model/claim-steps.test.ts` | 값이 비면 앞 단계로 당기는지 |
 | `model/claim-selection.ts` | 고른 상품과 수량, 전체선택. 신청 진행 여부 판정은 `entities/order`에 있다 |

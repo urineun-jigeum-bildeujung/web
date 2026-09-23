@@ -11,9 +11,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef } from "react";
+import { useRef } from "react";
 
 import { Icon } from "@/shared/ui/icon/icon";
+
+import { useObjectUrls } from "../lib/use-object-urls";
 
 /** 시안의 장수 표시(0/3) */
 export const PHOTO_MAX = 3;
@@ -26,12 +28,9 @@ type ClaimPhotoPickerProps = {
 export function ClaimPhotoPicker({ photos, onChange }: ClaimPhotoPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // React Compiler가 있어도 useMemo를 남긴다. 값을 아끼려는 것이 아니라
-  // 렌더마다 새 주소가 생기는 것을 막으려는 것이다 — 그러면 아래 정리가 헛돈다
-  const previews = useMemo(() => photos.map((photo) => URL.createObjectURL(photo)), [photos]);
-
-  // 다 쓴 주소는 반드시 거둬들인다. 그러지 않으면 고를 때마다 메모리에 쌓인다
-  useEffect(() => () => previews.forEach((url) => URL.revokeObjectURL(url)), [previews]);
+  // 다 쓴 주소는 훅이 거둔다. 개발 모드 StrictMode에서도 쓰는 주소를 거두지 않게 만들었다(#409 리뷰).
+  // 사진 목록이 바뀐 직후 한 번은 비어 있어 칸마다 다른 사진이 잠깐 보이는 일도 없다
+  const previews = useObjectUrls(photos);
 
   const full = photos.length >= PHOTO_MAX;
 
@@ -40,14 +39,19 @@ export function ClaimPhotoPicker({ photos, onChange }: ClaimPhotoPickerProps) {
       {photos.map((photo, index) => (
         // 같은 파일을 두 번 고를 수 있어 파일 정보만으로는 키가 겹친다
         <div key={`${photo.name}-${photo.lastModified}-${index}`} className="relative">
-          {/* blob: 주소는 next/image가 알아서 최적화를 건너뛴다. 설정할 것이 없다 */}
-          <Image
-            src={previews[index]}
-            alt={`첨부한 사진 ${index + 1}`}
-            width={74}
-            height={74}
-            className="size-18.5 rounded-xl bg-surface-disable object-cover"
-          />
+          {/* blob: 주소는 next/image가 알아서 최적화를 건너뛴다. 설정할 것이 없다.
+              주소가 생기기 전 한 번은 같은 크기의 빈 칸으로 자리만 잡는다 */}
+          {previews[index] ? (
+            <Image
+              src={previews[index]}
+              alt={`첨부한 사진 ${index + 1}`}
+              width={74}
+              height={74}
+              className="size-18.5 rounded-xl bg-surface-disable object-cover"
+            />
+          ) : (
+            <span aria-hidden className="block size-18.5 rounded-xl bg-surface-disable" />
+          )}
           <button
             type="button"
             aria-label={`${index + 1}번째 사진 빼기`}

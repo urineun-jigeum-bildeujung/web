@@ -46,10 +46,18 @@ test("주문 상세에서 반품을 세 단계로 접수하고 돌아온다", as
   );
   await page.getByRole("button", { name: "다음" }).click();
 
-  // 보기는 내일·모레라 날마다 글자가 바뀐다. 첫 칸을 누른다
   const submit = page.getByRole("button", { name: "반품 신청 완료하기" });
   await expect(submit).toBeDisabled();
-  await page.getByRole("radiogroup", { name: "수거 희망일" }).locator("label").first().click();
+  // 보기는 내일·모레라 날마다 글자가 바뀌어 순서로 고른다. 라디오는 화면에서 숨기고(sr-only)
+  // 레이블을 누르게 만든 칸이라 좌표로 누르면 빗나간다(`check({ force: true })`로 확인).
+  // 키보드 사용자처럼 초점을 두고 Space로 고른다 (#409 리뷰)
+  const firstDate = page
+    .getByRole("radiogroup", { name: "수거 희망일" })
+    .getByRole("radio")
+    .first();
+  await firstDate.focus();
+  await firstDate.press("Space");
+  await expect(firstDate).toBeChecked();
   await submit.click();
 
   // 접수하면 주문 상세로 돌아간다
