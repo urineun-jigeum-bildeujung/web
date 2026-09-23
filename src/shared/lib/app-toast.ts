@@ -14,9 +14,12 @@ import { reportError } from "./report-error";
  *
  * 다른 토스트는 코드로 문구를 찾지만 푸시 제목·본문은 서버가 그때그때 정하는 값이라 여기 둘 수 없다.
  * 탭이 보이는 동안은 서비스 워커가 알림을 띄우지 않아, 이것이 없으면 그 푸시는 어디에도 보이지 않는다.
+ *
+ * 다른 토스트와 달리 위에 띄운다. 새 알림은 OS 배너처럼 위에서 내려오는 것이 익숙하고, 아래는
+ * 방금 누른 버튼의 결과(저장됨·실패)가 뜨는 자리라 섞이면 무엇에 대한 것인지 헷갈린다.
  */
 export function toastPushMessage(title: string, description?: string) {
-  toast.info(title, { description });
+  toast.info(title, { description, position: "top-center" });
 }
 
 export function toastAppSuccess(code: AppMessageCode) {
