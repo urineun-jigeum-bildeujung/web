@@ -383,6 +383,14 @@ test("다음 쪽 조회가 실패해도 앞 쪽은 남는다", async () => {
   // 앞 쪽은 그대로다. 전체 오류 화면으로 덮지 않는다
   expect(screen.getByText("테스트 상품 1")).toBeDefined();
   expect(screen.queryByRole("alert")).toBeNull();
+
+  // **다시 받는 동안에도 오류 상태가 남아 버튼이 서 있다.** 잠그지 않으면 또 눌러 같은 커서로
+  // 요청이 한 번 더 나간다 (#427)
+  getOrders.mockImplementation(() => new Promise(() => {}));
+  fireEvent.click(screen.getByRole("button", { name: /다시 시도/ }));
+
+  expect(await screen.findByRole("status", { name: "주문을 더 불러오는 중" })).toBeDefined();
+  expect(screen.getByRole("button", { name: /다시 시도/ }).hasAttribute("disabled")).toBe(true);
 });
 
 test("주문이 없으면 빈 상태를 안내한다", async () => {

@@ -79,7 +79,7 @@ export function CartView() {
   const checkedItems = sellable.filter((item) => checkedKeys.includes(cartItemKey(item)));
   const allChecked = sellable.length > 0 && checkedItems.length === sellable.length;
 
-  // 서버가 준 `subtotal`은 수량을 방금 바꿨을 때 아직 옛 값이라 여기서 다시 센다
+  // 줄 합계는 `price × quantity`로 센다. 수량을 먼저 그리는 낙관적 갱신도 같은 식으로 맞춘다 (#427)
   const itemTotal = checkedItems.reduce((sum, item) => sum + (item.price ?? 0) * item.quantity, 0);
   // 담은 것이 없으면 배송비도 물리지 않는다.
   const total = itemTotal === 0 ? 0 : itemTotal + SHIPPING_FEE;
