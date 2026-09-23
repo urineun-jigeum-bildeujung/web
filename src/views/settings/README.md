@@ -31,7 +31,7 @@
 
 Firebase 접점은 `shared/lib/push/fcm.ts` 하나고, 서비스 워커는 `app/firebase-messaging-sw.js/route.ts`가 내려 준다. 해제 API(`DELETE`)는 백엔드가 아직 안 만들어 서버는 꺼진 기기의 토큰을 계속 들고 있다 — 나중에 보탄다.
 
-앱(웹뷰) 안에서는 Push API가 없어 `fcm.ts`가 물러나고, 앱이 푸시를 받아 줄 수 있으면(`window.golajuNative.pushSupported`, 지금은 Android만) `shared/lib/push/native-bridge`로 앱에 토큰을 요청해 같은 API에 등록한다(#403). 끌 때는 표시만 지운다 — 앱 토큰을 무효화할 길이 없어 서버 해제 API가 올 때까지 OS 알림은 계속 온다.
+스위치의 뜻은 "이 기기에서 알림 받기"다(#403). 켜면 열려 있을 때의 토스트(`widgets/notification-bell`)가 뜨고, 토큰을 등록한 기기는 앱 밖에서도 OS 알림을 받는다. 앱(웹뷰) 안에서는 Push API가 없어 `fcm.ts`가 물러나고, 앱이 푸시를 받아 줄 수 있으면(`window.golajuNative.pushSupported`, 지금은 Android만) `shared/lib/push/native-bridge`로 앱에 토큰을 요청해 같은 API에 등록한다. iOS 앱은 토큰을 못 받아 표시만 남기고 토스트만 켜진다. 끌 때는 표시만 지운다 — 앱 토큰을 무효화할 길이 없어 서버 해제 API가 올 때까지 OS 알림은 계속 온다.
 
 ## 아직 없는 것
 

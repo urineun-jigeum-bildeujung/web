@@ -30,9 +30,14 @@ declare global {
   }
 }
 
-/** 이 웹뷰의 앱이 푸시를 받아 줄 수 있는가. 서버·브라우저에서는 언제나 `false`다 */
+/** 앱 셸 안에서 열렸는가. 서버·브라우저에서는 언제나 `false`다 */
+export function isNativeApp(): boolean {
+  return typeof window !== "undefined" && window.golajuNative !== undefined;
+}
+
+/** 이 웹뷰의 앱이 푸시를 받아 줄 수 있는가(지금은 Android). iOS 앱은 앱이지만 아니다 */
 export function isNativePushSupported(): boolean {
-  return typeof window !== "undefined" && window.golajuNative?.pushSupported === true;
+  return isNativeApp() && window.golajuNative?.pushSupported === true;
 }
 
 /**

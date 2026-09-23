@@ -2,6 +2,7 @@
 import { afterEach, expect, test, vi } from "vitest";
 
 import {
+  isNativeApp,
   isNativePushSupported,
   requestNativePushToken,
   subscribeNativePushReceived,
@@ -22,10 +23,13 @@ afterEach(() => {
 });
 
 test("앱이 없거나 푸시를 못 받는 앱이면 지원하지 않는다", async () => {
+  expect(isNativeApp()).toBe(false);
   expect(isNativePushSupported()).toBe(false);
   await expect(requestNativePushToken()).resolves.toEqual({ status: "unsupported" });
 
+  // iOS 앱. 앱이긴 하지만 토큰은 못 받는다
   mountNativeApp(false);
+  expect(isNativeApp()).toBe(true);
   expect(isNativePushSupported()).toBe(false);
   await expect(requestNativePushToken()).resolves.toEqual({ status: "unsupported" });
 });

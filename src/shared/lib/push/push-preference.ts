@@ -1,11 +1,11 @@
-// "이 기기에서 푸시를 켰다"는 표시. 권한은 브라우저가 쥐고 있어 켰다/껐다는 따로 남겨야 한다.
+// "이 기기에서 알림을 켰다"는 표시. 권한은 브라우저가 쥐고 있어 켰다/껐다는 따로 남겨야 한다.
 //
-// 설정의 알림 스위치가 쓰고, 앱 전역의 포그라운드 수신(`PushMessageListener`)이 켜져 있을 때만
-// 구독하려고 함께 본다. 켜짐 = 권한이 허용돼 있고 이 표시가 있을 때. 브라우저 설정에서 권한을
-// 거두면 표시가 남아 있어도 꺼짐이다. 앱 안에서는 권한을 앱이 쥐고 있어 알 수 없으니 표시만 본다(#403).
+// 설정의 알림 스위치가 쓰고, 앱 전역의 포그라운드 수신(`PushMessageListener`)과 폴링 토스터가 같이 본다 —
+// 토스트는 켜져 있을 때만 뜬다(#403). 켜짐 = 표시가 있고, 브라우저면 권한도 허용돼 있을 때. 브라우저
+// 설정에서 권한을 거두면 표시가 남아 있어도 꺼짐이다. 앱 안에서는 권한을 앱이 쥐고 있어 표시만 본다.
 
 import { isPushPermissionGranted } from "./fcm";
-import { isNativePushSupported } from "./native-bridge";
+import { isNativeApp } from "./native-bridge";
 
 const STORAGE_KEY = "push-enabled";
 
@@ -23,7 +23,7 @@ export function readPushEnabled(): boolean {
   try {
     return (
       window.localStorage.getItem(STORAGE_KEY) === "1" &&
-      (isNativePushSupported() || isPushPermissionGranted())
+      (isNativeApp() || isPushPermissionGranted())
     );
   } catch {
     return false;
