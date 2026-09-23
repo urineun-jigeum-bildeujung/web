@@ -69,18 +69,25 @@ function RatingSummary({
   reviewCount,
   onReviewClick,
 }: {
-  rating: number;
+  /** 아직 별점이 없으면 null. 별 묶음을 빼고 후기 수만 남긴다 — 0.0은 나쁜 점수로 읽힌다 */
+  rating: number | null;
   reviewCount: number;
   /** 있으면 "후기" 부분이 버튼이 된다(상품 제목 아래는 리뷰 탭으로 이동, 카드는 정보만 보여준다) */
   onReviewClick?: () => void;
 }) {
   return (
     <span className="flex items-center gap-2">
-      <span className="flex items-center gap-0.5">
-        <Icon name="star" className="size-5 text-icon-fill-accent" />
-        <span className="text-body-medium-14 text-text-body-secondary">{rating.toFixed(1)}</span>
-      </span>
-      <span aria-hidden className="h-4 w-px bg-border" />
+      {rating !== null && (
+        <>
+          <span className="flex items-center gap-0.5">
+            <Icon name="star" className="size-5 text-icon-fill-accent" />
+            <span className="text-body-medium-14 text-text-body-secondary">
+              {rating.toFixed(1)}
+            </span>
+          </span>
+          <span aria-hidden className="h-4 w-px bg-border" />
+        </>
+      )}
       {onReviewClick ? (
         // min-h-11를 그대로 주면 44px 박스가 레이아웃 높이 자체를 늘려 별점 줄과 다음
         // 줄 사이가 시안보다 벌어진다. 보이는 줄은 시안 높이 그대로 두고 누르는 자리만
@@ -316,7 +323,7 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
             <div className="flex items-center justify-between gap-3">
               <Price
                 amount={product.price}
-                originalAmount={product.originalPrice}
+                originalAmount={product.originalPrice ?? undefined}
                 discountRate={product.discountRate}
                 size="lg"
               />
@@ -480,7 +487,9 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
           <TabsContent value="review">
             <ReviewPanel
               productId={productId}
-              rating={product.rating}
+              // 리뷰 탭 별점 요약은 리뷰 API가 붙을 자리다(#339). 그때 응답의 값으로
+              // 바뀌므로 아직 별점이 없는 상품은 여기서만 0으로 둔다
+              rating={product.rating ?? 0}
               reviewCount={product.reviewCount}
               petProfileLabel={match.profileLabel}
             />

@@ -29,6 +29,22 @@ describe("formatWon", () => {
 });
 
 describe("Price", () => {
+  // 서버는 반올림(HALF_UP)하고 calcDiscountRate는 버림이라 같은 금액에서 값이 갈린다.
+  // 계약이 있는 값을 화면이 다시 만들면 서버 표기와 어긋난다 (#413)
+  test("할인율을 받으면 금액으로 계산하지 않고 그 값을 쓴다", () => {
+    render(<Price amount={8010} originalAmount={10000} discountRate={20} />);
+
+    expect(screen.getByText("20%")).toBeDefined();
+    expect(screen.queryByText("19%")).toBeNull();
+  });
+
+  test("할인율이 0으로 오면 취소선도 할인율도 그리지 않는다", () => {
+    render(<Price amount={10000} originalAmount={10000} discountRate={0} />);
+
+    expect(screen.queryByText("0%")).toBeNull();
+    expect(screen.getByText("10,000원")).toBeDefined();
+  });
+
   test("할인이 없으면 금액만 보여준다", () => {
     render(<Price amount={31200} />);
 

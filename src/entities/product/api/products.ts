@@ -102,7 +102,14 @@ type AllergenInfo = {
   severity: string;
 };
 
-/** 백엔드 `ProductDetailResponse` 그대로 */
+/**
+ * 백엔드 `ProductDetailResponse` 그대로.
+ *
+ * **null 여부는 OpenAPI가 아니라 엔티티에서 읽었다.** 명세에 `required`가 하나도 없어
+ * 스키마로는 구분할 수 없고, `Product` 엔티티에서 `@Column(nullable = false)`가 붙지
+ * 않은 열이 여기서 `| null`인 것들이다. `targetBreedSize`·`targetAgeGroup`은 응답을
+ * 만드는 쪽에서도 명시적으로 null을 내보낸다.
+ */
 type ProductDetailApiResponse = {
   productId: number;
   /** 타임딜 진행 중일 때만 온다 */
@@ -111,29 +118,40 @@ type ProductDetailApiResponse = {
     images: string[];
     productName: string;
     price: number;
-    originalPrice: number;
+    /** 할인 전 가격이 없는 상품이 있다 */
+    originalPrice: number | null;
+    /** 정가가 없으면 서버가 0을 준다. 계산은 서버가 끝내 준다 */
     discountRate: number;
-    avgRating: number;
+    /** 아직 별점이 매겨지지 않았으면 비어 온다 */
+    avgRating: number | null;
     reviewCount: number;
     soldOut: boolean;
   };
   detailInfo: {
-    manufacturer: string;
-    brandName: string;
-    originCountry: string;
+    manufacturer: string | null;
+    brandName: string | null;
+    originCountry: string | null;
     netQuantityValue: number;
     netQuantityUnit: string;
     ingredients: string[];
-    feedingTarget: string;
-    targetBreedSize: string;
-    targetAgeGroup: string;
+    feedingTarget: string | null;
+    /** "소형"처럼 표시명으로 온다 */
+    targetBreedSize: string | null;
+    /** "노령"처럼 표시명으로 온다 */
+    targetAgeGroup: string | null;
+    /** "강아지"·"고양이" 표시명 */
     targetSpecies: string[];
-    feedingMethod: string;
+    feedingMethod: string | null;
     allergens: AllergenInfo[];
+    /**
+     * **코드가 아니라 표시명 배열이다.** 서버가 `CautionIngredientCode.getDisplayName()`을
+     * 거쳐 내보낸다. 위험 등급(`CautionLevel`)은 이 응답에 없다 — 독성과 섭취 주의를
+     * 가르려면 백엔드가 응답을 넓혀야 한다 (#414).
+     */
     cautions: string[];
-    consumptionPeriodDisplay: string;
-    shelfLifeAfterOpeningDays: number;
-    storageMethod: string;
+    consumptionPeriodDisplay: string | null;
+    shelfLifeAfterOpeningDays: number | null;
+    storageMethod: string | null;
   };
 };
 
@@ -156,10 +174,14 @@ export type ProductDetail = {
   images: string[];
   name: string;
   price: number;
-  originalPrice: number;
-  /** 서버가 계산해 준 값을 그대로 쓴다. 화면에서 두 금액으로 다시 계산하지 않는다 */
+  originalPrice: number | null;
+  /**
+   * 서버가 계산해 준 값을 그대로 쓴다. 화면에서 두 금액으로 다시 계산하지 않는다 —
+   * 서버는 반올림(HALF_UP)하고 화면의 `calcDiscountRate`는 버림이라 값이 갈린다.
+   */
   discountRate: number;
-  rating: number;
+  /** 아직 별점이 없으면 null. 0점과 다르다 */
+  rating: number | null;
   reviewCount: number;
   soldOut: boolean;
   detail: ProductDetailInfo;
