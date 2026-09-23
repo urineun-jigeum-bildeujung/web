@@ -12,15 +12,15 @@ import type { CartItem } from "@/entities/cart";
 
 import type { TossPaymentOrder } from "./toss-payment-widget";
 
-const { requestPayment, toastAppError, createOrder, releaseOrder, preparePayment } = vi.hoisted(
-  () => ({
+const { requestPayment, toastAppError, createOrder, releaseOrder, preparePayment, replace } =
+  vi.hoisted(() => ({
     requestPayment: vi.fn(),
     toastAppError: vi.fn(),
     createOrder: vi.fn(),
     releaseOrder: vi.fn(),
     preparePayment: vi.fn(),
-  }),
-);
+    replace: vi.fn(),
+  }));
 
 const useQueryCart = vi.fn();
 const useQueryAddresses = vi.fn();
@@ -32,7 +32,7 @@ vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 let searchParams = new URLSearchParams();
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), back: vi.fn(), replace }),
   useSearchParams: () => searchParams,
 }));
 
@@ -175,6 +175,8 @@ test("등록된 배송지가 없으면 등록하러 보낸다", () => {
   renderView({ addresses: [] });
 
   expect(screen.getByText("아직 등록된 배송지가 없어요")).toBeDefined();
+  // 시안(`2115:171079`)과 배송지 목록의 빈 상태와 같은 문구다 (#422)
+  expect(screen.getByText("상품을 안전하게 받아보실 주소를 미리 등록해 주세요")).toBeDefined();
   // 등록을 마치면 이 화면으로 돌아와야 결제를 이어갈 수 있다 (#369)
   expect(screen.getByRole("link", { name: "배송지 등록" }).getAttribute("href")).toBe(
     "/mypage/address/new?from=%2Fpayment",
@@ -705,11 +707,98 @@ test("결제창이 실패로 돌아오면 알린다", async () => {
   );
 });
 
+/**
+ * **알린 뒤에는 주소에서 실패 값을 걷는다.** 두면 배송지 변경에 갔다 뒤로 오거나 새로고침할
+ * 때마다 같은 실패가 또 뜬다. 고른 상품은 남겨야 장바구니 전체로 읽히지 않는다 (#422)
+ */
+test("실패를 알린 뒤 주소에서 토스가 붙인 값을 걷고 고른 상품만 남긴다", async () => {
+  searchParams = new URLSearchParams(
+    "items=NORMAL%3A1&code=PAY_PROCESS_CANCELED&message=취소&orderId=ORD-1",
+  );
+  renderView();
+
+  await waitFor(() =>
+    expect(replace).toHaveBeenCalledWith("/payment?items=NORMAL%3A1", { scroll: false }),
+  );
+});
+
 // 평상시 진입에서 실패를 알리면 사용자가 하지도 않은 일로 놀란다
 test("쿼리가 없으면 실패를 알리지 않는다", () => {
   renderView();
 
   expect(toastAppError).not.toHaveBeenCalled();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+// 재고 부족처럼 서버가 이유를 알려 준 실패를 "결제 실패"로 뭉개면 다시 눌러도 같은 자리에서
+// 막힌다. 그 문구를 그대로 보인다 (#422)
+test("주문 생성이 재고 부족으로 막히면 재고 부족이라고 알린다", async () => {
+  const outOfStock = new ApiError(409, "재고가 부족합니다.", {
+    errorCode: "ORDER_409_INSUFFICIENT_STOCK",
+  } as never);
+  createOrder.mockRejectedValueOnce(outOfStock);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledWith("product.outOfStock", outOfStock));
+});
+
+// 상태 코드로만 떨어진 실패는 결제 맥락이 빠진 공통 문구라 "결제 실패"로 모은다
+test("이유를 모르는 실패는 결제 실패로 알린다", async () => {
+  const unknown = new ApiError(500, "서버 오류", { errorCode: "COMMON_500" } as never);
+  createOrder.mockRejectedValueOnce(unknown);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledWith("payment.failed", unknown));
+});
+
+// 없을 때 금액을 그리면 배송비만 더한 "결제금액 3,000원"이 "결제할 상품이 없어요" 옆에 뜬다 (#422)
+test("결제할 상품이 없으면 금액 줄을 그리지 않는다", () => {
+  renderView({ items: [] });
+
+  expect(screen.getByText("결제할 상품이 없어요")).toBeDefined();
+  expect(screen.queryByText("결제금액")).toBeNull();
+  expect(screen.queryByText("3,000원")).toBeNull();
+});
+
+test("장바구니를 불러오는 동안에는 금액 줄을 그리지 않는다", () => {
+  renderView({ cartState: { cart: undefined, isLoading: true } });
+
+  expect(screen.queryByText("결제금액")).toBeNull();
+});
+
+/**
+ * **`<dl>`의 자식 `<div>`는 `dt`·`dd`만 담을 수 있다.** 간격을 주려고 한 겹 더 감싸면 보조기기가
+ * 이름과 값을 짝으로 읽지 못한다. `PaymentDetail`에서 #341로 고친 것과 같은 규칙이다 (#422)
+ */
+test("화면의 dl 아래에는 이름·값 짝만 온다", () => {
+  const { container } = renderView();
+
+  const lists = [...container.querySelectorAll("dl")];
+  expect(lists.length).toBeGreaterThan(0);
+  for (const list of lists) {
+    for (const child of [...list.children]) {
+      if (child.tagName === "DT" || child.tagName === "DD") {
+        continue;
+      }
+      expect(child.tagName, `dl의 자식이 ${child.tagName}다`).toBe("DIV");
+      expect(child.querySelector("div"), "짝 안에 div가 또 있다").toBeNull();
+    }
+  }
+});
+
+// 결제 화면이 사진을 읽지 않아 장바구니·주문 완료와 달리 늘 회색 칸이었다 (#422)
+test("상품 사진이 있으면 보인다", () => {
+  const { container } = renderView({
+    items: [{ ...ITEM, thumbnailUrl: "https://cdn.test/cat.png" }],
+  });
+
+  expect(container.querySelector('img[src*="cat.png"]')).not.toBeNull();
 });
 
 // 배송지를 등록하러 갔다 돌아올 때 고른 것을 잃으면 장바구니 전체로 읽혀 고르지 않은

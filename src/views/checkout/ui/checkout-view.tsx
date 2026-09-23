@@ -19,16 +19,16 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IoImageOutline } from "react-icons/io5";
 
 import { useQueryAddresses } from "@/entities/address";
 import { cartItemKey, useQueryCart, type CartItem } from "@/entities/cart";
+import { OrderProductThumbnail } from "@/entities/order";
 import { useQueryPets } from "@/entities/pet";
 import { ApiError } from "@/shared/api/client";
 import { toAppMessageCode } from "@/shared/api/error-message";
-import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -121,14 +121,8 @@ function OrderItemSkeleton() {
 function OrderItemRow({ item }: { item: CartItem }) {
   return (
     <div className="flex items-start gap-2">
-      {/* 디자인 시스템 icon 세트에 이미지 글리프가 없어 react-icons로 채운다 (AGENTS.md 5.3).
-          주문 완료(`paym_002`)도 같은 자리에 같은 것을 쓴다 */}
-      <span
-        aria-hidden
-        className="flex size-20 shrink-0 items-center justify-center rounded-lg bg-surface-tertiary text-icon-fill-secondary"
-      >
-        <IoImageOutline className="size-7" />
-      </span>
+      {/* 주문 화면들과 같은 80 썸네일이다. 사진이 없으면 자리만 잡는다 (#422) */}
+      <OrderProductThumbnail imageUrl={item.thumbnailUrl} />
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 self-stretch">
         <div className="flex flex-col gap-1">
           {/* 살 수 있는 줄만 여기까지 오므로 이름이 `null`이 아니다 */}
@@ -187,6 +181,19 @@ const UNUSABLE_ORDER_CODES = new Set([
  * **만든 주문으로 결제를 준비하다 막혔으면** 서버가 준 코드를 본다. 상태 코드로 뭉뚱그리지
  * 않는다 — 429처럼 잠깐 막힌 것까지 버리면 다시 누를 때 주문이 하나 더 생긴다 (#361).
  */
+/**
+ * 결제를 시작하지 못한 까닭을 문구 코드로 옮긴다.
+ *
+ * **서버가 이유를 알려 준 실패는 그 문구를 쓴다.** 재고 부족·판매 중지·배송지 없음처럼 도메인
+ * 문구가 있는데 "결제 실패 / 다시 시도해 주세요"로 뭉개면, 다시 눌러도 같은 자리에서 막힌다 (#422).
+ * 상태 코드로 떨어진 공통 문구(`common.*`)는 결제 맥락이 빠져 있어 "결제 실패"로 모은다 —
+ * 주문 완료 화면의 `toConfirmFailureCode`와 같은 방식이다.
+ */
+function toPayFailureCode(error: unknown): AppMessageCode {
+  const code = toAppMessageCode(error);
+  return code.startsWith("common.") ? APP_MESSAGE_CODE.payment.failed : code;
+}
+
 function shouldForgetOrder(error: unknown, creating: boolean): boolean {
   if (!(error instanceof ApiError)) {
     return false;
@@ -206,14 +213,18 @@ export function CheckoutView() {
   // 주문 생성부터 결제창이 뜨기까지의 왕복. 결제는 되돌릴 수 없어 두 번 눌리면 안 된다
   const [paying, setPaying] = useState(false);
 
+  const router = useRouter();
   const searchParams = useSearchParams();
-  // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다
+  // 결제창이 실패나 취소로 돌아오면 `?code=`가 붙는다. 왜 돌아왔는지 알려야 다시 시도한다.
+  // **알린 뒤에는 주소에서 걷는다.** 두면 배송지 변경에 갔다 뒤로 오거나 새로고침할 때마다 같은
+  // 실패가 또 뜬다. 고른 상품(`items`)만 남긴다 (#422)
   const failCode = searchParams.get("code");
   useEffect(() => {
     if (failCode) {
       toastAppError(APP_MESSAGE_CODE.payment.failed, failCode);
+      router.replace(toCheckoutPath(searchParams.toString()), { scroll: false });
     }
-  }, [failCode]);
+  }, [failCode, router, searchParams]);
 
   const { cart, isLoading: cartLoading, error: cartError } = useQueryCart();
   const { addresses, isLoading: addressLoading, error: addressError } = useQueryAddresses();
@@ -341,7 +352,7 @@ export function CheckoutView() {
       if (shouldForgetOrder(error, orderId === null)) {
         clearPendingOrder();
       }
-      toastAppError(APP_MESSAGE_CODE.payment.failed, error);
+      toastAppError(toPayFailureCode(error), error);
       // 결제창이 떴으면 브라우저가 떠나므로 여기로 돌아오지 않는다. 실패했을 때만 되돌린다
       setPaying(false);
     }
@@ -408,7 +419,8 @@ export function CheckoutView() {
               <EmptyState
                 className="py-6"
                 title="아직 등록된 배송지가 없어요"
-                description="상품을 안전하게 받아볼 수 있도록 먼저 등록해 주세요"
+                // 시안(`2115:171079`)과 배송지 목록의 빈 상태와 같은 문구다 (#422)
+                description="상품을 안전하게 받아보실 주소를 미리 등록해 주세요"
               />
             ))}
 
@@ -495,25 +507,33 @@ export function CheckoutView() {
               </ul>
             ))}
 
-          <dl className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <dt className="text-label-bold-14 text-surface-primary">결제금액</dt>
-              <dd className="text-title-bold-16 text-surface-primary">{formatWon(total)}</dd>
+          {/* **살 상품이 있을 때만 금액을 그린다.** 없을 때 그리면 배송비만 더한 "결제금액 3,000원"이
+              "결제할 상품이 없어요" 옆에 뜬다. 장바구니 화면도 상품이 없으면 금액 줄을 숨긴다 (#422) */}
+          {!cartLoading && !cartError && items.length > 0 && (
+            // **dl 아래에는 이름·값 짝만 둔다.** 간격을 주려고 한 겹 더 감싸면 보조기기가 짝을 읽지
+            // 못한다(`definition-list`·`dlitem`, #341). 묶음 간격은 dl 밖에서 준다 (#422)
+            <div className="flex flex-col gap-2">
+              <dl>
+                <div className="flex items-center justify-between gap-2">
+                  <dt className="text-label-bold-14 text-surface-primary">결제금액</dt>
+                  <dd className="text-title-bold-16 text-surface-primary">{formatWon(total)}</dd>
+                </div>
+              </dl>
+              {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
+                  금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
+                  임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
+              <dl className="flex flex-col gap-1 text-body-medium-14 text-text-body-secondary">
+                <div className="flex items-center justify-between gap-2">
+                  <dt>상품 옵션</dt>
+                  <dd>{formatWon(itemPrice)}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <dt>배송비</dt>
+                  <dd>{formatWon(SHIPPING_FEE)}</dd>
+                </div>
+              </dl>
             </div>
-            {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
-                금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
-                임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
-            <div className="flex flex-col gap-1 text-body-medium-14 text-text-body-secondary">
-              <div className="flex items-center justify-between gap-2">
-                <dt>상품 옵션</dt>
-                <dd>{formatWon(itemPrice)}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <dt>배송비</dt>
-                <dd>{formatWon(SHIPPING_FEE)}</dd>
-              </div>
-            </div>
-          </dl>
+          )}
         </Section>
 
         <hr className="border-border" />
