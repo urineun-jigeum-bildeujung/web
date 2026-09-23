@@ -159,11 +159,6 @@ export const APP_MESSAGE = {
     title: "배송 조회 준비 중",
     description: "택배사 연동이 끝나면 여기에서 배송 위치를 볼 수 있어요.",
   },
-  // 주문 응답에 상품 ID·`itemType`이 없어 목록에서 바로 다시 담을 수 없다. 받으면 걷는다 (#405)
-  "order.reorderPreparing": {
-    title: "장바구니 담기 준비 중",
-    description: "지금은 상품 화면에서 담아 주세요.",
-  },
   // "취소·반품·교환" 탭 화면 시안과 신청 목록 API가 아직 없다. 취소한 주문은 첫 탭에 남는다 (#405)
   "order.claimHistoryPreparing": {
     title: "취소·반품·교환 내역 준비 중",
@@ -288,7 +283,6 @@ export const APP_MESSAGE_CODE = {
     notFound: "order.notFound",
     temporarilyUnavailable: "order.temporarilyUnavailable",
     deliveryTrackingPreparing: "order.deliveryTrackingPreparing",
-    reorderPreparing: "order.reorderPreparing",
     claimHistoryPreparing: "order.claimHistoryPreparing",
     claimRequested: "order.claimRequested",
     notClaimable: "order.notClaimable",

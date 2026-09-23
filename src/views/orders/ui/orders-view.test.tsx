@@ -8,9 +8,11 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const { getOrders, confirmOrder } = vi.hoisted(() => ({
+const { getOrders, confirmOrder, addCartItem, showSnackbar } = vi.hoisted(() => ({
   getOrders: vi.fn(),
   confirmOrder: vi.fn(),
+  addCartItem: vi.fn(),
+  showSnackbar: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
@@ -19,6 +21,17 @@ vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
   getOrders,
   confirmOrder,
+}));
+
+// 담기는 서버까지 가지 않는다. 무엇을 몇 개 담는지는 인자로 본다
+vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/cart/api/cart")>()),
+  addCartItem,
+}));
+
+vi.mock("@/shared/ui/snackbar/snackbar", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/ui/snackbar/snackbar")>()),
+  showSnackbar,
 }));
 
 import type { OrderListResponse, OrderSummary } from "@/entities/order";
@@ -38,9 +51,11 @@ function makeOrder(orderId: number, orderStatus: string, over: Partial<OrderSumm
     items: [
       {
         orderItemId: orderId * 10,
+        productId: orderId * 100,
         thumbnailUrl: null,
         productName: `테스트 상품 ${orderId}`,
         quantity: 1,
+        amount: orderId * 1000 + 500,
       },
     ],
     ...over,
@@ -114,12 +129,68 @@ test("결제 직후 주문에는 취소 버튼이 없고, 배송완료에는 구
   expect(screen.getAllByRole("button", { name: "장바구니 담기" })).toHaveLength(3);
 });
 
-// 주문 응답에 상품 ID가 없어 아직 담을 수 없다. 누르면 왜 안 되는지 알린다 (#405)
-test("장바구니 담기를 누르면 준비 중이라고 알린다", async () => {
+// 목록 응답에 그 줄에 낸 금액이 온다(백엔드 #141). 비워 두던 금액 줄을 채운다 (#418)
+test("상품마다 그 줄에 낸 금액을 보인다", async () => {
+  renderView();
+
+  expect(await screen.findByText("1,500")).toBeDefined();
+  expect(screen.getByText("2,500")).toBeDefined();
+});
+
+/**
+ * **일반 상품으로, 주문한 수량만큼 담는다.** 목록의 `productId`는 타임딜로 산 줄도 원본 상품
+ * id다. 상품 상세의 담기와 같이 끝나면 스낵바로 알린다 (#418).
+ */
+test("장바구니 담기를 누르면 그 상품을 주문한 수량만큼 담고 알린다", async () => {
+  served = [
+    makeOrder(1, "DELIVERED", { items: [{ ...makeOrder(1, "PAID").items[0], quantity: 3 }] }),
+  ];
+  addCartItem.mockResolvedValueOnce(undefined);
+  renderView();
+
+  fireEvent.click(await screen.findByRole("button", { name: "장바구니 담기" }));
+
+  await waitFor(() => expect(showSnackbar).toHaveBeenCalledWith("상품이 장바구니에 담겼어요"));
+  expect(addCartItem).toHaveBeenCalledWith({ itemType: "NORMAL", itemId: 100 }, 3);
+});
+
+// 담는 동안 또 누르면 서버가 같은 줄에 수량을 한 번 더 더한다. 눌렸는지도 보여야 한다 (AGENTS.md 5.8)
+test("담는 동안 대기를 보이고, 끝날 때까지 담기 버튼이 모두 잠긴다", async () => {
+  let finish: () => void = () => {};
+  addCartItem.mockImplementationOnce(() => new Promise<void>((resolve) => (finish = resolve)));
+  renderView();
+
+  // jsdom은 `invisible`을 모르므로 대기 중에도 버튼 이름에 라벨이 남는다. 이름은 느슨하게 찾는다
+  fireEvent.click((await screen.findAllByRole("button", { name: /장바구니 담기/ }))[0]);
+
+  expect(await screen.findByRole("status", { name: "장바구니에 담는 중" })).toBeDefined();
+  // 다른 줄도 끝날 때까지 잠긴다
+  for (const button of screen.getAllByRole("button", { name: /장바구니 담기/ })) {
+    expect(button.hasAttribute("disabled")).toBe(true);
+  }
+
+  await act(async () => finish());
+  await waitFor(() =>
+    expect(screen.queryByRole("status", { name: "장바구니에 담는 중" })).toBeNull(),
+  );
+});
+
+// 실패 알림은 전역(MutationCache.onError)이 맡는다. 담겼다고 거짓으로 알리면 안 된다
+test("담기가 실패하면 담겼다고 알리지 않고 버튼을 되살린다", async () => {
+  addCartItem.mockRejectedValueOnce(new Error("재고 없음"));
   renderView();
 
   fireEvent.click((await screen.findAllByRole("button", { name: "장바구니 담기" }))[0]);
-  expect(await screen.findByRole("dialog", { name: "장바구니 담기 준비 중" })).toBeDefined();
+
+  await waitFor(() => expect(addCartItem).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(
+      screen
+        .getAllByRole("button", { name: "장바구니 담기" })
+        .every((button) => !button.hasAttribute("disabled")),
+    ).toBe(true),
+  );
+  expect(showSnackbar).not.toHaveBeenCalled();
 });
 
 test("배송 중이면 배송 위치 보기가 나오고 누르면 준비 중이라고 알린다", async () => {
@@ -333,8 +404,22 @@ test("상품이 여럿이면 상품마다 뱃지·줄·버튼을 세운다", asy
   served = [
     makeOrder(5, "PAID", {
       items: [
-        { orderItemId: 50, thumbnailUrl: null, productName: "사료", quantity: 2 },
-        { orderItemId: 51, thumbnailUrl: null, productName: "간식", quantity: 1 },
+        {
+          orderItemId: 50,
+          productId: 500,
+          thumbnailUrl: null,
+          productName: "사료",
+          quantity: 2,
+          amount: 40000,
+        },
+        {
+          orderItemId: 51,
+          productId: 510,
+          thumbnailUrl: null,
+          productName: "간식",
+          quantity: 1,
+          amount: 9000,
+        },
       ],
     }),
   ];

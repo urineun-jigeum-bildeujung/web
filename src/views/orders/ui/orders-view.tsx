@@ -9,7 +9,13 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Fragment, useState } from "react";
 import { toast } from "sonner";
 
-import { OrderProductRow, useMutateOrder, useQueryOrders } from "@/entities/order";
+import { useMutateCartItem } from "@/entities/cart";
+import {
+  OrderProductRow,
+  useMutateOrder,
+  useQueryOrders,
+  type OrderListItem,
+} from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
@@ -19,6 +25,7 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { groupByPaidDate } from "../model/group-by-paid-date";
@@ -47,6 +54,29 @@ function OrderHistory() {
   // 어느 주문을 확정할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
   const [askingConfirmId, setAskingConfirmId] = useState<number | null>(null);
   const [preparing, setPreparing] = useState<AppMessageCode | null>(null);
+
+  const { add } = useMutateCartItem();
+  // 담는 중인 상품 줄. 담기 훅의 대기 표시는 어느 줄인지 몰라 화면이 든다
+  const [reorderingId, setReorderingId] = useState<number | null>(null);
+
+  /**
+   * 주문한 상품을 장바구니에 다시 담는다. 상품 상세의 담기처럼 끝나면 스낵바로 알린다.
+   *
+   * **일반 상품으로, 주문한 수량만큼 담는다.** 목록의 `productId`는 타임딜로 산 줄도 원본
+   * 상품 id다 — 딜은 기간이 끝나 있을 수 있다. 몇 개 담을지는 시안에 없어, 같은 것을 다시 사는
+   * 흐름에 맞춰 주문 수량으로 둔다(PD 확인 거리, #418).
+   */
+  async function reorder(item: OrderListItem) {
+    setReorderingId(item.orderItemId);
+    try {
+      await add({ itemType: "NORMAL", itemId: item.productId }, item.quantity);
+      showSnackbar("상품이 장바구니에 담겼어요");
+    } catch {
+      // 실패 알림은 MutationCache.onError가 맡는다
+    }
+    // `finally`에 두지 않는다 — React Compiler가 finally 절을 만나면 이 컴포넌트 최적화를 포기한다
+    setReorderingId(null);
+  }
 
   const list = orders ?? [];
   const asking = list.find((order) => order.orderId === askingConfirmId) ?? null;
@@ -92,7 +122,8 @@ function OrderHistory() {
                       order={order}
                       onConfirm={setAskingConfirmId}
                       onTrack={() => setPreparing(APP_MESSAGE_CODE.order.deliveryTrackingPreparing)}
-                      onReorder={() => setPreparing(APP_MESSAGE_CODE.order.reorderPreparing)}
+                      onReorder={(item) => void reorder(item)}
+                      reorderingId={reorderingId}
                     />
                   ))}
                 </div>

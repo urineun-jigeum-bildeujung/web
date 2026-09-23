@@ -10,18 +10,29 @@ import { apiRequest } from "@/shared/api/client";
 
 const ORDERS_PATH = "/orders";
 
-/**
- * 목록 한 줄에 담겨 오는 주문 상품.
- *
- * **상세보다 좁다.** 목록은 썸네일·이름·수량만 주고 금액·상태·클레임은 주문 상세
- * (`GET /orders/{orderId}`)에만 있다.
- */
-export type OrderListItem = {
+/** 목록과 상세가 함께 주는 주문 상품 필드 */
+type OrderItemBase = {
   orderItemId: number;
   /** 명세 Example은 늘 채워 주지만 이미지가 빠진 상품을 본 적이 있어 없을 때를 함께 다룬다 */
   thumbnailUrl: string | null;
   productName: string;
   quantity: number;
+};
+
+/**
+ * 목록 한 줄에 담겨 오는 주문 상품.
+ *
+ * **상세와 필드가 다르다.** 목록은 상품 id와 그 줄의 금액을 주고, 상태·클레임은 주문 상세
+ * (`GET /orders/{orderId}`)에만 있다. 상품 id와 금액은 백엔드 #141(2026-09-23)로 더해졌다.
+ */
+export type OrderListItem = OrderItemBase & {
+  /**
+   * 상품 원본 id. **타임딜로 산 줄도 원본 상품 id다**(`OrderItem.productId = catalog.productId()`).
+   * 그래서 장바구니에 다시 담을 때는 일반 상품으로 담는다 (#418)
+   */
+  productId: number;
+  /** 그 줄에 낸 금액. `(단가 − 할인) × 수량`이다(`OrderItem.lineAmount`) */
+  amount: number;
 };
 
 /** 목록 한 줄. 백엔드 응답 `orders[]`의 모양 그대로다 */
@@ -97,7 +108,7 @@ export type OrderItemClaim = {
  * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
  * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
  */
-export type OrderDetailItem = OrderListItem & {
+export type OrderDetailItem = OrderItemBase & {
   unitPrice: number;
   /**
    * 상품별 상태. 주문 전체 상태와 따로 움직인다 — 한 상품만 반품 중일 수 있다.
