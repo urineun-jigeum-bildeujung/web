@@ -7,6 +7,8 @@
 | `query-keys.ts` | TanStack Query Key 중앙 관리 factory (`QUERY_KEYS`) — 도메인별 구성 |
 | `query-keys.test.ts` | factory 계층 규칙 단위 테스트 |
 | `firebase.ts` | Firebase 웹 앱 설정(`FIREBASE_CONFIG`)·VAPID 키. `NEXT_PUBLIC_FIREBASE_*`를 읽는다. 브라우저와 서비스 워커 라우트가 같은 값을 본다 |
+| `observability.ts` | Grafana Faro 수집 주소·키(`FARO_CONFIG`)와 앱 이름. `NEXT_PUBLIC_FARO_*`를 읽고 둘 다 있을 때만 켠다(`isFaroConfigured`) (#396) |
+| `observability.test.ts` | 주소나 키가 하나라도 비면 켜지 않는지 본다 |
 | `app-message.ts` | 사용자에게 보이는 문구(`APP_MESSAGE`)와 그 코드(`APP_MESSAGE_CODE`) — 화면은 코드만 넘기고 문구는 여기서 찾는다 |
 
 - Query Key는 호출부에서 배열을 직접 조립하지 않고 이 파일의 factory만 쓴다. 규칙은 [code-convention](../../../docs/conventions/code-convention.md)의 "TanStack Query Key" 절을 따른다.
