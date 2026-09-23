@@ -25,8 +25,8 @@ type RemovedEntry = { queryKey: QueryKey; item: WishlistItem; index: number };
  * 서로 다른 상품의 요청이 순서를 기다릴 이유가 없다.
  *
  * PATCH는 삭제가 아니라 토글이라 응답을 그대로 믿지 않는다("성공이든 실패든 서버가
- * 가진 것으로 맞춘다" — `use-mutate-cart-item.ts`와 같은 원칙). 끝나면 무조건 무효화해
- * 서버 상태로 재동기화하고, mutation 자동 재시도는 쓰지 않는다.
+ * 가진 것으로 맞춘다" — `use-mutate-cart-item.ts`와 같은 원칙). 진행 중인 해제가 모두
+ * 끝났을 때 무효화해 서버 상태로 재동기화하고, mutation 자동 재시도는 쓰지 않는다.
  */
 export function useMutateWishlist() {
   const queryClient = useQueryClient();
@@ -63,11 +63,18 @@ export function useMutateWishlist() {
   }
 
   const mutation = useMutation({
+    mutationKey: rootKey,
     mutationFn: (productId: number) => toggleWishlist(productId),
     retry: false,
     onMutate: (productId) => removeFromAllCaches(productId),
     onError: (_error, _productId, entries) => restore(entries),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: rootKey }),
+    // 아직 끝나지 않은 해제가 있으면 재조회하지 않는다. 그 요청이 반영되기 전의 목록을
+    // 받아 덮어쓰면 방금 뺀 상품이 되살아난다. 자기 자신은 이 시점에 아직 pending이라 1이다
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: rootKey }) === 1) {
+        return queryClient.invalidateQueries({ queryKey: rootKey });
+      }
+    },
   });
 
   return {
