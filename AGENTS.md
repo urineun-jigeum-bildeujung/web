@@ -166,6 +166,7 @@
 | 푸시 | firebase | 12.19.0 | FCM 웹 푸시 토큰 발급·삭제. `app`·`messaging`만 `shared/lib/push`에서 동적 import. 전송은 백엔드가 맡는다 |
 | 관측 | @grafana/faro-web-sdk | 2.12.1 | 오류·웹 바이탈·콘솔 오류를 인프라 Grafana로 보낸다. 수집 주소·키가 있을 때만 `instrumentation-client.ts`가 첫 화면 뒤에 동적 import. 민감정보는 수집 서버가 거른다 (#396) |
 | 관측 | @grafana/faro-web-tracing | 2.12.1 | 같은 출처 API 요청에 `traceparent`를 실어 백엔드 추적과 잇는다 |
+| 관측 | prom-client | 15.1.3 | 서버(Next.js) 기본 지표를 `/metrics`로 내보내 인프라 Prometheus가 수집. **Host가 IP·localhost인 요청(파드 직접 호출)에만 응답**하고 도메인으로 온 바깥 요청은 404 (#401) |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |

@@ -19,6 +19,8 @@
 | `push/fcm.test.ts` | 미지원 환경에서 물러나는지, 권한 거부·허용에 따라 토큰을 받는지, 끄면 지우는지 |
 | `observability/faro.ts` | Grafana Faro를 켠다(`startFaro`). 오류·웹 바이탈·콘솔 오류 수집과 같은 출처 API의 trace 전파. **`src/instrumentation-client.ts`가 수집 설정이 있을 때만 동적으로 부른다** (#396) |
 | `observability/faro.test.ts` | 수집 주소·키·앱 이름과 trace 계측을 넘기는지 본다 |
+| `metrics/server-metrics.ts` | 서버 기본 지표를 Prometheus 형식으로 낸다(`readServerMetrics`). 파드를 직접 부른 요청인지 Host로 가른다(`isInternalHost`) — **도메인으로 온 요청은 로드밸런서를 거친 바깥 요청이라 막는다**. `src/app/metrics/route.ts`가 부른다 (#401) |
+| `metrics/server-metrics.test.ts` | IP·localhost만 안쪽으로 보는지, 지표를 내는지, 모듈을 다시 읽어도 레지스트리를 새로 만들지 않는지 |
 | `app-toast.ts` | 토스트를 띄우는 유일한 통로(`toastAppSuccess`·`toastAppError`) — 호출부는 메시지 코드만 넘긴다. 예외는 서버가 정한 문구가 오는 `toastPushMessage` 하나 |
 | `report-error.ts` | 오류를 바깥으로 알리는 유일한 통로(`reportError`) — 민감정보를 걸러낸 요약만 남긴다. 관측 도구 접점 — Faro가 이 콘솔 출력을 그대로 수집한다 (#396) |
 | `report-error.test.ts` | 무엇이 남고 무엇이 남지 않는지 단위 테스트 |
