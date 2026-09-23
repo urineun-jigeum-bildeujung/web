@@ -14,7 +14,7 @@
 | `api/use-mutate-address.ts` | 등록·수정 훅. 실패 토스트는 전역에 맡긴다 |
 | `ui/address-place-list.tsx` | 장소 목록과 "장소 추가하기". 두 화면이 함께 쓴다. `from`으로 등록·수정을 마치고 돌아올 경로를 받는다 (#369) |
 | `ui/address-place-list.test.tsx` | 무엇을 어떤 차례로 그리는지, 실패·빈 상태 |
-| `ui/place-icon.ts` | 장소 이름으로 아이콘을 고르는 표 |
+| `ui/place-icon.ts` | 장소 이름으로 아이콘을 고른다(`placeIconOf`). 표의 제 키만 봐서 `toString` 같은 이름에 물려받은 값이 나오지 않는다 (#423) |
 | `model/group-addresses.ts` | 기본 배송지를 맨 앞에 두는 묶음 계산 |
 | `index.ts` | 공개 API |
 
