@@ -88,7 +88,10 @@ const ROUTES = [
   "/search",
   "/recommendations",
   "/compare",
-  "/products/1",
+  // **`/products/1`은 `/deals`와 같은 이유로 뺐다.** 상품 상세가 서버에서 실제 API를
+  // 조회하는데(#413) 이 스위트에는 그 서버가 없어 404가 된다. 스모크는
+  // `e2e/product-detail.server-fetch.spec.ts`가 전용 목 API 서버로 맡는다.
+  // 사진 격자는 아직 목데이터라 서버 조회가 없어 여기 남는다
   "/products/1/photos",
   "/cart",
   "/payment",
@@ -247,6 +250,9 @@ test("화면에 걸린 링크가 모두 열린다", async ({ page }) => {
       // 그 오류 처리가 dev 서버를 붙들어 같은 회차의 다른 테스트까지 느려졌다 (#324).
       // 이 라우트의 스모크는 `e2e/deals.server-fetch.spec.ts`가 전용 목 API 서버로 맡는다
       if (key === "/deals") continue;
+
+      // 상품 상세도 같다(#413). 사진 격자(`/products/1/photos`)는 목데이터라 그대로 확인한다
+      if (/^\/products\/[^/]+$/.test(key)) continue;
 
       // dev 서버는 라우트를 첫 요청에 컴파일한다. 다른 테스트와 겹치면
       // 그 사이에 실패할 수 있어 한 번 더 확인하고 판단한다.
