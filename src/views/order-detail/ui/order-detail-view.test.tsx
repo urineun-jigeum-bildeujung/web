@@ -1,5 +1,5 @@
 // 주문 상세 테스트. 서버가 준 주문을 그리는지, 응답에 없어 계산해 만드는 값이 맞는지,
-// 배송완료일 때만 반품·교환으로 갈 수 있는지 본다.
+// 배송완료일 때만 반품·교환으로 갈 수 있는지 본다. 구성은 2026-09-23 시안(mypa_161, #405)을 따른다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -66,21 +66,36 @@ beforeEach(() => {
   getOrderDetail.mockResolvedValue(makeDetail());
 });
 
-test("주문정보·결제상세·배송지 정보를 나눠 보여준다", async () => {
+/** 상품 한 줄의 글자 전부. 금액이 숫자와 "원"으로 갈려 있어 줄째 읽는다 */
+function productRowText(name: string) {
+  return screen.getByText(name).closest("li")?.textContent;
+}
+
+test("결제일·주문 상품·결제상세·배송지 정보를 나눠 보여준다", async () => {
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  for (const title of ["주문정보", "결제상세", "배송지 정보"]) {
+  expect(await screen.findByRole("heading", { name: "주문 내역", level: 1 })).toBeDefined();
+  for (const title of ["주문 상품 1개", "결제상세", "배송지 정보"]) {
     expect(await screen.findByRole("heading", { name: title })).toBeDefined();
   }
+  // 첫 카드는 제목 없이 결제일이 맨 윗줄이다. 결제 시각은 한국 기준으로 읽는다
+  const summary = screen.getByRole("region", { name: "주문 정보" });
+  expect(summary.textContent).toContain("결제일 26.09.11");
 });
 
 test("서버가 준 주문번호와 상품을 보여준다", async () => {
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   expect(await screen.findByText("ORD-TEST-DETAIL-01")).toBeDefined();
-  expect(screen.getByText("테스트 상품 A")).toBeDefined();
-  // 결제 직후 주문도 배송준비중으로 보인다 (#297)
-  expect(screen.getByText("배송준비중")).toBeDefined();
+  expect(productRowText("테스트 상품 A")).toBe("테스트 상품 A1개35,000원");
+});
+
+// 2026-09-23 시안에서 상세의 상태 뱃지가 빠졌다. 목록에만 붙는다
+test("상태 뱃지를 붙이지 않는다", async () => {
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  await screen.findByText("ORD-TEST-DETAIL-01");
+  expect(screen.queryByText("배송준비중")).toBeNull();
 });
 
 // 응답에 배송비 필드가 없다. 결제 금액에서 상품 금액을 빼 만드는 값이라 틀리면 바로 돈이 안 맞는다
@@ -90,8 +105,8 @@ test("배송비는 결제 금액에서 상품 금액을 뺀 값이다", async ()
   expect(await screen.findByText("배송비")).toBeDefined();
   expect(screen.getByText("3,000원")).toBeDefined();
   expect(screen.getByText("38,000원")).toBeDefined();
-  // 상품 금액은 상품 줄과 결제상세 두 곳에 나온다. 상품이 하나뿐이라 값이 같다
-  expect(screen.getAllByText("35,000원")).toHaveLength(2);
+  // 결제상세의 상품 금액. 상품이 하나뿐이라 상품 줄의 금액과 같다
+  expect(screen.getByText("35,000원")).toBeDefined();
 });
 
 // 도로명과 상세 주소가 따로 온다. 하나만 그리면 몇 층 몇 호인지 사라진다
@@ -100,6 +115,14 @@ test("배송지는 도로명과 상세 주소를 함께 보여준다", async () 
 
   expect(await screen.findByText("서울특별시 강남구 테헤란로 123 UI타워 4층 404호")).toBeDefined();
   expect(screen.getByText("010-1234-5678")).toBeDefined();
+});
+
+// 헷갈리는 정보를 물을 곳이다. 고객지원의 1:1 문의로 보낸다
+test("1:1문의로 갈 수 있다", async () => {
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  const link = await screen.findByRole("link", { name: "1:1문의" });
+  expect(link.getAttribute("href")).toBe("/mypage/support/inquiries");
 });
 
 // 시안(mypa_161)의 결제상세는 결제금액·상품 옵션·배송비·결제수단 넷뿐이다
@@ -117,8 +140,8 @@ test("배송완료가 아니면 반품·교환 버튼이 없다", async () => {
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   await screen.findByText("ORD-TEST-DETAIL-01");
-  expect(screen.queryByRole("button", { name: "반품하기" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "교환하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "반품 신청하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "교환 신청하기" })).toBeNull();
 });
 
 test("배송완료면 반품·교환을 접수할 수 있다", async () => {
@@ -127,12 +150,13 @@ test("배송완료면 반품·교환을 접수할 수 있다", async () => {
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByRole("button", { name: "반품하기" })).toBeDefined();
-  expect(screen.getByRole("button", { name: "교환하기" })).toBeDefined();
+  expect(await screen.findByRole("button", { name: "반품 신청하기" })).toBeDefined();
+  expect(screen.getByRole("button", { name: "교환 신청하기" })).toBeDefined();
 });
 
-// 접수하고 돌아왔는데 화면이 그대로면 됐는지 알 길이 없다 (#334)
-test("신청이 걸린 상품에는 그 상태가 붙는다", async () => {
+// 눌러 봐야 신청 화면이 "신청 진행 중"으로 되돌려 보낸다 (#334).
+// 신청 상태 뱃지는 2026-09-23 시안에 자리가 없어 걷었다 (#405)
+test("진행 중인 신청이 걸린 상품뿐이면 반품·교환 버튼을 감춘다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({
       orderStatus: "DELIVERED",
@@ -163,13 +187,13 @@ test("신청이 걸린 상품에는 그 상태가 붙는다", async () => {
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByText("반품 수거 중")).toBeDefined();
-  // 눌러 봐야 신청 화면이 "신청 진행 중"으로 되돌려 보낸다
-  expect(screen.queryByRole("button", { name: "반품하기" })).toBeNull();
+  await screen.findByText("ORD-TEST-DETAIL-01");
+  expect(screen.queryByRole("button", { name: "반품 신청하기" })).toBeNull();
+  expect(screen.queryByText("반품 수거 중")).toBeNull();
 });
 
 // 거절·완료는 끝난 신청이다. 다시 신청할 수 있어야 한다
-test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다", async () => {
+test("끝난 신청만 있으면 다시 신청할 수 있다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({
       orderStatus: "DELIVERED",
@@ -200,8 +224,7 @@ test("끝난 신청만 있으면 상태는 보이되 다시 신청할 수 있다
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByText("반품 거절")).toBeDefined();
-  expect(screen.getByRole("button", { name: "반품하기" })).toBeDefined();
+  expect(await screen.findByRole("button", { name: "반품 신청하기" })).toBeDefined();
 });
 
 // 확인창에서 바로 접수되면 사유도 사진도 받지 못한다. 신청 화면으로 넘겨야 한다 (MYPA_261)
@@ -211,13 +234,15 @@ test("반품을 확인하면 그 주문의 신청 화면으로 간다", async ()
   );
   render(<OrderDetailView orderId="7" />, { wrapper: createQueryWrapper() });
 
-  fireEvent.click(await screen.findByRole("button", { name: "반품하기" }));
-  const link = screen.getByRole("link", { name: "반품 접수하기" });
+  fireEvent.click(await screen.findByRole("button", { name: "반품 신청하기" }));
+  expect(screen.getByText("반품 접수를 진행할까요?")).toBeDefined();
+  // 시안은 트리거와 확인 버튼을 같은 문구로 쓴다. 확인 쪽만 링크다
+  const link = screen.getByRole("link", { name: "반품 신청하기" });
   expect(link.getAttribute("href")).toBe("/mypage/orders/7/claim?type=return");
 });
 
-// 목록은 첫 상품만 세우고 나머지를 수로 접는다. 상세는 무엇을 샀는지 다 보여야 한다
-test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다", async () => {
+// 상세는 무엇을 샀는지 다 보여야 한다
+test("상품이 여럿이면 모두 보여주고 줄마다 낸 돈을 적는다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({
       items: [
@@ -250,12 +275,10 @@ test("상품이 여럿이면 모두 보여주고 상태는 한 번만 붙인다"
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByText("사료")).toBeDefined();
-  expect(screen.getByText("간식")).toBeDefined();
+  expect(await screen.findByRole("heading", { name: "주문 상품 2개" })).toBeDefined();
   // 낱개 값에 수량을 곱한 것이 그 줄에 낸 돈이다
-  expect(screen.getByText("20,000원")).toBeDefined();
-  // 주문 단위 상태라 줄마다 반복하지 않는다
-  expect(screen.getAllByText("배송준비중")).toHaveLength(1);
+  expect(productRowText("사료")).toBe("사료2개20,000원");
+  expect(productRowText("간식")).toBe("간식1개15,000원");
 });
 
 // 주문은 결제 전에도 만들어진다. 그때 `payment`가 null로 오는데 빈 카드를 세우면
@@ -264,8 +287,10 @@ test("결제 전 주문이면 결제상세 카드를 세우지 않는다", async
   getOrderDetail.mockResolvedValue(makeDetail({ orderStatus: "PENDING", payment: null }));
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByRole("heading", { name: "주문정보" })).toBeDefined();
+  expect(await screen.findByRole("heading", { name: "주문 상품 1개" })).toBeDefined();
   expect(screen.queryByRole("heading", { name: "결제상세" })).toBeNull();
+  // 결제일도 지어내지 않는다
+  expect(screen.getByRole("region", { name: "주문 정보" }).textContent).not.toContain("결제일");
   // 배송지는 결제와 무관하게 정해져 있어 그대로 보인다
   expect(screen.getByRole("heading", { name: "배송지 정보" })).toBeDefined();
 });

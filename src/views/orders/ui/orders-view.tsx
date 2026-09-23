@@ -1,30 +1,21 @@
-// 주문·배송 확인. 주문별 상태에 따라 할 수 있는 행동이 달라진다.
-// UI 시안 기준(mypa_061 287:8422, mypa_061_구매확정 287:8634, mypa_061_주문취소 302:9385)이다.
+// 주문·배송 확인. "주문내역"·"취소·환불·교환" 두 탭이고, 주문내역은 주문마다 상품 줄을 세운다.
+// UI 시안 기준(mypa_061 3324:36861, mypa_061_구매확정_시트 3324:36993, mypa_061_주문취소_모달 3324:37141)이다 (#405).
 
 "use client";
 
-import Link from "next/link";
-import { useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { Fragment, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  OrderProductRow,
-  OrderStatusBadge,
-  toOrderStatus,
-  useMutateOrder,
-  useQueryOrders,
-  type OrderSummary,
-} from "@/entities/order";
+import { OrderProductRow, useMutateOrder, useQueryOrders } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
-import { APP_MESSAGE } from "@/shared/config/app-message";
-import { formatDisplayDate } from "@/shared/lib/date/display-date";
+import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
+import { cn } from "@/shared/lib/utils";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
@@ -34,39 +25,21 @@ import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
-import { DeliveryTrackingDialog } from "./delivery-tracking-dialog";
+import { OrderGroup } from "./order-group";
 import { OrdersSkeleton } from "./orders-skeleton";
+import { PreparingDialog } from "./preparing-dialog";
 import { useLoadMore } from "./use-load-more";
 
-/** 시안의 목록 행동 버튼. 36px에 label/medium_14, 두 개면 같은 폭으로 나눠 갖는다 (287:8551) */
-const ACTION_CLASS =
-  "h-9 flex-1 bg-surface-tertiary text-label-medium-14 text-foreground hover:bg-surface-tertiary/80";
+const TABS = ["orders", "claims"] as const;
+type Tab = (typeof TABS)[number];
 
-// 시안의 시트 버튼. 48px에 label/bold_16 (287:8795).
-const SHEET_ACTION_CLASS = "h-12 flex-1 text-label-bold-16";
+/** 시트·확인창의 action_button. 40px에 굵은 14px, 둘이 같은 폭으로 나눈다 (3324:37140·3324:37274) */
+const DIALOG_BUTTON = "h-10 flex-1 rounded-lg text-label-bold-14";
 
-/**
- * 대표로 보일 상품 한 줄을 고른다.
- *
- * **목록은 주문 하나를 한 줄로 보여준다.** 상품이 여럿이면 첫 줄만 세우고 나머지는 수를 붙여
- * 알린다. 전부 보려면 상세로 들어간다.
- */
-function toProductRow(order: OrderSummary) {
-  const [first, ...rest] = order.items;
-  if (!first) {
-    return null;
-  }
-
-  // 시안의 둘째 줄은 "상품 옵션" 자리인데 옵션이라는 데이터가 없다. PD팀이 "옵션은 빼고
-  // 수량은 있어도 괜찮다"고 확인해 줘서 몇 개를 샀는지 넣는다 (#297)
-  const caption =
-    rest.length > 0 ? `${first.quantity}개 외 ${rest.length}건` : `${first.quantity}개`;
-
-  return { name: first.productName, caption, imageUrl: first.thumbnailUrl };
-}
-
-export function OrdersView() {
+/** 주문내역 탭. 받는 중 · 실패 · 비어 있음 · 목록과, 목록에서 여는 시트·확인창을 든다 */
+function OrderHistory() {
   const { orders, error, isLoading, hasNext, loadNext, isLoadingNext, nextError } =
     useQueryOrders();
   const { confirm, cancel, confirmingId, cancelingId } = useMutateOrder();
@@ -78,118 +51,65 @@ export function OrdersView() {
   // 어느 주문을 확정·취소할지 묻는 중인지. 서버에 보내기 전 단계라 화면이 든다
   const [askingConfirmId, setAskingConfirmId] = useState<number | null>(null);
   const [askingCancelId, setAskingCancelId] = useState<number | null>(null);
-  const [trackingOpen, setTrackingOpen] = useState(false);
+  const [preparing, setPreparing] = useState<AppMessageCode | null>(null);
 
   const list = orders ?? [];
   const asking = list.find((order) => order.orderId === askingConfirmId) ?? null;
-  const askingRow = asking ? toProductRow(asking) : null;
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <PageHeader title="주문·배송 확인" />
+    <>
+      {isLoading && <OrdersSkeleton />}
 
-      <main className="flex flex-1 flex-col gap-4 px-5 pt-3 pb-8">
-        {isLoading && <OrdersSkeleton />}
+      {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다.
+          **이미 받아 둔 주문이 있으면 화면을 덮지 않는다** — 둘째 쪽에서 실패했다고 보고 있던
+          목록까지 사라지면 스크롤하던 자리를 잃는다 (#294 리뷰) */}
+      {error && list.length === 0 && (
+        <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
+      )}
 
-        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다.
-            **이미 받아 둔 주문이 있으면 화면을 덮지 않는다** — 둘째 쪽에서 실패했다고 보고 있던
-            목록까지 사라지면 스크롤하던 자리를 잃는다 (#294 리뷰) */}
-        {error && list.length === 0 && (
-          <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
-        )}
+      {!isLoading && !error && list.length === 0 && (
+        <EmptyState
+          icon={<Icon name="delivery" />}
+          title="아직 주문한 내역이 없어요"
+          description="맞춤 리포트로 딱 맞는 식단을 찾아보세요"
+        />
+      )}
 
-        {!isLoading && !error && list.length === 0 && (
-          <EmptyState
-            icon={<Icon name="delivery" />}
-            title="아직 주문한 내역이 없어요"
-            description="맞춤 리포트로 딱 맞는 식단을 찾아보세요"
-          />
-        )}
+      {/* 주문 사이에 구분선(border/default)이 들어가고 위아래로 16px씩 띄운다 (3324:36908) */}
+      {!isLoading && list.length > 0 && (
+        <div className="flex flex-col gap-4">
+          {list.map((order, index) => (
+            <Fragment key={order.orderId}>
+              {index > 0 && <hr className="border-border-default" />}
+              <OrderGroup
+                order={order}
+                onCancel={setAskingCancelId}
+                onConfirm={setAskingConfirmId}
+                onTrack={() => setPreparing(APP_MESSAGE_CODE.order.deliveryTrackingPreparing)}
+                onReorder={() => setPreparing(APP_MESSAGE_CODE.order.reorderPreparing)}
+              />
+            </Fragment>
+          ))}
+        </div>
+      )}
 
-        {!isLoading &&
-          list.map((order) => {
-            const status = toOrderStatus(order.orderStatus);
-            const row = toProductRow(order);
-            const orderedAt = formatDisplayDate(order.orderedAt);
+      {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
+      {hasNext && !nextError && <div ref={loadMoreRef} aria-hidden className="h-px" />}
+      {isLoadingNext && <OrdersSkeleton count={1} className="pt-4" />}
 
-            return (
-              <article key={order.orderId} className="flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  {/* 읽을 수 없는 값이면 줄을 비운다. 지어낸 날짜를 보이느니 낫다 */}
-                  {orderedAt && (
-                    <p className="text-body-regular-13 text-text-body-secondary">
-                      주문 일자 {orderedAt}
-                    </p>
-                  )}
+      {/* 다음 쪽만 실패한 경우다. 저절로 다시 부르면 같은 실패가 되풀이되므로 사용자가 고른다 */}
+      {nextError && (
+        <Button
+          variant="secondary"
+          className="mt-4 h-10 text-label-bold-14"
+          onClick={() => loadNext()}
+        >
+          주문을 더 불러오지 못했어요. 다시 시도
+        </Button>
+      )}
 
-                  {row && (
-                    <OrderProductRow
-                      name={row.name}
-                      option={row.caption}
-                      imageUrl={row.imageUrl}
-                      amount={order.totalAmount}
-                      nameTrailing={
-                        // 모르는 상태 값이면 뱃지를 붙이지 않는다. 명세에 없는 값을 추측으로
-                        // 옮기면 엉뚱한 단계가 확정처럼 보인다 (entities/order/model/order-status.ts)
-                        status ? <OrderStatusBadge status={status} className="shrink-0" /> : null
-                      }
-                    />
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {/* 시안은 활성이지만 택배사 연동 전이라 갈 곳이 없다. 준비중임을 알린다 */}
-                  {status === "shipping" && (
-                    <Button
-                      variant="secondary"
-                      className={ACTION_CLASS}
-                      onClick={() => setTrackingOpen(true)}
-                    >
-                      배송 위치 보기
-                    </Button>
-                  )}
-                  {/* 배송이 시작되기 전까지만 취소할 수 있다 (mypa_061). 백엔드 전이 규칙도
-                      `PAID`·`PREPARING`에서만 취소를 허용하는데, 화면은 그 둘을 한 단계로 묶는다 */}
-                  {status === "preparing" && (
-                    <Button
-                      variant="secondary"
-                      className={ACTION_CLASS}
-                      onClick={() => setAskingCancelId(order.orderId)}
-                    >
-                      주문 취소
-                    </Button>
-                  )}
-                  {status === "delivered" && (
-                    <Button
-                      variant="secondary"
-                      className={ACTION_CLASS}
-                      onClick={() => setAskingConfirmId(order.orderId)}
-                    >
-                      구매 확정하기
-                    </Button>
-                  )}
-                  <Button variant="secondary" className={ACTION_CLASS} asChild>
-                    <Link href={`/mypage/orders/${order.orderId}`}>자세히 보기</Link>
-                  </Button>
-                </div>
-              </article>
-            );
-          })}
-
-        {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
-        {hasNext && !nextError && <div ref={loadMoreRef} aria-hidden className="h-px" />}
-        {isLoadingNext && <OrdersSkeleton count={1} />}
-
-        {/* 다음 쪽만 실패한 경우다. 저절로 다시 부르면 같은 실패가 되풀이되므로 사용자가 고른다 */}
-        {nextError && (
-          <Button variant="secondary" className={ACTION_CLASS} onClick={() => loadNext()}>
-            주문을 더 불러오지 못했어요. 다시 시도
-          </Button>
-        )}
-      </main>
-
-      {/* 구매 확정은 되돌릴 수 없지만 무엇을 확정하는지 함께 보여야 해서 시트로 연다.
-          시안의 카드에는 손잡이가 없다 */}
+      {/* 구매 확정은 되돌릴 수 없어 무엇을 확정하는지 보여주는 시트를 한 번 거친다.
+          시안(3324:37140)은 손잡이·제목·설명이 8px로 붙고 상품·버튼이 12px씩 떨어진다 */}
       <BottomSheet
         open={asking !== null}
         // 보내는 중에는 닫히지 않는다. 바깥을 눌러 닫으면 어느 주문을 확정하는지 잃은 채
@@ -199,11 +119,10 @@ export function OrdersView() {
             setAskingConfirmId(null);
           }
         }}
-        showHandle={false}
-        className="gap-5 p-4"
+        className="gap-2 px-5 pb-4"
       >
-        <DrawerHeader className="gap-1 p-0">
-          <DrawerTitle className="text-left text-title-bold-16 text-foreground">
+        <DrawerHeader className="gap-2 p-0">
+          <DrawerTitle className="text-left text-title-bold-18 text-foreground">
             무사히 잘 도착했나요?
           </DrawerTitle>
           <DrawerDescription className="text-left text-body-medium-14 text-text-body-secondary">
@@ -211,26 +130,33 @@ export function OrdersView() {
           </DrawerDescription>
         </DrawerHeader>
 
-        {askingRow && (
-          <OrderProductRow
-            name={askingRow.name}
-            option={askingRow.caption}
-            imageUrl={askingRow.imageUrl}
-            amount={asking?.totalAmount ?? 0}
-          />
+        {/* 확정은 주문 단위라 그 주문의 상품을 모두 보인다. 목록 응답에 상품별 금액이 없어
+            금액 줄은 비운다 */}
+        {asking && (
+          <ul className="mt-1 flex flex-col gap-3">
+            {asking.items.map((item) => (
+              <li key={item.orderItemId}>
+                <OrderProductRow
+                  name={item.productName}
+                  quantity={item.quantity}
+                  imageUrl={item.thumbnailUrl}
+                />
+              </li>
+            ))}
+          </ul>
         )}
 
-        <div className="flex gap-2">
+        <div className="mt-1 flex gap-3">
           <Button
             variant="secondary"
-            className={`${SHEET_ACTION_CLASS} bg-surface-tertiary text-foreground hover:bg-surface-tertiary/80`}
+            className={DIALOG_BUTTON}
             disabled={confirmingId !== null}
             onClick={() => setAskingConfirmId(null)}
           >
             나중에 할게요
           </Button>
           <Button
-            className={SHEET_ACTION_CLASS}
+            className={DIALOG_BUTTON}
             // 서버가 끝낸 뒤 닫는다. 먼저 닫으면 실패했을 때 확정된 줄 안다
             disabled={confirmingId !== null}
             onClick={async () => {
@@ -264,6 +190,7 @@ export function OrdersView() {
         }}
       >
         <AlertDialogContent
+          className="rounded-2xl"
           // Escape는 `onOpenChange`를 거치지 않고 바로 닫는 경로라 따로 막는다
           onEscapeKeyDown={(event) => {
             if (cancelingId !== null) {
@@ -271,18 +198,35 @@ export function OrdersView() {
             }
           }}
         >
-          <AlertDialogTitle>주문을 취소할까요?</AlertDialogTitle>
-          <AlertDialogDescription>결제하신 금액은 안전하게 환불 처리돼요.</AlertDialogDescription>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11" disabled={cancelingId !== null}>
+          {/* 제목과 설명은 4px로 붙는다. 기본 Header는 모바일에서 가운데 정렬이라 쓰지 않는다 */}
+          <div className="flex flex-col gap-1">
+            <AlertDialogTitle className="text-title-bold-18 text-foreground">
+              주문을 취소할까요?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-body-medium-14 break-keep text-text-body-secondary">
+              결제하신 금액은 안전하게 환불 처리돼요.
+            </AlertDialogDescription>
+          </div>
+          {/* 기본 Footer는 회색 띠를 두르는데 시안은 카드 안에 버튼만 놓는다 */}
+          <div className="flex gap-2">
+            <AlertDialogCancel
+              variant="secondary"
+              className={DIALOG_BUTTON}
+              disabled={cancelingId !== null}
+            >
               닫기
             </AlertDialogCancel>
-            <AlertDialogAction
-              className="min-h-11"
+            {/* **`AlertDialogAction`을 쓰지 않는다.** 그쪽은 버튼 모양을 `asChild`로 얹어 클래스를
+                겹칠 때 충돌 정리를 거치지 않아, 빨간 바탕을 줘도 기본 진한 바탕이 이긴다. 누르면
+                닫히는 기본 동작도 여기서는 막아야 해서(서버가 끝날 때까지 열어 둔다) 쓸 까닭이 없다.
+                시안의 button/bg/danger(3324:37274) — 되돌릴 수 없는 동작이라 빨간색이다 */}
+            <Button
+              className={cn(
+                DIALOG_BUTTON,
+                "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+              )}
               disabled={cancelingId !== null}
-              // 확인 창은 누르면 닫히는 것이 기본이라, 서버가 끝날 때까지 열어 두려면 막아야 한다
-              onClick={async (event) => {
-                event.preventDefault();
+              onClick={async () => {
                 if (askingCancelId === null) {
                   return;
                 }
@@ -298,12 +242,58 @@ export function OrdersView() {
               <LoadingSwap loading={cancelingId !== null} label="주문을 취소하는 중">
                 주문 취소하기
               </LoadingSwap>
-            </AlertDialogAction>
-          </AlertDialogFooter>
+            </Button>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
 
-      <DeliveryTrackingDialog open={trackingOpen} onOpenChange={setTrackingOpen} />
+      <PreparingDialog code={preparing} onClose={() => setPreparing(null)} />
+    </>
+  );
+}
+
+export function OrdersView() {
+  const [tab, setTab] = useQueryState(
+    "tab",
+    // 두 탭이 서로 다른 목록이라 뒤로가기로 되돌아와야 한다
+    parseAsStringLiteral(TABS).withDefault("orders").withOptions({ history: "push" }),
+  );
+
+  return (
+    <div className="flex min-h-dvh flex-col">
+      <PageHeader title="주문·배송 확인" />
+
+      <main className="flex flex-1 flex-col px-5 pt-3 pb-8">
+        <Tabs
+          value={tab}
+          onValueChange={(next) => void setTab(next as Tab)}
+          className="flex-1 gap-4"
+        >
+          {/* 시안의 segment_control(3324:36992). 트랙은 목록보다 좌우 4px 안쪽이다 */}
+          <TabsList variant="segment" className="mx-1 w-auto">
+            <TabsTrigger value="orders" className="h-10 text-label-bold-16">
+              주문내역
+            </TabsTrigger>
+            <TabsTrigger value="claims" className="h-10 text-label-bold-16">
+              취소·환불·교환
+            </TabsTrigger>
+          </TabsList>
+
+          {/* 탭을 열 때만 받는다. 둘째 탭에 머무는 동안 주문 목록을 부르지 않는다 */}
+          <TabsContent value="orders" className="flex flex-col">
+            {tab === "orders" && <OrderHistory />}
+          </TabsContent>
+
+          {/* **탭 화면 시안이 완성본에 없고 신청 목록 API도 없다.** 작업 영역에 초안만 있어
+              PD팀 확인 중이다. 그때까지 준비 중으로 둔다 (#405) */}
+          <TabsContent value="claims" className="flex flex-col">
+            <EmptyState
+              icon={<Icon name="delivery" />}
+              {...APP_MESSAGE[APP_MESSAGE_CODE.order.claimHistoryPreparing]}
+            />
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 }
