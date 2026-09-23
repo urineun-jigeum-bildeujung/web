@@ -1,4 +1,4 @@
-// 주문·배송 확인. "주문내역"·"취소·환불·교환" 두 탭이고, 주문내역은 주문마다 상품 줄을 세운다.
+// 주문·배송 확인. "주문내역"·"취소·반품·교환" 두 탭이고, 주문내역은 주문마다 상품 줄을 세운다.
 // UI 시안 기준(mypa_061 3324:36861, mypa_061_구매확정_시트 3324:36993, mypa_061_주문취소_모달 3324:37141)이다 (#405).
 
 "use client";
@@ -292,7 +292,7 @@ export function OrdersView() {
               주문내역
             </TabsTrigger>
             <TabsTrigger value="claims" className="h-10 text-label-bold-16">
-              취소·환불·교환
+              취소·반품·교환
             </TabsTrigger>
           </TabsList>
 

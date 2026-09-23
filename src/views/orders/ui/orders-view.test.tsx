@@ -379,12 +379,12 @@ test("상품이 여럿이면 상품마다 뱃지·줄·버튼을 세운다", asy
 });
 
 // 탭 화면 시안이 완성본에 없고 신청 목록 API도 없다. 그 탭에 있는 동안 주문 목록을 부르지 않는다
-test("취소·환불·교환 탭은 준비 중이라고 알린다", async () => {
+test("취소·반품·교환 탭은 준비 중이라고 알린다", async () => {
   renderView("?tab=claims");
 
-  expect(screen.getByRole("tab", { name: "취소·환불·교환" }).getAttribute("aria-selected")).toBe(
+  expect(screen.getByRole("tab", { name: "취소·반품·교환" }).getAttribute("aria-selected")).toBe(
     "true",
   );
-  expect(await screen.findByText("취소·환불·교환 내역 준비 중")).toBeDefined();
+  expect(await screen.findByText("취소·반품·교환 내역 준비 중")).toBeDefined();
   expect(getOrders).not.toHaveBeenCalled();
 });
