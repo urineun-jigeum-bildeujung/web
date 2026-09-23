@@ -41,6 +41,7 @@ describe("getWishlist", () => {
           wished: true,
           productName: "오리&고구마 사료",
           price: 24000,
+          originalPrice: 30000,
           reviewScore: null,
           reviewCount: 0,
         },
@@ -55,8 +56,31 @@ describe("getWishlist", () => {
         name: "오리&고구마 사료",
         thumbnailUrl: "https://example.com/a.jpg",
         price: 24000,
+        originalPrice: 30000,
       },
     ]);
+  });
+
+  // 할인하지 않는 상품도 정가가 저장돼 있어 판매가와 같은 값이 온다(백엔드 확인)
+  it("할인이 없으면 정가가 판매가와 같은 값으로 온다", async () => {
+    stubFetch(
+      Response.json([
+        {
+          productId: 1,
+          thumbnailUrl: null,
+          wished: true,
+          productName: "오리&고구마 사료",
+          price: 24000,
+          originalPrice: 24000,
+          reviewScore: null,
+          reviewCount: 0,
+        },
+      ]),
+    );
+
+    const items = await getWishlist();
+
+    expect(items[0].originalPrice).toBe(24000);
   });
 });
 

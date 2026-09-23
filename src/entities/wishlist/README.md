@@ -21,8 +21,8 @@
 
 **변경 실패 토스트는 여기서 띄우지 않는다.** `AppProviders`의 `MutationCache.onError`가 모든 변경 실패를 알린다 — `entities/cart`와 같다.
 
-## 아직 없는 것
+**정가는 늘 온다.** 할인하지 않는 상품도 할인율 계산 때문에 `originalPrice`를 저장해 둬, 그때는 `price`와 같은 값이 온다(백엔드 확인, #390). 두 값이 같으면 `calcDiscountRate`가 0을 돌려줘 카드가 취소선·할인율을 그리지 않는다 — 찜 응답엔 `discountRate` 필드가 없어 상품 목록과 달리 두 값을 비교해 판단한다.
 
-**정가(`originalPrice`) 표시가 없다.** 서버 응답에 필드가 없다 — `product-service` 내부 응답엔 있지만 `member-service`가 받는 내부 DTO에 그 필드가 선언돼 있지 않아 역직렬화 단계부터 못 받는다(#390). 백엔드에 필드 추가를 요청해 뒀다. 오면 `WishlistItem`·`toWishlistItem`에 반영한다.
+## 아직 없는 것
 
 **리뷰 점수·후기 수는 항상 비어 있다.** 응답 필드(`reviewScore`·`reviewCount`)는 있지만 백엔드가 "리뷰 벌크조회 API 연동 전까지 임시로 비워둠"이라 늘 `null`/`0`이다 — 그래서 `WishlistItem`에 아예 옮기지 않는다. 좋아요 화면의 찜 탭 카드는 애초에 이 값을 보여주지 않아 지금은 문제되지 않는다.

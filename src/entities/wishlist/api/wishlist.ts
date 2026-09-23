@@ -1,9 +1,6 @@
 // 찜 API. 카테고리별 목록 조회와 찜 토글 두 가지를 부른다.
 //
 // 규격 출처는 실행 중인 백엔드(member-service) 컨트롤러 소스로 직접 확인했다(#390).
-// 응답에 originalPrice가 없다 — product-service 내부 응답엔 있지만 member-service가
-// 받는 자기 쪽 내부 DTO에 그 필드가 없어 역직렬화 단계부터 못 받는다. 필드 추가를
-// 백엔드에 요청해 뒀고, 오기 전까지 할인 배지 없이 그린다.
 
 import { apiRequest } from "@/shared/api/client";
 
@@ -14,6 +11,7 @@ type WishlistItemApiResponse = {
   wished: boolean;
   productName: string;
   price: number;
+  originalPrice: number;
   reviewScore: number | null;
   reviewCount: number;
 };
@@ -25,6 +23,8 @@ export type WishlistItem = {
   name: string;
   thumbnailUrl: string | null;
   price: number;
+  /** 할인 전 가격. 할인하지 않는 상품도 저장돼 있어 늘 오고, 그때는 `price`와 같다 */
+  originalPrice: number;
 };
 
 function toWishlistItem(response: WishlistItemApiResponse): WishlistItem {
@@ -33,6 +33,7 @@ function toWishlistItem(response: WishlistItemApiResponse): WishlistItem {
     name: response.productName,
     thumbnailUrl: response.thumbnailUrl,
     price: response.price,
+    originalPrice: response.originalPrice,
   };
 }
 

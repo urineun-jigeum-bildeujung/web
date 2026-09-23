@@ -51,16 +51,20 @@ type Product = {
   id: string;
   name: string;
   price: number;
-  /** 찜 목록엔 아직 없다 — 백엔드 응답에 필드가 없어서다(#390) */
   originalPrice?: number;
   /** 자주 산 상품에만 있는 것 */
   boughtCount?: number;
   lastBought?: string;
 };
 
-/** 찜 목록 항목을 카드가 쓰는 모양으로 옮긴다. 백엔드가 원가를 안 줘 originalPrice는 없다 */
+/** 찜 목록 항목을 카드가 쓰는 모양으로 옮긴다. 할인이 없으면 정가가 판매가와 같아 카드가 취소선을 그리지 않는다 */
 function toLikedProduct(item: WishlistItem): Product {
-  return { id: String(item.productId), name: item.name, price: item.price };
+  return {
+    id: String(item.productId),
+    name: item.name,
+    price: item.price,
+    originalPrice: item.originalPrice,
+  };
 }
 
 /** "최근에 봤어요"·"자주 샀어요" 전용, API 연동 전까지 화면 확인용 값 */

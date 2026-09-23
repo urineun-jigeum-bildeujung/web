@@ -39,14 +39,16 @@ type StoredItem = {
   productId: number;
   name: string;
   price: number;
+  originalPrice: number;
   category: "FOOD" | "TREAT" | "SUPPLEMENT";
 };
 
+// 할인하지 않는 상품은 정가가 판매가와 같은 값으로 온다(백엔드 확인) — 사료A만 할인 중이다
 const ITEMS: StoredItem[] = [
-  { productId: 1, name: "사료A", price: 25600, category: "FOOD" },
-  { productId: 2, name: "간식B", price: 31200, category: "TREAT" },
-  { productId: 3, name: "영양제C", price: 31200, category: "SUPPLEMENT" },
-  { productId: 4, name: "사료D", price: 31200, category: "FOOD" },
+  { productId: 1, name: "사료A", price: 25600, originalPrice: 32000, category: "FOOD" },
+  { productId: 2, name: "간식B", price: 31200, originalPrice: 31200, category: "TREAT" },
+  { productId: 3, name: "영양제C", price: 31200, originalPrice: 31200, category: "SUPPLEMENT" },
+  { productId: 4, name: "사료D", price: 31200, originalPrice: 31200, category: "FOOD" },
 ];
 
 let stored: StoredItem[] = [];
@@ -58,7 +60,13 @@ beforeEach(() => {
   getWishlist.mockImplementation(async (categoryCode?: string) =>
     stored
       .filter((item) => !categoryCode || item.category === categoryCode)
-      .map(({ productId, name, price }) => ({ productId, name, thumbnailUrl: null, price })),
+      .map(({ productId, name, price, originalPrice }) => ({
+        productId,
+        name,
+        thumbnailUrl: null,
+        price,
+        originalPrice,
+      })),
   );
 
   toggleWishlist.mockImplementation(async (productId: number) => {
@@ -162,6 +170,17 @@ describe("LikesView", () => {
 
     await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(screen.getAllByRole("listitem")).toHaveLength(4));
+  });
+
+  // 정가는 없을 수도, 판매가와 같을 수도 있다 — 둘 다 할인이 아니다
+  it("할인 중인 상품에만 정가 취소선과 할인율을 보여준다", async () => {
+    const { container } = renderWith("?tab=liked");
+    await screen.findAllByRole("listitem");
+
+    // 넷 중 사료A만 32,000원 → 25,600원(20%)이다. 나머지 셋은 정가가 판매가와 같아 할인이 아니다
+    expect(container.querySelectorAll(".line-through")).toHaveLength(1);
+    expect(screen.getByText("32,000원")).toBeDefined();
+    expect(screen.getByText("20%")).toBeDefined();
   });
 
   // 빈 상태 시안(2022-158710)엔 칩 줄이 없다. 거른 결과가 빈 것과는 다르다
@@ -317,19 +336,15 @@ describe("LikesView", () => {
     expect(await screen.findByText("찜한 상품을 불러오는 중")).toBeDefined();
 
     resolveWishlist(
-      ITEMS.map(({ productId, name, price }) => ({ productId, name, thumbnailUrl: null, price })),
+      ITEMS.map(({ productId, name, price, originalPrice }) => ({
+        productId,
+        name,
+        thumbnailUrl: null,
+        price,
+        originalPrice,
+      })),
     );
     expect(await screen.findAllByRole("listitem")).toHaveLength(4);
-  });
-
-  // WishlistItem엔 originalPrice가 없다(#390) — 잘못 이어붙이면 취소선 정가나
-  // 할인율(%) 배지가 근거 없이 뜬다
-  it("정가 필드가 없어 할인 배지·취소선 정가가 뜨지 않는다", async () => {
-    const { container } = renderWith("?tab=liked");
-    await screen.findAllByRole("listitem");
-
-    expect(container.querySelector(".line-through")).toBeNull();
-    expect(screen.getByText("25,600원")).toBeDefined();
   });
 
   // 시안(header, 1585:18342)은 뒤로가기 화살표 + 검색·알림·장바구니고 제목이 없다(#274).
