@@ -29,6 +29,11 @@ export const EMPTY_REVIEW_DRAFT: ReviewDraft = {
 
 const QUESTIONS = [...RATING_STEP_QUESTIONS, HANDLING_QUESTION];
 
+/** 서버 아이 id를 문자열로 든 것만 받는다. 빈 문자열·숫자 아닌 문자열은 버린다 */
+function isPetId(value: unknown): value is string {
+  return typeof value === "string" && /^\d+$/.test(value);
+}
+
 let cache: { key: string; draft: ReviewDraft } | null = null;
 const listeners = new Set<() => void>();
 
@@ -60,10 +65,12 @@ function normalize(raw: unknown): ReviewDraft {
     score,
     days: typeof saved.days === "string" ? saved.days.replace(/\D/g, "").slice(0, 3) : "",
     responses,
-    // 아이 여러 마리로 바뀌기 전(#391)에 저장한 초안은 `petId` 하나다. 배열로 옮겨 잃지 않는다
+    // 아이 여러 마리로 바뀌기 전(#391)에 저장한 초안은 `petId` 하나다. 배열로 옮겨 잃지 않는다.
+    // 아이 id는 서버 숫자 id의 문자열이다 — 손댄 저장값("abc")이 남으면 등록 버튼은 열리는데
+    // 요청 변환이 NaN으로 실패해 아무 일도 안 일어난다. 여기서 걸러 두 경로가 같은 값을 본다
     petIds: Array.isArray(saved.petIds)
-      ? saved.petIds.filter((id): id is string => typeof id === "string")
-      : typeof (saved as { petId?: unknown }).petId === "string"
+      ? saved.petIds.filter(isPetId)
+      : isPetId((saved as { petId?: unknown }).petId)
         ? [(saved as { petId: string }).petId]
         : [],
     text: typeof saved.text === "string" ? saved.text : "",
