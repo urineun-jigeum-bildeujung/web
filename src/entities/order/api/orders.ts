@@ -147,8 +147,8 @@ export type OrderPayment = {
  * 적어 두었고 Example의 차액도 3,000원이라 맞지만, 계산해 쓰는 것이라 화면 쪽에서
  * 한 번만 빼도록 둔다.
  *
- * **`orderedAt`이 없다.** 목록에는 오지만 상세 응답에는 없다. 시안(`mypa_161`)도
- * 주문 일자를 그리지 않아 지금은 모자라지 않는다.
+ * **`orderedAt`이 없다.** 목록에는 오지만 상세 응답에는 없다. 시안(`mypa_161`)이 그리는
+ * 것은 결제일이라 `payment.paidAt`으로 모자라지 않는다 (#405).
  */
 export type OrderDetail = {
   orderId: number;

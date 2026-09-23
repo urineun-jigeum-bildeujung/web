@@ -72,9 +72,12 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
       )}
 
       {/* **수단 이름 대신 로고를 둔다.** PD팀이 두 화면을 `paym_002`의 토스페이 로고로
-          통일하라고 확정했다 (2026-09-21, #304). 서버가 주는 `payment.method`는 그리지 않는다 */}
+          통일하라고 확정했다 (2026-09-21, #304). 서버가 주는 `payment.method`는 그리지 않는다.
+
+          위 금액 묶음과 12px 떨어진다(기본 gap 4 + 8). UI 페이지의 `mypa_161`(3324:36737)과
+          `paym_002`(1117:4759)가 같다 — 와이어프레임 때는 8px이었다 (#405) */}
       <DetailRow
-        className="mt-1"
+        className="mt-2"
         term={<span className={STRONG_TERM}>결제수단</span>}
         description={
           <Image

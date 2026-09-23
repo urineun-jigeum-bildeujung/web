@@ -30,7 +30,7 @@ export function ClaimItemRow({ item, quantity, onToggle, onQuantityChange }: Cla
         label={
           <OrderProductRow
             name={item.productName}
-            option={`${item.quantity}개`}
+            quantity={item.quantity}
             amount={item.unitPrice * item.quantity}
             imageUrl={item.thumbnailUrl}
           />

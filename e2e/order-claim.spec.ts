@@ -17,9 +17,10 @@ test("주문 상세에서 반품을 접수하고 돌아온다", async ({ page })
 
   await page.goto("/mypage/orders/1");
 
-  // 확인창을 한 번 거친다. 누르는 순간 접수되는 것처럼 보이면 안 된다
-  await page.getByRole("button", { name: "반품하기" }).click();
-  await page.getByRole("link", { name: "반품 접수하기" }).click();
+  // 확인창을 한 번 거친다. 누르는 순간 접수되는 것처럼 보이면 안 된다.
+  // 시안은 트리거와 확인을 같은 문구로 쓴다 — 트리거는 버튼, 확인은 링크다 (#405)
+  await page.getByRole("button", { name: "반품 신청하기" }).click();
+  await page.getByRole("link", { name: "반품 신청하기" }).click();
 
   await expect(page).toHaveURL(/\/mypage\/orders\/1\/claim\?type=return/);
   await expect(page.getByRole("heading", { name: "반품 신청" })).toBeVisible();
@@ -53,7 +54,7 @@ test("배송완료 7일이 지나면 반품·교환 버튼이 없다", async ({ 
 
   await page.goto("/mypage/orders/1");
 
-  await expect(page.getByRole("heading", { name: "주문정보" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "반품하기" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "교환하기" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "주문 상품 1개" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "반품 신청하기" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "교환 신청하기" })).toHaveCount(0);
 });

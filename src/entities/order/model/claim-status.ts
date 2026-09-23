@@ -12,8 +12,9 @@
 // 개발이 생략되어서 COMPLETED 등으로 넘어갈 일이 없을 것 같습니다". 시연에 필요하면 DB에서
 // 직접 바꾼다고 했다.
 //
-// **그래도 나머지 문구를 지우지 않는다.** 단계를 그리는 화면을 만든 것이 아니라 문구 표 한 장뿐이라
-// 비용이 없고, 관리자 기능이 붙으면 그대로 쓰인다. 모르는 값은 `claimLabel`이 `null`을 돌린다.
+// **"반품 수거 중" 같은 문구 표는 걷어냈다.** 주문 상세에서 신청 상태를 뱃지로 보였는데(#334)
+// 2026-09-23 시안에 그 자리가 없어 뺐다. 신청 건을 보일 곳은 "취소·환불·교환" 탭이고 그 화면
+// 시안이 아직 없다 (#405).
 
 import type { OrderDetailItem, OrderItemClaim } from "../api/orders";
 
@@ -67,44 +68,4 @@ export function isWithinClaimPeriod(deliveredAt: string | null): boolean {
     return false;
   }
   return delivered.getTime() + CLAIM_DAYS * 24 * 60 * 60 * 1000 > Date.now();
-}
-
-/**
- * 그 상품에 지금 걸려 있는 신청. 여럿일 수 없다 — 서버가 품목마다 하나만 받는다.
- *
- * 진행 중인 것이 없으면 **가장 최근에 끝난 것**을 준다. 반품이 거절됐다는 사실도
- * 주문 상세에서 알 수 있어야 한다.
- */
-export function currentClaim(item: OrderDetailItem): OrderItemClaim | undefined {
-  const active = item.claims.find(isActiveClaim);
-  if (active) {
-    return active;
-  }
-  return [...item.claims].sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0];
-}
-
-const TYPE_LABEL: Record<string, string> = {
-  CANCEL: "취소",
-  RETURN: "반품",
-  EXCHANGE: "교환",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  REQUESTED: "접수",
-  COLLECTING: "수거 중",
-  INSPECTING: "확인 중",
-  COMPLETED: "완료",
-  REJECTED: "거절",
-};
-
-/**
- * "반품 수거 중"처럼 읽을 문구로 만든다.
- *
- * **모르는 값이면 `null`이다.** 서버가 enum을 늘렸을 때 `undefined 접수`처럼 그리는 것보다
- * 아무것도 안 보이는 쪽이 낫다 (`toOrderStatus`와 같은 방식).
- */
-export function claimLabel(claim: OrderItemClaim): string | null {
-  const type = TYPE_LABEL[claim.claimType];
-  const status = STATUS_LABEL[claim.claimStatus];
-  return type && status ? `${type} ${status}` : null;
 }
