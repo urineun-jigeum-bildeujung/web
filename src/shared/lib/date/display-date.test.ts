@@ -6,6 +6,7 @@ import {
   formatDisplayDateTime,
   formatDisplayDayHour,
   formatDisplayHour,
+  formatDisplayMonthDayTime,
   toDisplayDayKey,
 } from "./display-date";
 
@@ -72,4 +73,12 @@ test("읽을 수 없는 값은 새 함수들도 null이다", () => {
   expect(toDisplayDayKey("곧")).toBeNull();
   expect(formatDisplayHour("곧")).toBeNull();
   expect(formatDisplayDayHour("곧")).toBeNull();
+});
+
+// 주문 목록은 "결제일 26.09.03" 아래에 해를 뺀 날짜와 시각을 한 번 더 적는다 (mypa_061, #405)
+test("해를 뺀 날짜와 시각을 그린다", () => {
+  expect(formatDisplayMonthDayTime("2026-09-03T19:34:00+09:00")).toBe("09.03 19:34");
+  // 한국 자정 직후 값이 UTC로는 전날이다. 날짜를 한국 기준으로 읽어야 한다
+  expect(formatDisplayMonthDayTime("2026-09-02T15:05:00Z")).toBe("09.03 00:05");
+  expect(formatDisplayMonthDayTime("곧")).toBeNull();
 });

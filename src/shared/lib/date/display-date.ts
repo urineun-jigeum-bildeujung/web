@@ -63,6 +63,17 @@ export function formatDisplayDateTime(iso: string): string | null {
 }
 
 /**
+ * `08.28 15:43` 꼴. 읽을 수 없는 값이면 `null`이다.
+ *
+ * 해를 뺀 날짜와 시각이다. 바로 위에 해까지 적힌 날짜가 있어 되풀이하지 않는 자리에 쓴다 —
+ * 주문 목록의 "결제일 26.09.03" 아래 줄이 그렇다 (mypa_061, #405).
+ */
+export function formatDisplayMonthDayTime(iso: string): string | null {
+  const parts = toParts(iso);
+  return parts && `${parts.month}.${parts.day} ${parts.hour}:${parts.minute}`;
+}
+
+/**
  * 한국 기준 하루 키(`2026-09-25`). 두 시각이 같은 날인지 견줄 때 쓴다.
  *
  * date-fns의 `isToday`·`isTomorrow`는 브라우저 시간대로 판정해서, 자정 근처 값이 실제와
