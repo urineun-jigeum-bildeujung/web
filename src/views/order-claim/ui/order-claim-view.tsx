@@ -5,12 +5,13 @@
 // 값이 그대로 남는다. 저장소(zustand)를 따로 두면 다른 주문으로 들어갈 때 비우는 일만 는다.
 // 새로고침하면 값이 사라지므로 `reachableStep`이 값이 있는 단계까지 당긴다.
 //
-// **서버가 받지 않는 값(사유 보기·수거 희망일·요청사항)은 사유 글 하나에 묶어 보낸다**
-// (model/to-claim-request). 사진은 접수할 때 훅이 올린다.
+// **고른 사유는 코드로 보내고, 서버에 필드가 없는 값(상세 사유·수거 희망일·요청사항)은 사유 글
+// 하나에 묶어 보낸다** (model/to-claim-request, #417). 사진은 접수할 때 훅이 올린다.
 //
 // **취소는 여기로 오지 않는다.** 클레임은 배송완료 주문만 받으므로 취소를 보내면 늘 409다.
-// 주문 취소는 `POST /orders/{orderId}/cancel`이고 주문 목록에 붙어 있다. PD팀이 2026-09-21에
-// "취소 버튼 → 모달 → 취소버튼 클릭 시 취소"이고 "사유를 적는 건 반품과 환불만"이라고 확정했다.
+// 주문 취소는 `POST /orders/{orderId}/cancel`이고 주문 상세 맨 아래에 붙어 있다(#410). PD팀이
+// 2026-09-21에 "취소 버튼 → 모달 → 취소버튼 클릭 시 취소"이고 "사유를 적는 건 반품과 환불만"이라고
+// 확정했다.
 
 "use client";
 
@@ -86,7 +87,11 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
   // 보기 두 날은 화면에 머무는 동안 바뀌지 않게 처음 한 번만 센다
   const [dateOptions] = useState(() => pickupDateOptions(new Date()));
 
-  const claimType = type ? TYPE_BY_QUERY[type] : undefined;
+  // 표의 제 키만 받는다. 대괄호로 찾으면 `constructor` 같은 이름에 물려받은 값이 나와 유형
+  // 검사를 통과한다 (#426)
+  const claimType = type && Object.hasOwn(TYPE_BY_QUERY, type) ? TYPE_BY_QUERY[type] : undefined;
+  // 접수를 보냈는지. 보내는 동안과 보낸 뒤에는 신청할 수 없는 까닭을 따지지 않는다(아래 `submit`)
+  const [sent, setSent] = useState(false);
   const label = claimType ? TYPE_LABEL[claimType] : "반품·교환";
 
   // 서버가 보는 조건은 배송완료 **그리고** 배송완료 뒤 7일 이내다(`Order.isClaimableForReturn`).
@@ -115,16 +120,26 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
     if (!claimType || reason === null || pickupDate === null) {
       return;
     }
-    await request({
-      request: toCreateClaimRequest(claimType, {
-        selection,
-        reason,
-        detail,
-        pickupDate,
-        pickupRequest,
-      }),
-      photos,
-    });
+    // **보내는 순간부터 막기 판정을 멈춘다.** 접수 훅은 끝난 뒤 주문을 다시 받는데, 그 응답에는
+    // 방금 신청한 상품이 진행 중인 신청으로 걸려 있다. 판정을 그대로 두면 주문 상세로 넘어가기 전
+    // 한순간 "신청 진행 중 / 이미 접수된 신청이 있어요"가 뜬다 (#426)
+    setSent(true);
+    try {
+      await request({
+        request: toCreateClaimRequest(claimType, {
+          selection,
+          reason,
+          detail,
+          pickupDate,
+          pickupRequest,
+        }),
+        photos,
+      });
+    } catch {
+      // 실패 알림은 MutationCache.onError가 맡는다. 고쳐서 다시 누를 수 있게 되돌린다
+      setSent(false);
+      return;
+    }
     toastAppSuccess(APP_MESSAGE_CODE.order.claimRequested);
     // 뒤로가기로 방금 접수한 화면에 돌아오지 않도록 이력을 갈아 끼운다
     router.replace(`/mypage/orders/${orderId}`);
@@ -136,6 +151,9 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
    * `AppMessage` 중에는 `description`이 없는 것이 있어 넓게 받는다.
    */
   const blocked: { title: string; description?: string } | null = (() => {
+    if (sent) {
+      return null;
+    }
     if (!claimType) {
       return { title: "신청 유형 없음", description: "주문 상세에서 다시 눌러 주세요." };
     }
@@ -143,7 +161,8 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
       return APP_MESSAGE[toAppMessageCode(error)];
     }
     if (!order) {
-      return { title: "주문 없음", description: "주소가 맞는지 확인해 주세요." };
+      // 서버 404와 같은 문구다. 주문 상세도 이것을 쓴다 (#426)
+      return APP_MESSAGE[APP_MESSAGE_CODE.order.notFound];
     }
     if (!delivered) {
       return APP_MESSAGE[APP_MESSAGE_CODE.order.notClaimable];
@@ -251,10 +270,7 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
             // `onClick`에 그대로 넘기면 받아 줄 곳이 없어 처리되지 않은 거부가 된다.
             // 접수는 서버가 세 가지로 막는다 — 진행 중인 신청·수량 초과·기간 경과 (#358).
             // 문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다
-            <Button
-              disabled={pickupDate === null || isRequesting}
-              onClick={() => void submit().catch(() => undefined)}
-            >
+            <Button disabled={pickupDate === null || isRequesting} onClick={() => void submit()}>
               <LoadingSwap loading={isRequesting} label={`${label} 신청을 보내는 중`}>
                 {label} 신청 완료하기
               </LoadingSwap>

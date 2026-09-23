@@ -24,7 +24,7 @@ import {
   useQueryOrderDetail,
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
-import { APP_MESSAGE } from "@/shared/config/app-message";
+import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { formatDisplayDate, formatDisplayDateTime } from "@/shared/lib/date/display-date";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -77,17 +77,19 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
         {/* 처음 그릴 때라 뼈대를 둔다. 버튼의 대기 표시(LoadingSwap)는 취소 버튼(CancelOrderAction)이 든다 */}
         {isLoading && <OrderDetailSkeleton />}
 
-        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다 */}
-        {error && (
+        {/* 조회 실패는 토스트로 알리지 않는다(AppProviders 주석). 화면에서 무엇이 잘못됐는지 보여준다.
+            **받아 둔 주문이 있으면 화면을 덮지 않는다** — 다시 받기가 실패해도 v5는 받아 둔 것을
+            남긴 채 오류를 채워, 오류 화면 아래에 옛 주문과 그 버튼이 함께 그려졌다. 목록과 같다 (#426) */}
+        {error && !order && (
           <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
         )}
 
-        {/* 숫자가 아닌 주소로 들어오면 서버를 부르지 않아 실패도 아니고 내용도 없다 */}
+        {/* 숫자가 아닌 주소로 들어오면 서버를 부르지 않아 실패도 아니고 내용도 없다.
+            서버 404(`ORDER_404_ORDER_NOT_FOUND`)와 같은 문구를 쓴다 — 갈리면 같은 화면이 두 말을 한다 (#426) */}
         {!isLoading && !error && !order && (
           <EmptyState
             icon={<Icon name="delivery" />}
-            title="주문을 찾을 수 없어요"
-            description="주소가 맞는지 확인해 주세요"
+            {...APP_MESSAGE[APP_MESSAGE_CODE.order.notFound]}
           />
         )}
 
