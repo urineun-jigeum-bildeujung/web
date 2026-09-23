@@ -147,7 +147,7 @@
 
 ## 3. 기술 스택 (확정)
 
-버전은 2026-09-16 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
+버전은 2026-09-23 기준 실제 설치값입니다. 패키지를 추가·갱신하면 이 표를 함께 갱신하십시오.
 
 **새 라이브러리는 작업을 시작하기 전에 정하십시오.** 이미 설치된 것·shadcn·플랫폼 기능으로 되는지 먼저 보고, 필요하면 최종 배포일과 React 19·Turbopack 호환을 확인합니다. 절차는 [library-convention](./docs/conventions/library-convention.md)을 따르고 `/check-library`가 그대로 실행합니다.
 
@@ -164,6 +164,8 @@
 | 아이콘 | lucide-react | 1.31.0 | shadcn 생성 컴포넌트 내부 전용 |
 | 결제 | @tosspayments/tosspayments-sdk | 2.8.1 | 결제 UI와 결제창. 승인은 백엔드가 맡는다 |
 | 푸시 | firebase | 12.19.0 | FCM 웹 푸시 토큰 발급·삭제. `app`·`messaging`만 `shared/lib/push`에서 동적 import. 전송은 백엔드가 맡는다 |
+| 관측 | @grafana/faro-web-sdk | 2.12.1 | 오류·웹 바이탈·콘솔 오류를 인프라 Grafana로 보낸다. 수집 주소·키가 있을 때만 `instrumentation-client.ts`가 첫 화면 뒤에 동적 import. 민감정보는 수집 서버가 거른다 (#396) |
+| 관측 | @grafana/faro-web-tracing | 2.12.1 | 같은 출처 API 요청에 `traceparent`를 실어 백엔드 추적과 잇는다 |
 | 서버 상태 | @tanstack/react-query | 5.101.4 | API 응답 캐싱·무효화 |
 | 클라이언트 상태 | zustand | 5.0.15 | 서버와 무관한 UI 상태 |
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |
