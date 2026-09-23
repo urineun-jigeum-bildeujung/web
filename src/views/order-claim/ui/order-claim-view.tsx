@@ -1,16 +1,12 @@
-// 반품·교환 신청 화면. 배송이 끝난 주문에서 상품과 수량을 고르고 사유를 남겨 접수한다.
+// 반품·교환 신청 화면. 배송이 끝난 주문에서 ① 상품 고르기 → ② 사유·사진 → ③ 수거·안내 순으로 받아 접수한다.
+// UI 시안 기준(mypa_261·262·361·362, 2026-09-23 PD 완성본)이다 (#408).
 //
-// **이 화면은 Figma에 없다.** 주문 상세(`mypa_161`)와 같은 골격(회색 바닥 + 흰 카드)으로
-// 맞추고 디자인 토큰만 썼다. 2026-09-21 PD 회신이 "아직 디자인 되지 않은 화면은 내일부터
-// 작업해 전달"이라 곧 온다. **시안이 오면 교체 대상이다** (#327, #344).
+// **단계는 URL(`?step=`)에, 입력값은 이 화면의 상태로 든다.** 세 단계가 한 화면 안에서 바뀌어
+// 값이 그대로 남는다. 저장소(zustand)를 따로 두면 다른 주문으로 들어갈 때 비우는 일만 는다.
+// 새로고침하면 값이 사라지므로 `reachableStep`이 값이 있는 단계까지 당긴다.
 //
-// **기능명세서(`MYPA_261`)와 셋이 다르다.** 까닭은 서버가 받는 모양에 있다.
-//
-// ```
-// 사유 라디오   → 여러 줄 입력   서버가 받는 것은 자유 문자열 하나다. 사유 코드가 없다
-// 사진 첨부     → 없음          클레임용 presigned URL 엔드포인트가 없다
-// 유형 드롭다운 → 진입 쿼리      주문 상세 확인창이 이미 유형을 정해 보낸다
-// ```
+// **서버가 받지 않는 값(사유 보기·수거 희망일·요청사항)은 사유 글 하나에 묶어 보낸다**
+// (model/to-claim-request). 사진은 접수할 때 훅이 올린다.
 //
 // **취소는 여기로 오지 않는다.** 클레임은 배송완료 주문만 받으므로 취소를 보내면 늘 409다.
 // 주문 취소는 `POST /orders/{orderId}/cancel`이고 주문 목록에 붙어 있다. PD팀이 2026-09-21에
@@ -19,7 +15,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { useEffect, useState } from "react";
 
 import {
   claimableItems,
@@ -32,18 +29,23 @@ import {
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppSuccess } from "@/shared/lib/app-toast";
+import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
-import { Label } from "@/shared/ui/label";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Textarea } from "@/shared/ui/textarea";
 
-import { toRequestItems, toggleSelection, type ClaimSelection } from "../model/claim-selection";
-import { ClaimItemRow } from "./claim-item-row";
+import type { ClaimReason } from "../model/claim-reasons";
+import type { ClaimSelection } from "../model/claim-selection";
+import { CLAIM_STEPS, reachableStep } from "../model/claim-steps";
+import { pickupDateOptions } from "../model/pickup-dates";
+import { toCreateClaimRequest } from "../model/to-claim-request";
+import { ClaimItemsStep } from "./claim-items-step";
+import { ClaimPickupStep } from "./claim-pickup-step";
+import { ClaimReasonStep } from "./claim-reason-step";
 
 /** 주문 상세가 넘기는 쿼리 값과 서버 `ClaimType`의 대응 */
 const TYPE_BY_QUERY: Record<string, ClaimType> = {
@@ -56,9 +58,6 @@ const TYPE_LABEL: Record<ClaimType, string> = {
   EXCHANGE: "교환",
 };
 
-/** 서버 `@Size(max = 1000)` */
-const REASON_MAX = 1000;
-
 interface OrderClaimViewProps {
   orderId: string;
   type: string | undefined;
@@ -69,8 +68,23 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
   const { order, error, isLoading } = useQueryOrderDetail(orderId);
   const { request, isRequesting } = useMutateClaim(Number(orderId));
 
+  const [step, setStep] = useQueryState(
+    "step",
+    // 기기 뒤로가기로 이전 단계에 가야 한다. 기본값 replace면 ③에서 뒤로가기를 누를 때 신청을
+    // 통째로 떠나 적어 둔 사유가 사라진다. 단계가 바뀌면 새 화면이라 맨 위부터 보인다
+    parseAsStringLiteral(CLAIM_STEPS)
+      .withDefault("items")
+      .withOptions({ history: "push", scroll: true }),
+  );
+
   const [selection, setSelection] = useState<ClaimSelection>({});
-  const [reason, setReason] = useState("");
+  const [reason, setReason] = useState<ClaimReason | null>(null);
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [detail, setDetail] = useState("");
+  const [pickupDate, setPickupDate] = useState<string | null>(null);
+  const [pickupRequest, setPickupRequest] = useState("");
+  // 보기 두 날은 화면에 머무는 동안 바뀌지 않게 처음 한 번만 센다
+  const [dateOptions] = useState(() => pickupDateOptions(new Date()));
 
   const claimType = type ? TYPE_BY_QUERY[type] : undefined;
   const label = claimType ? TYPE_LABEL[claimType] : "반품·교환";
@@ -80,24 +94,36 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
   const delivered = order
     ? toOrderStatus(order.orderStatus) === "delivered" && isWithinClaimPeriod(order.deliveredAt)
     : false;
-  const items = order ? claimableItems(order.items) : [];
-  const picked = toRequestItems(selection);
+  const claimableIds = order ? claimableItems(order.items).map((item) => item.orderItemId) : [];
+  // 주문에 담긴 순서를 지킨다. 고른 순서로 늘어놓으면 ②·③의 줄 순서가 ①과 달라진다
+  const pickedItems = order
+    ? order.items.filter((item) => selection[item.orderItemId] !== undefined)
+    : [];
+  const current = reachableStep(step, {
+    picked: pickedItems.length > 0,
+    reasoned: reason !== null,
+  });
 
-  const backToDetail = (
-    <Button variant="secondary" onClick={() => router.replace(`/mypage/orders/${orderId}`)}>
-      주문 상세로 돌아가기
-    </Button>
-  );
+  // 새로고침으로 값이 비어 앞 단계로 당겨졌으면 주소도 맞춘다. 되돌린 것이라 이력을 쌓지 않는다
+  useEffect(() => {
+    if (current !== step) {
+      void setStep(current, { history: "replace" });
+    }
+  }, [current, step, setStep]);
 
   async function submit() {
-    if (!claimType) {
+    if (!claimType || reason === null || pickupDate === null) {
       return;
     }
     await request({
-      claimType,
-      // 빈 문자열을 보내면 서버가 사유를 남긴 것으로 저장한다. 안 쓴 것은 안 보낸다
-      reason: reason.trim() || undefined,
-      items: picked,
+      request: toCreateClaimRequest(claimType, {
+        selection,
+        reason,
+        detail,
+        pickupDate,
+        pickupRequest,
+      }),
+      photos,
     });
     toastAppSuccess(APP_MESSAGE_CODE.order.claimRequested);
     // 뒤로가기로 방금 접수한 화면에 돌아오지 않도록 이력을 갈아 끼운다
@@ -105,7 +131,7 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
   }
 
   /**
-   * 신청할 수 없는 까닭. 없으면 폼을 그린다.
+   * 신청할 수 없는 까닭. 없으면 단계를 그린다.
    *
    * `AppMessage` 중에는 `description`이 없는 것이 있어 넓게 받는다.
    */
@@ -122,22 +148,27 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
     if (!delivered) {
       return APP_MESSAGE[APP_MESSAGE_CODE.order.notClaimable];
     }
-    if (items.length === 0) {
+    if (claimableIds.length === 0) {
       return APP_MESSAGE[APP_MESSAGE_CODE.order.claimInProgress];
     }
     return null;
   })();
 
-  return (
-    <div className="flex min-h-dvh flex-col bg-surface-tertiary">
-      <PageHeader title={`${label} 신청`} className="bg-card" />
+  // 시안은 ①만 흰 바탕에 머리말이 "주문 내역"이고 ②·③은 회색 바탕에 "○○ 신청"이다
+  const onItems = current === "items";
+  const ready = !isLoading && !blocked && order && claimType;
 
-      <main className="flex flex-1 flex-col gap-2 px-5 pt-3 pb-8">
+  return (
+    <div className={cn("flex min-h-dvh flex-col", onItems ? "bg-background" : "bg-bg-secondary")}>
+      <PageHeader title={onItems ? "주문 내역" : `${label} 신청`} />
+
+      <main className="flex flex-1 flex-col">
         {isLoading && (
-          <div className="flex flex-col gap-2 rounded-lg bg-card p-4">
-            <Skeleton className="h-6 w-28" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
+          <div role="status" className="flex flex-col gap-3 px-5 pt-3">
+            <span className="sr-only">신청할 주문을 불러오는 중</span>
+            <Skeleton aria-hidden className="h-6 w-24" />
+            <Skeleton aria-hidden className="h-24 w-full rounded-2xl" />
+            <Skeleton aria-hidden className="h-24 w-full rounded-2xl" />
           </div>
         )}
 
@@ -147,63 +178,88 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
             className="flex-1"
             icon={<Icon name="delivery" />}
             {...blocked}
-            action={backToDetail}
+            action={
+              <Button
+                variant="secondary"
+                onClick={() => router.replace(`/mypage/orders/${orderId}`)}
+              >
+                주문 상세로 돌아가기
+              </Button>
+            }
           />
         )}
 
-        {!isLoading && !blocked && (
-          <>
-            <section className="flex flex-col gap-3 rounded-lg bg-card p-4">
-              <h2 className="text-title-bold-16 text-foreground">{label}할 상품</h2>
-              {items.map((item) => (
-                <ClaimItemRow
-                  key={item.orderItemId}
-                  item={item}
-                  quantity={selection[item.orderItemId]}
-                  onToggle={() =>
-                    setSelection((current) => toggleSelection(current, item.orderItemId))
-                  }
-                  onQuantityChange={(next) =>
-                    setSelection((current) => ({ ...current, [item.orderItemId]: next }))
-                  }
-                />
-              ))}
-            </section>
+        {ready && current === "items" && (
+          <ClaimItemsStep
+            items={order.items}
+            claimableIds={claimableIds}
+            selection={selection}
+            onSelectionChange={setSelection}
+          />
+        )}
 
-            <section className="flex flex-col gap-2 rounded-lg bg-card p-4">
-              <Label htmlFor="claim-reason" className="text-title-bold-16 text-foreground">
-                사유 (선택)
-              </Label>
-              <Textarea
-                id="claim-reason"
-                placeholder={`어떤 점이 문제였는지 알려주세요 (최대 ${REASON_MAX}자)`}
-                maxLength={REASON_MAX}
-                value={reason}
-                onChange={(event) => setReason(event.target.value)}
-                className="min-h-28"
-              />
-              <p className="self-end text-caption-regular-12 text-text-body-secondary">
-                {reason.length}/{REASON_MAX}자
-              </p>
-            </section>
-          </>
+        {ready && current === "reason" && (
+          <ClaimReasonStep
+            label={label}
+            items={pickedItems}
+            selection={selection}
+            onQuantityChange={(orderItemId, next) =>
+              setSelection((prev) => ({ ...prev, [orderItemId]: next }))
+            }
+            reason={reason}
+            onReasonChange={setReason}
+            photos={photos}
+            onPhotosChange={setPhotos}
+            detail={detail}
+            onDetailChange={setDetail}
+          />
+        )}
+
+        {ready && current === "pickup" && (
+          <ClaimPickupStep
+            claimType={claimType}
+            lines={pickedItems.map((item) => ({
+              orderItemId: item.orderItemId,
+              productName: item.productName,
+              unitPrice: item.unitPrice,
+              quantity: selection[item.orderItemId] ?? 1,
+            }))}
+            dateOptions={dateOptions}
+            pickupDate={pickupDate}
+            onPickupDateChange={setPickupDate}
+            pickupRequest={pickupRequest}
+            onPickupRequestChange={setPickupRequest}
+          />
         )}
       </main>
 
-      {!isLoading && !blocked && (
-        <BottomActionBar>
-          {/* **거부를 여기서 받는다.** `request`가 `mutateAsync`라 실패하면 던지는데,
-              `onClick`에 그대로 넘기면 받아 줄 곳이 없어 처리되지 않은 거부가 된다.
-              접수는 서버가 세 가지로 막는다 — 진행 중인 신청·수량 초과·기간 경과 (#358).
-              문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다 */}
-          <Button
-            disabled={picked.length === 0 || isRequesting}
-            onClick={() => void submit().catch(() => undefined)}
-          >
-            <LoadingSwap loading={isRequesting} label={`${label} 신청을 보내는 중`}>
+      {ready && (
+        // 시안은 버튼 위 12다. ②·③은 바탕이 회색이라 버튼 줄도 회색으로 맞춘다
+        <BottomActionBar className={cn("pt-3", !onItems && "bg-bg-secondary")}>
+          {current === "items" && (
+            <Button disabled={pickedItems.length === 0} onClick={() => void setStep("reason")}>
               {label} 신청하기
-            </LoadingSwap>
-          </Button>
+            </Button>
+          )}
+          {current === "reason" && (
+            <Button disabled={reason === null} onClick={() => void setStep("pickup")}>
+              다음
+            </Button>
+          )}
+          {current === "pickup" && (
+            // **거부를 여기서 받는다.** `request`가 `mutateAsync`라 실패하면 던지는데,
+            // `onClick`에 그대로 넘기면 받아 줄 곳이 없어 처리되지 않은 거부가 된다.
+            // 접수는 서버가 세 가지로 막는다 — 진행 중인 신청·수량 초과·기간 경과 (#358).
+            // 문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다
+            <Button
+              disabled={pickupDate === null || isRequesting}
+              onClick={() => void submit().catch(() => undefined)}
+            >
+              <LoadingSwap loading={isRequesting} label={`${label} 신청을 보내는 중`}>
+                {label} 신청 완료하기
+              </LoadingSwap>
+            </Button>
+          )}
         </BottomActionBar>
       )}
     </div>
