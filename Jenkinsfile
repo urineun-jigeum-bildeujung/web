@@ -129,6 +129,14 @@ spec:
         }
 
         stage('Build App') {
+            // NEXT_PUBLIC_*는 npm run build 때 번들에 박히는 값이라 런타임이 아니라 여기서 넣어야 한다.
+            // 세 값 모두 브라우저에 그대로 노출되는 공개 값(토스는 공개 문서 데모 키)이라
+            // 자격증명으로 뺄 이유가 없다. stage 단위 environment라 이미지 빌드·GitOps 단계엔 퍼지지 않는다.
+            environment {
+                NEXT_PUBLIC_FARO_URL = 'https://leechs.shop/collect'
+                NEXT_PUBLIC_FARO_API_KEY = '7e2d175c4d7f58aa0fe7c1a813b1dd376467bb7f5531239cbf1fc435c08ed28e'
+                NEXT_PUBLIC_TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'
+            }
             steps {
                 container('node') {
                     sh """
