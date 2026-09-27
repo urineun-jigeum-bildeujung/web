@@ -31,6 +31,39 @@ test("응답의 상품이 상단 요약에 그대로 그려진다", async ({ pag
   await expect(summary.getByRole("button", { name: "후기 312" })).toBeVisible();
 });
 
+// 보는 것은 **응답의 사진이 화면에 닿고 캐러셀이 움직이는가**다. 목 응답이 사진을 비워 두면
+// 그 경로를 한 번도 지나지 않아, 사진이 안 뜨는 문제를 E2E가 못 잡는다.
+//
+// 목 사진은 앱과 같은 출처(`public/images/e2e/`)를 가리킨다. 운영 CDN 호스트 허용 여부는
+// 자동화 범위 밖이고, 백엔드가 실제 이미지 호스트를 확정한 뒤 따로 확인한다.
+test("응답의 사진이 실제로 그려지고 넘기면 현재 위치 점이 따라온다", async ({ page }) => {
+  await page.goto(PATH);
+
+  // 두 장째 alt가 "<이름> 사진 2"라 이름으로만 찾으면 둘이 걸린다
+  const first = page.getByRole("img", { name: NAME, exact: true });
+  await expect(first).toBeVisible();
+
+  // 깨진 이미지는 폭이 0이다. 주소 형식은 보지 않는다 — Next 내부 구현에 붙을 이유가 없다
+  await expect
+    .poll(() => first.evaluate((img: HTMLImageElement) => img.naturalWidth))
+    .toBeGreaterThan(0);
+
+  // 두 장째는 넘겨야 보이므로 접근성 이름에 순번이 붙는다
+  await expect(page.getByRole("img", { name: `${NAME} 사진 2` })).toBeAttached();
+
+  // 점은 사진 장수와 같아야 한다. 예전에는 셋으로 못박혀 있었다
+  const dots = page.locator("span.size-1\\.5");
+  await expect(dots).toHaveCount(2);
+  await expect(dots.nth(0)).toHaveClass(/bg-foreground/);
+
+  // 한 장 넘기면 진한 점이 두 번째로 옮겨간다
+  const carousel = page.locator("div.snap-x");
+  await carousel.evaluate((el) => el.scrollTo({ left: el.clientWidth }));
+
+  await expect(dots.nth(1)).toHaveClass(/bg-foreground/);
+  await expect(dots.nth(0)).not.toHaveClass(/bg-foreground/);
+});
+
 test("상세 설명 표가 응답으로 채워지고 빈 항목은 줄째로 빠진다", async ({ page }) => {
   await page.goto(PATH);
 
