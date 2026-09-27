@@ -66,7 +66,8 @@ function breedOf(profileLabel: string) {
 
 type ReviewPanelProps = {
   productId: string;
-  rating: number;
+  /** 평가가 없으면 null로도 `0`으로도 온다. 아래 hasRating이 후기 수로 가른다 */
+  rating: number | null;
   reviewCount: number;
   /** 지금 고른 아이. 맞춤보기를 켜면 이 아이와 같은 품종의 후기만 남는다 */
   petProfileLabel: string;
@@ -92,6 +93,8 @@ export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }:
   const [filterParam, setFilterParam] = useQueryState("reviewFilter", { defaultValue: "" });
 
   const on = matchOnly === "on";
+  // 상단 요약과 같은 기준이다. 값이 0으로 오는지 null로 오는지에 흔들리지 않게 후기 수를 본다
+  const hasRating = reviewCount > 0 && rating !== null;
   const breed = breedOf(petProfileLabel);
   const filter = parseFilter(filterParam);
 
@@ -106,7 +109,9 @@ export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }:
   return (
     <div className="flex flex-col">
       <section aria-label="별점 요약" className="flex flex-col items-start gap-1 p-5">
-        <Rating value={rating} size="lg" showValue />
+        {/* 평가가 없으면 빈 별 다섯만 두고 숫자를 적지 않는다. 상단 요약과 같은 기준으로
+            후기 수를 본다 — `Rating`은 빈 별을 이미 회색(icon/fill/disable)으로 그린다 */}
+        <Rating value={hasRating ? rating : 0} size="lg" showValue={hasRating} />
         <p className="text-body-medium-14 text-text-body-secondary">총 리뷰 {reviewCount}개</p>
       </section>
 

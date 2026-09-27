@@ -18,18 +18,44 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
 
 import { ReviewPanel } from "./review-panel";
 
-function renderPanel(search = "") {
+function renderPanel(search = "", props: { rating?: number | null; reviewCount?: number } = {}) {
   render(
     <NuqsTestingAdapter searchParams={search}>
       <ReviewPanel
         productId="1"
-        rating={4.8}
-        reviewCount={108}
+        rating={props.rating === undefined ? 4.8 : props.rating}
+        reviewCount={props.reviewCount ?? 108}
         petProfileLabel="말티즈 · 8세 · 4kg"
       />
     </NuqsTestingAdapter>,
   );
 }
+
+// 상단 요약과 같은 기준이다. 0.0을 적으면 평가 없는 상품이 평이 나쁜 상품처럼 읽힌다
+describe("리뷰가 없는 상품의 별점 요약", () => {
+  it("후기가 0이면 숫자를 적지 않는다", () => {
+    renderPanel("", { reviewCount: 0, rating: 0 });
+
+    const summary = within(screen.getByRole("region", { name: "별점 요약" }));
+    expect(summary.queryByText("0.0")).toBeNull();
+    expect(summary.getByText("총 리뷰 0개")).toBeDefined();
+  });
+
+  it("별점이 null로 와도 같다", () => {
+    renderPanel("", { reviewCount: 0, rating: null });
+
+    const summary = within(screen.getByRole("region", { name: "별점 요약" }));
+    expect(summary.queryByText(/^\d\.\d$/)).toBeNull();
+  });
+
+  it("후기가 있으면 점수를 보여준다", () => {
+    renderPanel("", { reviewCount: 108, rating: 4.8 });
+
+    expect(
+      within(screen.getByRole("region", { name: "별점 요약" })).getByText("4.8"),
+    ).toBeDefined();
+  });
+});
 
 describe("ReviewPanel", () => {
   it("리뷰 수가 아니라 사진 장수를 기준으로 앞의 네 장을 보여준다", () => {

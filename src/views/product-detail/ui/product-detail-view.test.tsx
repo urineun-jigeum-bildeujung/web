@@ -71,6 +71,36 @@ describe("ProductDetailView", () => {
     vi.clearAllMocks();
   });
 
+  // 아직 아무도 평가하지 않은 상품을 0점으로 그리면 평이 나쁜 상품처럼 읽힌다(#119와 같은 판단).
+  // 백엔드는 이 경우를 null로도 0으로도 줄 수 있어 후기 수로 가른다
+  describe("리뷰가 없는 상품의 별점", () => {
+    it("후기가 0이면 숫자를 적지 않고 별을 회색으로 둔다", () => {
+      renderWith("", { reviewCount: 0, rating: 0 });
+
+      const summary = screen.getByRole("region", { name: PRODUCT.name });
+      expect(within(summary).queryByText("0.0")).toBeNull();
+      expect(within(summary).getByRole("button", { name: "후기 0" })).toBeDefined();
+      expect(summary.querySelector(".text-icon-fill-disable")).not.toBeNull();
+      expect(summary.querySelector(".text-icon-fill-accent")).toBeNull();
+    });
+
+    it("별점이 null로 와도 같다", () => {
+      renderWith("", { reviewCount: 0, rating: null });
+
+      const summary = screen.getByRole("region", { name: PRODUCT.name });
+      expect(within(summary).queryByText(/^\d\.\d$/)).toBeNull();
+      expect(summary.querySelector(".text-icon-fill-disable")).not.toBeNull();
+    });
+
+    it("후기가 있으면 노란 별과 숫자를 보여준다", () => {
+      renderWith("", { reviewCount: 108, rating: 4.8 });
+
+      const summary = screen.getByRole("region", { name: PRODUCT.name });
+      expect(within(summary).getByText("4.8")).toBeDefined();
+      expect(summary.querySelector(".text-icon-fill-accent")).not.toBeNull();
+    });
+  });
+
   it("가격 아래에 적합도와 근거가 함께 있다", () => {
     renderWith();
 
