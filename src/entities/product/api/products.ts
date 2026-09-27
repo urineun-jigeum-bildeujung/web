@@ -107,8 +107,8 @@ type AllergenInfo = {
  *
  * **null 여부는 OpenAPI가 아니라 엔티티에서 읽었다.** 명세에 `required`가 하나도 없어
  * 스키마로는 구분할 수 없고, `Product` 엔티티에서 `@Column(nullable = false)`가 붙지
- * 않은 열이 여기서 `| null`인 것들이다. `targetBreedSize`·`targetAgeGroup`은 응답을
- * 만드는 쪽에서도 명시적으로 null을 내보낸다.
+ * 않은 열이 여기서 `| null`인 것들이다. 응답을 만드는 쪽(`ProductDetailResponse`)도
+ * `targetBreedSize`·`targetAgeGroup`이 비면 null을 그대로 통과시킨다.
  */
 type ProductDetailApiResponse = {
   productId: number;
