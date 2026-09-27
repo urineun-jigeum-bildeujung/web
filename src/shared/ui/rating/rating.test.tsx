@@ -9,6 +9,14 @@ test("기본 5점 만점으로 읽는다", () => {
   expect(screen.getByText("5점 만점에 4점")).toBeDefined();
 });
 
+test("낭독 문구를 갈아 끼우면 점수를 읽지 않는다", () => {
+  render(<Rating value={0} srLabel="아직 평가가 없어요" />);
+
+  // 평가가 없는 자리에서 "0점"으로 들리면 평이 나쁜 상품과 구별되지 않는다
+  expect(screen.getByText("아직 평가가 없어요")).toBeDefined();
+  expect(screen.queryByText("5점 만점에 0점")).toBeNull();
+});
+
 test("만점을 바꾸면 문구도 따라간다", () => {
   render(<Rating value={3} max={10} />);
 

@@ -111,7 +111,14 @@ export function ReviewPanel({ productId, rating, reviewCount, petProfileLabel }:
       <section aria-label="별점 요약" className="flex flex-col items-start gap-1 p-5">
         {/* 평가가 없으면 빈 별 다섯만 두고 숫자를 적지 않는다. 상단 요약과 같은 기준으로
             후기 수를 본다 — `Rating`은 빈 별을 이미 회색(icon/fill/disable)으로 그린다 */}
-        <Rating value={hasRating ? rating : 0} size="lg" showValue={hasRating} />
+        <Rating
+          value={hasRating ? rating : 0}
+          size="lg"
+          showValue={hasRating}
+          // 화면에서 숫자를 감춰도 `Rating`은 낭독기에 "0점"을 읽는다. 후기가 없는 상품이
+          // 낮은 평가를 받은 상품으로 들리지 않게 문구째로 바꾼다
+          srLabel={hasRating ? undefined : "아직 평가가 없어요"}
+        />
         <p className="text-body-medium-14 text-text-body-secondary">총 리뷰 {reviewCount}개</p>
       </section>
 

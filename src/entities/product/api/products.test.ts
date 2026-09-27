@@ -139,6 +139,16 @@ describe("getProductDetail", () => {
     expect(new Headers(init.headers).has("Authorization")).toBe(false);
   });
 
+  // 인코딩하지 않으면 `..`가 정규화되어 /api/v1/products/reviews를 부른다
+  it("경로 구분자가 섞인 productId도 한 조각으로 보낸다", async () => {
+    const fetchMock = stubFetch(Response.json(response));
+
+    await getProductDetail("1/../reviews");
+
+    const [url] = fetchMock.mock.calls[0] as [string];
+    expect(url).toBe("/api/v1/products/1%2F..%2Freviews");
+  });
+
   it("응답을 화면 모델로 옮긴다. 할인율은 서버 값을 그대로 쓴다", async () => {
     stubFetch(Response.json(response));
 
