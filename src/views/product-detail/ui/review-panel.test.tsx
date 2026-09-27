@@ -41,6 +41,22 @@ describe("리뷰가 없는 상품의 별점 요약", () => {
     expect(summary.getByText("총 리뷰 0개")).toBeDefined();
   });
 
+  it("후기가 0이면 낭독기도 0점이 아니라 평가 없음으로 읽는다", () => {
+    renderPanel("", { reviewCount: 0, rating: 0 });
+
+    const summary = within(screen.getByRole("region", { name: "별점 요약" }));
+    expect(summary.getByText("아직 평가가 없어요")).toBeDefined();
+    expect(summary.queryByText("5점 만점에 0점")).toBeNull();
+  });
+
+  it("후기가 있으면 점수를 그대로 읽는다", () => {
+    renderPanel("", { reviewCount: 108, rating: 4.8 });
+
+    expect(
+      within(screen.getByRole("region", { name: "별점 요약" })).getByText("5점 만점에 4.8점"),
+    ).toBeDefined();
+  });
+
   it("별점이 null로 와도 같다", () => {
     renderPanel("", { reviewCount: 0, rating: null });
 

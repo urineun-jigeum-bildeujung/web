@@ -12,6 +12,11 @@ type RatingProps = {
   size?: "sm" | "md" | "lg";
   /** 별 옆에 숫자를 함께 보여준다 */
   showValue?: boolean;
+  /**
+   * 별 묶음을 화면 낭독기가 읽는 문구. 기본은 "5점 만점에 N점"이다.
+   * 아직 평가가 없는 자리에서 0점으로 읽히지 않게 갈아 끼운다.
+   */
+  srLabel?: string;
   className?: string;
 };
 
@@ -41,13 +46,20 @@ export function RatingStar({ fill, className }: { fill: 0 | 0.5 | 1; className: 
   );
 }
 
-export function Rating({ value, max = 5, size = "sm", showValue, className }: RatingProps) {
+export function Rating({
+  value,
+  max = 5,
+  size = "sm",
+  showValue,
+  srLabel,
+  className,
+}: RatingProps) {
   const halves = Math.round(value * 2);
 
   return (
     <span className={cn("inline-flex items-center", className)}>
       {/* 별 모양만으로는 값을 읽을 수 없어 스크린 리더용 문장을 따로 둔다 */}
-      <span className="sr-only">{`${max}점 만점에 ${value}점`}</span>
+      <span className="sr-only">{srLabel ?? `${max}점 만점에 ${value}점`}</span>
       {Array.from({ length: max }, (_, index) => {
         const fill = Math.max(0, Math.min(2, halves - index * 2));
         return (

@@ -89,9 +89,12 @@ test("제공고시 품명은 응답의 상품명을 쓴다", async ({ page }) =>
 
   await page.getByRole("button", { name: "상품정보 제공고시" }).click();
 
-  await expect(page.getByText("품명 및 모델명")).toBeVisible();
+  // 항목명만 보면 품명이 옛 목데이터로 남아 있어도 통과한다. 값이 응답의 상품명인지 본다
+  const notice = page.getByRole("region", { name: "상품정보 제공고시" });
+  await expect(notice.getByText("품명 및 모델명")).toBeVisible();
+  await expect(notice.getByText(NAME, { exact: true })).toBeVisible();
   // 배송·판매자·수입식품 여부·상담 전화는 응답에 자리가 없어 아직 고정 목데이터다
-  await expect(page.getByText("해당 없음")).toBeVisible();
+  await expect(notice.getByText("해당 없음")).toBeVisible();
 });
 
 test("없는 상품은 404 화면으로 간다", async ({ page }) => {

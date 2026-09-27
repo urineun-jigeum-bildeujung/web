@@ -63,7 +63,7 @@ function toSpecRows(detail: ProductDetailInfo): [string, string][] {
       "제품 용량",
       detail.netQuantityValue ? `${detail.netQuantityValue}${detail.netQuantityUnit}` : "",
     ],
-    ["원재료명", detail.ingredients?.join(", ") ?? ""],
+    ["원재료명", detail.ingredients.join(", ")],
     ["급여 대상", feedingTarget],
     ["급여 방법", detail.feedingMethod ?? ""],
     // 응답의 allergens는 **들어 있는** 알레르기 유발 성분이다. 시안 문구가

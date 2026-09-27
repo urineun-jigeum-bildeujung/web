@@ -210,9 +210,11 @@ function toProductDetail(response: ProductDetailApiResponse): ProductDetail {
  * `notFound()`로 넘긴다.
  */
 export function getProductDetail(productId: string): Promise<ProductDetail> {
-  return apiRequest<ProductDetailApiResponse>(`/products/${productId}`, { auth: false }).then(
-    toProductDetail,
-  );
+  // 경로 조각으로 인코딩한다. `productId`는 라우트 파라미터에서 검증 없이 오는 문자열이라
+  // `/`나 `..`가 섞이면 URL 정규화가 일어나 상세가 아닌 다른 경로를 부르게 된다
+  return apiRequest<ProductDetailApiResponse>(`/products/${encodeURIComponent(productId)}`, {
+    auth: false,
+  }).then(toProductDetail);
 }
 
 /** 리뷰 작성 화면의 상품 줄처럼 이름과 대표 사진만 필요한 자리가 쓴다 */
