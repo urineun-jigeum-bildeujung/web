@@ -70,12 +70,14 @@ test("상세 설명 표가 응답으로 채워지고 빈 항목은 줄째로 빠
   const spec = page.getByRole("region", { name: "상세 설명" });
 
   await expect(spec.getByText("이엠펫푸드 / 조인트케어")).toBeVisible();
-  // 급여 대상은 종부터 적는다. 종을 빼면 이 상품이 누구 것인지가 사라진다
-  await expect(spec.getByText("강아지 · 8세 이상 · 소형 · 노령")).toBeVisible();
+  // 급여 대상은 체구 뒤에 종 접미를 붙인 한 문구다. targetAgeGroup("노령")은 적지 않는다
+  await expect(spec.getByText("8세 이상 소형견")).toBeVisible();
   await expect(spec.getByText("글루코사민, MSM")).toBeVisible();
-  // 응답의 allergens는 들어 있는 성분이다. 옛 목 문구("계란 · 유제품 불포함")와 뜻이 반대다
-  await expect(spec.getByText("계란", { exact: true })).toBeVisible();
-  await expect(spec.getByText("제조일로부터 18개월 · 개봉 후 60일")).toBeVisible();
+  // 응답의 allergens는 들어 있는 성분이라 뒤에 "포함"을 붙인다. 시안 문구("계란 · 유제품
+  // 불포함")와 뜻이 반대여서, 성분명만 적으면 없는 성분으로 읽힌다
+  await expect(spec.getByText("알레르기 정보")).toBeVisible();
+  await expect(spec.getByText("계란 포함", { exact: true })).toBeVisible();
+  await expect(spec.getByText("제조일로부터 18개월")).toBeVisible();
 
   // 제조국·보관방법은 목 응답에서 비어 온다. 항목명만 남은 줄을 그리지 않는다
   await expect(spec.getByText("제조국")).toHaveCount(0);

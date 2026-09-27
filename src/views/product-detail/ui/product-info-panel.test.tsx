@@ -15,7 +15,7 @@ const DETAIL: ProductDetailInfo = {
   netQuantityUnit: "정",
   ingredients: ["타우린", "글루코사민"],
   feedingTarget: "8세 이상",
-  targetBreedSize: "소형·중형견",
+  targetBreedSize: "소형",
   targetAgeGroup: "노령",
   targetSpecies: ["강아지"],
   feedingMethod: "1일 1정, 사료와 함께 급여",
@@ -38,11 +38,19 @@ const BASE: PetMatch = {
 };
 
 describe("상세 설명 표", () => {
-  // 종을 빼면 이 상품이 누구 것인지가 사라진다. 응답은 "강아지"·"고양이" 표시명으로 온다
-  it("급여 대상에 종·대상·체구·연령을 함께 적는다", () => {
+  // 종은 체구 뒤에 접미로 붙는다(시안 1702-18844). 응답은 "강아지"·"고양이" 표시명으로 온다
+  it("급여 대상을 체구 뒤에 종 접미를 붙여 한 문구로 적는다", () => {
     render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
 
-    expect(screen.getByText("강아지 · 8세 이상 · 소형·중형견 · 노령")).toBeDefined();
+    expect(screen.getByText("8세 이상 소형견")).toBeDefined();
+  });
+
+  // 응답의 allergens는 들어 있는 성분이다. 성분명만 적으면 시안 문구("불포함") 때문에
+  // 뜻이 정반대로 읽힌다
+  it("알레르기 성분 뒤에 포함을 붙인다", () => {
+    render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
+
+    expect(screen.getByText("계란 포함")).toBeDefined();
   });
 
   it("비어 오는 항목은 줄째로 빼고 그린다", () => {

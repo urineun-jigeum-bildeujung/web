@@ -32,29 +32,30 @@ type ProductInfoPanelProps = {
 };
 
 /**
+ * 종 표시명과 체구 뒤에 붙는 접미. 백엔드 `Species`는 `강아지`·`고양이` 둘뿐이고,
+ * 응답의 `targetSpecies`가 `Set`이라 순서가 보장되지 않아 이 순서로 고정해 적는다.
+ */
+const SPECIES_SUFFIX = [
+  ["강아지", "견"],
+  ["고양이", "묘"],
+] as const;
+
+/**
  * 응답을 상세 설명 표의 아홉 줄로 옮긴다. 항목명은 시안의 말이라 화면이 쥔다.
  *
  * **빈 값은 줄째로 뺀다.** "제조국 —"처럼 항목명만 남은 줄은 알려주는 것이 없다.
  * `cautions`는 이 표에 자리가 없다 — 경고로 쓸 값이라 따로 다룬다(#414).
  */
 function toSpecRows(detail: ProductDetailInfo): [string, string][] {
-  // 급여 대상은 네 갈래를 한 줄로 잇는다. 종부터 적는 것은 "강아지 · 8세 이상 · 소형 · 노령"처럼
-  // 넓은 것에서 좁은 것으로 읽히기 때문이다. 종을 빼면 이 상품이 누구 것인지가 사라진다
-  const feedingTarget = [
-    detail.targetSpecies?.join(" · "),
-    detail.feedingTarget,
-    detail.targetBreedSize,
-    detail.targetAgeGroup,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-  const shelfLife = [
-    detail.consumptionPeriodDisplay,
-    detail.shelfLifeAfterOpeningDays && `개봉 후 ${detail.shelfLifeAfterOpeningDays}일`,
-  ]
-    .filter(Boolean)
-    .join(" · ");
-
+  // 급여 대상은 시안(1702-18844)처럼 "8세 이상 소형견" 한 문구로 적는다. 종은 늘 맨 뒤에 오고,
+  // 체구가 있으면 접미로 줄고(소형견) 없으면 이름 그대로 선다(강아지). `targetAgeGroup`은 적지
+  // 않는다 — `feedingTarget`("8세 이상")과 같은 사실을 두 번 적는 꼴이고 시안에도 없다
+  const species = SPECIES_SUFFIX.filter(([name]) => detail.targetSpecies.includes(name));
+  const targetPart = detail.targetBreedSize
+    ? `${detail.targetBreedSize}${species.map(([, suffix]) => suffix).join("·")}`
+    : species.map(([name]) => name).join("·");
+  const feedingTarget = [detail.feedingTarget, targetPart].filter(Boolean).join(" ");
+  const allergens = detail.allergens.map((allergen) => allergen.displayName).join(" · ");
   const rows: [string, string][] = [
     ["제조사/브랜드", [detail.manufacturer, detail.brandName].filter(Boolean).join(" / ")],
     ["제조국", detail.originCountry ?? ""],
@@ -65,10 +66,13 @@ function toSpecRows(detail: ProductDetailInfo): [string, string][] {
     ["원재료명", detail.ingredients?.join(", ") ?? ""],
     ["급여 대상", feedingTarget],
     ["급여 방법", detail.feedingMethod ?? ""],
-    // 응답의 allergens는 **들어 있는** 알레르기 유발 성분이다. 예전 목 문구는
-    // "계란 · 유제품 불포함"이었는데 뜻이 반대라 그대로 쓰지 않는다
-    ["알레르기 정보", detail.allergens?.map((allergen) => allergen.displayName).join(" · ") ?? ""],
-    ["소비기한", shelfLife],
+    // 응답의 allergens는 **들어 있는** 알레르기 유발 성분이다. 시안 문구가
+    // "계란 · 유제품 불포함"이라 성분명만 적으면 뜻이 정반대로 읽혀서 "포함"을 붙인다.
+    // 성분이 없으면 줄째로 빠진다 — 불포함이라고 단정하려면 전체 알레르겐 목록이 필요하다
+    ["알레르기 정보", allergens && `${allergens} 포함`],
+    // 응답의 shelfLifeAfterOpeningDays는 적지 않는다. 시안(1702-18859)은 소비기한 값이
+    // "제조일로부터 18개월" 한 덩어리고 개봉 후 일수를 붙일 자리가 없다
+    ["소비기한", detail.consumptionPeriodDisplay ?? ""],
     ["보관방법", detail.storageMethod ?? ""],
   ];
 
