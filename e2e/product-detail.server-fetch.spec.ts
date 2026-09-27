@@ -56,11 +56,18 @@ test("응답의 사진이 실제로 그려지고 넘기면 현재 위치 점이 
   await expect(dots).toHaveCount(2);
   await expect(dots.nth(0)).toHaveClass(/bg-foreground/);
 
-  // 한 장 넘기면 진한 점이 두 번째로 옮겨간다
+  // 한 장 넘기면 진한 점이 두 번째로 옮겨간다.
+  //
+  // **스크롤 핸들러가 붙기 전에 밀면 점이 그대로 남는다.** 점은 React 상태로 그려지는데
+  // 하이드레이션이 늦은 환경(CI)에서는 첫 밀기가 그냥 지나간다. 그래서 되돌렸다 다시 미는
+  // 것까지 묶어 재시도한다 — 같은 자리로 다시 밀면 스크롤 이벤트가 나지 않는다
   const carousel = page.locator("div.snap-x");
-  await carousel.evaluate((el) => el.scrollTo({ left: el.clientWidth }));
+  await expect(async () => {
+    await carousel.evaluate((el) => el.scrollTo({ left: 0 }));
+    await carousel.evaluate((el) => el.scrollTo({ left: el.clientWidth }));
+    await expect(dots.nth(1)).toHaveClass(/bg-foreground/, { timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
 
-  await expect(dots.nth(1)).toHaveClass(/bg-foreground/);
   await expect(dots.nth(0)).not.toHaveClass(/bg-foreground/);
 });
 
