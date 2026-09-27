@@ -188,6 +188,22 @@ function timeDeals(status) {
 }
 
 /**
+ * 상품 사진 두 장. **앱과 같은 출처의 경로**를 준다 (`public/images/e2e/`의 16×16 PNG 둘).
+ *
+ * **사진 목록을 비워 두면 캐러셀과 `next/image` 경로를 한 번도 지나지 않는다.** 그래서
+ * 실제 바이트가 있는 자산을 가리킨다.
+ *
+ * **왜 목 서버가 직접 이미지를 주지 않는가** — Next 16의 최적화 서버는 업스트림 이미지가
+ * 사설 IP로 풀리면 거부한다(`hostname resolved to private IP`, SSRF 방어). `remotePatterns`에
+ * `localhost`가 있어도 막히고, 풀려면 `images.dangerouslyAllowLocalIP`를 켜야 한다 — 운영
+ * 설정에 보안 플래그를 넣지 않기로 했다. 같은 출처 경로는 그 검사를 지나지 않는다.
+ *
+ * 그래서 이 테스트가 보는 것은 **캐러셀과 렌더 경로**다. 운영 원격 호스트 허용 여부는
+ * 백엔드가 호스트를 확정한 뒤 따로 검증한다.
+ */
+const IMAGE_PATHS = ["/images/e2e/product-photo-1.png", "/images/e2e/product-photo-2.png"];
+
+/**
  * 상품 상세(#413). 화면이 그리는 값이 **이 응답에서 왔다는 것을 보이려고** 목록 목데이터와
  * 다른 이름·가격을 쓴다 — 같은 값을 쓰면 옛 목데이터가 남아 있어도 테스트가 통과한다.
  *
@@ -198,7 +214,7 @@ const PRODUCT_DETAIL = {
   productId: 1,
   timeDealItemId: null,
   summary: {
-    images: [],
+    images: IMAGE_PATHS,
     productName: "관절 튼튼 영양제 90정",
     price: 18000,
     originalPrice: 24000,
