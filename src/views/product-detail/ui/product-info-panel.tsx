@@ -141,8 +141,7 @@ export function ProductInfoPanel({ detail, productName, match, petName }: Produc
 
         {match.nutrients.length === 0 ? (
           <p className="pt-3 text-sm text-muted-foreground">
-            {petName ? `${petName} 기준의 급여량이 ` : "급여 기준이 "}
-            등록되지 않아 아직 분석하지 못했어요.
+            {petName ? `${petName} 기준으로는 ` : ""}아직 분석하지 못했어요.
           </p>
         ) : (
           <>

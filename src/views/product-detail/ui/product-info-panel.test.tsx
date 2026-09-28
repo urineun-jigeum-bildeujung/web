@@ -130,7 +130,8 @@ describe("종합 점수 카드", () => {
     expect(screen.queryByText(/기능성 성분/)).toBeNull();
   });
 
-  it("성분이 없으면 아이 이름으로 이유를 알린다", () => {
+  // 이유를 지어내지 않는다. 예전 문구("급여량이 등록되지 않아")는 종이 달라 재지 않은 아이에게도 떴다 (#481)
+  it("성분이 없으면 그 아이 기준으로는 아직 분석하지 못했다고 알린다", () => {
     render(
       <ProductInfoPanel
         detail={DETAIL}
@@ -140,7 +141,7 @@ describe("종합 점수 카드", () => {
       />,
     );
 
-    expect(screen.getByText(/냥이 기준의 급여량이/)).toBeDefined();
+    expect(screen.getByText("냥이 기준으로는 아직 분석하지 못했어요.")).toBeDefined();
   });
 });
 

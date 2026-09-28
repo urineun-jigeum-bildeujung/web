@@ -10,6 +10,7 @@
 "use client";
 
 import { getMatchLevel } from "@/entities/product";
+import { withJosa } from "@/shared/lib/josa/josa";
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/shared/ui/select";
@@ -69,7 +70,7 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
           <h2 id="match-heading" className="text-title-bold-16 text-text-body-default">
             {match.score === null
               ? `${petName} 기준으로는 아직 재지 못했어요`
-              : `${petName}와 ${level.label}`}
+              : `${withJosa(petName, "과/와")} ${level.label}`}
           </h2>
           <p className="text-caption-regular-12 text-text-body-secondary">
             ({match.profileLabel} 기준)

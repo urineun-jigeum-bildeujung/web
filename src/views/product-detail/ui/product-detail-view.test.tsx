@@ -211,6 +211,23 @@ describe("ProductDetailView", () => {
 
     expect(screen.getByText("나비 기준으로 보고 있어요")).toBeDefined();
     expect(screen.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeDefined();
+    // 정보 탭도 이유를 지어내지 않는다. 예전 문구는 "급여량이 등록되지 않아"였다
+    expect(screen.getByText("나비 기준으로는 아직 분석하지 못했어요.")).toBeDefined();
+  });
+
+  // 이름이 서버에서 온다. 예시 아이("소리")는 받침이 없어 "와"로 박아도 맞았다
+  it("받침 있는 이름에는 '과'를 붙인다", async () => {
+    useQueryPets.mockReturnValue({
+      pets: [{ id: "9", name: "콩", isDefault: true }],
+      isLoading: false,
+    });
+    useQueryPetDetail.mockReturnValue({
+      pet: { ...PET_DETAILS["7"], id: "9", name: "콩" },
+      isLoading: false,
+    });
+    await renderWith();
+
+    expect(screen.getByRole("heading", { name: "콩과 잘 맞아요" })).toBeDefined();
   });
 
   it("로그인하지 않았으면 적합도 칸을 그리지 않는다", async () => {
