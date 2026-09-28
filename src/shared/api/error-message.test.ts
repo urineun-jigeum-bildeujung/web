@@ -55,6 +55,17 @@ describe("toAppMessageCode", () => {
   });
 
   // 백엔드가 새 코드를 추가하면 우리는 나중에 안다. 그동안에도 화면은 무언가를 보여줘야 한다
+  // 남의 주문 id로 부른 경우다. 403이라고 "권한 없음"으로 떨어지면 남의 주문이 있다는 것만
+  // 알리고 무엇을 하라는 말은 없다. 결제 쪽 같은 경우와 같이 "주문 없음"으로 간다 (#442)
+  it("남의 주문을 부르면 없는 주문과 같은 문구로 간다", () => {
+    expect(toAppMessageCode(apiError(403, "ORDER_403_OWNER_MISMATCH"))).toBe(
+      APP_MESSAGE_CODE.order.notFound,
+    );
+    expect(toAppMessageCode(apiError(404, "PAYMENT_404_ORDER_NOT_FOUND"))).toBe(
+      APP_MESSAGE_CODE.order.notFound,
+    );
+  });
+
   it("모르는 errorCode는 상태 코드 기준 문구로 떨어진다", () => {
     expect(toAppMessageCode(apiError(404, "ORDER_404_NOT_EXIST"))).toBe(
       APP_MESSAGE_CODE.common.notFound,
@@ -137,6 +148,8 @@ describe("서버 에러 코드와의 대조", () => {
     "MEMBER_409_ALREADY_HAVE_NICKNAME",
     "MEMBER_409_ALREADY_SIGNED_UP",
     "ORDER_400_INVALID_CLAIM_TYPE",
+    // 2026-09-23 반품·교환 사유 코드 검증으로 더해졌다. 2026-09-28 소스에서 확인했다
+    "ORDER_400_INVALID_CLAIM_REASON_CODE",
     "ORDER_400_INVALID_CURSOR",
     // 2026-09-23 주문 사진 업로드(백엔드 #132)로 더해졌다. 같은 날 소스에서 확인했다
     "ORDER_400_INVALID_IMAGE_EXTENSION",

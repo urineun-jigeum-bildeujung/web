@@ -79,6 +79,9 @@ export const MESSAGE_BY_ERROR_CODE: Record<string, AppMessageCode> = {
   ORDER_403_FORBIDDEN_IMAGE: APP_MESSAGE_CODE.image.uploadFailed,
   ORDER_404_ITEM_NOT_FOUND: APP_MESSAGE_CODE.order.itemNotFound,
   ORDER_404_ORDER_NOT_FOUND: APP_MESSAGE_CODE.order.notFound,
+  // 남의 주문 id로 상세·취소·확정·신청을 부른 경우다(주소창 조작). "권한 없음"보다 없는 주문으로
+  // 안내하는 편이 자연스럽고, 남의 주문이 있다는 사실도 드러내지 않는다 (#442)
+  ORDER_403_OWNER_MISMATCH: APP_MESSAGE_CODE.order.notFound,
   ORDER_404_ADDRESS_NOT_FOUND: APP_MESSAGE_CODE.address.notFound,
   ORDER_409_INSUFFICIENT_STOCK: APP_MESSAGE_CODE.product.outOfStock,
   ORDER_404_PRODUCT_NOT_FOUND: APP_MESSAGE_CODE.product.notFound,
