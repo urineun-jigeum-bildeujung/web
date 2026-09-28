@@ -20,7 +20,7 @@ export function FieldRow({ term, description, className }: FieldRowProps) {
     <div className={cn("flex items-start gap-3", className)}>
       {/* 시안이 이름 칸을 52px로 고정해 값의 왼쪽 끝을 맞춘다 */}
       <dt className="w-13 shrink-0 text-body-medium-14 text-text-body-secondary">{term}</dt>
-      <dd className="min-w-0 text-body-medium-14 text-surface-primary">{description}</dd>
+      <dd className="min-w-0 text-body-medium-14 text-foreground">{description}</dd>
     </div>
   );
 }

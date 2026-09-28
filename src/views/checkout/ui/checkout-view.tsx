@@ -91,7 +91,8 @@ const TERMS = [
 
 /** 시안의 약관 줄은 32px이다. 원의 누르는 자리는 44px로 넓혀져 있어 그대로 둔다 */
 const TERM_ROW = "min-h-8";
-const TERM_LABEL = "text-label-medium-14 text-surface-primary";
+// 시안 `body/medium_14`·`text/body/secondary`다. 제목과 [전체 동의]만 진한 글씨다 (#451)
+const TERM_LABEL = "text-body-medium-14 text-text-body-secondary";
 
 /** 위젯이 준비되면 넘겨주는 함수. 주문번호는 그때 손에 들어와 부를 때 넘긴다 */
 type RequestPayment = (order: TossPaymentOrder) => Promise<void>;
@@ -129,7 +130,7 @@ function OrderItemRow({ item }: { item: CartItem }) {
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 self-stretch">
         <div className="flex flex-col gap-1">
           {/* 살 수 있는 줄만 여기까지 오므로 이름이 `null`이 아니다 */}
-          <p className="truncate text-title-bold-16 text-surface-primary">{item.productName}</p>
+          <p className="truncate text-title-bold-16 text-foreground">{item.productName}</p>
         </div>
         <dl>
           {/* 시안이 이 줄만 이름과 값을 16px 띄운다 */}
@@ -153,7 +154,7 @@ function Section({
   return (
     <section className="flex flex-col gap-3 px-5">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-title-bold-18 text-surface-primary">{title}</h2>
+        <h2 className="text-title-bold-18 text-foreground">{title}</h2>
         {action}
       </div>
       {children}
@@ -412,7 +413,7 @@ export function CheckoutView() {
                         from: toCheckoutPath(searchParams.toString()),
                       })}`
                 }
-                className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-secondary"
+                className="inline-flex min-h-11 items-center text-body-regular-14 text-text-body-tertiary"
               >
                 {address ? "배송지 변경" : "배송지 등록"}
               </Link>
@@ -542,8 +543,8 @@ export function CheckoutView() {
             <div className="flex flex-col gap-2">
               <dl>
                 <div className="flex items-center justify-between gap-2">
-                  <dt className="text-label-bold-14 text-surface-primary">결제금액</dt>
-                  <dd className="text-title-bold-16 text-surface-primary">{formatWon(total)}</dd>
+                  <dt className="text-label-bold-14 text-foreground">결제금액</dt>
+                  <dd className="text-title-bold-16 text-foreground">{formatWon(total)}</dd>
                 </div>
               </dl>
               {/* 시안(`paym_001`)이 이 자리를 "상품 옵션"이라 부른다. 같은 자리를 주문 완료는
@@ -580,14 +581,14 @@ export function CheckoutView() {
         </Section>
 
         <section aria-labelledby="terms-heading" className="flex flex-col gap-2 px-5">
-          <h2 id="terms-heading" className="text-label-bold-14 text-foreground">
+          <h2 id="terms-heading" className="text-title-bold-16 text-foreground">
             안전한 결제를 위해 약관에 동의해 주세요
           </h2>
 
           <div className="flex flex-col gap-1">
             <CheckboxRow
               className={TERM_ROW}
-              labelClassName="text-label-bold-14 text-surface-primary"
+              labelClassName="text-title-bold-16 text-foreground"
               label="[전체 동의]"
               checked={allAgreed}
               onCheckedChange={(on) => setAgreed(on ? TERMS.map((term) => term.id) : [])}

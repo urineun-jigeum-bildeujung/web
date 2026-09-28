@@ -50,7 +50,7 @@ function PlaceRow({ place, from }: { place: Address; from: string }) {
         </span>
         {/* 시안의 화살표는 18px이고 누르는 자리는 줄 전체다 */}
         <span aria-hidden className="flex size-8 shrink-0 items-center justify-center">
-          <Icon name="right" className="size-4.5 text-icon-fill-secondary" />
+          <Icon name="right" className="size-4.5 text-icon-stroke-tertiary" />
         </span>
       </span>
     </Link>
@@ -136,12 +136,13 @@ export function AddPlaceLink({ from }: { from: string }) {
     <Link
       href={`/mypage/address/new?${new URLSearchParams({ from })}`}
       className={cn(
-        "flex min-h-11 items-center justify-center gap-1 rounded-lg text-body-medium-14 text-text-body-secondary transition-colors",
+        "flex min-h-11 items-center justify-center gap-1 rounded-lg text-body-medium-14 text-foreground transition-colors",
         "hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
       )}
     >
       장소 추가하기
-      <Icon name="plus" aria-hidden />
+      {/* 시안은 글자만 진하고 더하기는 회색이다 (`icon/fill/secondary`, #451) */}
+      <Icon name="plus" aria-hidden className="text-icon-fill-secondary" />
     </Link>
   );
 }
