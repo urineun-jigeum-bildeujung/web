@@ -17,6 +17,7 @@ import {
 import {
   CATEGORY_TO_API,
   MatchScoreBadge,
+  formatUnitPrice,
   useProductList,
   type ProductCard as ApiProductCard,
   type ProductListResult,
@@ -32,7 +33,6 @@ import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
-import { formatWon } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -147,7 +147,7 @@ function PromiseErrorFallback({ router }: { router: ReturnType<typeof useRouter>
 function CategoryProductMeta({ product }: { product: ApiProductCard }) {
   return (
     <p className="text-label-medium-11 text-text-body-tertiary">
-      {product.unitLabel} {formatWon(product.unitPrice)}
+      {formatUnitPrice(product.unitLabel, product.unitPrice)}
     </p>
   );
 }
@@ -360,7 +360,7 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
               meta={
                 item.unitLabel && (
                   <p className="text-label-medium-11 text-text-body-tertiary">
-                    {item.unitLabel} {formatWon(item.unitAmount)}
+                    {formatUnitPrice(item.unitLabel, item.unitAmount)}
                   </p>
                 )
               }

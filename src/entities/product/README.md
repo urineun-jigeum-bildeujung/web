@@ -13,6 +13,8 @@
 | `api/time-deals.test.ts` | 요청 파라미터·다중 딜 묶음 보존·`stockBadge` 매핑 단위 테스트 |
 | `model/category.ts` | 화면 카테고리 값 → 백엔드 `CategoryCode` 매핑(`CATEGORY_TO_API`). 홈·좋아요 등 여러 화면이 공유합니다(#390) |
 | `model/category.test.ts` | snack→TREAT 등 매핑이 단순 대문자 변환이 아님을 고정 |
+| `model/unit-price.ts` | 서버 단가(정규화 단위 기호 + 한 단위 가격)를 시안의 "1개당 약 680원" 꼴로 옮긴다(`formatUnitPrice`). 기호만 앞에 붙이면 "g 11원"으로 읽힌다(#479) |
+| `model/unit-price.test.ts` | 단가 줄 문장과 천 단위 쉼표 |
 | `model/mock-detail-product.ts` | API 연동 전 상품 상세·비교 화면이 공유하는 상품 요약 목데이터 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |

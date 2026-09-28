@@ -15,12 +15,11 @@ import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { IoChevronBack, IoSearchOutline } from "react-icons/io5";
 
-import type { ProductCard, ProductSearchResult } from "@/entities/product";
+import { formatUnitPrice, type ProductCard, type ProductSearchResult } from "@/entities/product";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
-import { formatWon } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -128,7 +127,7 @@ function GeneralResultList({
                 meta={
                   <>
                     <p className="text-xs text-muted-foreground">
-                      {product.unitLabel} {formatWon(product.unitPrice)}
+                      {formatUnitPrice(product.unitLabel, product.unitPrice)}
                     </p>
                     {/* 시안은 5개 별점 줄이 아니라 별 1개(16px)+숫자다 — 공용 Rating은
                         review-card처럼 실제 5개 별점을 보이는 화면 전용이라 여기 안 맞는다.

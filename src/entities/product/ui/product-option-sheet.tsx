@@ -16,6 +16,8 @@ import { formatWon } from "@/shared/ui/price/price";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
+import { formatUnitPrice } from "../model/unit-price";
+
 export type OptionSheetProduct = {
   id: string;
   name: string;
@@ -77,7 +79,7 @@ function SheetBody({ product, onAddToCart, adding = false }: SheetBodyProps) {
           <p className="truncate text-label-bold-14 text-foreground">{product.name}</p>
           {product.unitLabel && product.unitAmount !== undefined && (
             <p className="text-label-medium-11 text-text-body-secondary">
-              {product.unitLabel} {formatWon(product.unitAmount)}
+              {formatUnitPrice(product.unitLabel, product.unitAmount)}
             </p>
           )}
         </div>

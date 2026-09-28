@@ -17,6 +17,7 @@ import { Suspense, use, useState } from "react";
 import { CartLink } from "@/widgets/cart-link";
 import {
   ProductOptionSheet,
+  formatUnitPrice,
   type DealItem,
   type OptionSheetProduct,
   type TimeDealList,
@@ -223,7 +224,7 @@ function LiveDealsSection({
                               없으면 이 줄 자체를 안 그린다 */}
                           {item.unitLabel && (
                             <p className="text-label-medium-11 text-text-body-unselect">
-                              {item.unitLabel} {formatWon(item.unitAmount)}
+                              {formatUnitPrice(item.unitLabel, item.unitAmount)}
                             </p>
                           )}
                         </div>
