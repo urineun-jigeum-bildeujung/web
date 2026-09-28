@@ -22,7 +22,7 @@ import {
   OrderStatusBadge,
   PaymentDetail,
 } from "@/entities/order";
-import { PetSwitcher } from "@/entities/pet";
+import { PetPhoto, PetSwitcher } from "@/entities/pet";
 import { CompareSlot, CompareTable, MatchScoreBadge } from "@/entities/product";
 import { AddressResultList } from "@/shared/ui/address-result-list/address-result-list";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
@@ -66,10 +66,11 @@ const SIZE = [
   { value: "large", label: "대형견", description: "25kg 이상" },
 ];
 
+// 사진 있는 아이와 없는 아이를 섞는다. 없는 아이는 이름 앞 두 글자가 들어간다(#470)
 const PETS = [
   { id: "1", name: "코코" },
-  { id: "2", name: "보리" },
-  { id: "3", name: "나비" },
+  { id: "2", name: "보리", photoUrl: "/images/e2e/product-photo-1.png" },
+  { id: "3", name: "구름이" },
 ];
 
 // bdNm은 넣지 않는다. 건물명이 도로명 주소에 이미 들어 있어 줄을 나누지 않기 때문이다.
@@ -550,6 +551,28 @@ export function DevGalleryView() {
             onSelect={setPickedPet}
             onAdd={() => {}}
           />
+        </Section>
+
+        <Section title="PetPhoto">
+          {/* 아이 원의 안쪽. 부모가 원을 잡는다. 42px(마이페이지)과 56px(메인) 두 크기 */}
+          <div className="flex items-center gap-3">
+            {PETS.map((pet) => (
+              <span
+                key={pet.id}
+                className="relative size-10.5 shrink-0 overflow-hidden rounded-full bg-surface-disable"
+              >
+                <PetPhoto
+                  name={pet.name}
+                  photoUrl={pet.photoUrl}
+                  sizes="42px"
+                  textClassName="text-label-bold-14"
+                />
+              </span>
+            ))}
+            <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-surface-disable">
+              <PetPhoto name="구름이" sizes="56px" textClassName="text-title-bold-16" />
+            </span>
+          </div>
         </Section>
 
         <Section title="InfoNotice">

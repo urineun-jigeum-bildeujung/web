@@ -2,6 +2,8 @@
 // nuqs 기본값(replace)이면 히스토리에 쌓이지 않아 화면을 통째로 떠난다.
 import { expect, test } from "@playwright/test";
 
+import { stubCart } from "./fixtures/cart";
+import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { signIn } from "./fixtures/session";
 
@@ -61,8 +63,11 @@ test("필터는 히스토리에 쌓이지 않는다", async ({ page }) => {
 });
 
 test("주소에 없는 아이 id가 와도 화면이 한 아이를 가리킨다", async ({ page }) => {
-  // 아이는 실제 목록이라 로그인했을 때만 부른다(#470)
+  // 아이는 실제 목록이라 로그인했을 때만 부른다(#470). 로그인하면 헤더의 알림·장바구니도 부르므로
+  // 함께 세운다 — 세우지 않으면 로컬 백엔드에서는 401로 흔들린다(#470 리뷰)
   await signIn(page);
+  await stubNotifications(page);
+  await stubCart(page);
   await page.goto("/recommendations?pet=unknown");
 
   // 목록에 없는 id면 기본 아이로 되돌린다. 고르는 자리도 같은 아이를 가리켜야 한다

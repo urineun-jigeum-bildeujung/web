@@ -41,6 +41,7 @@ test("모든 구역이 렌더링된다", () => {
     "AddressResultList",
     "AddressPlaceList · AddPlaceLink",
     "PetSwitcher",
+    "PetPhoto",
     "InfoNotice",
     "EmptyState",
     "ErrorBoundary",

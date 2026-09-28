@@ -42,8 +42,9 @@ export function ReviewCard({ review, hideAvatar, hidePhotos, className }: Review
   return (
     <article className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center gap-2">
-        {/* 프로필 사진을 받을 곳이 아직 없다. 시안은 원 안에 아이 이름+색을 넣지만
-            그 색이 서버 값일 가능성이 커 API 확정 전까지는 보류한다(PetSwitcher와 같은 결정).
+        {/* 프로필 사진을 받을 곳이 아직 없다. 시안은 원 안에 아이 이름을 넣는다. 아이 고르기 줄은
+            이제 아이 원(`entities/pet`의 `PetPhoto`)으로 이름 앞 두 글자를 넣지만(#470), 리뷰 한 건에
+            아이가 여럿일 수 있어 어느 아이를 넣을지 정해지지 않아 회색 원으로 둔다.
             **닉네임이 없으면 원도 그리지 않는다** — 누구인지 모르는데 자리만 남기는 꼴이 된다 */}
         {!hideAvatar && review.nickname && (
           <span aria-hidden className="size-10.5 shrink-0 rounded-full bg-surface-disable" />
