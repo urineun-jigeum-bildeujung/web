@@ -187,6 +187,7 @@ function LiveDealsSection({
                   >
                     <ProductSummary
                       name={item.name}
+                      imageUrl={item.thumbnailUrl ?? undefined}
                       imageSize={24}
                       className="gap-4 py-5 pr-17 pl-5"
                       imageBadge={
@@ -331,6 +332,7 @@ function UpcomingDealsSection({
                 <li key={item.timeDealItemId} className="border-b border-border last:border-b-0">
                   <ProductSummary
                     name={item.name}
+                    imageUrl={item.thumbnailUrl ?? undefined}
                     imageSize={24}
                     className="gap-4 p-5"
                     meta={

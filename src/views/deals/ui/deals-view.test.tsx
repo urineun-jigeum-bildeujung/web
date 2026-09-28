@@ -147,6 +147,26 @@ describe("DealsView", () => {
     expect(screen.getByText("오리&고구마 소형견 사료 1.5kg")).toBeDefined();
   });
 
+  // API가 사진을 주는데 카드가 받지 않아 두 탭 모두 늘 빈 자리였다 (#479)
+  it("진행 중인 딜 상품 사진을 그린다", async () => {
+    const live = buildLiveGroups();
+    live[0].items[0] = { ...live[0].items[0], thumbnailUrl: "https://image.leechs.shop/live.png" };
+    await renderWith("", live);
+
+    expect(document.querySelector('img[src*="live.png"]')).not.toBeNull();
+  });
+
+  it("오픈 예정 딜 상품 사진을 그린다", async () => {
+    const upcoming = buildUpcomingGroups();
+    upcoming[0].items[0] = {
+      ...upcoming[0].items[0],
+      thumbnailUrl: "https://image.leechs.shop/soon.png",
+    };
+    await renderWith("?tab=upcoming", buildLiveGroups(), upcoming);
+
+    expect(document.querySelector('img[src*="soon.png"]')).not.toBeNull();
+  });
+
   it("썸네일·이름을 누르면 상품 상세로 가는 링크다", async () => {
     await renderWith();
 
