@@ -31,8 +31,8 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
 | `/deals` | 타임딜 목록 | 공개 후보 | `tab=live\|upcoming` | UI 시안 반영(#275). 담긴 상품·딜 종료는 화면 안 상태라 URL에 없음 |
 | `/recommendations` | 맞춤 추천 | 인증 필요 후보 | `pet`(아이 id, 서버 전달 방식 미확정), `category=all\|food\|snack\|supplement`, `sort=recommend\|latest\|rating-high\|rating-low` | 메인 "맞춤 추천" 섹션 더보기로 진입하는 서브 화면(#273). `PageHeader` 사용 |
-| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort`, `reviewMatch`, `reviewFilter` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
-| `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `review`, `photo` | 구현됨 |
+| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
+| `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `photo`, `n` | 구현됨 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
 | `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭만 UI 시안 반영(#274). 나머지 두 탭은 와이어프레임이고 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
 
@@ -109,16 +109,16 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 리뷰 작성 | `productId` | 리뷰를 작성할 상품. 백엔드가 회원+상품당 한 건만 받는다 |
 | 상품 상세 | `tab` | `info`, `review`, `qna` |
 | 상품 상세 | `reviewSort` | `recommend`, `recent`, `rating-high`, `rating-low` |
-| 상품 상세 | `reviewMatch` | `on`, `off` — 고른 아이와 같은 품종의 후기만 |
-| 사진 리뷰 | `review`, `photo` | 보고 있는 후기 번호와 그 후기의 몇 번째 사진 |
-| 상품 상세 | `reviewFilter` | `period:3-9\|species:dog` 꼴. 기본값과 다른 조건만 싣고, 값은 `parseFilter`가 검증한다 |
+| 상품 상세 | ~~`reviewMatch`~~ | **지금은 읽지 않는다(#339).** 맞춤보기 토글을 닫아 두었다 — 서버 `personalized`가 종과 체구만 견주어 문구가 약속하는 범위와 다르다 |
+| 사진 리뷰 | `photo`, `n` | 보고 있는 **후기 번호**(`reviewId`)와 그 후기의 몇 번째 사진. 전에는 배열 순번이었는데 쪽을 이어 받으면 같은 번호가 다른 사진을 가리켜 바꿨다(#339). 둘은 한 번에 갱신해 히스토리가 한 칸만 쌓인다 |
+| 상품 상세 | ~~`reviewFilter`~~ | **지금은 읽지 않는다(#339).** 필터 시트를 닫아 두었다 — 나이·사용 기간은 화면이 구간으로 고르는데 서버는 단계 열거형으로 받고, 품종은 화면이 여럿 고르는데 서버는 하나만 받는다. 파서는 남아 있어 옛 주소가 와도 아는 조건만 읽고 나머지는 무시한다 |
 | 타임딜 | `tab` | `live`, `upcoming` |
 
 검색·추천·주문 상태 쿼리는 백엔드 API와 PM·PD 정책 확정 후 이 표에 추가한다.
 
 ## 라우트가 아닌 상태
 
-- 배송지 변경. 리뷰 필터 바텀시트의 열림 여부도 여기 속한다. 다만 고른 조건은 `reviewFilter`로 주소에 남는다.
+- 배송지 변경. 리뷰 필터 바텀시트의 열림 여부도 여기 속한다. 다만 고른 조건은 `reviewFilter`로 주소에 남는다(시트를 다시 열 때까지는 쓰이지 않는다, #339).
 - 반려동물 등록 완료 모달.
 - 메인의 구매 후 반려동물 상태 체크.
 - 일시적인 확인창과 드로어 열림 상태.

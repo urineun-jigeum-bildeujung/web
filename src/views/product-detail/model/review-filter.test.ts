@@ -1,11 +1,9 @@
 // 필터 규칙 테스트. 구간 해석과 주소 왕복, 잘못된 주소를 견디는지 본다.
 import { describe, expect, it } from "vitest";
 
-import { MOCK_REVIEWS } from "@/entities/review";
 import {
   DEFAULT_FILTER,
   ageLabel,
-  applyFilter,
   isDefault,
   parseFilter,
   periodLabel,
@@ -43,48 +41,6 @@ describe("구간을 사람이 읽는 문장으로", () => {
   });
 });
 
-describe("조건으로 거르기", () => {
-  it("고르지 않았으면 전부 남는다", () => {
-    expect(applyFilter(MOCK_REVIEWS, DEFAULT_FILTER)).toHaveLength(MOCK_REVIEWS.length);
-  });
-
-  it("종을 고르면 그 종의 후기만 남는다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ species: "cat" }));
-
-    expect(only).toHaveLength(1);
-    expect(only[0].nickname).toBe("밤이맘");
-  });
-
-  it("재구매만 보기를 켜면 첫 구매 후기가 빠진다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ repeatOnly: true }));
-
-    expect(only.map((review) => review.nickname).sort()).toEqual(["댕댕이짱", "초코집사"]);
-  });
-
-  it("체중 구간을 좁히면 그 밖의 후기가 빠진다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ weight: [1, 5] }));
-
-    expect(only.every((review) => review.weight <= 5)).toBe(true);
-    expect(only.some((review) => review.nickname === "초코집사")).toBe(false);
-  });
-
-  it("사용 기한 최소값을 올리면 그 미만 후기가 빠진다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ period: [3, 12] }));
-
-    expect(only.map((review) => review.nickname).sort()).toEqual(["뭉이언니", "초코집사"]);
-  });
-
-  it("사용 기한의 양쪽을 좁히면 구간 밖 후기가 빠진다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ period: [1, 3] }));
-    expect(only.every((review) => review.usedMonths >= 1 && review.usedMonths <= 3)).toBe(true);
-  });
-
-  it("나이의 양쪽을 좁히면 구간 밖 후기가 빠진다", () => {
-    const only = applyFilter(MOCK_REVIEWS, filterWith({ age: [2, 8] }));
-    expect(only.every((review) => review.age >= 2 && review.age <= 8)).toBe(true);
-  });
-});
-
 describe("주소에 싣고 되읽기", () => {
   it("기본값은 빈 문자열이 된다", () => {
     expect(serializeFilter(DEFAULT_FILTER)).toBe("");
@@ -92,7 +48,7 @@ describe("주소에 싣고 되읽기", () => {
   });
 
   it("고른 조건만 실어 되읽어도 같다", () => {
-    const filter = filterWith({ species: "dog", age: [2, 8], repeatOnly: true });
+    const filter = filterWith({ species: "dog", age: [2, 8] });
     const restored = parseFilter(serializeFilter(filter));
 
     expect(restored).toEqual(filter);
@@ -123,7 +79,6 @@ describe("주소에 싣고 되읽기", () => {
 
     expect(restored.age).toEqual(DEFAULT_FILTER.age);
     expect(restored.species).toBeNull();
-    expect(restored.repeatOnly).toBe(false);
     // 범위를 벗어난 값은 양 끝으로 잘린다
     expect(restored.weight[1]).toBe(30);
   });
@@ -135,5 +90,19 @@ describe("주소에 싣고 되읽기", () => {
   it("기존 단일 손잡이 링크도 같은 최소값의 범위로 읽는다", () => {
     expect(parseFilter("period:3|age:8").period).toEqual([3, 12]);
     expect(parseFilter("period:3|age:8").age).toEqual([8, 15]);
+  });
+
+  // "재구매 여부만 보기"가 MVP에서 빠지기 전에 공유된 주소가 남아 있을 수 있다.
+  // `parseFilter`는 아는 키만 꺼내 쓰므로 모르는 조각은 조용히 무시된다
+  it("걷어낸 조건이 섞인 옛 주소도 아는 조건만 읽는다", () => {
+    const restored = parseFilter("period:3-6|repeat:1|weight:1-9");
+
+    expect(restored.period).toEqual([3, 6]);
+    expect(restored.weight).toEqual([1, 9]);
+    expect(restored).toEqual(filterWith({ period: [3, 6], weight: [1, 9] }));
+  });
+
+  it("걷어낸 조건만 남은 옛 주소는 아무것도 고르지 않은 것과 같다", () => {
+    expect(isDefault(parseFilter("repeat:1"))).toBe(true);
   });
 });

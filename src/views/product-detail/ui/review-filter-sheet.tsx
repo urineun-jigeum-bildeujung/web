@@ -21,7 +21,6 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
-import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { DrawerDescription, DrawerTitle } from "@/shared/ui/drawer";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -270,17 +269,6 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
                 />
                 <Summary text={periodLabel(draft)} />
               </Field>
-
-              <CheckboxRow
-                label="재구매 여부만 보기"
-                checked={draft.repeatOnly}
-                onCheckedChange={(checked) => patch({ repeatOnly: checked })}
-                round={false}
-                reverse
-                tone="brand"
-                className="min-h-9"
-                labelClassName="text-label-medium-14 text-text-body-default"
-              />
             </TabsContent>
 
             <TabsContent value="pet" className="flex flex-col gap-4">

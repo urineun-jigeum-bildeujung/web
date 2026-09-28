@@ -4,7 +4,8 @@
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
 - **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬·맞춤보기·거르기 조건은 `reviewSort` · `reviewMatch` · `reviewFilter`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로 연동했고(#413) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
@@ -96,7 +97,10 @@
 | 찜 버튼 | 화면 안 `useState`다. 토글 API는 있지만(#390) 초기 찜 여부가 상세 응답에 없어 찜 목록을 따로 받아야 한다 |
 | 헤더 장바구니 개수 배지 | `5`로 고정돼 있다 |
 | 상세 로딩 표시 | 라우트의 `Suspense` 폴백이 빈 `div`다. 처음 그릴 때는 스켈레톤이 맞다(AGENTS 5.8) |
-| 리뷰 탭 목록·리뷰 사진 | `MOCK_REVIEWS` (#339). 리뷰 0개 상품에서도 "총 리뷰 0개" 아래에 다른 상품 후기가 보인다 |
+| 리뷰 필터·맞춤보기 | 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다 (#339). 나이·사용 기간은 구간 ↔ 단계 열거형, 품종은 복수 ↔ 단수 |
+| 리뷰 도움돼요 | 수만 보이고 누를 수 없다. 목록 응답에 `liked`가 없어 버튼으로 두면 누르는 순간 취소된다 (#339) |
+| 리뷰 카드의 아이 줄 | `소형견 · 8세`까지다. 응답에 품종명·몸무게가 없다 (#339) |
+| 리뷰 재구매 N회 배지 | 응답에 필드가 없다. PD 답 대기 |
 | 문의 탭 | API가 없다 |
 | 함께 보면 좋은 상품 | 응답에 없다. 카드가 눌리지 않는 까닭도 그대로다 |
 | 적합도·영양 성분 분석 | 서버 계산 대기 (#123) |
