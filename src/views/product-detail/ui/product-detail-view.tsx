@@ -17,6 +17,7 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
+import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useMutateCartItem } from "@/entities/cart";
 import type { ProductDetail } from "@/entities/product";
@@ -263,20 +264,7 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
           // 같은 아이콘·터치 영역 방식이다(보이는 자리 28px, 안 보이는 자리만 넓힘)
           <>
             <NotificationBell />
-            <Link
-              href="/cart"
-              aria-label="장바구니에 5개"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="cart" className="size-7" />
-              {/* 시안(header, 카트 아이콘의 Notification Badge)의 18px·11px 값 그대로 */}
-              <span
-                aria-hidden
-                className="absolute -top-1 -right-2 flex size-4.5 items-center justify-center rounded-full bg-brand text-label-bold-11 text-brand-foreground"
-              >
-                5
-              </span>
-            </Link>
+            <CartLink />
           </>
         }
       />

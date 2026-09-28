@@ -13,6 +13,10 @@ vi.mock("@/widgets/notification-bell", () => ({
   ),
   NewNotificationToaster: () => null,
 }));
+// 헤더 장바구니도 서버 상태를 읽는 위젯이라 링크만 대신 그린다(#470)
+vi.mock("@/widgets/cart-link", () => ({
+  CartLink: () => <a href="/cart" aria-label="장바구니" />,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, back: vi.fn() }),
   usePathname: () => "/compare",

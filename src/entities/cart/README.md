@@ -8,6 +8,8 @@
 | --- | --- |
 | `api/cart.ts` | 조회·**담기**·수량 변경·빼기 요청 함수와 `Cart`·`CartItem` 타입 |
 | `api/use-query-cart.ts` | 장바구니를 가져오는 훅 |
+| `api/use-query-cart-count.ts` | 담은 가짓수(줄 수). 헤더 장바구니 뱃지가 쓴다. 같은 캐시를 써 담거나 빼면 바로 바뀐다. **로그인 여부는 부르는 쪽이 `enabled`로 준다** — 여기서 `useHasSession`을 부르면 서버 페이지(`app/payment`)가 이 공개 API를 들이면서 `useSyncExternalStore`가 서버 컴포넌트 그래프에 들어가 깨진다 (#470) |
+| `api/use-query-cart-count.test.tsx` | 꺼 두면 부르지 않는지, 수량이 아니라 줄 수를 세는지 |
 | `api/use-mutate-cart-item.ts` | 담기·수량 변경·빼기 훅. **담기만 낙관적 갱신을 걸지 않는다** — 서버가 줄을 만들어야 짝이 확정된다. 빼기는 `remove`(낙관적)와 `removeAsync`(기다림) 둘을 낸다 — 서버에서 빠진 것을 확인한 뒤 화면 상태를 바꿔야 하는 자리가 뒤쪽을 쓴다 (#316). 수량을 먼저 그릴 때 합계(`subtotal`)도 같이 바꾸고, 요청이 겹치면 마지막 것이 끝날 때만 다시 받는다 (#427) |
 | `api/use-mutate-cart-item.test.tsx` | 겹친 요청에서 다시 받는 때, 먼저 그리는 합계 |
 | `index.ts` | 공개 API |

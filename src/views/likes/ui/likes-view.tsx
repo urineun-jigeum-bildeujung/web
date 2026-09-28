@@ -16,6 +16,7 @@ import { IoClose } from "react-icons/io5";
 import { CATEGORY_TO_API } from "@/entities/product";
 import { useMutateWishlist, useQueryWishlist, type WishlistItem } from "@/entities/wishlist";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import {
@@ -216,13 +217,7 @@ export function LikesView() {
               <Icon name="search" className="size-7" />
             </Link>
             <NotificationBell />
-            <Link
-              href="/cart"
-              aria-label="장바구니"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="cart" className="size-7" />
-            </Link>
+            <CartLink />
           </nav>
         }
       />
