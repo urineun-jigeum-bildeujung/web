@@ -52,6 +52,17 @@ describe("QUERY_KEYS", () => {
     );
   });
 
+  // 찜 목록 캐시를 도는 훅은 그 아래를 모두 배열로 여긴다. 찜 여부(boolean)가 섞이면 깨진다 (#483)
+  it("찜 여부는 찜 목록 접두사 밖에 있다", () => {
+    const status = QUERY_KEYS.user.wishlistStatus(1);
+    const likes = QUERY_KEYS.user.likesAll();
+
+    expect(status.slice(0, likes.length)).not.toEqual([...likes]);
+    expect(status.slice(0, QUERY_KEYS.user.wishlistStatusAll().length)).toEqual([
+      ...QUERY_KEYS.user.wishlistStatusAll(),
+    ]);
+  });
+
   it("모든 factory는 도메인 all 루트에서 시작한다", () => {
     expect(QUERY_KEYS.timedeal.detail(1).slice(0, 1)).toEqual(QUERY_KEYS.timedeal.all);
     expect(QUERY_KEYS.notification.unreadCount().slice(0, 1)).toEqual(QUERY_KEYS.notification.all);
