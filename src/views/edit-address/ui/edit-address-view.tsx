@@ -47,6 +47,12 @@ export function EditAddressView() {
   // 새 배송지와 이미 있는 곳의 수정을 한 화면이 맡는다. 어느 쪽인지는 주소창이 들고 있다.
   // `place`는 고칠 배송지의 `addressId`다.
   const [place] = useQueryState("place");
+  // 저장을 마치고 돌아갈 곳. 들어온 화면이 실어 보낸다 (#369)
+  const [from] = useQueryState("from");
+  // 목록의 빈 집·회사 자리를 눌러 왔으면 그 이름을 채워 둔다 (#455). 보기가 정해진 값이라
+  // 그 밖의 이름은 버린다
+  const [presetName] = useQueryState("name", parseAsStringLiteral(FIXED_PLACE_NAMES));
+  const returnTo = toInternalPath(from);
   const { addresses, isLoading, error } = useQueryAddresses();
 
   // **고칠 대상이 있으면 목록을 기다린다.** 빈 폼을 먼저 그리면 값이 나중에 들어오면서
@@ -77,9 +83,22 @@ export function EditAddressView() {
   // 그러면 고칠 대상이 집에서 회사로 바뀌어도 입력값이 앞의 것으로 남는다.
   // key를 바꿔 대상이 달라질 때마다 폼을 새로 세운다.
   //
+  // **대상은 적다 만 초안과 같은 기준이다.** 고칠 배송지뿐 아니라 들어온 곳과 채워 둔 이름까지
+  // 같아야 같은 폼이다 — 둘이 어긋나면 초안은 새 대상을 보는데 폼은 앞의 입력을 든다 (#476).
+  //
   // 고른 주소(roadAddr)는 key에 넣지 않는다. 넣으면 검색에서 돌아올 때마다 폼이 다시 서서
   // 먼저 적어둔 이름·연락처가 지워진다.
-  return <EditAddressForm key={place ?? "new"} place={place} saved={saved} />;
+  const draftTarget = toDraftTarget(place, returnTo, presetName);
+  return (
+    <EditAddressForm
+      key={draftTarget}
+      draftTarget={draftTarget}
+      place={place}
+      saved={saved}
+      returnTo={returnTo}
+      presetName={presetName}
+    />
+  );
 }
 
 function EditAddressSkeleton() {
@@ -96,7 +115,24 @@ function EditAddressSkeleton() {
   );
 }
 
-function EditAddressForm({ place, saved }: { place: string | null; saved?: Address }) {
+type EditAddressFormProps = {
+  /** 무엇을 고치던 중인지. 적다 만 초안은 이것이 같을 때만 되살린다 (`toDraftTarget`) */
+  draftTarget: string;
+  place: string | null;
+  saved?: Address;
+  /** 저장을 마치고 돌아갈 곳. 우리 경로가 아니면 `null`이다 */
+  returnTo: string | null;
+  /** 빈 집·회사 자리에서 왔을 때 채워 둘 이름 */
+  presetName: (typeof FIXED_PLACE_NAMES)[number] | null;
+};
+
+function EditAddressForm({
+  draftTarget,
+  place,
+  saved,
+  returnTo,
+  presetName,
+}: EditAddressFormProps) {
   const router = useRouter();
   const { create, update, isSaving } = useMutateAddress();
 
@@ -104,14 +140,6 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   // 우편번호는 등록에 **필수**라 함께 읽어 보낸다 (`zipNo → zipCode`, `roadAddr → address`).
   const [roadAddr] = useQueryState("roadAddr");
   const [zipNo] = useQueryState("zipNo");
-
-  // 저장을 마치고 돌아갈 곳. 들어온 화면이 실어 보낸다 (#369)
-  const [from] = useQueryState("from");
-
-  // 목록의 빈 집·회사 자리를 눌러 왔으면 그 이름을 채워 둔다 (#455). 보기가 정해진 값이라
-  // 그 밖의 이름은 버린다
-  const [presetName] = useQueryState("name", parseAsStringLiteral(FIXED_PLACE_NAMES));
-  const returnTo = toInternalPath(from);
 
   // 고칠 대상(place)과 돌아갈 곳(from)을 검색 화면에 들려 보낸다. `place`를 빠뜨리면 돌아올 때
   // `집 수정`이 `새 배송지`로 바뀌어 고치던 배송지를 잃고(#187), `from`을 빠뜨리면 돌아갈 곳을 잃는다.
@@ -163,10 +191,6 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   // 메모이제이션을 포기한다(`react-hooks/incompatible-library`). `useWatch`는 구독 훅이다
   const values = useWatch({ control });
   const isFilled = addressFormSchema.safeParse(values).success;
-
-  // 무엇을 고치던 중인지. 대상이 같을 때만 적어 둔 것을 되살린다. 들어온 곳과 채워 둔 이름까지
-  // 같아야 한다 — 새 배송지끼리 초안을 나눠 쓰지 않게 (#476)
-  const draftTarget = toDraftTarget(place, returnTo, presetName);
 
   /**
    * **검색 화면에 다녀왔으면 적다 만 것을 되살린다** (#370). 주소를 골라 왔든 고르지 않고

@@ -486,6 +486,26 @@ test("다른 화면에서 연 새 폼에는 남은 초안이 들어오지 않는
   expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("");
 });
 
+// App Router는 같은 경로에서 쿼리만 바뀌면 화면을 그대로 둔다. 폼의 key가 초안과 다른 기준이면
+// 초안은 새 대상을 보는데 폼은 앞의 입력을 든다 (#476 리뷰). 어댑터는 `hasMemory`여야 바뀐 쿼리를 따른다
+test("같은 경로에서 채워 둔 이름만 바뀌어도 폼을 새로 세운다", () => {
+  const { rerender } = render(
+    <NuqsTestingAdapter searchParams="?name=집" hasMemory>
+      <EditAddressView />
+    </NuqsTestingAdapter>,
+  );
+  fill([["받는 분 이름", "전지호"]]);
+
+  rerender(
+    <NuqsTestingAdapter searchParams="?name=회사" hasMemory>
+      <EditAddressView />
+    </NuqsTestingAdapter>,
+  );
+
+  expect((screen.getByLabelText("배송지 이름") as HTMLInputElement).value).toBe("회사");
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("");
+});
+
 // 검색 화면이 들어온 곳과 이름을 그대로 돌려주면 같은 폼이라 되살아난다 (#476)
 test("빈 자리에서 검색을 다녀와도 적다 만 값이 남아 있다", () => {
   leaveForSearch("?name=회사&from=%2Fmypage%2Faddress");
