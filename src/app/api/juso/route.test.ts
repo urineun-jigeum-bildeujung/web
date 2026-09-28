@@ -90,6 +90,9 @@ test.each([
   ["E0011", 400, "JUSO_400_KEYWORD_TOO_LONG"],
   ["E0012", 400, "JUSO_400_KEYWORD_INVALID"],
   ["E0013", 400, "JUSO_400_KEYWORD_FORBIDDEN_CHAR"],
+  // 키 만료는 행안부 장애가 아니라 우리 설정 문제다. 너무 먼 쪽은 검색어를 좁혀야 한다 (#476)
+  ["E0014", 500, "JUSO_500_KEY_EXPIRED"],
+  ["E0015", 400, "JUSO_400_KEYWORD_TOO_BROAD"],
   ["E9999", 502, "JUSO_502_UPSTREAM"],
 ])("행안부 %s를 %s %s로 옮긴다", async (errorCode, status, mapped) => {
   fetchMock.mockResolvedValue(
