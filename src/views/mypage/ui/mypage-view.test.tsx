@@ -1,6 +1,6 @@
 // 마이페이지 홈 테스트. 메뉴 묶음과 이동 경로를 검증한다.
 import { render, screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
@@ -10,11 +10,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 // 아이 원 줄이 목록을 서버에서 받는다(#230)
+const PETS = [
+  { id: "3", name: "코코", isDefault: true },
+  { id: "7", name: "보리", isDefault: false },
+];
 let petsQuery: { pets: unknown; isLoading: boolean; error: null } = {
-  pets: [
-    { id: "3", name: "코코", isDefault: true },
-    { id: "7", name: "보리", isDefault: false },
-  ],
+  pets: PETS,
   isLoading: false,
   error: null,
 };
@@ -25,6 +26,11 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
 }));
 
 import { MypageView } from "./mypage-view";
+
+// 테스트 안에서 되돌리면 단언이 먼저 실패할 때 뒤 테스트가 줄줄이 깨진다
+afterEach(() => {
+  petsQuery = { pets: PETS, isLoading: false, error: null };
+});
 
 function renderView() {
   return render(<MypageView />, { wrapper: createQueryWrapper() });
@@ -81,7 +87,6 @@ test("점선 원은 아이 관리가 아니라 새 아이 등록으로 간다", 
 
 // 회색 원만 있으면 어느 아이인지 알 수 없었다(QA 1차 4번, #470)
 test("사진이 없는 아이는 원 안에 이름 앞 두 글자를 넣는다", () => {
-  const before = petsQuery;
   petsQuery = {
     pets: [{ id: "9", name: "구름이", isDefault: true }],
     isLoading: false,
@@ -90,7 +95,18 @@ test("사진이 없는 아이는 원 안에 이름 앞 두 글자를 넣는다",
   renderView();
 
   expect(screen.getByTitle("구름이").textContent).toBe("구름");
-  petsQuery = before;
+});
+
+// 빈 링크가 남으면 보이지 않는데도 Tab과 화면 낭독기에 잡힌다(#470 리뷰)
+test("아이가 없거나 목록을 못 받았으면 아이 관리 링크를 그리지 않고 점선 원만 남긴다", () => {
+  for (const pets of [[], undefined]) {
+    petsQuery = { pets, isLoading: false, error: null };
+    const { unmount } = renderView();
+
+    expect(screen.queryByRole("link", { name: "반려동물 프로필 관리" })).toBeNull();
+    expect(screen.getByRole("link", { name: "새 아이 추가" })).toBeDefined();
+    unmount();
+  }
 });
 
 // 원이 목이던 동안에는 등록한 아이가 둘이 아니어도 늘 둘이 떴다
@@ -107,12 +123,4 @@ test("목록을 받는 동안 원 자리를 잡아 둔다", () => {
   renderView();
 
   expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
-  petsQuery = {
-    pets: [
-      { id: "3", name: "코코", isDefault: true },
-      { id: "7", name: "보리", isDefault: false },
-    ],
-    isLoading: false,
-    error: null,
-  };
 });

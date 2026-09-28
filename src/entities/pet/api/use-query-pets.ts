@@ -28,7 +28,9 @@ export function useQueryPets({ enabled = true }: UseQueryPetsOptions = {}) {
   });
 
   return {
-    pets: query.data,
+    // **꺼 두면 받아 둔 것도 내주지 않는다.** 재발급 실패로 세션이 끊기면 캐시가 남아, 로그아웃
+    // 상태에서도 옛 아이 이름이 보일 수 있다(#470 리뷰)
+    pets: enabled ? query.data : undefined,
     /** 처음 받는 중. 부르지 않는 동안은 거짓이다 — 꺼 둔 조회는 끝나지 않는 대기로 남기 때문이다 */
     isLoading: enabled && query.isPending,
     /** 실패 뒤 다시 시도하는 동안. 버튼의 대기 표시가 본다 */
