@@ -206,7 +206,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
           {nextError && (
             <Button
               variant="secondary"
-              className="mx-5 my-4 h-10 text-label-bold-14"
+              className="mx-5 my-4 min-h-11 text-label-bold-14"
               disabled={isLoadingNext}
               onClick={() => loadNext()}
             >
