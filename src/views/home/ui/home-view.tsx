@@ -142,8 +142,7 @@ function PromiseErrorFallback({ router }: { router: ReturnType<typeof useRouter>
   );
 }
 
-/** 카테고리 그리드 상품 하나의 가격 아래 자리. 적합도·별점은 응답에 없어(#289)
- *  단가만 보인다 — search-result의 일반 검색 카드와 같은 이유로 정가·할인율도 뺐다 */
+/** 카테고리 그리드 상품 하나의 가격 아래 자리. 적합도가 응답에 없어(#289) 단가만 보인다 */
 function CategoryProductMeta({ product }: { product: ApiProductCard }) {
   return (
     <p className="text-label-medium-11 text-text-body-tertiary">

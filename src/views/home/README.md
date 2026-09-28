@@ -52,7 +52,7 @@
 
 **카테고리 매핑은 `entities/product`가 갖고 있습니다.** `getProducts`는 백엔드 `CategoryCode`(`FOOD`·`TREAT`·`SUPPLEMENT`)만 받습니다 — API 함수가 화면의 URL 값(`food`·`snack`·`supplement`)을 알면 API 계층이 화면 상태에 결합되기 때문입니다. `snack→TREAT`는 단순 대문자 변환이 아닙니다(`CategoryCode.java`로 직접 확인). 좋아요 화면도 같은 매핑을 쓰게 되면서(#390) `entities/product/model/category.ts`로 내렸습니다 — 여러 화면이 쓰는 값이라 한 곳에 둡니다.
 
-**정가·적합도 배지는 카테고리 그리드에서 뺐습니다.** 실제 `ProductCardResponse`엔 정가·적합도(matchScore) 필드가 없습니다(`search-result`와 같은 공백). Figma 시안(1758-69075)은 취소선 정가를 보여주는데 백엔드엔 없습니다 — 제품 정책 확인 후 백엔드에 필드 추가를 요청할 수 있는 후보로 남깁니다.
+**적합도 배지는 카테고리 그리드에서 뺐습니다.** 실제 `ProductCardResponse`엔 적합도(matchScore) 필드가 없습니다(`search-result`와 같은 공백). 정가는 백엔드가 `originalPrice`를 주게 되어 Figma 시안(1758-69075)대로 취소선 정가와 서버 할인율을 그립니다 (#458).
 
 **"AI가 골라주는 맞춤 상품" 캐러셀은 이번 라운드에 연동하지 않았습니다.** `petId`를 백엔드가 받기만 하고 실제 조회에 반영하지 않고(`ProductListCriteria`에 필드 자체가 없음), `RECOMMEND` 정렬도 `POPULAR`와 완전히 같은 동작이라(`resolveEffectiveSort()`) 개인화가 실제로 동작하지 않습니다 — `/recommendations`와 같은 이유로 제외했습니다. 재연동 조건은 후속 이슈로 남깁니다.
 
@@ -68,5 +68,4 @@
 
 - 배너가 한 장이다. 점은 여럿임을 알리는 자리로만 그렸고 넘기지는 못한다
 - "AI가 골라주는 맞춤 상품" 캐러셀이 목업입니다 — `/recommendations`와 함께 개인화 계약이 갖춰지면 후속 이슈로 연동합니다
-- 정가(취소선 원가) 표시가 없습니다 — `ProductCardResponse`에 필드가 없어서입니다
 - 배포 환경변수(`API_BASE_URL_INTERNAL`)는 로컬 값만 확인했습니다. 실제 GitOps 주입은 별도 확인이 필요합니다
