@@ -84,7 +84,6 @@ function ready() {
   useQueryPaymentConfirm.mockReturnValue({
     payment: PAYMENT,
     error: null,
-    isConfirming: false,
     canConfirm: true,
   });
   useQueryOrderDetail.mockReturnValue({
@@ -154,15 +153,16 @@ test("결제일시를 승인 응답으로 보인다", () => {
 
 // 값이 없거나 읽을 수 없으면 줄을 비운다. 지어낸 날짜를 보이느니 안 보이는 편이 낫다
 test("승인 시각이 없으면 결제일시를 비운다", () => {
-  // `ready({ payment: undefined })`는 기본 매개변수가 되살려서 안 된다. 직접 세운다
+  // 승인 응답이 없으면 완료 화면 대신 뼈대가 선다. 응답은 두고 시각만 뺀다 (#468)
   useQueryPaymentConfirm.mockReturnValue({
-    payment: undefined,
+    payment: { ...PAYMENT, approvedAt: undefined },
     error: null,
-    isConfirming: false,
     canConfirm: true,
   });
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
+  // 뼈대만 떠서 통과하는 것이 아니라 완료 화면에서 그 줄만 비었는지 본다
+  expect(screen.getByText("주문을 무사히 마쳤어요")).toBeDefined();
   expect(screen.queryByText(/^\d{2}\.\d{2}\.\d{2} /)).toBeNull();
 });
 
@@ -239,7 +239,6 @@ test("승인을 기다리는 동안 자리를 잡는다", () => {
   useQueryPaymentConfirm.mockReturnValue({
     payment: undefined,
     error: null,
-    isConfirming: true,
     canConfirm: true,
   });
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
@@ -281,15 +280,11 @@ test("주소창에 주문 id가 없어도 상세로 갈 수 있다", () => {
   );
 });
 
-// 주소창으로 직접 들어와 승인도 안 된 경우다. 엉뚱한 주문을 여느니 목록이 낫다
-test("승인 결과가 없으면 주문 내역으로 보낸다", () => {
-  useQueryPaymentConfirm.mockReturnValue({
-    payment: undefined,
-    error: null,
-    isConfirming: false,
-    canConfirm: true,
-  });
-  render(<CheckoutDoneView {...QUERY} />);
+// 받아 오지 못한 주문의 상세로 보내느니 목록이 낫다. 전에는 승인 응답이 없는 경우로 봤는데,
+// 그때는 완료 화면 대신 뼈대가 선다 (#468)
+test("주문을 못 받아 오면 주문 내역으로 보낸다", () => {
+  useQueryOrderDetail.mockReturnValue({ order: undefined, error: null, isLoading: false });
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();
   expect(screen.getByRole("link", { name: "주문 내역 보기" }).getAttribute("href")).toBe(
@@ -311,7 +306,6 @@ function failed() {
   useQueryPaymentConfirm.mockReturnValue({
     payment: undefined,
     error: new Error("승인 실패"),
-    isConfirming: false,
     canConfirm: true,
   });
 }
@@ -398,21 +392,6 @@ test("주문이 없으면 상품 줄과 세부 금액을 비운다", () => {
   expect(screen.getByText("12,345원")).toBeDefined();
 });
 
-// `?order=`는 주소창에서 바꿀 수 있다. 두 주문이 한 화면에 섞이면 안 된다
-test("승인 결과와 다른 주문이면 그 주문 값을 쓰지 않는다", () => {
-  useQueryOrderDetail.mockReturnValue({
-    order: { ...ORDER, orderNumber: "ORD-20260919-999999" },
-    error: null,
-    isLoading: false,
-  });
-
-  render(<CheckoutDoneView {...QUERY} orderId={77} />);
-
-  expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
-  expect(screen.queryByRole("heading", { name: "배송지 정보" })).toBeNull();
-  expect(screen.queryByRole("link", { name: "주문 상세 보기" })).toBeNull();
-});
-
 /**
  * **이 화면이 받은 상세는 승인 전 모습이다.** 서버는 승인 뒤 이벤트를 거쳐 결제 완료를 1초 남짓
  * 늦게 적는다. 낡았다고 표시하지 않으면 60초 동안 주문 상세가 그 모습을 써서 결제상세와 취소
@@ -458,7 +437,6 @@ test("승인이 끝나기 전에는 표시하지 않는다", () => {
   useQueryPaymentConfirm.mockReturnValue({
     payment: undefined,
     error: null,
-    isConfirming: true,
     canConfirm: true,
   });
 

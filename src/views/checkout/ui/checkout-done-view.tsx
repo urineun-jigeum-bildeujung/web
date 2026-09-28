@@ -197,7 +197,7 @@ export function CheckoutDoneView({
   amount,
   orderId,
 }: CheckoutDoneViewProps) {
-  const { payment, error, isConfirming, canConfirm } = useQueryPaymentConfirm({
+  const { payment, error, canConfirm } = useQueryPaymentConfirm({
     paymentKey,
     tossOrderId,
     amount,
@@ -236,12 +236,16 @@ export function CheckoutDoneView({
 
   // **숫자 주문 id는 승인 응답이 준다.** 주소창의 `?order=`는 사용자가 바꿀 수 있으므로
   // 승인이 끝나면 그쪽을 믿지 않는다. 승인을 기다리는 동안에는 쿼리로 먼저 조회를 걸어
-  // 왕복을 겹쳐 둔다 — 값이 다르면 키가 바뀌며 다시 조회한다 (#374)
+  // 왕복을 겹쳐 둔다 — 값이 다르면 키가 바뀌며 다시 조회한다 (#374).
+  //
+  // **그래서 다른 주문이 화면에 섞이지 않는다.** 주소창 값으로 받은 주문은 승인을 기다리는
+  // 뼈대가 가리고, 승인 뒤에는 응답의 id로 받는다. 그전에 두었던 주문번호 대조(#308 리뷰)는
+  // 걸릴 일이 없어 걷었다 (#468)
   const resolvedOrderId = payment?.orderId ?? orderId;
 
   // **상품과 배송지는 승인 응답에 없다.** 주문을 다시 조회해 채운다 (#301·#308)
   const {
-    order: fetched,
+    order,
     isLoading: isLoadingOrder,
     isFetching: isFetchingOrder,
   } = useQueryOrderDetail(resolvedOrderId ? String(resolvedOrderId) : "");
@@ -253,11 +257,6 @@ export function CheckoutDoneView({
   // 대기 표시 없음 — 화면이 아니라 캐시를 다루는 자리다. 이 화면의 대기는 아래 뼈대가 맡는다
   useMarkOrdersStale(Boolean(payment) && !isFetchingOrder);
 
-  // **승인 결과와 같은 주문인지 본다.** 승인 전에는 주소창의 `?order=`로 조회하므로 그 사이에
-  // 이 결제의 금액과 다른 주문의 상품·배송지가 한 화면에 섞일 수 있다 (#308 리뷰).
-  // 승인 전이거나 주문을 못 받았으면 견줄 것이 없어 그대로 둔다
-  const mismatched = Boolean(payment && fetched && payment.orderNumber !== fetched.orderNumber);
-  const order = mismatched ? undefined : fetched;
   const row = order ? toProductRow(order) : null;
 
   // 승인이 실패하면 화면이 댈 수 있는 식별자가 토스에서 받은 주문번호뿐이다
@@ -295,8 +294,10 @@ export function CheckoutDoneView({
     return <ConfirmFailureScreen failure={failure} />;
   }
 
-  // 승인이 끝나도 주문을 받는 중이면 자리를 잡는다. 먼저 그리면 상품이 비고 금액이 0원이 된다
-  if (isConfirming || isLoadingOrder) {
+  // 승인이 끝나도 주문을 받는 중이면 자리를 잡는다. 먼저 그리면 상품이 비고 금액이 0원이 된다.
+  // **승인을 기다리는 것은 응답이 없는 것으로 가른다.** 실패는 바로 위에서 걸렀으니 응답이 없으면
+  // 아직 기다리는 중이다. 이렇게 가르면 아래 완료 화면이 늘 승인 응답을 쥐고 그린다 (#468)
+  if (!payment || isLoadingOrder) {
     return (
       <div className="flex min-h-dvh flex-col">
         <PageHeader leading="none" />
@@ -337,13 +338,13 @@ export function CheckoutDoneView({
                 term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
                 description={
                   <span className="text-body-regular-14 text-text-body-secondary">
-                    {payment?.orderNumber ?? order?.orderNumber}
+                    {payment.orderNumber}
                   </span>
                 }
               />
             </dl>
 
-            {/* 주문을 못 받아 왔거나 다른 주문이면 이 줄을 세우지 않는다. 빈 이름과
+            {/* 주문을 못 받아 왔으면 이 줄을 세우지 않는다. 빈 이름과
                 사진 자리만 남으면 상품이 없는 주문처럼 보인다 (#308 리뷰) */}
             {row && (
               <div className="flex flex-col gap-2">
@@ -379,12 +380,12 @@ export function CheckoutDoneView({
         </div>
 
         <div className="flex flex-col gap-4">
-          <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
+          <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment.approvedAt)}>
             {/* **주문이 없으면 세부 금액을 비운다.** 결제 금액만 알고 그 안을 가를 수 없는데
                 `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰) */}
             <PaymentDetail
               variant="complete"
-              total={payment?.amount ?? order?.totalAmount ?? 0}
+              total={payment.amount}
               itemPrice={order?.productAmount}
               // 배송비 필드가 따로 없다. 결제 금액에서 상품 금액을 뺀다 (주문 상세와 같은 방식).
               // 시안에는 없는 줄이지만 PD팀이 넣기로 했다 (2026-09-28, #448)
@@ -418,8 +419,8 @@ export function CheckoutDoneView({
           {/* **주문 상세로 갈 숫자 id는 승인 응답이 준다**(2026-09-22부터). 승인을 기다리는
               동안에 쓰려고 [1] 주문 생성이 돌려준 id도 복귀 주소에 실어 건너 온다 (#301·#374).
 
-              **그 주문을 실제로 받아 왔을 때만 상세로 보낸다.** 값이 없거나 승인 결과와
-              다른 주문이면 엉뚱한 주문을 여는 셈이라 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
+              **그 주문을 실제로 받아 왔을 때만 상세로 보낸다.** 값이 없거나 주문을 못 받아
+              왔으면 목록이 낫다. 문구도 가는 곳에 맞춘다 */}
           <Link
             href={resolvedOrderId && order ? `/mypage/orders/${resolvedOrderId}` : "/mypage/orders"}
           >
