@@ -9,6 +9,7 @@ const card = (productId: number) => ({
   productName: `상품 ${productId}`,
   discountRate: 0,
   price: 10_000,
+  originalPrice: null,
   unitPrice: 10,
   unitLabel: "g",
   avgRating: 4.5,
