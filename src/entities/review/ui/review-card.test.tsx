@@ -54,6 +54,53 @@ describe("ReviewCard", () => {
     expect(screen.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeDefined();
   });
 
+  // 원은 작성자가 아니라 함께 먹인 아이들이다 (#488)
+  describe("아이 원", () => {
+    it("아이 수만큼 원을 그리고 각자 이름 글자를 넣는다", () => {
+      render(<ReviewCard review={{ ...REVIEW, pets: [BORI, NABI] }} />);
+
+      expect(screen.getByText("보리")).toBeDefined();
+      expect(screen.getByText("나비")).toBeDefined();
+    });
+
+    // DOM에서 뒤 요소가 기본적으로 위에 그려져, 그냥 두면 시안과 반대로 쌓인다
+    it("뒤에 오는 아이일수록 아래로 깔린다", () => {
+      render(<ReviewCard review={{ ...REVIEW, pets: [BORI, NABI] }} />);
+
+      const front = Number(screen.getByText("보리").style.zIndex);
+      const back = Number(screen.getByText("나비").style.zIndex);
+
+      expect(front).toBeGreaterThan(back);
+    });
+
+    it("아이마다 색이 다르고 같은 아이는 같은 색이다", () => {
+      const { unmount } = render(<ReviewCard review={{ ...REVIEW, pets: [BORI, NABI] }} />);
+      const boriColor = screen.getByText("보리").style.background;
+
+      expect(boriColor).not.toBe("");
+      expect(boriColor).not.toBe(screen.getByText("나비").style.background);
+
+      unmount();
+      render(<ReviewCard review={{ ...REVIEW, pets: [BORI] }} />);
+
+      expect(screen.getByText("보리").style.background).toBe(boriColor);
+    });
+
+    // 닉네임이 비어도 아이는 알 수 있다. 아래 아이 줄과 같은 조건으로 그린다
+    it("닉네임이 비어 있어도 원을 그린다", () => {
+      render(<ReviewCard review={{ ...REVIEW, nickname: "" }} />);
+
+      expect(screen.getByText("보리")).toBeDefined();
+    });
+
+    // 사진 뷰어는 사진을 이미 크게 보여주고 있어 이 줄을 통째로 뺀다
+    it("hideAvatar면 원을 그리지 않는다", () => {
+      render(<ReviewCard review={REVIEW} hideAvatar />);
+
+      expect(screen.queryByText("보리")).toBeNull();
+    });
+  });
+
   // 인증 UX가 확정될 때까지 읽기 전용이다
   describe("도움돼요", () => {
     it("수만 보이고 누를 수 없다", () => {
