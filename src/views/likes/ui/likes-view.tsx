@@ -212,7 +212,8 @@ export function LikesView() {
             <Link
               href="/search"
               aria-label="검색"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+              // 가로 4px만 넓힌다. `-inset-x-1.125`는 Tailwind가 만들지 않아 넓혀지지 않았다(#470 리뷰)
+              className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
             >
               <Icon name="search" className="size-7" />
             </Link>

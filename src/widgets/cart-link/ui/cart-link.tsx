@@ -11,7 +11,10 @@ import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 
 type CartLinkProps = {
-  /** 링크 자리 모양. 기본은 보이는 28px에 안 보이는 터치 자리만 넓힌 헤더 아이콘 방식이다(알림 종과 같다) */
+  /**
+   * 링크 자리 모양. 기본은 보이는 28px에 안 보이는 터치 자리만 가로 4px·세로 8px 넓힌 헤더 아이콘
+   * 방식이다(알림 종과 같다). 가로는 아이콘 간격 9px의 절반이 안 되게 둬 옆 아이콘과 겹치지 않는다
+   */
   className?: string;
 };
 
@@ -24,7 +27,8 @@ export function CartLink({ className }: CartLinkProps) {
       href="/cart"
       aria-label={count > 0 ? `장바구니에 ${count}개` : "장바구니"}
       className={cn(
-        "after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2",
+        // `-inset-x-1.125`(4.5px)는 0.25 단위가 아니라 Tailwind가 만들지 않아 넓혀지지 않았다(#470 리뷰)
+        "relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2",
         className,
       )}
     >

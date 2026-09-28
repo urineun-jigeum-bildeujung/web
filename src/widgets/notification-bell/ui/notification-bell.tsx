@@ -22,7 +22,9 @@ export function NotificationBell({ className }: NotificationBellProps) {
       href="/mypage/notifications"
       aria-label="알림"
       className={cn(
-        "after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2",
+        // 가로 4px·세로 8px만 넓힌다. 전에 쓰던 `-inset-x-1.125`(4.5px)는 0.25 단위가 아니라
+        // Tailwind가 만들지 않아, 누르는 자리가 보이는 28px 그대로였다(#470 리뷰)
+        "relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2",
         className,
       )}
     >
