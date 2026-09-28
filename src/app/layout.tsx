@@ -40,14 +40,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", pretendard.variable)}
     >
       <body className="min-h-full">
-        {/* 지금은 모바일 시안만 있어 화면 폭을 여기서 한 번에 제한한다.
-            화면마다 붙이면 새 화면에서 빠뜨리게 되고 실제로 그렇게 됐다.
-            태블릿·데스크톱 시안이 나오면 이 제한을 풀고 화면별로 정한다.
+        {/* 폭 제한은 여기 없다. 태블릿·웹 시안이 온 화면부터 넓어져야 하므로
+            `(constrained)` 라우트 그룹의 레이아웃이 420px 기둥을 진다(#491).
+            아직 시안이 없는 화면은 그 그룹 안에 있어 모바일 폭 그대로다.
 
-            제한을 body가 아니라 이 div가 지는 이유가 있다. 바텀시트와 확인창은
-            포털로 body 바로 아래에 붙는데, body가 flex 컨테이너이면서 폭까지
-            제한하면 그 포털이 폭 계산에 끼어들어 뒤에 깔린 화면이 짜부라진다. */}
-        <div className="mx-auto flex min-h-full w-full max-w-105 flex-col">
+            폭을 body가 아니라 div 층에서 다루는 이유는 그대로다. 바텀시트와
+            확인창은 포털로 body 바로 아래에 붙는데, body가 flex 컨테이너이면서
+            폭까지 제한하면 그 포털이 폭 계산에 끼어들어 뒤에 깔린 화면이 짜부라진다. */}
+        <div className="mx-auto flex min-h-full w-full flex-col">
           <AppProviders>
             {/* 열려 있는 동안 새 알림을 토스트로. shared/providers는 entities를 못 써 여기 둔다(#395) */}
             <NewNotificationToaster />
