@@ -5,7 +5,10 @@
 
 import type { Page } from "@playwright/test";
 
-/** 백엔드 `FeedbackCheckPendingListResponse.Item` 그대로 */
+/**
+ * 백엔드 `FeedbackCheckPendingListResponse.Item` 그대로. 첫째는 아이가 필수가 되기 전(2026-09-23) 주문이라
+ * `petId`가 없고, 둘째는 그 뒤 주문이라 보리(7)에게 사 준 것이다
+ */
 const ITEMS = [
   {
     orderProductId: 11,
@@ -21,7 +24,7 @@ const ITEMS = [
     productName: "관절 튼튼 트릿 200g",
     thumbnailUrl: null,
     checkAvailableAt: "2026-09-22T00:00:00Z",
-    petId: null,
+    petId: 7,
   },
 ];
 
@@ -29,10 +32,13 @@ export async function stubFeedbacks(page: Page) {
   const pending = [...ITEMS];
   /** 등록으로 나간 요청 본문. 무엇을 보냈는지 보는 테스트가 쓴다 */
   const sent: unknown[] = [];
+  /** 목록을 부른 횟수. 로그아웃한 메인이 부르지 않는지 보는 테스트가 쓴다 */
+  let listed = 0;
 
-  await page.route("**/api/v1/reviews/feedbacks/pending", (route) =>
-    route.fulfill({ json: { content: pending } }),
-  );
+  await page.route("**/api/v1/reviews/feedbacks/pending", (route) => {
+    listed += 1;
+    return route.fulfill({ json: { content: pending } });
+  });
   await page.route("**/api/v1/reviews/products/*/feedbacks", (route) => {
     const body = route.request().postDataJSON() as { orderProductId: number };
     sent.push(body);
@@ -41,5 +47,5 @@ export async function stubFeedbacks(page: Page) {
     return route.fulfill({ status: 201, body: "" });
   });
 
-  return { sent };
+  return { sent, listed: () => listed };
 }

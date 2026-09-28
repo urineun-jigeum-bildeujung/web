@@ -53,16 +53,45 @@ test("반응을 남기면 서버에 보내고 어디에 쓰이는지 알린다",
   await page.getByRole("button", { name: "등록하기" }).click();
 
   await expect(page.getByText(/다음 추천 적합도에 반영할게요/)).toBeVisible();
-  // 항목의 아이가 비어 있으면(백엔드가 아직 null) 메인에서 고른 아이(기본 아이 코코)다
+  // 항목의 아이가 비어 있으면(아이가 필수가 되기 전 주문) 메인에서 고른 아이(기본 아이 코코)다
   expect(feedbacks.sent).toEqual([
     { orderProductId: 11, petId: 3, postpone: false, answer: "GOOD" },
   ]);
 });
 
-test("로그인하지 않았으면 최근에 구매한 상품 칸이 없다", async ({ page }) => {
+test("항목에 아이가 있으면 그 아이에게 묻고 그 아이의 반응으로 보낸다", async ({ page }) => {
+  await signIn(page);
+  await stubPetCatalog(page);
+  await stubNotifications(page);
+  await stubCart(page);
+  const feedbacks = await stubFeedbacks(page);
+
   await page.goto("/");
 
+  // 둘째 항목은 보리에게 사 준 것이다. 메인에서 고른 아이(코코)가 아니다
+  await page
+    .getByRole("button", { name: /반응 남기기/ })
+    .nth(1)
+    .click();
+  await expect(page.getByText("보리에게 잘 맞았나요?")).toBeVisible();
+  await page.getByRole("radio", { name: "안 맞았어요" }).click();
+  await page.getByRole("button", { name: "등록하기" }).click();
+
+  await expect(page.getByText(/다음 추천 적합도에 반영할게요/)).toBeVisible();
+  expect(feedbacks.sent).toEqual([
+    { orderProductId: 12, petId: 7, postpone: false, answer: "BAD" },
+  ]);
+});
+
+test("로그인하지 않았으면 최근에 구매한 상품을 부르지 않고 칸도 없다", async ({ page }) => {
+  // 목록을 세워 둔다. 게이트가 빠지면 칸이 실제로 그려져 아래 단언이 흔들리지 않고 실패한다
+  const feedbacks = await stubFeedbacks(page);
+
+  await page.goto("/");
   await expect(page.getByText(/AI가 골라주는/)).toBeVisible();
+  await page.waitForLoadState("networkidle");
+
+  expect(feedbacks.listed()).toBe(0);
   await expect(page.getByText("최근에 구매한 상품, 아이는 어때요?")).toHaveCount(0);
 });
 
