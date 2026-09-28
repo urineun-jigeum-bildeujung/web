@@ -89,10 +89,14 @@ export function ProductGridCard({
         {imageBadge && <div className="absolute top-3 left-3 flex">{imageBadge}</div>}
       </div>
       <div className="flex flex-col gap-1">
+        {/* **말줄임할 줄은 폭을 부모에 묶는다.** `items-start` 세로 flex라 문단이 제 글자 폭만큼
+            넓어져, 묶지 않으면 `truncate`가 걸리지 않고 옆 카드까지 넘친다 (#479) */}
         <div className="flex flex-col items-start">
-          <p className="truncate text-body-medium-14 text-foreground">{name}</p>
+          <p className="max-w-full truncate text-body-medium-14 text-foreground">{name}</p>
           {option && (
-            <p className="truncate text-label-regular-13 text-text-body-tertiary">{option}</p>
+            <p className="max-w-full truncate text-label-regular-13 text-text-body-tertiary">
+              {option}
+            </p>
           )}
           {discountRate > 0 && originalPrice && (
             <p className="text-label-regular-13 text-text-body-tertiary line-through">
