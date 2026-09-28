@@ -16,6 +16,8 @@ type LoadMoreFooterProps = {
   isLoadingNext: boolean;
   /** 다음 쪽만 실패한 경우. 이미 받은 주문은 그대로 둔다 */
   nextError: boolean;
+  /** 참이면 끝이 보여도 다음 쪽을 부르지 않는다. 받은 쪽의 뒷일(상세 받기)이 끝나길 기다릴 때 준다 */
+  paused?: boolean;
 };
 
 export function LoadMoreFooter({
@@ -23,10 +25,12 @@ export function LoadMoreFooter({
   loadNext,
   isLoadingNext,
   nextError,
+  paused = false,
 }: LoadMoreFooterProps) {
   // 목록 끝이 보이면 다음 쪽을 가져온다. 가져오는 중이거나 방금 실패했으면 멈춘다 —
-  // 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다
-  const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext && !nextError);
+  // 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다. 멈춤이 풀리면 다시 관찰을 걸어
+  // 그때도 끝이 보이면 곧바로 부른다
+  const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext && !nextError && !paused);
 
   return (
     <>

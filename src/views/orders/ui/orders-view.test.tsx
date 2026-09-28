@@ -162,7 +162,7 @@ test("같은 날 결제한 주문은 결제일 하나 아래 결제 시각으로
   // ISO로 오는 값을 시안 형식으로 옮긴다. 03:00Z는 한국 12:00이다
   expect(screen.getAllByRole("heading", { name: "결제일 26.09.15" })).toHaveLength(1);
   expect(screen.getAllByText("09.15 12:00")).toHaveLength(3);
-  expect(screen.getAllByRole("link", { name: "주문 상세" })).toHaveLength(3);
+  expect(screen.getAllByRole("link", { name: /주문 상세$/ })).toHaveLength(3);
 });
 
 // 결제일 사이에만 구분선이 들어간다 (3326:33455)
@@ -269,9 +269,26 @@ test("배송 중이면 배송 위치 보기가 나오고 누르면 준비 중이
 test("주문 상세는 그 주문의 상세로 간다", async () => {
   renderView();
 
-  const link = (await screen.findAllByRole("link", { name: "주문 상세" }))[0];
+  const link = (await screen.findAllByRole("link", { name: /주문 상세$/ }))[0];
   expect(link.getAttribute("href")).toBe("/mypage/orders/1");
-  expect(screen.queryByRole("link", { name: "자세히 보기" })).toBeNull();
+  expect(screen.queryByRole("link", { name: /자세히 보기$/ })).toBeNull();
+});
+
+// 건마다 "주문 상세"만 있으면 화면 낭독기로 링크만 훑을 때 어느 주문인지 가를 수 없다(#474)
+test("주문 상세 링크 이름에 그 주문의 상품이 들어간다", async () => {
+  served = [
+    makeOrder(1, "PAID"),
+    makeOrder(2, "PAID", {
+      items: [
+        { ...makeOrder(2, "PAID").items[0], orderItemId: 20, productName: "사료" },
+        { ...makeOrder(2, "PAID").items[0], orderItemId: 21, productName: "간식" },
+      ],
+    }),
+  ];
+  renderView();
+
+  expect(await screen.findByRole("link", { name: "테스트 상품 1 주문 상세" })).toBeDefined();
+  expect(screen.getByRole("link", { name: "사료 외 1건 주문 상세" })).toBeDefined();
 });
 
 // 명세에 배송준비중·배송중에 해당하는 값이 없다. 추측으로 매핑하면 그 주문만 조용히
@@ -285,10 +302,10 @@ test("명세에 없는 상태 값이 오면 뱃지와 행동 버튼을 내보내
   expect(screen.queryByText("배송준비중")).toBeNull();
   expect(screen.queryByRole("button", { name: "배송 위치 보기" })).toBeNull();
   // 상세로 가는 길은 남는다
-  expect(screen.getByRole("link", { name: "주문 상세" })).toBeDefined();
+  expect(screen.getByRole("link", { name: /주문 상세$/ })).toBeDefined();
 });
 
-// 한 번에 오는 것은 기본 열 건이다. 첫 쪽만 그리면 열한 번째 주문부터 볼 길이 없다 (#288).
+// 한 번에 오는 것은 기본 스무 건이다. 첫 쪽만 그리면 스물한 번째 주문부터 볼 길이 없다 (#288).
 test("목록 끝이 보이면 다음 쪽을 이어서 가져온다", async () => {
   const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
   vi.stubGlobal(
@@ -579,12 +596,15 @@ test("취소·반품·교환 탭은 취소·환불·교환 뱃지를 단 건을 
   expect(screen.getByText("09.15 12:00")).toBeDefined();
 
   // 자세히 보기는 그 주문의 상세로 간다
-  const links = screen.getAllByRole("link", { name: "자세히 보기" });
+  const links = screen.getAllByRole("link", { name: /자세히 보기$/ });
   expect(links.map((link) => link.getAttribute("href")).sort()).toEqual([
     "/mypage/orders/2",
     "/mypage/orders/4",
     "/mypage/orders/5",
   ]);
+  // 건마다 같은 이름이면 화면 낭독기로 링크만 훑을 때 가를 수 없다. 뱃지와 상품을 앞에 붙인다(#474)
+  expect(screen.getByRole("link", { name: "취소 테스트 상품 2 자세히 보기" })).toBeDefined();
+  expect(screen.getByRole("link", { name: "환불 테스트 상품 4 자세히 보기" })).toBeDefined();
 });
 
 // 결제 실패·재고 부족으로 서버가 취소한 주문도 CANCELLED다. 사용자가 취소한 것이 아니다 (#462)
@@ -645,12 +665,122 @@ test("한 신청에 걸린 상품들은 한 건으로 모은다", async () => {
 });
 
 // 상세 하나를 못 받았는데 조용히 빼면 취소한 주문이 사라진 것처럼 보인다 (#462)
-test("상세를 받지 못하면 토스트 대신 화면에서 알린다", async () => {
+test("상세를 받지 못하면 토스트 대신 화면에서 알리고 비었다고 하지 않는다", async () => {
   served = [makeOrder(2, "CANCELLED")];
   renderView("?tab=claims");
 
   expect(await screen.findByRole("alert")).toBeDefined();
+  expect(screen.getByRole("button", { name: "내역을 불러오지 못했어요. 다시 시도" })).toBeDefined();
   expect(screen.queryByText("취소·반품·교환 내역이 없어요")).toBeNull();
+});
+
+// 상세 하나가 실패했다고 보이던 건까지 치우고 탭 전체를 오류로 덮으면 다시 시도할 길도 없다(#474)
+test("상세 하나가 실패해도 받은 건은 남기고, 다시 시도는 실패한 상세만 다시 받는다", async () => {
+  served = [makeOrder(2, "CANCELLED"), makeOrder(4, "DELIVERED")];
+  details = [withClaim(4, { claimId: 40, claimType: "RETURN" })];
+  renderView("?tab=claims");
+
+  expect(await screen.findByText("환불")).toBeDefined();
+  const retry = await screen.findByRole("button", {
+    name: "일부 내역을 불러오지 못했어요. 다시 시도",
+  });
+
+  details = [...details, makeDetail(2, { orderStatus: "CANCELLED" })];
+  fireEvent.click(retry);
+
+  expect(await screen.findByText("취소")).toBeDefined();
+  expect(screen.getByText("환불")).toBeDefined();
+  expect(screen.queryByRole("button", { name: /다시 시도/ })).toBeNull();
+  // 받아 둔 4번은 다시 부르지 않는다
+  expect(getOrderDetail.mock.calls.filter(([orderId]) => orderId === 4)).toHaveLength(1);
+});
+
+// 둘째 쪽의 상세 하나가 실패했다고 첫 쪽에서 보던 건까지 사라지면 스크롤하던 자리를 잃는다(#474)
+test("둘째 쪽 상세가 실패해도 첫 쪽 건이 남는다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) =>
+    cursor
+      ? { orders: [makeOrder(2, "CANCELLED")], nextCursor: null, hasNext: false }
+      : { orders: [makeOrder(4, "DELIVERED")], nextCursor: "CURSOR-1", hasNext: true },
+  );
+  details = [withClaim(4, { claimId: 40, claimType: "RETURN" })];
+  renderView("?tab=claims");
+
+  expect(await screen.findByText("환불")).toBeDefined();
+  await waitFor(() => expect(callbacks.length).toBeGreaterThan(0));
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  expect(
+    await screen.findByRole("button", { name: "일부 내역을 불러오지 못했어요. 다시 시도" }),
+  ).toBeDefined();
+  expect(screen.getByText("환불")).toBeDefined();
+  expect(screen.getByText("테스트 상품 4")).toBeDefined();
+});
+
+// 건이 적은 계정은 목록 끝 줄이 계속 보여, 기다리지 않으면 쪽마다 상세 요청이 한꺼번에 몰린다(#474)
+test("상세를 기다리는 동안은 다음 쪽을 부르지 않는다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) =>
+    cursor
+      ? { orders: [], nextCursor: null, hasNext: false }
+      : { orders: [makeOrder(4, "DELIVERED")], nextCursor: "CURSOR-1", hasNext: true },
+  );
+  getOrderDetail.mockImplementation(() => new Promise(() => {}));
+  renderView("?tab=claims");
+
+  await waitFor(() => expect(getOrderDetail).toHaveBeenCalledWith(4));
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  await act(async () => {});
+  expect(getOrders).toHaveBeenCalledTimes(1);
+});
+
+// 받아 둔 목록을 배경에서 다시 받다 실패해도, 받아 둔 것으로 빈 상태를 보인다. 막으면 빈 화면이 된다(#474)
+test("받아 둔 목록을 다시 받다 실패해도 빈 상태를 그대로 보인다", async () => {
+  served = [makeOrder(1, "PENDING")];
+  renderView();
+  expect(await screen.findByText("아직 주문한 내역이 없어요")).toBeDefined();
+
+  // 창으로 돌아오면 낡은 목록을 다시 받는다. TanStack은 window의 visibilitychange를 듣는다
+  getOrders.mockRejectedValue(new Error("network down"));
+  act(() => {
+    window.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  await waitFor(() => expect(getOrders).toHaveBeenCalledTimes(2));
+  await act(async () => {});
+  expect(screen.getByText("아직 주문한 내역이 없어요")).toBeDefined();
+  expect(screen.queryByRole("alert")).toBeNull();
 });
 
 test("취소·반품·교환 건이 없으면 빈 상태를 안내한다", async () => {
