@@ -14,7 +14,7 @@
 | `ui/field-row.tsx` | 이름 52px + 값 한 줄. 배송지 세 줄과 주문 수량이 쓴다 (`paym_001`) |
 | `ui/checkout-view.test.tsx` | 금액 표시(상품이 없으면 숨김), 필수 동의 잠금, 주문 생성부터 결제창까지의 순서, 실패 문구와 실패 값 걷기, `dl` 구조를 본다 |
 | `ui/checkout-address-view.test.tsx` | 고정 장소와 추가한 장소의 차이, 미입력 안내를 본다 |
-| `ui/checkout-done-view.test.tsx` | 주문번호·도착 예정·다음에 갈 곳을 본다. 승인과 조회가 끝난 뒤에만 주문 캐시를 낡은 것으로 두는지 |
+| `ui/checkout-done-view.test.tsx` | 주문번호·도착 예정·다음에 갈 곳을 본다. 승인과 조회가 끝난 뒤에만 주문 캐시를 낡은 것으로 두는지, 승인 실패 문구를 가르는지(`payment.*`는 그대로, 나머지는 승인 실패로) |
 | `ui/checkout-address-view.tsx` | 배송지 설정 (`paym_011`). `GET /members/me/addresses`를 받아 이름으로 아이콘이 붙는 곳과 아닌 곳을 구분선으로 가른다 (#237) |
 | `ui/checkout-done-view.tsx` | 주문 완료 (`paym_002`). 결제상세·배송지는 `entities/order` 조각을 쓴다 |
 | `ui/delivery-notice.tsx` | 언제 도착하는지 알리는 한 줄. **지금 쓰는 곳이 없다** — 아래 "도착 예정일" 절 |

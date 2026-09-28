@@ -29,6 +29,7 @@ vi.mock("@/entities/order", async (importOriginal) => ({
   useQueryOrderDetail,
 }));
 
+import { ApiError } from "@/shared/api/client";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 import { readPendingOrder, writePendingOrder } from "../model/pending-order";
@@ -302,10 +303,10 @@ test("머리에 뒤로가기와 닫기를 두지 않고 아래 버튼으로 나�
 });
 
 /** 승인 실패를 세운다. 그때 화면이 댈 수 있는 식별자는 토스가 준 주문번호뿐이다 */
-function failed() {
+function failed(error: unknown = new Error("승인 실패")) {
   useQueryPaymentConfirm.mockReturnValue({
     payment: undefined,
-    error: new Error("승인 실패"),
+    error,
     canConfirm: true,
   });
 }
@@ -332,6 +333,34 @@ test("승인이 실패하면 완료가 아니라 그 사실을 알린다", () =>
   expect(screen.getByText(APP_MESSAGE[APP_MESSAGE_CODE.payment.confirmFailed].title)).toBeDefined();
   // 성공 화면의 문구가 함께 뜨면 안 된다
   expect(screen.queryByText("주문을 무사히 마쳤어요")).toBeNull();
+});
+
+// **`payment.*` 문구는 그대로 쓴다.** 금액이 어긋난 것은 사용자가 알아야 할 다른 사실이다 —
+// 결제됐다면 백엔드가 자동으로 취소한다 (#260). 라우트 테스트와 함께 지워졌던 것을 되살렸다 (#468)
+test("금액이 어긋나면 그 사유로 알린다", () => {
+  // 백엔드 `PaymentErrorCode.AMOUNT_MISMATCH`는 400이 아니라 409다 (#310)
+  failed(new ApiError(409, "금액 불일치", { errorCode: "PAYMENT_409_AMOUNT_MISMATCH" }));
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(
+    screen.getByText(APP_MESSAGE[APP_MESSAGE_CODE.payment.amountMismatch].title),
+  ).toBeDefined();
+  expect(screen.queryByText(APP_MESSAGE[APP_MESSAGE_CODE.payment.confirmFailed].title)).toBeNull();
+});
+
+/**
+ * **결제 밖의 문구는 승인 실패 문구로 모은다.** 네트워크 오류는 평소 "네트워크 상태를 확인해
+ * 주세요"로 떨어지는데, 이 화면에서 그 말은 다시 시도하라는 뜻으로 읽혀 두 번 결제로 이어진다
+ * (#260). 라우트 테스트와 함께 지워졌던 것을 되살렸다 (#468)
+ */
+test("결제와 무관한 오류도 승인 실패 문구로 모은다", () => {
+  failed(new TypeError("Failed to fetch"));
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.getByText(APP_MESSAGE[APP_MESSAGE_CODE.payment.confirmFailed].title)).toBeDefined();
+  expect(
+    screen.queryByText(APP_MESSAGE[APP_MESSAGE_CODE.common.networkError].description),
+  ).toBeNull();
 });
 
 // 승인 응답이 없으니 화면이 댈 수 있는 식별자가 이것뿐이다. 문의할 때 사용자가 부르는 번호다
