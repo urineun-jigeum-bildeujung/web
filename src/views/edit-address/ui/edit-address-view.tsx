@@ -158,22 +158,22 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const draftTarget = place ?? "new";
 
   /**
-   * **검색을 다녀왔으면 적다 만 것을 되살린다.** `roadAddr`가 그 표시다 (#370).
+   * **검색 화면에 다녀왔으면 적다 만 것을 되살린다** (#370). 주소를 골라 왔든 고르지 않고
+   * 뒤로 돌아왔든 같다 — 고르지 않고 돌아온 경우까지 이름·연락처를 다시 적게 하지 않는다 (#457).
    *
-   * 그냥 다시 들어온 경우까지 되살리면 지웠다고 생각한 값이 돌아온다.
+   * **되살린 뒤 바로 비운다.** 초안은 주소 줄을 누를 때만 적으므로, 한 번 쓰고 비우면 나중에
+   * 새로 들어왔을 때 옛 값이 돌아오지 않는다.
    *
    * **렌더가 아니라 마운트 뒤에 읽는다.** `sessionStorage`는 서버에 없어, 렌더 중에 읽으면
    * 서버가 그린 빈 칸과 어긋나 하이드레이션에서 깨진다.
    */
   useEffect(() => {
-    if (roadAddr === null) {
-      return;
-    }
     const draft = readAddressDraft(draftTarget);
     if (draft) {
       reset(draft);
+      clearAddressDraft();
     }
-  }, [roadAddr, draftTarget, reset]);
+  }, [draftTarget, reset]);
 
   const submit = async (values: AddressFormValues) => {
     const request_ = {
