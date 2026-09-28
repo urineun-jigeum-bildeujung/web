@@ -325,7 +325,9 @@ export function CheckoutView() {
   const pay = async () => {
     // **`try` 안에서 옵셔널 체이닝을 쓰지 않는다.** React Compiler가 try/catch 안의
     // 값 블록(옵셔널 체이닝·조건식 등)을 만나면 이 컴포넌트 최적화를 통째로 포기한다 (#223).
-    if (!requestPayment || !address || !pet) {
+    // 배송지·아이 id는 본문을 만들 때 이미 옮겨 두었다. 모르면 `null`이라 여기서 거른다
+    const { addressId, petId } = orderRequest;
+    if (!requestPayment || addressId === null || petId === null) {
       return;
     }
 
@@ -350,7 +352,7 @@ export function CheckoutView() {
         await releaseOrder(superseded);
       }
       if (orderId === null) {
-        const body = { ...orderRequest, addressId: address.addressId, petId: Number(pet.id) };
+        const body = { ...orderRequest, addressId, petId };
         // **보내기 전에 적어 둔다.** 응답을 잃어도 다음 누름이 같은 키로 물어, 서버가 이미
         // 만든 주문을 돌려받는다 (#412)
         let held = pending;
