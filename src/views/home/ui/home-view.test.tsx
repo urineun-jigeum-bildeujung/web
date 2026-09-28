@@ -341,6 +341,18 @@ describe("HomeView", () => {
     expect(refetch).toHaveBeenCalledOnce();
   });
 
+  // 받아 둔 것 없이 다시 부르면 조회가 오류를 비운다. 그때 칸이 사라지면 아래 구역이 튄다 (#498 점검)
+  it("다시 받는 동안에도 오류 칸이 남아 대기를 알린다", async () => {
+    pendingQuery = { ...pendingIdle(), items: undefined, error: null, isRetrying: true };
+    await renderWith();
+
+    const alert = screen.getByRole("alert");
+    expect(
+      within(alert).getByRole("status", { name: "최근에 구매한 상품을 다시 불러오는 중" }),
+    ).toBeDefined();
+    expect(within(alert).getByRole("button")).toHaveProperty("disabled", true);
+  });
+
   it("반응을 남기면 서버에 보내고 어디에 쓰이는지 알린다", async () => {
     submitFeedback.mockResolvedValue(undefined);
     await renderWith();
@@ -377,6 +389,58 @@ describe("HomeView", () => {
         submission: { answer: "BAD" },
       }),
     );
+  });
+
+  // 테스트의 고른 아이가 기본 아이이자 목록 첫째면, 규칙을 "목록 첫 아이"로 바꿔도 통과한다 (#498 점검)
+  it("항목에 아이가 없으면 메인에서 고른 아이로 묻고 보낸다", async () => {
+    submitFeedback.mockResolvedValue(undefined);
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+    fireEvent.click(screen.getAllByRole("button", { name: /반응 남기기/ })[0]);
+    expect(screen.getByText("구름이에게 잘 맞았나요?")).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+    fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+
+    await waitFor(() =>
+      expect(submitFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ orderProductId: "11", petId: "7" }),
+      ),
+    );
+  });
+
+  // 지운 아이의 주문이다. 고른 아이 이름으로 떨어지면 다른 아이에게 묻게 된다 (#498 점검)
+  it("항목의 아이가 목록에 없으면 우리 아이로 묻고, 그 아이 번호는 그대로 보낸다", async () => {
+    submitFeedback.mockResolvedValue(undefined);
+    pendingQuery = {
+      ...pendingIdle(),
+      items: [{ orderProductId: "13", productId: "8", name: "연어 트릿 100g", petId: "99" }],
+    };
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("button", { name: /반응 남기기/ }));
+    expect(screen.getByText("우리 아이에게 잘 맞았나요?")).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+    fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+
+    await waitFor(() =>
+      expect(submitFeedback).toHaveBeenCalledWith(
+        expect.objectContaining({ orderProductId: "13", petId: "99" }),
+      ),
+    );
+  });
+
+  // 버튼 이름이 카드마다 같아 스크린 리더로는 어느 상품인지 모른다 (#498 점검)
+  it("반응 남기기 버튼은 어느 상품인지 설명으로 알린다", async () => {
+    await renderWith();
+
+    const names = screen
+      .getAllByRole("button", { name: "우리 아이 반응 남기기" })
+      .map(
+        (button) =>
+          document.getElementById(button.getAttribute("aria-describedby") ?? "")?.textContent,
+      );
+    expect(names).toEqual(["치석 케어 덴탈껌 7개입", "관절 튼튼 트릿 200g"]);
   });
 
   it("반응을 고르면 아직 이르다는 표시가 풀린다", async () => {

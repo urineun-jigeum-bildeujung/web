@@ -7,7 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { Suspense, use, useRef, useState, useTransition } from "react";
+import { Suspense, use, useId, useRef, useState, useTransition } from "react";
 
 import {
   PetSwitcher,
@@ -410,6 +410,8 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
   const [feedback, setFeedback] = useState<PendingFeedback | null>(null);
   const [recentIndex, setRecentIndex] = useState(0);
   const recentListRef = useRef<HTMLUListElement>(null);
+  // 카드마다 반응 남기기 버튼 이름이 같아, 스크린 리더가 어느 상품인지 알도록 상품명을 설명으로 잇는다
+  const recentNameId = useId();
 
   // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(소리·냥이)을 쓰던 동안 화면마다
   // 이름이 달랐다(QA 1차 6번, #470). 고르기 전에는 기본 아이이고, 로그인하지 않았으면 부르지 않아
@@ -432,6 +434,8 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
   // 있다 — 뼈대를 그렸다 지우면 칸이 없는 대부분의 사람에게 아래 구역이 한 번 밀린다
   const pending = useQueryPendingFeedbacks({ enabled: session === true });
   const recentItems = pending.items ?? [];
+  // 답해서 목록이 줄면 스크롤 전의 칸 번호가 남는다. 남은 칸 안으로 당겨 점 하나는 늘 켜 둔다(#498 점검)
+  const activeRecent = Math.min(recentIndex, recentItems.length - 1);
   const { submitFeedback, isSubmitting } = useMutateSubmitFeedback();
 
   // 시안(Frame 31)의 점 표시기를 실제 스크롤 위치에 맞춘다. 카드 사이 간격(gap)까지
@@ -449,13 +453,16 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
   };
 
   /**
-   * 반응의 아이. 항목의 `petId`가 그 제품을 사 준 아이인데 **백엔드가 아직 `null`로 둔다**(주문
-   * 서비스 내부 응답에 없어 "추후 연동"). 그때까지는 메인에서 고른 아이다 — 시트의 "○○는
-   * 어땠나요?"도 그 아이다. 채워지면 코드 변경 없이 그 아이로 바뀐다
+   * 반응의 아이. 항목의 `petId`가 그 제품을 사 준 아이다. 2026-09-23부터 주문에 아이가 필수라
+   * (주문 서비스 `CreateOrderRequest.petId`) 그 전 주문만 `null`이고, 그때는 메인에서 고른 아이다 —
+   * 시트의 "○○에게 잘 맞았나요?"도 그 아이다.
+   *
+   * **항목의 아이가 목록에 없으면(지운 아이) 이름은 "우리 아이"로 둔다.** 고른 아이 이름으로 떨어지면
+   * 다른 아이에게 묻게 된다. 마이페이지 아이 관리와 같다(#498 점검)
    */
   const feedbackPetId = feedback ? (feedback.petId ?? pet?.id ?? null) : null;
   const feedbackPetName =
-    pets?.find((candidate) => candidate.id === feedbackPetId)?.name ?? petName;
+    pets?.find((candidate) => candidate.id === feedbackPetId)?.name ?? "우리 아이";
   const submitRecent = (choice: FeedbackChoice) =>
     feedback
       ? submitFeedback({
@@ -592,7 +599,8 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
             </section>
 
             {/* 이 서비스가 근거를 모으는 자리. 남길 반응이 없으면 칸째 없다 — 빈 상태 시안이 없다(#494) */}
-            {pending.error && !pending.items ? (
+            {/* 다시 받는 동안에도 오류 칸을 지킨다 — 받아 둔 것 없이 다시 부르면 조회가 오류를 비운다(#498 점검) */}
+            {(pending.error || pending.isRetrying) && !pending.items ? (
               <section className="flex flex-col gap-3 py-6 pl-5">
                 <SectionTitle className="pr-5">최근에 구매한 상품, 아이는 어때요?</SectionTitle>
                 <div
@@ -657,7 +665,10 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                               디자인 시스템에 없다. SemiBold(600)도 #162에서 정리된 대로 이
                               프로젝트가 등록해 쓰지 않는 굵기라, 가장 가까운 기존 토큰
                               (14px Bold)으로 근사한다 — PD팀에 15px·SemiBold 처리 여부 확인 필요 */}
-                              <p className="truncate text-label-bold-14 text-foreground">
+                              <p
+                                id={`${recentNameId}-${item.orderProductId}`}
+                                className="truncate text-label-bold-14 text-foreground"
+                              >
                                 {item.name}
                               </p>
                               {/* 시안의 "구매 후 N일"·"N번째 구매" 뱃지는 응답에 값이 없어 그리지 않는다.
@@ -666,6 +677,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                           </div>
                           <Button
                             className="min-h-11 w-full bg-brand text-label-bold-16 font-bold text-brand-foreground hover:bg-brand/90"
+                            aria-describedby={`${recentNameId}-${item.orderProductId}`}
                             onClick={() => setFeedback(item)}
                           >
                             우리 아이 반응 남기기
@@ -683,7 +695,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                         key={item.orderProductId}
                         className={cn(
                           "size-1.5 rounded-full",
-                          index === recentIndex ? "bg-primary" : "bg-border",
+                          index === activeRecent ? "bg-primary" : "bg-border",
                         )}
                       />
                     ))}
