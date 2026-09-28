@@ -242,6 +242,12 @@ export const APP_MESSAGE = {
     title: "알림 권한이 꺼져 있어요",
     description: "브라우저나 기기 설정에서 알림을 허용한 뒤 다시 켜 주세요.",
   },
+
+  // 고객지원. 기능정의서는 서비스 문의하기가 노션 문의 페이지로 간다고 적었는데 그 주소가 아직 없다 (#502)
+  "support.inquiryPreparing": {
+    title: "문의 창구 준비 중",
+    description: "문의 페이지가 열리면 이 버튼으로 바로 문의할 수 있어요.",
+  },
 } as const satisfies Record<string, AppMessage>;
 
 export type AppMessageCode = keyof typeof APP_MESSAGE;
@@ -317,5 +323,8 @@ export const APP_MESSAGE_CODE = {
   },
   notification: {
     pushPermissionDenied: "notification.pushPermissionDenied",
+  },
+  support: {
+    inquiryPreparing: "support.inquiryPreparing",
   },
 } as const satisfies Record<string, Record<string, AppMessageCode>>;
