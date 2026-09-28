@@ -522,9 +522,23 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
       <main className="flex flex-1 flex-col pb-24">
         {category === "all" ? (
           <>
-            {/* 프로모션 배너. 시안은 문구 없이 사진 배너 하나다 — 홍보 문구는 이미지 안에 들어간다 */}
+            {/* 프로모션 배너. 시안은 문구 없이 사진 배너 하나다 — 홍보 문구는 이미지 안에 들어간다.
+                배너 API가 없어 시안 배너(1708:22742)를 예시로 둔다. 빈 회색 상자로 두면 첫 화면 가장 큰
+                자리가 비어 보인다(#504). 시안 프로토타입에도 누르면 가는 곳이 없어 링크는 달지 않는다 */}
             <section aria-label="진행 중인 행사" className="relative p-5">
-              <div className="aspect-4/3 overflow-hidden rounded-lg bg-muted" />
+              <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
+                {/* 이미지 안 문구가 곧 내용이라 대체 텍스트로 옮긴다. 첫 화면 가장 큰 이미지라 먼저 받는다(AGENTS 5.6) —
+                    Next 16에서 `priority`가 `preload`로 이름이 바뀌었다(next/dist/docs의 image.md).
+                    화면 폭은 레이아웃이 420px(max-w-105)로 묶고 좌우 여백이 20씩이다 */}
+                <Image
+                  src="/images/home/promo-banner.webp"
+                  alt="매주 목요일 밤 12시 타임딜 특가. 놓치면 아쉬운 한정 특가"
+                  fill
+                  preload
+                  sizes="(min-width: 420px) 380px, calc(100vw - 40px)"
+                  className="object-cover"
+                />
+              </div>
               {/* 배너가 여럿임을 알리는 자리. 넘기는 것은 서버 데이터가 붙은 뒤에 잇는다.
                   시안(Frame 31)은 사진 박스가 아니라 padding을 포함한 이 섹션 기준
                   bottom-[29.75px]다 — 테두리 없이 짙은 원 1개 + 옅은 원 2개.
