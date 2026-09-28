@@ -40,6 +40,12 @@ describe("MatchScoreBadge", () => {
     expect(screen.getByText("코코와 적합도 92점")).toBeDefined();
   });
 
+  // 목 이름(소리·코코·봄이)은 모두 받침이 없어 드러나지 않았다. 실제 이름에는 받침이 있다(#470)
+  test("받침 있는 이름에는 과를 붙인다", () => {
+    render(<MatchScoreBadge score={92} petName="구름" />);
+    expect(screen.getByText("구름과 적합도 92점")).toBeDefined();
+  });
+
   test("이름이 없으면 우리 아이로 읽는다", () => {
     render(<MatchScoreBadge score={45} />);
     expect(screen.getByText("우리 아이와 적합도 45점")).toBeDefined();

@@ -23,9 +23,24 @@ vi.mock("@/widgets/notification-bell", () => ({
   ),
   NewNotificationToaster: () => null,
 }));
+// 장바구니도 같은 까닭으로 링크만 대신 그린다(#470)
+vi.mock("@/widgets/cart-link", () => ({
+  CartLink: () => <a href="/cart" aria-label="장바구니" />,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, back: vi.fn(), refresh: refreshMock }),
   usePathname: () => "/",
+}));
+
+// 아이 줄은 마이페이지와 같은 실제 목록을 받는다(#470)
+const PETS = [
+  { id: "3", name: "초코", isDefault: true },
+  { id: "7", name: "구름이", isDefault: false },
+];
+let petsQuery: { pets: unknown; isLoading: boolean } = { pets: PETS, isLoading: false };
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryPets: () => petsQuery,
 }));
 
 import { HomeView } from "./home-view";
@@ -127,7 +142,49 @@ describe("HomeView", () => {
     await renderWith();
 
     // 사진만으로는 어느 아이인지 알 수 없다
-    expect(screen.getByText("소리")).toBeDefined();
+    expect(screen.getByText("구름이")).toBeDefined();
+  });
+
+  // 예시 이름(소리)을 쓰던 동안 마이페이지의 실제 이름과 달랐다(QA 1차 6번, #470)
+  it("고르기 전에는 기본 아이의 실제 이름으로 추천 제목을 단다", async () => {
+    petsQuery = {
+      pets: [
+        { id: "3", name: "초코", isDefault: false },
+        { id: "7", name: "구름이", isDefault: true },
+      ],
+      isLoading: false,
+    };
+    await renderWith();
+
+    expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
+    expect(screen.getByRole("radio", { name: "구름이" }).getAttribute("aria-checked")).toBe("true");
+    petsQuery = { pets: PETS, isLoading: false };
+  });
+
+  it("아이를 바꾸면 추천 제목도 그 아이 이름으로 바뀐다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
+  });
+
+  it("아이 목록을 받는 동안 아이 줄 자리를 잡아 둔다", async () => {
+    petsQuery = { pets: undefined, isLoading: true };
+    await renderWith();
+
+    expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
+    petsQuery = { pets: PETS, isLoading: false };
+  });
+
+  // 로그인하지 않았으면 목록을 부르지 않는다
+  it("아이가 없으면 아이 줄 없이 우리 아이로 읽는다", async () => {
+    petsQuery = { pets: undefined, isLoading: false };
+    await renderWith();
+
+    expect(screen.queryByRole("radiogroup", { name: "아이 고르기" })).toBeNull();
+    expect(screen.getByText("AI가 골라주는 우리 아이 맞춤 상품")).toBeDefined();
+    petsQuery = { pets: PETS, isLoading: false };
   });
 
   it("진행 중인 타임딜이 없으면 없다고 알린다", async () => {

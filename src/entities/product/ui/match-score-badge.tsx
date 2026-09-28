@@ -13,6 +13,7 @@
 
 import type { ComponentProps } from "react";
 
+import { withJosa } from "@/shared/lib/josa/josa";
 import { cn } from "@/shared/lib/utils";
 
 type MatchScoreBadgeProps = {
@@ -32,7 +33,8 @@ export function getMatchLevel(score: number | null) {
 }
 
 export function MatchScoreBadge({ score, petName, className, ...props }: MatchScoreBadgeProps) {
-  const subject = petName ? `${petName}와` : "우리 아이와";
+  // 이름이 서버에서 오면서 받침 있는 이름이 생겼다. "구름와"가 아니라 "구름과"다(#470)
+  const subject = withJosa(petName ?? "우리 아이", "과/와");
 
   if (score === null) {
     const { label } = getMatchLevel(score);

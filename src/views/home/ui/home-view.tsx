@@ -8,7 +8,12 @@ import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useRef, useState, useTransition } from "react";
 
-import { PetSwitcher, ProductFeedbackSheet, type FeedbackTarget } from "@/entities/pet";
+import {
+  PetSwitcher,
+  ProductFeedbackSheet,
+  useQueryPets,
+  type FeedbackTarget,
+} from "@/entities/pet";
 import {
   CATEGORY_TO_API,
   MatchScoreBadge,
@@ -18,6 +23,7 @@ import {
   type TimeDealGroup,
   type TimeDealList,
 } from "@/entities/product";
+import { useHasSession } from "@/shared/api/use-has-session";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge/badge";
 import { Button } from "@/shared/ui/button";
@@ -32,16 +38,11 @@ import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 
 import { CATEGORIES, CATEGORY_LABEL, type HomeCategory } from "../model/category";
 import { SORT_LABEL, SORT_TO_API, SORTS, type HomeSort } from "../model/sort";
-
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_PETS = [
-  { id: "1", name: "소리" },
-  { id: "2", name: "냥이" },
-];
 
 // "AI가 골라주는 맞춤 상품" 캐러셀 전용 목업. petId가 실제 조회에 반영되지 않고
 // 적합도(matchScore) 필드도 응답에 없어(#289, product-service 코드로 확인) 이번
@@ -148,6 +149,20 @@ function CategoryProductMeta({ product }: { product: ApiProductCard }) {
     <p className="text-label-medium-11 text-text-body-tertiary">
       {product.unitLabel} {formatWon(product.unitPrice)}
     </p>
+  );
+}
+
+/** 아이 목록을 받는 동안 아이 고르기 줄의 자리를 잡는다. 60px 원과 이름 줄 둘 */
+function PetSwitcherSkeleton() {
+  return (
+    <div className="flex gap-4 px-5" role="status" aria-label="아이 목록을 불러오는 중">
+      {Array.from({ length: 2 }, (_, index) => (
+        <div key={index} className="flex flex-col items-center gap-1">
+          <Skeleton className="size-15 rounded-full" />
+          <Skeleton className="h-4.5 w-8" />
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -398,7 +413,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
     // 정렬도 서버가 다시 조회해야 하므로 shallow를 끈다(#289)
     parseAsStringLiteral(SORTS).withDefault("recommend").withOptions({ shallow: false }),
   );
-  const [petId, setPetId] = useState(MOCK_PETS[0].id);
+  const [petId, setPetId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
   const [recentIndex, setRecentIndex] = useState(0);
   const recentListRef = useRef<HTMLUListElement>(null);
@@ -417,7 +432,14 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
     setRecentIndex(Math.max(0, Math.min(MOCK_RECENT.length - 1, index)));
   };
 
-  const pet = MOCK_PETS.find((item) => item.id === petId) ?? MOCK_PETS[0];
+  // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(소리·냥이)을 쓰던 동안 화면마다
+  // 이름이 달랐다(QA 1차 6번, #470). 고르기 전에는 기본 아이이고, 로그인하지 않았으면 부르지 않아
+  // 아이가 없다 — 그때 문구는 "우리 아이"로 읽는다
+  const hasSession = useHasSession();
+  const { pets = [], isLoading: isLoadingPets } = useQueryPets({ enabled: hasSession });
+  const pet =
+    pets.find((item) => item.id === petId) ?? pets.find((item) => item.isDefault) ?? pets[0];
+  const petName = pet?.name ?? "우리 아이";
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -438,20 +460,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
             <Icon name="search" className="size-7" />
           </Link>
           <NotificationBell />
-          <Link
-            href="/cart"
-            aria-label="장바구니에 5개"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-          >
-            <Icon name="cart" className="size-7" />
-            {/* 시안(header, 카트 아이콘의 Notification Badge)의 18px·11px 값 그대로 */}
-            <span
-              aria-hidden
-              className="absolute -top-1 -right-2 flex size-4.5 items-center justify-center rounded-full bg-brand text-label-bold-11 text-brand-foreground"
-            >
-              5
-            </span>
-          </Link>
+          <CartLink />
         </nav>
       </header>
 
@@ -497,22 +506,28 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               </span>
             </section>
 
-            <PetSwitcher
-              pets={MOCK_PETS}
-              selectedId={petId}
-              onSelect={setPetId}
-              // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다
-              onAdd={() => router.push("/onboarding?step=basic")}
-              withNames
-              variant="main"
-            />
+            {isLoadingPets ? (
+              <PetSwitcherSkeleton />
+            ) : (
+              pets.length > 0 && (
+                <PetSwitcher
+                  pets={pets}
+                  selectedId={pet?.id}
+                  onSelect={setPetId}
+                  // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다
+                  onAdd={() => router.push("/onboarding?step=basic")}
+                  withNames
+                  variant="main"
+                />
+              )
+            )}
 
             <section className="flex flex-col gap-5 pt-6 pb-8 pl-5">
               <SectionTitle href="/recommendations" className="pr-5">
-                AI가 골라주는 {pet.name} 맞춤 상품
+                AI가 골라주는 {petName} 맞춤 상품
               </SectionTitle>
               <ScrollRow
-                label={`${pet.name} 맞춤 상품`}
+                label={`${petName} 맞춤 상품`}
                 itemWidth="208px"
                 edgeInset={5}
                 bleedRight={false}
@@ -524,7 +539,9 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                       name={product.name}
                       price={product.price}
                       originalPrice={product.originalPrice}
-                      imageBadge={<MatchScoreBadge score={product.matchScore} petName={pet.name} />}
+                      imageBadge={
+                        <MatchScoreBadge score={product.matchScore} petName={pet?.name} />
+                      }
                       imageAction={
                         // 시안(Reaction Button)은 24px 흰색이다 — 사진 위에 얹히므로 흰색이어야 보인다
                         <span
@@ -672,7 +689,7 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
 
       <ProductFeedbackSheet
         target={feedback}
-        petName={pet.name}
+        petName={petName}
         onOpenChange={(open) => !open && setFeedback(null)}
         onSeeProduct={(productId) => router.push(`/products/${productId}`)}
         variant="full"
