@@ -49,15 +49,18 @@ test("주문 상세는 상품 옵션과 배송비를 그린다", () => {
   expect(queryByText("판매 금액")).toBeNull();
 });
 
-test("주문 완료는 판매 금액만 그리고 배송비 줄이 없다", () => {
+// 주문 완료 시안에는 배송비 줄이 없지만 PD팀이 넣기로 했다. 없으면 결제금액과 판매 금액이
+// 배송비만큼 달라 보인다 (2026-09-28, #448)
+test("주문 완료는 판매 금액과 배송비를 그린다", () => {
   const { getByText, queryByText } = render(
-    <PaymentDetail variant="complete" total={38000} itemPrice={35000} />,
+    <PaymentDetail variant="complete" total={38000} itemPrice={35000} shippingFee={3000} />,
   );
 
   expect(getByText("판매 금액")).toBeDefined();
   expect(getByText("35,000원")).toBeDefined();
+  expect(getByText("배송비")).toBeDefined();
+  expect(getByText("3,000원")).toBeDefined();
   expect(queryByText("상품 옵션")).toBeNull();
-  expect(queryByText("배송비")).toBeNull();
 });
 
 // 주문을 못 받아 온 자리에서는 결제 금액만 알고 그 안을 가를 수 없다 (#308 리뷰)

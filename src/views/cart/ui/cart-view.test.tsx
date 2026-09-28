@@ -168,7 +168,20 @@ describe("CartView", () => {
     renderCart([]);
 
     expect(await screen.findByText("장바구니가 비어 있어요")).toBeDefined();
-    expect(screen.queryByText(/전체선택/)).toBeNull();
+  });
+
+  // 상품을 담으면 무엇을 할 수 있는지 미리 보이게 PD팀이 일부러 남겼다 (2026-09-28, #448)
+  it("비었어도 전체선택과 결제하기를 잠근 채 남긴다", async () => {
+    renderCart([]);
+
+    await screen.findByText("장바구니가 비어 있어요");
+    expect(screen.getByText("전체선택 (0/0)")).toBeDefined();
+    expect(screen.getByRole("checkbox", { name: "전체선택 (0/0)" }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(screen.getByRole("button", { name: "결제하기" }).hasAttribute("disabled")).toBe(true);
+    // 고른 것이 없으니 금액 줄은 없다
+    expect(screen.queryByText("결제금액")).toBeNull();
   });
 
   // 이름이 안 오는 경우다(`unavailableWithoutInfo`). 고를 수 없어야 결제 합계가 맞는다

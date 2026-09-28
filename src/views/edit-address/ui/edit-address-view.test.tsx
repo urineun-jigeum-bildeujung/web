@@ -99,7 +99,7 @@ test("입력칸은 주문이 받는 길이까지만 적힌다", () => {
   expect(maxLength("받는 분 이름")).toBe("50");
   expect(maxLength("연락처")).toBe("20");
   expect(maxLength("상세 주소")).toBe("100");
-  expect(maxLength("배송 요청사항")).toBe("100");
+  expect(maxLength("요청사항")).toBe("100");
 });
 
 // `maxLength`는 적는 것만 막고 불러온 값은 자르지 않는다. 전에 길게 저장한 곳은 줄여야 저장된다
@@ -245,7 +245,7 @@ test("고른 주소의 우편번호가 함께 나간다", async () => {
 });
 
 // 적지 않은 요청사항은 빈 문자열이 아니라 null이다. 명세에서 유일하게 nullable인 필드다
-test("배송 요청사항을 비우면 null로 보낸다", async () => {
+test("요청사항을 비우면 null로 보낸다", async () => {
   renderAt(`?${PICKED}`);
 
   fill([
@@ -351,7 +351,7 @@ test("상세주소를 비우면 입력 완료가 꺼진다", () => {
 test("수정에서 요청사항을 지우면 빈 문자열을 보낸다", async () => {
   renderAt("?place=5");
 
-  fill([["배송 요청사항", ""]]);
+  fill([["요청사항", ""]]);
   fireEvent.click(submit());
 
   await waitFor(() => expect(update).toHaveBeenCalled());

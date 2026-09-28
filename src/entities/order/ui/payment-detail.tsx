@@ -1,9 +1,12 @@
 // 결제 내역 줄들. 결제금액 아래에 상품 금액(과 배송비)이 붙고 결제수단이 따로 온다.
 // UI 페이지 시안 기준 — 주문 상세 3324:37275·3324:36679, 주문 완료 1117:4759.
 //
-// **두 화면이 함께 쓰지만 시안이 다르다.** 주문 상세는 둘째 줄이 "상품 옵션"이고 배송비 줄이 있으며
-// 결제금액 값이 18px 흐린 색이다. 주문 완료는 둘째 줄이 "판매 금액"이고 배송비 줄이 없으며 결제금액
-// 값이 16px 진한 색이다. 그래서 어느 화면인지를 `variant`로 받는다 (#439).
+// **두 화면이 함께 쓰지만 시안이 다르다.** 주문 상세는 둘째 줄이 "상품 옵션"이고 결제금액 값이
+// 18px 흐린 색이다. 주문 완료는 둘째 줄이 "판매 금액"이고 결제금액 값이 16px 진한 색이다. 그래서
+// 어느 화면인지를 `variant`로 받는다 (#439).
+//
+// **배송비 줄은 두 화면 모두 그린다.** 주문 완료 시안에는 없지만, 없으면 결제금액과 판매 금액이
+// 배송비만큼 달라 보여 PD팀이 넣기로 했다(2026-09-28, #448).
 
 import { formatWon } from "@/shared/ui/price/price";
 
@@ -20,7 +23,6 @@ type PaymentDetailProps = {
    * 가를 수 없다 — `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰)
    */
   itemPrice?: number;
-  /** 주문 상세만 그린다. 주문 완료 시안에는 배송비 줄이 없다 */
   shippingFee?: number;
   /** 어느 화면의 시안을 따르나. 기본은 주문 상세다 */
   variant?: "detail" | "complete";
@@ -37,8 +39,8 @@ export function PaymentDetail({
   variant = "detail",
 }: PaymentDetailProps) {
   const complete = variant === "complete";
-  // 주문 상세에서는 둘이 늘 함께 온다. 하나만 있는 경우는 없어 같이 묶어 판단한다
-  const hasBreakdown = itemPrice !== undefined && (complete || shippingFee !== undefined);
+  // 둘은 늘 함께 온다. 하나만 있는 경우는 없어 같이 묶어 판단한다
+  const hasBreakdown = itemPrice !== undefined && shippingFee !== undefined;
 
   // **줄을 `<div>`로 더 감싸지 않는다.** `<dl>`의 자식 `<div>`는 `dt`·`dd`만 담을 수 있어서,
   // 간격을 주려고 한 겹 더 넣으면 그 안의 `dt`·`dd`가 `dl` 소속으로 읽히지 않는다. 스크린
@@ -70,12 +72,10 @@ export function PaymentDetail({
             term={<span className={VALUE}>{complete ? "판매 금액" : "상품 옵션"}</span>}
             description={<span className={VALUE}>{formatWon(itemPrice)}</span>}
           />
-          {!complete && shippingFee !== undefined && (
-            <DetailRow
-              term={<span className={VALUE}>배송비</span>}
-              description={<span className={VALUE}>{formatWon(shippingFee)}</span>}
-            />
-          )}
+          <DetailRow
+            term={<span className={VALUE}>배송비</span>}
+            description={<span className={VALUE}>{formatWon(shippingFee)}</span>}
+          />
         </>
       )}
 
