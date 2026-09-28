@@ -27,8 +27,6 @@ import {
   type PendingFeedback,
 } from "@/entities/review";
 import { ApiError } from "@/shared/api/client";
-import { toAppMessageCode } from "@/shared/api/error-message";
-import { toastAppError } from "@/shared/lib/app-toast";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -127,9 +125,6 @@ export function PetProfileView() {
           orderProductId: feedback.item.orderProductId,
           petId: feedbackPetId,
           submission: choice,
-        }).catch((causedBy: unknown) => {
-          toastAppError(toAppMessageCode(causedBy), causedBy);
-          throw causedBy;
         })
       : Promise.resolve();
 

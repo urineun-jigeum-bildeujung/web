@@ -12,7 +12,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError, toastAppSuccess } from "@/shared/lib/app-toast";
 import { Button } from "@/shared/ui/button";
@@ -67,7 +66,8 @@ export function VerifyPhoneView() {
         setCode(FIXED_CODE);
         toastAppSuccess(APP_MESSAGE_CODE.member.verificationCodeSent);
       })
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+      .catch(() => {});
   };
 
   /**
@@ -80,7 +80,7 @@ export function VerifyPhoneView() {
     if (!carrier) return;
     savePhone({ phone, carrier, code })
       .then(() => router.back())
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      .catch(() => {});
   };
 
   const checkCode = () => {
@@ -96,7 +96,7 @@ export function VerifyPhoneView() {
         // 서버가 200에 `verified: false`로 답한다. 틀렸다는 것을 알려야 다시 칠 수 있다
         toastAppError(APP_MESSAGE_CODE.member.verificationCodeWrong);
       })
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      .catch(() => {});
   };
 
   return (

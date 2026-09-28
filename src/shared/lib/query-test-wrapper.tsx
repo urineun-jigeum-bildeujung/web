@@ -7,7 +7,9 @@
 // ESLint가 `@tanstack/react-query` import를 슬라이스 `api` 세그먼트와 `shared`로 묶어 두어
 // (code-convention "훅") 화면 테스트가 직접 `QueryClient`를 만들 수 없다. 그 자리가 여기다.
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+
+import { createQueryClient } from "./query-client";
 
 /**
  * 테스트용 Provider를 만든다. `render(ui, { wrapper: createQueryWrapper() })`로 쓴다.
@@ -16,11 +18,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  *
  * 재시도를 끄는 이유는 실패를 검증할 때다. 켜 두면 4xx가 아닌 실패에서 한 번 더 기다렸다가
  * 그제야 에러가 나와 테스트가 느려지고 타임아웃 언저리에서 흔들린다.
+ *
+ * **앱과 같은 `createQueryClient`를 쓴다.** 변경 실패 토스트를 띄우는 MutationCache가 같이 실려야
+ * 화면이 토스트를 또 띄우는 중복을 테스트가 잡는다(#359).
  */
 export function createQueryWrapper() {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
+  const queryClient = createQueryClient({ retry: false, staleTime: 0 });
 
   return function QueryWrapper({ children }: { children: React.ReactNode }) {
     return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;

@@ -192,8 +192,9 @@ test("답을 고르고 등록하면 그 구매 항목으로 서버에 보내고 
   expect(await screen.findByText("반응이 등록됐어요")).toBeDefined();
 });
 
-// 이미 답했거나 아직 기간 전이면 서버가 거절한다. 됐다고 알리면 거짓이다
-test("등록에 실패하면 까닭을 알리고 완료로 가지 않는다", async () => {
+// 이미 답했거나 아직 기간 전이면 서버가 거절한다. 됐다고 알리면 거짓이다.
+// 까닭을 알리는 토스트는 전역 MutationCache 몫이라(`shared/lib/query-client.test.tsx`) 여기서는 띄우지 않는다(#359)
+test("등록에 실패하면 완료로 가지 않고 화면이 직접 토스트를 띄우지 않는다", async () => {
   submitFeedback.mockRejectedValue(new ApiError(409, "이미 답함"));
   renderView("?tab=products");
   fireEvent.click(screen.getByRole("button", { name: "베터 글루코사민 반응 남기기" }));
@@ -201,8 +202,10 @@ test("등록에 실패하면 까닭을 알리고 완료로 가지 않는다", as
   fireEvent.click(screen.getByRole("radio", { name: "안 맞았어요" }));
   fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
 
-  await waitFor(() => expect(toastAppError).toHaveBeenCalled());
+  await waitFor(() => expect(submitFeedback).toHaveBeenCalled());
   expect(screen.queryByText("반응이 등록됐어요")).toBeNull();
+  expect(screen.getByRole("radio", { name: "안 맞았어요" })).toBeDefined();
+  expect(toastAppError).not.toHaveBeenCalled();
 });
 
 test("남길 반응이 없으면 그 사실을 알리고 탭에 점을 찍지 않는다", () => {

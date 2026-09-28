@@ -24,7 +24,6 @@ import { useQueryMyProfile } from "@/entities/member";
 import { PetSwitcher, useQueryPets } from "@/entities/pet";
 import { useQueryProductSummary } from "@/entities/product";
 import { useMutateCreateReview } from "@/entities/review";
-import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError } from "@/shared/lib/app-toast";
 import { Badge } from "@/shared/ui/badge/badge";
@@ -209,7 +208,8 @@ function ReviewWriteForm({ productId }: { productId: string }) {
         setDone(true);
         clearReviewDraft(productId);
       })
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+      .catch(() => {});
   };
 
   if (done) {

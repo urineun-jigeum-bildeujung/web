@@ -9,8 +9,6 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 
 import { useMutateUpdatePet, useQueryPetDetail, type PetUpdate } from "@/entities/pet";
-import { toAppMessageCode } from "@/shared/api/error-message";
-import { toastAppError } from "@/shared/lib/app-toast";
 
 export function useEditPet() {
   const router = useRouter();
@@ -25,7 +23,8 @@ export function useEditPet() {
   const save = (patch: PetUpdate, photo?: File | null) => {
     updatePet({ patch, photo })
       .then(() => router.back())
-      .catch((causedBy: unknown) => toastAppError(toAppMessageCode(causedBy), causedBy));
+      // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+      .catch(() => {});
   };
 
   return {

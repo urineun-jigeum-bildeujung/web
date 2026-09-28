@@ -9,9 +9,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { useMutateMyProfile, useQueryMyProfile } from "@/entities/member";
-import { toAppMessageCode } from "@/shared/api/error-message";
 import { formatBirthDateInput, parseBirthDate } from "@/shared/lib/birth-date";
-import { toastAppError } from "@/shared/lib/app-toast";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 
@@ -30,7 +28,8 @@ export function EditBirthView() {
     if (parsed === null) return;
     updateProfile({ birth: parsed })
       .then(() => router.back())
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+      .catch(() => {});
   };
 
   return (
