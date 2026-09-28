@@ -14,6 +14,19 @@ Next.js App Router의 라우팅 디렉터리이자 FSD의 최상위 레이어다
 - **Provider 조립.** 전역 Provider는 `shared/providers`에 두고 `layout`은 `AppProviders` 하나만 감싼다. 로그인이 필요한 구간의 `layout`은 `shared/providers`의 `SessionGuard` 하나만 감싼다(`mypage/layout.tsx`, #447).
 - 비즈니스 로직, 재사용 컴포넌트.
 
+## `(constrained)` 라우트 그룹
+
+**아직 태블릿·웹 시안이 없는 화면을 모바일 폭(420px) 기둥에 담는 자리다**(#491). `(constrained)/layout.tsx`가 그 기둥을 지고, 루트 `layout.tsx`는 폭을 제한하지 않는다.
+
+시안이 온 화면은 이 그룹 밖으로 폴더를 옮기면서 제 폭을 스스로 정한다. 화면이 하나씩 준비되는 동안 **아직 작업하지 않은 화면이 넓은 뷰포트에서 혼자 퍼지지 않게** 하는 것이 목적이다. 반응형 대응은 #132가 추적한다.
+
+라우트 그룹은 URL에 들어가지 않는다. `(constrained)/cart/page.tsx`는 그대로 `/cart`다.
+
+**옮기지 않는 것이 있다.**
+
+- `api/` · `metrics/` · `firebase-messaging-sw.js` — route handler라 레이아웃과 무관하다
+- `error.tsx` · `not-found.tsx` · `global-error.tsx` — 그룹 밖 루트에 두고 **폭과 높이를 각자 직접 가진다.** 그룹 안에 복제해도 그룹 레이아웃 자체에서 난 오류는 잡지 못한다(Next 문서: 같은 세그먼트의 `layout`은 감싸지 않는다)
+
 ## 의존 방향
 
 모든 레이어를 import할 수 있다. 어떤 레이어도 `app`을 import하지 않는다.
