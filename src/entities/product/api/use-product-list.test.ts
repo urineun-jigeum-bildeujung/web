@@ -17,6 +17,7 @@ const FIRST_PAGE = {
       name: "중소형견 소포장 사료 1kg",
       thumbnailUrl: null,
       price: 31500,
+      originalPrice: null,
       discountRate: 0,
       unitPrice: 1050,
       unitLabel: "g",

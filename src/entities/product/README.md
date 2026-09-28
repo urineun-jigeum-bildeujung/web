@@ -51,8 +51,12 @@
 버림이라 19.9%가 20%와 19%로 갈립니다. 계약이 있는 값을 화면에서 다시 만들지 않습니다.
 
 정가는 비할인 상품에서도 `price`와 같은 값으로 저장되고 그때 할인율이 0으로 내려온다는 답을 받았습니다.
-`ProductCardResponse`에는 정가 필드가 없어 목록·검색 카드는 여전히 두 금액으로 계산하므로, 같은 상품이
-목록과 상세에서 다른 %로 보일 수 있습니다 — 그 화면 작업에서 맞춥니다.
+`ProductCardResponse`도 `originalPrice`를 주므로 목록·검색·타임딜 카드가 모두 서버 `discountRate`를
+그대로 표시합니다 — `ProductGridCard`에 그 값을 넘기면 카드가 두 금액으로 다시 계산하지 않습니다 (#458).
+`originalPrice`는 `null`일 수 있어(`Product.originalPrice` 열이 NULL 허용) 화면에 넘길 때만
+`?? undefined`로 바꿉니다.
+
+찜 목록(`entities/wishlist`)은 서버 할인율이 없어 카드의 버림 계산을 그대로 씁니다.
 
 **`use-product-list.ts`는 TanStack Query로 감싸지 않았습니다.** 상품 목록은 공개 데이터라 서버 컴포넌트가
 첫 페이지를 직접 fetch하고, "더 보기"는 캐싱·무효화가 필요 없는 단순 이어 붙이기라 Query 캐시를 쓸 이유가

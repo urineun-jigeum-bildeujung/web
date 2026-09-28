@@ -20,6 +20,7 @@ const PUPPY_FOOD: ProductCard = {
   productId: 4,
   name: "퍼피 성장기 사료 1kg",
   price: 21000,
+  originalPrice: null,
   discountRate: 0,
   unitPrice: 21,
   unitLabel: "g",
@@ -32,6 +33,7 @@ const SENIOR_FOOD: ProductCard = {
   productId: 2,
   name: "노령견 저지방 소화케어 사료 1kg",
   price: 27200,
+  originalPrice: 31900,
   discountRate: 15,
   unitPrice: 27,
   unitLabel: "g",
@@ -170,6 +172,25 @@ describe("SearchResultView", () => {
     expect(screen.queryByRole("button", { name: /찜하기/ })).toBeNull();
     expect(screen.queryByText(/당 약/)).toBeNull();
     expect(screen.getByText("21,000원")).toBeDefined();
+  });
+
+  // SENIOR_FOOD는 27,200 / 31,900이다. 서버가 준 15%와 버림 계산 14%가 갈린다
+  it("그냥 검색하러 왔으면 취소선 정가와 서버 할인율이 보인다", async () => {
+    await renderWith("?q=저지방", [SENIOR_FOOD]);
+
+    expect(await screen.findByText("31,900원")).toBeDefined();
+    expect(screen.getByText("15%")).toBeDefined();
+    expect(screen.queryByText("14%")).toBeNull();
+  });
+
+  it("비교할 자리를 채우러 왔으면 할인 중인 상품도 정가·할인율 없이 보인다", async () => {
+    const { container } = await renderWith("?q=저지방&slot=1", [SENIOR_FOOD]);
+
+    await screen.findByText("노령견 저지방 소화케어 사료 1kg");
+    expect(screen.getByText("27,200원")).toBeDefined();
+    expect(screen.queryByText("31,900원")).toBeNull();
+    expect(screen.queryByText("15%")).toBeNull();
+    expect(container.querySelector(".line-through")).toBeNull();
   });
 
   it("서버 조회가 실패하면 렌더 중 오류로 던져 바깥 경계가 잡는다", async () => {

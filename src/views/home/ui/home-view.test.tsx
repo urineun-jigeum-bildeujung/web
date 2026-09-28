@@ -64,6 +64,7 @@ const PUPPY_FOOD: ProductCard = {
   productId: 4,
   name: "퍼피 성장기 사료 1kg",
   price: 21000,
+  originalPrice: null,
   discountRate: 0,
   unitPrice: 21,
   unitLabel: "g",
@@ -76,6 +77,7 @@ const SENIOR_FOOD: ProductCard = {
   productId: 2,
   name: "노령견 저지방 소화케어 사료 1kg",
   price: 27200,
+  originalPrice: 31900,
   discountRate: 15,
   unitPrice: 27,
   unitLabel: "g",
@@ -145,6 +147,19 @@ describe("HomeView", () => {
 
     // 지금 어느 것을 보고 있는지 알린다
     expect(screen.getByRole("button", { name: "사료" })).toHaveProperty("ariaCurrent", "page");
+  });
+
+  // SENIOR_FOOD는 27,200 / 31,900이다. 서버가 준 15%와 버림 계산 14%가 갈려, 화면이
+  // 어느 쪽을 쓰는지 드러난다. PUPPY_FOOD는 정가가 없어 취소선이 붙지 않는다
+  it("할인 중인 상품만 취소선 정가와 서버 할인율을 보여준다", async () => {
+    const { container } = await renderWith("?category=food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
+
+    expect(screen.getByText("31,900원")).toBeDefined();
+    expect(screen.getByText("15%")).toBeDefined();
+    expect(screen.queryByText("14%")).toBeNull();
+    // 정가가 없는 상품은 판매가만 나온다 — 취소선은 둘 중 하나에만 붙는다
+    expect(screen.getByText("21,000원")).toBeDefined();
+    expect(container.querySelectorAll(".line-through")).toHaveLength(1);
   });
 
   it("카테고리에 상품이 없으면 없다고 알린다", async () => {
@@ -401,5 +416,39 @@ describe("타임딜 여러 묶음", () => {
 
     expect(screen.queryByText("먼저 끝나는 상품")).toBeNull();
     expect(screen.getByText("나중에 끝나는 상품")).toBeDefined();
+  });
+
+  // 27,200 / 31,900은 서버가 15%, 버림 계산이 14%다. 딜 응답의 discountRate를 쓰는지 본다
+  it("딜 상품의 할인율은 두 금액으로 계산하지 않고 서버 값을 쓴다", async () => {
+    const now = Date.now();
+    const group: TimeDealGroup = {
+      dealId: 1,
+      dealName: "지금 딜",
+      startAt: new Date(now - 3_600_000).toISOString(),
+      endAt: new Date(now + 3_600_000).toISOString(),
+      items: [
+        {
+          timeDealItemId: 1,
+          productId: 1,
+          name: "딜 사료",
+          thumbnailUrl: null,
+          price: 27200,
+          originalPrice: 31900,
+          discountRate: 15,
+          unitLabel: null,
+          unitAmount: 0,
+          stock: "enough",
+        },
+      ],
+    };
+
+    await renderWith("", EMPTY_PRODUCTS, {
+      groups: [group],
+      serverTime: new Date(now).toISOString(),
+    });
+
+    expect(screen.getByText("15%")).toBeDefined();
+    expect(screen.queryByText("14%")).toBeNull();
+    expect(screen.getByText("31,900원")).toBeDefined();
   });
 });

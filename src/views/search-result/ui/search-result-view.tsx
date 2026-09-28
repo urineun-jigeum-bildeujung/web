@@ -101,6 +101,8 @@ function GeneralResultList({
                 href={`/products/${id}`}
                 name={product.name}
                 price={product.price}
+                originalPrice={product.originalPrice ?? undefined}
+                discountRate={product.discountRate}
                 imageUrl={product.thumbnailUrl ?? undefined}
                 // 시안(2396-80432·2396-80461)은 사진 위에 바로 얹지 않고 어두운 원판(32px)
                 // 안에 24px 흰 하트를 놓는다. 원판은 이미지 모서리에서 4px 떨어져 있다
