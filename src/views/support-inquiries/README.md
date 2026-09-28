@@ -1,8 +1,18 @@
 # support-inquiries
 
-문의 내역과 상태를 보여준다. 새 문의 작성 방식은 연동 정책 확정 후 연결한다.
+1:1 문의 내역과 서비스 문의하기.
 
 - **라우트**: `/mypage/support/inquiries` — `src/app/mypage/support/inquiries/page.tsx`
-- **조립**: `shared/ui/page-header`
-- **상태**: 문의 내역 서버 상태. API 계약 확정 전 미연동
-- **참고**: 디자인 확정 전 자리 표시 화면. 외부 문의 페이지에 주문 식별자를 전달할 수 있는지는 확인 필요
+- **조립**: `shared/ui/page-header`, `shared/ui/accordion`, `shared/ui/badge`, `shared/ui/bottom-action-bar`, `shared/ui/preparing-dialog`
+- **상태**: 준비 중 안내를 띄울지(`useState`). 문의 API가 없어 서버 상태는 없다
+- **참고**: 시안이 아직 없다(#209). 기능정의서(마이페이지 ver0.5)를 따른다(#502)
+  - 내역은 최신순이고 답변 대기·답변 완료를 보인다. **문의 API가 없어(2026-09-29 백엔드 확인) 예시 내역이다**
+  - 서비스 문의하기는 기능정의서대로면 노션 문의 페이지로 가는데 **그 주소가 아직 없어** 준비 중 안내를 띄운다. 주소가 오면 안내 대신 그 페이지를 연다
+  - 주문 상세·상품 상세에서 들어올 때 주문 정보를 붙여 넘기는 것은 기능정의서가 MVP에서 뺐다
+
+| 파일 | 설명 |
+| --- | --- |
+| `ui/support-inquiries-view.tsx` | 문의 내역과 서비스 문의하기 |
+| `ui/support-inquiries-view.test.tsx` | 최신순·상태·답변 표시·준비 중 안내 |
+| `config/inquiries.ts` | 예시 문의 내역 |
+| `index.ts` | 공개 API |

@@ -83,8 +83,8 @@ views/
 | `order-claim` | `/mypage/orders/[orderId]/claim` | 반품·교환 신청. 상품 고르기 → 사유·사진 → 수거 세 단계 (#408). 취소는 주문 상세에서 한다 |
 | `review-write` | `/mypage/reviews/write` | 리뷰 작성. 별점과 함께 아이의 실제 반응을 받는다 |
 | `review-detail` | `/mypage/reviews/[reviewId]` | 리뷰 상세 (자리 표시) |
-| `support-inquiries` | `/mypage/support/inquiries` | 1:1 문의 내역 (자리 표시) |
-| `support-notices` | `/mypage/support/notices` | 공지사항 (자리 표시) |
+| `support-inquiries` | `/mypage/support/inquiries` | 1:1 문의 내역과 서비스 문의하기 (예시 내역) |
+| `support-notices` | `/mypage/support/notices` | 공지사항 (예시 공지) |
 | `service` | `/mypage/service` | 서비스 안내. 약관·방침 입구 |
 | `service-terms` | `/mypage/service/terms` | 서비스 이용약관 (예시 조항) |
 | `service-privacy` | `/mypage/service/privacy` | 개인정보 처리방침 (예시 본문) |
