@@ -23,7 +23,7 @@ vi.mock("@/entities/address", async (importOriginal) => ({
   useMutateAddress: () => ({ create, update, isSaving: false }),
 }));
 
-import { readAddressDraft, writeAddressDraft } from "../model/address-draft";
+import { readAddressDraft, toDraftTarget, writeAddressDraft } from "../model/address-draft";
 import { EditAddressView } from "./edit-address-view";
 
 /** 명세 예시 JSON을 옮긴 값 */
@@ -43,6 +43,11 @@ const HOME = {
 const PICKED =
   "roadAddr=%EC%84%9C%EC%9A%B8%ED%8A%B9%EB%B3%84%EC%8B%9C+%EB%A7%88%ED%8F%AC%EA%B5%AC+%EC%96%91%ED%99%94%EB%A1%9C+45&zipNo=04039";
 const PICKED_ROAD = "서울특별시 마포구 양화로 45";
+
+/** 들어온 곳도 채워 둔 이름도 없는 새 배송지 폼의 초안 대상 */
+const NEW_FORM = toDraftTarget(null, null, null);
+/** 저장된 배송지 5를 고치는 폼의 초안 대상 */
+const PLACE_5 = toDraftTarget("5", null, null);
 
 beforeEach(() => {
   // 적다 만 값이 테스트 사이에 남으면 다음 테스트의 폼이 그것으로 선다
@@ -330,6 +335,15 @@ test("고치는 중이면 검색 링크가 place와 돌아갈 곳을 들고 간�
   expect(query.get("from")).toBe("/mypage/address");
 });
 
+// 채워 둔 이름도 들고 가야 돌아올 때 "회사"가 남는다. 저장소가 막히면 초안이 대신하지 못한다 (#476)
+test("빈 자리에서 왔으면 검색 링크가 그 이름을 들고 간다", () => {
+  renderAt("?name=회사");
+
+  const link = screen.getByRole("link", { name: /주소/ }) as HTMLAnchorElement;
+  const query = new URLSearchParams(link.getAttribute("href")!.split("?")[1]);
+  expect(query.get("name")).toBe("회사");
+});
+
 test("새 배송지면 검색 링크에 place가 없다", () => {
   renderAt("");
 
@@ -404,7 +418,7 @@ test("기본이 아닌 배송지는 체크를 바꿀 수 있다", () => {
  * 이름을 먼저 적은 사람은 매번 다시 적어야 했다 (#370).
  */
 test("검색을 다녀오면 적다 만 값이 남아 있다", () => {
-  writeAddressDraft("new", { addressName: "본가", receiver: "전지호" });
+  writeAddressDraft(NEW_FORM, { addressName: "본가", receiver: "전지호" });
 
   const input = renderAt(`?${PICKED}`);
 
@@ -414,7 +428,7 @@ test("검색을 다녀오면 적다 만 값이 남아 있다", () => {
 
 // 주소를 고르지 않고 뒤로 돌아와도 이름·연락처를 다시 적게 하지 않는다 (#457)
 test("주소를 고르지 않고 돌아와도 적다 만 값이 남아 있다", () => {
-  writeAddressDraft("new", { addressName: "본가", receiver: "전지호" });
+  writeAddressDraft(NEW_FORM, { addressName: "본가", receiver: "전지호" });
 
   const input = renderAt("");
 
@@ -424,10 +438,10 @@ test("주소를 고르지 않고 돌아와도 적다 만 값이 남아 있다", 
 
 // 한 번 쓰고 비워야 나중에 새로 들어왔을 때 지웠다고 생각한 옛 값이 돌아오지 않는다 (#457)
 test("한 번 되살린 값은 비워 다시 오지 않는다", () => {
-  writeAddressDraft("new", { addressName: "본가" });
+  writeAddressDraft(NEW_FORM, { addressName: "본가" });
 
   renderAt("");
-  expect(readAddressDraft("new")).toBeNull();
+  expect(readAddressDraft(NEW_FORM)).toBeNull();
 
   cleanup();
   expect(renderAt("").value).toBe("");
@@ -435,11 +449,51 @@ test("한 번 되살린 값은 비워 다시 오지 않는다", () => {
 
 // `집`을 고치다 나가서 새 배송지를 넣으면 집 값이 새 폼에 들어찬다
 test("다른 배송지에 적던 것은 되살리지 않는다", () => {
-  writeAddressDraft("5", { addressName: "본가" });
+  writeAddressDraft(PLACE_5, { addressName: "본가" });
 
   const input = renderAt(`?${PICKED}`);
 
   expect(input.value).toBe("");
+});
+
+/** 폼에 적다가 주소 줄을 눌러 검색하러 떠난다. 검색 화면에서 돌아오지 않은 채 끝낸다 */
+function leaveForSearch(search: string) {
+  renderAt(search);
+  fill([["받는 분 이름", "전지호"]]);
+  fireEvent.click(screen.getByRole("link", { name: /주소/ }));
+  cleanup();
+}
+
+/**
+ * **검색 화면에서 폼으로 돌아오지 않고 떠나면 초안이 남는다.** 새 배송지가 모두 한 대상이던 때는
+ * 빈 "회사" 줄을 눌렀는데 이름이 "집", 받는 분이 앞서 적던 사람으로 채워졌다 (#476)
+ */
+test("다른 빈 자리에서 연 새 폼에는 남은 초안이 들어오지 않는다", () => {
+  leaveForSearch("?name=집&from=%2Fmypage%2Faddress");
+
+  const input = renderAt("?name=회사&from=%2Fmypage%2Faddress");
+
+  expect(input.value).toBe("회사");
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("");
+});
+
+// 결제 화면의 배송지 등록과 배송지 목록의 장소 추가도 서로의 초안을 나눠 쓰지 않는다 (#476)
+test("다른 화면에서 연 새 폼에는 남은 초안이 들어오지 않는다", () => {
+  leaveForSearch("?from=%2Fpayment");
+
+  renderAt("?from=%2Fmypage%2Faddress");
+
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("");
+});
+
+// 검색 화면이 들어온 곳과 이름을 그대로 돌려주면 같은 폼이라 되살아난다 (#476)
+test("빈 자리에서 검색을 다녀와도 적다 만 값이 남아 있다", () => {
+  leaveForSearch("?name=회사&from=%2Fmypage%2Faddress");
+
+  const input = renderAt(`?name=회사&from=%2Fmypage%2Faddress&${PICKED}`);
+
+  expect(input.value).toBe("회사");
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("전지호");
 });
 
 // 떠나기 직전이 적어 둘 마지막 기회다. 라우트가 바뀌면 폼이 사라진다
@@ -449,7 +503,7 @@ test("검색하러 갈 때 적던 값을 적어 둔다", () => {
 
   fireEvent.click(screen.getByRole("link", { name: /주소/ }));
 
-  expect(readAddressDraft("new")?.addressName).toBe("본가");
+  expect(readAddressDraft(NEW_FORM)?.addressName).toBe("본가");
 });
 
 // 저장됐으니 쓸모가 없다. 남겨 두면 다음에 새로 넣을 때 되살아난다.
@@ -457,10 +511,10 @@ test("검색하러 갈 때 적던 값을 적어 둔다", () => {
 test("저장하면 적어 둔 것을 비운다", async () => {
   renderAt("?place=5");
   fireEvent.click(screen.getByRole("link", { name: /주소/ }));
-  expect(readAddressDraft("5")).not.toBeNull();
+  expect(readAddressDraft(PLACE_5)).not.toBeNull();
 
   fireEvent.click(submit());
 
   await waitFor(() => expect(update).toHaveBeenCalled());
-  expect(readAddressDraft("5")).toBeNull();
+  expect(readAddressDraft(PLACE_5)).toBeNull();
 });

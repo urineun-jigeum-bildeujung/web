@@ -5,7 +5,12 @@
 
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-import { clearAddressDraft, readAddressDraft, writeAddressDraft } from "./address-draft";
+import {
+  clearAddressDraft,
+  readAddressDraft,
+  toDraftTarget,
+  writeAddressDraft,
+} from "./address-draft";
 
 const VALUES = {
   addressName: "집",
@@ -40,6 +45,21 @@ test("다른 대상의 것은 읽지 않는다", () => {
 
   expect(readAddressDraft("new")).toBeNull();
   expect(readAddressDraft("5")).toEqual(VALUES);
+});
+
+// 새 배송지끼리 초안을 나눠 쓰지 않는다. 들어온 곳과 채워 둔 이름까지 같아야 같은 폼이다 (#476)
+test("고칠 배송지·들어온 곳·채워 둔 이름 중 하나라도 다르면 다른 대상이다", () => {
+  const target = toDraftTarget(null, "/mypage/address", "집");
+
+  expect(toDraftTarget(null, "/mypage/address", "집")).toBe(target);
+  for (const other of [
+    toDraftTarget("5", "/mypage/address", "집"),
+    toDraftTarget(null, "/payment", "집"),
+    toDraftTarget(null, "/mypage/address", "회사"),
+    toDraftTarget(null, "/mypage/address", null),
+  ]) {
+    expect(other).not.toBe(target);
+  }
 });
 
 test("지우면 없어진다", () => {

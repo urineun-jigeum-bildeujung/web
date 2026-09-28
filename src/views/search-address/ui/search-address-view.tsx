@@ -47,6 +47,8 @@ export function SearchAddressView() {
   const [place] = useQueryState("place");
   // 저장을 마치고 돌아갈 곳. 이 화면은 읽지 않고 그대로 돌려주기만 한다 (#369)
   const [from] = useQueryState("from");
+  // 배송지 화면이 채워 둔 이름(집·회사). 이것도 그대로 돌려주기만 한다 (#476)
+  const [name] = useQueryState("name");
   // 찾은 말과 몇 쪽인지는 주소창에 둔다. 새로고침과 뒤로가기에서 살아남아야 하는 값이다 (AGENTS.md 5.1).
   // 쪽은 화면 구성이 바뀌므로 history를 쌓아 뒤로가기가 앞 쪽으로 돌아가게 한다
   const [query, setQuery] = useQueryState("query", { defaultValue: "" });
@@ -119,6 +121,10 @@ export function SearchAddressView() {
     // **돌아갈 곳도 되돌려준다.** 여기서 잃으면 저장을 마친 사용자가 이 검색 화면으로 온다 (#369)
     if (from) {
       query.set("from", from);
+    }
+    // 채워 둔 이름도 되돌려준다. 빠뜨리면 저장소가 막힌 환경에서 "회사"가 사라진다 (#476)
+    if (name) {
+      query.set("name", name);
     }
     router.push(`/mypage/address/new?${query}`);
   };
