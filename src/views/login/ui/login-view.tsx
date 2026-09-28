@@ -1,52 +1,42 @@
-// 로그인 화면. 아이디·비밀번호로 들어오거나 소셜로 들어온다.
-// UI 시안 기준(sign_001 로그인, 1117-4927)이다.
+// 로그인 화면. 소셜(카카오·구글)로만 들어온다.
+// UI 시안 기준(sign_001 로그인, 3574-80319)이다 (#463).
 //
-// 시안에는 소셜이 넷(카카오·네이버·애플·구글) 그려져 있으나 인증 정책은 카카오·구글로
-// 확정돼 둘만 둔다. 실제 인증은 백엔드 방식이 정해져야 붙는다.
+// 시안의 소셜은 카카오·네이버인데 인증 정책이 카카오·구글로 확정돼 네이버 자리에 구글을 둔다.
+// 구글 버튼은 시안이 없어 구글 브랜드 가이드(흰 바탕·테두리)대로 카카오와 같은 모양으로 맞췄다.
 //
-// 소셜 로고는 디자인 시스템 아이콘 세트 밖이라 react-icons 브랜드 글리프를 쓴다.
-// (RiKakaoTalkFill · FcGoogle)
+// 카카오 로고는 시안 SVG이고, 구글 로고는 디자인 시스템 아이콘 세트 밖이라 react-icons 브랜드
+// 글리프(FcGoogle)를 쓴다.
 
-"use client";
-
-import Link from "next/link";
-import { useState } from "react";
+import Image from "next/image";
 import { FcGoogle } from "react-icons/fc";
-import { RiKakaoTalkFill } from "react-icons/ri";
 
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
-import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
-import { FormField } from "@/shared/ui/form-field/form-field";
 
 import { socialLoginUrl } from "../config/oauth";
 
-// 브랜드 색은 아이콘 자체가 들고 있어 배경에 HEX를 쓰지 않는다.
-// 카카오는 노란 바탕에 검은 말풍선이라 원형 배경이 필요한데, 그 색만 토큰으로 뺐다
+// 시안 글자는 15px SemiBold인데 맞는 토큰이 없어 다른 주요 버튼과 같은 label-bold-16을 쓴다.
+// 카카오 글자는 다크 모드에서도 노란 바탕 위라 모드에 따라 바뀌지 않는 검정이다
 const SOCIALS = [
   {
     id: "kakao",
-    label: "카카오로 시작하기",
-    icon: <RiKakaoTalkFill aria-hidden className="size-6 text-black" />,
-    className: "bg-kakao",
+    label: "카카오 로그인",
+    icon: (
+      // 18×18짜리 SVG라 최적화로 얻을 것이 없고 `/_next/image` 왕복만 는다(TossPayLogo와 같은 판단)
+      <Image src="/images/login/kakao.svg" alt="" width={18} height={18} unoptimized />
+    ),
+    className: "bg-kakao text-text-label-static-black",
   },
   {
     id: "google",
-    label: "구글로 시작하기",
+    label: "구글 로그인",
     icon: <FcGoogle aria-hidden className="size-4.5" />,
-    className: "border border-border-default bg-background",
+    className: "border border-border-default bg-background text-foreground",
   },
 ] as const;
 
 export function LoginView() {
-  const [loginId, setLoginId] = useState("");
-  const [password, setPassword] = useState("");
-  const [autoLogin, setAutoLogin] = useState(true);
-
-  const canSubmit = loginId.trim().length > 0 && password.length > 0;
-
   return (
-    <div className="flex min-h-dvh flex-col px-5 pt-15">
+    <div className="flex min-h-dvh flex-col px-5 pt-24">
       <header className="flex flex-col gap-2">
         <h1 className="text-title-bold-24 text-foreground">
           우리 아이 맞춤 사료
@@ -60,64 +50,7 @@ export function LoginView() {
         </p>
       </header>
 
-      <form
-        className="flex flex-col pt-13"
-        onSubmit={(event) => {
-          event.preventDefault();
-          // 백엔드 인증 방식 확정 전이라 아직 보내지 않는다
-        }}
-      >
-        {/* 시안은 레이블과 입력 사이가 4px이다. 온보딩(12px)보다 좁다 */}
-        <FormField
-          label="아이디"
-          className="gap-1"
-          value={loginId}
-          onChange={(event) => setLoginId(event.target.value)}
-          autoComplete="username"
-        />
-        <FormField
-          label="비밀번호"
-          className="gap-1 pt-4"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          autoComplete="current-password"
-        />
-
-        {/* 시안은 입력·체크·버튼 사이가 12px씩이다. 체크 줄은 탭 영역 44px 안에 24px 원이
-            가운데 있어 위아래 10px이 이미 들어 있으므로 2px만 더한다 */}
-        <div className="flex flex-col gap-0.5 pt-0.5">
-          <CheckboxRow
-            label="자동로그인"
-            checked={autoLogin}
-            onCheckedChange={setAutoLogin}
-            labelClassName="text-body-regular-14"
-          />
-
-          {/* 시안의 button/xl. 비활성은 흐려지지 않고 회색으로 채워진다 */}
-          <Button
-            type="submit"
-            className="h-11 text-label-bold-16 disabled:bg-surface-disable disabled:text-text-label-disable disabled:opacity-100"
-            disabled={!canSubmit}
-          >
-            로그인
-          </Button>
-        </div>
-      </form>
-
-      {/* 아이디·비밀번호 찾기는 갈 화면이 아직 시안에 없다. 링크를 걸면 404가 되고
-          버튼으로 두면 눌러도 아무 일이 없어 고장으로 읽힌다 — ListRowStatic과 같은 판단이다 */}
-      <p className="flex items-center justify-center gap-2 pt-5 text-body-medium-14 text-foreground">
-        <span className="flex min-h-11 w-20 items-center justify-center">아이디 찾기</span>
-        <span aria-hidden className="h-3 w-px bg-border-default" />
-        <span className="flex min-h-11 w-20 items-center justify-center">비밀번호 찾기</span>
-        <span aria-hidden className="h-3 w-px bg-border-default" />
-        <Link href="/signup" className="flex min-h-11 w-20 items-center justify-center">
-          회원가입
-        </Link>
-      </p>
-
-      <div className="flex items-center justify-center gap-10 pt-15 pb-10">
+      <div className="flex flex-col gap-4 pt-29">
         {SOCIALS.map((social) => (
           // 인증 제공자 화면으로 리다이렉트되는 흐름이라 fetch가 아니라 브라우저를 통째로
           // 보낸다. 이동이므로 button이 아니라 a다 — 새 탭·복사 같은 기본 동작도 따라온다.
@@ -125,14 +58,14 @@ export function LoginView() {
           <a
             key={social.id}
             href={socialLoginUrl(social.id)}
-            aria-label={social.label}
             className={cn(
-              "flex size-11 items-center justify-center rounded-full",
+              "flex h-12 items-center justify-center gap-2 rounded-md text-label-bold-16",
               "transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
               social.className,
             )}
           >
             {social.icon}
+            {social.label}
           </a>
         ))}
       </div>
