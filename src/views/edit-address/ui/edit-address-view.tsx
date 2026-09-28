@@ -30,7 +30,12 @@ import { Icon } from "@/shared/ui/icon/icon";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 import { Skeleton } from "@/shared/ui/skeleton";
 
-import { clearAddressDraft, readAddressDraft, writeAddressDraft } from "../model/address-draft";
+import {
+  clearAddressDraft,
+  readAddressDraft,
+  toDraftTarget,
+  writeAddressDraft,
+} from "../model/address-draft";
 import {
   ADDRESS_FIELD_MAX,
   addressFormSchema,
@@ -109,13 +114,18 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const returnTo = toInternalPath(from);
 
   // 고칠 대상(place)과 돌아갈 곳(from)을 검색 화면에 들려 보낸다. `place`를 빠뜨리면 돌아올 때
-  // `집 수정`이 `새 배송지`로 바뀌어 고치던 배송지를 잃고(#187), `from`을 빠뜨리면 돌아갈 곳을 잃는다
+  // `집 수정`이 `새 배송지`로 바뀌어 고치던 배송지를 잃고(#187), `from`을 빠뜨리면 돌아갈 곳을 잃는다.
+  // 채워 둔 이름(name)도 들려 보낸다. 빠뜨리면 저장소가 막힌 환경에서 주소를 고르고 올 때 "회사"가
+  // 사라지고, 아래 초안의 대상도 달라져 되살아나지 않는다 (#476)
   const searchQuery = new URLSearchParams();
   if (place) {
     searchQuery.set("place", place);
   }
   if (returnTo) {
     searchQuery.set("from", returnTo);
+  }
+  if (presetName) {
+    searchQuery.set("name", presetName);
   }
   // `URLSearchParams.size`는 Safari 17부터라 쓰지 않는다. 옛 기기에서 조용히 거짓이 되어
   // `place`와 `from`이 통째로 빠진 링크가 된다
@@ -154,8 +164,9 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const values = useWatch({ control });
   const isFilled = addressFormSchema.safeParse(values).success;
 
-  // 무엇을 고치던 중인지. 대상이 같을 때만 적어 둔 것을 되살린다
-  const draftTarget = place ?? "new";
+  // 무엇을 고치던 중인지. 대상이 같을 때만 적어 둔 것을 되살린다. 들어온 곳과 채워 둔 이름까지
+  // 같아야 한다 — 새 배송지끼리 초안을 나눠 쓰지 않게 (#476)
+  const draftTarget = toDraftTarget(place, returnTo, presetName);
 
   /**
    * **검색 화면에 다녀왔으면 적다 만 것을 되살린다** (#370). 주소를 골라 왔든 고르지 않고

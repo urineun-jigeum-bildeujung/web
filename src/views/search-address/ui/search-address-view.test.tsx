@@ -213,6 +213,18 @@ test("돌아갈 곳(from)을 그대로 돌려준다", async () => {
   expect(url.searchParams.get("from")).toBe("/payment/address");
 });
 
+// 배송지 목록의 빈 회사 줄에서 온 경우다. 잃으면 저장소가 막힌 환경에서 "회사"가 사라진다 (#476)
+test("채워 둔 이름(name)을 그대로 돌려준다", async () => {
+  renderAt("?name=%ED%9A%8C%EC%82%AC");
+
+  searchFor("테헤란로");
+  fireEvent.click(firstResult());
+  fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
+
+  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  expect(url.searchParams.get("name")).toBe("회사");
+});
+
 test("새 배송지면 place를 붙이지 않는다", async () => {
   renderAt();
 

@@ -35,6 +35,17 @@ const draftSchema = z.object({
 const storedSchema = z.object({ target: z.string(), values: draftSchema });
 
 /**
+ * 초안의 대상. 고칠 배송지(`place`)와 들어온 곳(`from`), 채워 둔 이름(`name`)이 모두 같아야 같은 폼이다.
+ *
+ * **고칠 배송지만 보면 새 배송지는 모두 한 대상이다.** 장소 추가, 결제 화면의 배송지 등록, 빈 집·회사
+ * 줄이 초안 하나를 나눠 썼다. 검색 화면에서 폼으로 돌아오지 않고 떠나면 남은 초안이 다음 새 폼에
+ * 들어왔다 — 빈 "회사" 줄을 눌렀는데 이름이 "집" (#476)
+ */
+export function toDraftTarget(place: string | null, from: string | null, name: string | null) {
+  return JSON.stringify([place, from, name]);
+}
+
+/**
  * 적어 둔 것을 읽는다. 없거나 다른 대상의 것이면 `null`이다.
  *
  * **대상이 같을 때만 쓴다.** `집`을 고치다 나가서 새 배송지를 넣으면 집 값이 새 폼에 들어찬다.
