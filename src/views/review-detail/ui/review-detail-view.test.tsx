@@ -27,7 +27,7 @@ vi.mock("@/entities/pet", () => ({
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
 const { toggleWish, wish } = vi.hoisted(() => ({
   toggleWish: vi.fn(),
-  wish: { status: undefined as boolean | undefined },
+  wish: { status: undefined as boolean | undefined, loading: false },
 }));
 vi.mock("@/features/toggle-wishlist", () => ({
   useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
@@ -35,6 +35,7 @@ vi.mock("@/features/toggle-wishlist", () => ({
 vi.mock("@/entities/wishlist", () => ({
   useQueryWishlistStatus: (productId: number) => ({
     wished: productId === 7 ? wish.status : undefined,
+    isLoading: wish.loading,
   }),
 }));
 
@@ -144,6 +145,15 @@ test("구매 줄의 하트는 이 후기 상품의 찜 여부로 채우고 누�
   fireEvent.click(heart);
   expect(toggleWish).toHaveBeenCalledWith(7, false);
   wish.status = undefined;
+});
+
+// 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
+test("구매 줄의 하트는 찜 여부를 받는 동안 누를 수 없다", () => {
+  wish.loading = true;
+  render(<ReviewDetailView reviewId="1" showPurchaseBar />);
+
+  expect(screen.getByRole("button", { name: "찜 목록에 담기" })).toHaveProperty("disabled", true);
+  wish.loading = false;
 });
 
 test("없는 리뷰는 찾을 수 없다고 알리고 다시 시도를 두지 않는다", () => {

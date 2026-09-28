@@ -234,7 +234,7 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
   const related = use(productsPromise);
   // 찜은 서버에 저장한다(#483). 검색 결과와 같이 전체 찜 목록으로 하트를 채운다
   const heart = useToggleWishlist();
-  const wishedIds = useWishedProductIds();
+  const { wishedIds, isLoading: isLoadingWishes } = useWishedProductIds();
 
   if (related.length === 0) {
     return null;
@@ -264,6 +264,7 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
                   <CardHeartButton
                     name={item.name}
                     wished={wishedIds.has(item.productId)}
+                    loading={isLoadingWishes}
                     onToggle={() =>
                       heart.toggle(
                         item.productId,
@@ -325,9 +326,8 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도
   // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인으로 보낸다
   const heart = useToggleWishlist();
-  const { wished: liked = false } = useQueryWishlistStatus(product.productId, {
-    enabled: heart.signedIn,
-  });
+  const wishStatus = useQueryWishlistStatus(product.productId, { enabled: heart.signedIn });
+  const liked = wishStatus.wished ?? false;
   const toggleLike = () => {
     const next = !liked;
     // 좋아요 탭 목록에 먼저 넣을 줄. 찜 목록은 정상가로 오므로 딜가가 붙은 타임딜 상세면 넣지 않고
@@ -650,15 +650,26 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
             type="button"
             aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
             aria-pressed={liked}
-            // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
+            // 찜 여부를 받는 동안은 누를 수 없다 — PATCH가 토글이라 모르는 채로 누르면 서버의 찜이 지워진다(#493 리뷰). 받은 뒤에는 낙관적 갱신이라 누르는 즉시 바뀐다
+            disabled={wishStatus.isLoading}
             onClick={toggleLike}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {liked ? (
-              <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
-            ) : (
-              <Icon name="heart_stroke" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-            )}
+            <LoadingSwap
+              loading={wishStatus.isLoading}
+              label="찜 여부를 불러오는 중"
+              spinnerClassName="size-5"
+            >
+              {liked ? (
+                <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
+              ) : (
+                <Icon
+                  name="heart_stroke"
+                  aria-hidden
+                  className="size-6 text-icon-stroke-tertiary"
+                />
+              )}
+            </LoadingSwap>
           </button>
         )}
         {isDealActive ? (

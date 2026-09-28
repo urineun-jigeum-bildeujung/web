@@ -212,9 +212,8 @@ function ReactionRow() {
 function PurchaseBar({ productId }: { productId: string }) {
   const router = useRouter();
   const heart = useToggleWishlist();
-  const { wished: liked = false } = useQueryWishlistStatus(Number(productId), {
-    enabled: heart.signedIn,
-  });
+  const wishStatus = useQueryWishlistStatus(Number(productId), { enabled: heart.signedIn });
+  const liked = wishStatus.wished ?? false;
   const goToProduct = () => router.push(`/products/${productId}`);
 
   return (
@@ -223,7 +222,8 @@ function PurchaseBar({ productId }: { productId: string }) {
         type="button"
         aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
         aria-pressed={liked}
-        // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
+        // 찜 여부를 받는 동안은 누를 수 없다 — PATCH가 토글이라 모르는 채로 누르면 서버의 찜이 지워진다(#493 리뷰). 받은 뒤에는 낙관적 갱신이라 누르는 즉시 바뀐다
+        disabled={wishStatus.isLoading}
         onClick={() => {
           if (heart.toggle(Number(productId), !liked) && !liked) {
             showSnackbar("해당 상품을 찜 목록에 담았어요!");
@@ -231,11 +231,17 @@ function PurchaseBar({ productId }: { productId: string }) {
         }}
         className="flex size-12 flex-none! items-center justify-center rounded-2xl border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >
-        {liked ? (
-          <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
-        ) : (
-          <Icon name="heart_stroke" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-        )}
+        <LoadingSwap
+          loading={wishStatus.isLoading}
+          label="찜 여부를 불러오는 중"
+          spinnerClassName="size-5"
+        >
+          {liked ? (
+            <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
+          ) : (
+            <Icon name="heart_stroke" aria-hidden className="size-6 text-icon-stroke-tertiary" />
+          )}
+        </LoadingSwap>
       </button>
       <Button variant="secondary" className="h-12" onClick={goToProduct}>
         장바구니

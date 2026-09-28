@@ -7,8 +7,8 @@
 | `api/wishlist.ts` | 카테고리별 목록 조회(`getWishlist`)·상품 하나의 찜 여부(`getWishlistStatus`)·토글(`toggleWishlist`) 요청 함수와 `WishlistItem` 타입 |
 | `api/wishlist.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
 | `api/use-query-wishlist.ts` | 찜 목록을 가져오는 훅. `enabled`로 조건부 조회한다 |
-| `api/use-query-wishlist-status.ts` | 상품 하나의 찜 여부를 가져오는 훅. 로그인했을 때만 `enabled`로 켠다 (#483) |
-| `api/use-query-wishlist-status.test.tsx` | 받은 여부를 돌려주는지, 꺼져 있으면 묻지 않는지 |
+| `api/use-query-wishlist-status.ts` | 상품 하나의 찜 여부를 가져오는 훅. 로그인했을 때만 `enabled`로 켜고, 꺼 두면 남은 캐시를 내주지 않는다. 받는 동안(`isLoading`)은 화면이 하트를 막는다 — 토글이라 모르는 채로 누르면 서버의 찜이 지워진다 (#483) |
+| `api/use-query-wishlist-status.test.tsx` | 받은 여부를 돌려주는지, 꺼져 있으면 묻지 않는지, 받는 중을 알리는지 |
 | `api/use-mutate-wishlist.ts` | 찜 해제(`remove`)·토글(`toggle`) 훅. 찜 목록(전체·카테고리별)과 찜 여부를 함께 낙관적으로 갱신한다 |
 | `api/use-mutate-wishlist.test.tsx` | 해제·토글의 낙관적 갱신·실패 시 복구·재동기화 시점·재시도 안 함을 실제 `QueryClient`로 본다 |
 | `index.ts` | 공개 API |

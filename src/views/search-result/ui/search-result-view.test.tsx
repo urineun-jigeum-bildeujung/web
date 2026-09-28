@@ -17,12 +17,12 @@ vi.mock("next/navigation", () => ({
 // 찜은 서버에 저장한다(#483). 로그인·찜 목록은 서버 상태라 값만 세운다. 하트 버튼은 진짜를 그린다
 const { toggle, wished } = vi.hoisted(() => ({
   toggle: vi.fn(),
-  wished: { ids: new Set<number>() },
+  wished: { ids: new Set<number>(), loading: false },
 }));
 vi.mock("@/features/toggle-wishlist", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/toggle-wishlist")>()),
   useToggleWishlist: () => ({ signedIn: true, toggle }),
-  useWishedProductIds: () => wished.ids,
+  useWishedProductIds: () => ({ wishedIds: wished.ids, isLoading: wished.loading }),
 }));
 
 import { SearchResultView } from "./search-result-view";
@@ -240,5 +240,18 @@ describe("SearchResultView", () => {
 
     expect(await screen.findByText("문제가 생겼어요")).toBeDefined();
     expect(onError).toHaveBeenCalled();
+  });
+
+  // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
+  it("찜 목록을 받는 동안은 하트를 누를 수 없다", async () => {
+    toggle.mockClear();
+    wished.loading = true;
+    await renderWith("?q=퍼피");
+
+    const heart = await screen.findByRole("button", { name: /퍼피 성장기 사료 1kg 찜하기/ });
+    expect(heart).toHaveProperty("disabled", true);
+    fireEvent.click(heart);
+    expect(toggle).not.toHaveBeenCalled();
+    wished.loading = false;
   });
 });

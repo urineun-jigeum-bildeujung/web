@@ -37,16 +37,21 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부·찜 목록은 서버 상태라 값만 세운다. 하트 버튼은 진짜를 그린다
 const { toggleWish, wish } = vi.hoisted(() => ({
   toggleWish: vi.fn(),
-  wish: { status: undefined as boolean | undefined, ids: new Set<number>() },
+  wish: {
+    status: undefined as boolean | undefined,
+    statusLoading: false,
+    ids: new Set<number>(),
+    listLoading: false,
+  },
 }));
 vi.mock("@/features/toggle-wishlist", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/toggle-wishlist")>()),
   useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
-  useWishedProductIds: () => wish.ids,
+  useWishedProductIds: () => ({ wishedIds: wish.ids, isLoading: wish.listLoading }),
 }));
 vi.mock("@/entities/wishlist", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/wishlist")>()),
-  useQueryWishlistStatus: () => ({ wished: wish.status }),
+  useQueryWishlistStatus: () => ({ wished: wish.status, isLoading: wish.statusLoading }),
 }));
 vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
@@ -447,7 +452,27 @@ describe("ProductDetailView", () => {
   describe("찜 (#483)", () => {
     beforeEach(() => {
       wish.status = undefined;
+      wish.statusLoading = false;
       wish.ids = new Set();
+      wish.listLoading = false;
+    });
+
+    // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
+    it("찜 여부를 받는 동안은 하트를 누를 수 없고 대기를 알린다", async () => {
+      wish.statusLoading = true;
+      wish.listLoading = true;
+      await renderWith();
+
+      const bottom = screen.getByRole("button", { name: "찜 목록에 담기" });
+      expect(bottom).toHaveProperty("disabled", true);
+      fireEvent.click(bottom);
+      expect(toggleWish).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole("button", { name: "연어&감자 그레인프리 사료 2kg 찜하기" }),
+      ).toHaveProperty("disabled", true);
+      expect(
+        screen.getAllByRole("status", { name: "찜 여부를 불러오는 중" }).length,
+      ).toBeGreaterThan(0);
     });
 
     it("찜한 상품이면 채운 하트로 들어온다", async () => {

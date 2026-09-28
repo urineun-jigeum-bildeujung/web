@@ -8,28 +8,37 @@
 // 44px로 넓힌다(32+6*2=44).
 
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
 type CardHeartButtonProps = {
   /** 상품 이름. 화면 낭독기가 "○○ 찜하기"로 읽는다 */
   name: string;
   wished: boolean;
+  /**
+   * 찜 여부를 받는 중. 누를 수 없게 막고 하트 자리에 대기를 보인다 — 모르는 채로 누르면 토글이
+   * 서버의 찜을 지울 수 있다(#493 리뷰)
+   */
+  loading?: boolean;
   onToggle: () => void;
 };
 
-export function CardHeartButton({ name, wished, onToggle }: CardHeartButtonProps) {
+export function CardHeartButton({ name, wished, loading = false, onToggle }: CardHeartButtonProps) {
   return (
     <button
       type="button"
       onClick={onToggle}
       aria-pressed={wished}
       aria-label={`${name} 찜하기`}
+      disabled={loading}
       className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-dimmed text-icon-fill-static-white after:absolute after:-inset-1.5"
     >
-      {wished ? (
-        <Icon name="heart_fill" aria-hidden className="size-6" />
-      ) : (
-        <Icon name="heart_stroke" aria-hidden className="size-6" />
-      )}
+      <LoadingSwap loading={loading} label="찜 여부를 불러오는 중" spinnerClassName="size-5">
+        {wished ? (
+          <Icon name="heart_fill" aria-hidden className="size-6" />
+        ) : (
+          <Icon name="heart_stroke" aria-hidden className="size-6" />
+        )}
+      </LoadingSwap>
     </button>
   );
 }
