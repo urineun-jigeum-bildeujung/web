@@ -92,6 +92,8 @@ test("주문 완료에 주문번호와 주문 상세로 가는 길이 있다", a
     route.fulfill({
       json: {
         paymentId: 1,
+        // 승인 응답이 숫자 주문 id를 준다 (#374). 빼 두면 실제 서버와 다른 모양을 시험한다 (#476)
+        orderId: 77,
         orderNumber: "ORD-E2E-0001",
         paymentStatus: "DONE",
         amount: 12345,

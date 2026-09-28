@@ -104,8 +104,8 @@ beforeEach(() => {
 /** 결제 화면이 주문과 함께 적어 둔 장바구니 줄 */
 const PAID_LINES = [{ itemType: "NORMAL" as const, itemId: 1 }];
 
-function holdPendingOrder() {
-  writePendingOrder({ signature: "x", idempotencyKey: "k", orderId: 77, cartItems: PAID_LINES });
+function holdPendingOrder(orderId: number | null = 77) {
+  writePendingOrder({ signature: "x", idempotencyKey: "k", orderId, cartItems: PAID_LINES });
 }
 
 /** 화면이 라우트에서 받는 값들 */
@@ -137,6 +137,40 @@ test("다시 그려져도 한 번만 뺀다", () => {
   rerender(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(removePaidCartItems).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * **뒤로가기로 옛 완료 화면에 다시 들어온 경우다.** 승인 결과는 캐시에 남아 있어 바로 채워지고,
+ * 탭에 든 것은 그 뒤에 시작한 다른 결제의 주문이다. 꺼내면 아직 사지 않은 줄이 빠지고, 비우면
+ * 그 주문을 풀어 줄 id를 잃는다 (#476).
+ */
+test("다른 주문의 완료 화면에 다시 들어와도 들고 있는 주문과 장바구니를 건드리지 않는다", () => {
+  holdPendingOrder(103);
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(removePaidCartItems).not.toHaveBeenCalled();
+  expect(readPendingOrder()?.orderId).toBe(103);
+});
+
+// 주소창의 `?order=`는 사용자가 바꿀 수 있다. 승인한 주문이 아니면 그 줄을 산 것이 아니다 (#476)
+test("승인한 주문이 들고 있던 주문과 다르면 장바구니 줄을 빼지 않는다", () => {
+  holdPendingOrder(103);
+
+  render(<CheckoutDoneView {...QUERY} orderId={103} />);
+
+  expect(removePaidCartItems).not.toHaveBeenCalled();
+});
+
+// 주소창으로 직접 들어오면 어느 주문의 완료 화면인지 모른다. 아직 만들지 못한 주문도 건드리지 않는다.
+// 라우트는 `?order=`가 없으면 `null`을 넘긴다(`readOrderId`)
+test("주소창에 주문 id가 없으면 들고 있는 주문을 비우지 않는다", () => {
+  holdPendingOrder(null);
+
+  render(<CheckoutDoneView {...QUERY} orderId={null} />);
+
+  expect(removePaidCartItems).not.toHaveBeenCalled();
+  expect(readPendingOrder()).not.toBeNull();
 });
 
 // 서버가 배송 예정일을 주지 않는다. 시안 문구를 그대로 두면 지난 날짜가 모든 주문에 뜬다 (#262)
@@ -320,6 +354,8 @@ test("승인이 막히면 장바구니 줄을 빼지 않는다", () => {
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(removePaidCartItems).not.toHaveBeenCalled();
+  // 들고 있던 주문은 비운다. 그 주문은 이미 결제창을 거쳐 새 결제를 붙일 자리가 아니다 (#367)
+  expect(readPendingOrder()).toBeNull();
 });
 
 /**
