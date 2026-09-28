@@ -15,7 +15,18 @@ test("들어오면 바로 칠 수 있고 글자를 넣으면 추천어가 나온
   await expect(page.getByText("최근 검색어")).toBeHidden();
 });
 
+// 검색한 적 없는 사람에게는 예시를 보이지 않는다. 기기에 남은 검색어로 시작한다 (#479)
+test("검색한 적이 없으면 최근 검색어가 비어 있다", async ({ page }) => {
+  await page.goto("/search");
+
+  await expect(page.getByText("최근에 검색한 내역이 없어요")).toBeVisible();
+  await expect(page.getByRole("button", { name: "전체삭제" })).toBeHidden();
+});
+
 test("최근 검색어를 지우면 비었다고 알린다", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("recent-keywords", JSON.stringify(["저자극 덴탈껌", "양치 껌"]));
+  });
   await page.goto("/search");
 
   await page.getByLabel("양치 껌 검색 기록 지우기").click();

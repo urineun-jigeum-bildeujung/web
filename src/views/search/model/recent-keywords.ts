@@ -9,15 +9,6 @@
 
 const KEY = "recent-keywords";
 
-/** 시안(검색 화면_검색 전)에 그려진 다섯 개. 저장된 것이 없을 때 보여준다 */
-export const INITIAL_RECENT = [
-  "저자극 덴탈껌",
-  "중소형견 사료",
-  "사료",
-  "고양이 화장실 모래",
-  "양치 껌",
-];
-
 /** IA가 "최대 5개"로 못 박고 있다 */
 export const MAX_RECENT = 5;
 
@@ -28,15 +19,15 @@ const listeners = new Set<() => void>();
 function load(): string[] {
   try {
     const saved = window.localStorage.getItem(KEY);
-    if (!saved) return INITIAL_RECENT;
+    if (!saved) return [];
 
     const parsed: unknown = JSON.parse(saved);
-    if (!Array.isArray(parsed)) return INITIAL_RECENT;
+    if (!Array.isArray(parsed)) return [];
 
     return parsed.filter((item): item is string => typeof item === "string").slice(0, MAX_RECENT);
   } catch {
     // 저장을 막아 둔 브라우저이거나 값이 깨졌다. 검색을 막을 이유는 없다
-    return INITIAL_RECENT;
+    return [];
   }
 }
 
@@ -52,9 +43,14 @@ export function getRecent(): string[] {
   return cache;
 }
 
-/** 프리렌더에는 저장소가 없다. 시안 값으로 그려 두고 붙은 뒤 저장된 것으로 바꾼다 */
-export function getRecentOnServer(): string[] {
-  return INITIAL_RECENT;
+/**
+ * 프리렌더에는 저장소가 없다. 아직 모른다(`null`)고 그려 두고 붙은 뒤 저장된 것으로 바꾼다.
+ *
+ * **시안 예시를 대신 그리지 않는다.** 그러면 검색한 적 없는 사람에게도 "고양이 화장실 모래" 같은
+ * 말이 최근 검색어로 뜬다 — 저장된 것이 없을 때도 예시를 돌려주던 때 그랬다 (#479)
+ */
+export function getRecentOnServer(): string[] | null {
+  return null;
 }
 
 export function setRecent(next: string[]) {
