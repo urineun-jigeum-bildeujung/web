@@ -1,5 +1,5 @@
 // 결제하기. 어디로 보낼지, 무엇을 얼마에 사는지, 어떻게 낼지를 한 화면에서 확인한다.
-// UI 시안 기준(paym_001 421:16488, paym_001_드롭다운, paym_001_직접입력)이다.
+// UI 페이지 시안 기준(paym_001 1586:23984, paym_001_드롭다운 1586:24254, paym_001_직접입력)이다.
 //
 // **결제 방법 자리는 시안이 라디오 5종과 페이 로고 3종을 그렸지만 그리지 않는다.**
 // 그 자리는 토스 결제위젯이 차지한다 (#212). 섹션 제목과 여백만 시안에 맞춘다.
@@ -536,9 +536,9 @@ export function CheckoutView() {
                   <dd className="text-title-bold-16 text-surface-primary">{formatWon(total)}</dd>
                 </div>
               </dl>
-              {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
-                  금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
-                  임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
+              {/* 시안(`paym_001`)이 이 자리를 "상품 옵션"이라 부른다. 같은 자리를 주문 완료는
+                  "판매 금액", 장바구니는 "판매가격"이라 불러 화면마다 다르다. 화면에 그대로 나가는
+                  문구라 임의로 맞추지 않고 화면마다 시안을 따른다. */}
               <dl className="flex flex-col gap-1 text-body-medium-14 text-text-body-secondary">
                 <div className="flex items-center justify-between gap-2">
                   <dt>상품 옵션</dt>

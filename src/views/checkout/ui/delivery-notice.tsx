@@ -1,5 +1,5 @@
 // 언제 도착하는지 한 줄로 알린다. 결제 전에 가장 궁금한 값이라 결제 정보 맨 위에 둔다.
-// UI 시안 기준(paym_001 502:17151)이다.
+// UI 페이지 시안 기준(paym_001 1586:23984)이다.
 
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";

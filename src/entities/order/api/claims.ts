@@ -1,8 +1,8 @@
 // 반품·교환 신청 API.
 //
-// **규격은 로컬 백엔드 소스에서 옮겼다** (`order-service`의 `adapter/in/web/claim`). 명세 화면에는
-// 이 엔드포인트 행이 없어 `CreateClaimRequest`·`CreateClaimResponse`와 `CreateClaimService`를
-// 직접 읽었다 (#327).
+// **규격은 로컬 백엔드 소스에서 옮겼다** (`order-service`의 `adapter/in/web/claim`). 명세 화면에
+// 이 엔드포인트 행이 없던 때라 `CreateClaimRequest`·`CreateClaimResponse`와 `CreateClaimService`를
+// 직접 읽었다 (#327). 9/19부터 행이 생겼지만 필수인 `reasonCode`가 빠져 있어 소스가 기준이다.
 //
 // 서버가 거는 조건이라 화면이 먼저 막아 주는 편이 낫다.
 //
@@ -19,8 +19,8 @@ import type { PresignedUpload } from "@/shared/api/upload-image";
 /**
  * 신청 유형. 백엔드 `ClaimType` 그대로다.
  *
- * **`CANCEL`은 이 경로로 보내지 않는다.** 클레임은 배송완료 주문만 받으므로 취소를 여기로
- * 보내면 늘 `ORDER_409_NOT_CLAIMABLE`이다. 주문 취소는 `cancelOrder`다.
+ * **`CANCEL`은 이 경로로 보내지 않는다.** 서버 `ClaimType`에는 있고 배송완료 7일 안이면 받기도
+ * 하지만, 주문 취소는 배송 전에 `cancelOrder`로 한다. 화면에 이 경로로 취소할 자리가 없다.
  */
 export const CLAIM_TYPES = ["RETURN", "EXCHANGE"] as const;
 export type ClaimType = (typeof CLAIM_TYPES)[number];

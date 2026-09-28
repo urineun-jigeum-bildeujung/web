@@ -12,8 +12,8 @@ import { getOrders, type GetOrdersParams } from "./orders";
  * **서버 컴포넌트로 두지 않는 이유는 토큰이다.** 토큰이 클라이언트 저장소에 있어 서버에서
  * `Authorization`을 붙일 수 없고, 사람마다 내용이 달라 캐시할 것도 아니다 (AGENTS.md 5.2).
  *
- * **커서 페이지네이션이라 이어 부른다.** 한 번에 오는 것은 기본 10건이라 그것만 그리면
- * 열한 번째 주문부터는 볼 길이 없다. `nextCursor`는 백엔드가
+ * **커서 페이지네이션이라 이어 부른다.** 한 번에 오는 것은 기본 20건이라 그것만 그리면
+ * 스물한 번째 주문부터는 볼 길이 없다. `nextCursor`는 백엔드가
  * `Base64(orderedAt + ":::" + orderId)`로 만든 값이라 받은 그대로 다시 보낸다 (#288).
  */
 export function useQueryOrders({ size }: Pick<GetOrdersParams, "size"> = {}) {
