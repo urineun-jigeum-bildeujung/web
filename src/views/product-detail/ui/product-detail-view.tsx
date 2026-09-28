@@ -495,12 +495,9 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
           </TabsContent>
 
           <TabsContent value="review">
-            <ReviewPanel
-              productId={productId}
-              rating={product.rating}
-              reviewCount={product.reviewCount}
-              petProfileLabel={match.profileLabel}
-            />
+            {/* 별점 요약도 리뷰 목록 응답(`averageRating`·`totalCount`)에서 받는다.
+                상품 응답의 값과 출처를 나누면 탭 안팎이 어긋날 수 있어 한쪽으로 모은다 */}
+            <ReviewPanel productId={productId} />
           </TabsContent>
 
           <TabsContent value="qna">

@@ -259,6 +259,118 @@ const PRODUCT_NOT_FOUND = {
   errorCode: "PRODUCT_404_PRODUCT_NOT_FOUND",
 };
 
+/**
+ * 리뷰(#339). 상품 상세의 리뷰 탭과 사진 모음 화면이 브라우저에서 직접 부른다.
+ *
+ * **실제 백엔드 응답 모양 그대로다.** 목록에는 `hasNext`가 없고 `totalCount`만 오며,
+ * 사진 없는 후기의 `images`는 빈 배열이 아니라 `null`, 닉네임을 못 찾은 회원은 빈 문자열,
+ * 고양이는 `breedSize`가 `null`이다. 공개 리뷰 상세에는 `nickname`·`likeCount`가 없다.
+ *
+ * 사진 주소는 로컬 파일이라 next/image의 remotePatterns를 타지 않는다.
+ */
+const REVIEW_PHOTO_URLS = ["/images/e2e/product-photo-1.png", "/images/e2e/product-photo-2.png"];
+
+/** 7번 후기가 사진 두 장(아이 두 마리), 9번이 한 장, 11번은 사진 없음 */
+const REVIEWS = [
+  {
+    reviewId: 7,
+    nickname: "댕댕이맘",
+    pets: [
+      { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG" },
+      { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT" },
+    ],
+    rating: 4.5,
+    usagePeriod: "21일",
+    palatability: null,
+    text: "확실히 예전보다 계단 오를 때 덜 힘들어해요.",
+    images: REVIEW_PHOTO_URLS,
+    likeCount: 32,
+    createdAt: "2026-09-27",
+  },
+  {
+    reviewId: 9,
+    nickname: "초코집사",
+    pets: [{ petId: 105, name: "초코", sex: "MALE", age: 6, breedSize: "LARGE", species: "DOG" }],
+    rating: 5,
+    usagePeriod: "180일",
+    palatability: null,
+    text: "대형견이라 양이 많이 드는데 좋아요.",
+    images: [REVIEW_PHOTO_URLS[1]],
+    likeCount: 51,
+    createdAt: "2026-09-20",
+  },
+  {
+    reviewId: 11,
+    nickname: "",
+    pets: [{ petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG" }],
+    rating: 3.5,
+    usagePeriod: "14일",
+    palatability: null,
+    text: "닉네임을 못 찾는 회원의 후기입니다.",
+    images: null,
+    likeCount: 0,
+    createdAt: "2026-09-10",
+  },
+];
+
+/** 사진 낱장. 백엔드 쿼리와 같게 후기 최신순 → 그 안에서 sortOrder 오름차순이다 */
+const REVIEW_PHOTOS = [
+  { reviewId: 7, imageUrl: REVIEW_PHOTO_URLS[0] },
+  { reviewId: 7, imageUrl: REVIEW_PHOTO_URLS[1] },
+  { reviewId: 9, imageUrl: REVIEW_PHOTO_URLS[1] },
+];
+
+/** 대표 사진은 후기당 첫 장(sortOrder 0)이다 */
+const FEATURED_PHOTOS = [
+  { reviewId: 7, imageUrl: REVIEW_PHOTO_URLS[0] },
+  { reviewId: 9, imageUrl: REVIEW_PHOTO_URLS[1] },
+];
+
+const REVIEW_NOT_FOUND = {
+  detail: "리뷰를 찾을 수 없습니다.",
+  status: 404,
+  title: "REVIEW_404_NOT_FOUND",
+  errorCode: "REVIEW_404_NOT_FOUND",
+};
+
+/** 상품 1번만 후기가 있다. 999번으로 빈 상태를 본다 */
+function productReviews(productId, url) {
+  if (productId !== "1") return { averageRating: 0.0, totalCount: 0, content: [] };
+
+  const sort = url.searchParams.get("sort");
+  const ordered =
+    sort === "RATING_LOW" ? [...REVIEWS].sort((a, b) => a.rating - b.rating) : REVIEWS;
+  const page = Number(url.searchParams.get("page") ?? 0);
+  const size = Number(url.searchParams.get("size") ?? 10);
+
+  return {
+    averageRating: 4.3,
+    totalCount: ordered.length,
+    content: ordered.slice(page * size, (page + 1) * size),
+  };
+}
+
+/** 공개 리뷰 상세. 사진 뷰어의 카드가 이걸로 채워진다 — nickname·likeCount가 없다 */
+function reviewDetail(reviewId) {
+  const review = REVIEWS.find((item) => String(item.reviewId) === reviewId);
+  if (!review) return null;
+  return {
+    reviewId: review.reviewId,
+    isMine: false,
+    product: { productId: 1, name: "관절 튼튼 영양제 90정", image: null },
+    pets: review.pets,
+    rating: review.rating,
+    usagePeriod: Number(review.usagePeriod.replace("일", "")),
+    answerValues: [],
+    goodPoints: null,
+    badPoints: null,
+    matchScore: null,
+    text: review.text,
+    images: review.images,
+    createdAt: review.createdAt,
+  };
+}
+
 function productDetail(productId) {
   if (productId === "1") return PRODUCT_DETAIL;
   if (productId === "101") return TIME_DEAL_PRODUCT;
@@ -292,6 +404,43 @@ const server = createServer((req, res) => {
       return;
     }
     res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(product));
+    return;
+  }
+
+  const reviewListMatch = /^\/api\/v1\/reviews\/products\/([^/]+)$/.exec(url.pathname);
+  if (reviewListMatch) {
+    const body = JSON.stringify(productReviews(reviewListMatch[1], url));
+    res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  const photosMatch = /^\/api\/v1\/reviews\/products\/([^/]+)\/photos$/.exec(url.pathname);
+  if (photosMatch) {
+    const photos = photosMatch[1] === "1" ? REVIEW_PHOTOS : [];
+    const body = JSON.stringify({ totalCount: photos.length, photos, hasNext: false });
+    res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  const featuredMatch = /^\/api\/v1\/reviews\/products\/([^/]+)\/photos\/featured$/.exec(
+    url.pathname,
+  );
+  if (featuredMatch) {
+    const photos = featuredMatch[1] === "1" ? FEATURED_PHOTOS : [];
+    res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify({ photos }));
+    return;
+  }
+
+  const reviewDetailMatch = /^\/api\/v1\/reviews\/([0-9]+)$/.exec(url.pathname);
+  if (reviewDetailMatch) {
+    const review = reviewDetail(reviewDetailMatch[1]);
+    if (!review) {
+      res
+        .writeHead(404, { "content-type": "application/json" })
+        .end(JSON.stringify(REVIEW_NOT_FOUND));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(review));
     return;
   }
 
