@@ -81,6 +81,7 @@ const RELATED: ProductCard[] = [
     name: "연어&감자 그레인프리 사료 2kg",
     thumbnailUrl: null,
     price: 31_200,
+    originalPrice: 38_900,
     discountRate: 20,
     unitPrice: 16,
     unitLabel: "g",
@@ -261,6 +262,10 @@ describe("ProductDetailView", () => {
     const card = screen.getByRole("link", { name: /연어&감자 그레인프리 사료 2kg/ });
     expect(card.getAttribute("href")).toBe("/products/3");
     expect(within(card).getByText("1g당 약 16원")).toBeDefined();
+    // 다른 목록 카드처럼 취소선 정가와 서버 할인율을 단다(#458). 서버의 20%와 버림 계산 19%가 갈린다
+    expect(within(card).getByText("38,900원")).toBeDefined();
+    expect(within(card).getByText("20%")).toBeDefined();
+    expect(within(card).queryByText("19%")).toBeNull();
   });
 
   it("함께 볼 다른 상품이 없으면 칸을 그리지 않는다", async () => {

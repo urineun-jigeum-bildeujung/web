@@ -242,6 +242,8 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
                 href={`/products/${item.productId}`}
                 name={item.name}
                 price={item.price}
+                originalPrice={item.originalPrice ?? undefined}
+                discountRate={item.discountRate}
                 imageUrl={item.thumbnailUrl ?? undefined}
                 priceClassName="text-title-bold-16"
                 // 시안(1716-34241)의 찜 자리는 다른 화면(top-3 right-3)과 달리
