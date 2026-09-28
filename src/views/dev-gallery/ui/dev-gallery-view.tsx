@@ -40,6 +40,7 @@ import { InfoNotice } from "@/shared/ui/info-notice/info-notice";
 import { ListRowButton, ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { PreparingDialog } from "@/shared/ui/preparing-dialog/preparing-dialog";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
@@ -189,6 +190,7 @@ export function DevGalleryView() {
   const [pickedProduct, setPickedProduct] = useState("1");
   const [pickedPet, setPickedPet] = useState("1");
   const [swapping, setSwapping] = useState(false);
+  const [preparingOpen, setPreparingOpen] = useState(false);
 
   return (
     <div className="flex min-h-dvh flex-col border-x border-border">
@@ -642,6 +644,16 @@ export function DevGalleryView() {
               <Skeleton className="h-4 w-1/2" />
             </div>
           </div>
+        </Section>
+
+        <Section title="PreparingDialog">
+          <Button variant="outline" onClick={() => setPreparingOpen(true)}>
+            준비 중 안내 열기
+          </Button>
+          <PreparingDialog
+            code={preparingOpen ? APP_MESSAGE_CODE.order.deliveryTrackingPreparing : null}
+            onClose={() => setPreparingOpen(false)}
+          />
         </Section>
 
         <Section title="여기서 볼 수 없는 것">

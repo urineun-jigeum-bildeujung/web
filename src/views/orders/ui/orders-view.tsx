@@ -16,6 +16,7 @@ import { APP_MESSAGE, APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/con
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { PreparingDialog } from "@/shared/ui/preparing-dialog/preparing-dialog";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
@@ -26,7 +27,6 @@ import { ClaimHistory } from "./claim-history";
 import { LoadMoreFooter } from "./load-more-footer";
 import { OrderEntry } from "./order-entry";
 import { OrdersSkeleton } from "./orders-skeleton";
-import { PreparingDialog } from "./preparing-dialog";
 
 const TABS = ["orders", "claims"] as const;
 type Tab = (typeof TABS)[number];

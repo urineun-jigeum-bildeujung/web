@@ -19,7 +19,6 @@
 | `model/item-summary.test.ts` | 하나·여럿·없음 |
 | `model/claim-entries.test.ts` | 상세를 받을 주문, 결제 없는 취소 빼기, 한 신청 모으기, 머리 이름이 다른 날짜를 섞지 않는지 |
 | `ui/orders-skeleton.tsx` | 불러오는 동안의 뼈대. 이어 부를 때는 한 장만 |
-| `ui/preparing-dialog.tsx` | 갈 곳이 아직 없는 버튼(배송 위치 보기)의 준비 중 안내 |
 | `index.ts` | 공개 API |
 
 주문 상품 줄은 상세 화면도 써서 `entities/order`로 옮겼다 (#205).
@@ -107,4 +106,4 @@ PD팀이 시안 옆에 남긴 메모(`mypa_061 레이아웃 변경 참고` 구�
 [entities/order](../../entities/order/README.md)를 본다.
 
 **배송 조회.** 시안은 `배송 위치 보기`를 활성으로 그렸지만 택배사 연동이 정해지지 않아
-준비중 안내만 띄운다. 갈 곳이 생기면 `preparing-dialog.tsx`를 거치지 않게 그 자리를 잇는다 (#201).
+준비중 안내(`shared/ui/preparing-dialog`)만 띄운다. 갈 곳이 생기면 그 안내를 거치지 않게 그 자리를 잇는다 (#201).
