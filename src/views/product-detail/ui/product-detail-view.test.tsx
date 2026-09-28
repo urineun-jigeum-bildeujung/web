@@ -22,6 +22,18 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }
 const { add } = vi.hoisted(() => ({ add: vi.fn() }));
 // 담기는 서버를 부른다. 이 화면 테스트의 관심은 담은 뒤의 표시라 호출만 세운다 (#316)
 vi.mock("@/entities/cart", () => ({ useMutateCartItem: () => ({ add, isAdding: false }) }));
+// 적합도는 내 아이 기준이다(#481). 로그인·아이 목록·아이 상세는 서버 상태라 값만 세운다
+const { useSessionState, useQueryPets, useQueryPetDetail } = vi.hoisted(() => ({
+  useSessionState: vi.fn(),
+  useQueryPets: vi.fn(),
+  useQueryPetDetail: vi.fn(),
+}));
+vi.mock("@/shared/api/use-session-state", () => ({ useSessionState }));
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryPets,
+  useQueryPetDetail,
+}));
 vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
@@ -70,9 +82,45 @@ function renderWith(search = "", product: Partial<ProductDetail> = {}) {
   );
 }
 
+/** 내 아이 둘. 기본 아이가 앞에 온다 */
+const PETS = [
+  { id: "7", name: "초코", isDefault: true },
+  { id: "8", name: "나비", isDefault: false },
+];
+const PET_DETAILS: Record<string, object> = {
+  "7": {
+    id: "7",
+    name: "초코",
+    species: "dog",
+    breedName: "말티즈",
+    age: 3,
+    weight: 4.5,
+    allergies: [],
+  },
+  "8": {
+    id: "8",
+    name: "나비",
+    species: "cat",
+    breedName: "코리안 숏헤어",
+    age: 2,
+    weight: 3.8,
+    allergies: [],
+  },
+};
+
+function signedIn() {
+  useSessionState.mockReturnValue(true);
+  useQueryPets.mockReturnValue({ pets: PETS, isLoading: false });
+  useQueryPetDetail.mockImplementation((petId?: string) => ({
+    pet: petId ? PET_DETAILS[petId] : undefined,
+    isLoading: false,
+  }));
+}
+
 describe("ProductDetailView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    signedIn();
   });
 
   // 아직 아무도 평가하지 않은 상품을 0점으로 그리면 평이 나쁜 상품처럼 읽힌다(#119와 같은 판단).
@@ -108,8 +156,46 @@ describe("ProductDetailView", () => {
   it("가격 아래에 적합도와 근거가 함께 있다", () => {
     renderWith();
 
-    expect(screen.getByRole("heading", { name: "소리와 잘 맞아요" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "초코와 잘 맞아요" })).toBeDefined();
     expect(screen.getByText("관절 건강에 도움되는 글루코사민이 들어있어요")).toBeDefined();
+  });
+
+  // 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이 근거에까지 박혀 떴다 (#481)
+  it("적합도는 내 기본 아이의 이름과 프로필로 그린다", () => {
+    renderWith();
+
+    expect(screen.getByText("초코 기준으로 보고 있어요")).toBeDefined();
+    expect(screen.getByText(/말티즈 · 3세 · 4.5kg/)).toBeDefined();
+    expect(screen.queryByText(/소리/)).toBeNull();
+  });
+
+  // 고양이에게 강아지 영양제 점수를 보이면 근거가 거짓이 된다
+  it("급여 대상이 아닌 종의 아이는 점수 없이 재지 못했다고 알린다", () => {
+    useQueryPets.mockReturnValue({ pets: [PETS[1], PETS[0]], isLoading: false });
+    renderWith();
+
+    expect(screen.getByText("나비 기준으로 보고 있어요")).toBeDefined();
+    expect(screen.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeDefined();
+  });
+
+  it("로그인하지 않았으면 적합도 칸을 그리지 않는다", () => {
+    useSessionState.mockReturnValue(false);
+    useQueryPets.mockReturnValue({ pets: undefined, isLoading: false });
+    renderWith();
+
+    expect(screen.queryByRole("combobox", { name: "적합도 기준이 되는 아이" })).toBeNull();
+    expect(screen.queryByRole("status", { name: "적합도를 불러오는 중" })).toBeNull();
+    // 정보 탭의 성분 분석은 아이 없이 예시로 남는다
+    expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
+  });
+
+  // 서버는 로그인을 모른다. 늦게 끼어들면 아래가 통째로 밀리니 자리를 잡는다
+  it("로그인 여부를 아직 모르면 적합도 자리를 잡아 둔다", () => {
+    useSessionState.mockReturnValue(null);
+    useQueryPets.mockReturnValue({ pets: undefined, isLoading: false });
+    renderWith();
+
+    expect(screen.getByRole("status", { name: "적합도를 불러오는 중" })).toBeDefined();
   });
 
   // 좋은 말만 있으면 광고와 구별되지 않는다. 지켜볼 것이 같은 자리에 있어야 근거로 읽힌다
@@ -133,7 +219,7 @@ describe("ProductDetailView", () => {
 
     expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
     expect(screen.getByText("종합 92점")).toBeDefined();
-    expect(screen.getByText("소리에게 꾸준히 급여하기 좋은 상품이에요")).toBeDefined();
+    expect(screen.getByText("초코에게 꾸준히 급여하기 좋은 상품이에요")).toBeDefined();
   });
 
   it("비교하기를 누르면 한 상품을 담은 안내를 띄우고 확인 시 비교 화면으로 이동한다", () => {

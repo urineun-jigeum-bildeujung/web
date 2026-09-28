@@ -20,7 +20,9 @@ import { toast } from "sonner";
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useMutateCartItem } from "@/entities/cart";
+import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
 import type { ProductDetail } from "@/entities/product";
+import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -31,17 +33,13 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar, SNACKBAR_CLASS, SNACKBAR_OPTIONS } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
-import {
-  DEAL_ENDS_AT,
-  MOCK_PETS,
-  MOCK_PRODUCT,
-  PET_MATCHES,
-  RELATED_PRODUCTS,
-} from "../model/mock-product";
+import { DEAL_ENDS_AT, MOCK_PRODUCT, RELATED_PRODUCTS } from "../model/mock-product";
+import { EXAMPLE_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
 import { DetailOptionSheet } from "./detail-option-sheet";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
@@ -225,7 +223,7 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
     parseAsStringLiteral(TABS).withDefault("info").withOptions({ history: "push" }),
   );
 
-  const [petId, setPetId] = useState(MOCK_PETS[0].id);
+  const [petId, setPetId] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [optionSheetOpen, setOptionSheetOpen] = useState(false);
   // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리. 실제로는
@@ -241,9 +239,18 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
   const isDealActive = status === "deal" && !dealOver;
   const isSoldOut = status === "soldout";
 
-  // 이름도 여기서 함께 온다. 아이 목록에서 따로 찾으면 폴백이 걸렸을 때
-  // 이름과 근거가 서로 다른 아이 것이 된다
-  const match = PET_MATCHES.find((item) => item.petId === petId) ?? PET_MATCHES[0];
+  // **적합도는 내 아이 기준이다.** 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이
+  // 근거에까지 박혀 떴다 (#481). 고르기 전에는 기본 아이다(목록이 기본 아이를 앞에 둔다).
+  // 로그인하지 않았으면 아이를 모르니 부르지 않고 적합도 칸도 그리지 않는다.
+  //
+  // 이름·프로필·알레르기 근거는 아이 상세에서, 점수·성분은 AI가 붙기 전까지 예시다(`toPetMatch`)
+  const session = useSessionState();
+  const { pets, isLoading: isLoadingPets } = useQueryPets({ enabled: session === true });
+  const selectedPetId = session === true ? (petId ?? pets?.[0]?.id) : undefined;
+  const { pet, isLoading: isLoadingPet } = useQueryPetDetail(selectedPetId);
+  const match = pet ? toPetMatch(pet, product.detail) : null;
+  // 로그인 여부를 아직 모르거나 아이를 받는 중이면 자리를 잡는다. 늦게 끼어들면 아래가 통째로 밀린다
+  const isWaitingMatch = session === null || isLoadingPets || isLoadingPet;
 
   // 타임딜 진행 중인 상품은 장바구니가 딜 아이템으로 받아야 딜가가 붙는다.
   // 상세에서 담을 때만 정가로 들어가던 자리다
@@ -407,9 +414,27 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
 
         <div className="h-2 bg-muted" />
 
-        <MatchPanel pets={MOCK_PETS} onPetChange={setPetId} match={match} />
-
-        <div className="h-2 bg-muted" />
+        {match && pets ? (
+          <>
+            <MatchPanel pets={pets} onPetChange={setPetId} match={match} />
+            <div className="h-2 bg-muted" />
+          </>
+        ) : (
+          isWaitingMatch && (
+            <>
+              <div
+                role="status"
+                aria-label="적합도를 불러오는 중"
+                className="flex flex-col gap-3 p-5"
+              >
+                <Skeleton className="h-8 w-44 rounded-full" />
+                <Skeleton className="h-7 w-56" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+              <div className="h-2 bg-muted" />
+            </>
+          )
+        )}
 
         <section aria-labelledby="related-heading" className="flex flex-col gap-3 p-5">
           <h2 id="related-heading" className="text-title-bold-20 text-text-body-default">
@@ -477,8 +502,8 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
             <ProductInfoPanel
               detail={product.detail}
               productName={product.name}
-              match={match}
-              petName={match.petName}
+              match={match ?? EXAMPLE_MATCH_WITHOUT_PET}
+              petName={match?.petName}
             />
           </TabsContent>
 
