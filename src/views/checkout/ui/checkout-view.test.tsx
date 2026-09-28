@@ -854,6 +854,22 @@ test("이유를 모르는 실패는 결제 실패로 알린다", async () => {
   await waitFor(() => expect(toastAppError).toHaveBeenCalledWith("payment.failed", unknown));
 });
 
+// 들고 있던 주문을 결제 준비가 못 찾은 경우다. 그 주문은 버렸으니 다시 누르면 결제된다.
+// 주문 문구의 "주소가 바뀌었을 수 있어요"는 이 화면에 맞지 않는다 (#476)
+test("결제 준비가 주문을 못 찾으면 결제 실패로 알린다", async () => {
+  const notFound = new ApiError(404, "주문 없음", {
+    errorCode: "PAYMENT_404_ORDER_NOT_FOUND",
+  } as never);
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockRejectedValueOnce(notFound);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledWith("payment.failed", notFound));
+});
+
 // 없을 때 금액을 그리면 배송비만 더한 "결제금액 3,000원"이 "결제할 상품이 없어요" 옆에 뜬다 (#422)
 test("결제할 상품이 없으면 금액 줄을 그리지 않는다", () => {
   renderView({ items: [] });
