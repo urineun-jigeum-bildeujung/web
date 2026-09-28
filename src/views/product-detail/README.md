@@ -3,7 +3,7 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
+- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
 - **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로 연동했고(#413) 적합도·영양 분석은 여전히 목이다
@@ -23,8 +23,8 @@
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지 |
 | `ui/description-collapse.tsx` | 상품 설명 이미지 자리. 402px를 미리 보여주고 눌러서 전체를 펼치는 더보기/접기 |
 | `ui/description-collapse.test.tsx` | 눌렀을 때 접힘·펼침 상태와 라벨이 바뀌는지 |
-| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·맞춤보기 토글·정렬·후기 목록 |
-| `ui/review-panel.test.tsx` | 맞춤보기가 품종으로 거르는지, 정렬이 순서를 바꾸는지 |
+| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·정렬·대표 사진 줄·후기 목록(서버 조회) |
+| `ui/review-panel.test.tsx` | 서버 응답의 네 상태·정렬·대표 사진과, 닫아 둔 필터·맞춤보기·도움돼요가 정말 없는지 |
 | `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭 |
 | `ui/review-filter-picker.tsx` | 품종·건강 관심사를 고르는 전체화면(#264). 갈래-항목 좌우 분할, 데이터만 갈아끼워 재사용 |
 | `ui/review-filter-picker.test.tsx` | 갈래를 바꾸면 오른쪽 목록이 바뀌는지, 여러 개 고르고 적용·초기화가 되는지 |
@@ -43,7 +43,8 @@
 | 사진·이름·판매가·정가·할인율·별점·후기 수·품절 | — | `summary` |
 | 상세 설명 표 아홉 줄, 제공고시 품명 | — | `detailInfo`·`productName` |
 | — | 적합도·영양 성분 분석 | 서버가 계산해 내려줄 값이다 (#123) |
-| — | 리뷰 목록 | #339 |
+| 리뷰 요약·목록·정렬·대표 사진 | — | `useQueryProductReviews` · `useQueryFeaturedReviewPhotos` (#339) |
+| — | 리뷰 필터·맞춤보기·도움돼요 토글 | 서버가 받는 모양이 달라 닫아 뒀다 (#339, 아래 후속 항목) |
 | — | 문의 목록 | API가 없다 |
 | — | 함께 보면 좋은 상품 | 응답에 없다. 카드가 눌리지 않는 까닭도 그대로다 |
 | — | 배송·판매자·제공고시 두 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
