@@ -2,12 +2,13 @@
 // UI 시안 기준(#273, 1576-87320)이다. 헤더는 시안(로고+검색+알림+장바구니)과 달리
 // 뒤로가기 있는 PageHeader를 쓴다 — 메인 "맞춤 추천"의 "더보기"로 들어가는 서브
 // 화면이라 사용자 흐름상 뒤로 갈 방법이 있어야 해서 우선 이렇게 두었고, 시안대로
-// 바꿀지는 프디팀 확인 후 정한다. 오른쪽 알림·장바구니는 시안대로 둔다 — 빠져 있었다(QA 1차 2번, #470).
+// 바꿀지는 프디팀 확인 후 정한다. 오른쪽 검색·알림·장바구니는 시안대로 둔다 — 빠져 있었다(QA 1차 2번, #470).
 //
 // 아이는 마이페이지와 같은 실제 목록이다. 상품과 적합도는 아직 예시 데이터다(#384).
 
 "use client";
 
+import Link from "next/link";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
@@ -16,7 +17,7 @@ import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useQueryPets } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
-import { useHasSession } from "@/shared/api/use-has-session";
+import { useSessionState } from "@/shared/api/use-session-state";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -100,11 +101,14 @@ export function RecommendationsView() {
   const [liked, setLiked] = useState<string[]>([]);
 
   // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(코코·봄이)을 쓰던 동안 화면마다
-  // 이름이 달랐다(QA 1차 6번, #470). 로그인하지 않았으면 부르지 않아 아이가 없고 "우리 아이"로 읽는다
-  const hasSession = useHasSession();
-  const { pets = [], isLoading: isLoadingPets } = useQueryPets({ enabled: hasSession });
+  // 이름이 달랐다(QA 1차 6번, #470). 로그인하지 않았으면 부르지 않아 아이가 없고 "우리 아이"로 읽는다.
+  // 로그인 여부를 아직 모르는 동안(서버 렌더·하이드레이션)은 받는 중과 같이 알약 자리를 잡는다 — 메인과
+  // 같은 기준이다
+  const session = useSessionState();
+  const { pets, isLoading } = useQueryPets({ enabled: session === true });
+  const isWaitingPets = session === null || isLoading;
   const pet =
-    pets.find((item) => item.id === petId) ?? pets.find((item) => item.isDefault) ?? pets[0];
+    pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
   const petName = pet?.name ?? "우리 아이";
 
   const filtered =
@@ -121,8 +125,15 @@ export function RecommendationsView() {
       <PageHeader
         title="맞춤 추천"
         right={
-          // 시안(1576-87320)의 알림·장바구니. 다른 헤더와 같은 위젯이다
+          // 시안(1576-87320) 헤더의 검색·알림·장바구니. 메인 헤더와 같은 순서·아이콘·누르는 자리다
           <>
+            <Link
+              href="/search"
+              aria-label="검색"
+              className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
+            >
+              <Icon name="search" className="size-7" />
+            </Link>
             <NotificationBell />
             <CartLink />
           </>
@@ -155,7 +166,7 @@ export function RecommendationsView() {
                       고른 항목도 체크 표시 없이 글자만 있다. 아이 선택 알약 바로 아래로 열리는
                       일반 드롭다운이라 position="popper"를 쓴다 */}
                   <SelectContent position="popper" align="start" className="min-w-25 p-1">
-                    {pets.map((item) => (
+                    {(pets ?? []).map((item) => (
                       <SelectItem
                         key={item.id}
                         value={item.id}
@@ -167,7 +178,7 @@ export function RecommendationsView() {
                   </SelectContent>
                 </Select>
               ) : (
-                isLoadingPets && (
+                isWaitingPets && (
                   // 이름이 오기 전에 문장이 "의 건강 고민을"로 시작하지 않게 알약 자리를 잡는다
                   <Skeleton
                     role="status"
@@ -177,7 +188,7 @@ export function RecommendationsView() {
                 )
               )}
               <h2 className="text-title-bold-20 break-keep text-foreground">
-                {pet || isLoadingPets ? "의 건강 고민을 덜어줄" : "우리 아이의 건강 고민을 덜어줄"}
+                {pet || isWaitingPets ? "의 건강 고민을 덜어줄" : "우리 아이의 건강 고민을 덜어줄"}
               </h2>
             </div>
             <p className="text-title-bold-20 text-foreground">맞춤 상품을 찾았어요</p>

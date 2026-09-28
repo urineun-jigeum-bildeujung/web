@@ -32,18 +32,33 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
-// 아이 줄은 마이페이지와 같은 실제 목록을 받는다(#470)
+// 아이 줄은 마이페이지와 같은 실제 목록을 받는다(#470). 받은 인자도 적어 두어, 로그인 여부를
+// 조회에 넘기는지 본다 — 목이 인자를 버리면 게이트를 지워도 테스트가 통과한다(#470 리뷰)
 const PETS = [
   { id: "3", name: "초코", isDefault: true },
   { id: "7", name: "구름이", isDefault: false },
 ];
 let petsQuery: { pets: unknown; isLoading: boolean } = { pets: PETS, isLoading: false };
+let petsCalls: unknown[] = [];
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
-  useQueryPets: () => petsQuery,
+  useQueryPets: (options: unknown) => {
+    petsCalls.push(options);
+    return petsQuery;
+  },
 }));
 
+// 로그인 여부. 서버 렌더·하이드레이션 중에는 모른다(null)
+const session: { value: boolean | null } = { value: true };
+vi.mock("@/shared/api/use-session-state", () => ({ useSessionState: () => session.value }));
+
 import { HomeView } from "./home-view";
+
+afterEach(() => {
+  petsQuery = { pets: PETS, isLoading: false };
+  petsCalls = [];
+  session.value = true;
+});
 
 const PUPPY_FOOD: ProductCard = {
   productId: 4,
@@ -158,7 +173,6 @@ describe("HomeView", () => {
 
     expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
     expect(screen.getByRole("radio", { name: "구름이" }).getAttribute("aria-checked")).toBe("true");
-    petsQuery = { pets: PETS, isLoading: false };
   });
 
   it("아이를 바꾸면 추천 제목도 그 아이 이름으로 바뀐다", async () => {
@@ -169,22 +183,65 @@ describe("HomeView", () => {
     expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
   });
 
+  // 안 들고 가면 추천은 기본 아이로 열려 두 화면의 아이가 달라졌다(#470 리뷰)
+  it("더보기는 고른 아이를 맞춤 추천까지 들고 간다", async () => {
+    await renderWith();
+    expect(screen.getByRole("link", { name: "더보기" }).getAttribute("href")).toBe(
+      "/recommendations?pet=3",
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    expect(screen.getByRole("link", { name: "더보기" }).getAttribute("href")).toBe(
+      "/recommendations?pet=7",
+    );
+  });
+
+  it("로그인했을 때만 아이 목록을 부른다", async () => {
+    session.value = false;
+    const { unmount } = await renderWith();
+    expect(petsCalls.at(-1)).toEqual({ enabled: false });
+    unmount();
+
+    session.value = true;
+    await renderWith();
+    expect(petsCalls.at(-1)).toEqual({ enabled: true });
+  });
+
   it("아이 목록을 받는 동안 아이 줄 자리를 잡아 둔다", async () => {
     petsQuery = { pets: undefined, isLoading: true };
     await renderWith();
 
     expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
-    petsQuery = { pets: PETS, isLoading: false };
   });
 
-  // 로그인하지 않았으면 목록을 부르지 않는다
-  it("아이가 없으면 아이 줄 없이 우리 아이로 읽는다", async () => {
+  // 서버가 그린 첫 화면이 로그아웃 모양이면 하이드레이션 뒤 아이 줄이 끼어들며 아래가 밀렸다(#470 리뷰)
+  it("로그인 여부를 아직 모르면 아이 줄 자리를 뼈대로 잡아 둔다", async () => {
+    session.value = null;
+    petsQuery = { pets: undefined, isLoading: false };
+    await renderWith();
+
+    expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
+    expect(petsCalls.at(-1)).toEqual({ enabled: false });
+  });
+
+  it("로그인하지 않았으면 아이 줄 없이 우리 아이로 읽는다", async () => {
+    session.value = false;
     petsQuery = { pets: undefined, isLoading: false };
     await renderWith();
 
     expect(screen.queryByRole("radiogroup", { name: "아이 고르기" })).toBeNull();
+    expect(screen.queryByRole("status", { name: "아이 목록을 불러오는 중" })).toBeNull();
     expect(screen.getByText("AI가 골라주는 우리 아이 맞춤 상품")).toBeDefined();
-    petsQuery = { pets: PETS, isLoading: false };
+  });
+
+  // 아이 등록이 전제라 드물지만, 그때도 새 아이를 들일 자리는 남아야 한다(#470 리뷰)
+  it("아이가 0마리면 새 아이 추가 칸만 남긴다", async () => {
+    petsQuery = { pets: [], isLoading: false };
+    await renderWith();
+
+    expect(screen.queryAllByRole("radio")).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "새 아이 추가" })).toBeDefined();
   });
 
   it("진행 중인 타임딜이 없으면 없다고 알린다", async () => {

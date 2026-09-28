@@ -8,6 +8,8 @@
 | `client.test.ts` | `apiRequest` 단위 테스트 |
 | `use-has-session.ts` | 로그인돼 있는지를 렌더에 맞춰 읽는 훅. 세션이 끊기면 따라온다 |
 | `use-has-session.test.tsx` | 토큰 유무와 끊김 반영 |
+| `use-session-state.ts` | 로그인 여부를 세 상태로 읽는 훅. 서버 렌더·하이드레이션 첫 렌더에서는 `null`(모름)이라, 서버가 그리는 화면이 로그아웃 모양으로 나갔다가 밀리지 않게 그동안 뼈대를 그릴 수 있다(#470) |
+| `use-session-state.test.tsx` | 서버 렌더에서 `null`, 브라우저에서 토큰 유무와 끊김 반영 |
 | `token-store.ts` | 인증 토큰 보관소 — accessToken 메모리, refreshToken localStorage. `hasSession`·`subscribeTokensCleared` 포함 |
 | `token-store.test.ts` | 토큰 보관소 단위 테스트 |
 | `error-message.ts` | 실패 응답을 문구 코드로 옮긴다(`toAppMessageCode`) — `errorCode` 매핑, 없으면 상태 코드 기준 |

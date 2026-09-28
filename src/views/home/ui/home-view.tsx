@@ -23,7 +23,7 @@ import {
   type TimeDealGroup,
   type TimeDealList,
 } from "@/entities/product";
-import { useHasSession } from "@/shared/api/use-has-session";
+import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge/badge";
 import { Button } from "@/shared/ui/button";
@@ -434,11 +434,16 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
 
   // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(소리·냥이)을 쓰던 동안 화면마다
   // 이름이 달랐다(QA 1차 6번, #470). 고르기 전에는 기본 아이이고, 로그인하지 않았으면 부르지 않아
-  // 아이가 없다 — 그때 문구는 "우리 아이"로 읽는다
-  const hasSession = useHasSession();
-  const { pets = [], isLoading: isLoadingPets } = useQueryPets({ enabled: hasSession });
+  // 아이가 없다 — 그때 문구는 "우리 아이"로 읽는다.
+  //
+  // **로그인 여부를 아직 모르는 동안도 받는 중과 같이 뼈대를 그린다.** 이 화면은 서버가 그리는데,
+  // 서버에서는 로그인을 알 수 없다. 로그아웃 모양으로 그려 두면 하이드레이션 뒤 아이 줄이 끼어들며
+  // 아래 구역이 통째로 밀린다(#470 리뷰). 아이 등록이 전제인 서비스라 로그인한 쪽을 지킨다
+  const session = useSessionState();
+  const { pets, isLoading } = useQueryPets({ enabled: session === true });
+  const isWaitingPets = session === null || isLoading;
   const pet =
-    pets.find((item) => item.id === petId) ?? pets.find((item) => item.isDefault) ?? pets[0];
+    pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
   const petName = pet?.name ?? "우리 아이";
 
   return (
@@ -451,11 +456,13 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
           className="flex items-center gap-2.25 text-icon-stroke-tertiary"
         >
           {/* 보이는 자리는 시안대로 28px·9px 간격을 두고, 누르는 자리만 after로 안 보이게 넓힌다.
-              가로는 간격(9px)의 절반까지만 넓혀 옆 아이콘 터치 영역과 겹치지 않게 한다 */}
+              가로는 간격(9px)의 절반이 안 되게 4px만 넓혀 옆 아이콘 터치 영역과 겹치지 않게 한다.
+              전에 쓰던 4.5px(`-inset-x-1.125`)는 0.25 단위가 아니라 Tailwind가 만들지 않아 넓혀지지
+              않았다(#470 리뷰) */}
           <Link
             href="/search"
             aria-label="검색"
-            className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
+            className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
           >
             <Icon name="search" className="size-7" />
           </Link>
@@ -506,10 +513,11 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               </span>
             </section>
 
-            {isLoadingPets ? (
+            {isWaitingPets ? (
               <PetSwitcherSkeleton />
             ) : (
-              pets.length > 0 && (
+              // 아이가 0마리여도 새 아이를 들이는 칸은 남긴다. 목록을 못 받았으면(실패) 줄을 비운다
+              pets && (
                 <PetSwitcher
                   pets={pets}
                   selectedId={pet?.id}
@@ -523,7 +531,12 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
             )}
 
             <section className="flex flex-col gap-5 pt-6 pb-8 pl-5">
-              <SectionTitle href="/recommendations" className="pr-5">
+              {/* 고른 아이를 맞춤 추천까지 들고 간다. 안 들고 가면 추천은 기본 아이로 열려, 메인에서
+                  다른 아이를 골랐을 때 두 화면의 아이가 달라진다(#470 리뷰) */}
+              <SectionTitle
+                href={pet ? `/recommendations?pet=${pet.id}` : "/recommendations"}
+                className="pr-5"
+              >
                 AI가 골라주는 {petName} 맞춤 상품
               </SectionTitle>
               <ScrollRow
