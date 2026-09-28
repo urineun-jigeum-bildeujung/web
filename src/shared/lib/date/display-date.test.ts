@@ -5,6 +5,7 @@ import {
   formatDisplayDate,
   formatDisplayDateTime,
   formatDisplayDayHour,
+  formatDisplayFullDate,
   formatDisplayHour,
   formatDisplayMonthDayTime,
   toDisplayDayKey,
@@ -81,4 +82,20 @@ test("해를 뺀 날짜와 시각을 그린다", () => {
   // 한국 자정 직후 값이 UTC로는 전날이다. 날짜를 한국 기준으로 읽어야 한다
   expect(formatDisplayMonthDayTime("2026-09-02T15:05:00Z")).toBe("09.03 00:05");
   expect(formatDisplayMonthDayTime("곧")).toBeNull();
+});
+
+// 리뷰 카드는 해를 다 적는다. 몇 해 전 후기가 함께 놓여 두 자리로는 어느 해인지 훑기 어렵다
+test("해를 네 자리로 적는 날짜를 그린다", () => {
+  expect(formatDisplayFullDate("2026-08-28T15:43:00+09:00")).toBe("2026. 08. 28");
+  expect(formatDisplayFullDate("2026-07-20")).toBe("2026. 07. 20");
+});
+
+test("해를 네 자리로 적는 날짜도 한국 기준으로 가른다", () => {
+  // UTC로는 27일 늦은 밤이지만 한국에서는 28일이다
+  expect(formatDisplayFullDate("2026-08-27T15:30:00Z")).toBe("2026. 08. 28");
+});
+
+test("해를 네 자리로 적는 날짜도 읽을 수 없으면 null이다", () => {
+  expect(formatDisplayFullDate("")).toBeNull();
+  expect(formatDisplayFullDate("어제")).toBeNull();
 });

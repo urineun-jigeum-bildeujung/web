@@ -34,14 +34,14 @@ type DateParts = Record<Intl.DateTimeFormatPartTypes, string>;
  * 로캘마다 구분자와 순서가 달라 포맷 결과 문자열을 그대로 쓸 수 없다. `formatToParts`로
  * 받아 우리가 조립한다.
  */
-function toParts(iso: string): DateParts | null {
+function toParts(iso: string, formatter: Intl.DateTimeFormat = FORMATTER): DateParts | null {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) {
     return null;
   }
 
   return Object.fromEntries(
-    FORMATTER.formatToParts(date).map((part) => [part.type, part.value]),
+    formatter.formatToParts(date).map((part) => [part.type, part.value]),
   ) as DateParts;
 }
 
@@ -54,6 +54,25 @@ function toParts(iso: string): DateParts | null {
 export function formatDisplayDate(iso: string): string | null {
   const parts = toParts(iso);
   return parts && `${parts.year}.${parts.month}.${parts.day}`;
+}
+
+// 해를 네 자리로 적는 자리를 위한 포매터. 위 FORMATTER는 `year: "2-digit"`이라 나눠 둔다
+const FULL_YEAR_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/**
+ * `2026. 08. 31` 꼴. 읽을 수 없는 값이면 `null`이다.
+ *
+ * 해를 줄이지 않고 다 적는 자리에 쓴다 — 리뷰 카드의 작성일이 그렇다. 후기는 몇 해 전 것도
+ * 함께 놓이므로 `26.08.31`처럼 줄이면 어느 해인지 훑어보기 어렵다.
+ */
+export function formatDisplayFullDate(iso: string): string | null {
+  const parts = toParts(iso, FULL_YEAR_FORMATTER);
+  return parts && `${parts.year}. ${parts.month}. ${parts.day}`;
 }
 
 /** `26.08.28 15:43` 꼴. 읽을 수 없는 값이면 `null`이다 */

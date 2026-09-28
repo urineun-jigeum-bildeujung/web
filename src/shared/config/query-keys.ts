@@ -90,6 +90,8 @@ const addressKeys = {
 const reviewKeys = {
   all: ["review"] as const,
   byProductAll: () => [...reviewKeys.all, "by-product"] as const,
+  /** 그 상품의 리뷰 캐시 전부 — 목록(정렬별) · 사진 · 대표 사진. 후기를 새로 쓰면 이걸 비운다 */
+  byProductAllOf: (productId: ResourceId) => [...reviewKeys.byProductAll(), productId] as const,
   byProduct: (productId: ResourceId, filters: ProductReviewFilters = {}) =>
     [...reviewKeys.byProductAll(), productId, filters] as const,
   photos: (productId: ResourceId) => [...reviewKeys.byProductAll(), productId, "photos"] as const,

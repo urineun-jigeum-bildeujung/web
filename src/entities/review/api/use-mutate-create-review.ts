@@ -24,6 +24,10 @@ type CreateReviewInput = {
  *
  * 성공하면 내 후기 목록과 그 상품의 리뷰 캐시를 비운다. 완료 화면의 "확인"이 내 후기 목록으로
  * 가는데 비우지 않으면 방금 쓴 후기가 거기 없다.
+ *
+ * **상품 쪽은 목록만이 아니라 사진·대표 사진까지 비운다.** 셋이 키를 나눠 갖고 있어
+ * 목록만 비우면 사진을 올린 직후에도 리뷰 탭의 사진 줄과 사진 모음이 예전 그대로 남는다.
+ * `byProductAllOf`가 그 셋을 한 번에 가리킨다 — 정렬별로 갈린 목록 캐시도 함께 걸린다.
  */
 export function useMutateCreateReview() {
   const queryClient = useQueryClient();
@@ -38,7 +42,10 @@ export function useMutateCreateReview() {
     onSuccess: async (_, { request }) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.review.myAll() }),
-        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.review.byProduct(request.productId) }),
+        queryClient.invalidateQueries({
+          // 화면은 `productId`를 문자열로 들고 조회한다. 숫자로 넣으면 키가 어긋나 안 걸린다
+          queryKey: QUERY_KEYS.review.byProductAllOf(String(request.productId)),
+        }),
       ]);
     },
   });

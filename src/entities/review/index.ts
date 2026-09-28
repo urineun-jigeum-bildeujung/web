@@ -8,8 +8,14 @@ export {
   type MyReviewItem,
   type MyReviewList,
   type ReviewCreateRequest,
+  getFeaturedReviewPhotos,
+  getProductReviews,
+  getReviewPhotos,
+  type ProductReviewPage,
+  type ProductReviewsParams,
   type ReviewDetail,
-  type ReviewPet,
+  type ReviewPhoto,
+  type ReviewPhotoPage,
   type WritableReview,
 } from "./api/reviews";
 export { useMutateCreateReview } from "./api/use-mutate-create-review";
@@ -26,13 +32,15 @@ export { useMutateSubmitFeedback } from "./api/use-mutate-submit-feedback";
 export { useQueryMyReviews } from "./api/use-query-my-reviews";
 export { useQueryWritableReviews } from "./api/use-query-writable-reviews";
 export { useQueryReviewDetail } from "./api/use-query-review-detail";
-export { ReviewCard, type Review } from "./ui/review-card";
+export { useQueryProductReviews } from "./api/use-query-product-reviews";
+export { useQueryReviewPhotos } from "./api/use-query-review-photos";
+export { useQueryFeaturedReviewPhotos } from "./api/use-query-featured-review-photos";
+export { formatPetProfile, formatPetProfiles } from "./lib/pet-label";
+export { ReviewCard } from "./ui/review-card";
+export type { Review, ReviewPet } from "./model/review";
 export {
-  MOCK_REVIEWS,
-  PHOTO_REVIEWS,
-  PHOTO_TOTAL,
   REVIEW_SORTS,
   REVIEW_SORT_LABEL,
-  type MockReview,
+  toReviewSortParam,
   type ReviewSort,
-} from "./model/mock-reviews";
+} from "./model/review-sort";

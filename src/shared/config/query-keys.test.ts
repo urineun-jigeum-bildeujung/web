@@ -18,6 +18,30 @@ describe("QUERY_KEYS", () => {
     expect(QUERY_KEYS.review.myWritable()).toEqual([...QUERY_KEYS.review.myAll(), "writable"]);
   });
 
+  // 후기를 새로 쓰면 그 상품의 목록·사진·대표 사진을 함께 비워야 한다. 셋이 이 접두사를
+  // 공유해야 `invalidateQueries` 한 번으로 걸린다 (#339)
+  it("상품별 리뷰 캐시 셋이 byProductAllOf를 접두사로 갖는다", () => {
+    const prefix = QUERY_KEYS.review.byProductAllOf("1");
+
+    for (const key of [
+      QUERY_KEYS.review.byProduct("1", { sort: "recommend" }),
+      QUERY_KEYS.review.byProduct("1", { sort: "recent" }),
+      QUERY_KEYS.review.photos("1"),
+      QUERY_KEYS.review.featuredPhotos("1"),
+    ]) {
+      expect(key.slice(0, prefix.length)).toEqual([...prefix]);
+    }
+  });
+
+  // 상품이 다르면 접두사도 달라야 남의 상품 캐시까지 비우지 않는다
+  it("상품이 다르면 리뷰 캐시 접두사가 다르다", () => {
+    expect(QUERY_KEYS.review.byProductAllOf("1")).not.toEqual(
+      QUERY_KEYS.review.byProductAllOf("2"),
+    );
+    // 등록 요청은 숫자, 조회 화면은 문자열로 상품을 든다. 섞이면 키가 어긋나 안 걸린다
+    expect(QUERY_KEYS.review.byProductAllOf(1)).not.toEqual(QUERY_KEYS.review.byProductAllOf("1"));
+  });
+
   it("아이(petId)에 따라 응답이 달라지는 조회는 키가 서로 다르다", () => {
     expect(QUERY_KEYS.product.detail("a1b2", 10)).not.toEqual(
       QUERY_KEYS.product.detail("a1b2", 20),
