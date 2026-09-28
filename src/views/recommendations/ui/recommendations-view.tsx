@@ -2,7 +2,9 @@
 // UI 시안 기준(#273, 1576-87320)이다. 헤더는 시안(로고+검색+알림+장바구니)과 달리
 // 뒤로가기 있는 PageHeader를 쓴다 — 메인 "맞춤 추천"의 "더보기"로 들어가는 서브
 // 화면이라 사용자 흐름상 뒤로 갈 방법이 있어야 해서 우선 이렇게 두었고, 시안대로
-// 바꿀지는 프디팀 확인 후 정한다.
+// 바꿀지는 프디팀 확인 후 정한다. 오른쪽 알림·장바구니는 시안대로 둔다 — 빠져 있었다(QA 1차 2번, #470).
+//
+// 아이는 마이페이지와 같은 실제 목록이다. 상품과 적합도는 아직 예시 데이터다(#384).
 
 "use client";
 
@@ -10,18 +12,17 @@ import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
 import { BottomNav } from "@/widgets/bottom-nav";
+import { CartLink } from "@/widgets/cart-link";
+import { NotificationBell } from "@/widgets/notification-bell";
+import { useQueryPets } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
+import { useHasSession } from "@/shared/api/use-has-session";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
-
-/** API 연동 전까지 화면 확인용 값 */
-const MOCK_PETS = [
-  { id: "1", name: "코코" },
-  { id: "2", name: "봄이" },
-];
+import { Skeleton } from "@/shared/ui/skeleton";
 
 // 건강 고민 칩(관절·알러지·구강관리)은 이 시안에 없다. home-view와 같은 상품 분류
 // 탭(전체·사료·간식·영양제)으로 거른다
@@ -84,8 +85,8 @@ function sortProducts(products: typeof MOCK_PRODUCTS, sort: (typeof SORT_VALUES)
 
 export function RecommendationsView() {
   // 아이 id는 서버에서 오는 값이라 보기를 미리 적을 수 없어 parseAsStringLiteral을 쓰지 못한다.
-  // 대신 아래에서 목록에 없는 id면 첫 아이로 되돌린다
-  const [petId, setPetId] = useQueryState("pet", parseAsString.withDefault(MOCK_PETS[0].id));
+  // 대신 아래에서 목록에 없는 id면 기본 아이로 되돌린다
+  const [petId, setPetId] = useQueryState("pet", parseAsString);
   // 주소로 아무 값이나 올 수 있다. 목록에 없는 값이면 목록이 통째로 비므로 보기 안에서만 받는다.
   const [category, setCategory] = useQueryState(
     "category",
@@ -98,7 +99,14 @@ export function RecommendationsView() {
   );
   const [liked, setLiked] = useState<string[]>([]);
 
-  const pet = MOCK_PETS.find((item) => item.id === petId) ?? MOCK_PETS[0];
+  // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(코코·봄이)을 쓰던 동안 화면마다
+  // 이름이 달랐다(QA 1차 6번, #470). 로그인하지 않았으면 부르지 않아 아이가 없고 "우리 아이"로 읽는다
+  const hasSession = useHasSession();
+  const { pets = [], isLoading: isLoadingPets } = useQueryPets({ enabled: hasSession });
+  const pet =
+    pets.find((item) => item.id === petId) ?? pets.find((item) => item.isDefault) ?? pets[0];
+  const petName = pet?.name ?? "우리 아이";
+
   const filtered =
     category === "all"
       ? MOCK_PRODUCTS
@@ -110,7 +118,16 @@ export function RecommendationsView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="맞춤 추천" />
+      <PageHeader
+        title="맞춤 추천"
+        right={
+          // 시안(1576-87320)의 알림·장바구니. 다른 헤더와 같은 위젯이다
+          <>
+            <NotificationBell />
+            <CartLink />
+          </>
+        }
+      />
 
       {/* 시안(홈화면 프레임 기준)은 상태 표시줄+헤더 아래로 12px을 두고 본문이 시작한다.
           다른 화면들도 PageHeader 다음에 pt-3을 공통으로 쓴다 */}
@@ -121,35 +138,46 @@ export function RecommendationsView() {
               {/* 아이를 바꾸면 추천도 바뀐다. 시안(1576-87420)은 검정 알약 안에 이름+화살표만
                   두고 문장 첫머리에 잇는다. 보이는 높이는 32px, 누르는 자리만 44px로 넓힌다 */}
               {/* 주소에 없는 id가 와도 본문과 같은 아이를 가리키도록 정규화한 값을 쓴다 */}
-              <Select value={pet.id} onValueChange={(next) => void setPetId(next)}>
-                {/* 배경은 시안(1576-87505, button/bg/primary #2a3038)과 같은 surface-primary
-                    토큰이다 — shadcn Button 기본 변형의 bg-primary와 같다. 화살표는 시안대로
-                    20px 흰 아이콘으로 바꾸고, 시안에 없는 기본 테두리도 지운다 */}
-                <SelectTrigger
-                  aria-label="어느 아이의 추천을 볼지"
-                  // 마지막 svg(공용 트리거의 기본 화살표)만 지운다 — 앞의 Icon은 남겨야 한다
-                  className="relative h-8 w-auto gap-1 rounded-lg border-0 bg-primary px-3 py-2 text-label-medium-12 text-primary-foreground after:absolute after:-inset-y-1.5 [&>svg:last-child]:hidden"
-                >
-                  <SelectValue />
-                  <Icon name="down" aria-hidden className="size-5" />
-                </SelectTrigger>
-                {/* 시안(1585-18052)은 흰 배경에 4px 안쪽 여백, 항목은 40px에 6px 모서리고
-                    고른 항목도 체크 표시 없이 글자만 있다. 아이 선택 알약 바로 아래로 열리는
-                    일반 드롭다운이라 position="popper"를 쓴다 */}
-                <SelectContent position="popper" align="start" className="min-w-25 p-1">
-                  {MOCK_PETS.map((item) => (
-                    <SelectItem
-                      key={item.id}
-                      value={item.id}
-                      className="h-10 rounded-md px-1.5 [&>span:first-child]:hidden"
-                    >
-                      {item.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {pet ? (
+                <Select value={pet.id} onValueChange={(next) => void setPetId(next)}>
+                  {/* 배경은 시안(1576-87505, button/bg/primary #2a3038)과 같은 surface-primary
+                      토큰이다 — shadcn Button 기본 변형의 bg-primary와 같다. 화살표는 시안대로
+                      20px 흰 아이콘으로 바꾸고, 시안에 없는 기본 테두리도 지운다 */}
+                  <SelectTrigger
+                    aria-label="어느 아이의 추천을 볼지"
+                    // 마지막 svg(공용 트리거의 기본 화살표)만 지운다 — 앞의 Icon은 남겨야 한다
+                    className="relative h-8 w-auto gap-1 rounded-lg border-0 bg-primary px-3 py-2 text-label-medium-12 text-primary-foreground after:absolute after:-inset-y-1.5 [&>svg:last-child]:hidden"
+                  >
+                    <SelectValue />
+                    <Icon name="down" aria-hidden className="size-5" />
+                  </SelectTrigger>
+                  {/* 시안(1585-18052)은 흰 배경에 4px 안쪽 여백, 항목은 40px에 6px 모서리고
+                      고른 항목도 체크 표시 없이 글자만 있다. 아이 선택 알약 바로 아래로 열리는
+                      일반 드롭다운이라 position="popper"를 쓴다 */}
+                  <SelectContent position="popper" align="start" className="min-w-25 p-1">
+                    {pets.map((item) => (
+                      <SelectItem
+                        key={item.id}
+                        value={item.id}
+                        className="h-10 rounded-md px-1.5 [&>span:first-child]:hidden"
+                      >
+                        {item.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                isLoadingPets && (
+                  // 이름이 오기 전에 문장이 "의 건강 고민을"로 시작하지 않게 알약 자리를 잡는다
+                  <Skeleton
+                    role="status"
+                    aria-label="아이 목록을 불러오는 중"
+                    className="h-8 w-16 rounded-lg"
+                  />
+                )
+              )}
               <h2 className="text-title-bold-20 break-keep text-foreground">
-                의 건강 고민을 덜어줄
+                {pet || isLoadingPets ? "의 건강 고민을 덜어줄" : "우리 아이의 건강 고민을 덜어줄"}
               </h2>
             </div>
             <p className="text-title-bold-20 text-foreground">맞춤 상품을 찾았어요</p>
@@ -217,7 +245,7 @@ export function RecommendationsView() {
 
         {products.length === 0 ? (
           <EmptyState
-            title={`${pet.name}에게 맞는 상품을 아직 찾지 못했어요`}
+            title={`${petName}에게 맞는 상품을 아직 찾지 못했어요`}
             description="아이 정보를 채우면 더 잘 골라드릴 수 있어요."
             className="flex-1"
           />
@@ -235,7 +263,7 @@ export function RecommendationsView() {
                   // 쓰는데, Figma에 이 배지를 다른 화면과 통일할 예정이라는 코멘트가 있다.
                   // MatchScoreBadge는 home-view와 같이 쓰는 공용 컴포넌트라 지금 표기를
                   // 그대로 두고 통일 방향을 프디팀에 확인한다(README 참고)
-                  imageBadge={<MatchScoreBadge score={product.matchScore} petName={pet.name} />}
+                  imageBadge={<MatchScoreBadge score={product.matchScore} petName={pet?.name} />}
                   // 찜 버튼은 32px 흰 원판(rounded-full) 위에 24px 아이콘, 사진 오른쪽
                   // 아래 4px 인셋이다(product-detail과 같은 위치). 원판은 시안이 불투명
                   // 흰색인데 이 프로젝트에 그 토큰이 없어 반투명 surface-overlay-static으로
