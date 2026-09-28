@@ -5,7 +5,7 @@
 // 그 경우는 화면 쪽에서 key로 폼을 새로 세워 막는다.
 //
 // 조회·저장은 가짜로 둔다. 무엇을 어떤 모양으로 보내는지는 `entities/address`가 본다.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
 
@@ -412,13 +412,25 @@ test("검색을 다녀오면 적다 만 값이 남아 있다", () => {
   expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("전지호");
 });
 
-// 그냥 다시 들어온 경우까지 되살리면 지웠다고 생각한 값이 돌아온다. `roadAddr`가 다녀온 표시다
-test("검색을 다녀오지 않았으면 되살리지 않는다", () => {
-  writeAddressDraft("new", { addressName: "본가" });
+// 주소를 고르지 않고 뒤로 돌아와도 이름·연락처를 다시 적게 하지 않는다 (#457)
+test("주소를 고르지 않고 돌아와도 적다 만 값이 남아 있다", () => {
+  writeAddressDraft("new", { addressName: "본가", receiver: "전지호" });
 
   const input = renderAt("");
 
-  expect(input.value).toBe("");
+  expect(input.value).toBe("본가");
+  expect((screen.getByLabelText("받는 분 이름") as HTMLInputElement).value).toBe("전지호");
+});
+
+// 한 번 쓰고 비워야 나중에 새로 들어왔을 때 지웠다고 생각한 옛 값이 돌아오지 않는다 (#457)
+test("한 번 되살린 값은 비워 다시 오지 않는다", () => {
+  writeAddressDraft("new", { addressName: "본가" });
+
+  renderAt("");
+  expect(readAddressDraft("new")).toBeNull();
+
+  cleanup();
+  expect(renderAt("").value).toBe("");
 });
 
 // `집`을 고치다 나가서 새 배송지를 넣으면 집 값이 새 폼에 들어찬다
@@ -440,10 +452,12 @@ test("검색하러 갈 때 적던 값을 적어 둔다", () => {
   expect(readAddressDraft("new")?.addressName).toBe("본가");
 });
 
-// 저장됐으니 쓸모가 없다. 남겨 두면 다음에 새로 넣을 때 되살아난다
+// 저장됐으니 쓸모가 없다. 남겨 두면 다음에 새로 넣을 때 되살아난다.
+// 주소 줄을 눌러 적어 둔 뒤 돌아오지 않고 저장한 경우다(검색을 새 탭으로 연 경우 등)
 test("저장하면 적어 둔 것을 비운다", async () => {
-  writeAddressDraft("5", { addressName: "본가" });
   renderAt("?place=5");
+  fireEvent.click(screen.getByRole("link", { name: /주소/ }));
+  expect(readAddressDraft("5")).not.toBeNull();
 
   fireEvent.click(submit());
 
