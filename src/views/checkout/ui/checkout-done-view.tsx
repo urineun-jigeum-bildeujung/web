@@ -14,7 +14,6 @@ import { useEffect, useRef } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
-import { IoImageOutline } from "react-icons/io5";
 
 import {
   DeliveryDetail,
@@ -346,8 +345,7 @@ export function CheckoutDoneView({
             {row && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-start gap-2 px-3">
-                  {/* 사진이 없으면 자리만 잡는다. 디자인 시스템 icon 43종에 이미지 글리프가
-                    없어 react-icons로 채운다 (AGENTS.md 5.3) */}
+                  {/* 사진이 없으면 그림 아이콘으로 자리만 잡는다 */}
                   <span
                     aria-hidden
                     className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-tertiary text-icon-fill-secondary"
@@ -355,7 +353,7 @@ export function CheckoutDoneView({
                     {row.imageUrl ? (
                       <Image src={row.imageUrl} alt="" fill sizes="64px" className="object-cover" />
                     ) : (
-                      <IoImageOutline className="size-8" />
+                      <Icon name="image" className="size-8" />
                     )}
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
