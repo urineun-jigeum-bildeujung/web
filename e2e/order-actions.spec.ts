@@ -8,6 +8,12 @@
 import { expect, test } from "@playwright/test";
 
 import { stubOrders } from "./fixtures/orders";
+import { signIn } from "./fixtures/session";
+
+// 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("구매 확정을 누르면 서버까지 가고 확정됐다고 알린다", async ({ page }) => {
   const calls: string[] = [];

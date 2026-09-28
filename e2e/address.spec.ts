@@ -12,6 +12,12 @@ import { expect, test } from "@playwright/test";
 
 import { stubAddressFlow } from "./fixtures/address";
 import { stubMemberProfile } from "./fixtures/member-profile";
+import { signIn } from "./fixtures/session";
+
+// 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("배송지를 등록하면 들어온 화면으로 돌아오고 적던 값이 살아남는다", async ({ page }) => {
   const saved: unknown[] = [];

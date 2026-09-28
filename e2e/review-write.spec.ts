@@ -4,6 +4,7 @@ import { expect, test } from "@playwright/test";
 import { stubMemberProfile } from "./fixtures/member-profile";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { stubReviewApi } from "./fixtures/review";
+import { signIn } from "./fixtures/session";
 
 const PATH = "/mypage/reviews/write?productId=7";
 
@@ -18,6 +19,8 @@ type Page = import("@playwright/test").Page;
 // 아이 목록·내 정보·상품 요약을 서버에서 받고 등록을 보낸다(#291). 백엔드에 흔들리지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  // 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+  await signIn(page);
   await stubMemberProfile(page);
   await stubReviewApi(page);
 });

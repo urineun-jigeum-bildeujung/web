@@ -2,12 +2,15 @@
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { signIn } from "./fixtures/session";
 
 const PATH = "/onboarding?step=health";
 
 // 품종·건강 옵션이 서버에서 온다(#226). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  // 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+  await signIn(page);
 });
 
 test("갈래를 옮기면 그 갈래의 항목이 나온다", async ({ page }) => {
