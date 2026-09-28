@@ -1,8 +1,14 @@
-// searchProducts·getProducts·getProductDetail·getProductSummary 단위 테스트.
+// searchProducts·getProducts·getProductDetail·getTimeDealDetail·getProductSummary 단위 테스트.
 // 요청 파라미터 조립과 응답 필드 매핑을 본다.
 import { afterEach, describe, expect, it, test, vi } from "vitest";
 
-import { getProductDetail, getProducts, getProductSummary, searchProducts } from "./products";
+import {
+  getProductDetail,
+  getProducts,
+  getProductSummary,
+  getTimeDealDetail,
+  searchProducts,
+} from "./products";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -92,41 +98,42 @@ test("상품 요약은 이름과 첫 사진만 옮기고 사진이 없으면 키
   vi.unstubAllGlobals();
 });
 
-describe("getProductDetail", () => {
-  const response = {
-    productId: 7,
-    timeDealItemId: 42,
-    summary: {
-      images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
-      productName: "오메가3 피쉬오일 60캡슐",
-      price: 21000,
-      originalPrice: 30000,
-      discountRate: 30,
-      avgRating: 4.8,
-      reviewCount: 108,
-      soldOut: false,
-    },
-    detailInfo: {
-      manufacturer: "대한펫푸드",
-      brandName: "포포도그",
-      originCountry: "대한민국",
-      netQuantityValue: 90,
-      netQuantityUnit: "정",
-      ingredients: ["타우린", "글루코사민"],
-      feedingTarget: "노령견",
-      targetBreedSize: "소형·중형",
-      targetAgeGroup: "노령",
-      targetSpecies: ["강아지"],
-      feedingMethod: "1일 1정, 사료와 함께 급여",
-      allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
-      // 서버가 CautionIngredientCode.getDisplayName()을 거쳐 내보낸다. 코드가 아니다
-      cautions: ["나트륨 과다"],
-      consumptionPeriodDisplay: "제조일로부터 18개월",
-      shelfLifeAfterOpeningDays: 60,
-      storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
-    },
-  };
+// 일반 상품 상세는 딜 중인 상품이어도 딜 번호를 채우지 않는다(로컬 백엔드 실측, #484)
+const response = {
+  productId: 7,
+  timeDealItemId: null,
+  summary: {
+    images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
+    productName: "오메가3 피쉬오일 60캡슐",
+    price: 21000,
+    originalPrice: 30000,
+    discountRate: 30,
+    avgRating: 4.8,
+    reviewCount: 108,
+    soldOut: false,
+  },
+  detailInfo: {
+    manufacturer: "대한펫푸드",
+    brandName: "포포도그",
+    originCountry: "대한민국",
+    netQuantityValue: 90,
+    netQuantityUnit: "정",
+    ingredients: ["타우린", "글루코사민"],
+    feedingTarget: "노령견",
+    targetBreedSize: "소형·중형",
+    targetAgeGroup: "노령",
+    targetSpecies: ["강아지"],
+    feedingMethod: "1일 1정, 사료와 함께 급여",
+    allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
+    // 서버가 CautionIngredientCode.getDisplayName()을 거쳐 내보낸다. 코드가 아니다
+    cautions: ["나트륨 과다"],
+    consumptionPeriodDisplay: "제조일로부터 18개월",
+    shelfLifeAfterOpeningDays: 60,
+    storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
+  },
+};
 
+describe("getProductDetail", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
   });
@@ -158,7 +165,7 @@ describe("getProductDetail", () => {
 
     expect(product).toEqual({
       productId: 7,
-      timeDealItemId: 42,
+      timeDealItemId: null,
       images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
       name: "오메가3 피쉬오일 60캡슐",
       price: 21000,
@@ -171,8 +178,10 @@ describe("getProductDetail", () => {
     });
   });
 
-  it("타임딜이 아니면 timeDealItemId가 null로 남는다", async () => {
-    stubFetch(Response.json({ ...response, timeDealItemId: null }));
+  // 백엔드 sever#170부터는 최상위 딜 번호 필드가 아예 없다
+  it("딜 번호 필드가 없어도 null로 둔다", async () => {
+    // JSON으로 보낼 때 undefined 필드는 빠진다
+    stubFetch(Response.json({ ...response, timeDealItemId: undefined }));
 
     const product = await getProductDetail("7");
 
@@ -201,6 +210,53 @@ describe("getProductDetail", () => {
 
     expect(product.originalPrice).toBeNull();
     expect(product.rating).toBeNull();
+  });
+});
+
+describe("getTimeDealDetail", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  // 딜가와 딜 번호는 일반 상품 상세에 오지 않는다. 타임딜 상세에서만 온다 (#484)
+  it("토큰 없이 딜 아이템 한 건을 부른다", async () => {
+    const fetchMock = stubFetch(Response.json({ ...response, timeDealItemId: 1 }));
+
+    await getTimeDealDetail("1");
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/time-deals/items/1");
+    expect(new Headers(init.headers).has("Authorization")).toBe(false);
+  });
+
+  it("새 응답(sever#170)의 timeDeal에서 딜 번호를 읽는다", async () => {
+    stubFetch(
+      Response.json({
+        ...response,
+        timeDealItemId: undefined,
+        timeDeal: {
+          timeDealItemId: 1,
+          dealId: 3,
+          dealStatus: "ACTIVE",
+          startAt: "2026-09-29T10:00:00+09:00",
+          endAt: "2026-09-29T22:00:00+09:00",
+          serverTime: "2026-09-29T12:00:00+09:00",
+          purchasable: true,
+        },
+      }),
+    );
+
+    const product = await getTimeDealDetail("1");
+
+    expect(product.timeDealItemId).toBe(1);
+  });
+
+  it("옛 응답의 최상위 딜 번호도 읽는다", async () => {
+    stubFetch(Response.json({ ...response, timeDealItemId: 1 }));
+
+    const product = await getTimeDealDetail("1");
+
+    expect(product.timeDealItemId).toBe(1);
   });
 });
 

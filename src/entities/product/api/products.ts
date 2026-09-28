@@ -120,8 +120,14 @@ type AllergenInfo = {
  */
 type ProductDetailApiResponse = {
   productId: number;
-  /** 타임딜 진행 중일 때만 온다 */
-  timeDealItemId: number | null;
+  /**
+   * 딜 아이템 번호의 옛 자리. **타임딜 상세(`getTimeDealDetail`)에서만 채워진다** — 일반 상품
+   * 상세는 딜 중인 상품이어도 null이다. 백엔드 sever#170부터 `timeDeal.timeDealItemId`로
+   * 옮겨 가 이 필드가 사라진다. 배포가 맞춰질 때까지 둘 다 읽는다 (#484)
+   */
+  timeDealItemId?: number | null;
+  /** 타임딜 상세에서만 온다(sever#170). 상태·기간도 담기지만 화면은 아직 딜 아이템 번호만 쓴다 */
+  timeDeal?: { timeDealItemId: number } | null;
   summary: {
     images: string[];
     productName: string;
@@ -175,7 +181,7 @@ export type ProductDetailInfo = ProductDetailApiResponse["detailInfo"];
 export type ProductDetail = {
   productId: number;
   /**
-   * 타임딜 진행 중이면 그 딜 아이템 id. 장바구니에 담을 때 식별자가 달라진다 —
+   * 타임딜 상세로 받았으면 그 딜 아이템 id. 장바구니에 담을 때 식별자가 달라진다 —
    * 일반 상품은 `NORMAL`+`productId`, 타임딜은 `TIME_DEAL`+`timeDealItemId`다.
    */
   timeDealItemId: number | null;
@@ -198,7 +204,7 @@ export type ProductDetail = {
 function toProductDetail(response: ProductDetailApiResponse): ProductDetail {
   return {
     productId: response.productId,
-    timeDealItemId: response.timeDealItemId,
+    timeDealItemId: response.timeDeal?.timeDealItemId ?? response.timeDealItemId ?? null,
     images: response.summary.images,
     name: response.summary.productName,
     price: response.summary.price,
@@ -223,6 +229,20 @@ export function getProductDetail(productId: string): Promise<ProductDetail> {
   return apiRequest<ProductDetailApiResponse>(`/products/${encodeURIComponent(productId)}`, {
     auth: false,
   }).then(toProductDetail);
+}
+
+/**
+ * 타임딜 아이템 한 건의 상세. 상품 상세와 같은 모양에 **딜가와 딜 아이템 번호가 붙는다.**
+ * 공개 엔드포인트라 토큰을 붙이지 않는다.
+ *
+ * 딜 정보는 일반 상품 상세(`getProductDetail`)에 오지 않는다 — 딜 중인 상품이어도 정가와
+ * 빈 딜 아이템 번호가 온다(로컬 백엔드 실측, #484). 끝났거나 보이지 않는 딜이면 404다.
+ */
+export function getTimeDealDetail(timeDealItemId: string): Promise<ProductDetail> {
+  return apiRequest<ProductDetailApiResponse>(
+    `/time-deals/items/${encodeURIComponent(timeDealItemId)}`,
+    { auth: false },
+  ).then(toProductDetail);
 }
 
 /** 리뷰 작성 화면의 상품 줄처럼 이름과 대표 사진만 필요한 자리가 쓴다 */
