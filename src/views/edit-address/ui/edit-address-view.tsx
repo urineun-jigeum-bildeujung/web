@@ -1,5 +1,5 @@
 // 배송지 추가·수정. 이름과 받는 사람, 주소, 요청사항을 받는다.
-// UI 시안 기준(mypa_311_미입력, mypa_311).
+// UI 페이지 시안 기준(mypa_311 1505:39298).
 //
 // 주소는 이 화면에서 직접 입력하지 않고 검색 화면에서 고른다. 고른 값은 주소창에 실려 돌아온다 —
 // 새로고침이나 뒤로가기에서 살아남아야 해서다 (AGENTS.md 5.1). 컴포넌트 상태로 들면
@@ -261,9 +261,10 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
 
       {/* 시안은 라벨 하나 아래 주소 줄과 상세주소 줄을 묶는다 */}
       <div className="flex flex-col gap-3">
-        <p className="text-title-bold-16 text-foreground">받을 곳 주소</p>
+        <p className="text-title-bold-16 text-foreground">주소</p>
         {/* 주소는 직접 적지 않고 검색 화면에서 고른다. 그래서 입력칸이 아니라 링크다.
-            시안이 오른쪽에 돋보기를 놓아 누르면 찾으러 간다는 것을 보인다 */}
+            시안은 오른쪽에 화살표(>)만 두고 빈 줄에 글자를 넣지 않는다. 비었을 때 링크 이름은
+            아이콘 라벨 "주소 검색"이 맡는다 (#441) */}
         <Link
           href={searchHref}
           // **떠나기 직전에 적어 둔다.** 라우트가 바뀌면 폼이 언마운트돼 적던 값이 사라진다 (#370).
@@ -272,10 +273,12 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
           onClick={() => writeAddressDraft(draftTarget, values)}
           className="flex min-h-11 items-center justify-between gap-2 rounded-lg border border-input px-3 text-body-medium-14 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <span className={address ? "truncate text-foreground" : "text-text-body-tertiary"}>
-            {address || "주소 검색"}
-          </span>
-          <Icon name="search" label="주소 검색" className="size-5 text-icon-stroke-tertiary" />
+          <span className="truncate text-foreground">{address}</span>
+          <Icon
+            name="right"
+            label="주소 검색"
+            className="size-5 shrink-0 text-icon-stroke-tertiary"
+          />
         </Link>
         <Controller
           control={control}
@@ -298,7 +301,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         render={({ field }) => (
           <FormField
             label="배송 요청사항"
-            placeholder="요청사항을 적어주세요."
+            placeholder="요청사항을 적어주세요"
             maxLength={ADDRESS_FIELD_MAX.deliveryNote}
             {...field}
             onClear={() => field.onChange("")}

@@ -1,5 +1,5 @@
 // 주소 검색 결과 목록. 우편번호·도로명·구주소를 항목 이름과 함께 보여준다.
-// 와이어프레임 기준(mypa_312_검색결과)이라 디자인 확정 시 바뀔 수 있다.
+// UI 페이지 시안 기준(mypa_312 결과를 고른 뒤 1507:40624)이다.
 //
 // 행정안전부 도로명주소 API 응답 필드에 맞춘 형태다.
 
@@ -48,7 +48,7 @@ export function AddressResultList({
             {ROWS.map((row) => (
               <span key={row.term} className="flex gap-2">
                 {/* 라벨 너비를 고정하지 않는다. 시안이 값을 라벨 바로 뒤에 붙인다 */}
-                <span className="shrink-0 text-label-bold-14 text-foreground">{row.term}</span>
+                <span className="shrink-0 text-body-medium-14 text-foreground">{row.term}</span>
                 <span className="text-body-regular-14 text-text-body-tertiary">
                   {row.of(result)}
                 </span>
