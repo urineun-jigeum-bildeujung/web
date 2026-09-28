@@ -13,6 +13,7 @@ import { stubAddToCart, stubCart } from "./fixtures/cart";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { signIn } from "./fixtures/session";
+import { stubWishlist } from "./fixtures/wishlist";
 
 const PATH = "/products/1";
 /** 목 API 서버가 주는 값. 목록 목데이터와 일부러 다른 이름·가격이다 */
@@ -24,6 +25,8 @@ async function signInWithPets(page: Page) {
   await stubPetCatalog(page);
   await stubNotifications(page);
   await stubCart(page);
+  // 로그인하면 하단 하트·함께 보면 좋은 상품이 찜을 부른다(#483). 따로 세우는 테스트가 덮는다
+  await stubWishlist(page);
 }
 
 // 화면이 목이던 시절엔 어느 상품을 열어도 같은 값이었다. 응답에서 온 값인지 보려고
@@ -221,17 +224,53 @@ test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page 
   await expect(omega.getByText("부족", { exact: true })).toHaveCount(0);
 });
 
-test("찜을 누르면 담긴 상태로 남는다", async ({ page }) => {
+// 로그인하지 않았으면 찜 대신 로그인으로 보낸다 (#483)
+test("로그인하지 않고 찜을 누르면 로그인 화면으로 간다", async ({ page }) => {
   await page.goto(PATH);
+  // 로그인 여부를 아는 것은 하이드레이션 뒤다. 그전에는 적합도 자리의 뼈대가 있다
+  await expect(page.getByRole("status", { name: "적합도를 불러오는 중" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "찜 목록에 담기" }).click();
+
+  await expect(page).toHaveURL(/\/login$/);
+});
+
+// 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
+test("로그인하고 찜을 누르면 서버에 걸려 새로고침해도 남는다", async ({ page }) => {
+  await signInWithPets(page);
+  const wishlist = await stubWishlist(page);
+  await page.goto(PATH);
+  // 하이드레이션 뒤에만 뜬다. 그전에 누르면 아무 일도 없다
+  await expect(page.getByRole("heading", { name: "코코와 잘 맞아요" })).toBeVisible();
 
   const like = page.getByRole("button", { name: "찜 목록에 담기" });
   await expect(like).toHaveAttribute("aria-pressed", "false");
-
   await like.click();
-  await expect(page.getByRole("button", { name: "찜 목록에서 빼기" })).toHaveAttribute(
-    "aria-pressed",
-    "true",
-  );
+
+  const liked = page.getByRole("button", { name: "찜 목록에서 빼기" });
+  await expect(liked).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByText("해당 상품을 찜 목록에 담았어요!")).toBeVisible();
+  expect(wishlist.toggled).toEqual([1]);
+
+  await page.reload();
+  await expect(liked).toHaveAttribute("aria-pressed", "true");
+});
+
+test("함께 보면 좋은 상품의 하트는 찜 목록으로 채우고 누르면 그 상품을 뒤집는다", async ({
+  page,
+}) => {
+  await signInWithPets(page);
+  const wishlist = await stubWishlist(page, { wished: [2] });
+  await page.goto(PATH);
+
+  const related = page.getByRole("region", { name: "함께 보면 좋은 상품" });
+  const senior = related.getByRole("button", { name: "노령견 저지방 소화케어 사료 1kg 찜하기" });
+  await expect(senior).toHaveAttribute("aria-pressed", "true");
+
+  const allergy = related.getByRole("button", { name: "알레르기 케어 무곡물 사료 1kg 찜하기" });
+  await allergy.click();
+  await expect(allergy).toHaveAttribute("aria-pressed", "true");
+  expect(wishlist.toggled).toEqual([3]);
 });
 
 test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {

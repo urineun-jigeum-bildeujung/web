@@ -34,6 +34,20 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
   useQueryPets,
   useQueryPetDetail,
 }));
+// 찜은 서버에 저장한다(#483). 로그인·찜 여부·찜 목록은 서버 상태라 값만 세운다. 하트 버튼은 진짜를 그린다
+const { toggleWish, wish } = vi.hoisted(() => ({
+  toggleWish: vi.fn(),
+  wish: { status: undefined as boolean | undefined, ids: new Set<number>() },
+}));
+vi.mock("@/features/toggle-wishlist", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/toggle-wishlist")>()),
+  useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
+  useWishedProductIds: () => wish.ids,
+}));
+vi.mock("@/entities/wishlist", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/wishlist")>()),
+  useQueryWishlistStatus: () => ({ wished: wish.status }),
+}));
 vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
@@ -430,16 +444,87 @@ describe("ProductDetailView", () => {
     expect(screen.getByRole("status").textContent).toContain("재입고되면 바로 알려드릴게요!");
   });
 
-  it("찜을 누르면 채워진 하트로 바뀌고 담김 안내가 뜬다", async () => {
-    await renderWith();
+  describe("찜 (#483)", () => {
+    beforeEach(() => {
+      wish.status = undefined;
+      wish.ids = new Set();
+    });
 
-    fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
+    it("찜한 상품이면 채운 하트로 들어온다", async () => {
+      wish.status = true;
+      await renderWith();
 
-    expect(screen.getByRole("button", { name: "찜 목록에서 빼기" })).toBeDefined();
-    expect(toast.custom).toHaveBeenCalledOnce();
+      const button = screen.getByRole("button", { name: "찜 목록에서 빼기" });
+      expect(button.getAttribute("aria-pressed")).toBe("true");
+    });
 
-    const renderToast = vi.mocked(toast.custom).mock.calls[0][0];
-    render(renderToast("liked-toast"));
-    expect(screen.getByRole("status").textContent).toContain("해당 상품을 찜 목록에 담았어요!");
+    // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다
+    it("찜을 누르면 서버에 찜을 걸고 담김 안내가 뜬다", async () => {
+      toggleWish.mockReturnValue(true);
+      await renderWith();
+
+      fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
+
+      // 좋아요 탭 목록에 먼저 넣을 줄도 함께 넘긴다
+      expect(toggleWish).toHaveBeenCalledWith(1, true, {
+        productId: 1,
+        name: "면역 지원 영양제 90정",
+        thumbnailUrl: null,
+        price: 21_000,
+        originalPrice: 30_000,
+      });
+      expect(toast.custom).toHaveBeenCalledOnce();
+      const renderToast = vi.mocked(toast.custom).mock.calls[0][0];
+      render(renderToast("liked-toast"));
+      expect(screen.getByRole("status").textContent).toContain("해당 상품을 찜 목록에 담았어요!");
+    });
+
+    // 로그인으로 보냈거나 로그인 여부를 아직 모르면 찜이 걸리지 않았다
+    it("찜이 걸리지 않았으면 담김 안내를 띄우지 않는다", async () => {
+      toggleWish.mockReturnValue(false);
+      await renderWith();
+
+      fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
+
+      expect(toast.custom).not.toHaveBeenCalled();
+    });
+
+    it("찜을 빼면 담김 안내를 띄우지 않는다", async () => {
+      wish.status = true;
+      toggleWish.mockReturnValue(true);
+      await renderWith();
+
+      fireEvent.click(screen.getByRole("button", { name: "찜 목록에서 빼기" }));
+
+      expect(toggleWish).toHaveBeenCalledWith(1, false, expect.anything());
+      expect(toast.custom).not.toHaveBeenCalled();
+    });
+
+    // 찜 목록은 정상가로 온다. 딜가를 넣으면 좋아요 탭에 딜가가 잠깐 보인다
+    it("타임딜 상세면 좋아요 탭에 먼저 넣을 줄을 넘기지 않는다", async () => {
+      toggleWish.mockReturnValue(true);
+      await renderWith("", { soldOut: false, timeDealItemId: 77 });
+
+      fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
+
+      expect(toggleWish).toHaveBeenCalledWith(1, true, undefined);
+    });
+
+    it("함께 보면 좋은 상품의 하트는 찜 목록으로 채우고 누르면 그 상품을 뒤집는다", async () => {
+      wish.ids = new Set([3]);
+      await renderWith();
+
+      const heart = screen.getByRole("button", { name: "연어&감자 그레인프리 사료 2kg 찜하기" });
+      expect(heart.getAttribute("aria-pressed")).toBe("true");
+
+      fireEvent.click(heart);
+      expect(toggleWish).toHaveBeenCalledWith(3, false, {
+        productId: 3,
+        name: "연어&감자 그레인프리 사료 2kg",
+        thumbnailUrl: null,
+        price: 31_200,
+        originalPrice: 38_900,
+      });
+    });
   });
 });

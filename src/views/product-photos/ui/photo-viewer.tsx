@@ -13,10 +13,11 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
 import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
 
+import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { ReviewCard, toUsageLabel, useQueryReviewDetail } from "@/entities/review";
+import { useQueryWishlistStatus } from "@/entities/wishlist";
 import { cn } from "@/shared/lib/utils";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -34,6 +35,8 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
 type PhotoViewerProps = {
+  /** 이 사진 모음의 상품. 하단 하트가 이 상품의 찜을 켜고 끈다 */
+  productId: number;
   reviewId: string;
   /** 이 후기의 사진 중 몇 번째. 주소로 들어오면 범위를 벗어난 값이 올 수 있다 */
   photoIndex: number;
@@ -43,6 +46,7 @@ type PhotoViewerProps = {
 };
 
 export function PhotoViewer({
+  productId,
   reviewId,
   photoIndex,
   onPhotoChange,
@@ -51,11 +55,14 @@ export function PhotoViewer({
 }: PhotoViewerProps) {
   const { review, isLoading } = useQueryReviewDetail(reviewId);
 
-  // 찜은 이 화면 안에서 끝나는 상태라 진짜로 토글한다. 장바구니·바로구매는 옵션 시트와
-  // 가격이 상품 상세 슬라이스에 있어 여기서 그대로 재사용하면 FSD의 같은 레이어(views)
-  // 간 참조 금지에 걸린다 — 지금은 상품 상세로 이동만 시키고, 그 데이터가
-  // entities로 내려올 때 이 화면도 같이 실제 동작으로 올린다
-  const [liked, setLiked] = useState(false);
+  // 찜은 서버에 저장한다(#483). 가격을 몰라 좋아요 탭 목록에 먼저 넣을 줄은 넘기지 않고
+  // 재동기화에 맡긴다. 장바구니·바로구매는 옵션 시트와 가격이 상품 상세 슬라이스에 있어
+  // 여기서 그대로 재사용하면 FSD의 같은 레이어(views) 간 참조 금지에 걸린다 — 지금은 상품
+  // 상세로 이동만 시키고, 그 데이터가 entities로 내려올 때 이 화면도 같이 실제 동작으로 올린다
+  const heart = useToggleWishlist();
+  const { wished: liked = false } = useQueryWishlistStatus(productId, {
+    enabled: heart.signedIn,
+  });
 
   const images = review?.images ?? [];
   const current = images.length > 0 ? Math.min(Math.max(photoIndex, 0), images.length - 1) : 0;
@@ -185,9 +192,11 @@ export function PhotoViewer({
             type="button"
             aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
             aria-pressed={liked}
+            // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
             onClick={() => {
-              setLiked(!liked);
-              if (!liked) showSnackbar("해당 상품을 찜 목록에 담았어요!");
+              if (heart.toggle(productId, !liked) && !liked) {
+                showSnackbar("해당 상품을 찜 목록에 담았어요!");
+              }
             }}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >

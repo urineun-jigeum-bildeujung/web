@@ -14,6 +14,17 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/search/result",
 }));
 
+// 찜은 서버에 저장한다(#483). 로그인·찜 목록은 서버 상태라 값만 세운다. 하트 버튼은 진짜를 그린다
+const { toggle, wished } = vi.hoisted(() => ({
+  toggle: vi.fn(),
+  wished: { ids: new Set<number>() },
+}));
+vi.mock("@/features/toggle-wishlist", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/toggle-wishlist")>()),
+  useToggleWishlist: () => ({ signedIn: true, toggle }),
+  useWishedProductIds: () => wished.ids,
+}));
+
 import { SearchResultView } from "./search-result-view";
 
 const PUPPY_FOOD: ProductCard = {
@@ -152,15 +163,32 @@ describe("SearchResultView", () => {
     expect(push).toHaveBeenCalledWith("/search?slot=1&from=detail&first=123");
   });
 
-  // 일반 검색은 적합도 대신 찜하기를 보여준다(2396-80432)
-  it("그냥 검색하러 왔으면 찜하기가 보이고 찜하면 눌린 채로 바뀐다", async () => {
+  // 일반 검색은 적합도 대신 찜하기를 보여준다(2396-80432). 찜 여부는 전체 찜 목록에서 온다 (#483)
+  it("그냥 검색하러 왔으면 찜하기가 보이고 찜한 상품은 눌린 하트다", async () => {
+    wished.ids = new Set([4]);
+    await renderWith("?q=사료", [PUPPY_FOOD, SENIOR_FOOD]);
+
+    const puppy = await screen.findByRole("button", { name: /퍼피 성장기 사료 1kg 찜하기/ });
+    expect(puppy.getAttribute("aria-pressed")).toBe("true");
+    const senior = screen.getByRole("button", { name: /노령견 저지방 소화케어 사료 1kg 찜하기/ });
+    expect(senior.getAttribute("aria-pressed")).toBe("false");
+    wished.ids = new Set();
+  });
+
+  // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
+  it("하트를 누르면 그 상품의 찜을 서버에서 뒤집는다", async () => {
     await renderWith("?q=퍼피");
 
-    const like = await screen.findByRole("button", { name: /퍼피 성장기 사료 1kg 찜하기/ });
-    expect(like.getAttribute("aria-pressed")).toBe("false");
+    fireEvent.click(await screen.findByRole("button", { name: /퍼피 성장기 사료 1kg 찜하기/ }));
 
-    fireEvent.click(like);
-    expect(like.getAttribute("aria-pressed")).toBe("true");
+    // 정가가 없는 상품은 찜 응답처럼 판매가로 채워 좋아요 탭 목록에 먼저 넣는다
+    expect(toggle).toHaveBeenCalledWith(4, true, {
+      productId: 4,
+      name: "퍼피 성장기 사료 1kg",
+      thumbnailUrl: null,
+      price: 21000,
+      originalPrice: 21000,
+    });
   });
 
   // 비교 자리를 채우러 왔으면 체크만 하면 되니 카드가 이름·가격만 보인다(1117-6424) —

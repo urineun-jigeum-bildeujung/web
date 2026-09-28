@@ -19,9 +19,16 @@ import { toast } from "sonner";
 
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
+import {
+  CardHeartButton,
+  toWishlistItem,
+  useToggleWishlist,
+  useWishedProductIds,
+} from "@/features/toggle-wishlist";
 import { useMutateCartItem } from "@/entities/cart";
 import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
 import { formatUnitPrice, type ProductCard, type ProductDetail } from "@/entities/product";
+import { useQueryWishlistStatus } from "@/entities/wishlist";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -225,6 +232,9 @@ type ProductDetailViewProps = {
  */
 function RelatedProducts({ productsPromise }: { productsPromise: Promise<ProductCard[]> }) {
   const related = use(productsPromise);
+  // 찜은 서버에 저장한다(#483). 검색 결과와 같이 전체 찜 목록으로 하트를 채운다
+  const heart = useToggleWishlist();
+  const wishedIds = useWishedProductIds();
 
   if (related.length === 0) {
     return null;
@@ -247,18 +257,21 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
                 discountRate={item.discountRate}
                 imageUrl={item.thumbnailUrl ?? undefined}
                 priceClassName="text-title-bold-16"
-                // 시안(1716-34241)의 찜 자리는 다른 화면(top-3 right-3)과 달리
-                // 사진 오른쪽 아래(4px 인셋)다
-                imageActionClassName="top-auto right-1 bottom-1"
+                // 시안(1716-34235)의 찜 자리는 검색 결과와 같이 사진 오른쪽 위(4px 인셋)의
+                // 어두운 원판이다. 예전 시안(1716-34241)은 오른쪽 아래 흰 원이었다 (#483)
+                imageActionClassName="top-1 right-1"
                 imageAction={
-                  // 흰 원 배경 위에 찜 아이콘을 얹는다. 찜이 서버에 붙기 전까지는
-                  // 실제 찜 상태를 못 매겨 장식으로만 둔다
-                  <span
-                    aria-hidden
-                    className="flex size-8 items-center justify-center rounded-full bg-surface-overlay-static"
-                  >
-                    <Icon name="heart_stroke" className="size-6 text-icon-fill-secondary" />
-                  </span>
+                  <CardHeartButton
+                    name={item.name}
+                    wished={wishedIds.has(item.productId)}
+                    onToggle={() =>
+                      heart.toggle(
+                        item.productId,
+                        !wishedIds.has(item.productId),
+                        toWishlistItem(item),
+                      )
+                    }
+                  />
                 }
                 meta={
                   <span className="flex flex-col gap-1">
@@ -309,7 +322,29 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   );
 
   const [petId, setPetId] = useState<string | null>(null);
-  const [liked, setLiked] = useState(false);
+  // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도
+  // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인으로 보낸다
+  const heart = useToggleWishlist();
+  const { wished: liked = false } = useQueryWishlistStatus(product.productId, {
+    enabled: heart.signedIn,
+  });
+  const toggleLike = () => {
+    const next = !liked;
+    // 좋아요 탭 목록에 먼저 넣을 줄. 찜 목록은 정상가로 오므로 딜가가 붙은 타임딜 상세면 넣지 않고
+    // 재동기화에 맡긴다 — 넣으면 좋아요 탭에 딜가가 잠깐 보인다
+    const item = product.timeDealItemId
+      ? undefined
+      : toWishlistItem({
+          productId: product.productId,
+          name: product.name,
+          thumbnailUrl: product.images[0] ?? null,
+          price: product.price,
+          originalPrice: product.originalPrice,
+        });
+    if (heart.toggle(product.productId, next, item) && next) {
+      showSnackbar("해당 상품을 찜 목록에 담았어요!");
+    }
+  };
   const [optionSheetOpen, setOptionSheetOpen] = useState(false);
   // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리. 실제로는
   // 상품 상태와 타임딜 종료 시각을 서버가 준다(#123)
@@ -615,10 +650,8 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
             type="button"
             aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
             aria-pressed={liked}
-            onClick={() => {
-              setLiked(!liked);
-              if (!liked) showSnackbar("해당 상품을 찜 목록에 담았어요!");
-            }}
+            // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
+            onClick={toggleLike}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             {liked ? (

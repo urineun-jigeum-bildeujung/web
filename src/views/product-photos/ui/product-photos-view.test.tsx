@@ -18,6 +18,20 @@ vi.mock("@/entities/review", async (importOriginal) => ({
   useQueryReviewDetail: (reviewId: string) => useQueryReviewDetail(reviewId),
 }));
 
+// 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
+const { toggleWish, wish } = vi.hoisted(() => ({
+  toggleWish: vi.fn(),
+  wish: { status: undefined as boolean | undefined },
+}));
+vi.mock("@/features/toggle-wishlist", () => ({
+  useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
+}));
+vi.mock("@/entities/wishlist", () => ({
+  useQueryWishlistStatus: (productId: number) => ({
+    wished: productId === 1 ? wish.status : undefined,
+  }),
+}));
+
 import { ProductPhotosView } from "./product-photos-view";
 
 /** 7번 후기가 두 장, 9번 후기가 한 장. 한 후기의 사진은 서버가 이어서 준다 */
@@ -174,5 +188,32 @@ describe("뷰어 아래 후기 카드", () => {
 
     expect(screen.getByText("댕댕이짱")).toBeDefined();
     expect(screen.getByText(/도움이 됐다고 했어요/)).toBeDefined();
+  });
+
+  // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
+  describe("뷰어의 찜", () => {
+    it("이 상품을 찜했으면 채운 하트로 열린다", () => {
+      wish.status = true;
+      useQueryReviewPhotos.mockReturnValue(photosState());
+      useQueryReviewDetail.mockReturnValue({ review: DETAIL, isLoading: false });
+      renderView("?photo=7&n=0");
+
+      expect(
+        screen.getByRole("button", { name: "찜 목록에서 빼기" }).getAttribute("aria-pressed"),
+      ).toBe("true");
+      wish.status = undefined;
+    });
+
+    it("누르면 이 상품의 찜을 서버에서 뒤집는다", () => {
+      toggleWish.mockReturnValue(true);
+      useQueryReviewPhotos.mockReturnValue(photosState());
+      useQueryReviewDetail.mockReturnValue({ review: DETAIL, isLoading: false });
+      renderView("?photo=7&n=0");
+
+      fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
+
+      // 가격을 몰라 좋아요 탭 목록에 먼저 넣을 줄은 넘기지 않는다
+      expect(toggleWish).toHaveBeenCalledWith(1, true);
+    });
   });
 });

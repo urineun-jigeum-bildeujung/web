@@ -15,6 +15,12 @@ import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { IoChevronBack, IoSearchOutline } from "react-icons/io5";
 
+import {
+  CardHeartButton,
+  toWishlistItem,
+  useToggleWishlist,
+  useWishedProductIds,
+} from "@/features/toggle-wishlist";
 import { formatUnitPrice, type ProductCard, type ProductSearchResult } from "@/entities/product";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -49,8 +55,9 @@ type GeneralResultListProps = {
   totalCount: number;
   sort: ResultSort;
   onSortChange: (sort: ResultSort) => void;
-  liked: string[];
-  onToggleLike: (id: string) => void;
+  /** 찜한 상품 번호. 전체 찜 목록에서 온다 (#483) */
+  wishedIds: Set<number>;
+  onToggleLike: (product: ProductCard) => void;
 };
 
 /** 그냥 검색하러 왔을 때. 총 개수·정렬·할인율·별점·찜하기가 있다(2396-80432) */
@@ -59,7 +66,7 @@ function GeneralResultList({
   totalCount,
   sort,
   onSortChange,
-  liked,
+  wishedIds,
   onToggleLike,
 }: GeneralResultListProps) {
   return (
@@ -104,27 +111,16 @@ function GeneralResultList({
                 originalPrice={product.originalPrice ?? undefined}
                 discountRate={product.discountRate}
                 imageUrl={product.thumbnailUrl ?? undefined}
-                // 시안(2396-80432·2396-80461)은 사진 위에 바로 얹지 않고 어두운 원판(32px)
-                // 안에 24px 흰 하트를 놓는다. 원판은 이미지 모서리에서 4px 떨어져 있다
-                // (공용 기본값 top-3/right-3=12px보다 좁아 이 화면만 덮어쓴다). 44px 안팎
-                // 감싸는 버튼을 따로 두면 원판이 가운데 정렬되며 안쪽으로 밀려 4px이
-                // 아니게 되므로, 원판 자체를 버튼으로 쓰고 after:로 탭 영역만 44px로
-                // 넓힌다(32+6*2=44) — home-view 텍스트 버튼과 같은 기법이다
+                // 시안(2396-80432·2396-80461)의 원판은 이미지 모서리에서 4px 떨어져 있다
+                // (공용 기본값 top-3/right-3=12px보다 좁아 이 화면만 덮어쓴다). 모양은 함께 보면
+                // 좋은 상품과 같아 CardHeartButton 한 벌을 쓴다
                 imageActionClassName="top-1 right-1"
                 imageAction={
-                  <button
-                    type="button"
-                    onClick={() => onToggleLike(id)}
-                    aria-pressed={liked.includes(id)}
-                    aria-label={`${product.name} 찜하기`}
-                    className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-dimmed text-icon-fill-static-white after:absolute after:-inset-1.5"
-                  >
-                    {liked.includes(id) ? (
-                      <Icon name="heart_fill" aria-hidden className="size-6" />
-                    ) : (
-                      <Icon name="heart_stroke" aria-hidden className="size-6" />
-                    )}
-                  </button>
+                  <CardHeartButton
+                    name={product.name}
+                    wished={wishedIds.has(product.productId)}
+                    onToggle={() => onToggleLike(product)}
+                  />
                 }
                 meta={
                   <>
@@ -196,8 +192,8 @@ type ResultsRegionProps = {
   onPick: (id: string) => void;
   sort: ResultSort;
   onSortChange: (sort: ResultSort) => void;
-  liked: string[];
-  onToggleLike: (id: string) => void;
+  wishedIds: Set<number>;
+  onToggleLike: (product: ProductCard) => void;
 };
 
 /** 결과 개수·정렬·목록·빈 상태를 한 덩어리로 묶는다. `use()`가 미결 상태인 동안
@@ -210,7 +206,7 @@ function ResultsRegion({
   onPick,
   sort,
   onSortChange,
-  liked,
+  wishedIds,
   onToggleLike,
 }: ResultsRegionProps) {
   const { items, totalCount } = use(resultsPromise);
@@ -229,7 +225,7 @@ function ResultsRegion({
       totalCount={totalCount}
       sort={sort}
       onSortChange={onSortChange}
-      liked={liked}
+      wishedIds={wishedIds}
       onToggleLike={onToggleLike}
     />
   );
@@ -274,9 +270,12 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
   const [other] = useQueryState("other");
   const picking = slot !== null;
   const [picked, setPicked] = useState<string | null>(null);
-  const [liked, setLiked] = useState<string[]>([]);
-  const toggleLike = (id: string) =>
-    setLiked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+  // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도
+  // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인으로 보낸다
+  const heart = useToggleWishlist();
+  const wishedIds = useWishedProductIds();
+  const toggleLike = (product: ProductCard) =>
+    heart.toggle(product.productId, !wishedIds.has(product.productId), toWishlistItem(product));
   const otherContext = slot !== null && other ? `&other=${encodeURIComponent(other)}` : "";
   const detailContext =
     slot !== null && from === "detail" && first
@@ -351,7 +350,7 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
             onPick={(id) => setPicked((prev) => (prev === id ? null : id))}
             sort={sort}
             onSortChange={(next) => void setSort(next)}
-            liked={liked}
+            wishedIds={wishedIds}
             onToggleLike={toggleLike}
           />
         </Suspense>
