@@ -3,6 +3,7 @@
 
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
@@ -12,7 +13,7 @@ import {
   PetSwitcher,
   ProductFeedbackSheet,
   useQueryPets,
-  type FeedbackTarget,
+  type FeedbackChoice,
 } from "@/entities/pet";
 import {
   CATEGORY_TO_API,
@@ -24,9 +25,13 @@ import {
   type TimeDealGroup,
   type TimeDealList,
 } from "@/entities/product";
+import {
+  useMutateSubmitFeedback,
+  useQueryPendingFeedbacks,
+  type PendingFeedback,
+} from "@/entities/review";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
-import { Badge } from "@/shared/ui/badge/badge";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
@@ -58,21 +63,6 @@ const MOCK_PRODUCTS = Array.from({ length: 4 }, (_, index) => ({
   reviewCount: index % 2 === 0 ? 108 : 203,
   matchScore: 92 - index * 6,
 }));
-
-const MOCK_RECENT: FeedbackTarget[] = [
-  {
-    productId: "1",
-    productName: "저자극 덴탈껌 14개입",
-    sinceLabel: "구매 후 6일",
-    countLabel: "3번째 구매",
-  },
-  {
-    productId: "2",
-    productName: "그레인프리 연어 사료 2kg",
-    sinceLabel: "구매 후 12일",
-    countLabel: "2번째 구매",
-  },
-];
 
 /** 시안 ProductCard/Grid의 price 슬롯 — 하루 급여비 캡션 + 별점 + 후기 수를 한 자리에.
  * Rating Container는 5개 별을 늘어놓는 Rating(mypa_041_작성한 기준)과 달리 별 1개 + 숫자다 */
@@ -417,23 +407,9 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
     parseAsStringLiteral(SORTS).withDefault("recommend").withOptions({ shallow: false }),
   );
   const [petId, setPetId] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackTarget | null>(null);
+  const [feedback, setFeedback] = useState<PendingFeedback | null>(null);
   const [recentIndex, setRecentIndex] = useState(0);
   const recentListRef = useRef<HTMLUListElement>(null);
-
-  // 시안(Frame 31)의 점 표시기를 실제 스크롤 위치에 맞춘다. 카드 사이 간격(gap)까지
-  // 포함해야 해서, 고정 폭을 그대로 쓰지 않고 옆 칸까지의 실제 간격(offsetLeft 차이)으로
-  // 한 칸 크기를 구한다
-  const handleRecentScroll = () => {
-    const list = recentListRef.current;
-    const first = list?.children[0] as HTMLElement | undefined;
-    const second = list?.children[1] as HTMLElement | undefined;
-    if (!list || !first || !second) return;
-    const step = second.offsetLeft - first.offsetLeft;
-    if (step <= 0) return;
-    const index = Math.round(list.scrollLeft / step);
-    setRecentIndex(Math.max(0, Math.min(MOCK_RECENT.length - 1, index)));
-  };
 
   // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(소리·냥이)을 쓰던 동안 화면마다
   // 이름이 달랐다(QA 1차 6번, #470). 고르기 전에는 기본 아이이고, 로그인하지 않았으면 부르지 않아
@@ -448,6 +424,47 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
   const pet =
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
   const petName = pet?.name ?? "우리 아이";
+
+  // **최근에 구매한 상품은 반응을 남길 수 있는 실제 구매다(#494).** 누구에게나 같은 목데이터
+  // 두 개가 뜨고 남긴 반응이 서버에 가지 않던 자리다. 마이페이지 아이 관리의 제품 탭과 같은 목록이다.
+  //
+  // **받는 동안 뼈대를 그리지 않는다.** 아이 줄과 달리 이 칸은 구매확정 뒤 며칠이 지난 사람에게만
+  // 있다 — 뼈대를 그렸다 지우면 칸이 없는 대부분의 사람에게 아래 구역이 한 번 밀린다
+  const pending = useQueryPendingFeedbacks({ enabled: session === true });
+  const recentItems = pending.items ?? [];
+  const { submitFeedback, isSubmitting } = useMutateSubmitFeedback();
+
+  // 시안(Frame 31)의 점 표시기를 실제 스크롤 위치에 맞춘다. 카드 사이 간격(gap)까지
+  // 포함해야 해서, 고정 폭을 그대로 쓰지 않고 옆 칸까지의 실제 간격(offsetLeft 차이)으로
+  // 한 칸 크기를 구한다
+  const handleRecentScroll = () => {
+    const list = recentListRef.current;
+    const first = list?.children[0] as HTMLElement | undefined;
+    const second = list?.children[1] as HTMLElement | undefined;
+    if (!list || !first || !second) return;
+    const step = second.offsetLeft - first.offsetLeft;
+    if (step <= 0) return;
+    const index = Math.round(list.scrollLeft / step);
+    setRecentIndex(Math.max(0, Math.min(recentItems.length - 1, index)));
+  };
+
+  /**
+   * 반응의 아이. 항목의 `petId`가 그 제품을 사 준 아이인데 **백엔드가 아직 `null`로 둔다**(주문
+   * 서비스 내부 응답에 없어 "추후 연동"). 그때까지는 메인에서 고른 아이다 — 시트의 "○○는
+   * 어땠나요?"도 그 아이다. 채워지면 코드 변경 없이 그 아이로 바뀐다
+   */
+  const feedbackPetId = feedback ? (feedback.petId ?? pet?.id ?? null) : null;
+  const feedbackPetName =
+    pets?.find((candidate) => candidate.id === feedbackPetId)?.name ?? petName;
+  const submitRecent = (choice: FeedbackChoice) =>
+    feedback
+      ? submitFeedback({
+          productId: feedback.productId,
+          orderProductId: feedback.orderProductId,
+          petId: feedbackPetId,
+          submission: choice,
+        })
+      : Promise.resolve();
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -574,63 +591,106 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               </ScrollRow>
             </section>
 
-            {/* 이 서비스가 근거를 모으는 자리 */}
-            <section className="flex flex-col gap-3 py-6 pl-5">
-              <SectionTitle className="pr-5">최근에 구매한 상품, 아이는 어때요?</SectionTitle>
-              <ScrollRow
-                ref={recentListRef}
-                onScroll={handleRecentScroll}
-                label="최근에 구매한 상품"
-                itemWidth="322px"
-                edgeInset={5}
-                bleedRight={false}
-                className="gap-2"
-              >
-                {MOCK_RECENT.map((item) => (
-                  <ScrollRowItem key={item.productId}>
-                    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-center gap-3">
-                        <span aria-hidden className="size-15 shrink-0 rounded-lg bg-muted" />
-                        <div className="flex min-w-0 flex-col gap-2">
-                          {/* 시안은 15px SemiBold(raw, 토큰 없음)인데 이 크기의 타입 토큰이
+            {/* 이 서비스가 근거를 모으는 자리. 남길 반응이 없으면 칸째 없다 — 빈 상태 시안이 없다(#494) */}
+            {pending.error && !pending.items ? (
+              <section className="flex flex-col gap-3 py-6 pl-5">
+                <SectionTitle className="pr-5">최근에 구매한 상품, 아이는 어때요?</SectionTitle>
+                <div
+                  role="alert"
+                  className="flex flex-col items-center gap-3 py-4 pr-5 text-center"
+                >
+                  <p className="text-body-regular-14 text-text-body-secondary">
+                    최근에 구매한 상품을 불러오지 못했어요. 다시 시도해 주세요.
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="min-h-11 px-4"
+                    disabled={pending.isRetrying}
+                    onClick={() => void pending.refetch()}
+                  >
+                    <LoadingSwap
+                      loading={pending.isRetrying}
+                      label="최근에 구매한 상품을 다시 불러오는 중"
+                    >
+                      다시 시도
+                    </LoadingSwap>
+                  </Button>
+                </div>
+              </section>
+            ) : (
+              recentItems.length > 0 && (
+                <section className="flex flex-col gap-3 py-6 pl-5">
+                  <SectionTitle className="pr-5">최근에 구매한 상품, 아이는 어때요?</SectionTitle>
+                  <ScrollRow
+                    ref={recentListRef}
+                    onScroll={handleRecentScroll}
+                    label="최근에 구매한 상품"
+                    itemWidth="322px"
+                    edgeInset={5}
+                    bleedRight={false}
+                    className="gap-2"
+                  >
+                    {recentItems.map((item) => (
+                      <ScrollRowItem key={item.orderProductId}>
+                        <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
+                          <div className="flex items-center gap-3">
+                            {/* 이름이 바로 옆에 있어 사진은 꾸밈이다(alt="") */}
+                            {item.imageUrl ? (
+                              <Image
+                                src={item.imageUrl}
+                                alt=""
+                                width={60}
+                                height={60}
+                                sizes="60px"
+                                className="size-15 shrink-0 rounded-lg object-cover"
+                              />
+                            ) : (
+                              <span
+                                aria-hidden
+                                className="flex size-15 shrink-0 items-center justify-center rounded-lg bg-muted"
+                              >
+                                <Icon name="image" className="size-6 text-muted-foreground" />
+                              </span>
+                            )}
+                            <div className="flex min-w-0 flex-col gap-2">
+                              {/* 시안은 15px SemiBold(raw, 토큰 없음)인데 이 크기의 타입 토큰이
                               디자인 시스템에 없다. SemiBold(600)도 #162에서 정리된 대로 이
                               프로젝트가 등록해 쓰지 않는 굵기라, 가장 가까운 기존 토큰
                               (14px Bold)으로 근사한다 — PD팀에 15px·SemiBold 처리 여부 확인 필요 */}
-                          <p className="truncate text-label-bold-14 text-foreground">
-                            {item.productName}
-                          </p>
-                          <p className="flex gap-2">
-                            <Badge>{item.sinceLabel}</Badge>
-                            <Badge variant="outline">{item.countLabel}</Badge>
-                          </p>
+                              <p className="truncate text-label-bold-14 text-foreground">
+                                {item.name}
+                              </p>
+                              {/* 시안의 "구매 후 N일"·"N번째 구매" 뱃지는 응답에 값이 없어 그리지 않는다.
+                              지어낸 숫자를 보이면 반응의 근거가 거짓이 된다 (#494) */}
+                            </div>
+                          </div>
+                          <Button
+                            className="min-h-11 w-full bg-brand text-label-bold-16 font-bold text-brand-foreground hover:bg-brand/90"
+                            onClick={() => setFeedback(item)}
+                          >
+                            우리 아이 반응 남기기
+                          </Button>
                         </div>
-                      </div>
-                      <Button
-                        className="min-h-11 w-full bg-brand text-label-bold-16 font-bold text-brand-foreground hover:bg-brand/90"
-                        onClick={() => setFeedback(item)}
-                      >
-                        우리 아이 반응 남기기
-                      </Button>
-                    </div>
-                  </ScrollRowItem>
-                ))}
-              </ScrollRow>
-              {/* 시안(Frame 31)은 배너와 같은 점 표시기다 — 이 목록은 있고, 아래 두 목록
+                      </ScrollRowItem>
+                    ))}
+                  </ScrollRow>
+                  {/* 시안(Frame 31)은 배너와 같은 점 표시기다 — 이 목록은 있고, 아래 두 목록
                   (AI 추천·타임딜)은 개수가 안 정해져 있어 없다. 피그마엔 점이 3개
-                  보이지만, 코드는 목데이터 개수만큼 그리므로 지금은 MOCK_RECENT가
-                  2개라 2개만 뜬다 */}
-              <span aria-hidden className="flex justify-center gap-1">
-                {MOCK_RECENT.map((item, index) => (
-                  <span
-                    key={item.productId}
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      index === recentIndex ? "bg-primary" : "bg-border",
-                    )}
-                  />
-                ))}
-              </span>
-            </section>
+                  보이지만 실제 항목 수만큼 그린다 */}
+                  <span aria-hidden className="flex justify-center gap-1">
+                    {recentItems.map((item, index) => (
+                      <span
+                        key={item.orderProductId}
+                        className={cn(
+                          "size-1.5 rounded-full",
+                          index === recentIndex ? "bg-primary" : "bg-border",
+                        )}
+                      />
+                    ))}
+                  </span>
+                </section>
+              )
+            )}
 
             {/* 시안은 이 줄만 왼쪽 여백(pl-5)이고 오른쪽은 없다 — ScrollRow가 화면
                 끝까지 삐져나가야 해서, 그 줄 말고 나머지 자식들에 pr-5를 따로 준다.
@@ -704,10 +764,18 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
       <BottomNav />
 
       <ProductFeedbackSheet
-        target={feedback}
-        petName={petName}
+        target={
+          feedback && {
+            productId: feedback.productId,
+            productName: feedback.name,
+            imageUrl: feedback.imageUrl,
+          }
+        }
+        petName={feedbackPetName}
         onOpenChange={(open) => !open && setFeedback(null)}
         onSeeProduct={(productId) => router.push(`/products/${productId}`)}
+        onSubmit={submitRecent}
+        isSubmitting={isSubmitting}
         variant="full"
       />
     </div>
