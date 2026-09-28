@@ -24,6 +24,9 @@ export function useQueryPetDetail(petId: string | undefined) {
   return {
     pet: query.data,
     isLoading: query.isLoading,
+    /** 실패 뒤 다시 시도하는 동안. 버튼의 대기 표시가 본다 */
+    isRetrying: query.isRefetching,
     error: query.error,
+    refetch: query.refetch,
   };
 }

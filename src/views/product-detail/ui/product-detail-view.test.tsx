@@ -255,6 +255,39 @@ describe("ProductDetailView", () => {
     expect(screen.getByRole("status", { name: "적합도를 불러오는 중" })).toBeDefined();
   });
 
+  // 조용히 비우면 로그아웃과 구별되지 않는다 (#482 리뷰)
+  it("로그인했는데 아이 목록을 받지 못하면 그 자리에서 알리고 다시 받는다", async () => {
+    const refetch = vi.fn();
+    useQueryPets.mockReturnValue({
+      pets: undefined,
+      isLoading: false,
+      isRetrying: false,
+      error: new Error("503"),
+      refetch,
+    });
+    await renderWith();
+
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("적합도를 불러오지 못했어요");
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it("고른 아이의 상세를 받지 못해도 알리고 그 상세를 다시 받는다", async () => {
+    const refetch = vi.fn();
+    useQueryPetDetail.mockReturnValue({
+      pet: undefined,
+      isLoading: false,
+      isRetrying: false,
+      error: new Error("503"),
+      refetch,
+    });
+    await renderWith();
+
+    fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "다시 시도" }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
   // 예시 상품 셋은 없는 상품이라 누를 수 없게 막아 두었다. AI 추천 전까지 인기순이다 (#481)
   it("함께 보면 좋은 상품은 실제 상품이고 누르면 그 상품으로 간다", async () => {
     await renderWith();

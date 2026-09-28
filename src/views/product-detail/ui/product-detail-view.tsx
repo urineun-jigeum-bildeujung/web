@@ -30,6 +30,7 @@ import { Countdown } from "@/shared/ui/countdown/countdown";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
@@ -329,12 +330,16 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   //
   // 이름·프로필·알레르기 근거는 아이 상세에서, 점수·성분은 AI가 붙기 전까지 예시다(`toPetMatch`)
   const session = useSessionState();
-  const { pets, isLoading: isLoadingPets } = useQueryPets({ enabled: session === true });
+  const petList = useQueryPets({ enabled: session === true });
+  const { pets } = petList;
   const selectedPetId = session === true ? (petId ?? pets?.[0]?.id) : undefined;
-  const { pet, isLoading: isLoadingPet } = useQueryPetDetail(selectedPetId);
-  const match = pet ? toPetMatch(pet, product.detail) : null;
+  const petDetail = useQueryPetDetail(selectedPetId);
+  const match = petDetail.pet ? toPetMatch(petDetail.pet, product.detail) : null;
   // 로그인 여부를 아직 모르거나 아이를 받는 중이면 자리를 잡는다. 늦게 끼어들면 아래가 통째로 밀린다
-  const isWaitingMatch = session === null || isLoadingPets || isLoadingPet;
+  const isWaitingMatch = session === null || petList.isLoading || petDetail.isLoading;
+  // 로그인했는데 아이를 받지 못했으면 그 자리에서 알린다. 조용히 비우면 로그아웃과 구별되지 않는다
+  const matchFailed = session === true && Boolean(petList.error ?? petDetail.error);
+  const retryMatch = () => void (petList.error ? petList.refetch() : petDetail.refetch());
 
   // 타임딜 진행 중인 상품은 장바구니가 딜 아이템으로 받아야 딜가가 붙는다.
   // 상세에서 담을 때만 정가로 들어가던 자리다
@@ -503,17 +508,39 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
             <MatchPanel pets={pets} onPetChange={setPetId} match={match} />
             <div className="h-2 bg-muted" />
           </>
+        ) : isWaitingMatch ? (
+          <>
+            <div
+              role="status"
+              aria-label="적합도를 불러오는 중"
+              className="flex flex-col gap-3 p-5"
+            >
+              <Skeleton className="h-8 w-44 rounded-full" />
+              <Skeleton className="h-7 w-56" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="h-2 bg-muted" />
+          </>
         ) : (
-          isWaitingMatch && (
+          matchFailed && (
             <>
-              <div
-                role="status"
-                aria-label="적합도를 불러오는 중"
-                className="flex flex-col gap-3 p-5"
-              >
-                <Skeleton className="h-8 w-44 rounded-full" />
-                <Skeleton className="h-7 w-56" />
-                <Skeleton className="h-20 w-full" />
+              <div role="alert" className="flex flex-col items-center gap-3 px-5 py-8 text-center">
+                <p className="text-body-regular-14 text-text-body-secondary">
+                  적합도를 불러오지 못했어요. 다시 시도해 주세요.
+                </p>
+                <Button
+                  variant="outline"
+                  className="min-h-11 px-4"
+                  disabled={petList.isRetrying || petDetail.isRetrying}
+                  onClick={retryMatch}
+                >
+                  <LoadingSwap
+                    loading={petList.isRetrying || petDetail.isRetrying}
+                    label="적합도를 다시 불러오는 중"
+                  >
+                    다시 시도
+                  </LoadingSwap>
+                </Button>
               </div>
               <div className="h-2 bg-muted" />
             </>
