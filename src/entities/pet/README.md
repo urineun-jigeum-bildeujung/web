@@ -20,7 +20,7 @@
 | `api/pets.test.ts` | 무엇을 부르는지, 기본 아이 정렬, enum을 화면 값으로 옮기는 것 |
 | `api/use-query-pets.ts` | 아이 목록을 가져오는 훅. `enabled: false`면 부르지 않고 대기도 아니며, 받아 둔 목록도 내주지 않는다(세션이 끊긴 뒤 옛 이름이 남지 않게) — 로그인 없이 열리는 메인·맞춤 추천이 세션으로 건다(#470) |
 | `api/use-query-pets.test.tsx` | 꺼 두면 부르지 않고 대기로 남지 않는지, 껐다가는 받아 둔 목록을 내주지 않는지 |
-| `api/use-query-pet-detail.ts` | 고른 아이의 상세를 가져오는 훅 |
+| `api/use-query-pet-detail.ts` | 고른 아이의 상세를 가져오는 훅. 실패하면 다시 받을 수 있게 `refetch`·`isRetrying`을 준다(#482 리뷰) |
 | `api/use-mutate-update-pet.ts` | 고친 값을 저장하는 훅. 새 사진이 있으면 `shared/api/upload-image`로 올린 뒤 `image`를 실어 보낸다 |
 | `ui/pet-switcher.tsx` | 아이 고르기 줄(기본 48px, `variant="main"` 60px, `variant="hero"`는 고른 아이만 90px). 마지막 칸은 새 아이 자리. `withNames`로 이름을 보인다. `selectedIds`·`onToggle`을 주면 여러 마리를 고르는 체크박스 모드(리뷰 작성) (`mypa_021`, 리뷰 작성, 메인 홈화면) |
 | `ui/pet-switcher.test.tsx` | 단일 선택은 라디오, 다중 선택은 체크박스로 읽히고 각각 고른 아이를 알리는지, 사진 없는 아이가 이름 앞 두 글자로 보이는지 |
