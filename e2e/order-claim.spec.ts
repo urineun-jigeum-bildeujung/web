@@ -11,6 +11,12 @@
 import { expect, test } from "@playwright/test";
 
 import { daysAgo, stubOrders } from "./fixtures/orders";
+import { signIn } from "./fixtures/session";
+
+// 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("주문 상세에서 반품을 세 단계로 접수하고 돌아온다", async ({ page }) => {
   const claims: unknown[] = [];

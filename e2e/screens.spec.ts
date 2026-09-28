@@ -15,6 +15,7 @@ import { stubReviewApi } from "./fixtures/review";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubCart } from "./fixtures/cart";
 import { stubOrders } from "./fixtures/orders";
+import { signIn } from "./fixtures/session";
 
 /**
  * 화면이 바깥에 기대는 것을 끊는다.
@@ -103,6 +104,8 @@ const ROUTES = [
 // 품종·건강 옵션이 서버에서 온다(#226). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  // 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+  await signIn(page);
   await stubPhoneVerification(page);
   await stubOrders(page);
   // 세우지 않으면 /cart가 빈 화면으로 서서 스모크가 아무것도 보지 않는다 (#379)

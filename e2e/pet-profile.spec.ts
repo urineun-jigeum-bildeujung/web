@@ -2,10 +2,13 @@
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { signIn } from "./fixtures/session";
 
 // 목록·상세·건강 선택지 셋을 받는다(#230). 백엔드가 떠 있느냐에 흔들리지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  // 마이페이지는 세션이 없으면 로그인으로 보낸다(#447)
+  await signIn(page);
 });
 
 test("고른 아이의 품종·나이·성별과 몸무게를 보인다", async ({ page }) => {
