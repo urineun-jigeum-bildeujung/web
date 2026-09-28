@@ -1,12 +1,13 @@
 // 주문 상세 테스트. 서버가 준 주문을 그리는지, 응답에 없어 계산해 만드는 값이 맞는지,
-// 배송 전에만 주문을 취소하고 배송완료일 때만 반품·교환으로 갈 수 있는지 본다.
-// 구성은 2026-09-23 시안(mypa_161, #405·#410)을 따른다.
+// 배송 전에만 주문을 취소하고 배송완료일 때만 구매 확정·반품·교환으로 갈 수 있는지 본다.
+// 구성은 2026-09-23 시안(mypa_161, #405·#410)과 2026-09-28 PD 답(#462)을 따른다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
-const { getOrderDetail, cancelOrder } = vi.hoisted(() => ({
+const { getOrderDetail, cancelOrder, confirmOrder } = vi.hoisted(() => ({
   getOrderDetail: vi.fn(),
   cancelOrder: vi.fn(),
+  confirmOrder: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
@@ -15,6 +16,7 @@ vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
   getOrderDetail,
   cancelOrder,
+  confirmOrder,
 }));
 
 import type { OrderDetail } from "@/entities/order";
@@ -140,23 +142,91 @@ test("시안에서 빠진 포인트 할인과 하단 링크를 보여주지 않�
   expect(screen.queryByRole("link", { name: "문의하기" })).toBeNull();
 });
 
-// 배송이 끝나야 반품·교환을 접수할 수 있다. 배송 전에는 주문 취소가 맞는 길이다
-test("배송완료가 아니면 반품·교환 버튼이 없다", async () => {
+// 배송이 끝나야 구매 확정과 반품·교환을 할 수 있다. 배송 전에는 주문 취소가 맞는 길이다
+test("배송완료가 아니면 구매확정·반품·교환 버튼이 없다", async () => {
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   await screen.findByText("ORD-TEST-DETAIL-01");
-  expect(screen.queryByRole("button", { name: "반품 신청하기" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "교환 신청하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "구매확정" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
 });
 
-test("배송완료면 반품·교환을 접수할 수 있다", async () => {
+// 글자 버튼 셋은 PD팀이 피했다. 반품과 교환은 한 버튼으로 묶고 시트에서 고른다 (2026-09-28, #462)
+test("배송완료면 맨 아래에 구매확정·반품·교환 두 버튼이 선다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({ orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByRole("button", { name: "반품 신청하기" })).toBeDefined();
-  expect(screen.getByRole("button", { name: "교환 신청하기" })).toBeDefined();
+  expect(await screen.findByRole("button", { name: "구매확정" })).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "반품·교환" }));
+
+  // 시트에서 둘 중 하나를 고른다 (3610:59865)
+  expect(await screen.findByRole("dialog", { name: "상품에 문제가 생겼나요?" })).toBeDefined();
+  expect(screen.getByRole("link", { name: "반품하기" }).getAttribute("href")).toBe(
+    "/mypage/orders/1/claim?type=return",
+  );
+  expect(screen.getByRole("link", { name: "교환하기" }).getAttribute("href")).toBe(
+    "/mypage/orders/1/claim?type=exchange",
+  );
+});
+
+// 반품·교환은 배송완료 뒤 7일까지다. 확정은 기간이 없어 혼자 남는다 (#374)
+test("반품·교환 기간이 지나면 구매확정만 남는다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ orderStatus: "DELIVERED", deliveredAt: daysAgo(8) }),
+  );
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  expect(await screen.findByRole("button", { name: "구매확정" })).toBeDefined();
+  expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
+});
+
+// 목록의 상품 줄마다 있던 것을 옮겼다. 서버는 주문 전체만 확정한다 (2026-09-28 PD 답, #462)
+test("구매확정은 시트에서 확정할 상품을 보여 준 뒤 서버를 부르고, 끝나면 버튼이 사라진다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
+  );
+  confirmOrder.mockImplementation(async () => {
+    // 확정이 끝나면 다시 받은 상세는 확정된 주문이다
+    getOrderDetail.mockResolvedValue(
+      makeDetail({ orderStatus: "CONFIRMED", deliveredAt: daysAgo(1) }),
+    );
+  });
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "구매확정" }));
+  const sheet = await screen.findByRole("dialog", { name: "무사히 잘 도착했나요?" });
+  // 무엇을 확정하는지 보여 준다. 금액은 위 주문 상품 카드와 같은 값이다
+  expect(sheet.textContent).toContain("테스트 상품 A");
+  expect(sheet.textContent).toContain("35,000");
+  fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
+
+  await waitFor(() => expect(confirmOrder).toHaveBeenCalledWith(1));
+  // 확정하면 반품·교환도 닫힌다. 두 버튼 모두 사라진다
+  await waitFor(() => expect(screen.queryByRole("button", { name: "구매확정" })).toBeNull());
+  expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
+});
+
+// 보내는 중에 시트가 닫히면 요청만 남아 끝났을 때 확정됐는지 알 수 없다 (#293 리뷰)
+test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
+  );
+  confirmOrder.mockImplementation(() => new Promise(() => {}));
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "구매확정" }));
+  fireEvent.click(await screen.findByRole("button", { name: "확정하기" }));
+
+  await waitFor(() =>
+    expect(screen.getByRole("button", { name: "나중에 할게요" }).hasAttribute("disabled")).toBe(
+      true,
+    ),
+  );
+  // **Escape로도 닫히지 않는다.** 버튼을 잠그는 것만으로는 모자라다
+  fireEvent.keyDown(document, { key: "Escape" });
+  expect(screen.getByText("무사히 잘 도착했나요?")).toBeDefined();
 });
 
 // 눌러 봐야 신청 화면이 "신청 진행 중"으로 되돌려 보낸다 (#334).
@@ -193,8 +263,10 @@ test("진행 중인 신청이 걸린 상품뿐이면 반품·교환 버튼을 �
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   await screen.findByText("ORD-TEST-DETAIL-01");
-  expect(screen.queryByRole("button", { name: "반품 신청하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
   expect(screen.queryByText("반품 수거 중")).toBeNull();
+  // 확정은 신청과 상관없이 남는다
+  expect(screen.getByRole("button", { name: "구매확정" })).toBeDefined();
 });
 
 // 거절·완료는 끝난 신청이다. 다시 신청할 수 있어야 한다
@@ -229,20 +301,20 @@ test("끝난 신청만 있으면 다시 신청할 수 있다", async () => {
   );
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
-  expect(await screen.findByRole("button", { name: "반품 신청하기" })).toBeDefined();
+  expect(await screen.findByRole("button", { name: "반품·교환" })).toBeDefined();
 });
 
-// 확인창에서 바로 접수되면 사유도 사진도 받지 못한다. 신청 화면으로 넘겨야 한다 (MYPA_261)
-test("반품을 확인하면 그 주문의 신청 화면으로 간다", async () => {
+// 시트에서 고르면 바로 접수되지 않는다. 사유와 사진을 받는 신청 화면으로 넘어간다 (MYPA_261).
+// 예전의 접수 확인 모달은 시트가 대신해 PD팀이 시안에서 지웠다 (2026-09-28, #462)
+test("시트의 반품하기는 확인창 없이 그 주문의 신청 화면으로 간다", async () => {
   getOrderDetail.mockResolvedValue(
     makeDetail({ orderId: 7, orderStatus: "DELIVERED", deliveredAt: daysAgo(1) }),
   );
   render(<OrderDetailView orderId="7" />, { wrapper: createQueryWrapper() });
 
-  fireEvent.click(await screen.findByRole("button", { name: "반품 신청하기" }));
-  expect(screen.getByText("반품 접수를 진행할까요?")).toBeDefined();
-  // 시안은 트리거와 확인 버튼을 같은 문구로 쓴다. 확인 쪽만 링크다
-  const link = screen.getByRole("link", { name: "반품 신청하기" });
+  fireEvent.click(await screen.findByRole("button", { name: "반품·교환" }));
+  const link = await screen.findByRole("link", { name: "반품하기" });
+  expect(screen.queryByRole("alertdialog")).toBeNull();
   expect(link.getAttribute("href")).toBe("/mypage/orders/7/claim?type=return");
 });
 
