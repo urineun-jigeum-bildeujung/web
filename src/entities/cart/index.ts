@@ -9,3 +9,4 @@ export {
 } from "./api/cart";
 export { useMutateCartItem } from "./api/use-mutate-cart-item";
 export { useQueryCart } from "./api/use-query-cart";
+export { useQueryCartCount } from "./api/use-query-cart-count";

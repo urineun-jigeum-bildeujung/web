@@ -20,6 +20,10 @@ const { showSnackbar, add, removeAsync } = vi.hoisted(() => ({
 vi.mock("@/entities/cart", () => ({
   useMutateCartItem: () => ({ add, removeAsync, isAdding: false }),
 }));
+// 헤더 장바구니는 담은 수를 서버에서 읽는 위젯이다. 여기서는 링크만 대신 그린다(#470)
+vi.mock("@/widgets/cart-link", () => ({
+  CartLink: () => <a href="/cart" aria-label="장바구니" />,
+}));
 vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
 import { DealsView } from "./deals-view";

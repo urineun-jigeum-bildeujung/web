@@ -14,6 +14,7 @@ import Link from "next/link";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useState } from "react";
 
+import { CartLink } from "@/widgets/cart-link";
 import {
   ProductOptionSheet,
   type DealItem,
@@ -447,7 +448,7 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
         title="타임딜"
         right={
           // 시안(1905-32416)의 공용 header 아이콘 방식이다(product-detail·product-compare와 동일).
-          // 장바구니 개수 배지는 실제 연동 전까지 생략한다(로컬 QA 기록)
+          // 장바구니 개수 뱃지는 실제 담은 수다(#470)
           <>
             <Link
               href="/search"
@@ -456,13 +457,7 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
             >
               <Icon name="search" className="size-7" />
             </Link>
-            <Link
-              href="/cart"
-              aria-label="장바구니"
-              className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
-            >
-              <Icon name="cart" className="size-7" />
-            </Link>
+            <CartLink className="after:-inset-2" />
           </>
         }
       />

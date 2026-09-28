@@ -7,7 +7,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useState } from "react";
@@ -23,6 +22,7 @@ import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { BottomNav } from "@/widgets/bottom-nav";
+import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 
 /**
@@ -265,13 +265,7 @@ export function ProductCompareView() {
           <>
             <span aria-hidden className="size-7" />
             <NotificationBell />
-            <Link
-              href="/cart"
-              aria-label="장바구니"
-              className="after:-inset-x-1.125 relative flex size-7 items-center justify-center after:absolute after:-inset-y-2"
-            >
-              <Icon name="cart" className="size-7" />
-            </Link>
+            <CartLink />
           </>
         }
       />
