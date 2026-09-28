@@ -274,6 +274,8 @@ export function CheckoutView() {
   // **배송지는 id만이 아니라 내용까지 넣는다.** 서버는 주문을 만들 때 주소를 복사해 두고 바꾸지
   // 않아서, 같은 배송지의 주소를 고친 뒤 옛 주문을 쓰면 옛 주소로 간다 (#412)
   const orderSignature = JSON.stringify({ ...orderRequest, address });
+  // 결제가 끝나면 장바구니에서 뺄 줄. 주문과 함께 적어 두면 완료 화면이 꺼내 쓴다 (#457)
+  const cartItems = items.map(({ itemType, itemId }) => ({ itemType, itemId }));
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =
@@ -332,7 +334,7 @@ export function CheckoutView() {
     const pending =
       stored !== null && stored.signature === orderSignature
         ? stored
-        : newPendingOrder(orderSignature);
+        : newPendingOrder(orderSignature, cartItems);
     // 새로 만들면 들고 있던 주문은 쓸 일이 없다. 결제 대기로 남아 재고 예약을 붙잡지 않게
     // 먼저 푼다 (#412)
     const superseded = stored !== null && stored !== pending ? stored.orderId : null;
@@ -358,7 +360,7 @@ export function CheckoutView() {
         // 결제된 주문처럼 다른 상태는 새로 만들지 않는다 — 결제 준비가 걸러 주고, 두 번 결제될
         // 여지를 만들지 않는다
         if (created.orderStatus === "CANCELLED") {
-          held = newPendingOrder(orderSignature);
+          held = newPendingOrder(orderSignature, cartItems);
           writePendingOrder(held);
           created = await createOrder(body, held.idempotencyKey);
         }

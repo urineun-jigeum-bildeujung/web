@@ -14,6 +14,8 @@
 // 잃고 다시 누를 때 같은 키를 실어야 서버가 이미 만든 주문을 돌려준다 — 키를 새로 만들면
 // 주문이 하나 더 생긴다 (#412).
 
+import type { CartItemRef } from "@/entities/cart";
+
 const KEY = "checkout.pendingOrder";
 
 /**
@@ -28,11 +30,18 @@ export type PendingOrder = {
   idempotencyKey: string;
   /** 서버가 만든 주문. 생성 응답을 받기 전에는 없다 */
   orderId: number | null;
+  /**
+   * 이 주문을 만든 장바구니 줄. 결제가 끝나면 완료 화면이 이 줄을 장바구니에서 뺀다 (#457).
+   *
+   * 완료 화면은 리다이렉트로 새로 서서 결제 화면이 고른 줄을 모른다. 주문 응답에도 장바구니
+   * 식별자(`itemType`·`itemId`)가 없어 여기 함께 적어 둔다.
+   */
+  cartItems: CartItemRef[];
 };
 
 /** 이 본문으로 처음 주문을 만들 때. 키는 여기서 한 번만 만든다 */
-export function newPendingOrder(signature: string): PendingOrder {
-  return { signature, idempotencyKey: newIdempotencyKey(), orderId: null };
+export function newPendingOrder(signature: string, cartItems: CartItemRef[]): PendingOrder {
+  return { signature, idempotencyKey: newIdempotencyKey(), orderId: null, cartItems };
 }
 
 /**
@@ -88,18 +97,33 @@ export function clearPendingOrder(): void {
 /**
  * 손으로 고쳤거나 옛 모양이 남아 있을 수 있다. 모양이 맞을 때만 쓴다.
  *
- * 키가 없는 #412 전 모양도 여기서 걸러진다. 배포 뒤 처음 한 번 새 주문을 만드는 것으로 끝난다.
+ * 키가 없는 #412 전 모양, 장바구니 줄이 없는 #457 전 모양도 여기서 걸러진다. 배포 뒤 처음 한 번
+ * 새 주문을 만드는 것으로 끝난다.
  */
 function isPendingOrder(value: unknown): value is PendingOrder {
   if (typeof value !== "object" || value === null) {
     return false;
   }
-  const { orderId, signature, idempotencyKey } = value as Record<string, unknown>;
+  const { orderId, signature, idempotencyKey, cartItems } = value as Record<string, unknown>;
   const validOrderId = orderId === null || (Number.isInteger(orderId) && (orderId as number) > 0);
   return (
     validOrderId &&
     typeof signature === "string" &&
     typeof idempotencyKey === "string" &&
-    idempotencyKey.length > 0
+    idempotencyKey.length > 0 &&
+    isCartItemRefs(cartItems)
+  );
+}
+
+function isCartItemRefs(value: unknown): value is CartItemRef[] {
+  return (
+    Array.isArray(value) &&
+    value.every((item: unknown) => {
+      if (typeof item !== "object" || item === null) {
+        return false;
+      }
+      const { itemType, itemId } = item as Record<string, unknown>;
+      return typeof itemType === "string" && Number.isInteger(itemId);
+    })
   );
 }

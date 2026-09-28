@@ -10,12 +10,13 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
 import { IoImageOutline } from "react-icons/io5";
 
+import type { CartItemRef } from "@/entities/cart";
 import {
   DeliveryDetail,
   DetailRow,
@@ -31,7 +32,8 @@ import { formatDisplayDateTime } from "@/shared/lib/date/display-date";
 
 import { useMarkOrdersStale } from "../api/use-mark-orders-stale";
 import { useQueryPaymentConfirm } from "../api/use-query-payment-confirm";
-import { clearPendingOrder } from "../model/pending-order";
+import { useRemovePaidCartItems } from "../api/use-remove-paid-cart-items";
+import { clearPendingOrder, readPendingOrder } from "../model/pending-order";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -201,14 +203,36 @@ export function CheckoutDoneView({
     amount,
   });
 
+  // 이 결제가 어느 장바구니 줄에서 왔는지. 결제 화면이 주문과 함께 적어 둔 것이다 (#457)
+  const paidCartItems = useRef<CartItemRef[]>([]);
+  const removePaidCartItems = useRemovePaidCartItems();
+
   // **결제창을 통과한 주문은 더 이상 재사용 대상이 아니다.** 들고 있던 것을 비우지 않으면
   // 다음 장바구니에서 그 주문으로 결제를 시도한다 (#367). 승인 실패도 마찬가지다 —
-  // 그 주문은 이미 결제창을 거쳤으므로 새 결제를 붙일 자리가 아니다
+  // 그 주문은 이미 결제창을 거쳤으므로 새 결제를 붙일 자리가 아니다.
+  //
+  // 비우기 전에 장바구니 줄을 꺼내 둔다. Strict Mode가 효과를 두 번 돌리면 두 번째는 이미 비운
+  // 뒤라 읽을 것이 없다 — 그때 덮어쓰지 않는다
   useEffect(() => {
     if (canConfirm) {
+      const pending = readPendingOrder();
+      if (pending) {
+        paidCartItems.current = pending.cartItems;
+      }
       clearPendingOrder();
     }
   }, [canConfirm]);
+
+  // **승인이 끝났을 때만 장바구니에서 뺀다.** 승인이 막히면 결제가 끝났는지 알 수 없어 장바구니를
+  // 남긴다. 한 번 뺀 뒤에는 비워 두어 다시 그려져도 또 부르지 않는다 (#457)
+  useEffect(() => {
+    if (!payment || paidCartItems.current.length === 0) {
+      return;
+    }
+    const items = paidCartItems.current;
+    paidCartItems.current = [];
+    void removePaidCartItems(items);
+  }, [payment, removePaidCartItems]);
 
   // **숫자 주문 id는 승인 응답이 준다.** 주소창의 `?order=`는 사용자가 바꿀 수 있으므로
   // 승인이 끝나면 그쪽을 믿지 않는다. 승인을 기다리는 동안에는 쿼리로 먼저 조회를 걸어

@@ -61,6 +61,7 @@ vi.mock("./toss-payment-widget", () => ({
   },
 }));
 
+import { readPendingOrder } from "../model/pending-order";
 import { CheckoutView } from "./checkout-view";
 
 // 앞 테스트의 호출 기록이 남으면 "부르지 않았다"를 단언할 수 없다
@@ -427,6 +428,19 @@ test("배송지 주소를 고치면 주문을 새로 만든다", async () => {
 
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(2));
   expect(preparePayment).toHaveBeenLastCalledWith({ orderId: 88 });
+});
+
+// 완료 화면은 리다이렉트로 새로 서서 어느 장바구니 줄을 샀는지 모른다. 주문과 함께 적어 둔다 (#457)
+test("주문을 만들 때 그 장바구니 줄을 함께 적어 둔다", async () => {
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  expect(readPendingOrder()?.cartItems).toEqual([{ itemType: "NORMAL", itemId: 1 }]);
 });
 
 /**

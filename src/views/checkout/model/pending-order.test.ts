@@ -12,7 +12,12 @@ import {
   writePendingOrder,
 } from "./pending-order";
 
-const ORDER = { signature: '{"addressId":5}', idempotencyKey: "key-1", orderId: 77 };
+const ORDER = {
+  signature: '{"addressId":5}',
+  idempotencyKey: "key-1",
+  orderId: 77,
+  cartItems: [{ itemType: "NORMAL" as const, itemId: 1 }],
+};
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -43,8 +48,8 @@ test("주문을 받기 전에 적어 둔 키도 그대로 읽는다", () => {
 
 // 본문이 바뀌면 새 키여야 한다. 서버는 같은 키에 본문을 견주지 않고 처음 주문을 돌려준다 (#412)
 test("새로 시작할 때마다 다른 키를 만든다", () => {
-  const first = newPendingOrder("a");
-  const second = newPendingOrder("a");
+  const first = newPendingOrder("a", []);
+  const second = newPendingOrder("a", []);
 
   expect(first.orderId).toBeNull();
   expect(first.idempotencyKey).not.toBe(second.idempotencyKey);
@@ -56,11 +61,25 @@ test("보안 출처가 아니어서 randomUUID가 없어도 UUID 모양의 키�
   const real = globalThis.crypto;
   vi.stubGlobal("crypto", { getRandomValues: real.getRandomValues.bind(real) });
 
-  const { idempotencyKey } = newPendingOrder("a");
+  const { idempotencyKey } = newPendingOrder("a", []);
 
   expect(idempotencyKey).toMatch(
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
   );
+});
+
+// 완료 화면은 리다이렉트로 새로 서서 결제 화면이 고른 줄을 모른다. 주문과 함께 적어 둔다 (#457)
+test("주문을 만든 장바구니 줄을 함께 들고 있는다", () => {
+  const order = newPendingOrder("a", [
+    { itemType: "NORMAL", itemId: 1 },
+    { itemType: "TIME_DEAL", itemId: 3 },
+  ]);
+  writePendingOrder(order);
+
+  expect(readPendingOrder()?.cartItems).toEqual([
+    { itemType: "NORMAL", itemId: 1 },
+    { itemType: "TIME_DEAL", itemId: 3 },
+  ]);
 });
 
 test("지우면 없어진다", () => {
@@ -77,7 +96,10 @@ test("모양이 맞지 않으면 없는 것으로 다룬다", () => {
     '{"orderId":0,"signature":"x","idempotencyKey":"k"}',
     '{"orderId":77,"signature":"x","idempotencyKey":""}',
     // 키를 들기 전(#412) 모양이다. 키 없이 다시 보내면 서버가 같은 요청으로 못 알아본다
-    '{"orderId":77,"signature":"x"}',
+    '{"orderId":77,"signature":"x","cartItems":[]}',
+    // 장바구니 줄을 들기 전(#457) 모양이다. 결제 뒤 무엇을 뺄지 모른다
+    '{"orderId":77,"signature":"x","idempotencyKey":"k"}',
+    '{"orderId":77,"signature":"x","idempotencyKey":"k","cartItems":[{"itemType":"NORMAL","itemId":"1"}]}',
     "{}",
     "깨진 값",
   ]) {
