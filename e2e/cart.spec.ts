@@ -42,10 +42,22 @@ test("못 사는 줄은 고를 수 없고 전체선택에서도 빠진다", asyn
   await page.getByRole("checkbox", { name: "전체선택" }).check();
 
   await expect(page.getByText("전체선택 (2/2)")).toBeVisible();
+  // 화면 순서(최근에 담은 것부터)대로 싣는다. 결제 화면은 순서와 무관하게 받는다
   await expect(page.getByRole("link", { name: "결제하기" })).toHaveAttribute(
     "href",
-    "/payment?items=NORMAL:1,NORMAL:2",
+    "/payment?items=NORMAL:2,NORMAL:1",
   );
+});
+
+// 서버는 먼저 담은 순서로 준다(sever#170). 흔히 쓰는 방식대로 최근에 담은 줄이 맨 위다 (#486)
+test("최근에 담은 상품이 맨 위다", async ({ page }) => {
+  await stubCart(page);
+  await page.goto("/cart");
+
+  const rows = page.getByRole("checkbox", { name: / 고르기$/ });
+  await expect(rows.nth(0)).toHaveAccessibleName("끝난 타임딜 상품 고르기");
+  await expect(rows.nth(1)).toHaveAccessibleName("테스트 간식 고르기");
+  await expect(rows.nth(2)).toHaveAccessibleName("테스트 사료 고르기");
 });
 
 // 서버는 바뀐 값이 아니라 증감을 받는다. 절대값을 보내면 수량이 엉뚱하게 쌓인다
