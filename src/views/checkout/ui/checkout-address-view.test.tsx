@@ -34,7 +34,9 @@ test("머리말이 서고 저장해 둔 장소가 목록에 온다", () => {
   useQueryAddresses.mockReturnValue({ addresses: [HOME], isLoading: false, error: null });
   render(<CheckoutAddressView />);
 
-  expect(screen.getByRole("heading", { name: "배송지 설정" })).toBeDefined();
+  // 시안은 제목 없이 뒤로가기만 둔다. 화면 이름은 스크린 리더에만 남는다 (#448)
+  expect(screen.getByRole("heading", { name: "배송지 설정" }).className).toContain("sr-only");
+  expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
   expect(screen.getByText("집")).toBeDefined();
   expect(screen.getByRole("link", { name: /장소 추가하기/ })).toBeDefined();
 });

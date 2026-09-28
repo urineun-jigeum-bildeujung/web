@@ -17,9 +17,12 @@ export function CheckoutAddressView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="배송지 설정" />
+      {/* 시안(1117:4825)은 제목 없이 뒤로가기만 둔다(PD 확인, 2026-09-28 #448). 화면 이름은
+          스크린 리더에만 남긴다 — 제목이 없으면 어느 화면에 왔는지 들을 길이 없다 */}
+      <PageHeader />
 
       <main className="flex flex-1 flex-col gap-5 px-5 pt-3 pb-8">
+        <h1 className="sr-only">배송지 설정</h1>
         {/* 등록·수정을 마치면 이 화면으로 돌아온다. 결제를 이어가야 해서다 (#369) */}
         <AddressPlaceList
           addresses={addresses}

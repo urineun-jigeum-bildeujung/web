@@ -300,7 +300,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         name="deliveryNote"
         render={({ field }) => (
           <FormField
-            label="배송 요청사항"
+            label="요청사항"
             placeholder="요청사항을 적어주세요"
             maxLength={ADDRESS_FIELD_MAX.deliveryNote}
             {...field}

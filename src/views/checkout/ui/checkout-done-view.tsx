@@ -3,7 +3,7 @@
 //
 // 흰 바닥에 요약 카드 하나만 떠 있고 결제상세·배송지는 카드 없이 그대로 놓인다.
 // 그 두 블록은 `entities/order`의 조각을 쓴다 (#210). 결제상세는 주문 상세(mypa_161)와 함께
-// 쓰지만 줄 이름과 배송비 줄이 달라 `variant`로 가른다 (#439).
+// 쓰지만 둘째 줄 이름과 결제금액 글자가 달라 `variant`로 가른다 (#439).
 //
 // **클라이언트 컴포넌트다.** 결제 승인을 여기서 부르는데, 토큰이 브라우저에만 있어
 // 서버 렌더에서는 인증이 실리지 않는다 (#308).
@@ -358,12 +358,13 @@ export function CheckoutDoneView({
           <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
             {/* **주문이 없으면 세부 금액을 비운다.** 결제 금액만 알고 그 안을 가를 수 없는데
                 `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰) */}
-            {/* 시안이 배송비 줄을 두지 않는다. 결제금액과 판매 금액이 배송비만큼 다를 수 있어
-                PD 확인을 기다린다 (#439) */}
             <PaymentDetail
               variant="complete"
               total={payment?.amount ?? order?.totalAmount ?? 0}
               itemPrice={order?.productAmount}
+              // 배송비 필드가 따로 없다. 결제 금액에서 상품 금액을 뺀다 (주문 상세와 같은 방식).
+              // 시안에는 없는 줄이지만 PD팀이 넣기로 했다 (2026-09-28, #448)
+              shippingFee={order && order.totalAmount - order.productAmount}
             />
           </DetailSection>
 
