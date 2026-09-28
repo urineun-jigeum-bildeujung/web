@@ -6,6 +6,10 @@
 | --- | --- |
 | `date/display-date.ts` | 서버 시각을 화면 형식으로. **표시 기준을 `Asia/Seoul`로 못 박는다.** 날짜·날짜시각·해를 뺀 날짜시각·시각·날짜시각(말하듯)과 같은 날인지 견줄 하루 키 (#295, #405) |
 | `date/display-date.test.ts` | 시안 형식, 자정 근처 값이 하루 밀리지 않는지, 오전·오후와 12시 경계, 읽을 수 없는 값을 본다 |
+| `avatar/avatar-color.ts` | 식별자로 아바타 배경색을 고른다(`avatarColor`). PD 공식은 H만 0~360에서 뽑고 채도·명도를 고정해 `hsl(H, 100%, 85%)`다. **매번 새로 뽑지 않고 식별자에서 H를 뽑아** 한 대상이 어느 화면에서나 같은 색이 된다 (#488) |
+| `avatar/avatar-color.test.ts` | 채도·명도가 공식대로 고정인지, 같은 식별자가 같은 색인지, 이어지는 숫자 id끼리 색이 벌어지는지 |
+| `avatar/avatar-initials.ts` | 사진 없는 아바타 원에 넣을 이름 앞 두 글자(`avatarInitials`). 보이는 글자 단위로 자른다 |
+| `avatar/avatar-initials.test.ts` | 공백·한 글자 이름과 여러 코드 포인트로 된 이모지를 본다 |
 | `birth-date.ts` | 생년월일을 치는 대로 다듬고 서버가 받는 `YYYY-MM-DD`로 옮긴다 |
 | `birth-date.test.ts` | 달력에 없는 날과 앞날을 거르는지 본다 |
 | `list/use-load-more.ts` | 목록 끝이 화면에 들어오면 다음 쪽을 부른다. 주문 목록과 상품 후기 사진이 쓴다 |
@@ -35,4 +39,5 @@
 - **`query-test-wrapper.tsx`는 테스트만 쓴다.** 앱은 `shared/providers`의 `AppProviders`가 감싼다. ESLint가 `@tanstack/react-query` import를 슬라이스 `api` 세그먼트와 `shared`로 묶어 두어 화면 테스트가 직접 `QueryClient`를 만들 수 없고, 그 자리를 여기서 연다. `@testing-library`는 들이지 않는다 — `src` 안에 개발 의존성이 섞이면 누가 화면에서 import했을 때 빌드가 그것까지 담으려 든다.
 - **관측 진입점은 `src/instrumentation-client.ts`다.** Next.js가 이 이름의 파일을 브라우저에서 앱보다 먼저 실행한다. 레이어 밖 파일이라 여기 적어 둔다. 켜고 끄는 조건은 같은 자리의 `instrumentation-client.test.ts`가 본다.
 - **날짜를 그리는 화면은 `date/display-date.ts`만 쓴다.** `new Date(iso)`를 직접 `format`에 넘기면 표시 기준이 실행 환경을 따라간다. `birth-date.ts`는 사용자 입력을 다듬는 쪽이라 성격이 다르고, 폴더 규칙이 생기기 전부터 있어 현 위치를 지킨다.
+- **`avatar/`는 이름에 도메인을 담지 않는다.** 아이 원이 쓰는 함수지만 하는 일은 "식별자로 색을 고르고 이름 앞 글자를 자르는" 일반 표시 규칙이라 `pet`을 넣지 않았다. `entities/pet`의 `PetPhoto`와 `entities/review`의 리뷰 카드가 각각 가져다 쓴다 — 두 엔티티는 같은 레이어라 서로를 참조할 수 없어서 이 자리가 필요하다 (#488).
 - 새 유틸리티는 라이브러리·주제별 폴더로 만든다 (`lib/motion/`, `lib/date/`). 상세는 [code-convention](../../../docs/conventions/code-convention.md)의 "shared/lib 폴더 구조" 절을 본다.

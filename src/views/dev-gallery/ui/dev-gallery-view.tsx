@@ -562,6 +562,7 @@ export function DevGalleryView() {
                 className="relative size-10.5 shrink-0 overflow-hidden rounded-full bg-surface-disable"
               >
                 <PetPhoto
+                  petId={pet.id}
                   name={pet.name}
                   photoUrl={pet.photoUrl}
                   sizes="42px"
@@ -570,7 +571,12 @@ export function DevGalleryView() {
               </span>
             ))}
             <span className="relative size-14 shrink-0 overflow-hidden rounded-full bg-surface-disable">
-              <PetPhoto name="구름이" sizes="56px" textClassName="text-title-bold-16" />
+              <PetPhoto
+                petId="dev-3"
+                name="구름이"
+                sizes="56px"
+                textClassName="text-title-bold-16"
+              />
             </span>
           </div>
         </Section>
