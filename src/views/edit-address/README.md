@@ -6,7 +6,8 @@
 | --- | --- |
 | `ui/edit-address-view.tsx` | 배송지 추가·수정 |
 | `ui/edit-address-view.test.tsx` | 주소창이 가리키는 값이 채워지는지, 고른 주소가 들어오는지 |
-| `model/address-form-schema.ts` | 폼 검증 규칙. 서버 제약을 옮겨 둔 zod 스키마 |
+| `model/address-form-schema.ts` | 폼 검증 규칙. 서버 제약을 옮겨 둔 zod 스키마와 칸별 길이(`ADDRESS_FIELD_MAX`) |
+| `model/address-form-schema.test.ts` | 칸별 길이의 경계값(한 자 넘으면 막음), 앞뒤 공백 |
 | `model/address-draft.ts` | 적다 만 폼 값을 탭 안에서 들고 있는다 |
 | `model/address-draft.test.ts` | 대상이 다른 것, 절반만 적은 것, 막힌 저장소 |
 | `model/return-to.ts` | 저장을 마치고 돌아갈 곳. 우리 경로만 통과시킨다 |
@@ -46,6 +47,8 @@
 `AGENTS.md` 기술 스택 표가 폼에 `react-hook-form`·`zod`를 적어 두었는데 저장소 어디에서도 쓰이지 않고 있었다. 이 화면이 그 규칙을 처음 따르는 곳이다 (#355).
 
 검증 규칙은 `model/address-form-schema.ts` 한 곳에 있다. **서버 `AddressRegisterRequest`의 `@NotBlank` 넷을 그대로 옮긴 것**이라, 그전처럼 저장 버튼 잠금 조건에 손으로 늘어놓지 않는다. 상세주소가 필수인 줄 모르고 빠뜨려 저장이 400으로 막힌 적이 있다 (#314).
+
+**길이는 주문 쪽을 따른다.** 배송지 등록은 요청사항(100자) 말고는 길이를 보지 않아 긴 값도 저장되는데, 주문은 배송지를 복사해 두는 컬럼이 더 짧다(배송지 이름·받는 분 50, 연락처 20, 상세 주소 100). 그대로 두면 그 배송지로 결제할 때 주문 저장이 DB에서 막혀 500이 난다. 그래서 스키마와 입력칸 `maxLength`가 이 길이를 쓴다. `maxLength`는 적는 것만 막고 불러온 값은 자르지 않으므로, 전에 길게 저장한 곳은 줄여야 저장된다 (#437).
 
 `FormField`·`CheckboxRow`는 제어 컴포넌트라 `Controller`로 잇는다.
 

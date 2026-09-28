@@ -26,7 +26,11 @@ import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-
 import { Skeleton } from "@/shared/ui/skeleton";
 
 import { clearAddressDraft, readAddressDraft, writeAddressDraft } from "../model/address-draft";
-import { addressFormSchema, type AddressFormValues } from "../model/address-form-schema";
+import {
+  ADDRESS_FIELD_MAX,
+  addressFormSchema,
+  type AddressFormValues,
+} from "../model/address-form-schema";
 import { toInternalPath } from "../model/return-to";
 
 export function EditAddressView() {
@@ -219,6 +223,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
           <FormField
             label="배송지 이름"
             placeholder="ex) 집, 회사"
+            maxLength={ADDRESS_FIELD_MAX.addressName}
             {...field}
             onClear={() => field.onChange("")}
           />
@@ -229,7 +234,12 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
         control={control}
         name="receiver"
         render={({ field }) => (
-          <FormField label="받는 분 이름" {...field} onClear={() => field.onChange("")} />
+          <FormField
+            label="받는 분 이름"
+            maxLength={ADDRESS_FIELD_MAX.receiver}
+            {...field}
+            onClear={() => field.onChange("")}
+          />
         )}
       />
 
@@ -242,6 +252,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
           <FormField
             label="연락처"
             inputMode="numeric"
+            maxLength={ADDRESS_FIELD_MAX.phone}
             {...field}
             onClear={() => field.onChange("")}
           />
@@ -274,6 +285,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
               label="상세 주소"
               className="[&>label]:sr-only"
               placeholder="상세주소를 입력해주세요"
+              maxLength={ADDRESS_FIELD_MAX.addressDetail}
               {...field}
             />
           )}
@@ -287,6 +299,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
           <FormField
             label="배송 요청사항"
             placeholder="요청사항을 적어주세요."
+            maxLength={ADDRESS_FIELD_MAX.deliveryNote}
             {...field}
             onClear={() => field.onChange("")}
           />
