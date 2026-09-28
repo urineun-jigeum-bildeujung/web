@@ -1,7 +1,7 @@
 // 적합도가 점수만이 아니라 문장으로도 읽히는지, 아이를 바꿀 수 있는지 본다.
 import { render, screen } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
@@ -16,18 +16,33 @@ vi.mock("@/widgets/cart-link", () => ({
   CartLink: () => <a href="/cart" aria-label="장바구니" />,
 }));
 
-// 아이는 마이페이지와 같은 실제 목록이다(#470)
+// 아이는 마이페이지와 같은 실제 목록이다(#470). 받은 인자도 적어 두어, 로그인 여부를 조회에
+// 넘기는지 본다 — 목이 인자를 버리면 게이트를 지워도 테스트가 통과한다(#470 리뷰)
 const PETS = [
   { id: "3", name: "초코", isDefault: true },
   { id: "7", name: "구름", isDefault: false },
 ];
 let petsQuery: { pets: unknown; isLoading: boolean } = { pets: PETS, isLoading: false };
+let petsCalls: unknown[] = [];
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
-  useQueryPets: () => petsQuery,
+  useQueryPets: (options: unknown) => {
+    petsCalls.push(options);
+    return petsQuery;
+  },
 }));
 
+// 로그인 여부. 서버 렌더·하이드레이션 중에는 모른다(null)
+const session: { value: boolean | null } = { value: true };
+vi.mock("@/shared/api/use-session-state", () => ({ useSessionState: () => session.value }));
+
 import { RecommendationsView } from "./recommendations-view";
+
+afterEach(() => {
+  petsQuery = { pets: PETS, isLoading: false };
+  petsCalls = [];
+  session.value = true;
+});
 
 function renderWith(search = "") {
   return render(
@@ -50,11 +65,30 @@ describe("RecommendationsView", () => {
     expect(screen.getAllByText(/구름과 적합도 \d+점/)[0]).toBeDefined();
   });
 
-  // 예시 이름(코코)을 쓰던 동안 마이페이지의 실제 이름과 달랐다(QA 1차 6번, #470)
-  it("주소에 아이가 없거나 목록에 없으면 기본 아이 기준이다", () => {
+  // 예시 이름(코코)을 쓰던 동안 마이페이지의 실제 이름과 달랐다(QA 1차 6번, #470).
+  // 기본 아이를 둘째에 두어야 "첫 아이로 되돌림"과 갈린다(#470 리뷰)
+  it("주소에 아이가 없거나 목록에 없으면 첫 아이가 아니라 기본 아이 기준이다", () => {
+    petsQuery = {
+      pets: [
+        { id: "3", name: "초코", isDefault: false },
+        { id: "7", name: "구름", isDefault: true },
+      ],
+      isLoading: false,
+    };
     renderWith("?pet=999");
 
-    expect(screen.getAllByText(/초코와 적합도 \d+점/)[0]).toBeDefined();
+    expect(screen.getAllByText(/구름과 적합도 \d+점/)[0]).toBeDefined();
+  });
+
+  it("로그인했을 때만 아이 목록을 부른다", () => {
+    session.value = false;
+    const { unmount } = renderWith();
+    expect(petsCalls.at(-1)).toEqual({ enabled: false });
+    unmount();
+
+    session.value = true;
+    renderWith();
+    expect(petsCalls.at(-1)).toEqual({ enabled: true });
   });
 
   it("아이 목록을 받는 동안 아이 알약 자리를 잡아 둔다", () => {
@@ -62,17 +96,24 @@ describe("RecommendationsView", () => {
     renderWith();
 
     expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
-    petsQuery = { pets: PETS, isLoading: false };
   });
 
-  // 로그인하지 않았으면 목록을 부르지 않는다
-  it("아이가 없으면 고르는 알약 없이 우리 아이로 읽는다", () => {
+  it("로그인 여부를 아직 모르면 아이 알약 자리를 잡아 둔다", () => {
+    session.value = null;
+    petsQuery = { pets: undefined, isLoading: false };
+    renderWith();
+
+    expect(screen.getByRole("status", { name: "아이 목록을 불러오는 중" })).toBeDefined();
+    expect(petsCalls.at(-1)).toEqual({ enabled: false });
+  });
+
+  it("로그인하지 않았으면 고르는 알약 없이 우리 아이로 읽는다", () => {
+    session.value = false;
     petsQuery = { pets: undefined, isLoading: false };
     renderWith();
 
     expect(screen.queryByLabelText("어느 아이의 추천을 볼지")).toBeNull();
     expect(screen.getByRole("heading", { name: "우리 아이의 건강 고민을 덜어줄" })).toBeDefined();
-    petsQuery = { pets: PETS, isLoading: false };
   });
 
   it("무엇을 근거로 골랐는지 알린다", () => {
@@ -111,9 +152,10 @@ describe("RecommendationsView", () => {
     expect(screen.getByRole("heading", { name: "맞춤 추천" })).toBeDefined();
   });
 
-  // 시안의 알림·장바구니가 이 헤더에만 빠져 있었다(QA 1차 2번, #470)
-  it("머리말 오른쪽에 알림과 장바구니가 있다", () => {
+  // 시안의 검색·알림·장바구니가 이 헤더에만 빠져 있었다(QA 1차 2번, #470)
+  it("머리말 오른쪽에 검색·알림·장바구니가 있다", () => {
     renderWith();
+    expect(screen.getByRole("link", { name: "검색" }).getAttribute("href")).toBe("/search");
     expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
       "/mypage/notifications",
     );
