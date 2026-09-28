@@ -35,3 +35,39 @@ test("사진에 카드 크기에 맞는 sizes를 준다", () => {
     "(min-width: 768px) 240px, 50vw",
   );
 });
+
+// 할인율은 서버가 HALF_UP으로 반올림하고 calcDiscountRate는 버림이라 값이 갈린다.
+// 19,900 → 15,000은 서버 25%, 버림 24%다 — 어느 쪽을 쓰는지 케이스로 가른다.
+test("서버 할인율을 주면 두 금액에서 계산하지 않고 그 값을 보여준다", () => {
+  render(
+    <ProductGridCard name="연어 사료 1kg" price={15000} originalPrice={19900} discountRate={25} />,
+  );
+
+  expect(screen.getByText("25%")).toBeDefined();
+  expect(screen.getByText("19,900원")).toBeDefined();
+});
+
+test("서버 할인율이 없으면 두 금액에서 버림으로 계산한다", () => {
+  render(<ProductGridCard name="연어 사료 1kg" price={15000} originalPrice={19900} />);
+
+  expect(screen.getByText("24%")).toBeDefined();
+});
+
+// 0도 서버가 준 계약값이다. 두 금액 차이로 되살리면 할인 아닌 상품에 배지가 붙는다
+test("서버 할인율이 0이면 두 금액 차이로 다시 계산하지 않는다", () => {
+  render(
+    <ProductGridCard name="연어 사료 1kg" price={15000} originalPrice={19900} discountRate={0} />,
+  );
+
+  expect(screen.queryByText("24%")).toBeNull();
+  expect(screen.queryByText("19,900원")).toBeNull();
+});
+
+test("정가가 없으면 취소선 정가를 보여주지 않는다", () => {
+  const { container } = render(
+    <ProductGridCard name="연어 사료 1kg" price={15000} discountRate={25} />,
+  );
+
+  expect(screen.getByText("15,000원")).toBeDefined();
+  expect(container.querySelector(".line-through")).toBeNull();
+});
