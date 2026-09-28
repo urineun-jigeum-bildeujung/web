@@ -178,6 +178,25 @@ const UNUSABLE_ORDER_CODES = new Set([
 ]);
 
 /**
+ * 결제를 시작하지 못한 까닭을 문구 코드로 옮긴다.
+ *
+ * **서버가 이유를 알려 준 실패는 그 문구를 쓴다.** 재고 부족·판매 중지·배송지 없음처럼 도메인
+ * 문구가 있는데 "결제 실패 / 다시 시도해 주세요"로 뭉개면, 다시 눌러도 같은 자리에서 막힌다 (#422).
+ * 상태 코드로 떨어진 공통 문구(`common.*`)는 결제 맥락이 빠져 있어 "결제 실패"로 모은다 —
+ * 주문 완료 화면의 `toConfirmFailureCode`와 같은 방식이다.
+ *
+ * **주문 없음도 "결제 실패"로 모은다.** 결제 준비가 들고 있던 주문을 못 찾은 경우라 그 주문은
+ * 이미 버렸고(`shouldForgetOrder`), 다시 누르면 새로 만들어 결제된다. 주문 문구의 "주소가 바뀌었을
+ * 수 있어요"는 이 화면에 맞지 않고 다시 누를 길도 알려 주지 않는다 (#476)
+ */
+function toPayFailureCode(error: unknown): AppMessageCode {
+  const code = toAppMessageCode(error);
+  return code.startsWith("common.") || code === APP_MESSAGE_CODE.order.notFound
+    ? APP_MESSAGE_CODE.payment.failed
+    : code;
+}
+
+/**
  * 들고 있던 주문과 그 생성 키를 버려야 하는 실패인가.
  *
  * **주문을 만들다 막혔으면** 서버가 요청을 보고 거절했는지(4xx)를 본다. 같은 키로 다시 보내면
@@ -188,19 +207,6 @@ const UNUSABLE_ORDER_CODES = new Set([
  * **만든 주문으로 결제를 준비하다 막혔으면** 서버가 준 코드를 본다. 상태 코드로 뭉뚱그리지
  * 않는다 — 429처럼 잠깐 막힌 것까지 버리면 다시 누를 때 주문이 하나 더 생긴다 (#361).
  */
-/**
- * 결제를 시작하지 못한 까닭을 문구 코드로 옮긴다.
- *
- * **서버가 이유를 알려 준 실패는 그 문구를 쓴다.** 재고 부족·판매 중지·배송지 없음처럼 도메인
- * 문구가 있는데 "결제 실패 / 다시 시도해 주세요"로 뭉개면, 다시 눌러도 같은 자리에서 막힌다 (#422).
- * 상태 코드로 떨어진 공통 문구(`common.*`)는 결제 맥락이 빠져 있어 "결제 실패"로 모은다 —
- * 주문 완료 화면의 `toConfirmFailureCode`와 같은 방식이다.
- */
-function toPayFailureCode(error: unknown): AppMessageCode {
-  const code = toAppMessageCode(error);
-  return code.startsWith("common.") ? APP_MESSAGE_CODE.payment.failed : code;
-}
-
 function shouldForgetOrder(error: unknown, creating: boolean): boolean {
   if (!(error instanceof ApiError)) {
     return false;
