@@ -7,9 +7,7 @@
 /**
  * 리뷰를 쓸 당시의 아이. 목록·상세 응답이 같은 모양으로 준다.
  *
- * **품종명과 몸무게는 아직 응답에 없다.** 체구(`breedSize`)만 와서 카드가 `소형견 · 8세`까지
- * 그린다(`lib/pet-label`). 완성된 문자열이 아니라 구조로 들고 있어, 두 값이 들어오면
- * 매퍼와 그 함수만 넓히면 된다.
+ * 품종명 조회는 인증 정책이 정해지기 전까지 연결하지 않고 `breedId`만 보존한다.
  */
 export type ReviewPet = {
   id: string;
@@ -19,16 +17,17 @@ export type ReviewPet = {
   species: "DOG" | "CAT";
   /** 고양이는 체구가 없다 */
   breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
+  /** 품종 id. 이름은 `GET /pets/breeds`가 들고 있다 */
+  breedId: number;
+  /** kg */
+  weight: number;
 };
 
 /** 카드 한 장이 그리는 후기 */
 export type Review = {
   id: string;
-  /**
-   * 목록 응답에는 오지만 **공개 리뷰 상세에는 아직 없다**(사진 뷰어가 그쪽을 쓴다).
-   * 없으면 이름 줄을 그리지 않는다 — 임의의 이름을 넣으면 남의 글에 다른 이름표가 붙는다.
-   */
-  nickname?: string;
+  /** 닉네임 조회가 비면 빈 문자열로 온다. 그때는 이름 줄을 그리지 않는다 */
+  nickname: string;
   /** 함께 먹인 아이들. 한 마리 이상 */
   pets: ReviewPet[];
   /** 0~5. 0.5 단위 */
@@ -37,9 +36,11 @@ export type Review = {
   date: string;
   /** 첨부 사진 주소 */
   images: string[];
-  /** "사용 3주차" */
+  /** "사용 3주째" */
   tags: string[];
   content: string;
-  /** 닉네임과 같은 사정이다. 없으면 도움돼요 줄을 그리지 않는다 — `0`은 "아무도 안 눌렀다"는 다른 사실이다 */
-  likeCount?: number;
+  /** 도움돼요 수 */
+  likeCount: number;
+  /** 지금 보는 사람이 이미 눌렀는가. 비로그인이면 `false` */
+  liked: boolean;
 };

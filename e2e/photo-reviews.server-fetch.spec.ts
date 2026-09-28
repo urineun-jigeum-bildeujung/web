@@ -9,13 +9,14 @@ test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
 
   // 목록 응답에는 닉네임이 있다
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
-  // 품종명과 몸무게가 응답에 없어 체구와 나이까지만 그린다. 아이가 여럿이면 전부 적는다
-  await expect(page.getByText("소형견 · 8세, 고양이 · 3세")).toBeVisible();
-  await expect(page.getByText("대형견 · 6세")).toBeVisible();
+  // 품종명은 아직 붙이지 않는다. 아이가 여럿이면 줄이지 않고 `/`로 나눈다
+  await expect(page.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeVisible();
+  await expect(page.getByText("대형견 · 6세 · 28kg")).toBeVisible();
   await expect(page.getByText("총 리뷰 3개")).toBeVisible();
 });
 
-// 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#339)
+// 필터·맞춤보기는 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#472).
+// 도움돼요는 인증 UX가 확정될 때까지 읽기 전용이다
 test("계약이 없는 필터·맞춤보기·도움돼요 버튼은 리뷰 탭에 없다", async ({ page }) => {
   await page.goto("/products/1?tab=review");
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
@@ -82,17 +83,17 @@ test("좌우로 넘기면 같은 후기의 다른 사진으로 이동한다", as
   await expect(page.getByRole("button", { name: "다음 사진" })).toBeDisabled();
 });
 
-// 공개 리뷰 상세에 닉네임과 도움돼요 수가 없다. 진짜 후기 글에 다른 이름표를 붙이지 않는다
-test("뷰어 카드는 상세로 채울 수 있는 것만 보여준다", async ({ page }) => {
+// 공개 상세에 닉네임과 도움돼요가 실려 뷰어 카드가 목록 카드와 같은 모양이 됐다(#471)
+test("뷰어 카드가 목록 카드와 같은 내용을 보여준다", async ({ page }) => {
   await page.goto("/products/1/photos?photo=7&n=0");
 
   const card = page.getByRole("dialog").getByRole("article");
-  await expect(card.getByText("소형견 · 8세, 고양이 · 3세")).toBeVisible();
+  await expect(card.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeVisible();
   await expect(card.getByText("확실히 예전보다 계단 오를 때 덜 힘들어해요.")).toBeVisible();
-  await expect(card.getByText("사용 21일")).toBeVisible();
+  await expect(card.getByText("사용 3주째")).toBeVisible();
 
-  await expect(card.getByText("댕댕이맘", { exact: true })).toBeHidden();
-  await expect(card.getByText("도움이 됐다고 했어요")).toBeHidden();
+  await expect(card.getByText("댕댕이맘", { exact: true })).toBeVisible();
+  await expect(card.getByText("도움이 됐다고 했어요")).toBeVisible();
 });
 
 // 주소로 바로 들어오면 되감을 기록이 없다. 쿼리만 지워야 격자에 남는다

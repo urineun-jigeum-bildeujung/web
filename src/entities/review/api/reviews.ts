@@ -8,6 +8,7 @@ import { apiRequest } from "@/shared/api/client";
 import type { PresignedUpload } from "@/shared/api/upload-image";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 
+import { toUsageLabel } from "../lib/usage-label";
 import type { Review, ReviewPet } from "../model/review";
 import { toReviewSortParam, type ReviewSort } from "../model/review-sort";
 
@@ -122,10 +123,33 @@ export function getMyReviews(params: { page: number; size: number }): Promise<My
   }));
 }
 
+/** 목록과 상세가 아이를 같은 모양으로 주므로 옮기는 자리도 하나로 둔다 */
+function toReviewPet(pet: {
+  petId: number;
+  name: string;
+  age: number;
+  species: "DOG" | "CAT";
+  breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
+  breedId: number;
+  weight: number;
+}): ReviewPet {
+  return {
+    id: String(pet.petId),
+    name: pet.name,
+    age: pet.age,
+    species: pet.species,
+    breedSize: pet.breedSize,
+    breedId: pet.breedId,
+    weight: pet.weight,
+  };
+}
+
 /** 백엔드 `ReviewDetailResponse`와 같은 모양이다. 비어 있는 목록을 `null`로 준다 */
 type ReviewDetailResponse = {
   reviewId: number;
   isMine: boolean;
+  /** 닉네임 조회가 비면 빈 문자열로 온다 */
+  nickname: string;
   product: { productId: number; name: string; image: string | null };
   /** 함께 먹인 아이들의 스냅샷(쓸 당시 값). 고양이는 `breedSize`가 `null` */
   pets: {
@@ -135,6 +159,8 @@ type ReviewDetailResponse = {
     age: number;
     breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
     species: "DOG" | "CAT";
+    breedId: number;
+    weight: number;
   }[];
   /** 저장값 그대로. 0.5 단위 */
   rating: number;
@@ -148,15 +174,20 @@ type ReviewDetailResponse = {
   matchScore: number | null;
   text: string;
   images: string[] | null;
+  likeCount: number;
+  /** 지금 보는 사람이 이미 눌렀는가 */
+  liked: boolean;
   /** `YYYY-MM-DD` */
   createdAt: string;
 };
 
-/** 리뷰 한 건의 상세. 닉네임·도움돼요 수는 응답에 없다(백엔드 요청 중) */
+/** 리뷰 한 건의 상세 */
 export type ReviewDetail = {
   id: string;
   /** 로그인한 회원이 쓴 것인가. 비로그인이면 `false` */
   isMine: boolean;
+  /** 닉네임 조회가 비면 빈 문자열로 온다 */
+  nickname: string;
   product: { id: string; name: string; imageUrl?: string };
   /** 함께 먹인 아이들. 한 마리 이상 */
   pets: ReviewPet[];
@@ -168,6 +199,9 @@ export type ReviewDetail = {
   badPoints: string[];
   content: string;
   images: string[];
+  likeCount: number;
+  /** 지금 보는 사람이 이미 눌렀는가. 비로그인이면 `false` */
+  liked: boolean;
   /** `YYYY-MM-DD` */
   createdAt: string;
 };
@@ -176,24 +210,21 @@ export function getReviewDetail(reviewId: string): Promise<ReviewDetail> {
   return apiRequest<ReviewDetailResponse>(`/reviews/${reviewId}`).then((response) => ({
     id: String(response.reviewId),
     isMine: response.isMine,
+    nickname: response.nickname,
     product: {
       id: String(response.product.productId),
       name: response.product.name,
       ...(response.product.image && { imageUrl: response.product.image }),
     },
-    pets: response.pets.map((pet) => ({
-      id: String(pet.petId),
-      name: pet.name,
-      age: pet.age,
-      species: pet.species,
-      breedSize: pet.breedSize,
-    })),
+    pets: response.pets.map(toReviewPet),
     rating: response.rating,
     usageDays: response.usagePeriod,
     goodPoints: response.goodPoints ?? [],
     badPoints: response.badPoints ?? [],
     content: response.text,
     images: response.images ?? [],
+    likeCount: response.likeCount,
+    liked: response.liked,
     createdAt: response.createdAt,
   }));
 }
@@ -217,17 +248,21 @@ type ProductReviewListResponse = {
       /** 고양이는 `null` */
       breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
       species: "DOG" | "CAT";
+      breedId: number;
+      weight: number;
     }[];
     /** 0.5 단위 */
     rating: number;
-    /** `"21일"`처럼 이미 다듬어진 문구로 온다. 상세는 일 단위 숫자라 서로 다르다 */
-    usagePeriod: string;
+    /** 일 단위. 상세와 같은 숫자다 */
+    usagePeriod: number;
     /** 기호성 문항에 답하지 않았으면 `null` */
     palatability: string | null;
     text: string;
     /** 사진이 없으면 `null`이다. 빈 배열이 아니다 */
     images: string[] | null;
     likeCount: number;
+    /** 지금 보는 사람이 이미 눌렀는가 */
+    liked: boolean;
     /** `YYYY-MM-DD` */
     createdAt: string;
   }[];
@@ -270,21 +305,16 @@ export function getProductReviews({
     reviews: response.content.map((item) => ({
       id: String(item.reviewId),
       nickname: item.nickname,
-      pets: item.pets.map((pet) => ({
-        id: String(pet.petId),
-        name: pet.name,
-        age: pet.age,
-        species: pet.species,
-        breedSize: pet.breedSize,
-      })),
+      pets: item.pets.map(toReviewPet),
       rating: item.rating,
       // 서버가 주는 날짜는 전부 shared/lib/date를 거친다. 읽을 수 없으면 날짜 줄을 비운다
       date: formatDisplayFullDate(item.createdAt) ?? "",
       images: item.images ?? [],
       // 지금 배지로 세울 수 있는 것은 사용 기간뿐이다. 재구매 횟수는 응답에 없다
-      tags: [`사용 ${item.usagePeriod}`],
+      tags: [toUsageLabel(item.usagePeriod)],
       content: item.text,
       likeCount: item.likeCount,
+      liked: item.liked,
     })),
   }));
 }

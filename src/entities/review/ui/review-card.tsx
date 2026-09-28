@@ -2,8 +2,7 @@
 // 와이어프레임 기준(상품 상세_리뷰 탭)이라 디자인 확정 시 바뀔 수 있다.
 //
 // 같은 사료라도 4kg 말티즈와 30kg 리트리버의 후기는 다른 이야기다. 별점만 나열하면
-// 그 차이가 사라지므로 아이 정보를 이름 바로 아래에 둔다. 지금 응답으로 그릴 수 있는
-// 것은 체구와 나이까지다(`lib/pet-label`).
+// 그 차이가 사라지므로 아이 정보를 이름 바로 아래에 둔다(`lib/pet-label`).
 
 "use client";
 
@@ -112,17 +111,12 @@ export function ReviewCard({ review, hideAvatar, hidePhotos, className }: Review
           신고하기
         </button>
 
-        {/* **누를 수 없는 표시다.** 토글 API(`PATCH /reviews/{id}/recommend`)는 있지만 목록
-            응답에 "내가 이미 눌렀는지"(`liked`)가 없다. 버튼으로 두면 어제 누른 후기가 안 누른
-            상태로 그려지고, 누르는 순간 서버가 취소로 처리해 되돌아간다 — 누르려 했는데
-            취소되는 버튼이 된다. 계약이 생기면 그때 버튼으로 올린다 */}
-        {review.likeCount !== undefined && (
-          <p className="flex h-8 items-center gap-1 rounded-lg border border-border px-3 text-label-medium-12 text-icon-fill-secondary">
-            <Icon name="thumbs_up" aria-hidden className="size-5" />
-            <span>{review.likeCount}</span>
-            <span className="sr-only">명이 이 후기가 도움이 됐다고 했어요</span>
-          </p>
-        )}
+        {/* 인증 UX가 확정될 때까지 도움돼요 수만 읽기 전용으로 표시한다 */}
+        <p className="flex h-8 items-center gap-1 rounded-lg border border-border px-3 text-label-medium-12 text-icon-fill-secondary">
+          <Icon name="thumbs_up" aria-hidden className="size-5" />
+          <span>{review.likeCount}</span>
+          <span className="sr-only">명이 이 후기가 도움이 됐다고 했어요</span>
+        </p>
       </div>
 
       <AlertDialog open={reporting} onOpenChange={setReporting}>

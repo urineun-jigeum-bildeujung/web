@@ -29,10 +29,13 @@ import { ReviewDetailView } from "./review-detail-view";
 const REVIEW: ReviewDetail = {
   id: "1",
   isMine: true,
+  nickname: "댕댕이짱",
+  likeCount: 0,
+  liked: false,
   product: { id: "7", name: "오메가3 피쉬오일 60캡슐" },
   pets: [
-    { id: "3", name: "코코", age: 8, species: "DOG", breedSize: "SMALL" },
-    { id: "9", name: "나비", age: 2, species: "CAT", breedSize: null },
+    { id: "3", name: "코코", age: 8, species: "DOG", breedSize: "SMALL", breedId: 12, weight: 4 },
+    { id: "9", name: "나비", age: 2, species: "CAT", breedSize: null, breedId: 45, weight: 4.2 },
   ],
   rating: 4.5,
   usageDays: 16,

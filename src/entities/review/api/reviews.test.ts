@@ -177,14 +177,18 @@ const PRODUCT_REVIEWS = {
       reviewId: 1,
       nickname: "테스트회원1",
       pets: [
-        { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG" },
-        { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT" },
+        // 고양이는 breedSize가 null이고 breedId는 있다
+        // prettier-ignore
+        { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG", breedId: 12, weight: 4.0 },
+        // prettier-ignore
+        { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT", breedId: 45, weight: 4.2 },
       ],
       rating: 4.5,
-      usagePeriod: "21일",
+      usagePeriod: 21,
       palatability: null,
       text: "계단 오를 때 덜 힘들어해요.",
       images: ["https://cdn/a.webp", "https://cdn/b.webp"],
+      liked: false,
       likeCount: 3,
       createdAt: "2026-09-27",
     },
@@ -192,13 +196,15 @@ const PRODUCT_REVIEWS = {
       reviewId: 11,
       nickname: "",
       pets: [
-        { petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG" },
+        // prettier-ignore
+        { petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG", breedId: 7, weight: 12.5 },
       ],
       rating: 4.5,
-      usagePeriod: "22일",
+      usagePeriod: 22,
       palatability: "좋아함",
       text: "닉네임을 못 찾는 회원의 후기입니다.",
       images: null,
+      liked: true,
       likeCount: 0,
       createdAt: "2026-09-17",
     },
@@ -230,15 +236,33 @@ test("상품 후기 목록을 카드 모양으로 옮긴다", async () => {
     id: "1",
     nickname: "테스트회원1",
     pets: [
-      { id: "101", name: "보리", age: 8, species: "DOG", breedSize: "SMALL" },
-      { id: "102", name: "나비", age: 3, species: "CAT", breedSize: null },
+      {
+        id: "101",
+        name: "보리",
+        age: 8,
+        species: "DOG",
+        breedSize: "SMALL",
+        breedId: 12,
+        weight: 4,
+      },
+      {
+        id: "102",
+        name: "나비",
+        age: 3,
+        species: "CAT",
+        breedSize: null,
+        breedId: 45,
+        weight: 4.2,
+      },
     ],
     rating: 4.5,
     date: "2026. 09. 27",
     images: ["https://cdn/a.webp", "https://cdn/b.webp"],
-    tags: ["사용 21일"],
+    // 서버가 일 수를 주므로 상세와 같은 함수로 적는다
+    tags: ["사용 3주째"],
     content: "계단 오를 때 덜 힘들어해요.",
     likeCount: 3,
+    liked: false,
   });
 });
 

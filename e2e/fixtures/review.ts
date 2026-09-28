@@ -30,7 +30,7 @@ const PRODUCT = {
  * 나가 CORS로 막힌다 — 목데이터를 걷어내면서 이 화면들이 처음으로 네트워크를 탄다.
  *
  * 응답 모양은 실제 백엔드 그대로다. 목록에는 `hasNext`가 없고, 사진 없는 후기의 `images`는
- * `null`이며, 공개 상세에는 `nickname`·`likeCount`가 없다.
+ * `null`이며, `usagePeriod`는 목록도 상세도 일 단위 숫자다.
  */
 const REVIEW_PHOTO = "/images/e2e/product-photo-1.png";
 
@@ -41,12 +41,24 @@ const PRODUCT_REVIEWS = {
     {
       reviewId: 1,
       nickname: "코코맘",
-      pets: [{ petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" }],
+      pets: [
+        {
+          petId: 3,
+          name: "코코",
+          sex: "FEMALE",
+          age: 4,
+          breedSize: "SMALL",
+          species: "DOG",
+          breedId: 12,
+          weight: 4,
+        },
+      ],
       rating: 4.5,
-      usagePeriod: "16일",
+      usagePeriod: 16,
       palatability: null,
       text: "확실히 잘 먹어요",
       images: null,
+      liked: false,
       likeCount: 2,
       createdAt: "2026-09-21",
     },
@@ -72,9 +84,19 @@ export async function stubReviewApi(page: Page) {
       json: {
         reviewId: 1,
         isMine: true,
+        nickname: "코코맘",
         product: { productId: 1, name: PRODUCT.summary.productName, image: null },
         pets: [
-          { petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" },
+          {
+            petId: 3,
+            name: "코코",
+            sex: "FEMALE",
+            age: 4,
+            breedSize: "SMALL",
+            species: "DOG",
+            breedId: 12,
+            weight: 4,
+          },
         ],
         rating: 4.5,
         usagePeriod: 16,
@@ -84,6 +106,8 @@ export async function stubReviewApi(page: Page) {
         matchScore: null,
         text: "확실히 잘 먹어요",
         images: null,
+        likeCount: 2,
+        liked: false,
         createdAt: "2026-09-21",
       },
     }),

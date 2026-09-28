@@ -30,8 +30,13 @@ const PHOTOS: ReviewPhoto[] = [
 const DETAIL: ReviewDetail = {
   id: "7",
   isMine: false,
+  nickname: "댕댕이짱",
+  likeCount: 0,
+  liked: false,
   product: { id: "1", name: "관절 영양제" },
-  pets: [{ id: "10", name: "보리", age: 8, species: "DOG", breedSize: "SMALL" }],
+  pets: [
+    { id: "10", name: "보리", age: 8, species: "DOG", breedSize: "SMALL", breedId: 12, weight: 4 },
+  ],
   rating: 4.5,
   usageDays: 21,
   goodPoints: [],
@@ -155,17 +160,19 @@ describe("뷰어 아래 후기 카드", () => {
 
     renderView("?photo=7&n=0");
 
-    expect(screen.getByText("소형견 · 8세")).toBeDefined();
+    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
     expect(screen.getByText("계단 오를 때 덜 힘들어해요.")).toBeDefined();
-    expect(screen.getByText("사용 21일")).toBeDefined();
+    expect(screen.getByText("사용 3주째")).toBeDefined();
   });
 
-  it("닉네임과 도움돼요 수는 지어내지 않는다", () => {
+  // 공개 상세에 셋이 실려 이름 줄과 도움돼요가 살아났다
+  it("닉네임과 도움돼요 수를 보여준다", () => {
     useQueryReviewPhotos.mockReturnValue(photosState());
     useQueryReviewDetail.mockReturnValue({ review: DETAIL, isLoading: false });
 
     renderView("?photo=7&n=0");
 
-    expect(screen.queryByText(/도움이 됐다고 했어요/)).toBeNull();
+    expect(screen.getByText("댕댕이짱")).toBeDefined();
+    expect(screen.getByText(/도움이 됐다고 했어요/)).toBeDefined();
   });
 });

@@ -5,8 +5,7 @@
 // 들면 그 자리에서 상품으로 갈 수 있어야 한다.
 //
 // **카드는 공개 리뷰 상세로 채운다.** 격자가 보는 `/photos`는 `{ reviewId, imageUrl }`뿐이라
-// 카드에 그릴 것이 없다. 그 응답에 아직 `nickname`과 `likeCount`가 없어 두 줄은 비워 둔다 —
-// 임의의 이름과 숫자를 넣으면 진짜 후기 글에 다른 사람의 이름표가 붙는다(#339).
+// 카드에 그릴 것이 없다. 이름 줄과 도움돼요 수는 그 응답이 준다.
 //
 // 열고 닫는 껍데기는 shadcn Dialog에 맡긴다. `role="dialog"`를 손으로 붙이면
 // 포커스가 뒤 화면에 남고 Esc도 듣지 않는다 — 눈에 보이지 않아 놓치기 쉬운 부분이다.
@@ -17,7 +16,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
 
-import { ReviewCard, useQueryReviewDetail } from "@/entities/review";
+import { ReviewCard, toUsageLabel, useQueryReviewDetail } from "@/entities/review";
 import { cn } from "@/shared/lib/utils";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -164,14 +163,17 @@ export function PhotoViewer({
             <ReviewCard
               review={{
                 id: review.id,
+                nickname: review.nickname,
                 pets: review.pets,
                 rating: review.rating,
                 // 서버가 주는 날짜는 전부 shared/lib/date를 거친다
                 date: formatDisplayFullDate(review.createdAt) ?? "",
                 images: review.images,
-                tags: [`사용 ${review.usageDays}일`],
+                // 목록 배지와 같은 문구를 쓴다
+                tags: [toUsageLabel(review.usageDays)],
                 content: review.content,
-                // nickname·likeCount는 이 응답에 없다. 선택값이라 그 줄이 그려지지 않는다
+                likeCount: review.likeCount,
+                liked: review.liked,
               }}
               hidePhotos
             />
