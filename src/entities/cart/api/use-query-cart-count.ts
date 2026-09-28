@@ -27,5 +27,6 @@ export function useQueryCartCount({ enabled = true }: UseQueryCartCountOptions =
     enabled,
     select: (cart) => cart.items.length,
   });
-  return query.data ?? 0;
+  // 꺼 두면 받아 둔 수도 내주지 않는다. 세션이 끊긴 뒤에 옛 뱃지가 남지 않게 한다(#470 리뷰)
+  return enabled ? (query.data ?? 0) : 0;
 }
