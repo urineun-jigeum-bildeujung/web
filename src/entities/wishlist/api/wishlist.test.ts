@@ -1,7 +1,7 @@
-// getWishlist·toggleWishlist 단위 테스트. 요청 파라미터 조립과 응답 필드 매핑을 본다.
+// getWishlist·getWishlistStatus·toggleWishlist 단위 테스트. 요청 파라미터 조립과 응답 필드 매핑을 본다.
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getWishlist, toggleWishlist } from "./wishlist";
+import { getWishlist, getWishlistStatus, toggleWishlist } from "./wishlist";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn().mockResolvedValue(response);
@@ -81,6 +81,19 @@ describe("getWishlist", () => {
     const items = await getWishlist();
 
     expect(items[0].originalPrice).toBe(24000);
+  });
+});
+
+describe("getWishlistStatus", () => {
+  it("상품 번호로 찜 여부를 묻고 wished만 돌려준다", async () => {
+    const fetchMock = stubFetch(Response.json({ wished: true }));
+
+    const wished = await getWishlistStatus(7);
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/members/me/wishlist/status/7");
+    expect(init.method).toBeUndefined();
+    expect(wished).toBe(true);
   });
 });
 

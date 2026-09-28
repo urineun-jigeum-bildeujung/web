@@ -1,4 +1,4 @@
-// 찜 API. 카테고리별 목록 조회와 찜 토글 두 가지를 부른다.
+// 찜 API. 카테고리별 목록 조회·상품 하나의 찜 여부·찜 토글 세 가지를 부른다.
 //
 // 규격 출처는 실행 중인 백엔드(member-service) 컨트롤러 소스로 직접 확인했다(#390).
 
@@ -48,6 +48,18 @@ export function getWishlist(categoryCode?: string): Promise<WishlistItem[]> {
   return apiRequest<WishlistItemApiResponse[]>("/members/me/wishlist", {
     query: { category: categoryCode },
   }).then((items) => items.map(toWishlistItem));
+}
+
+/**
+ * 상품 하나를 찜했는지 본다.
+ *
+ * 상품 하나를 보는 화면(상세·사진 모아보기·리뷰 상세)이 쓴다. 여러 상품을 늘어놓는 화면은
+ * 상품마다 부를 수 없어 찜 목록으로 가른다 (#483).
+ */
+export function getWishlistStatus(productId: number): Promise<boolean> {
+  return apiRequest<{ wished: boolean }>(`/members/me/wishlist/status/${productId}`).then(
+    (response) => response.wished,
+  );
 }
 
 /**

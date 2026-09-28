@@ -1,5 +1,5 @@
-// useMutateWishlist 훅 테스트. 전체·카테고리별 캐시를 모두 낙관적으로 갱신하고,
-// 실패하면 둘 다 되돌리는지 본다.
+// useMutateWishlist 훅 테스트. 해제·토글이 찜 목록(전체·카테고리별)과 찜 여부를 함께 먼저 바꾸고,
+// 실패하면 되돌리며, 마지막 요청이 끝날 때 둘 다 재동기화하는지 본다.
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
@@ -145,7 +145,22 @@ describe("useMutateWishlist", () => {
 
     resolveSecond({ wished: false });
 
-    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(1));
+    // 찜 목록과 찜 여부를 함께 맞춘다. 한쪽만 맞추면 1분 안에 돌아온 화면이 틀린 하트를 보인다 (#483)
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(2));
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.user.likesAll() });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: QUERY_KEYS.user.wishlistStatusAll() });
+  });
+
+  // 좋아요 탭에서 뺀 상품을 1분 안에 상세로 다시 열면 채운 하트가 남아, 누르면 다시 찜됐다 (#483)
+  it("해제하면 그 상품의 찜 여부도 비운다", async () => {
+    toggleWishlist.mockResolvedValue({ wished: false });
+    const { client, wrapper } = setup();
+    client.setQueryData(QUERY_KEYS.user.wishlistStatus(1), true);
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.remove(1);
+
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(1))).toBe(false));
   });
 
   it("재시도하지 않는다", async () => {
@@ -159,5 +174,120 @@ describe("useMutateWishlist", () => {
     // 재시도가 있었다면 여기서 2 이상이 된다
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(toggleWishlist).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("useMutateWishlist().toggle", () => {
+  const NEW_ITEM: WishlistItem = {
+    productId: 3,
+    name: "덴탈껌",
+    thumbnailUrl: null,
+    price: 8000,
+    originalPrice: 10000,
+  };
+
+  it("켜면 찜 여부를 먼저 채우고, 준 줄을 전체 목록 끝에 붙인다", async () => {
+    toggleWishlist.mockResolvedValue({ wished: true });
+    const { client, wrapper } = setup();
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 3, wished: true, item: NEW_ITEM });
+
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(3))).toBe(true));
+    expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual([...ITEMS, NEW_ITEM]);
+    // 응답에 상품 카테고리가 없어 어느 카테고리 목록에 들어갈지 모른다
+    expect(client.getQueryData(QUERY_KEYS.user.likes("FOOD"))).toEqual([ITEMS[0]]);
+  });
+
+  // 가격 없는 줄을 넣으면 좋아요 탭이 재동기화 전까지 0원을 그린다
+  it("줄을 주지 않으면 목록은 건드리지 않는다", async () => {
+    toggleWishlist.mockResolvedValue({ wished: true });
+    const { client, wrapper } = setup();
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 3, wished: true });
+
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(3))).toBe(true));
+    expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual(ITEMS);
+  });
+
+  it("끄면 찜 여부를 먼저 비우고 모든 목록에서 뺀다", async () => {
+    toggleWishlist.mockResolvedValue({ wished: false });
+    const { client, wrapper } = setup();
+    client.setQueryData(QUERY_KEYS.user.wishlistStatus(1), true);
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 1, wished: false });
+
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(1))).toBe(false));
+    expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual([ITEMS[1]]);
+    expect(client.getQueryData(QUERY_KEYS.user.likes("FOOD"))).toEqual([]);
+  });
+
+  it("켜기가 실패하면 찜 여부와 붙인 줄을 되돌린다", async () => {
+    toggleWishlist.mockRejectedValue(new Error("네트워크 오류"));
+    const { client, wrapper } = setup();
+    client.setQueryData(QUERY_KEYS.user.wishlistStatus(3), false);
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 3, wished: true, item: NEW_ITEM });
+
+    await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(3))).toBe(false));
+    expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual(ITEMS);
+  });
+
+  it("끄기가 실패하면 뺀 줄을 제자리에 되돌린다", async () => {
+    toggleWishlist.mockRejectedValue(new Error("네트워크 오류"));
+    const { client, wrapper } = setup();
+    client.setQueryData(QUERY_KEYS.user.wishlistStatus(1), true);
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 1, wished: false });
+
+    await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(1))).toBe(true));
+    expect(client.getQueryData(QUERY_KEYS.user.likes(undefined))).toEqual(ITEMS);
+    expect(client.getQueryData(QUERY_KEYS.user.likes("FOOD"))).toEqual([ITEMS[0]]);
+  });
+
+  // 찜 여부를 받기 전에 누를 수 있다. 되돌릴 값이 없으면 누르기 전 화면이 보이던 값으로 둔다
+  it("누르기 전 찜 여부를 몰랐는데 실패하면 뒤집기 전 값으로 둔다", async () => {
+    toggleWishlist.mockRejectedValue(new Error("네트워크 오류"));
+    const { client, wrapper } = setup();
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 3, wished: true });
+
+    await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(3))).toBe(false));
+  });
+
+  // 같은 상품을 연달아 두 번 누르면 원래대로다. 먼저 끝난 요청이 재조회하면 둘째 요청이
+  // 반영되기 전의 여부를 받아 하트를 한 번 되돌렸다가 다시 바꾼다
+  it("연달아 누르면 마지막 요청이 끝난 뒤에만 재동기화한다", async () => {
+    let resolveSecond!: (value: { wished: boolean }) => void;
+    toggleWishlist.mockResolvedValueOnce({ wished: true });
+    toggleWishlist.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveSecond = resolve;
+        }),
+    );
+    const { client, wrapper } = setup();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const { result } = renderHook(() => useMutateWishlist(), { wrapper });
+
+    result.current.toggle({ productId: 3, wished: true, item: NEW_ITEM });
+    result.current.toggle({ productId: 3, wished: false });
+
+    await waitFor(() => expect(toggleWishlist).toHaveBeenCalledTimes(2));
+    expect(client.getQueryData(QUERY_KEYS.user.wishlistStatus(3))).toBe(false);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(invalidate).not.toHaveBeenCalled();
+
+    resolveSecond({ wished: false });
+
+    await waitFor(() => expect(invalidate).toHaveBeenCalledTimes(2));
   });
 });

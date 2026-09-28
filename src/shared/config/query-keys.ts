@@ -127,6 +127,12 @@ const userKeys = {
   me: () => [...userKeys.all, "me"] as const,
   likesAll: () => [...userKeys.all, "likes"] as const,
   likes: (category?: string) => [...userKeys.likesAll(), { category }] as const,
+  /**
+   * 상품 하나의 찜 여부. **찜 목록(`likesAll`) 아래에 두지 않는다** — 목록 캐시를 모두 도는
+   * 찜 훅이 그 아래를 배열로 여긴다 (#483)
+   */
+  wishlistStatusAll: () => [...userKeys.all, "wishlist-status"] as const,
+  wishlistStatus: (productId: number) => [...userKeys.wishlistStatusAll(), productId] as const,
   recentlyViewed: () => [...userKeys.all, "recently-viewed"] as const,
   frequentProducts: () => [...userKeys.all, "frequent-products"] as const,
   restockAlerts: (keyword?: string) => [...userKeys.all, "restock-alerts", { keyword }] as const,
