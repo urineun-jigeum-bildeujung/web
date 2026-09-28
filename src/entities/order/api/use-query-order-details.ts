@@ -14,6 +14,10 @@ import { getOrderDetail } from "./orders";
  *
  * **상세 화면과 같은 캐시를 쓴다.** 라우트가 주문 번호를 문자열로 넘겨 키에 문자열이 들어가므로
  * 여기서도 문자열로 맞춘다. 숫자로 두면 같은 주문을 두 번 받는다.
+ *
+ * **처음 받기 실패만 실패로 센다.** TanStack은 다시 받기가 실패해도 받아 둔 상세를 둔 채 오류
+ * 상태가 된다. 그것까지 실패로 넘기면 부르는 화면이 보이던 건을 치우고 오류로 덮는다(#474).
+ * 배경에서 다시 받다 실패한 것은 받아 둔 것을 그대로 쓴다 (app-message-convention).
  */
 export function useQueryOrderDetails(orderIds: number[]) {
   return useQueries({
@@ -21,13 +25,26 @@ export function useQueryOrderDetails(orderIds: number[]) {
       queryKey: QUERY_KEYS.order.detail(String(orderId)),
       queryFn: () => getOrderDetail(orderId),
     })),
-    combine: (results) => ({
-      /** 받아 온 상세. 아직 오지 않았거나 실패한 주문은 빠진다 */
-      details: results.flatMap((result) => (result.data ? [result.data] : [])),
-      /** 하나라도 처음 받는 중이면 참이다 */
-      isLoading: results.some((result) => result.isPending),
-      /** 먼저 실패한 것 하나. 없으면 `null`이다 */
-      error: results.find((result) => result.error)?.error ?? null,
-    }),
+    combine: (results) => {
+      const failed = results.filter((result) => result.isLoadingError);
+      return {
+        /** 받아 둔 상세. 아직 오지 않았거나 처음 받기에 실패한 주문은 빠진다 */
+        details: results.flatMap((result) => (result.data ? [result.data] : [])),
+        /** 하나라도 처음 받는 중이면 참이다. 처음 받기에 실패한 것은 대기가 아니라 실패로 센다 */
+        isLoading: results.some((result) => result.isPending),
+        /** 한 번도 받지 못한 상세 수. 다시 받다 실패한 것(받아 둔 것이 있다)은 세지 않는다 */
+        failedCount: failed.length,
+        /** 한 번도 받지 못한 것 중 먼저 실패한 것. 없으면 `null`이다 */
+        error: failed[0]?.error ?? null,
+        /** 한 번도 받지 못한 상세만 다시 받는다 */
+        retry: () => {
+          for (const result of failed) {
+            void result.refetch();
+          }
+        },
+        /** 받지 못한 상세를 다시 받는 중. 다시 시도 버튼의 대기 표시가 본다 */
+        isRetrying: failed.some((result) => result.isFetching),
+      };
+    },
   });
 }

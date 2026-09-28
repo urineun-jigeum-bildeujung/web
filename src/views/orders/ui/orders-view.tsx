@@ -78,8 +78,10 @@ function OrderHistory() {
         <EmptyState role="alert" className="flex-1" {...APP_MESSAGE[toAppMessageCode(error)]} />
       )}
 
-      {/* 다음 쪽이 남아 있으면 비었다고 하지 않는다. 한 쪽이 통째로 걸러졌을 수 있다 (#462) */}
-      {!isLoading && !error && !hasNext && list.length === 0 && (
+      {/* 다음 쪽이 남아 있으면 비었다고 하지 않는다. 한 쪽이 통째로 걸러졌을 수 있다 (#462).
+          받아 둔 목록을 배경에서 다시 받다 실패한 것은 막지 않는다 — 그것까지 막으면 빈 상태도
+          오류도 없는 빈 화면이 된다(#474) */}
+      {!isLoading && !(error && fetched.length === 0) && !hasNext && list.length === 0 && (
         <EmptyState
           icon={<Icon name="delivery" />}
           title="아직 주문한 내역이 없어요"
