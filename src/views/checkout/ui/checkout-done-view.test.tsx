@@ -9,15 +9,21 @@ import type { OrderDetail } from "@/entities/order";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 
-const { useQueryPaymentConfirm, useQueryOrderDetail, useMarkOrdersStale } = vi.hoisted(() => ({
-  useQueryPaymentConfirm: vi.fn(),
-  useQueryOrderDetail: vi.fn(),
-  useMarkOrdersStale: vi.fn(),
-}));
+const { useQueryPaymentConfirm, useQueryOrderDetail, useMarkOrdersStale, removePaidCartItems } =
+  vi.hoisted(() => ({
+    useQueryPaymentConfirm: vi.fn(),
+    useQueryOrderDetail: vi.fn(),
+    useMarkOrdersStale: vi.fn(),
+    removePaidCartItems: vi.fn(),
+  }));
 
 vi.mock("../api/use-query-payment-confirm", () => ({ useQueryPaymentConfirm }));
 // 캐시를 실제로 어떻게 건드리는지는 훅 테스트가 본다. 여기서는 언제 켜는지만 본다
 vi.mock("../api/use-mark-orders-stale", () => ({ useMarkOrdersStale }));
+// 실제로 어떻게 빼는지는 훅 테스트가 본다. 여기서는 언제 무엇을 넘기는지만 본다
+vi.mock("../api/use-remove-paid-cart-items", () => ({
+  useRemovePaidCartItems: () => removePaidCartItems,
+}));
 vi.mock("@/entities/order", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order")>()),
   useQueryOrderDetail,
@@ -25,6 +31,7 @@ vi.mock("@/entities/order", async (importOriginal) => ({
 
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
+import { readPendingOrder, writePendingOrder } from "../model/pending-order";
 import { CheckoutDoneView } from "./checkout-done-view";
 
 const PAYMENT = {
@@ -90,8 +97,16 @@ function ready() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  sessionStorage.clear();
   ready();
 });
+
+/** 결제 화면이 주문과 함께 적어 둔 장바구니 줄 */
+const PAID_LINES = [{ itemType: "NORMAL" as const, itemId: 1 }];
+
+function holdPendingOrder() {
+  writePendingOrder({ signature: "x", idempotencyKey: "k", orderId: 77, cartItems: PAID_LINES });
+}
 
 /** 화면이 라우트에서 받는 값들 */
 const QUERY = { paymentKey: "tviva20260919", tossOrderId: "ORD-20260919-000001", amount: 12345 };
@@ -101,6 +116,27 @@ test("주문번호를 알린다", () => {
 
   expect(screen.getByText("주문을 무사히 마쳤어요")).toBeDefined();
   expect(screen.getByText("ORD-20260919-000001")).toBeDefined();
+});
+
+// 서버는 결제가 끝나도 장바구니를 비우지 않는다. 두면 방금 산 상품이 남아 또 결제될 수 있다 (#457)
+test("승인이 끝나면 결제한 장바구니 줄을 뺀다", () => {
+  holdPendingOrder();
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(removePaidCartItems).toHaveBeenCalledTimes(1);
+  expect(removePaidCartItems).toHaveBeenCalledWith(PAID_LINES);
+  // 들고 있던 주문은 그대로 비운다 (#367)
+  expect(readPendingOrder()).toBeNull();
+});
+
+test("다시 그려져도 한 번만 뺀다", () => {
+  holdPendingOrder();
+
+  const { rerender } = render(<CheckoutDoneView {...QUERY} orderId={77} />);
+  rerender(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(removePaidCartItems).toHaveBeenCalledTimes(1);
 });
 
 // 서버가 배송 예정일을 주지 않는다. 시안 문구를 그대로 두면 지난 날짜가 모든 주문에 뜬다 (#262)
@@ -279,6 +315,16 @@ function failed() {
     canConfirm: true,
   });
 }
+
+// 승인이 막히면 결제가 끝났는지 알 수 없다. 장바구니를 남겨야 다시 살 수 있다 (#457)
+test("승인이 막히면 장바구니 줄을 빼지 않는다", () => {
+  holdPendingOrder();
+  failed();
+
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(removePaidCartItems).not.toHaveBeenCalled();
+});
 
 /**
  * 승인이 막히면 결제창에서는 이미 성공한 뒤라 **돈이 빠져나갔을 수 있다.**

@@ -1,6 +1,7 @@
 // cart 슬라이스의 공개 API
 export {
   cartItemKey,
+  removeCartItem,
   type Cart,
   type CartItem,
   type CartItemRef,
