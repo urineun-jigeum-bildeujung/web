@@ -90,6 +90,32 @@ test("저장된 곳을 열면 연락처도 함께 채워진다", () => {
   expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("010-1234-5678");
 });
 
+// 배송지는 길게 저장돼도 주문이 복사해 두는 컬럼이 짧아, 그 배송지로 결제하면 500이 난다 (#437)
+test("입력칸은 주문이 받는 길이까지만 적힌다", () => {
+  renderAt("");
+
+  const maxLength = (label: string) => screen.getByLabelText(label).getAttribute("maxlength");
+  expect(maxLength("배송지 이름")).toBe("50");
+  expect(maxLength("받는 분 이름")).toBe("50");
+  expect(maxLength("연락처")).toBe("20");
+  expect(maxLength("상세 주소")).toBe("100");
+  expect(maxLength("배송 요청사항")).toBe("100");
+});
+
+// `maxLength`는 적는 것만 막고 불러온 값은 자르지 않는다. 전에 길게 저장한 곳은 줄여야 저장된다
+test("전에 길게 저장한 상세 주소를 열면 줄이기 전까지 입력 완료가 꺼진다", () => {
+  useQueryAddresses.mockReturnValue({
+    addresses: [{ ...HOME, addressDetail: "가".repeat(101) }],
+    isLoading: false,
+    error: null,
+  });
+  renderAt("?place=5");
+
+  expect(submit().hasAttribute("disabled")).toBe(true);
+  fill([["상세 주소", "가".repeat(100)]]);
+  expect(submit().hasAttribute("disabled")).toBe(false);
+});
+
 // 다른 칸이 함께 비어 있으면 연락처 조건을 지워도 테스트가 통과해 회귀를 놓친다.
 // 전부 채워진 곳에서 연락처만 비워야 그 조건 하나를 겨눌 수 있다
 test("다 채워진 배송지에서 연락처만 비우면 입력 완료가 꺼진다", () => {
