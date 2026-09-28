@@ -3,6 +3,9 @@
 //
 // 같은 사료라도 4kg 말티즈와 30kg 리트리버의 후기는 다른 이야기다. 별점만 나열하면
 // 그 차이가 사라지므로 아이 정보를 이름 바로 아래에 둔다(`lib/pet-label`).
+//
+// 아이가 여럿이면 글로만 적지 않고 원도 그만큼 포갠다. 원 하나에 아이 여럿을 담으면
+// 몇 마리인지가 원에서 사라진다 (#488).
 
 "use client";
 
@@ -19,6 +22,8 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
+import { avatarColor } from "@/shared/lib/avatar/avatar-color";
+import { avatarInitials } from "@/shared/lib/avatar/avatar-initials";
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Rating } from "@/shared/ui/rating/rating";
@@ -41,12 +46,33 @@ export function ReviewCard({ review, hideAvatar, hidePhotos, className }: Review
   return (
     <article className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center gap-2">
-        {/* 프로필 사진을 받을 곳이 아직 없다. 시안은 원 안에 아이 이름을 넣는다. 아이 고르기 줄은
-            이제 아이 원(`entities/pet`의 `PetPhoto`)으로 이름 앞 두 글자를 넣지만(#470), 리뷰 한 건에
-            아이가 여럿일 수 있어 어느 아이를 넣을지 정해지지 않아 회색 원으로 둔다.
-            **닉네임이 없으면 원도 그리지 않는다** — 누구인지 모르는데 자리만 남기는 꼴이 된다 */}
-        {!hideAvatar && review.nickname && (
-          <span aria-hidden className="size-10.5 shrink-0 rounded-full bg-surface-disable" />
+        {/* 원은 작성자가 아니라 **함께 먹인 아이들**이다. 한 건에 아이가 여럿일 수 있어
+            시안대로 포개 놓는다. 닉네임이 비어도 아이는 알 수 있으므로 아래 아이 줄과 같은
+            조건으로 그린다. 사진은 리뷰 응답에 없어 전부 이름 글자만 들어간다 (#488).
+
+            아이 원 컴포넌트(`entities/pet`의 `PetPhoto`)를 가져다 쓸 수 없다 — 같은 레이어라
+            의존 방향이 깨진다. 색과 글자를 만드는 함수만 `shared/lib/avatar`에서 함께 쓴다 */}
+        {!hideAvatar && review.pets.length > 0 && (
+          <span aria-hidden className="flex shrink-0 items-center">
+            {review.pets.map((pet, index) => (
+              <span
+                key={pet.id}
+                style={{
+                  background: avatarColor(pet.id),
+                  // **뒤에 오는 아이일수록 아래로 깔린다.** 그냥 두면 DOM에서 뒤 요소가 위에
+                  // 그려져 시안과 반대가 된다
+                  zIndex: review.pets.length - index,
+                }}
+                className={cn(
+                  "relative flex size-10.5 items-center justify-center rounded-full text-label-bold-14 text-text-body-static-black",
+                  // 시안의 겹침 간격 -24px. 42px 원이 18px씩 보인다
+                  index > 0 && "-ml-6",
+                )}
+              >
+                {avatarInitials(pet.name)}
+              </span>
+            ))}
+          </span>
         )}
         {/* 시안(1716:34336)의 이름↔아이 줄 간격이 4px이다 */}
         <div className="flex flex-col gap-1">
