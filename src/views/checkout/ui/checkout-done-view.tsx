@@ -62,16 +62,6 @@ function toProductRow(order: OrderDetail) {
 }
 
 /**
- * 승인 시각을 화면 형식으로 옮긴다.
- *
- * 시안(`paym_002`)이 `26.08.28 15:43`으로 쓴다. 값이 없거나 읽을 수 없으면 줄을 비운다 —
- * 지어낸 날짜를 보이느니 안 보이는 편이 낫다.
- */
-function formatPaidAt(approvedAt: string | undefined) {
-  return approvedAt ? formatDisplayDateTime(approvedAt) : null;
-}
-
-/**
  * 승인 실패를 결제 맥락의 문구로 옮긴다.
  *
  * **일반 실패 문구를 그대로 쓰면 안 된다.** 네트워크 오류는 평소에 "네트워크 상태를 확인해
@@ -355,15 +345,15 @@ export function CheckoutDoneView({
                     aria-hidden
                     className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-surface-tertiary text-icon-fill-secondary"
                   >
-                    {row?.imageUrl ? (
+                    {row.imageUrl ? (
                       <Image src={row.imageUrl} alt="" fill sizes="64px" className="object-cover" />
                     ) : (
                       <IoImageOutline className="size-8" />
                     )}
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
-                    <p className="truncate text-title-bold-16 text-foreground">{row?.name}</p>
-                    {row?.caption && (
+                    <p className="truncate text-title-bold-16 text-foreground">{row.name}</p>
+                    {row.caption && (
                       <p className="truncate text-body-medium-14 text-text-body-secondary">
                         {row.caption}
                       </p>
@@ -380,7 +370,9 @@ export function CheckoutDoneView({
         </div>
 
         <div className="flex flex-col gap-4">
-          <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment.approvedAt)}>
+          {/* 시안(`paym_002`)이 승인 시각을 `26.08.28 15:43`으로 쓴다. 승인 응답에 늘 오는 값이지만
+              읽을 수 없으면 줄을 비운다 — 지어낸 날짜를 보이느니 안 보이는 편이 낫다 */}
+          <DetailSection title="결제상세" titleTrailing={formatDisplayDateTime(payment.approvedAt)}>
             {/* **주문이 없으면 세부 금액을 비운다.** 결제 금액만 알고 그 안을 가를 수 없는데
                 `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰) */}
             <PaymentDetail

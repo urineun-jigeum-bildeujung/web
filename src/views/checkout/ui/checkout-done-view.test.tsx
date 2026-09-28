@@ -152,11 +152,12 @@ test("결제일시를 승인 응답으로 보인다", () => {
   expect(screen.getByText("26.09.19 14:30")).toBeDefined();
 });
 
-// 값이 없거나 읽을 수 없으면 줄을 비운다. 지어낸 날짜를 보이느니 안 보이는 편이 낫다
-test("승인 시각이 없으면 결제일시를 비운다", () => {
-  // 승인 응답이 없으면 완료 화면 대신 뼈대가 선다. 응답은 두고 시각만 뺀다 (#468)
+// 읽을 수 없으면 줄을 비운다. 지어낸 날짜를 보이느니 안 보이는 편이 낫다. 승인 응답에 늘 오는
+// 값이라 빠지는 경우는 없고, 남는 것은 읽을 수 없는 문자열이다(#474)
+test("승인 시각을 읽을 수 없으면 결제일시를 비운다", () => {
+  // 승인 응답이 없으면 완료 화면 대신 뼈대가 선다. 응답은 두고 시각만 바꾼다 (#468)
   useQueryPaymentConfirm.mockReturnValue({
-    payment: { ...PAYMENT, approvedAt: undefined },
+    payment: { ...PAYMENT, approvedAt: "not-a-date" },
     error: null,
     canConfirm: true,
   });
