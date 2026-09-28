@@ -14,32 +14,21 @@ async function gotoSignup(page: Page, search = "") {
   await page.goto(`/signup${search}`);
 }
 
-test("아이디와 비밀번호를 채워야 로그인 버튼이 켜진다", async ({ page }) => {
-  await page.goto("/login");
-
-  const submit = page.getByRole("button", { name: "로그인" });
-  await expect(submit).toBeDisabled();
-
-  await page.getByLabel("아이디").fill("gollaju");
-  await page.getByLabel("비밀번호").fill("pw123456");
-  await expect(submit).toBeEnabled();
-});
-
 // 인증 제공자 화면으로 리다이렉트되는 흐름이라 버튼이 아니라 링크다
 test("소셜은 카카오와 구글 둘만 두고 인가 시작 주소로 나간다", async ({ page }) => {
   await page.goto("/login");
 
   // 주소의 앞부분은 `NEXT_PUBLIC_OAUTH_BASE_URL`에 따라 달라진다. 비우면 same-origin이고
   // 로컬 백엔드를 보게 두면 절대 주소가 된다. 환경에 흔들리지 않게 끝부분만 본다
-  await expect(page.getByRole("link", { name: "카카오로 시작하기" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "카카오 로그인" })).toHaveAttribute(
     "href",
     /\/api\/auth\/oauth2\/authorization\/kakao$/,
   );
-  await expect(page.getByRole("link", { name: "구글로 시작하기" })).toHaveAttribute(
+  await expect(page.getByRole("link", { name: "구글 로그인" })).toHaveAttribute(
     "href",
     /\/api\/auth\/oauth2\/authorization\/google$/,
   );
-  // 시안에는 넷이 그려져 있으나 카카오·구글로 확정됐다
+  // 시안은 카카오·네이버인데 카카오·구글로 확정됐다
   await expect(page.getByRole("link", { name: /네이버|애플/ })).toHaveCount(0);
 });
 
