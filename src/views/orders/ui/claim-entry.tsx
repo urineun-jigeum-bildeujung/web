@@ -9,6 +9,7 @@ import { Badge } from "@/shared/ui/badge/badge";
 import { Button } from "@/shared/ui/button";
 
 import type { ClaimEntry as ClaimEntryData, ClaimEntryKind } from "../model/claim-entries";
+import { summarizeItems } from "../model/item-summary";
 
 /**
  * 뱃지 문구와 색. PD팀이 "취소, 환불, 교환에 맞춰서 뱃지로" 달라고 했다(2026-09-28).
@@ -47,9 +48,16 @@ export function ClaimEntry({ entry }: { entry: ClaimEntryData }) {
         ))}
       </ul>
 
-      {/* 시안의 action_button. 40px에 굵은 14px, 연한 회색 바탕이다. 상품 줄과 12px 떨어진다 */}
+      {/* 시안의 action_button. 40px에 굵은 14px, 연한 회색 바탕이다. 상품 줄과 12px 떨어진다.
+          건마다 같은 "자세히 보기"만 있으면 화면 낭독기로 링크만 훑을 때 어느 건인지 가를 수 없어
+          뱃지와 상품을 이름 앞에 붙인다. 보이는 글자는 이름 끝에 그대로 둔다(#474) */}
       <Button asChild variant="secondary" className="mt-1 h-10 rounded-lg text-label-bold-14">
-        <Link href={`/mypage/orders/${entry.orderId}`}>자세히 보기</Link>
+        <Link
+          href={`/mypage/orders/${entry.orderId}`}
+          aria-label={`${badge.label} ${summarizeItems(entry.items)} 자세히 보기`}
+        >
+          자세히 보기
+        </Link>
       </Button>
     </article>
   );

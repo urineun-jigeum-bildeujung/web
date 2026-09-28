@@ -21,6 +21,8 @@ import { formatDisplayMonthDayTime } from "@/shared/lib/date/display-date";
 import { Button } from "@/shared/ui/button";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
+import { summarizeItems } from "../model/item-summary";
+
 /** 시안의 목록 행동 버튼. 40px에 굵은 14px, 연한 회색 바탕이다. 하나면 가득, 둘이면 나눈다 */
 const ACTION_CLASS = "h-10 flex-1 rounded-lg text-label-bold-14";
 
@@ -42,7 +44,13 @@ export function OrderEntry({ order, onTrack, onReorder, reorderingId }: OrderEnt
     <article className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2 text-body-medium-14 text-text-body-secondary">
         {paidTime && <span>{paidTime}</span>}
-        <Link href={`/mypage/orders/${order.orderId}`} className="ml-auto underline">
+        {/* 건마다 "주문 상세"만 있으면 화면 낭독기로 링크만 훑을 때 어느 주문인지 가를 수 없다.
+            보이는 글자는 이름 끝에 그대로 둔다(#474) */}
+        <Link
+          href={`/mypage/orders/${order.orderId}`}
+          aria-label={`${summarizeItems(order.items)} 주문 상세`.trim()}
+          className="ml-auto underline"
+        >
           주문 상세
         </Link>
       </div>
