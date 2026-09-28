@@ -100,6 +100,8 @@ test("모양이 맞지 않으면 없는 것으로 다룬다", () => {
     // 장바구니 줄을 들기 전(#457) 모양이다. 결제 뒤 무엇을 뺄지 모른다
     '{"orderId":77,"signature":"x","idempotencyKey":"k"}',
     '{"orderId":77,"signature":"x","idempotencyKey":"k","cartItems":[{"itemType":"NORMAL","itemId":"1"}]}',
+    // 서버에 없는 종류다. 그대로 두면 장바구니 삭제 주소에 실린다 (#476)
+    '{"orderId":77,"signature":"x","idempotencyKey":"k","cartItems":[{"itemType":"normal","itemId":1}]}',
     "{}",
     "깨진 값",
   ]) {

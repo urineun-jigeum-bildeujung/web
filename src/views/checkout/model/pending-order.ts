@@ -14,9 +14,17 @@
 // 잃고 다시 누를 때 같은 키를 실어야 서버가 이미 만든 주문을 돌려준다 — 키를 새로 만들면
 // 주문이 하나 더 생긴다 (#412).
 
-import type { CartItemRef } from "@/entities/cart";
+import type { CartItemRef, CartItemType } from "@/entities/cart";
 
 const KEY = "checkout.pendingOrder";
+
+/**
+ * 장바구니 줄의 종류. 서버 `CartItemType`의 두 값뿐이다.
+ *
+ * 문자열인지만 보면 아무 값이나 장바구니 삭제 주소(`/carts/items/{itemType}/…`)에 그대로
+ * 실린다 (#476).
+ */
+const CART_ITEM_TYPES: readonly unknown[] = ["NORMAL", "TIME_DEAL"] satisfies CartItemType[];
 
 /**
  * 만들려는(또는 만든) 주문과 그때 보낸 본문의 지문. 지문이 같을 때만 다시 쓴다.
@@ -123,7 +131,7 @@ function isCartItemRefs(value: unknown): value is CartItemRef[] {
         return false;
       }
       const { itemType, itemId } = item as Record<string, unknown>;
-      return typeof itemType === "string" && Number.isInteger(itemId);
+      return CART_ITEM_TYPES.includes(itemType) && Number.isInteger(itemId);
     })
   );
 }
