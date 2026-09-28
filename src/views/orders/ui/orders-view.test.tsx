@@ -2,15 +2,15 @@
 // 모르는 상태 값이 왔을 때 조용히 엉뚱한 뱃지를 붙이지 않는지 본다.
 // 구성은 2026-09-23 시안(mypa_061, #405)을 따른다 — 탭 둘, 결제일 묶음 아래 결제 시각, 상품마다 뱃지·버튼.
 //
-// **목이 서버처럼 상태를 든다.** 구매 확정은 끝난 뒤 목록을 다시 조회해 맞추므로,
-// 목이 늘 같은 값을 돌려주면 확정한 주문이 그대로 되살아나 통과 여부가 뒤집힌다.
+// **두 탭이 한 목록을 나눠 쓴다(#462).** 주문내역 탭은 결제 대기·취소 주문을 거르고,
+// 취소·반품·교환 탭은 취소한 주문과 상세의 반품·교환 신청을 모은다.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const { getOrders, confirmOrder, addCartItem, showSnackbar } = vi.hoisted(() => ({
+const { getOrders, getOrderDetail, addCartItem, showSnackbar } = vi.hoisted(() => ({
   getOrders: vi.fn(),
-  confirmOrder: vi.fn(),
+  getOrderDetail: vi.fn(),
   addCartItem: vi.fn(),
   showSnackbar: vi.fn(),
 }));
@@ -20,7 +20,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.
 vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
   getOrders,
-  confirmOrder,
+  getOrderDetail,
 }));
 
 // 담기는 서버까지 가지 않는다. 무엇을 몇 개 담는지는 인자로 본다
@@ -34,7 +34,12 @@ vi.mock("@/shared/ui/snackbar/snackbar", async (importOriginal) => ({
   showSnackbar,
 }));
 
-import type { OrderListResponse, OrderSummary } from "@/entities/order";
+import type {
+  OrderDetail,
+  OrderItemClaim,
+  OrderListResponse,
+  OrderSummary,
+} from "@/entities/order";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import { OrdersView } from "./orders-view";
@@ -66,6 +71,56 @@ function respond(orders: OrderSummary[]): OrderListResponse {
   return { orders, nextCursor: null, hasNext: false };
 }
 
+/** 목록의 `makeOrder`와 짝을 이루는 상세. 결제는 목록의 주문 시각과 같은 때에 끝났다 */
+function makeDetail(orderId: number, over: Partial<OrderDetail> = {}): OrderDetail {
+  return {
+    orderId,
+    orderNumber: `ORD-TEST-${orderId}`,
+    orderStatus: "DELIVERED",
+    deliveredAt: null,
+    productAmount: 1000,
+    totalAmount: 4000,
+    items: [
+      {
+        orderItemId: orderId * 10,
+        thumbnailUrl: null,
+        productName: `테스트 상품 ${orderId}`,
+        quantity: 1,
+        unitPrice: 1000,
+        itemStatus: "PAID",
+        cancelledQuantity: 0,
+        returnedQuantity: 0,
+        effectiveQuantity: 1,
+        claims: [],
+      },
+    ],
+    deliveryAddress: {
+      receiver: "홍길동",
+      receiverPhone: "010-1234-5678",
+      zipCode: "06133",
+      address: "서울특별시 강남구 테헤란로 123",
+      addressDetail: "4층",
+    },
+    deliveryNote: null,
+    payment: { paidAt: "2026-09-15T03:00:00.000Z", method: "토스페이먼츠" },
+    ...over,
+  };
+}
+
+/** 그 주문 첫 상품에 신청 하나를 건 상세. 05:00Z는 한국 14:00이다 */
+function withClaim(orderId: number, claim: Pick<OrderItemClaim, "claimId" | "claimType">) {
+  const detail = makeDetail(orderId);
+  detail.items[0].claims = [
+    {
+      claimStatus: "REQUESTED",
+      requestedAt: "2026-09-16T05:00:00.000Z",
+      completedAt: null,
+      ...claim,
+    },
+  ];
+  return detail;
+}
+
 /** 탭을 URL(`?tab=`)에 담아 nuqs 어댑터가 있어야 그려진다 */
 function renderView(search = "") {
   return render(
@@ -76,15 +131,22 @@ function renderView(search = "") {
   );
 }
 
-/** 서버가 든 주문. 확정이 여기에 반영돼야 다시 조회했을 때 달라진다 */
+/** 서버가 든 주문. 테스트마다 바꿔 끼운다 */
 let served: OrderSummary[] = [];
+/** 서버가 든 상세. 없는 주문을 부르면 서버처럼 실패한다 */
+let details: OrderDetail[] = [];
 
 beforeEach(() => {
   vi.clearAllMocks();
   served = [makeOrder(1, "PAID"), makeOrder(2, "DELIVERED"), makeOrder(3, "CONFIRMED")];
+  details = [];
   getOrders.mockImplementation(async () => respond(served));
-  confirmOrder.mockImplementation(async (orderId: number) => {
-    served = served.map((o) => (o.orderId === orderId ? { ...o, orderStatus: "CONFIRMED" } : o));
+  getOrderDetail.mockImplementation(async (orderId: number) => {
+    const detail = details.find((candidate) => candidate.orderId === orderId);
+    if (!detail) {
+      throw new Error(`상세 없음: ${orderId}`);
+    }
+    return detail;
   });
 });
 
@@ -117,11 +179,13 @@ test("결제일이 다르면 머리를 따로 달고 사이에 구분선을 넣�
 });
 
 // 결제 직후 주문도 배송준비중으로 보인다. 시안에 "결제완료" 뱃지가 없다 (#297).
-// **취소는 목록에 없다.** 서버가 주문 전체만 취소해 PD가 주문 상세 맨 아래로 옮겼다 (#410)
-test("결제 직후 주문에는 취소 버튼이 없고, 배송완료에는 구매확정 하기가 나온다", async () => {
+// **취소와 구매 확정은 목록에 없다.** 서버가 둘 다 주문 전체에 걸어 PD가 주문 상세 맨 아래로
+// 옮겼다 — 취소는 #410, 구매 확정은 #462
+test("목록에는 주문 취소도 구매확정도 없다", async () => {
   renderView();
 
-  expect(await screen.findByRole("button", { name: "구매확정 하기" })).toBeDefined();
+  expect(await screen.findByText("배송완료")).toBeDefined();
+  expect(screen.queryByRole("button", { name: /구매확정/ })).toBeNull();
   expect(screen.queryByRole("button", { name: /주문 취소/ })).toBeNull();
   expect(screen.getByText("배송준비중")).toBeDefined();
   expect(screen.queryByText("결제완료")).toBeNull();
@@ -201,21 +265,6 @@ test("배송 중이면 배송 위치 보기가 나오고 누르면 준비 중이
   expect(await screen.findByRole("dialog", { name: "배송 조회 준비 중" })).toBeDefined();
 });
 
-test("구매 확정은 서버를 부르고 끝난 뒤 목록에서 그 버튼이 사라진다", async () => {
-  renderView();
-
-  fireEvent.click(await screen.findByRole("button", { name: "구매확정 하기" }));
-  const sheet = screen.getByRole("dialog", { name: "무사히 잘 도착했나요?" });
-  // 무엇을 확정하는지 보여 준다. 금액도 목록과 같이 그 줄에 낸 값이다 (#418)
-  expect(sheet.textContent).toContain("테스트 상품 2");
-  expect(sheet.textContent).toContain("2,500");
-  fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
-
-  // 로컬 배열만 바꾸면 새로고침에 되돌아온다. 서버를 부른 뒤 다시 조회해 맞춘다
-  await waitFor(() => expect(confirmOrder).toHaveBeenCalledWith(2));
-  await waitFor(() => expect(screen.queryByRole("button", { name: "구매확정 하기" })).toBeNull());
-});
-
 // 옛 시안의 "자세히 보기" 버튼 자리를 주문 머리의 링크가 대신한다
 test("주문 상세는 그 주문의 상세로 간다", async () => {
   renderView();
@@ -234,37 +283,9 @@ test("명세에 없는 상태 값이 오면 뱃지와 행동 버튼을 내보내
   // 주문 자체는 보인다 — 상태를 모른다고 주문을 감추면 산 것이 사라진다
   expect(await screen.findByText("테스트 상품 9")).toBeDefined();
   expect(screen.queryByText("배송준비중")).toBeNull();
-  expect(screen.queryByRole("button", { name: "구매확정 하기" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "배송 위치 보기" })).toBeNull();
   // 상세로 가는 길은 남는다
   expect(screen.getByRole("link", { name: "주문 상세" })).toBeDefined();
-});
-
-// 보내는 중에 시트가 닫히면 어느 주문을 확정하는지 잃은 채 요청만 남는다 (#293 리뷰)
-test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async () => {
-  let release: (() => void) | undefined;
-  confirmOrder.mockImplementation(
-    () =>
-      new Promise<void>((resolve) => {
-        release = () => resolve();
-      }),
-  );
-
-  renderView();
-  fireEvent.click(await screen.findByRole("button", { name: "구매확정 하기" }));
-  fireEvent.click(screen.getByRole("button", { name: "확정하기" }));
-
-  await waitFor(() =>
-    expect(screen.getByRole("button", { name: "나중에 할게요" }).hasAttribute("disabled")).toBe(
-      true,
-    ),
-  );
-
-  // **Escape로도 닫히지 않는다.** 버튼을 잠그는 것만으로는 모자라다 — 바깥을 누르거나
-  // Escape를 치는 길이 남아 있고, 그리로 닫히면 어느 주문을 확정하는지 잃는다
-  fireEvent.keyDown(document, { key: "Escape" });
-  expect(screen.getByText("무사히 잘 도착했나요?")).toBeDefined();
-
-  release?.();
 });
 
 // 한 번에 오는 것은 기본 열 건이다. 첫 쪽만 그리면 열한 번째 주문부터 볼 길이 없다 (#288).
@@ -443,13 +464,202 @@ test("상품이 여럿이면 상품마다 뱃지·줄·버튼을 세운다", asy
   expect(screen.getAllByRole("button", { name: "장바구니 담기" })).toHaveLength(2);
 });
 
-// 탭 화면 시안이 완성본에 없고 신청 목록 API도 없다. 그 탭에 있는 동안 주문 목록을 부르지 않는다
-test("취소·반품·교환 탭은 준비 중이라고 알린다", async () => {
+// 결제를 끝내지 않은 주문은 보이지 않고, 취소한 주문은 둘째 탭으로 간다 (2026-09-28 PD 답, #462)
+test("결제 대기 주문과 취소한 주문은 주문내역 탭에 세우지 않는다", async () => {
+  served = [makeOrder(1, "PAID"), makeOrder(2, "PENDING"), makeOrder(3, "CANCELLED")];
+  renderView();
+
+  expect(await screen.findByText("테스트 상품 1")).toBeDefined();
+  expect(screen.queryByText("테스트 상품 2")).toBeNull();
+  expect(screen.queryByText("테스트 상품 3")).toBeNull();
+  // 첫 탭은 목록만 쓴다. 상세를 받을 까닭이 없다
+  expect(getOrderDetail).not.toHaveBeenCalled();
+});
+
+// 한 쪽이 통째로 걸러지면 목록이 빈다. 다음 쪽이 남았는데 비었다고 하면 뒤의 주문을 못 본다 (#462)
+test("한 쪽이 모두 걸러져도 비었다고 하지 않고 다음 쪽을 받는다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) =>
+    cursor
+      ? { orders: [makeOrder(2, "PAID")], nextCursor: null, hasNext: false }
+      : { orders: [makeOrder(1, "PENDING")], nextCursor: "CURSOR-1", hasNext: true },
+  );
+
+  renderView();
+  await waitFor(() => expect(callbacks.length).toBeGreaterThan(0));
+  expect(screen.queryByText("아직 주문한 내역이 없어요")).toBeNull();
+
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  expect(await screen.findByText("테스트 상품 2")).toBeDefined();
+  expect(screen.queryByText("아직 주문한 내역이 없어요")).toBeNull();
+});
+
+// 받아 둔 것이 모두 걸러진 채 다음 쪽만 실패했다. 첫 조회 실패처럼 화면을 덮으면 다시 시도와
+// 오류 화면이 함께 뜬다 (#462)
+test("걸러져 빈 목록에서 다음 쪽이 실패하면 오류 화면 대신 다시 시도를 보인다", async () => {
+  const callbacks: ((entries: { isIntersecting: boolean }[]) => void)[] = [];
+  vi.stubGlobal(
+    "IntersectionObserver",
+    class {
+      constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+        callbacks.push(callback);
+      }
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+
+  getOrders.mockImplementation(async ({ cursor }: { cursor?: string | null }) => {
+    if (cursor) {
+      throw new Error("network down");
+    }
+    return { orders: [makeOrder(1, "PENDING")], nextCursor: "CURSOR-1", hasNext: true };
+  });
+
+  renderView();
+  await waitFor(() => expect(callbacks.length).toBeGreaterThan(0));
+
+  act(() => {
+    for (const callback of callbacks) {
+      callback([{ isIntersecting: true }]);
+    }
+  });
+
+  expect(await screen.findByRole("button", { name: /다시 시도/ })).toBeDefined();
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("취소·반품·교환 탭은 취소·환불·교환 뱃지를 단 건을 최근 것부터 세운다", async () => {
+  served = [
+    makeOrder(1, "PAID"),
+    makeOrder(2, "CANCELLED"),
+    makeOrder(4, "DELIVERED"),
+    makeOrder(5, "CONFIRMED"),
+  ];
+  details = [
+    makeDetail(2, { orderStatus: "CANCELLED" }),
+    withClaim(4, { claimId: 40, claimType: "RETURN" }),
+    withClaim(5, { claimId: 50, claimType: "EXCHANGE" }),
+  ];
+  renderView("?tab=claims");
+
+  expect(await screen.findByText("취소")).toBeDefined();
+  // 반품 건은 시안대로 "환불"로 단다
+  expect(screen.getByText("환불")).toBeDefined();
+  expect(screen.getByText("교환")).toBeDefined();
+  expect(screen.getByText("테스트 상품 2")).toBeDefined();
+  // 배송 전 주문은 취소하지 않은 한 건이 없어 상세도 받지 않는다
+  expect(screen.queryByText("테스트 상품 1")).toBeNull();
+  expect(getOrderDetail).not.toHaveBeenCalledWith(1);
+
+  // 반품·교환은 접수일, 취소는 결제일로 묶는다 (2026-09-23 PD 답)
+  const headings = screen
+    .getAllByRole("heading", { level: 2 })
+    .map((heading) => heading.textContent);
+  expect(headings).toEqual(["접수일 26.09.16", "결제일 26.09.15"]);
+  expect(screen.getAllByText("09.16 14:00")).toHaveLength(2);
+  expect(screen.getByText("09.15 12:00")).toBeDefined();
+
+  // 자세히 보기는 그 주문의 상세로 간다
+  const links = screen.getAllByRole("link", { name: "자세히 보기" });
+  expect(links.map((link) => link.getAttribute("href")).sort()).toEqual([
+    "/mypage/orders/2",
+    "/mypage/orders/4",
+    "/mypage/orders/5",
+  ]);
+});
+
+// 결제 실패·재고 부족으로 서버가 취소한 주문도 CANCELLED다. 사용자가 취소한 것이 아니다 (#462)
+test("결제한 적 없는 취소 주문은 둘째 탭에도 세우지 않는다", async () => {
+  served = [makeOrder(3, "CANCELLED")];
+  details = [makeDetail(3, { orderStatus: "CANCELLED", payment: null })];
+  renderView("?tab=claims");
+
+  expect(await screen.findByText("취소·반품·교환 내역이 없어요")).toBeDefined();
+  expect(getOrderDetail).toHaveBeenCalledWith(3);
+  expect(screen.queryByText("테스트 상품 3")).toBeNull();
+});
+
+// 여러 상품을 한 번에 신청하면 같은 신청이 상품마다 붙어 온다. 두 건으로 세면 신청이 둘로 보인다
+test("한 신청에 걸린 상품들은 한 건으로 모은다", async () => {
+  served = [
+    makeOrder(6, "DELIVERED", {
+      items: [
+        {
+          orderItemId: 60,
+          productId: 600,
+          thumbnailUrl: null,
+          productName: "사료",
+          quantity: 1,
+          amount: 30000,
+        },
+        {
+          orderItemId: 61,
+          productId: 610,
+          thumbnailUrl: null,
+          productName: "간식",
+          quantity: 2,
+          amount: 9000,
+        },
+      ],
+    }),
+  ];
+  const claim = {
+    claimId: 60,
+    claimType: "RETURN",
+    claimStatus: "REQUESTED",
+    requestedAt: "2026-09-16T05:00:00.000Z",
+    completedAt: null,
+  } satisfies OrderItemClaim;
+  const detail = makeDetail(6);
+  detail.items = [
+    { ...detail.items[0], orderItemId: 60, productName: "사료", claims: [claim] },
+    { ...detail.items[0], orderItemId: 61, productName: "간식", quantity: 2, claims: [claim] },
+  ];
+  details = [detail];
+  renderView("?tab=claims");
+
+  expect(await screen.findByText("사료")).toBeDefined();
+  expect(screen.getByText("간식")).toBeDefined();
+  expect(screen.getAllByText("환불")).toHaveLength(1);
+  // 금액은 목록이 주는 그 줄에 낸 값이다
+  expect(screen.getByText("간식").closest("li")?.textContent).toContain("9,000");
+});
+
+// 상세 하나를 못 받았는데 조용히 빼면 취소한 주문이 사라진 것처럼 보인다 (#462)
+test("상세를 받지 못하면 토스트 대신 화면에서 알린다", async () => {
+  served = [makeOrder(2, "CANCELLED")];
+  renderView("?tab=claims");
+
+  expect(await screen.findByRole("alert")).toBeDefined();
+  expect(screen.queryByText("취소·반품·교환 내역이 없어요")).toBeNull();
+});
+
+test("취소·반품·교환 건이 없으면 빈 상태를 안내한다", async () => {
+  served = [makeOrder(1, "PAID")];
   renderView("?tab=claims");
 
   expect(screen.getByRole("tab", { name: "취소·반품·교환" }).getAttribute("aria-selected")).toBe(
     "true",
   );
-  expect(await screen.findByText("취소·반품·교환 내역 준비 중")).toBeDefined();
-  expect(getOrders).not.toHaveBeenCalled();
+  expect(await screen.findByText("취소·반품·교환 내역이 없어요")).toBeDefined();
+  expect(getOrderDetail).not.toHaveBeenCalled();
 });

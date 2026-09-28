@@ -33,6 +33,7 @@ export {
 } from "./model/claim-status";
 export { useMutateOrder } from "./api/use-mutate-order";
 export { useQueryOrderDetail } from "./api/use-query-order-detail";
+export { useQueryOrderDetails } from "./api/use-query-order-details";
 export { useQueryOrders } from "./api/use-query-orders";
 export { toOrderStatus } from "./model/order-status";
 export {
