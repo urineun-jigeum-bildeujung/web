@@ -25,6 +25,34 @@ const PRODUCT = {
   detailInfo: {},
 };
 
+/**
+ * 상품 상세의 리뷰 탭과 사진 모음이 부르는 것(#339). 세우지 않으면 스모크가 실제 게이트웨이로
+ * 나가 CORS로 막힌다 — 목데이터를 걷어내면서 이 화면들이 처음으로 네트워크를 탄다.
+ *
+ * 응답 모양은 실제 백엔드 그대로다. 목록에는 `hasNext`가 없고, 사진 없는 후기의 `images`는
+ * `null`이며, 공개 상세에는 `nickname`·`likeCount`가 없다.
+ */
+const REVIEW_PHOTO = "/images/e2e/product-photo-1.png";
+
+const PRODUCT_REVIEWS = {
+  averageRating: 4.5,
+  totalCount: 1,
+  content: [
+    {
+      reviewId: 1,
+      nickname: "코코맘",
+      pets: [{ petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" }],
+      rating: 4.5,
+      usagePeriod: "16일",
+      palatability: null,
+      text: "확실히 잘 먹어요",
+      images: null,
+      likeCount: 2,
+      createdAt: "2026-09-21",
+    },
+  ],
+};
+
 /** 같은 오리진의 가짜 S3 주소. 브라우저 PUT을 여기서 받아 200으로 답한다 */
 const UPLOAD_PATH = "/e2e-s3-stub/reviews/member-1/uuid.jpg";
 
@@ -59,6 +87,24 @@ export async function stubReviewApi(page: Page) {
         createdAt: "2026-09-21",
       },
     }),
+  );
+  // 리뷰 탭 목록. 쿼리(sort·page·size)가 붙어도 `*`가 받는다
+  await page.route("**/api/v1/reviews/products/*", (route) =>
+    route.fulfill({ json: PRODUCT_REVIEWS }),
+  );
+  // 사진 모음 격자. `*`는 `/`를 넘지 않아 아래 featured와 겹치지 않는다
+  await page.route("**/api/v1/reviews/products/*/photos*", (route) =>
+    route.fulfill({
+      json: {
+        totalCount: 1,
+        photos: [{ reviewId: 1, imageUrl: REVIEW_PHOTO }],
+        hasNext: false,
+      },
+    }),
+  );
+  // 리뷰 탭 상단 대표 사진
+  await page.route("**/api/v1/reviews/products/*/photos/featured*", (route) =>
+    route.fulfill({ json: { photos: [{ reviewId: 1, imageUrl: REVIEW_PHOTO }] } }),
   );
   await page.route("**/api/v1/reviews/me*", (route) =>
     route.fulfill({ json: { content: [], hasNext: false } }),

@@ -4,16 +4,22 @@
 // 사진을 보다 바로 살 수 있어야 해서 시안이 하단 CTA를 그대로 둔다. 사진이 마음에
 // 들면 그 자리에서 상품으로 갈 수 있어야 한다.
 //
+// **카드는 공개 리뷰 상세로 채운다.** 격자가 보는 `/photos`는 `{ reviewId, imageUrl }`뿐이라
+// 카드에 그릴 것이 없다. 그 응답에 아직 `nickname`과 `likeCount`가 없어 두 줄은 비워 둔다 —
+// 임의의 이름과 숫자를 넣으면 진짜 후기 글에 다른 사람의 이름표가 붙는다(#339).
+//
 // 열고 닫는 껍데기는 shadcn Dialog에 맡긴다. `role="dialog"`를 손으로 붙이면
 // 포커스가 뒤 화면에 남고 Esc도 듣지 않는다 — 눈에 보이지 않아 놓치기 쉬운 부분이다.
 
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { IoChevronBack, IoChevronForward, IoClose, IoImageOutline } from "react-icons/io5";
+import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
 
-import { ReviewCard, type MockReview } from "@/entities/review";
+import { ReviewCard, useQueryReviewDetail } from "@/entities/review";
 import { cn } from "@/shared/lib/utils";
+import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import {
@@ -23,11 +29,14 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/shared/ui/dialog";
+import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
 type PhotoViewerProps = {
-  review: MockReview;
+  reviewId: string;
+  /** 이 후기의 사진 중 몇 번째. 주소로 들어오면 범위를 벗어난 값이 올 수 있다 */
   photoIndex: number;
   onPhotoChange: (index: number) => void;
   onClose: () => void;
@@ -35,14 +44,13 @@ type PhotoViewerProps = {
 };
 
 export function PhotoViewer({
-  review,
+  reviewId,
   photoIndex,
   onPhotoChange,
   onClose,
   onBuy,
 }: PhotoViewerProps) {
-  // 주소로 들어오면 범위를 벗어난 값이 올 수 있다
-  const current = Math.min(Math.max(photoIndex, 0), review.photoCount - 1);
+  const { review, isLoading } = useQueryReviewDetail(reviewId);
 
   // 찜은 이 화면 안에서 끝나는 상태라 진짜로 토글한다. 장바구니·바로구매는 옵션 시트와
   // 가격이 상품 상세 슬라이스에 있어 여기서 그대로 재사용하면 FSD의 같은 레이어(views)
@@ -50,12 +58,17 @@ export function PhotoViewer({
   // entities로 내려올 때 이 화면도 같이 실제 동작으로 올린다
   const [liked, setLiked] = useState(false);
 
+  const images = review?.images ?? [];
+  const current = images.length > 0 ? Math.min(Math.max(photoIndex, 0), images.length - 1) : 0;
+
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
         showCloseButton={false}
-        // 기본은 가운데 뜨는 작은 모달이다. 시안은 전체화면이라 자리와 크기를 덮는다
-        className="inset-0 flex h-dvh w-full max-w-none translate-0 flex-col gap-0 overflow-y-auto rounded-none p-0 ring-0"
+        // 기본은 가운데 뜨는 작은 모달이다. 시안은 전체화면이라 자리와 크기를 덮는다.
+        // **`sm:max-w-none`이 함께 있어야 한다** — 베이스가 `sm:max-w-sm`이라 같은 접두사로
+        // 덮지 않으면 640px 이상에서 384px로 남는다(tailwind-merge는 변형이 다르면 안 합친다)
+        className="inset-0 flex h-dvh w-full max-w-none translate-0 flex-col gap-0 overflow-y-auto rounded-none p-0 ring-0 sm:max-w-none"
       >
         {/* 시안(1758-54280)의 헤더는 48px, 제목은 18px 굵게다 */}
         <header className="flex h-12 shrink-0 items-center px-2">
@@ -76,13 +89,23 @@ export function PhotoViewer({
         </header>
 
         <DialogDescription className="sr-only">
-          {`${review.nickname}이 남긴 후기의 사진 ${review.photoCount}장`}
+          {images.length > 0 ? `이 후기에 달린 사진 ${images.length}장` : "후기 사진을 불러오는 중"}
         </DialogDescription>
 
         <div className="relative flex aspect-square w-full shrink-0 items-center justify-center bg-muted">
-          <IoImageOutline aria-hidden className="size-12 text-muted-foreground" />
+          {images.length > 0 && (
+            <Image
+              src={images[current]}
+              alt={`후기 사진 ${current + 1}번째`}
+              fill
+              // 열자마자 보는 이 화면의 주인공이다
+              priority
+              sizes="100vw"
+              className="object-contain"
+            />
+          )}
 
-          {review.photoCount > 1 && (
+          {images.length > 1 && (
             <>
               <button
                 type="button"
@@ -96,7 +119,7 @@ export function PhotoViewer({
               <button
                 type="button"
                 aria-label="다음 사진"
-                disabled={current === review.photoCount - 1}
+                disabled={current === images.length - 1}
                 onClick={() => onPhotoChange(current + 1)}
                 className="absolute right-2 flex size-11 items-center justify-center rounded-full bg-background/80 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-30"
               >
@@ -105,10 +128,10 @@ export function PhotoViewer({
 
               {/* 점 개수는 이 후기에 달린 사진 수다. 전체 장수를 넘기는 것이 아니다 */}
               <div className="absolute bottom-3 flex gap-1.5">
-                <span className="sr-only">{`${review.photoCount}장 중 ${current + 1}번째`}</span>
-                {Array.from({ length: review.photoCount }, (_, index) => (
+                <span className="sr-only">{`${images.length}장 중 ${current + 1}번째`}</span>
+                {images.map((url, index) => (
                   <span
-                    key={index}
+                    key={url}
                     aria-hidden
                     className={cn(
                       "size-1.5 rounded-full",
@@ -121,12 +144,41 @@ export function PhotoViewer({
           )}
         </div>
 
-        {/* 사진 아래에 그 사진을 남긴 후기가 온다. 사진만 보고는 왜 찍었는지 알 수 없다 */}
+        {/* 사진 아래에 그 사진을 남긴 후기가 온다. 사진만 보고는 왜 찍었는지 알 수 없다.
+            처음 그리는 자리라 대기 표시는 Skeleton이다 — 이미 그려진 UI가 기다리는 것이 아니다 */}
         <div className="flex-1 px-4 py-5">
-          <ReviewCard review={review} hideAvatar hidePhotos />
+          {isLoading && (
+            <div className="flex flex-col gap-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-2/3" />
+            </div>
+          )}
+
+          {!isLoading && !review && (
+            <EmptyState title="후기를 불러오지 못했어요" className="py-8" />
+          )}
+
+          {review && (
+            <ReviewCard
+              review={{
+                id: review.id,
+                pets: review.pets,
+                rating: review.rating,
+                // 서버가 주는 날짜는 전부 shared/lib/date를 거친다
+                date: formatDisplayFullDate(review.createdAt) ?? "",
+                images: review.images,
+                tags: [`사용 ${review.usageDays}일`],
+                content: review.content,
+                // nickname·likeCount는 이 응답에 없다. 선택값이라 그 줄이 그려지지 않는다
+              }}
+              hidePhotos
+            />
+          )}
         </div>
 
-        <BottomActionBar className="[&>*]:text-label-bold-14">
+        <BottomActionBar className="*:text-label-bold-14">
           <button
             type="button"
             aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}

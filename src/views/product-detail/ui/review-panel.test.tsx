@@ -1,161 +1,225 @@
-// 리뷰 탭 테스트. 맞춤보기가 실제로 거르는지, 정렬이 순서를 바꾸는지 본다.
+// 리뷰 탭 테스트. 서버 응답의 네 상태와, 계약이 없어 닫아 둔 것이 정말 닫혀 있는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { describe, expect, it, vi } from "vitest";
+
+import type { Review } from "@/entities/review";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
   usePathname: () => "/products/1",
 }));
 
-// 리뷰 필터 바텀시트(#264)가 품종·건강 관심사 조회를 실제로 부른다.
-// 이 탭 테스트가 보는 것과는 무관해 가짜로 둔다
-vi.mock("@/entities/pet", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/entities/pet")>()),
-  useQueryBreeds: () => ({ breeds: [], isLoading: false, error: null }),
-  useQueryHealthOptions: () => ({ options: undefined, isLoading: false, error: null }),
+// 무엇을 부르고 어떻게 옮기는지는 `entities/review/api`가 본다. 여기서는 상태만 세운다.
+// `ReviewCard`와 정렬 목록은 진짜를 써야 화면이 실제로 그려진다
+const useQueryProductReviews = vi.fn();
+const useQueryFeaturedReviewPhotos = vi.fn();
+vi.mock("@/entities/review", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/review")>()),
+  useQueryProductReviews: (args: unknown) => useQueryProductReviews(args),
+  useQueryFeaturedReviewPhotos: () => useQueryFeaturedReviewPhotos(),
 }));
 
 import { ReviewPanel } from "./review-panel";
 
-function renderPanel(search = "", props: { rating?: number | null; reviewCount?: number } = {}) {
+const REVIEWS: Review[] = [
+  {
+    id: "1",
+    nickname: "댕댕이짱",
+    pets: [{ id: "10", name: "보리", age: 8, species: "DOG", breedSize: "SMALL" }],
+    rating: 4.5,
+    date: "2026. 08. 31",
+    images: [],
+    tags: ["사용 21일"],
+    content: "계단 오를 때 덜 힘들어해요.",
+    likeCount: 32,
+  },
+  {
+    id: "2",
+    nickname: "초코집사",
+    pets: [{ id: "11", name: "초코", age: 6, species: "DOG", breedSize: "LARGE" }],
+    rating: 5,
+    date: "2026. 08. 14",
+    images: [],
+    tags: ["사용 180일"],
+    content: "대형견이라 양이 많이 드는데 좋아요.",
+    likeCount: 51,
+  },
+];
+
+function listState(part: Partial<ReturnType<typeof baseList>> = {}) {
+  return { ...baseList(), ...part };
+}
+
+function baseList() {
+  return {
+    reviews: REVIEWS as Review[] | undefined,
+    averageRating: 4.8 as number | null,
+    totalCount: 108 as number | null,
+    error: null as unknown,
+    isLoading: false,
+    hasNext: false,
+    loadNext: vi.fn(),
+    isLoadingNext: false,
+    nextError: false,
+  };
+}
+
+function renderPanel(search = "") {
   render(
     <NuqsTestingAdapter searchParams={search}>
-      <ReviewPanel
-        productId="1"
-        rating={props.rating === undefined ? 4.8 : props.rating}
-        reviewCount={props.reviewCount ?? 108}
-        petProfileLabel="말티즈 · 8세 · 4kg"
-      />
+      <ReviewPanel productId="1" />
     </NuqsTestingAdapter>,
   );
 }
 
-// 상단 요약과 같은 기준이다. 0.0을 적으면 평가 없는 상품이 평이 나쁜 상품처럼 읽힌다
-describe("리뷰가 없는 상품의 별점 요약", () => {
-  it("후기가 0이면 숫자를 적지 않는다", () => {
-    renderPanel("", { reviewCount: 0, rating: 0 });
+describe("별점 요약", () => {
+  it("목록 응답의 평균과 총 개수를 보여준다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
+
+    expect(screen.getByText("총 리뷰 108개")).toBeDefined();
+  });
+
+  // 0.0을 적으면 아직 아무도 평가하지 않은 상품이 평이 나쁜 상품처럼 읽힌다
+  it("후기가 0이면 숫자를 적지 않고 낭독 문구를 바꾼다", () => {
+    useQueryProductReviews.mockReturnValue(
+      listState({ reviews: [], averageRating: 0, totalCount: 0 }),
+    );
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
 
     const summary = within(screen.getByRole("region", { name: "별점 요약" }));
     expect(summary.queryByText("0.0")).toBeNull();
-    expect(summary.getByText("총 리뷰 0개")).toBeDefined();
-  });
-
-  it("후기가 0이면 낭독기도 0점이 아니라 평가 없음으로 읽는다", () => {
-    renderPanel("", { reviewCount: 0, rating: 0 });
-
-    const summary = within(screen.getByRole("region", { name: "별점 요약" }));
     expect(summary.getByText("아직 평가가 없어요")).toBeDefined();
-    expect(summary.queryByText("5점 만점에 0점")).toBeNull();
-  });
-
-  it("후기가 있으면 점수를 그대로 읽는다", () => {
-    renderPanel("", { reviewCount: 108, rating: 4.8 });
-
-    expect(
-      within(screen.getByRole("region", { name: "별점 요약" })).getByText("5점 만점에 4.8점"),
-    ).toBeDefined();
-  });
-
-  it("별점이 null로 와도 같다", () => {
-    renderPanel("", { reviewCount: 0, rating: null });
-
-    const summary = within(screen.getByRole("region", { name: "별점 요약" }));
-    expect(summary.queryByText(/^\d\.\d$/)).toBeNull();
-  });
-
-  it("후기가 있으면 점수를 보여준다", () => {
-    renderPanel("", { reviewCount: 108, rating: 4.8 });
-
-    expect(
-      within(screen.getByRole("region", { name: "별점 요약" })).getByText("4.8"),
-    ).toBeDefined();
+    expect(screen.getByText("아직 후기가 없어요")).toBeDefined();
   });
 });
 
-describe("ReviewPanel", () => {
-  it("리뷰 수가 아니라 사진 장수를 기준으로 앞의 네 장을 보여준다", () => {
+describe("목록", () => {
+  it("후기가 보이고 아이 정보가 함께 읽힌다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
+
+    // 별점만 나열하면 소형견과 대형견의 후기가 같아 보인다
+    expect(screen.getByText("소형견 · 8세")).toBeDefined();
+    expect(screen.getByText("대형견 · 6세")).toBeDefined();
+  });
+
+  it("처음 받는 동안에는 자리를 잡아 둔다", () => {
+    useQueryProductReviews.mockReturnValue(listState({ reviews: undefined, isLoading: true }));
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
+
+    expect(screen.queryByText("소형견 · 8세")).toBeNull();
+    expect(screen.queryByText("아직 후기가 없어요")).toBeNull();
+  });
+
+  it("실패하면 무엇이 잘못됐는지 화면에서 알린다", () => {
+    useQueryProductReviews.mockReturnValue(
+      listState({ reviews: [], error: new Error("boom"), totalCount: null }),
+    );
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
+
+    expect(screen.getByRole("alert")).toBeDefined();
+  });
+});
+
+describe("정렬", () => {
+  it("주소에 실린 정렬을 그대로 서버에 넘긴다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewSort=rating-low");
+
+    expect(useQueryProductReviews).toHaveBeenCalledWith({ productId: "1", sort: "rating-low" });
+  });
+});
+
+describe("리뷰 사진 줄", () => {
+  it("서버가 준 대표 사진을 그대로 걸고 후기 번호로 잇는다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({
+      photos: [
+        { reviewId: "7", imageUrl: "https://img.example/a.webp" },
+        { reviewId: "9", imageUrl: "https://img.example/b.webp" },
+      ],
+    });
+
     renderPanel();
 
     const photos = within(screen.getByRole("region", { name: "리뷰 사진" }));
-    expect(photos.getAllByRole("listitem")).toHaveLength(4);
-    expect(photos.getByRole("link", { name: "구름아사랑해의 후기 사진 1번째 보기" })).toBeDefined();
+    const links = photos.getAllByRole("link", { name: "이 후기의 첫 사진 크게 보기" });
+
+    expect(links).toHaveLength(2);
+    // 대표 사진은 서버가 `sortOrder = 0`으로 고른 그 후기의 첫 장이라 `n=0`이 같은 사진이다
+    expect(links[0].getAttribute("href")).toBe("/products/1/photos?photo=7&n=0");
+    expect(links[1].getAttribute("href")).toBe("/products/1/photos?photo=9&n=0");
   });
 
-  it("후기가 목록으로 보이고 아이 프로필이 함께 읽힌다", () => {
+  it("대표 사진이 없으면 줄째로 빠진다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
     renderPanel();
 
-    // 별점만 나열하면 4kg 말티즈와 28kg 리트리버의 후기가 같아 보인다
-    expect(screen.getByText("말티즈 · 8세 · 4kg")).toBeDefined();
-    expect(screen.getByText("리트리버 · 6세 · 28kg")).toBeDefined();
-    expect(screen.getAllByRole("listitem").length).toBeGreaterThan(1);
+    expect(screen.queryByRole("region", { name: "리뷰 사진" })).toBeNull();
   });
+});
 
-  it("사용 기간과 재구매 횟수가 칩으로 보인다", () => {
+// 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#339).
+// 되는 조건만 보내면 고른 것이 조용히 무시되고, 그냥 두면 눌러도 목록이 안 바뀐다
+describe("계약이 없어 닫아 둔 것", () => {
+  it("필터와 맞춤보기가 화면에 없다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
     renderPanel();
 
-    expect(screen.getByText("사용 3주차")).toBeDefined();
-    expect(screen.getByText("재구매 2회")).toBeDefined();
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByText("내 반려동물 맞춤보기")).toBeNull();
+    expect(screen.queryByText("상품 옵션")).toBeNull();
   });
 
-  // 시안 구조도가 필터를 자동(토글)과 수동(바텀시트) 둘로 나눠 적었다
-  it("맞춤보기를 켜면 같은 품종의 후기만 남는다", () => {
-    renderPanel();
-    expect(screen.getByText("리트리버 · 6세 · 28kg")).toBeDefined();
+  it("주소에 옛 조건이 남아 있어도 필터가 열리지 않는다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
-    fireEvent.click(screen.getByRole("switch"));
+    renderPanel("?reviewFilter=species:cat&reviewMatch=on");
 
-    expect(screen.queryByText("리트리버 · 6세 · 28kg")).toBeNull();
-    expect(screen.getByText("말티즈 · 8세 · 4kg")).toBeDefined();
-    expect(screen.getByText("말티즈와 함께 쓴 후기만 보고 있어요")).toBeDefined();
-  });
-
-  it("맞춤보기가 켜져 있어도 끄면 모든 후기가 돌아온다", () => {
-    renderPanel("?reviewMatch=on");
-    expect(screen.queryByText("리트리버 · 6세 · 28kg")).toBeNull();
-
-    fireEvent.click(screen.getByRole("switch"));
-
-    expect(screen.getByText("리트리버 · 6세 · 28kg")).toBeDefined();
-  });
-
-  it("별점 낮은순으로 바꾸면 가장 낮은 후기가 맨 위에 온다", () => {
-    renderPanel("?reviewSort=rating-low");
-
-    const first = screen.getAllByRole("article")[0];
-    expect(first.textContent).toContain("밤이맘");
-  });
-
-  // 조건을 직접 고르는 수동 필터. 자동(맞춤보기 토글)과 함께 걸린다
-  it("주소에 실린 조건대로 후기가 걸러진다", () => {
-    renderPanel("?reviewFilter=species:cat");
-
-    expect(screen.getByText("코리안 숏헤어 · 3세 · 4.2kg")).toBeDefined();
-    expect(screen.queryByText("말티즈 · 8세 · 4kg")).toBeNull();
-  });
-
-  it("조건이 걸려 있으면 지우는 길이 보인다", () => {
-    renderPanel("?reviewFilter=species:cat");
-
-    expect(screen.getByRole("button", { name: "필터 지우기" })).toBeDefined();
-  });
-
-  it("아무 조건도 없으면 지우기가 나오지 않는다", () => {
-    renderPanel();
-
+    expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
   });
 
-  it("망가진 조건이 실려 와도 후기가 사라지지 않는다", () => {
-    renderPanel("?reviewFilter=species:hamster|age:abc-def");
+  it("도움돼요는 수만 보이고 누를 수 없다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
-    expect(screen.getAllByRole("article").length).toBe(5);
-  });
-
-  it("추천순은 도움돼요가 많은 후기가 맨 위에 온다", () => {
     renderPanel();
 
-    const first = screen.getAllByRole("article")[0];
-    expect(first.textContent).toContain("초코집사");
+    expect(screen.getByText("32")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /도움이 됐어요/ })).toBeNull();
+  });
+});
+
+describe("더보기", () => {
+  it("다음 쪽만 실패하면 보던 목록을 지우지 않고 다시 시도를 준다", () => {
+    const loadNext = vi.fn();
+    useQueryProductReviews.mockReturnValue(listState({ hasNext: true, nextError: true, loadNext }));
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel();
+
+    expect(screen.getByText("소형견 · 8세")).toBeDefined();
+    fireEvent.click(screen.getByRole("button", { name: /다시 시도/ }));
+    expect(loadNext).toHaveBeenCalled();
   });
 });
