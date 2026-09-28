@@ -55,8 +55,6 @@ export function useQueryPaymentConfirm({ paymentKey, tossOrderId, amount }: Conf
   return {
     payment: query.data,
     error: query.error,
-    // `enabled`가 꺼져 있으면 `isPending`이 계속 참이다. 그대로 내보내면 대기 표시가 영영 남는다
-    isConfirming: canConfirm && query.isPending,
     /** 승인을 부를 수 있는 주소로 들어왔는지. 아니면 결제를 마치고 온 것이 아니다 */
     canConfirm,
   };
