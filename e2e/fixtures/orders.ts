@@ -59,6 +59,24 @@ const ORDERS = [
       },
     ],
   },
+  // 결제한 뒤 취소한 주문. 주문내역 탭에는 서지 않고 취소·반품·교환 탭에 "취소"로 선다 (#474)
+  {
+    orderId: 4,
+    orderNumber: "ORD-E2E-0004",
+    orderedAt: "2026-09-12T03:00:00.000Z",
+    orderStatus: "CANCELLED",
+    totalAmount: 15900,
+    items: [
+      {
+        orderItemId: 40,
+        productId: 400,
+        thumbnailUrl: null,
+        productName: "테스트 덴탈껌",
+        quantity: 1,
+        amount: 12900,
+      },
+    ],
+  },
 ];
 
 /**
@@ -79,7 +97,7 @@ const DETAIL = {
   orderId: 1,
   orderNumber: "ORD-E2E-0001",
   orderStatus: "DELIVERED",
-  deliveredAt: daysAgo(1),
+  deliveredAt: daysAgo(1) as string | null,
   productAmount: 9345,
   totalAmount: 12345,
   items: [
@@ -93,7 +111,7 @@ const DETAIL = {
       cancelledQuantity: 0,
       returnedQuantity: 0,
       effectiveQuantity: 2,
-      claims: [],
+      claims: [] as unknown[],
     },
   ],
   deliveryAddress: {
@@ -115,6 +133,72 @@ const CLAIM = {
   claimType: "RETURN",
   claimStatus: "REQUESTED",
   requestedAt: daysAgo(0),
+};
+
+/**
+ * 1번이 아닌 주문의 상세. 취소·반품·교환 탭이 주문마다 상세를 받아 건을 모은다.
+ *
+ * **전에는 어떤 주문을 물어도 1번 상세를 돌려줘** 그 탭이 건을 하나도 그리지 못했고, 화면 점검도
+ * 빈 상태만 봤다(#474). 2번(배송완료)에는 반품 신청을, 4번에는 결제한 뒤의 취소를 둔다
+ */
+const OTHER_DETAILS: Record<string, OrderDetailStub> = {
+  "2": {
+    ...DETAIL,
+    orderId: 2,
+    orderNumber: "ORD-E2E-0002",
+    productAmount: 20456,
+    totalAmount: 23456,
+    items: [
+      {
+        ...DETAIL.items[0],
+        orderItemId: 20,
+        productName: "테스트 간식",
+        quantity: 2,
+        unitPrice: 10228,
+        effectiveQuantity: 2,
+        claims: [
+          {
+            claimId: 21,
+            claimType: "RETURN",
+            claimStatus: "REQUESTED",
+            requestedAt: daysAgo(0),
+            completedAt: null,
+          },
+        ],
+      },
+    ],
+  },
+  "3": {
+    ...DETAIL,
+    orderId: 3,
+    orderNumber: "ORD-E2E-0003",
+    orderStatus: "CONFIRMED",
+    productAmount: 31567,
+    totalAmount: 34567,
+    items: [{ ...DETAIL.items[0], orderItemId: 30, productName: "테스트 영양제", quantity: 1 }],
+  },
+  "4": {
+    ...DETAIL,
+    orderId: 4,
+    orderNumber: "ORD-E2E-0004",
+    orderStatus: "CANCELLED",
+    deliveredAt: null,
+    productAmount: 12900,
+    totalAmount: 15900,
+    items: [
+      {
+        ...DETAIL.items[0],
+        orderItemId: 40,
+        productName: "테스트 덴탈껌",
+        quantity: 1,
+        unitPrice: 12900,
+        itemStatus: "CANCELLED",
+        cancelledQuantity: 1,
+        effectiveQuantity: 0,
+      },
+    ],
+    payment: { paidAt: "2026-09-12T03:00:00.000Z", method: "토스페이먼츠 결제" },
+  },
 };
 
 type StubOptions = {
@@ -144,9 +228,11 @@ export async function stubOrders(page: Page, options: StubOptions = {}) {
       options.calls?.push(pathname.replace(/^.*\/orders\//, "orders/"));
       return route.fulfill({ status: 204, body: "" });
     }
-    // 목록과 상세가 같은 패턴에 걸린다. 끝이 숫자면 상세다
+    // 목록과 상세가 같은 패턴에 걸린다. 끝이 숫자면 상세다. 2~4번은 그 주문의 상세를 주고,
+    // 나머지(1번, 결제 완료 화면이 부르는 77번 등)는 전처럼 1번 상세를 준다
     if (/\/orders\/\d+$/.test(pathname)) {
-      return route.fulfill({ json: detail });
+      const orderId = pathname.split("/").pop() ?? "";
+      return route.fulfill({ json: OTHER_DETAILS[orderId] ?? detail });
     }
     return route.fulfill({ json: { orders: ORDERS, nextCursor: null, hasNext: false } });
   });
