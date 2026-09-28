@@ -4,12 +4,14 @@
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
 - **조립**: `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙는다(#484). 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
 - **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
 | --- | --- |
+| `api/detail-product.ts` | 상세에 그릴 상품 한 건을 받는다(`getDetailProduct`). `dealItem`이 있으면 딜가가 붙은 타임딜 상세, 끝났거나 다른 상품의 딜이면 일반 상세(#484) |
+| `api/detail-product.test.ts` | 딜 번호 유무, 끝난 딜·다른 상품의 딜을 일반 상세로 두는지, 404가 아닌 오류는 던지는지 |
 | `api/related-products.ts` | 함께 보면 좋은 상품을 받는다(`getRelatedProducts`). 인기순에서 지금 상품을 빼고 여섯까지(#481) |
 | `api/related-products.test.ts` | 몇 개를 요청하는지, 지금 상품을 빼는지, 여섯에서 자르는지 |
 | `model/mock-product.ts` | 적합도의 예시 분석(점수·근거 두 줄·영양 성분)과, 아직 응답에 자리가 없는 배송·판매자·제공고시 |
@@ -52,11 +54,13 @@
 | — | 문의 목록 | API가 없다 |
 | 함께 보면 좋은 상품(인기순, 지금 상품 제외) | — | 라우트가 `getRelatedProducts`를 기다리지 않고 넘긴다 (#481) |
 | — | 배송·판매자·제공고시 두 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
-| — | 타임딜 종료 시각 | `timeDealItemId`는 오지만 `endAt`이 없다 (아래) |
+| 딜가·딜 아이템(`dealItem`으로 들어왔을 때) | 타임딜 배지·종료 시각 | 딜 정보는 타임딜 상세(`GET /time-deals/items/{id}`)에서만 온다(#484). 종료 시각은 아직 응답에 없다 (아래) |
 
 **배송비 `"3,000원"`은 목이 아니라 확정된 고정 정책이다.** 백엔드가 "MVP 단계에선 배송비는 정적으로 고정한다"고 답했고(2026-09-21) 장바구니·결제도 같은 값을 물린다(#214). 예전 문구("무료배송 · 조건 미충족 시 3,000원")는 근거가 없어 두 화면과 어긋났다.
 
-**타임딜은 반만 붙었다.** 상태 판정(배지·카운트다운)은 종료 시각이 응답에 없어 목이고, `?status=deal`로만 볼 수 있다. 반면 **장바구니에 담는 식별자는 실데이터다** — `timeDealItemId`가 있으면 `TIME_DEAL`로 담는다. 그냥 상품으로 담으면 딜가가 아니라 정가로 들어가서, 이쪽은 미룰 수 없었다.
+**타임딜은 반만 붙었다.** 상태 판정(배지·카운트다운)은 종료 시각이 응답에 없어 목이고, `?status=deal`로만 볼 수 있다. 반면 **딜가와 장바구니에 담는 식별자는 실데이터다** — `timeDealItemId`가 있으면 `TIME_DEAL`로 담는다. 그냥 상품으로 담으면 딜가가 아니라 정가로 들어가서, 이쪽은 미룰 수 없었다.
+
+**딜 정보는 일반 상품 상세에 오지 않는다(#484).** `GET /products/{id}`는 딜 중인 상품이어도 정가와 빈 딜 번호를 준다(로컬 백엔드 실측). 딜가와 딜 번호는 타임딜 상세 `GET /time-deals/items/{id}`에서만 온다. 그래서 타임딜 목록·메인 타임딜의 링크가 `?dealItem=<딜 아이템 번호>`를 붙이고, 라우트가 그 번호로 타임딜 상세를 받는다(`getDetailProduct`). 딜이 끝났거나(404) 주소의 상품과 다른 딜이면 일반 상세로 둔다 — 남의 상품 딜가를 붙이는 것보다 정가가 낫다. 전에는 E2E 목 서버가 일반 상세에 딜 번호를 넣어 줘서, 실제로는 한 번도 딜가를 받지 못하는데도 통과했다. 백엔드 sever#170이 이 번호를 `timeDeal.timeDealItemId`로 옮기고 상태·기간·서버 시각을 함께 주므로, 그 뒤에 배지·카운트다운을 실데이터로 붙인다.
 
 **`?status=`는 개발 빌드에서만 듣는다.** 목일 때는 QA가 세 상태를 보기 위한 장치였는데, 실데이터가 붙은 뒤로는 서버가 품절이라고 해도 `?status=normal`이 구매 버튼을 되살릴 수 있다. `views/deals`의 개발용 버튼과 같은 판단이다.
 
@@ -85,7 +89,7 @@
 | 항목 | 지금 | 확인할 것 |
 | --- | --- | --- |
 | `summary.images` 호스트 | 같은 출처 자산으로 E2E만 통과 | 운영 URL 호스트와 개발 환경 URL 형식(실제 CDN인지 로컬·내부 주소인지). 확정되면 `next.config.ts`의 `remotePatterns`에 넣고 따로 검증한다 |
-| 타임딜 배지 | `?status=deal`로만 보인다 | **`timeDealItemId`가 진행 중인 딜에만 오는가.** 그 계약이 확인되면 운영에서도 그 값으로 배지를 띄운다. `endAt`이 없어 카운트다운은 계속 보류하고, 배지와 `TIME_DEAL` 장바구니 식별자만 실데이터로 처리한다. **확인 전에는 구현하지 않는다** |
+| 타임딜 배지 | `?status=deal`로만 보인다 | 딜 번호는 타임딜 상세에서만 온다(#484) — 보이는 딜(예정·진행)만 200이다. 배지·카운트다운은 백엔드 sever#170의 `timeDeal.dealStatus`·`endAt`·`serverTime`이 배포된 뒤 붙인다 |
 | null 적재 정책 | 엔티티 nullable에 맞춰 방어적으로 처리 | 실제로 비는 필드가 있는지. 코드는 어느 답에도 안전하다 |
 | 제품 용량 단위 | 서버가 준 단위를 그대로 적는다 | 백엔드 `QuantityUnit`이 `g`·`kg`·`ml`·`L`·`개` 다섯뿐이라 시안의 `90정 / 병`과 같게는 구현되지 않는다. **단위를 넓힐 계획이 있는지, 표시용 문구 필드를 줄 수 있는지 물어볼 것** |
 | 원재료명 | 받은 순서대로 이어 붙인다 | 값이 코드(`TAURINE`)인지 표시명인지, 그리고 `Set<String>`이라 순서가 보장되지 않는데 함량 순서를 지킬 수 있는지. `List`와 표시명 변환을 요청할 것 |

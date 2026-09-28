@@ -251,12 +251,53 @@ const PRODUCT_DETAIL = {
   },
 };
 
-/** 타임딜로 파는 상품. 담을 때 식별자가 딜 아이템으로 바뀌는지 본다 */
+/**
+ * 진행 중 딜(`timeDeals("ACTIVE")`)의 상품 101을 **일반 상품 상세로** 부른 것. 실제 서버처럼
+ * 딜 중이어도 정가와 빈 딜 번호를 준다 — 전에는 여기에 딜 번호를 넣어 두어, 상세가 딜가를
+ * 한 번도 받지 못하는데도 E2E가 통과했다 (#484)
+ */
 const TIME_DEAL_PRODUCT = {
   ...PRODUCT_DETAIL,
   productId: 101,
-  timeDealItemId: 77,
-  summary: { ...PRODUCT_DETAIL.summary, productName: "타임딜 관절 영양제 90정" },
+  timeDealItemId: null,
+  summary: {
+    ...PRODUCT_DETAIL.summary,
+    productName: "오리&고구마 소형견 사료 1.5kg",
+    price: 32000,
+    originalPrice: null,
+    discountRate: 0,
+  },
+};
+
+/**
+ * 같은 상품을 **타임딜 상세**(`/time-deals/items/{id}`)로 부른 것. 딜가와 딜 정보가 붙는다.
+ * 백엔드 sever#170의 새 모양(`timeDeal` 객체, 최상위 `timeDealItemId` 없음)으로 둔다 —
+ * 옛 모양은 단위 테스트가 본다
+ */
+function timeDealDetail(timeDealItemId) {
+  if (timeDealItemId !== "1") return null;
+  return {
+    ...TIME_DEAL_PRODUCT,
+    timeDealItemId: undefined,
+    timeDeal: {
+      timeDealItemId: 1,
+      dealId: 1,
+      dealStatus: "ACTIVE",
+      startAt: hoursFromNow(-1),
+      endAt: hoursFromNow(11),
+      serverTime: NOW().toISOString(),
+      purchasable: true,
+    },
+    summary: { ...TIME_DEAL_PRODUCT.summary, price: 24000, originalPrice: 32000, discountRate: 25 },
+  };
+}
+
+/** 끝났거나 없는 딜. 실제 백엔드의 ProblemDetail 모양 */
+const TIME_DEAL_ITEM_NOT_FOUND = {
+  detail: "타임딜 상품이 존재하지 않습니다.",
+  status: 404,
+  title: "PRODUCT_404_TIME_DEAL_ITEM_NOT_FOUND",
+  errorCode: "PRODUCT_404_TIME_DEAL_ITEM_NOT_FOUND",
 };
 
 /** 실제 백엔드가 주는 ProblemDetail 그대로. 라우트가 이 404를 받아 notFound()로 넘긴다 */
@@ -399,6 +440,19 @@ const server = createServer((req, res) => {
   if (url.pathname === "/api/v1/products/search") {
     const body = JSON.stringify(searchProducts(url));
     res.writeHead(200, { "content-type": "application/json" }).end(body);
+    return;
+  }
+
+  const dealDetailMatch = /^\/api\/v1\/time-deals\/items\/([^/]+)$/.exec(url.pathname);
+  if (dealDetailMatch) {
+    const product = timeDealDetail(dealDetailMatch[1]);
+    if (!product) {
+      res
+        .writeHead(404, { "content-type": "application/json" })
+        .end(JSON.stringify(TIME_DEAL_ITEM_NOT_FOUND));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" }).end(JSON.stringify(product));
     return;
   }
 

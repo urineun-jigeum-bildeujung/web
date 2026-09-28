@@ -6,22 +6,26 @@
 // 상품은 여기서 await한다. 없는 상품을 404로 보내는 notFound()는 렌더 중에 호출해야 한다.
 // "함께 보면 좋은 상품"은 기다리지 않고 promise로 넘긴다 — 그 칸만 기다리게 해 상품이 늦게
 // 뜨지 않는다(views/deals와 같은 방식, #481).
+//
+// 타임딜에서 들어오면 주소에 딜 아이템 번호(`dealItem`)가 붙는다. 딜가는 일반 상품 상세에 오지
+// 않아 그 번호로 타임딜 상세를 받는다(`getDetailProduct`, #484).
 
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { ApiError } from "@/shared/api/client";
-import { getProductDetail } from "@/entities/product";
-import { getRelatedProducts, ProductDetailView } from "@/views/product-detail";
+import { getDetailProduct, getRelatedProducts, ProductDetailView } from "@/views/product-detail";
 
-export default async function ProductDetailPage({ params }: PageProps<"/products/[productId]">) {
-  const { productId } = await params;
+function toSearchParam(value: string | string[] | undefined): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
-  const product = await getProductDetail(productId).catch((error: unknown) => {
-    // 없는 상품과 그 밖의 실패는 다르다. 후자는 그대로 던져 오류 경계가 받는다
-    if (error instanceof ApiError && error.status === 404) return null;
-    throw error;
-  });
+export default async function ProductDetailPage({
+  params,
+  searchParams,
+}: PageProps<"/products/[productId]">) {
+  const [{ productId }, query] = await Promise.all([params, searchParams]);
+
+  const product = await getDetailProduct(productId, toSearchParam(query.dealItem));
 
   if (!product) notFound();
 

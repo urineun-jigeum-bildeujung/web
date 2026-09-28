@@ -32,6 +32,17 @@ test("목록에서 옵션을 골라 바로 담는다", async ({ page }) => {
   await expect(page.getByText("장바구니에 담겼어요")).toBeVisible();
 });
 
+// 딜가는 일반 상품 상세에 오지 않는다. 링크가 딜 번호를 들고 가야 상세도 딜가다 (#484)
+test("진행 중 딜 상품을 누르면 딜가가 붙은 상세로 간다", async ({ page }) => {
+  await page.goto("/deals");
+
+  await page.getByRole("link", { name: /오리&고구마 소형견 사료 1.5kg/ }).click();
+
+  await expect(page).toHaveURL(/\/products\/101\?dealItem=1$/);
+  const summary = page.getByRole("region", { name: "오리&고구마 소형견 사료 1.5kg" });
+  await expect(summary.getByText("24,000원")).toBeVisible();
+});
+
 // `screens.spec.ts`의 ROUTES 스모크에서 옮겨왔다 — /deals는 서버 조회를 타서 그 스위트의
 // dev 서버로는 확인할 수 없다. 같은 검사(콘솔 오류·가로 스크롤 없음)를 여기서 한다
 test("/deals — 오류 없이 그려진다", async ({ page }) => {

@@ -450,5 +450,9 @@ describe("타임딜 여러 묶음", () => {
     expect(screen.getByText("15%")).toBeDefined();
     expect(screen.queryByText("14%")).toBeNull();
     expect(screen.getByText("31,900원")).toBeDefined();
+    // 딜가는 일반 상품 상세에 오지 않는다. 딜 번호를 들고 가야 상세도 딜가다 (#484)
+    expect(screen.getByRole("link", { name: /딜 사료/ }).getAttribute("href")).toBe(
+      "/products/1?dealItem=1",
+    );
   });
 });

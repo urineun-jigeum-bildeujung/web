@@ -353,7 +353,8 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
         {group.items.map((item) => (
           <ScrollRowItem key={item.timeDealItemId}>
             <ProductGridCard
-              href={`/products/${item.productId}`}
+              // 딜 아이템 번호를 함께 넘긴다 — 딜가는 일반 상품 상세에 오지 않는다(#484)
+              href={`/products/${item.productId}?dealItem=${item.timeDealItemId}`}
               name={item.name}
               price={item.price}
               originalPrice={item.originalPrice}

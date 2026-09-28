@@ -175,11 +175,12 @@ describe("DealsView", () => {
     expect(screen.getByText("1g당 약 16원")).toBeDefined();
   });
 
-  it("썸네일·이름을 누르면 상품 상세로 가는 링크다", async () => {
+  // 딜가는 일반 상품 상세에 오지 않는다. 딜 번호가 없으면 상세가 정가를 보이고 정가로 담긴다 (#484)
+  it("썸네일·이름을 누르면 딜 아이템 번호를 들고 상품 상세로 간다", async () => {
     await renderWith();
 
     const link = screen.getByText("오리&고구마 소형견 사료 1.5kg").closest("a");
-    expect(link?.getAttribute("href")).toBe("/products/101");
+    expect(link?.getAttribute("href")).toBe("/products/101?dealItem=1");
   });
 
   it("품절인 딜은 담을 수 없다", async () => {
