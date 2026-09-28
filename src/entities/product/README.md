@@ -4,7 +4,7 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
+| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`), 딜가가 붙은 타임딜 상세 조회(`getTimeDealDetail`, #484 — 딜 번호는 새 응답의 `timeDeal`과 옛 응답의 최상위 필드를 둘 다 읽는다). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
 | `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
 | `api/use-product-list.ts` | `getProducts`의 커서 페이지네이션("더 보기") 상태를 관리하는 훅. 첫 페이지는 서버가 준 값을 받고 다음 페이지만 이어 붙입니다(#289) |
 | `api/use-product-list.test.ts` | 커서 이어 붙이기·중복 제거·실패 시 기존 목록 보존 단위 테스트 |

@@ -3,6 +3,7 @@ export {
   getProductDetail,
   getProducts,
   getProductSummary,
+  getTimeDealDetail,
   searchProducts,
   type ProductDetail,
   type ProductDetailInfo,
