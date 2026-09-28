@@ -157,7 +157,9 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
     if (!claimType) {
       return { title: "신청 유형 없음", description: "주문 상세에서 다시 눌러 주세요." };
     }
-    if (error) {
+    // **받아 둔 주문이 있으면 오류로 덮지 않는다.** 다시 받기가 실패해도 v5는 받아 둔 것을 두고
+    // `error`만 채운다. 창 포커스 재조회 한 번에 적던 사유·사진이 가려진다 — 주문 상세와 같다 (#426·#476)
+    if (error && !order) {
       return APP_MESSAGE[toAppMessageCode(error)];
     }
     if (!order) {
@@ -269,9 +271,14 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
             // **거부를 여기서 받는다.** `request`가 `mutateAsync`라 실패하면 던지는데,
             // `onClick`에 그대로 넘기면 받아 줄 곳이 없어 처리되지 않은 거부가 된다.
             // 접수는 서버가 세 가지로 막는다 — 진행 중인 신청·수량 초과·기간 경과 (#358).
-            // 문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다
-            <Button disabled={pickupDate === null || isRequesting} onClick={() => void submit()}>
-              <LoadingSwap loading={isRequesting} label={`${label} 신청을 보내는 중`}>
+            // 문구는 `MutationCache.onError`가 전역으로 띄우므로 여기서 또 띄우지 않는다.
+            // **보낸 뒤에도 잠근다.** 접수가 끝나면 `isRequesting`이 풀리는데, 주문 상세로 넘어가기
+            // 전 한 번 더 그려진다. 그 사이 다시 누르면 409 "신청 진행 중"이 뜬다 (#476)
+            <Button
+              disabled={pickupDate === null || isRequesting || sent}
+              onClick={() => void submit()}
+            >
+              <LoadingSwap loading={isRequesting || sent} label={`${label} 신청을 보내는 중`}>
                 {label} 신청 완료하기
               </LoadingSwap>
             </Button>

@@ -1,6 +1,6 @@
 // 반품·교환 신청 테스트. 세 단계를 거치며 서버가 거는 조건을 화면이 먼저 막는지, 고르고 적은
 // 것이 요청에 그대로 실리는지 본다. 서버 규칙은 로컬 백엔드 소스에서 확인한 것이다 (#327, #408).
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
@@ -547,6 +547,54 @@ test("접수한 뒤 주문 상세로 넘어가기 전에 신청 진행 중 안�
   // 다시 받기까지 끝난 뒤에도 안내로 바뀌지 않는다
   await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
   expect(screen.queryByText("신청 진행 중")).toBeNull();
+});
+
+/**
+ * **접수가 끝나면 요청 대기가 풀리는데, 주문 상세로 넘어가기 전 한 번 더 그려진다.** 그 사이
+ * 버튼이 다시 켜져 누르면 같은 신청이 또 나가 409 "신청 진행 중"이 떴다 (#476)
+ */
+test("접수가 끝나고 주문 상세로 넘어가기 전에는 다시 보낼 수 없다", async () => {
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+  // 접수 훅이 주문을 다시 받는 것까지 끝나 요청 대기가 풀린 뒤다
+  await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
+  // 대기 표시가 남고 버튼이 잠긴다
+  expect(screen.getByRole("status", { name: "반품 신청을 보내는 중" })).toBeDefined();
+  const button = screen.getByRole("button", { name: /반품 신청 완료하기/ });
+  expect(button.hasAttribute("disabled")).toBe(true);
+  fireEvent.click(button);
+  expect(createClaim).toHaveBeenCalledTimes(1);
+});
+
+/**
+ * **받아 둔 주문이 있으면 다시 받기가 실패해도 폼을 덮지 않는다.** v5는 받아 둔 것을 두고
+ * `error`만 채운다. 덮으면 창 포커스 재조회 한 번에 적던 사유가 가려진다 (#476)
+ */
+test("다시 받기가 실패해도 적던 단계를 오류 화면으로 덮지 않는다", async () => {
+  renderView("return");
+
+  await pickAndNext();
+  fireEvent.click(screen.getByRole("radio", { name: "단순 변심" }));
+
+  // 창으로 돌아오면 낡은 주문을 다시 받는다. TanStack은 window의 visibilitychange를 듣는다
+  getOrderDetail.mockRejectedValue(new Error("연결 실패"));
+  act(() => {
+    window.dispatchEvent(new Event("visibilitychange"));
+  });
+
+  await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
+  await act(async () => {});
+  expect(screen.getByRole("heading", { name: "반품할 상품" })).toBeDefined();
+  expect(screen.getByRole("radio", { name: "단순 변심" }).getAttribute("aria-checked")).toBe(
+    "true",
+  );
+  expect(screen.queryByRole("button", { name: "주문 상세로 돌아가기" })).toBeNull();
 });
 
 // 실패 알림은 전역(MutationCache.onError)이 맡는다. 적은 것을 그대로 두고 다시 보낼 수 있어야 한다
