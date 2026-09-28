@@ -21,7 +21,7 @@ vi.mock("@/entities/review", async (importOriginal) => ({
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
 const { toggleWish, wish } = vi.hoisted(() => ({
   toggleWish: vi.fn(),
-  wish: { status: undefined as boolean | undefined },
+  wish: { status: undefined as boolean | undefined, loading: false },
 }));
 vi.mock("@/features/toggle-wishlist", () => ({
   useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
@@ -29,6 +29,7 @@ vi.mock("@/features/toggle-wishlist", () => ({
 vi.mock("@/entities/wishlist", () => ({
   useQueryWishlistStatus: (productId: number) => ({
     wished: productId === 1 ? wish.status : undefined,
+    isLoading: wish.loading,
   }),
 }));
 
@@ -192,6 +193,20 @@ describe("뷰어 아래 후기 카드", () => {
 
   // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
   describe("뷰어의 찜", () => {
+    // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
+    it("찜 여부를 받는 동안은 누를 수 없다", () => {
+      wish.loading = true;
+      useQueryReviewPhotos.mockReturnValue(photosState());
+      useQueryReviewDetail.mockReturnValue({ review: DETAIL, isLoading: false });
+      renderView("?photo=7&n=0");
+
+      expect(screen.getByRole("button", { name: "찜 목록에 담기" })).toHaveProperty(
+        "disabled",
+        true,
+      );
+      wish.loading = false;
+    });
+
     it("이 상품을 찜했으면 채운 하트로 열린다", () => {
       wish.status = true;
       useQueryReviewPhotos.mockReturnValue(photosState());

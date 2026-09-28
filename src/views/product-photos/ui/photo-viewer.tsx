@@ -31,6 +31,7 @@ import {
 } from "@/shared/ui/dialog";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
@@ -60,9 +61,8 @@ export function PhotoViewer({
   // 여기서 그대로 재사용하면 FSD의 같은 레이어(views) 간 참조 금지에 걸린다 — 지금은 상품
   // 상세로 이동만 시키고, 그 데이터가 entities로 내려올 때 이 화면도 같이 실제 동작으로 올린다
   const heart = useToggleWishlist();
-  const { wished: liked = false } = useQueryWishlistStatus(productId, {
-    enabled: heart.signedIn,
-  });
+  const wishStatus = useQueryWishlistStatus(productId, { enabled: heart.signedIn });
+  const liked = wishStatus.wished ?? false;
 
   const images = review?.images ?? [];
   const current = images.length > 0 ? Math.min(Math.max(photoIndex, 0), images.length - 1) : 0;
@@ -192,7 +192,8 @@ export function PhotoViewer({
             type="button"
             aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
             aria-pressed={liked}
-            // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
+            // 찜 여부를 받는 동안은 누를 수 없다 — PATCH가 토글이라 모르는 채로 누르면 서버의 찜이 지워진다(#493 리뷰). 받은 뒤에는 낙관적 갱신이라 누르는 즉시 바뀐다
+            disabled={wishStatus.isLoading}
             onClick={() => {
               if (heart.toggle(productId, !liked) && !liked) {
                 showSnackbar("해당 상품을 찜 목록에 담았어요!");
@@ -200,11 +201,21 @@ export function PhotoViewer({
             }}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            {liked ? (
-              <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
-            ) : (
-              <Icon name="heart_stroke" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-            )}
+            <LoadingSwap
+              loading={wishStatus.isLoading}
+              label="찜 여부를 불러오는 중"
+              spinnerClassName="size-5"
+            >
+              {liked ? (
+                <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
+              ) : (
+                <Icon
+                  name="heart_stroke"
+                  aria-hidden
+                  className="size-6 text-icon-stroke-tertiary"
+                />
+              )}
+            </LoadingSwap>
           </button>
           <Button variant="secondary" className="min-h-11" onClick={onBuy}>
             장바구니

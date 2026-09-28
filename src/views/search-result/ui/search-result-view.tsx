@@ -57,6 +57,8 @@ type GeneralResultListProps = {
   onSortChange: (sort: ResultSort) => void;
   /** 찜한 상품 번호. 전체 찜 목록에서 온다 (#483) */
   wishedIds: Set<number>;
+  /** 찜 목록을 받는 중. 하트를 막고 대기를 보인다 (#493 리뷰) */
+  wishLoading: boolean;
   onToggleLike: (product: ProductCard) => void;
 };
 
@@ -67,6 +69,7 @@ function GeneralResultList({
   sort,
   onSortChange,
   wishedIds,
+  wishLoading,
   onToggleLike,
 }: GeneralResultListProps) {
   return (
@@ -119,6 +122,7 @@ function GeneralResultList({
                   <CardHeartButton
                     name={product.name}
                     wished={wishedIds.has(product.productId)}
+                    loading={wishLoading}
                     onToggle={() => onToggleLike(product)}
                   />
                 }
@@ -193,6 +197,7 @@ type ResultsRegionProps = {
   sort: ResultSort;
   onSortChange: (sort: ResultSort) => void;
   wishedIds: Set<number>;
+  wishLoading: boolean;
   onToggleLike: (product: ProductCard) => void;
 };
 
@@ -207,6 +212,7 @@ function ResultsRegion({
   sort,
   onSortChange,
   wishedIds,
+  wishLoading,
   onToggleLike,
 }: ResultsRegionProps) {
   const { items, totalCount } = use(resultsPromise);
@@ -226,6 +232,7 @@ function ResultsRegion({
       sort={sort}
       onSortChange={onSortChange}
       wishedIds={wishedIds}
+      wishLoading={wishLoading}
       onToggleLike={onToggleLike}
     />
   );
@@ -273,7 +280,7 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
   // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도
   // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인으로 보낸다
   const heart = useToggleWishlist();
-  const wishedIds = useWishedProductIds();
+  const { wishedIds, isLoading: wishLoading } = useWishedProductIds();
   const toggleLike = (product: ProductCard) =>
     heart.toggle(product.productId, !wishedIds.has(product.productId), toWishlistItem(product));
   const otherContext = slot !== null && other ? `&other=${encodeURIComponent(other)}` : "";
@@ -351,6 +358,7 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
             sort={sort}
             onSortChange={(next) => void setSort(next)}
             wishedIds={wishedIds}
+            wishLoading={wishLoading}
             onToggleLike={toggleLike}
           />
         </Suspense>

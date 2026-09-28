@@ -50,3 +50,15 @@ it("enabled가 꺼져 있으면 묻지 않는다", async () => {
   expect(getWishlistStatus).not.toHaveBeenCalled();
   expect(result.current.wished).toBeUndefined();
 });
+
+// 모르는 채로 누르면 토글이 서버의 찜을 지울 수 있다. 받는 동안임을 화면에 넘긴다 (#493 리뷰)
+it("받는 동안은 받는 중이고, 꺼 두면 받는 중이 아니다", async () => {
+  getWishlistStatus.mockResolvedValue(false);
+
+  const { result } = renderHook(() => useQueryWishlistStatus(7, { enabled: true }), { wrapper });
+  expect(result.current.isLoading).toBe(true);
+  await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+  const off = renderHook(() => useQueryWishlistStatus(7, { enabled: false }), { wrapper });
+  expect(off.result.current.isLoading).toBe(false);
+});

@@ -26,5 +26,10 @@ export function useQueryWishlistStatus(
     // **꺼 두면 받아 둔 것도 내주지 않는다.** 세션이 만료돼 끊기면 캐시가 남아, 로그아웃 상태에서
     // 전의 하트가 채워져 보인다 — `useQueryPets`와 같다
     wished: enabled ? query.data : undefined,
+    /**
+     * 처음 받는 중. **이때 하트를 누르게 두지 않는다** — PATCH가 토글이라, 모르는 채로 누르면
+     * 이미 찜한 상품을 찜하려던 사람의 찜이 서버에서 지워진다(#493 리뷰). 꺼 둔 조회는 거짓이다
+     */
+    isLoading: enabled && query.isPending,
   };
 }

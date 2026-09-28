@@ -26,7 +26,7 @@ it("로그인했으면 전체 찜 목록에서 상품 번호를 뽑는다", () =
 
   const { result } = renderHook(() => useWishedProductIds());
 
-  expect([...result.current]).toEqual([3, 5]);
+  expect([...result.current.wishedIds]).toEqual([3, 5]);
   expect(useQueryWishlist).toHaveBeenCalledWith(undefined, { enabled: true });
 });
 
@@ -36,6 +36,26 @@ it("로그아웃이면 찜 목록을 부르지 않고, 남은 캐시가 있어�
 
   const { result } = renderHook(() => useWishedProductIds());
 
-  expect(result.current.size).toBe(0);
+  expect(result.current.wishedIds.size).toBe(0);
   expect(useQueryWishlist).toHaveBeenCalledWith(undefined, { enabled: false });
+});
+
+// 모르는 채로 누르면 토글이 서버의 찜을 지울 수 있다. 받는 동안임을 화면에 넘긴다 (#493 리뷰)
+it("로그인해서 찜 목록을 받는 동안은 받는 중이다", () => {
+  useSessionState.mockReturnValue(true);
+  useQueryWishlist.mockReturnValue({ items: undefined, isLoading: true });
+
+  const { result } = renderHook(() => useWishedProductIds());
+
+  expect(result.current.isLoading).toBe(true);
+});
+
+// 꺼 둔 조회는 대기가 끝나지 않는다. 로그아웃이면 받는 중으로 두지 않는다
+it("로그아웃이면 받는 중이 아니다", () => {
+  useSessionState.mockReturnValue(false);
+  useQueryWishlist.mockReturnValue({ items: undefined, isLoading: true });
+
+  const { result } = renderHook(() => useWishedProductIds());
+
+  expect(result.current.isLoading).toBe(false);
 });
