@@ -48,6 +48,8 @@
 
 `app/page.tsx`가 서버에서 `entities/product`의 `getProducts`·`getTimeDeals("ACTIVE")`를 조회해 Promise로 넘기고, `home-view.tsx`의 `ProductGrid`·`TimeDealPreview`가 각각 `use()`+`Suspense`로 그 결과만 대기합니다. "더 보기"는 브라우저에서 같은 `getProducts`를 커서로 이어 부릅니다.
 
+**타임딜 미리보기 카드는 딜 아이템 번호를 들고 상세로 갑니다**(`?dealItem=`). 딜가는 일반 상품 상세에 오지 않아, 번호 없이 가면 상세가 정가를 보이고 정가로 담깁니다(#484).
+
 **정렬 UI를 백엔드 5종(`RECOMMEND`·`POPULAR`·`REVIEW`·`PRICE_ASC`·`PRICE_DESC`)에 맞춰 바꿨습니다.** 기존 목업엔 최신순·별점순이 있었지만, Figma("메인_사료 탭_드롭다운")를 직접 확인해 보니 펼쳐진 옵션 목록 자체가 시안에 없고 닫힌 상태("추천순")만 있었습니다 — 근거 없이 채워져 있던 목업이라 백엔드 계약값으로 교체했습니다(`search-result`와 같은 5개 값).
 
 **카테고리 매핑은 `entities/product`가 갖고 있습니다.** `getProducts`는 백엔드 `CategoryCode`(`FOOD`·`TREAT`·`SUPPLEMENT`)만 받습니다 — API 함수가 화면의 URL 값(`food`·`snack`·`supplement`)을 알면 API 계층이 화면 상태에 결합되기 때문입니다. `snack→TREAT`는 단순 대문자 변환이 아닙니다(`CategoryCode.java`로 직접 확인). 좋아요 화면도 같은 매핑을 쓰게 되면서(#390) `entities/product/model/category.ts`로 내렸습니다 — 여러 화면이 쓰는 값이라 한 곳에 둡니다.

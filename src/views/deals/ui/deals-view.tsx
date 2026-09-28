@@ -181,9 +181,10 @@ function LiveDealsSection({
                 >
                   {/* 썸네일·텍스트를 누르면 상품 상세로 간다. 담기 버튼은 링크 안에
                       두면 "링크 속 버튼"이 되어 눌리지 않으므로 링크 바깥의 절대
-                      위치 요소로 따로 둔다(product-grid-card의 imageAction과 같은 방식) */}
+                      위치 요소로 따로 둔다(product-grid-card의 imageAction과 같은 방식).
+                      딜 아이템 번호를 함께 넘긴다 — 딜가는 일반 상품 상세에 오지 않는다(#484) */}
                   <Link
-                    href={`/products/${item.productId}`}
+                    href={`/products/${item.productId}?dealItem=${item.timeDealItemId}`}
                     className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                   >
                     <ProductSummary

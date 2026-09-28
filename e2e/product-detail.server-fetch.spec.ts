@@ -254,7 +254,27 @@ test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 
 });
 
 // 타임딜 상품을 그냥 상품으로 담으면 딜가가 아니라 정가로 들어간다(#413).
-test("타임딜 상품은 딜 아이템 식별자로 담는다", async ({ page }) => {
+// 딜가·딜 번호는 일반 상품 상세에 오지 않아, 타임딜에서 온 주소의 딜 번호로 타임딜 상세를 받는다(#484)
+test("타임딜에서 들어오면 딜가로 보이고 딜 아이템 식별자로 담는다", async ({ page }) => {
+  const sent: string[] = [];
+  await page.route("**/api/v1/carts/items", (route) => {
+    sent.push(route.request().postData() ?? "");
+    return route.fulfill({ status: 201, body: "" });
+  });
+  await page.goto("/products/101?dealItem=1");
+
+  const summary = page.getByRole("region", { name: "오리&고구마 소형견 사료 1.5kg" });
+  await expect(summary.getByText("24,000원")).toBeVisible();
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  await page.getByRole("button", { name: "24,000원 장바구니 담기" }).click();
+
+  await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
+  expect(JSON.parse(sent[0])).toMatchObject({ itemType: "TIME_DEAL", itemId: 1 });
+});
+
+// 딜 번호 없이 들어오면(검색·추천) 서버가 주는 대로 일반 상품이다. 딜가를 지어내지 않는다
+test("딜 번호 없이 열면 정가로 보이고 일반 상품으로 담는다", async ({ page }) => {
   const sent: string[] = [];
   await page.route("**/api/v1/carts/items", (route) => {
     sent.push(route.request().postData() ?? "");
@@ -263,10 +283,10 @@ test("타임딜 상품은 딜 아이템 식별자로 담는다", async ({ page }
   await page.goto("/products/101");
 
   await page.getByRole("button", { name: "장바구니", exact: true }).click();
-  await page.getByRole("button", { name: "18,000원 장바구니 담기" }).click();
+  await page.getByRole("button", { name: "32,000원 장바구니 담기" }).click();
 
   await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
-  expect(JSON.parse(sent[0])).toMatchObject({ itemType: "TIME_DEAL", itemId: 77 });
+  expect(JSON.parse(sent[0])).toMatchObject({ itemType: "NORMAL", itemId: 101 });
 });
 
 // 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
