@@ -72,6 +72,7 @@ const ROUTES = [
   "/mypage/reviews/write?productId=0",
   "/mypage/reviews/1",
   "/mypage/orders",
+  "/mypage/orders?tab=claims",
   "/mypage/orders/1",
   "/mypage/orders/1/claim?type=cancel",
   "/mypage/orders/1/claim?type=return",
@@ -189,10 +190,17 @@ for (const route of ["/payment/address", "/mypage/address"]) {
 /** 바텀시트·확인창을 여는 화면. 오버레이는 열어봐야만 보인다 */
 const OVERLAYS = [
   {
-    route: "/mypage/orders",
-    open: /구매확정/,
+    // 구매확정은 목록에서 주문 상세 맨 아래로 옮겼다(#462). 상세 스텁의 기본값이 배송완료다
+    route: "/mypage/orders/1",
+    open: /^구매확정$/,
     slot: "drawer-overlay",
     name: "주문 구매확정 바텀시트",
+  },
+  {
+    route: "/mypage/orders/1",
+    open: /^반품·교환$/,
+    slot: "drawer-overlay",
+    name: "반품·교환 고르기 바텀시트",
   },
   {
     // 온보딩 이탈 확인창이 사라져(#115) 확인창은 여기서 본다. 주문 취소는 목록에서 주문 상세
@@ -292,8 +300,8 @@ test.describe("넓은 화면", () => {
   }
 
   // 시트가 앱 기둥(`layout.tsx`의 max-w-105 = 420px)을 벗어나 넓은 화면 전체로 퍼지지
-  // 않는지 본다. 그전에는 결제수단 화면의 시트로 쟀는데 그 화면을 지워(#348) 주문 목록의
-  // 구매확정 시트로 옮겼다.
+  // 않는지 본다. 그전에는 결제수단 화면의 시트로 쟀는데 그 화면을 지워(#348) 구매확정
+  // 시트로 옮겼다. 그 시트는 주문 목록에서 주문 상세로 옮겨 왔다 (#462).
   //
   // **두 시트는 모양이 다르다.** `shared/ui/bottom-sheet`의 `full`은 기둥을 꽉 채우고
   // (지운 화면이 그것), 기본값 `floating`은 양옆 8px을 띄운 카드다(mypa_061_구매확정).
@@ -301,11 +309,8 @@ test.describe("넓은 화면", () => {
   const FLOATING_INSET_X = 8;
 
   test("바텀시트가 앱 기둥을 벗어나지 않는다", async ({ page }) => {
-    await page.goto("/mypage/orders", { waitUntil: "networkidle" });
-    await page
-      .getByRole("button", { name: /구매확정/ })
-      .first()
-      .click();
+    await page.goto("/mypage/orders/1", { waitUntil: "networkidle" });
+    await page.getByRole("button", { name: "구매확정", exact: true }).click();
 
     const sheet = page.locator("[data-slot=drawer-content]");
     await expect(sheet).toBeVisible();
