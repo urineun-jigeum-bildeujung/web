@@ -12,10 +12,15 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryState } from "nuqs";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
-import { useQueryAddresses, useMutateAddress, type Address } from "@/entities/address";
+import {
+  FIXED_PLACE_NAMES,
+  useQueryAddresses,
+  useMutateAddress,
+  type Address,
+} from "@/entities/address";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
@@ -97,6 +102,10 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
 
   // 저장을 마치고 돌아갈 곳. 들어온 화면이 실어 보낸다 (#369)
   const [from] = useQueryState("from");
+
+  // 목록의 빈 집·회사 자리를 눌러 왔으면 그 이름을 채워 둔다 (#455). 보기가 정해진 값이라
+  // 그 밖의 이름은 버린다
+  const [presetName] = useQueryState("name", parseAsStringLiteral(FIXED_PLACE_NAMES));
   const returnTo = toInternalPath(from);
 
   // 고칠 대상(place)과 돌아갈 곳(from)을 검색 화면에 들려 보낸다. `place`를 빠뜨리면 돌아올 때
@@ -127,7 +136,7 @@ function EditAddressForm({ place, saved }: { place: string | null; saved?: Addre
   const { control, handleSubmit, reset } = useForm<AddressFormValues>({
     resolver: zodResolver(addressFormSchema),
     defaultValues: {
-      addressName: saved?.addressName ?? "",
+      addressName: saved?.addressName ?? presetName ?? "",
       receiver: saved?.receiver ?? "",
       phone: saved?.phone ?? "",
       addressDetail: saved?.addressDetail ?? "",

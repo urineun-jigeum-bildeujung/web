@@ -4,3 +4,4 @@ export { useMutateAddress } from "./api/use-mutate-address";
 export { useQueryAddresses } from "./api/use-query-addresses";
 export { AddressPlaceList, AddPlaceLink } from "./ui/address-place-list";
 export { groupAddresses, type GroupedAddresses } from "./model/group-addresses";
+export { FIXED_PLACE_NAMES } from "./ui/place-icon";

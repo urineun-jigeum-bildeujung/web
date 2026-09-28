@@ -13,9 +13,9 @@
 | `api/use-query-addresses.ts` | 목록을 가져오는 훅 |
 | `api/use-mutate-address.ts` | 등록·수정 훅. 실패 토스트는 전역에 맡긴다 |
 | `ui/address-place-list.tsx` | 장소 목록과 "장소 추가하기". 두 화면이 함께 쓴다. `from`으로 등록·수정을 마치고 돌아올 경로를 받는다 (#369) |
-| `ui/address-place-list.test.tsx` | 무엇을 어떤 차례로 그리는지, 실패·빈 상태 |
-| `ui/place-icon.ts` | 장소 이름으로 아이콘을 고른다(`placeIconOf`). 표의 제 키만 봐서 `toString` 같은 이름에 물려받은 값이 나오지 않는다 (#423) |
-| `model/group-addresses.ts` | 기본 배송지를 맨 앞에 두는 묶음 계산 |
+| `ui/address-place-list.test.tsx` | 무엇을 어떤 차례로 그리는지, 실패·빈 상태, 저장하지 않은 집·회사 빈 줄 |
+| `ui/place-icon.ts` | 장소 이름으로 아이콘을 고른다(`placeIconOf`). 표의 제 키만 봐서 `toString` 같은 이름에 물려받은 값이 나오지 않는다 (#423). 목록이 늘 자리를 잡는 이름(`FIXED_PLACE_NAMES`, 집·회사)도 여기 있다 (#455) |
+| `model/group-addresses.ts` | 기본 배송지를 맨 앞에 두는 묶음 계산. 저장하지 않은 집·회사를 빈 자리(`empty`)로 가린다 (#455) |
 | `index.ts` | 공개 API |
 
 ## 알아둘 것
@@ -23,6 +23,8 @@
 **배송지를 고르는 API는 없다.** `/payment/address`는 목록에서 하나를 골라 `addressId`를 주문 생성(`POST /orders`)에 넘긴다. 서버에 "지금 고른 배송지" 같은 상태는 없다.
 
 **집·회사는 서버에 없는 개념이다.** 종류를 내려주지 않으므로 아이콘은 화면이 `addressName`으로 고른다.
+
+**그래도 목록은 집·회사 자리를 늘 잡는다**(시안 `paym_011` `1117:4825`). 그 이름으로 저장한 곳이 없으면 "상품을 배송받을 주소를 입력해 주세요." 빈 줄을 구분선 위 끝에 그리고, 누르면 `?name=`으로 이름을 채운 채 새 배송지 입력으로 간다. 배송지가 하나도 없으면 빈 줄 대신 빈 상태 문구를 보인다 — 그 경우의 시안은 없다 (#455).
 
 **`deliveryNote`만 nullable이다.** 나머지는 등록할 때 빈 값으로 보내면 안 된다.
 

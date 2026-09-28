@@ -114,6 +114,44 @@ test("기본 배송지는 이름과 무관하게 맨 앞에 온다", () => {
   expect(rows[1].textContent).toContain("집");
 });
 
+const EMPTY_GUIDE = "상품을 배송받을 주소를 입력해 주세요.";
+
+// 시안(paym_011 1117:4825)은 주소를 아직 넣지 않은 집·회사도 빈 줄로 그린다. 누르면 그 이름을
+// 채운 채 새 배송지를 넣으러 간다 (#455)
+test("회사를 저장하지 않았으면 회사 빈 줄이 넣으라는 안내와 함께 선다", () => {
+  renderList({ addresses: [HOME, STUDIO], from: "/payment/address" });
+
+  expect(screen.getByText(EMPTY_GUIDE)).toBeDefined();
+  const row = screen.getByRole("link", { name: /회사/ }) as HTMLAnchorElement;
+  const query = new URLSearchParams(row.getAttribute("href")!.split("?")[1]);
+  expect(query.get("name")).toBe("회사");
+  expect(query.get("from")).toBe("/payment/address");
+  expect(query.get("place")).toBeNull();
+});
+
+// 빈 줄은 구분선 위 묶음의 끝에 붙는다. 사용자가 지은 이름보다 앞이다
+test("빈 줄은 저장한 집 뒤, 사용자가 지은 곳 앞에 온다", () => {
+  renderList({ addresses: [HOME, STUDIO] });
+
+  const rows = screen.getAllByRole("link").map((row) => row.textContent);
+  expect(rows[0]).toContain("집");
+  expect(rows[1]).toContain("회사");
+  expect(rows[2]).toContain("자취방");
+});
+
+test("집·회사를 다 저장했으면 빈 줄이 없다", () => {
+  renderList({ addresses: [HOME, { ...STUDIO, addressId: 10, addressName: "회사" }] });
+
+  expect(screen.queryByText(EMPTY_GUIDE)).toBeNull();
+});
+
+// 목록을 받기 전에 빈 줄을 그리면 저장해 둔 집이 빈 자리로 잠깐 보인다
+test("목록을 아직 모르면 빈 줄도 그리지 않는다", () => {
+  renderList({ addresses: undefined });
+
+  expect(screen.queryByText(EMPTY_GUIDE)).toBeNull();
+});
+
 // 재조회가 실패하면 앞서 받아 둔 값이 남는다. 함께 그리면 오류 문구 아래로 옛 배송지가 따라 나온다
 test("불러오지 못하면 앞서 받은 목록을 그리지 않는다", () => {
   renderList({ addresses: [HOME], error: new ApiError(500, "실패") });
