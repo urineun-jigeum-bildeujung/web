@@ -3,7 +3,7 @@
 마이페이지 홈. 프로필 카드와 메뉴 묶음을 보여준다.
 
 - **라우트**: `/mypage` — `src/app/mypage/page.tsx`
-- **조립**: `entities/pet`의 목록 조회 훅, `shared/ui`의 `page-header` · `setting-group` · `list-row` · `icon`, `widgets/bottom-nav`
+- **조립**: `entities/pet`의 목록 조회 훅·아이 원(`PetPhoto`), `shared/ui`의 `page-header` · `setting-group` · `list-row` · `icon`, `widgets/bottom-nav` · `notification-bell` · `cart-link`
 - **상태**: 아이 목록과 회원 정보 모두 서버 상태(TanStack Query)
 - **참고**: UI 시안 기준(`mypa_001`, `1474-23129`)
 
@@ -12,7 +12,7 @@
 | `ui/profile-summary.tsx` | 프로필 카드의 닉네임·이메일 줄. 회원 정보 조회를 쓰는 유일한 자리라 여기만 클라이언트다 |
 | `ui/pet-avatars.tsx` | 프로필 카드의 아이 원 줄. 목록 조회를 쓰는 유일한 자리라 여기만 클라이언트다 |
 | `ui/mypage-view.tsx` | 마이페이지 홈 |
-| `ui/mypage-view.test.tsx` | 메뉴 묶음과 이동 경로, 아이 원이 서버 목록을 따르는지 |
+| `ui/mypage-view.test.tsx` | 메뉴 묶음과 이동 경로, 아이 원이 서버 목록을 따르는지, 사진 없는 아이의 두 글자, 점선 원이 새 아이 등록으로 가는지 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것
@@ -30,6 +30,10 @@
 고르는 자리가 아니라 아이 관리로 가는 링크 안이라 `PetSwitcher`를 쓰지 않는다. 그것은 라디오 묶음이어서 링크 안에 넣으면 누르는 것이 둘로 갈린다.
 
 등록한 아이가 없으면 원을 그리지 않는다. 뒤따르는 점선 원이 아이를 들이는 자리로 남아 할 일을 알린다. **받아오는 중에는 회색 원으로 자리를 잡는다**(#238) — 비워 두면 점선 원이 왼쪽 끝에 붙어 있다가 목록이 오는 순간 오른쪽으로 밀린다.
+
+**사진이 없는 아이는 이름 앞 두 글자를 원에 넣는다**(#470). 시안의 아이 원 컴포넌트(`state=default`)가 그렇게 그린다. 회색 원만 남아 어느 아이인지 알 수 없었다.
+
+**점선 원은 아이 관리 링크 밖의 따로 된 링크다**(#470). 한 링크 안에 있어 누르면 첫 아이 프로필이 열렸다. 지금은 메인·아이 관리의 추가와 같은 온보딩 기본 정보 단계(`/onboarding?step=basic`, #189)로 간다.
 
 ## 회원 정보도 서버에서 온다
 

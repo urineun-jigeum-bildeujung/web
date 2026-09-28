@@ -11,6 +11,7 @@
 
 import Link from "next/link";
 
+import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { Icon } from "@/shared/ui/icon/icon";
 import { ListRowLink } from "@/shared/ui/list-row/list-row";
@@ -87,9 +88,7 @@ export function MypageView() {
         right={
           <>
             <NotificationBell className={HEADER_ICON} />
-            <Link href="/cart" aria-label="장바구니" className={HEADER_ICON}>
-              <Icon name="cart" className="size-7" />
-            </Link>
+            <CartLink className={HEADER_ICON} />
           </>
         }
         className="bg-transparent"
@@ -114,20 +113,26 @@ export function MypageView() {
 
           <span aria-hidden className="mx-3 h-px bg-border-default" />
 
-          <Link
-            href="/mypage/pets"
-            aria-label="반려동물 프로필 관리"
-            className="flex h-10.5 items-center gap-3 px-3 transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          >
-            <PetAvatars />
-            {/* 아이를 더 들이는 자리. 점선 원으로 비어 있음을 보인다 */}
-            <span
-              aria-hidden
-              className="flex size-10.5 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-icon-fill-tertiary text-icon-fill-tertiary"
+          {/* 아이 원은 아이 관리로, 점선 원은 새 아이 등록으로 간다. 둘을 한 링크에 넣었더니
+              점선 원을 눌러도 첫 아이 프로필이 열렸다(QA 1차 5번, #470) */}
+          <div className="flex h-10.5 items-center gap-3 px-3">
+            <Link
+              href="/mypage/pets"
+              aria-label="반려동물 프로필 관리"
+              className="flex items-center gap-3 rounded-full transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <PetAvatars />
+            </Link>
+            {/* 아이를 더 들이는 자리. 점선 원으로 비어 있음을 보인다. 새 아이는 온보딩 기본 정보
+                단계로 잇는다 — 메인·아이 관리의 추가와 같은 곳이다(#189) */}
+            <Link
+              href="/onboarding?step=basic"
+              aria-label="새 아이 추가"
+              className="flex size-10.5 shrink-0 items-center justify-center rounded-full border-2 border-dashed border-icon-fill-tertiary text-icon-fill-tertiary transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <Icon name="plus" className="size-6" />
-            </span>
-          </Link>
+            </Link>
+          </div>
         </section>
 
         {MENU_GROUPS.map((group) => (

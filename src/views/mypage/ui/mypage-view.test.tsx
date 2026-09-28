@@ -70,6 +70,29 @@ test("반려동물 프로필 영역이 마이페이지_반려동물 화면으로
   );
 });
 
+// 점선 원이 아이 관리 링크 안에 있어 누르면 첫 아이 프로필이 열렸다(QA 1차 5번, #470)
+test("점선 원은 아이 관리가 아니라 새 아이 등록으로 간다", () => {
+  renderView();
+
+  const add = screen.getByRole("link", { name: "새 아이 추가" });
+  expect(add.getAttribute("href")).toBe("/onboarding?step=basic");
+  expect(add.closest('a[href="/mypage/pets"]')).toBeNull();
+});
+
+// 회색 원만 있으면 어느 아이인지 알 수 없었다(QA 1차 4번, #470)
+test("사진이 없는 아이는 원 안에 이름 앞 두 글자를 넣는다", () => {
+  const before = petsQuery;
+  petsQuery = {
+    pets: [{ id: "9", name: "구름이", isDefault: true }],
+    isLoading: false,
+    error: null,
+  };
+  renderView();
+
+  expect(screen.getByTitle("구름이").textContent).toBe("구름");
+  petsQuery = before;
+});
+
 // 원이 목이던 동안에는 등록한 아이가 둘이 아니어도 늘 둘이 떴다
 test("아이 원을 서버에서 받은 목록으로 그린다", () => {
   renderView();
