@@ -245,7 +245,13 @@ test("로그인하고 찜을 누르면 서버에 걸려 새로고침해도 남�
 
   const like = page.getByRole("button", { name: "찜 목록에 담기" });
   await expect(like).toHaveAttribute("aria-pressed", "false");
+  // 화면은 낙관적으로 먼저 바뀐다. 요청이 끝난 뒤에 기록을 보고 새로고침해야 흔들리지 않는다
+  const patched = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" && response.url().endsWith("/members/me/wishlist/1"),
+  );
   await like.click();
+  await patched;
 
   const liked = page.getByRole("button", { name: "찜 목록에서 빼기" });
   await expect(liked).toHaveAttribute("aria-pressed", "true");
@@ -268,7 +274,13 @@ test("함께 보면 좋은 상품의 하트는 찜 목록으로 채우고 누르
   await expect(senior).toHaveAttribute("aria-pressed", "true");
 
   const allergy = related.getByRole("button", { name: "알레르기 케어 무곡물 사료 1kg 찜하기" });
+  // 화면은 낙관적으로 먼저 바뀐다. 요청이 끝난 뒤에 기록을 보고 새로고침해야 흔들리지 않는다
+  const patched = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" && response.url().endsWith("/members/me/wishlist/3"),
+  );
   await allergy.click();
+  await patched;
   await expect(allergy).toHaveAttribute("aria-pressed", "true");
   expect(wishlist.toggled).toEqual([3]);
 });

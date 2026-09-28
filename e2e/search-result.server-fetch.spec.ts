@@ -96,7 +96,13 @@ test("로그인했으면 찜한 상품의 하트가 채워져 있고 누르면 �
   );
 
   const senior = page.getByRole("button", { name: "노령견 저지방 소화케어 사료 1kg 찜하기" });
+  // 화면은 낙관적으로 먼저 바뀐다. 요청이 끝난 뒤에 기록을 보고 새로고침해야 흔들리지 않는다
+  const patched = page.waitForResponse(
+    (response) =>
+      response.request().method() === "PATCH" && response.url().endsWith("/members/me/wishlist/2"),
+  );
   await senior.click();
+  await patched;
   await expect(senior).toHaveAttribute("aria-pressed", "true");
   expect(wishlist.toggled).toEqual([2]);
 });
