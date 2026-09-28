@@ -21,8 +21,8 @@ const PUPPY_FOOD: ProductCard = {
   name: "퍼피 성장기 사료 1kg",
   price: 21000,
   discountRate: 0,
-  unitPrice: 1060,
-  unitLabel: "1kg당",
+  unitPrice: 21,
+  unitLabel: "g",
   thumbnailUrl: null,
   rating: 4.6,
   reviewCount: 109,
@@ -33,8 +33,8 @@ const SENIOR_FOOD: ProductCard = {
   name: "노령견 저지방 소화케어 사료 1kg",
   price: 27200,
   discountRate: 15,
-  unitPrice: 1050,
-  unitLabel: "1kg당",
+  unitPrice: 27,
+  unitLabel: "g",
   thumbnailUrl: null,
   rating: 4.5,
   reviewCount: 108,
@@ -64,6 +64,13 @@ describe("SearchResultView", () => {
 
     expect(await screen.findAllByRole("listitem")).toHaveLength(1);
     expect(screen.getByText("총 1개")).toBeDefined();
+  });
+
+  // 서버는 단위 기호(`g`)와 한 단위의 가격을 준다. 기호만 앞에 붙이면 "g 21원"으로 읽힌다 (#479)
+  it("단가를 한 단위당 가격으로 보인다", async () => {
+    await renderWith("?q=퍼피");
+
+    expect(await screen.findByText("1g당 약 21원")).toBeDefined();
   });
 
   it("결과가 없으면 없다고 알린다", async () => {
@@ -161,7 +168,7 @@ describe("SearchResultView", () => {
 
     await screen.findByText("퍼피 성장기 사료 1kg");
     expect(screen.queryByRole("button", { name: /찜하기/ })).toBeNull();
-    expect(screen.queryByText(/1kg당/)).toBeNull();
+    expect(screen.queryByText(/당 약/)).toBeNull();
     expect(screen.getByText("21,000원")).toBeDefined();
   });
 

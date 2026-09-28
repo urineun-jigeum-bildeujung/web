@@ -60,8 +60,8 @@ function buildLiveGroups(): TimeDealGroup[] {
           price: 24_000,
           originalPrice: 32_000,
           discountRate: 25,
-          unitLabel: "하루 예상 급여비 약",
-          unitAmount: 960,
+          unitLabel: "g",
+          unitAmount: 16,
           stock: "low",
         }),
         dealItem({
@@ -71,7 +71,7 @@ function buildLiveGroups(): TimeDealGroup[] {
           price: 14_400,
           originalPrice: 18_000,
           discountRate: 20,
-          unitLabel: "1정당 약",
+          unitLabel: "개",
           unitAmount: 480,
           stock: "enough",
         }),
@@ -82,7 +82,7 @@ function buildLiveGroups(): TimeDealGroup[] {
           price: 13_600,
           originalPrice: 16_000,
           discountRate: 15,
-          unitLabel: "1개당 약",
+          unitLabel: "개",
           unitAmount: 680,
           stock: "none",
         }),
@@ -165,6 +165,14 @@ describe("DealsView", () => {
     await renderWith("?tab=upcoming", buildLiveGroups(), upcoming);
 
     expect(document.querySelector('img[src*="soon.png"]')).not.toBeNull();
+  });
+
+  // 서버는 단위 기호와 한 단위의 가격을 준다. 시안(1905-32428)은 "1개당 약 680원"이다 (#479)
+  it("단가를 시안처럼 한 단위당 가격으로 보인다", async () => {
+    await renderWith();
+
+    expect(screen.getByText("1개당 약 680원")).toBeDefined();
+    expect(screen.getByText("1g당 약 16원")).toBeDefined();
   });
 
   it("썸네일·이름을 누르면 상품 상세로 가는 링크다", async () => {
