@@ -76,12 +76,12 @@
 
 문의할 때 사용자가 대는 유일한 식별자다. 완료 화면에서 안 보여주면 주문 내역을 다시 찾아 들어가야 한다.
 
-**승인 응답에는 주문 상세로 갈 식별자가 없다.** 주는 것은 표시용 `orderNumber`(`ORD-…`)뿐인데 주문 상세 라우트는 숫자 id를 받는다. 승인 응답에 주문 id를 실어 줄 수 있는지 백엔드에 확인을 요청해 뒀다 (#256 리뷰).
+**주문 상세로 가는 숫자 id는 승인 응답이 준다**(2026-09-22부터 `orderId`). 그전에는 표시용 `orderNumber`(`ORD-…`)만 와서 [1]이 돌려준 id를 복귀 주소에 실어 건넜고, 지금도 승인을 기다리는 동안에는 그 값으로 먼저 조회한다 (#301·#374).
 
 ## 결제 버튼 한 번에 세 단계가 이어진다
 
 ```text
-[1] POST /orders    { addressId, items, deliveryNote }  → orderId (숫자 PK)
+[1] POST /orders    { addressId, petId, items, deliveryNote }  → orderId (숫자 PK)
 [2] POST /payments  { orderId }                         → tossOrderId (문자열)·orderName·customerKey
 [3] requestPayment({ orderId: tossOrderId, orderName })  → 토스 결제창
 ```
@@ -138,7 +138,7 @@
 | `approvedAt` | 결제일시 — `26.09.19 14:30` 형식으로 옮긴다. 값이 없거나 읽을 수 없으면 줄을 비운다 |
 | `paymentId` · `paymentStatus` | 화면에 쓰지 않는다 |
 
-**나머지는 주문 상세 조회가 열려야 채운다.** 상품명·옵션·금액 내역·배송지가 목으로 남아 있고, `GET /orders/{orderId}`가 명세에서 아직 `시작 전`이다.
+**나머지는 주문 상세 조회(`GET /orders/{orderId}`)로 채운다.** 상품명·사진·상품 금액·배송지가 그쪽에서 온다 (#301·#308).
 
 완료 화면은 **리다이렉트로 들어온다.** 결제 화면이 알던 장바구니·배송지를 그대로 들고 올 수 없어, 다시 조회하지 않는 한 이 자리를 채울 방법이 없다.
 
@@ -206,7 +206,7 @@
 ```text
 POST /payments           결제 요청  [2]
 POST /payments/confirm   결제 승인  [5]
-GET  /payments/{id}      결제 상세  시작 전
+GET  /payments/{id}      결제 상세  명세·소스 모두 없음(2026-09-28 대조)
 ```
 
 **아직 토스와 실제로 주고받은 적이 없다.** 백엔드가 "결제 요청부터 DB 반영까지는 확인했지만 토스와는 못 해봤다"고 밝혔다 — 프론트 코드가 없어 승인 구간을 테스트하지 못한 것이라, **우리가 붙이는 순간이 첫 실측**이다. 처음 한 번은 실패를 전제로 본다.

@@ -3,8 +3,8 @@
 // **화면은 이 파일의 타입과 함수만 본다.** 응답 규격이 바뀌면 여기만 고치면 되도록
 // 필드 이름을 화면 쪽으로 옮기지 않고 명세 그대로 둔다 (`entities/cart/api/cart.ts`와 같은 방식).
 //
-// 규격 출처는 2026-09-21에 백엔드 `API 명세`의 행을 열어 확인한 Example이다. 주문 섹션 10줄이
-// 모두 "완료"이고 목록은 커서 페이지네이션이다.
+// 규격 출처는 2026-09-21에 백엔드 `API 명세`의 행을 열어 확인한 Example이다. 주문 섹션 줄이
+// 모두 "완료"이고(2026-09-28 11줄) 목록은 커서 페이지네이션이다.
 
 import { apiRequest } from "@/shared/api/client";
 
@@ -67,7 +67,7 @@ export type OrderListResponse = {
 };
 
 export type GetOrdersParams = {
-  /** 보일 주문 수. 명세 기본값 10, 최대 50 */
+  /** 보일 주문 수. 서버 기본값 20, 최대 50(2026-09-28 소스 대조) */
   size?: number;
   /** 다음 쪽을 부를 때 직전 응답의 `nextCursor` */
   cursor?: string | null;
@@ -146,7 +146,7 @@ export type OrderDeliveryAddress = {
 export type OrderPayment = {
   /** ISO 8601 */
   paidAt: string;
-  /** `"토스페이먼츠 결제"`처럼 이미 다듬어진 문자열 */
+  /** 서버가 고정 문자열 `"토스페이먼츠"`를 넣는다. 화면은 쓰지 않고 로고를 그린다 (#304) */
   method: string;
 };
 

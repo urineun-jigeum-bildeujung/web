@@ -1,6 +1,6 @@
 // 저장해 둔 장소를 화면에 놓는 차례로 가른다.
 //
-// UI 시안 기준(`paym_011` 532:17911)이다. 아이콘이 붙는 곳이 위, 구분선 아래가 나머지다.
+// UI 페이지 시안 기준(`paym_011` 1117:4825)이다. 아이콘이 붙는 곳이 위, 구분선 아래가 나머지다.
 
 import type { Address } from "../api/addresses";
 import { placeIconOf } from "../ui/place-icon";
