@@ -4,7 +4,6 @@ export {
   confirmOrder,
   getOrderDetail,
   getOrders,
-  type GetOrdersParams,
   type OrderDeliveryAddress,
   type OrderDetail,
   type OrderDetailItem,
@@ -22,7 +21,6 @@ export {
   type ClaimType,
   type CreateClaimItem,
   type CreateClaimRequest,
-  type CreateClaimResult,
 } from "./api/claims";
 export { useMutateClaim } from "./api/use-mutate-claim";
 export {
