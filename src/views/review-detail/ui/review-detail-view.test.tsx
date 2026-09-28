@@ -11,7 +11,8 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back }) }));
 
 // 무엇을 부르고 어떻게 옮기는지는 각 entities의 api 테스트가 본다. 여기서는 상태만 세운다
 const useQueryReviewDetail = vi.fn();
-vi.mock("@/entities/review", () => ({
+vi.mock("@/entities/review", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/review")>()),
   useQueryReviewDetail: () => useQueryReviewDetail(),
 }));
 vi.mock("@/entities/member", () => ({
