@@ -232,9 +232,13 @@ describe("ProductDetailView", () => {
 
   it("로그인하지 않았으면 적합도 칸을 그리지 않는다", async () => {
     useSessionState.mockReturnValue(false);
-    useQueryPets.mockReturnValue({ pets: undefined, isLoading: false });
+    // 세션이 만료돼 로그아웃되면 캐시에 전의 아이가 남아 있을 수 있다. 그래도 그리지 않는다
+    useQueryPets.mockReturnValue({ pets: PETS, isLoading: false });
     await renderWith();
 
+    // 아이 조회는 로그인해야 부른다. 부르면 방문할 때마다 401과 재발급 시도가 헛돈다
+    expect(useQueryPets).toHaveBeenCalledWith({ enabled: false });
+    expect(useQueryPetDetail).not.toHaveBeenCalledWith("7");
     expect(screen.queryByRole("combobox", { name: "적합도 기준이 되는 아이" })).toBeNull();
     expect(screen.queryByRole("status", { name: "적합도를 불러오는 중" })).toBeNull();
     // 정보 탭의 성분 분석은 아이 없이 예시로 남는다
