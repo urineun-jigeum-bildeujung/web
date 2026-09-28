@@ -1,5 +1,9 @@
-// 결제 내역 줄들. 결제금액 아래에 상품 금액·배송비가 붙고 결제수단이 따로 온다.
-// UI 시안 기준(mypa_161 1238:10065, paym_002 532:17875)이다. 두 화면이 같은 값을 같은 모양으로 쓴다.
+// 결제 내역 줄들. 결제금액 아래에 상품 금액(과 배송비)이 붙고 결제수단이 따로 온다.
+// UI 페이지 시안 기준 — 주문 상세 3324:37275·3324:36679, 주문 완료 1117:4759.
+//
+// **두 화면이 함께 쓰지만 시안이 다르다.** 주문 상세는 둘째 줄이 "상품 옵션"이고 배송비 줄이 있으며
+// 결제금액 값이 18px 흐린 색이다. 주문 완료는 둘째 줄이 "판매 금액"이고 배송비 줄이 없으며 결제금액
+// 값이 16px 진한 색이다. 그래서 어느 화면인지를 `variant`로 받는다 (#439).
 
 import { formatWon } from "@/shared/ui/price/price";
 
@@ -10,22 +14,31 @@ type PaymentDetailProps = {
   /** 실제로 낸 금액 */
   total: number;
   /**
-   * 상품 금액. 시안이 이 자리를 "상품 옵션"이라 부른다.
+   * 상품 금액. 주문 상세 시안은 이 자리를 "상품 옵션", 주문 완료 시안은 "판매 금액"이라 부른다.
    *
    * **배송비와 함께 없을 수 있다.** 주문을 못 받아 온 자리에서는 결제 금액만 알고 그 안을
    * 가를 수 없다 — `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰)
    */
   itemPrice?: number;
+  /** 주문 상세만 그린다. 주문 완료 시안에는 배송비 줄이 없다 */
   shippingFee?: number;
+  /** 어느 화면의 시안을 따르나. 기본은 주문 상세다 */
+  variant?: "detail" | "complete";
 };
 
 /** 시안이 이름 쪽에 굵은 글씨를 쓰는 줄. 결제금액과 결제수단이 그렇다 */
 const STRONG_TERM = "text-title-bold-16 text-foreground";
 const VALUE = "text-body-medium-14 text-text-body-secondary";
 
-export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailProps) {
-  // 둘은 늘 함께 온다. 하나만 있는 경우는 없어 같이 묶어 판단한다
-  const hasBreakdown = itemPrice !== undefined && shippingFee !== undefined;
+export function PaymentDetail({
+  total,
+  itemPrice,
+  shippingFee,
+  variant = "detail",
+}: PaymentDetailProps) {
+  const complete = variant === "complete";
+  // 주문 상세에서는 둘이 늘 함께 온다. 하나만 있는 경우는 없어 같이 묶어 판단한다
+  const hasBreakdown = itemPrice !== undefined && (complete || shippingFee !== undefined);
 
   // **줄을 `<div>`로 더 감싸지 않는다.** `<dl>`의 자식 `<div>`는 `dt`·`dd`만 담을 수 있어서,
   // 간격을 주려고 한 겹 더 넣으면 그 안의 `dt`·`dd`가 `dl` 소속으로 읽히지 않는다. 스크린
@@ -36,25 +49,33 @@ export function PaymentDetail({ total, itemPrice, shippingFee }: PaymentDetailPr
       <DetailRow
         term={<span className={STRONG_TERM}>결제금액</span>}
         description={
-          <span className="text-title-bold-18 text-text-body-secondary">{formatWon(total)}</span>
+          <span
+            className={
+              complete
+                ? "text-title-bold-16 text-foreground"
+                : "text-title-bold-18 text-text-body-secondary"
+            }
+          >
+            {formatWon(total)}
+          </span>
         }
       />
 
       {/* 세부 항목끼리는 4px(기본 gap)로 붙고, 위 결제금액과는 8px 떨어진다 */}
       {hasBreakdown && (
         <>
-          {/* 시안(`paym_001`·`paym_002`·`cart_001`) 세 화면 모두 이 자리를 "상품 옵션"이라 부른다.
-            금액이 들어가는 줄이라 "상품 금액"이 맞아 보이지만, 화면에 그대로 나가는 문구라
-            임의로 바꾸지 않고 PD팀에 확인을 요청해 뒀다. */}
+          {/* 같은 자리를 화면마다 다르게 부른다 — 주문 상세 "상품 옵션", 주문 완료 "판매 금액" */}
           <DetailRow
             className="mt-1"
-            term={<span className={VALUE}>상품 옵션</span>}
+            term={<span className={VALUE}>{complete ? "판매 금액" : "상품 옵션"}</span>}
             description={<span className={VALUE}>{formatWon(itemPrice)}</span>}
           />
-          <DetailRow
-            term={<span className={VALUE}>배송비</span>}
-            description={<span className={VALUE}>{formatWon(shippingFee)}</span>}
-          />
+          {!complete && shippingFee !== undefined && (
+            <DetailRow
+              term={<span className={VALUE}>배송비</span>}
+              description={<span className={VALUE}>{formatWon(shippingFee)}</span>}
+            />
+          )}
         </>
       )}
 

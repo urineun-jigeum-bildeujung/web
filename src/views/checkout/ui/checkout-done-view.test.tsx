@@ -135,11 +135,46 @@ test("상품과 배송지를 실제 주문에서 가져온다", () => {
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
   expect(screen.getByText("종근당 캣츠벨")).toBeDefined();
-  expect(screen.getByText("2개")).toBeDefined();
   expect(screen.getByText("천경진")).toBeDefined();
   expect(screen.getByText("서울특별시 강남구 테헤란로 123 UI타워 4층 404호")).toBeDefined();
-  // 배송비는 결제 금액에서 상품 금액을 뺀다
-  expect(screen.getByText("3,000원")).toBeDefined();
+  // 판매 금액은 주문의 상품 금액이다
+  expect(screen.getByText("9,345원")).toBeDefined();
+});
+
+// UI 페이지 시안(1117:4759)의 이름을 쓴다. 옛 와이어프레임 문구가 남아 있었다 (#439)
+test("결제상세와 배송지를 시안의 이름으로 부른다", () => {
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  for (const term of ["판매 금액", "받는 분", "연락처", "주소", "배송 요청사항"]) {
+    expect(screen.getByText(term)).toBeDefined();
+  }
+  // 시안에 없는 줄은 그리지 않는다. 배송비 줄은 PD 확인을 기다린다
+  for (const term of ["상품 옵션", "배송비", "받는 사람", "배송지 주소"]) {
+    expect(screen.queryByText(term)).toBeNull();
+  }
+});
+
+// 시안은 이름 아래 수량 줄을 두지 않는다. 여럿이면 나머지 수만 적는다 (#439)
+test("상품이 하나면 수량 줄 없이 이름만 둔다", () => {
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.queryByText("2개")).toBeNull();
+  expect(screen.queryByText(/외 \d+건/)).toBeNull();
+});
+
+test("상품이 여럿이면 첫 상품 아래에 나머지 수를 적는다", () => {
+  const second = { ...ORDER.items[0], orderItemId: 2, productName: "로얄캐닌 인도어" };
+  useQueryOrderDetail.mockReturnValue({
+    order: { ...ORDER, items: [ORDER.items[0], second] },
+    error: null,
+    isLoading: false,
+    isFetching: false,
+  });
+  render(<CheckoutDoneView {...QUERY} orderId={77} />);
+
+  expect(screen.getByText("종근당 캣츠벨")).toBeDefined();
+  expect(screen.getByText("외 1건")).toBeDefined();
+  expect(screen.queryByText("로얄캐닌 인도어")).toBeNull();
 });
 
 // 빈 칸을 남기면 배송지가 없는 주문처럼 보인다
@@ -224,12 +259,13 @@ test("승인 결과가 없으면 주문 내역으로 보낸다", () => {
   );
 });
 
-// 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 둔다
-test("뒤로가기 대신 닫기가 있다", () => {
+// 되돌아갈 곳이 없는 화면이다. 시안(1117:4759)은 머리에 닫기도 없이 아래 두 버튼으로 나가게 한다 (#439)
+test("머리에 뒤로가기와 닫기를 두지 않고 아래 버튼으로 나간다", () => {
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
-  expect(screen.getByRole("link", { name: "닫기" })).toBeDefined();
+  expect(screen.queryByRole("link", { name: "닫기" })).toBeNull();
   expect(screen.queryByRole("button", { name: "이전 화면으로" })).toBeNull();
+  expect(screen.getByRole("link", { name: "홈으로 가기" }).getAttribute("href")).toBe("/");
 });
 
 /** 승인 실패를 세운다. 그때 화면이 댈 수 있는 식별자는 토스가 준 주문번호뿐이다 */
@@ -307,8 +343,7 @@ test("주문이 없으면 상품 줄과 세부 금액을 비운다", () => {
 
   render(<CheckoutDoneView {...QUERY} orderId={77} />);
 
-  expect(screen.queryByText("상품 옵션")).toBeNull();
-  expect(screen.queryByText("배송비")).toBeNull();
+  expect(screen.queryByText("판매 금액")).toBeNull();
   expect(screen.queryByText("0원")).toBeNull();
   // 승인 응답만으로 세울 수 있는 것은 남는다
   expect(screen.getByText("12,345원")).toBeDefined();

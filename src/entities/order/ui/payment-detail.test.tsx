@@ -37,6 +37,29 @@ test("dl 아래에 이름·값 짝만 온다", () => {
   }
 });
 
+// 두 화면이 함께 쓰지만 시안이 다르다. 한쪽을 고치다 다른 쪽이 따라 바뀌지 않게 둘 다 본다 (#439)
+test("주문 상세는 상품 옵션과 배송비를 그린다", () => {
+  const { getByText, queryByText } = render(
+    <PaymentDetail total={38000} itemPrice={35000} shippingFee={3000} />,
+  );
+
+  expect(getByText("상품 옵션")).toBeDefined();
+  expect(getByText("배송비")).toBeDefined();
+  expect(getByText("3,000원")).toBeDefined();
+  expect(queryByText("판매 금액")).toBeNull();
+});
+
+test("주문 완료는 판매 금액만 그리고 배송비 줄이 없다", () => {
+  const { getByText, queryByText } = render(
+    <PaymentDetail variant="complete" total={38000} itemPrice={35000} />,
+  );
+
+  expect(getByText("판매 금액")).toBeDefined();
+  expect(getByText("35,000원")).toBeDefined();
+  expect(queryByText("상품 옵션")).toBeNull();
+  expect(queryByText("배송비")).toBeNull();
+});
+
 // 주문을 못 받아 온 자리에서는 결제 금액만 알고 그 안을 가를 수 없다 (#308 리뷰)
 test("세부 항목이 없으면 그 줄을 만들지 않는다", () => {
   const { container, queryByText } = render(<PaymentDetail total={38000} />);
