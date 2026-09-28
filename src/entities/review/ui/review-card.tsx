@@ -2,12 +2,13 @@
 // 와이어프레임 기준(상품 상세_리뷰 탭)이라 디자인 확정 시 바뀔 수 있다.
 //
 // 같은 사료라도 4kg 말티즈와 30kg 리트리버의 후기는 다른 이야기다. 별점만 나열하면
-// 그 차이가 사라지므로 품종·나이·체중을 이름 바로 아래에 둔다.
+// 그 차이가 사라지므로 아이 정보를 이름 바로 아래에 둔다. 지금 응답으로 그릴 수 있는
+// 것은 체구와 나이까지다(`lib/pet-label`).
 
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
-import { IoImageOutline } from "react-icons/io5";
 import { toast } from "sonner";
 
 import {
@@ -23,29 +24,11 @@ import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 import { Rating } from "@/shared/ui/rating/rating";
 
-export type Review = {
-  id: string;
-  nickname: string;
-  /** "말티즈 · 8세 · 4kg" — 상품 상세의 적합도 카드와 같은 표기를 쓴다 */
-  petProfile: string;
-  /** 0~5 */
-  rating: number;
-  /** "2026. 08. 31" */
-  date: string;
-  /** 첨부 사진. 아직 받을 곳이 없어 몇 장인지만 알고 자리를 잡는다 */
-  photoCount: number;
-  /** 구매한 옵션. "90정 1박스" */
-  option: string;
-  /** "사용 3주차" · "재구매 2회" */
-  tags: string[];
-  content: string;
-  likeCount: number;
-};
+import { formatPetProfiles } from "../lib/pet-label";
+import type { Review } from "../model/review";
 
 type ReviewCardProps = {
   review: Review;
-  /** 사진을 눌렀을 때. 없으면 누를 수 없다 */
-  onPhotoClick?: (index: number) => void;
   /** 사진 리뷰 뷰어처럼 사진을 이미 큰 화면으로 보여주고 있을 때, 이 카드 안의
       아바타 원·사진 줄까지 다시 그리면 중복이라 뺀다(시안 1758-54280) */
   hideAvatar?: boolean;
@@ -53,30 +36,27 @@ type ReviewCardProps = {
   className?: string;
 };
 
-export function ReviewCard({
-  review,
-  onPhotoClick,
-  hideAvatar,
-  hidePhotos,
-  className,
-}: ReviewCardProps) {
-  // 서버에 보낼 곳이 아직 없다. 누른 티는 나야 하므로 화면이 든다
-  const [liked, setLiked] = useState(false);
+export function ReviewCard({ review, hideAvatar, hidePhotos, className }: ReviewCardProps) {
   const [reporting, setReporting] = useState(false);
-
-  const likeCount = review.likeCount + (liked ? 1 : 0);
 
   return (
     <article className={cn("flex flex-col gap-2", className)}>
       <div className="flex items-center gap-2">
         {/* 프로필 사진을 받을 곳이 아직 없다. 시안은 원 안에 아이 이름+색을 넣지만
-            그 색이 서버 값일 가능성이 커 API 확정 전까지는 보류한다(PetSwitcher와 같은 결정) */}
-        {!hideAvatar && (
+            그 색이 서버 값일 가능성이 커 API 확정 전까지는 보류한다(PetSwitcher와 같은 결정).
+            **닉네임이 없으면 원도 그리지 않는다** — 누구인지 모르는데 자리만 남기는 꼴이 된다 */}
+        {!hideAvatar && review.nickname && (
           <span aria-hidden className="size-10.5 shrink-0 rounded-full bg-surface-disable" />
         )}
-        <div className="flex flex-col">
-          <p className="text-label-bold-14 text-text-body-default">{review.nickname}</p>
-          <p className="text-label-medium-11 text-text-body-secondary">{review.petProfile}</p>
+        {/* 시안(1716:34336)의 이름↔아이 줄 간격이 4px이다 */}
+        <div className="flex flex-col gap-1">
+          {review.nickname && (
+            <p className="text-label-bold-14 text-text-body-default">{review.nickname}</p>
+          )}
+          {/* 아이가 여럿이면 줄이지 않고 전부 적는다. 첫 마리만 적으면 사실과 달라진다 */}
+          <p className="text-label-medium-11 text-text-body-secondary">
+            {formatPetProfiles(review.pets)}
+          </p>
         </div>
       </div>
 
@@ -85,33 +65,24 @@ export function ReviewCard({
         <span className="text-label-medium-11 text-text-body-secondary">{review.date}</span>
       </div>
 
-      {!hidePhotos && review.photoCount > 0 && (
+      {!hidePhotos && review.images.length > 0 && (
         <ul className="flex gap-1">
-          {Array.from({ length: review.photoCount }, (_, index) => (
-            <li key={index} className="flex-1">
-              {onPhotoClick ? (
-                <button
-                  type="button"
-                  aria-label={`${review.nickname}의 리뷰 사진 ${index + 1}번째 크게 보기`}
-                  onClick={() => onPhotoClick(index)}
-                  className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                >
-                  <IoImageOutline aria-hidden className="size-6 text-muted-foreground" />
-                </button>
-              ) : (
-                <span
-                  aria-hidden
-                  className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted"
-                >
-                  <IoImageOutline className="size-6 text-muted-foreground" />
-                </span>
-              )}
+          {review.images.map((url, index) => (
+            <li key={`${index}-${url}`} className="flex-1">
+              {/* 목록 안이라 lazy 그대로 둔다(AGENTS.md 5.6). 3열이라 화면 폭의 1/3쯤 쓴다 */}
+              <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
+                <Image
+                  src={url}
+                  alt={`후기 사진 ${index + 1}번째`}
+                  fill
+                  sizes="(min-width: 768px) 200px, 33vw"
+                  className="object-cover"
+                />
+              </div>
             </li>
           ))}
         </ul>
       )}
-
-      <p className="text-label-medium-11 text-text-body-secondary">[옵션] {review.option}</p>
 
       {review.tags.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
@@ -140,21 +111,17 @@ export function ReviewCard({
           신고하기
         </button>
 
-        <button
-          type="button"
-          aria-pressed={liked}
-          onClick={() => setLiked((prev) => !prev)}
-          className={cn(
-            "relative flex h-8 items-center gap-1 rounded-lg border px-3 text-label-medium-12 transition-colors after:absolute after:inset-x-0 after:-inset-y-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-            // 시안(1758-54280)은 아웃라인이 아니라 채운 엄지척이고, 안 누른 상태는
-            // icon-fill-secondary다. 누른 상태 색은 이 프로젝트의 "골랐음" 공통색(brand)을 쓴다
-            liked ? "border-brand text-brand" : "border-border text-icon-fill-secondary",
-          )}
-        >
-          <Icon name="thumbs_up" aria-hidden className="size-5" />
-          <span>{likeCount}</span>
-          <span className="sr-only">이 후기가 도움이 됐어요</span>
-        </button>
+        {/* **누를 수 없는 표시다.** 토글 API(`PATCH /reviews/{id}/recommend`)는 있지만 목록
+            응답에 "내가 이미 눌렀는지"(`liked`)가 없다. 버튼으로 두면 어제 누른 후기가 안 누른
+            상태로 그려지고, 누르는 순간 서버가 취소로 처리해 되돌아간다 — 누르려 했는데
+            취소되는 버튼이 된다. 계약이 생기면 그때 버튼으로 올린다 */}
+        {review.likeCount !== undefined && (
+          <p className="flex h-8 items-center gap-1 rounded-lg border border-border px-3 text-label-medium-12 text-icon-fill-secondary">
+            <Icon name="thumbs_up" aria-hidden className="size-5" />
+            <span>{review.likeCount}</span>
+            <span className="sr-only">명이 이 후기가 도움이 됐다고 했어요</span>
+          </p>
+        )}
       </div>
 
       <AlertDialog open={reporting} onOpenChange={setReporting}>
