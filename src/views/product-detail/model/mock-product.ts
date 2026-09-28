@@ -111,48 +111,26 @@ export const RELATED_PRODUCTS: RelatedProduct[] = [
 ];
 
 /**
- * 아이별 적합도. 같은 상품이라도 아이에 따라 결과가 갈린다.
+ * 적합도의 예시 분석. 점수·근거 두 줄·영양 성분은 AI가 계산해 줄 값이라 그 전까지 예시로 둔다.
  *
- * 냥이는 점수가 없다. 이 영양제가 강아지용이라 고양이 기준으로는 재지 못한 것으로,
- * 0점이 아니라 "정보 확인 중"으로 읽혀야 한다(#119).
+ * **아이 이름은 넣지 않는다.** 예시 아이("소리")의 이름을 근거에 박아 두던 동안, 내 아이가
+ * 누구든 남의 이름이 떴다 (#481). 이름·프로필·알레르기 근거는 `toPetMatch`가 실제 아이로 채운다.
  */
-export const PET_MATCHES: PetMatch[] = [
-  {
-    petId: "1",
-    petName: "소리",
-    score: 92,
-    profileLabel: "말티즈 · 8세 · 4kg",
-    reasons: [
-      { tone: "good", text: "관절 건강에 도움되는 글루코사민이 들어있어요" },
-      { tone: "good", text: "소리에게 등록된 알레르기 유발 성분이 없어요" },
-      { tone: "caution", text: "나트륨 함량이 또래 평균보다 다소 높은 편이에요" },
-    ],
-    nutrients: [
-      { name: "단백질", valueLabel: "28%", position: 0.5, properRange: [0.33, 0.67] },
-      { name: "지방", valueLabel: "12%", position: 0.86, properRange: [0.3, 0.6] },
-      { name: "조섬유", valueLabel: "5%", position: 0.46, properRange: [0.33, 0.7] },
-      { name: "오메가3", valueLabel: "3%", position: 0.54 },
-    ],
-    functions: "관절 건강 · 피부 보습 · 면역력",
-    summary: "소리에게 꾸준히 급여하기 좋은 상품이에요",
-  },
-  {
-    petId: "2",
-    petName: "냥이",
-    score: null,
-    profileLabel: "코리안 숏헤어 · 3세 · 4.2kg",
-    reasons: [{ tone: "caution", text: "고양이 급여 기준이 등록되지 않아 아직 재지 못했어요" }],
-    nutrients: [],
-    functions: "관절 건강 · 피부 보습 · 면역력",
-    summary: null,
-  },
-];
-
-/**
- * 아이 고르기 목록. 적합도에서 파생시킨다.
- *
- * 목록을 따로 두면 두 벌이 어긋날 수 있다. 적합도가 없는 아이를 고르면 이름은
- * 그 아이인데 근거는 다른 아이 것이 붙어, 근거 문장에 박힌 이름과 화면의 이름이
- * 달라진다. 적합도 근거는 이 서비스가 내세우는 값이라 조용히 틀리면 안 된다.
- */
-export const MOCK_PETS = PET_MATCHES.map(({ petId, petName }) => ({ id: petId, name: petName }));
+export const EXAMPLE_ANALYSIS: {
+  score: number;
+  goodReason: MatchReason;
+  cautionReason: MatchReason;
+  nutrients: Nutrient[];
+  functions: string;
+} = {
+  score: 92,
+  goodReason: { tone: "good", text: "관절 건강에 도움되는 글루코사민이 들어있어요" },
+  cautionReason: { tone: "caution", text: "나트륨 함량이 또래 평균보다 다소 높은 편이에요" },
+  nutrients: [
+    { name: "단백질", valueLabel: "28%", position: 0.5, properRange: [0.33, 0.67] },
+    { name: "지방", valueLabel: "12%", position: 0.86, properRange: [0.3, 0.6] },
+    { name: "조섬유", valueLabel: "5%", position: 0.46, properRange: [0.33, 0.7] },
+    { name: "오메가3", valueLabel: "3%", position: 0.54 },
+  ],
+  functions: "관절 건강 · 피부 보습 · 면역력",
+};
