@@ -3,21 +3,23 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
+- **조립**: `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
 - **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
-- **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로 연동했고(#413) 적합도·영양 분석은 여전히 목이다
+- **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
 | --- | --- |
-| `model/mock-product.ts` | 적합도의 예시 분석(점수·근거 두 줄·영양 성분)·함께 보면 좋은 상품과, 아직 응답에 자리가 없는 배송·판매자·제공고시 |
+| `api/related-products.ts` | 함께 보면 좋은 상품을 받는다(`getRelatedProducts`). 인기순에서 지금 상품을 빼고 여섯까지(#481) |
+| `api/related-products.test.ts` | 몇 개를 요청하는지, 지금 상품을 빼는지, 여섯에서 자르는지 |
+| `model/mock-product.ts` | 적합도의 예시 분석(점수·근거 두 줄·영양 성분)과, 아직 응답에 자리가 없는 배송·판매자·제공고시 |
 | `model/pet-match.ts` | 고른 아이 기준의 적합도를 만든다(`toPetMatch`). 이름·프로필·알레르기 근거는 실제 아이에서, 점수·성분은 예시에서 온다. 급여 대상이 아닌 종이면 점수를 매기지 않는다(#481) |
 | `model/pet-match.test.ts` | 실제 아이 이름·프로필, 종이 다를 때 재지 않음, 알레르기 견주기 |
 | `model/mock-inquiries.ts` | 상품 문의 목데이터와 답변 상태 |
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
-| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·지켜볼 점·탭 전환 |
+| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환 |
 | `ui/detail-option-sheet.tsx` | 수량 시트. 용량 표기·수량과 장바구니 담기 버튼. 고를 옵션은 없다 |
 | `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기 동작 |
 | `ui/match-panel.tsx` | 적합도 블록. 아이 고르기, 점수, 근거 세 줄 |
@@ -44,11 +46,11 @@
 | --- | --- | --- |
 | 사진·이름·판매가·정가·할인율·별점·후기 수·품절 | — | `summary` |
 | 상세 설명 표 아홉 줄, 제공고시 품명 | — | `detailInfo`·`productName` |
-| — | 적합도·영양 성분 분석 | 서버가 계산해 내려줄 값이다 (#123) |
+| 적합도의 아이(이름·프로필·알레르기 근거) | 점수·근거 두 줄·영양 성분 분석 | 아이는 `useQueryPets`·`useQueryPetDetail`(#481), 나머지는 서버가 계산해 내려줄 값이다 (#123) |
 | 리뷰 요약·목록·정렬·대표 사진 | — | `useQueryProductReviews` · `useQueryFeaturedReviewPhotos` (#339) |
 | — | 리뷰 필터·맞춤보기·도움돼요 토글 | 서버가 받는 모양이 달라 닫아 뒀다 (#339, 아래 후속 항목) |
 | — | 문의 목록 | API가 없다 |
-| — | 함께 보면 좋은 상품 | 응답에 없다. 카드가 눌리지 않는 까닭도 그대로다 |
+| 함께 보면 좋은 상품(인기순, 지금 상품 제외) | — | 라우트가 `getRelatedProducts`를 기다리지 않고 넘긴다 (#481) |
 | — | 배송·판매자·제공고시 두 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
 | — | 타임딜 종료 시각 | `timeDealItemId`는 오지만 `endAt`이 없다 (아래) |
 
@@ -104,7 +106,7 @@
 | 리뷰 카드의 아이 줄 | `소형견 · 8세`까지다. 응답에 품종명·몸무게가 없다 (#339) |
 | 리뷰 재구매 N회 배지 | 응답에 필드가 없다. PD 답 대기 |
 | 문의 탭 | API가 없다 |
-| 함께 보면 좋은 상품 | 응답에 없다. 카드가 눌리지 않는 까닭도 그대로다 |
+| 함께 보면 좋은 상품 | AI 추천이 붙기 전까지 인기순이다. 카드의 찜 하트는 찜이 서버에 붙기 전까지 장식이다 |
 | 적합도·영양 성분 분석 | 서버 계산 대기 (#123) |
 | 제공고시 두 줄·배송 안내·판매자 | 응답에 자리가 없어 고정 목이다 |
 | 주의성분 표시 | #414 (백엔드 응답에 위험 등급 추가가 착수 조건) |
@@ -129,7 +131,7 @@
 
 **절대 기준치가 없는 성분은 재지 않는다.** 오메가3에 부족–적정–과다 눈금을 붙이면 가운데가 적정으로 읽혀, 있지도 않은 판정을 만들어낸다. 눈금 대신 그 사실을 적는다.
 
-**함께 보면 좋은 상품 카드는 누를 수 없다.** 목데이터가 이 상품 하나뿐이라 어느 카드를 눌러도 같은 화면이 나온다. 링크를 살려 두면 화면이 거짓말을 하므로 상품별 데이터가 붙을 때까지 뺐다.
+**함께 보면 좋은 상품은 인기순 실제 상품이다(#481).** 예시 상품 셋을 그리던 동안에는 없는 상품이라 누를 수 없게 막아 두었다. 이제 지금 상품을 빼고 여섯 개까지 가로로 놓고, 누르면 그 상품으로 간다. 자르는 일은 서버(`size`)에 맡기고 하나를 더 받는다 — 지금 상품이 섞여 오면 빼야 하는데 서버에는 "이 상품은 빼고"를 받는 값이 없다. 상품 조회와 따로 받아 이 칸만 기다리고(뼈대) 이 칸만 실패한다(칸째 숨김). 볼 것이 없으면 아래 구분선까지 함께 그리지 않는다. AI 추천이 붙으면 그 목록으로 바꾼다.
 
 **비교하기는 현재 상품을 담은 안내를 먼저 보여준다.** `확인하기`를 누르면 비교 화면의 첫 자리에 이 상품만 담긴다. 상품 요약 목데이터는 `entities/product`에서 두 화면이 공유한다.
 

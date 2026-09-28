@@ -14,20 +14,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { useEffect, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useMutateCartItem } from "@/entities/cart";
 import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
-import type { ProductDetail } from "@/entities/product";
+import { formatUnitPrice, type ProductCard, type ProductDetail } from "@/entities/product";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
+import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Price } from "@/shared/ui/price/price";
@@ -38,7 +39,7 @@ import { showSnackbar, SNACKBAR_CLASS, SNACKBAR_OPTIONS } from "@/shared/ui/snac
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
-import { DEAL_ENDS_AT, MOCK_PRODUCT, RELATED_PRODUCTS } from "../model/mock-product";
+import { DEAL_ENDS_AT, MOCK_PRODUCT } from "../model/mock-product";
 import { EXAMPLE_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
 import { DetailOptionSheet } from "./detail-option-sheet";
 import { MatchPanel } from "./match-panel";
@@ -211,9 +212,90 @@ type ProductDetailViewProps = {
   productId: string;
   /** 라우트가 서버에서 받아 온 상품 한 건 */
   product: ProductDetail;
+  /** "함께 보면 좋은 상품". 라우트가 기다리지 않고 넘긴다(`getRelatedProducts`) */
+  relatedPromise: Promise<ProductCard[]>;
 };
 
-export function ProductDetailView({ productId, product }: ProductDetailViewProps) {
+/**
+ * "함께 보면 좋은 상품". 인기순 실제 상품에서 지금 상품을 뺀 것이다 (#481).
+ *
+ * 예시 상품 셋을 그리던 동안에는 없는 상품이라 누를 수 없게 막아 두었다. AI 추천이 붙기 전까지는
+ * 인기순으로 채운다. 볼 것이 없으면 칸과 아래 구분선을 함께 그리지 않는다.
+ */
+function RelatedProducts({ productsPromise }: { productsPromise: Promise<ProductCard[]> }) {
+  const related = use(productsPromise);
+
+  if (related.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <section aria-labelledby="related-heading" className="flex flex-col gap-3 p-5">
+        <h2 id="related-heading" className="text-title-bold-20 text-text-body-default">
+          함께 보면 좋은 상품
+        </h2>
+        <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%">
+          {related.map((item) => (
+            <ScrollRowItem key={item.productId}>
+              <ProductGridCard
+                href={`/products/${item.productId}`}
+                name={item.name}
+                price={item.price}
+                imageUrl={item.thumbnailUrl ?? undefined}
+                priceClassName="text-title-bold-16"
+                // 시안(1716-34241)의 찜 자리는 다른 화면(top-3 right-3)과 달리
+                // 사진 오른쪽 아래(4px 인셋)다
+                imageActionClassName="top-auto right-1 bottom-1"
+                imageAction={
+                  // 흰 원 배경 위에 찜 아이콘을 얹는다. 찜이 서버에 붙기 전까지는
+                  // 실제 찜 상태를 못 매겨 장식으로만 둔다
+                  <span
+                    aria-hidden
+                    className="flex size-8 items-center justify-center rounded-full bg-surface-overlay-static"
+                  >
+                    <Icon name="heart_stroke" className="size-6 text-icon-fill-secondary" />
+                  </span>
+                }
+                meta={
+                  <span className="flex flex-col gap-1">
+                    <span className="text-caption-regular-12 text-text-body-tertiary">
+                      {formatUnitPrice(item.unitLabel, item.unitPrice)}
+                    </span>
+                    <RatingSummary rating={item.rating} reviewCount={item.reviewCount} />
+                  </span>
+                }
+              />
+            </ScrollRowItem>
+          ))}
+        </ScrollRow>
+      </section>
+      <div className="h-2 bg-muted" />
+    </>
+  );
+}
+
+/** 인기순 목록을 받는 동안 칸 자리를 잡는다. 늦게 끼어들면 아래 탭이 밀린다 */
+function RelatedProductsSkeleton() {
+  return (
+    <>
+      <div
+        role="status"
+        aria-label="함께 보면 좋은 상품을 불러오는 중"
+        className="flex flex-col gap-3 p-5"
+      >
+        <Skeleton className="h-7 w-44" />
+        <div className="flex gap-3">
+          <Skeleton className="aspect-square w-9/20 rounded-lg" />
+          <Skeleton className="aspect-square w-9/20 rounded-lg" />
+        </div>
+      </div>
+      <div className="h-2 bg-muted" />
+    </>
+  );
+}
+
+export function ProductDetailView({ productId, product, relatedPromise }: ProductDetailViewProps) {
   const router = useRouter();
   const { add, isAdding } = useMutateCartItem();
   // 고른 탭에 따라 보이는 것이 통째로 달라진다. nuqs 기본은 replace라
@@ -436,49 +518,13 @@ export function ProductDetailView({ productId, product }: ProductDetailViewProps
           )
         )}
 
-        <section aria-labelledby="related-heading" className="flex flex-col gap-3 p-5">
-          <h2 id="related-heading" className="text-title-bold-20 text-text-body-default">
-            함께 보면 좋은 상품
-          </h2>
-          <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%">
-            {RELATED_PRODUCTS.map((product) => (
-              <ScrollRowItem key={product.id}>
-                {/* 목데이터가 이 상품 하나뿐이라 어느 카드를 눌러도 같은 화면이
-                    나온다. 링크를 살려 두면 화면이 거짓말을 하므로 상품별 데이터가
-                    붙을 때까지 누를 수 없게 둔다 */}
-                <ProductGridCard
-                  name={product.name}
-                  price={product.price}
-                  originalPrice={product.originalPrice}
-                  priceClassName="text-title-bold-16"
-                  // 시안(1716-34241)의 찜 자리는 다른 화면(top-3 right-3)과 달리
-                  // 사진 오른쪽 아래(4px 인셋)다
-                  imageActionClassName="top-auto right-1 bottom-1"
-                  imageAction={
-                    // 흰 원 배경 위에 찜 아이콘을 얹는다. 목데이터가 상품 하나뿐이라
-                    // 실제 찜 상태를 못 매겨 장식으로만 둔다
-                    <span
-                      aria-hidden
-                      className="flex size-8 items-center justify-center rounded-full bg-surface-overlay-static"
-                    >
-                      <Icon name="heart_stroke" className="size-6 text-icon-fill-secondary" />
-                    </span>
-                  }
-                  meta={
-                    <span className="flex flex-col gap-1">
-                      <span className="text-caption-regular-12 text-text-body-tertiary">
-                        {product.unitLabel} {product.unitAmount.toLocaleString("ko-KR")}원
-                      </span>
-                      <RatingSummary rating={product.rating} reviewCount={product.reviewCount} />
-                    </span>
-                  }
-                />
-              </ScrollRowItem>
-            ))}
-          </ScrollRow>
-        </section>
-
-        <div className="h-2 bg-muted" />
+        {/* 볼 것이 없거나 받지 못하면 칸과 아래 구분선을 함께 그리지 않는다. 상품을 보는 데
+            방해되지 않게 이 칸만 기다리고 이 칸만 실패한다 */}
+        <ErrorBoundary fallback={() => null} resetKeys={[relatedPromise]}>
+          <Suspense fallback={<RelatedProductsSkeleton />}>
+            <RelatedProducts productsPromise={relatedPromise} />
+          </Suspense>
+        </ErrorBoundary>
 
         <Tabs
           value={tab}

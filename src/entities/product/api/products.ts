@@ -268,16 +268,24 @@ export type ProductListResult = {
  *
  * `category`는 백엔드 `CategoryCode`만 받는다 — "전체"에 대응하는 값이 없으므로
  * 그 경우엔 아예 undefined로 두고 호출한다(쿼리에서 빠진다).
+ *
+ * `size`를 빼면 서버 기본(10개)이다. 서버는 30개까지만 준다.
  */
 // petId를 받지 않는다 — 백엔드가 받기만 하고 실제 조회에 반영하지 않는다(#289)
 export function getProducts(params: {
   category?: ProductCategory;
   sort: ProductSort;
   cursor?: string;
+  size?: number;
 }): Promise<ProductListResult> {
   return apiRequest<ProductListApiResponse>("/products", {
     auth: false,
-    query: { category: params.category, sort: params.sort, cursor: params.cursor },
+    query: {
+      category: params.category,
+      sort: params.sort,
+      cursor: params.cursor,
+      size: params.size,
+    },
   }).then((response) => ({
     items: response.items.map(toProductCard),
     nextCursor: response.nextCursor,

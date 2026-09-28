@@ -37,17 +37,6 @@ export type PetMatch = {
   summary: string | null;
 };
 
-export type RelatedProduct = {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  unitLabel: string;
-  unitAmount: number;
-  rating: number;
-  reviewCount: number;
-};
-
 /** 상품 하나는 한 시점에 이 중 하나다. 타임딜이면서 동시에 품절인 상태는 다루지 않는다 */
 export type ProductStatus = "normal" | "deal" | "soldout";
 
@@ -76,39 +65,6 @@ export const MOCK_PRODUCT = {
     ["소비자상담 관련 전화번호", "1234-5678"],
   ] as const,
 };
-
-export const RELATED_PRODUCTS: RelatedProduct[] = [
-  {
-    id: "2",
-    name: "그레인프리 연어 사료 2kg",
-    price: 31_200,
-    originalPrice: 38_000,
-    unitLabel: "하루 예상 급여비 약",
-    unitAmount: 1_050,
-    rating: 4.8,
-    reviewCount: 108,
-  },
-  {
-    id: "3",
-    name: "저자극 덴탈껌 14개입",
-    price: 10_800,
-    originalPrice: 13_100,
-    unitLabel: "1개당",
-    unitAmount: 771,
-    rating: 4.9,
-    reviewCount: 203,
-  },
-  {
-    id: "4",
-    name: "관절 케어 트릿 200g",
-    price: 9_750,
-    originalPrice: 12_500,
-    unitLabel: "1일 섭취 기준 약",
-    unitAmount: 195,
-    rating: 4.7,
-    reviewCount: 64,
-  },
-];
 
 /**
  * 적합도의 예시 분석. 점수·근거 두 줄·영양 성분은 AI가 계산해 줄 값이라 그 전까지 예시로 둔다.

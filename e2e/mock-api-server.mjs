@@ -111,9 +111,17 @@ const FOOD_PAGE_2 = [
   },
 ];
 
+// 상품 상세의 "함께 보면 좋은 상품"(#481)은 카테고리 없이 인기순으로 부른다. 지금 보는 상품(1)이
+// 섞여 와야 화면이 빼는지 볼 수 있어 일부러 넣는다. 서버처럼 size만큼 자른다
+const POPULAR = [SMALL_BREED_FOOD, SENIOR_FOOD, ALLERGY_FOOD, PUPPY_FOOD];
+
 function getProducts(url) {
   const category = url.searchParams.get("category");
   const cursor = url.searchParams.get("cursor");
+  if (!category && url.searchParams.get("sort") === "POPULAR") {
+    const size = Number(url.searchParams.get("size") ?? 10);
+    return { items: POPULAR.slice(0, size), nextCursor: null, hasNext: false };
+  }
   if (category === "FOOD" && !cursor) {
     return { items: FOOD_PAGE_1, nextCursor: "page-2", hasNext: true };
   }

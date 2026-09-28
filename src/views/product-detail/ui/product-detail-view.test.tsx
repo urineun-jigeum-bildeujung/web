@@ -1,5 +1,5 @@
 // 적합도가 아이에 따라 갈리는지, 재지 못한 아이를 0점으로 읽히지 않게 하는지 본다.
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -38,7 +38,7 @@ vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
 
-import type { ProductDetail } from "@/entities/product";
+import type { ProductCard, ProductDetail } from "@/entities/product";
 
 import { ProductDetailView } from "./product-detail-view";
 
@@ -74,12 +74,47 @@ const PRODUCT: ProductDetail = {
   },
 };
 
-function renderWith(search = "", product: Partial<ProductDetail> = {}) {
-  return render(
-    <NuqsTestingAdapter searchParams={search}>
-      <ProductDetailView productId="1" product={{ ...PRODUCT, ...product }} />
-    </NuqsTestingAdapter>,
-  );
+/** 함께 보면 좋은 상품. 지금 상품을 빼는 일은 받아 올 때 끝난다(`getRelatedProducts`) */
+const RELATED: ProductCard[] = [
+  {
+    productId: 3,
+    name: "연어&감자 그레인프리 사료 2kg",
+    thumbnailUrl: null,
+    price: 31_200,
+    discountRate: 20,
+    unitPrice: 16,
+    unitLabel: "g",
+    rating: 4.6,
+    reviewCount: 12,
+  },
+];
+
+function relatedOf(items: ProductCard[] = RELATED): Promise<ProductCard[]> {
+  return Promise.resolve(items);
+}
+
+/**
+ * **act 안에서 그리고 돌려준다.** "함께 보면 좋은 상품"은 `use()`로 promise를 읽어, 한 번 멈췄다가
+ * 풀리면서 다시 그린다. act 밖에서 풀리면 토스트·시트를 보는 테스트까지 흔들린다
+ */
+async function renderWith(
+  search = "",
+  product: Partial<ProductDetail> = {},
+  relatedPromise: Promise<ProductCard[]> = relatedOf(),
+) {
+  let result: ReturnType<typeof render> | undefined;
+  await act(async () => {
+    result = render(
+      <NuqsTestingAdapter searchParams={search}>
+        <ProductDetailView
+          productId="1"
+          product={{ ...PRODUCT, ...product }}
+          relatedPromise={relatedPromise}
+        />
+      </NuqsTestingAdapter>,
+    );
+  });
+  return result!;
 }
 
 /** 내 아이 둘. 기본 아이가 앞에 온다 */
@@ -126,8 +161,8 @@ describe("ProductDetailView", () => {
   // 아직 아무도 평가하지 않은 상품을 0점으로 그리면 평이 나쁜 상품처럼 읽힌다(#119와 같은 판단).
   // 백엔드는 이 경우를 null로도 0으로도 줄 수 있어 후기 수로 가른다
   describe("리뷰가 없는 상품의 별점", () => {
-    it("후기가 0이면 숫자를 적지 않고 별을 회색으로 둔다", () => {
-      renderWith("", { reviewCount: 0, rating: 0 });
+    it("후기가 0이면 숫자를 적지 않고 별을 회색으로 둔다", async () => {
+      await renderWith("", { reviewCount: 0, rating: 0 });
 
       const summary = screen.getByRole("region", { name: PRODUCT.name });
       expect(within(summary).queryByText("0.0")).toBeNull();
@@ -136,16 +171,16 @@ describe("ProductDetailView", () => {
       expect(summary.querySelector(".text-icon-fill-accent")).toBeNull();
     });
 
-    it("별점이 null로 와도 같다", () => {
-      renderWith("", { reviewCount: 0, rating: null });
+    it("별점이 null로 와도 같다", async () => {
+      await renderWith("", { reviewCount: 0, rating: null });
 
       const summary = screen.getByRole("region", { name: PRODUCT.name });
       expect(within(summary).queryByText(/^\d\.\d$/)).toBeNull();
       expect(summary.querySelector(".text-icon-fill-disable")).not.toBeNull();
     });
 
-    it("후기가 있으면 노란 별과 숫자를 보여준다", () => {
-      renderWith("", { reviewCount: 108, rating: 4.8 });
+    it("후기가 있으면 노란 별과 숫자를 보여준다", async () => {
+      await renderWith("", { reviewCount: 108, rating: 4.8 });
 
       const summary = screen.getByRole("region", { name: PRODUCT.name });
       expect(within(summary).getByText("4.8")).toBeDefined();
@@ -153,16 +188,16 @@ describe("ProductDetailView", () => {
     });
   });
 
-  it("가격 아래에 적합도와 근거가 함께 있다", () => {
-    renderWith();
+  it("가격 아래에 적합도와 근거가 함께 있다", async () => {
+    await renderWith();
 
     expect(screen.getByRole("heading", { name: "초코와 잘 맞아요" })).toBeDefined();
     expect(screen.getByText("관절 건강에 도움되는 글루코사민이 들어있어요")).toBeDefined();
   });
 
   // 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이 근거에까지 박혀 떴다 (#481)
-  it("적합도는 내 기본 아이의 이름과 프로필로 그린다", () => {
-    renderWith();
+  it("적합도는 내 기본 아이의 이름과 프로필로 그린다", async () => {
+    await renderWith();
 
     expect(screen.getByText("초코 기준으로 보고 있어요")).toBeDefined();
     expect(screen.getByText(/말티즈 · 3세 · 4.5kg/)).toBeDefined();
@@ -170,18 +205,18 @@ describe("ProductDetailView", () => {
   });
 
   // 고양이에게 강아지 영양제 점수를 보이면 근거가 거짓이 된다
-  it("급여 대상이 아닌 종의 아이는 점수 없이 재지 못했다고 알린다", () => {
+  it("급여 대상이 아닌 종의 아이는 점수 없이 재지 못했다고 알린다", async () => {
     useQueryPets.mockReturnValue({ pets: [PETS[1], PETS[0]], isLoading: false });
-    renderWith();
+    await renderWith();
 
     expect(screen.getByText("나비 기준으로 보고 있어요")).toBeDefined();
     expect(screen.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeDefined();
   });
 
-  it("로그인하지 않았으면 적합도 칸을 그리지 않는다", () => {
+  it("로그인하지 않았으면 적합도 칸을 그리지 않는다", async () => {
     useSessionState.mockReturnValue(false);
     useQueryPets.mockReturnValue({ pets: undefined, isLoading: false });
-    renderWith();
+    await renderWith();
 
     expect(screen.queryByRole("combobox", { name: "적합도 기준이 되는 아이" })).toBeNull();
     expect(screen.queryByRole("status", { name: "적합도를 불러오는 중" })).toBeNull();
@@ -190,23 +225,54 @@ describe("ProductDetailView", () => {
   });
 
   // 서버는 로그인을 모른다. 늦게 끼어들면 아래가 통째로 밀리니 자리를 잡는다
-  it("로그인 여부를 아직 모르면 적합도 자리를 잡아 둔다", () => {
+  it("로그인 여부를 아직 모르면 적합도 자리를 잡아 둔다", async () => {
     useSessionState.mockReturnValue(null);
     useQueryPets.mockReturnValue({ pets: undefined, isLoading: false });
-    renderWith();
+    await renderWith();
 
     expect(screen.getByRole("status", { name: "적합도를 불러오는 중" })).toBeDefined();
   });
 
+  // 예시 상품 셋은 없는 상품이라 누를 수 없게 막아 두었다. AI 추천 전까지 인기순이다 (#481)
+  it("함께 보면 좋은 상품은 실제 상품이고 누르면 그 상품으로 간다", async () => {
+    await renderWith();
+
+    const card = screen.getByRole("link", { name: /연어&감자 그레인프리 사료 2kg/ });
+    expect(card.getAttribute("href")).toBe("/products/3");
+    expect(within(card).getByText("1g당 약 16원")).toBeDefined();
+  });
+
+  it("함께 볼 다른 상품이 없으면 칸을 그리지 않는다", async () => {
+    await renderWith("", {}, relatedOf([]));
+
+    expect(screen.queryByRole("heading", { name: "함께 보면 좋은 상품" })).toBeNull();
+    expect(screen.queryByRole("status", { name: "함께 보면 좋은 상품을 불러오는 중" })).toBeNull();
+  });
+
+  // 추천 칸 하나가 실패했다고 상품까지 못 보게 하지 않는다
+  it("함께 보면 좋은 상품을 받지 못하면 그 칸만 숨긴다", async () => {
+    // React가 경계에 걸린 오류를 콘솔에 찍어 출력이 지저분해진다
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const failed = Promise.reject(new Error("503"));
+    failed.catch(() => {});
+    await renderWith("", {}, failed);
+
+    expect(screen.queryByRole("heading", { name: "함께 보면 좋은 상품" })).toBeNull();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(screen.getByRole("heading", { name: "초코와 잘 맞아요" })).toBeDefined();
+
+    consoleError.mockRestore();
+  });
+
   // 좋은 말만 있으면 광고와 구별되지 않는다. 지켜볼 것이 같은 자리에 있어야 근거로 읽힌다
-  it("지켜볼 점도 같은 자리에 있다", () => {
-    renderWith();
+  it("지켜볼 점도 같은 자리에 있다", async () => {
+    await renderWith();
 
     expect(screen.getByText("나트륨 함량이 또래 평균보다 다소 높은 편이에요")).toBeDefined();
   });
 
-  it("탭을 옮기면 그 탭 내용이 나온다", () => {
-    renderWith("?tab=qna");
+  it("탭을 옮기면 그 탭 내용이 나온다", async () => {
+    await renderWith("?tab=qna");
 
     // Q&A 탭은 문의 목록을 담는다(#153). 예전의 빈 문구와 문의하기 버튼은 없어졌다
     expect(screen.getByRole("link", { name: "상품 문의" })).toBeDefined();
@@ -214,16 +280,16 @@ describe("ProductDetailView", () => {
     expect(screen.queryByRole("heading", { name: "영양 성분 분석" })).toBeNull();
   });
 
-  it("상품 정보 탭에 영양 성분 분석이 있다", () => {
-    renderWith();
+  it("상품 정보 탭에 영양 성분 분석이 있다", async () => {
+    await renderWith();
 
     expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
     expect(screen.getByText("종합 92점")).toBeDefined();
     expect(screen.getByText("초코에게 꾸준히 급여하기 좋은 상품이에요")).toBeDefined();
   });
 
-  it("비교하기를 누르면 한 상품을 담은 안내를 띄우고 확인 시 비교 화면으로 이동한다", () => {
-    renderWith();
+  it("비교하기를 누르면 한 상품을 담은 안내를 띄우고 확인 시 비교 화면으로 이동한다", async () => {
+    await renderWith();
 
     fireEvent.click(screen.getByRole("button", { name: "비교하기" }));
     expect(toast.custom).toHaveBeenCalledOnce();
@@ -237,8 +303,8 @@ describe("ProductDetailView", () => {
   });
 
   describe("평소 상태(정상 재고)", () => {
-    it("장바구니 버튼을 누르면 수량을 고르는 시트가 열린다", () => {
-      renderWith("", { soldOut: false });
+    it("장바구니 버튼을 누르면 수량을 고르는 시트가 열린다", async () => {
+      await renderWith("", { soldOut: false });
 
       fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
 
@@ -250,7 +316,7 @@ describe("ProductDetailView", () => {
     });
 
     it("옵션 시트에서 담으면 시트가 닫히고 담김 안내가 뜬다", async () => {
-      renderWith("", { soldOut: false });
+      await renderWith("", { soldOut: false });
 
       fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
       fireEvent.click(screen.getByRole("button", { name: "21,000원 장바구니 담기" }));
@@ -271,7 +337,7 @@ describe("ProductDetailView", () => {
 
     // 딜 아이템으로 담아야 딜가가 붙는다. 그냥 상품으로 담으면 정가로 들어간다
     it("타임딜 상품은 딜 아이템 id로 담는다", async () => {
-      renderWith("", { soldOut: false, timeDealItemId: 77 });
+      await renderWith("", { soldOut: false, timeDealItemId: 77 });
 
       fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
       fireEvent.click(screen.getByRole("button", { name: "21,000원 장바구니 담기" }));
@@ -283,16 +349,16 @@ describe("ProductDetailView", () => {
   });
 
   // 종료 시각이 상세 응답에 없어 타임딜 화면은 아직 개발용 오버라이드로만 본다(#413)
-  it("타임딜 중에는 카운트다운이 붙은 구매 버튼 하나만 있다", () => {
-    renderWith("?status=deal", { soldOut: false });
+  it("타임딜 중에는 카운트다운이 붙은 구매 버튼 하나만 있다", async () => {
+    await renderWith("?status=deal", { soldOut: false });
 
     expect(screen.getByText("타임딜")).toBeDefined();
     expect(screen.getByRole("link", { name: /타임딜 구매하기/ })).toBeDefined();
     expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
   });
 
-  it("품절이면 재입고 알림 버튼만 있고 누르면 안내가 뜬다", () => {
-    renderWith();
+  it("품절이면 재입고 알림 버튼만 있고 누르면 안내가 뜬다", async () => {
+    await renderWith();
 
     expect(screen.getByText("품절")).toBeDefined();
     expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
@@ -305,8 +371,8 @@ describe("ProductDetailView", () => {
     expect(screen.getByRole("status").textContent).toContain("재입고되면 바로 알려드릴게요!");
   });
 
-  it("찜을 누르면 채워진 하트로 바뀌고 담김 안내가 뜬다", () => {
-    renderWith();
+  it("찜을 누르면 채워진 하트로 바뀌고 담김 안내가 뜬다", async () => {
+    await renderWith();
 
     fireEvent.click(screen.getByRole("button", { name: "찜 목록에 담기" }));
 
