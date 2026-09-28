@@ -49,7 +49,9 @@ export function needsClaimDetail(order: OrderSummary): boolean {
 /**
  * 신청 유형을 건의 종류로 옮긴다.
  *
- * `CANCEL`은 서버가 만들지 않는다(취소는 신청을 거치지 않는다). 모르는 값은 건으로 세우지 않는다 —
+ * `CANCEL` 신청은 우리 화면이 보내지 않는다. 서버는 배송완료 7일 안이면 받기도 하지만, 주문 취소는
+ * 배송 전에 `cancelOrder`로 하고 신청 기록을 남기지 않는다(`entities/order`의 `CLAIM_TYPES`).
+ * 그래서 취소 건은 신청이 아니라 목록의 취소 주문으로 세운다. 모르는 값은 건으로 세우지 않는다 —
  * 지어낸 뱃지를 다느니 비워 두는 편이 낫다.
  */
 function toKind(claimType: string): ClaimEntryKind | null {
