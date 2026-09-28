@@ -479,6 +479,65 @@ test("주문 생성을 서버가 거절하면 다음에는 새 키로 만든다"
   expect(secondKey).not.toBe(firstKey);
 });
 
+/**
+ * 재고 서비스가 5xx로 막힌 경우다.
+ *
+ * 서버는 저장한 주문을 취소한 채 오류를 낸다. 5xx라 키를 들고 있다가 다시 누르면 같은 키로
+ * 그 취소된 주문이 200으로 온다. 그 주문으로 결제를 준비하면 또 막혀 세 번째 누름에야
+ * 결제됐다 (#442).
+ */
+test("같은 키로 취소된 주문이 오면 새 키로 다시 만들어 그 주문으로 결제한다", async () => {
+  createOrder
+    .mockRejectedValueOnce(
+      new ApiError(503, "재고 서비스를 사용할 수 없습니다.", {
+        errorCode: "ORDER_503_INVENTORY_SERVICE_UNAVAILABLE",
+      } as never),
+    )
+    .mockResolvedValueOnce({ orderId: 77, orderStatus: "CANCELLED" })
+    .mockResolvedValueOnce({ orderId: 78, orderStatus: "PENDING" });
+  preparePayment.mockResolvedValue(PREPARED);
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  expect(createOrder).toHaveBeenCalledTimes(3);
+  const [[, firstKey], [, replayKey], [, freshKey]] = createOrder.mock.calls;
+  // 두 번째 누름은 먼저 같은 키로 묻고, 취소된 주문을 받자 새 키로 만든다
+  expect(replayKey).toBe(firstKey);
+  expect(freshKey).not.toBe(firstKey);
+  expect(preparePayment).toHaveBeenCalledTimes(1);
+  expect(preparePayment).toHaveBeenCalledWith({ orderId: 78 });
+  // 두 번째 누름은 실패 없이 결제창까지 간다
+  expect(toastAppError).toHaveBeenCalledTimes(1);
+});
+
+// 결제된 주문을 같은 키로 받았는데 새로 만들면 두 번 결제될 수 있다. 결제 준비가 거르게 둔다
+test("같은 키로 받은 주문이 취소가 아니면 새로 만들지 않는다", async () => {
+  createOrder
+    .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+    .mockResolvedValueOnce({ orderId: 77, orderStatus: "PAID" });
+  preparePayment.mockRejectedValueOnce(
+    new ApiError(409, "결제 가능한 상태의 주문이 아닙니다.", {
+      errorCode: "PAYMENT_409_ORDER_NOT_PAYABLE",
+    } as never),
+  );
+  renderView();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(toastAppError).toHaveBeenCalledTimes(2));
+  expect(createOrder).toHaveBeenCalledTimes(2);
+  expect(preparePayment).toHaveBeenCalledWith({ orderId: 77 });
+  expect(requestPayment).not.toHaveBeenCalled();
+});
+
 // 서버가 `petId`를 필수로 받는다. 모르는 채로 누르면 본문 검증에서 400이다 (#393)
 test("아이 목록을 알기 전에는 결제할 수 없다", () => {
   renderView({ petState: { pets: undefined, isLoading: true } });

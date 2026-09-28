@@ -344,15 +344,25 @@ export function CheckoutView() {
         await releaseOrder(superseded);
       }
       if (orderId === null) {
+        const body = { ...orderRequest, addressId: address.addressId, petId: Number(pet.id) };
         // **보내기 전에 적어 둔다.** 응답을 잃어도 다음 누름이 같은 키로 물어, 서버가 이미
         // 만든 주문을 돌려받는다 (#412)
-        writePendingOrder(pending);
-        const created = await createOrder(
-          { ...orderRequest, addressId: address.addressId, petId: Number(pet.id) },
-          pending.idempotencyKey,
-        );
+        let held = pending;
+        writePendingOrder(held);
+        let created = await createOrder(body, held.idempotencyKey);
+        // **같은 키로 받은 주문이 이미 취소돼 있으면 새 키로 한 번 더 만든다.** 서버는 주문을
+        // 저장한 뒤 재고 예약에서 5xx로 막히면 그 주문을 취소한 채 오류를 낸다. 우리는 5xx라 키를
+        // 들고 있다가 같은 키로 다시 묻고, 서버는 그 취소된 주문을 200으로 돌려준다. 그대로 가면
+        // 결제 준비에서 또 막혀 세 번째 누름에야 결제됐다 (#442).
+        // 결제된 주문처럼 다른 상태는 새로 만들지 않는다 — 결제 준비가 걸러 주고, 두 번 결제될
+        // 여지를 만들지 않는다
+        if (created.orderStatus === "CANCELLED") {
+          held = newPendingOrder(orderSignature);
+          writePendingOrder(held);
+          created = await createOrder(body, held.idempotencyKey);
+        }
         orderId = created.orderId;
-        writePendingOrder({ ...pending, orderId });
+        writePendingOrder({ ...held, orderId });
       }
       // **`amount`는 서버가 만든 주문의 금액이다.** 화면이 장바구니로 센 `total`과
       // 갈릴 수 있어 결제창에는 이쪽을 싣는다 (#312)
