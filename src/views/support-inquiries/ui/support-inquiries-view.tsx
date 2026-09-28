@@ -2,7 +2,8 @@
 // 1:1 문의 화면. 문의 내역과 서비스 문의하기.
 // 시안이 아직 없어(#209) 기능정의서(마이페이지 ver0.5 "1:1 문의 내역 조회"·"1:1 문의 작성")를 따른다 (#502).
 //
-// - 내역은 최신순이고 답변 대기·답변 완료를 보인다. 문의 API가 없어 예시 내역이다
+// - 내역은 최신순이고 답변 대기·답변 완료를 보인다. 문의 API가 없어 예시 내역이고, **예시라고 목록 위에
+//   밝힌다** — 쓰지 않은 문의를 제 내역으로 오해하지 않게 (#503 리뷰)
 // - 서비스 문의하기는 노션 문의 페이지로 가는 버튼인데 그 주소가 아직 없어 준비 중 안내를 띄운다.
 //   주문 정보를 문의에 붙여 넘기는 것은 기능정의서가 MVP에서 뺐다
 //
@@ -40,7 +41,11 @@ export function SupportInquiriesView() {
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="1:1 문의" />
 
-      <main className="flex flex-1 flex-col px-5 pt-2 pb-8">
+      <main className="flex flex-1 flex-col gap-2 px-5 pt-2 pb-8">
+        <p className="rounded-xl bg-bg-secondary px-4 py-3 text-caption-regular-13 break-keep text-text-body-secondary">
+          문의 창구를 준비하는 동안 보이는 예시 내역이에요. 창구가 열리면 내가 남긴 문의가 여기에
+          보여요.
+        </p>
         <Accordion type="single" collapsible>
           {inquiries.map((inquiry) => (
             <AccordionItem key={inquiry.id} value={inquiry.id} className="border-border">

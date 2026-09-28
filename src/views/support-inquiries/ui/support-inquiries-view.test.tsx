@@ -16,6 +16,9 @@ function inquiryTriggers() {
 test("최신 문의가 위로 오고 상태가 보인다", () => {
   render(<SupportInquiriesView />);
 
+  // 예시 내역을 제 문의로 오해하지 않게 목록 위에 밝힌다 (#503 리뷰)
+  expect(screen.getByText(/예시 내역이에요/)).toBeDefined();
+
   const [first, second] = inquiryTriggers().map((button) => button.textContent);
   expect(first).toContain("답변 대기");
   expect(first).toContain("반품 수거 일정 문의");
