@@ -1,17 +1,19 @@
 // 서비스 이용약관 화면.
-// 와이어프레임 기준(마이페이지_서비스 이용약관 화면)이라 디자인 확정 시 바뀔 수 있다.
+// 시안이 아직 없어(#209) 기능정의서(마이페이지 ver0.5 "서비스 이용약관 조회")의 항목 — 시행일,
+// 목차, 전문 — 을 예시 조항으로 채운다 (#502). 회원가입 약관 동의(sign_001)의 보기에서도 들어온다.
 
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { PolicyDocument } from "@/shared/ui/policy-document/policy-document";
+
+import { TERMS_EFFECTIVE_DATE, TERMS_SECTIONS } from "../config/terms-sections";
 
 export function ServiceTermsView() {
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader title="서비스 이용약관" />
 
-      <main className="flex flex-1 flex-col gap-4 px-4 pb-8">
-        <p className="text-sm text-muted-foreground">
-          서비스 이용약관 전문. 디자인 확정 전 자리 표시 화면입니다.
-        </p>
+      <main className="flex flex-1 flex-col px-5 pt-2 pb-8">
+        <PolicyDocument effectiveDate={TERMS_EFFECTIVE_DATE} sections={TERMS_SECTIONS} />
       </main>
     </div>
   );
