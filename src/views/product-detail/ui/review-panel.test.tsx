@@ -26,24 +26,46 @@ const REVIEWS: Review[] = [
   {
     id: "1",
     nickname: "댕댕이짱",
-    pets: [{ id: "10", name: "보리", age: 8, species: "DOG", breedSize: "SMALL" }],
+    pets: [
+      {
+        id: "10",
+        name: "보리",
+        age: 8,
+        species: "DOG",
+        breedSize: "SMALL",
+        breedId: 12,
+        weight: 4,
+      },
+    ],
     rating: 4.5,
     date: "2026. 08. 31",
     images: [],
     tags: ["사용 21일"],
     content: "계단 오를 때 덜 힘들어해요.",
     likeCount: 32,
+    liked: false,
   },
   {
     id: "2",
     nickname: "초코집사",
-    pets: [{ id: "11", name: "초코", age: 6, species: "DOG", breedSize: "LARGE" }],
+    pets: [
+      {
+        id: "11",
+        name: "초코",
+        age: 6,
+        species: "DOG",
+        breedSize: "LARGE",
+        breedId: 12,
+        weight: 4,
+      },
+    ],
     rating: 5,
     date: "2026. 08. 14",
     images: [],
     tags: ["사용 180일"],
     content: "대형견이라 양이 많이 드는데 좋아요.",
     likeCount: 51,
+    liked: false,
   },
 ];
 
@@ -107,8 +129,8 @@ describe("목록", () => {
     renderPanel();
 
     // 별점만 나열하면 소형견과 대형견의 후기가 같아 보인다
-    expect(screen.getByText("소형견 · 8세")).toBeDefined();
-    expect(screen.getByText("대형견 · 6세")).toBeDefined();
+    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("대형견 · 6세 · 4kg")).toBeDefined();
   });
 
   it("처음 받는 동안에는 자리를 잡아 둔다", () => {
@@ -198,7 +220,7 @@ describe("계약이 없어 닫아 둔 것", () => {
     expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
   });
-
+  // 토글이 로그인을 요구해 비로그인에서 401이 난다. 정책이 정해질 때까지 읽기 전용이다
   it("도움돼요는 수만 보이고 누를 수 없다", () => {
     useQueryProductReviews.mockReturnValue(listState());
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
@@ -218,7 +240,7 @@ describe("더보기", () => {
 
     renderPanel();
 
-    expect(screen.getByText("소형견 · 8세")).toBeDefined();
+    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: /다시 시도/ }));
     expect(loadNext).toHaveBeenCalled();
   });

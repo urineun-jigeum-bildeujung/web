@@ -1,50 +1,58 @@
-// 리뷰 카드의 아이 표시 문구를 검증한다. 여러 마리를 줄이지 않는지, 고양이가 종으로 적히는지 본다.
+// 후기 카드의 아이 줄. 체구·나이·몸무게를 잇고 여러 마리는 줄이지 않는다.
+
 import { describe, expect, it } from "vitest";
 
 import type { ReviewPet } from "../model/review";
-
 import { formatPetProfile, formatPetProfiles } from "./pet-label";
 
-function pet(override: Partial<ReviewPet> = {}): ReviewPet {
-  return {
-    id: "1",
-    name: "보리",
-    age: 8,
-    species: "DOG",
-    breedSize: "SMALL",
-    ...override,
-  };
-}
+const BORI: ReviewPet = {
+  id: "101",
+  name: "보리",
+  age: 8,
+  species: "DOG",
+  breedSize: "SMALL",
+  breedId: 12,
+  weight: 4,
+};
+
+const NABI: ReviewPet = {
+  id: "102",
+  name: "나비",
+  age: 3,
+  species: "CAT",
+  breedSize: null,
+  breedId: 45,
+  weight: 4.2,
+};
 
 describe("formatPetProfile", () => {
-  it("강아지는 체구와 나이로 적는다", () => {
-    expect(formatPetProfile(pet())).toBe("소형견 · 8세");
-    expect(formatPetProfile(pet({ breedSize: "MEDIUM", age: 3 }))).toBe("중형견 · 3세");
-    expect(formatPetProfile(pet({ breedSize: "LARGE", age: 6 }))).toBe("대형견 · 6세");
+  it("체구·나이·몸무게를 가운뎃점으로 잇는다", () => {
+    expect(formatPetProfile(BORI)).toBe("소형견 · 8세 · 4kg");
   });
 
-  // 고양이는 응답에 체구가 없다. 빈 자리를 두지 않고 종으로 적는다
-  it("체구가 없으면 종으로 적는다", () => {
-    expect(formatPetProfile(pet({ species: "CAT", breedSize: null, age: 3 }))).toBe("고양이 · 3세");
+  // 품종명이 오기 전까지는 체구 자리를 종으로 채운다
+  it("고양이는 체구가 없어 종으로 적는다", () => {
+    expect(formatPetProfile(NABI)).toBe("고양이 · 3세 · 4.2kg");
   });
 
-  it("나이가 0세여도 자리를 지킨다", () => {
-    expect(formatPetProfile(pet({ age: 0 }))).toBe("소형견 · 0세");
+  it("몸무게의 불필요한 0을 떼고 소수 첫째 자리까지 적는다", () => {
+    expect(formatPetProfile({ ...BORI, weight: 4.0 })).toContain("4kg");
+    expect(formatPetProfile({ ...BORI, weight: 4.25 })).toContain("4.3kg");
+    expect(formatPetProfile({ ...BORI, weight: 28 })).toContain("28kg");
+  });
+
+  it("0세도 적는다 — 태어난 해의 아이가 빠지면 안 된다", () => {
+    expect(formatPetProfile({ ...BORI, age: 0 })).toBe("소형견 · 0세 · 4kg");
   });
 });
 
 describe("formatPetProfiles", () => {
-  it("여러 마리를 줄이지 않고 전부 적는다", () => {
-    const pets = [
-      pet({ id: "1", breedSize: "SMALL", age: 8 }),
-      pet({ id: "2", breedSize: "LARGE", age: 2 }),
-      pet({ id: "3", species: "CAT", breedSize: null, age: 5 }),
-    ];
-
-    expect(formatPetProfiles(pets)).toBe("소형견 · 8세, 대형견 · 2세, 고양이 · 5세");
+  it("아이끼리는 /로 나눈다", () => {
+    expect(formatPetProfiles([BORI, NABI])).toBe("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg");
   });
 
-  it("한 마리면 구분자가 붙지 않는다", () => {
-    expect(formatPetProfiles([pet()])).toBe("소형견 · 8세");
+  it("여러 마리여도 줄이지 않는다", () => {
+    const line = formatPetProfiles([BORI, NABI, { ...BORI, id: "103", name: "묭이" }]);
+    expect(line.split(" / ")).toHaveLength(3);
   });
 });

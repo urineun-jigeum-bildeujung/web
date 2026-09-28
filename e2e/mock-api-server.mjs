@@ -313,7 +313,8 @@ const PRODUCT_NOT_FOUND = {
  *
  * **실제 백엔드 응답 모양 그대로다.** 목록에는 `hasNext`가 없고 `totalCount`만 오며,
  * 사진 없는 후기의 `images`는 빈 배열이 아니라 `null`, 닉네임을 못 찾은 회원은 빈 문자열,
- * 고양이는 `breedSize`가 `null`이다. 공개 리뷰 상세에는 `nickname`·`likeCount`가 없다.
+ * 고양이는 `breedSize`가 `null`이다. `usagePeriod`는 목록도 상세도 일 단위 숫자이고,
+ * 공개 상세에도 `nickname`·`likeCount`·`liked`가 실린다.
  *
  * 사진 주소는 로컬 파일이라 next/image의 remotePatterns를 타지 않는다.
  */
@@ -325,38 +326,81 @@ const REVIEWS = [
     reviewId: 7,
     nickname: "댕댕이맘",
     pets: [
-      { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG" },
-      { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT" },
+      {
+        petId: 101,
+        name: "보리",
+        sex: "FEMALE",
+        age: 8,
+        breedSize: "SMALL",
+        species: "DOG",
+        breedId: 12,
+        weight: 4,
+      },
+      {
+        petId: 102,
+        name: "나비",
+        sex: "MALE",
+        age: 3,
+        breedSize: null,
+        species: "CAT",
+        breedId: 45,
+        weight: 4.2,
+      },
     ],
     rating: 4.5,
-    usagePeriod: "21일",
+    usagePeriod: 21,
     palatability: null,
     text: "확실히 예전보다 계단 오를 때 덜 힘들어해요.",
     images: REVIEW_PHOTO_URLS,
+    liked: false,
     likeCount: 32,
     createdAt: "2026-09-27",
   },
   {
     reviewId: 9,
     nickname: "초코집사",
-    pets: [{ petId: 105, name: "초코", sex: "MALE", age: 6, breedSize: "LARGE", species: "DOG" }],
+    pets: [
+      {
+        petId: 105,
+        name: "초코",
+        sex: "MALE",
+        age: 6,
+        breedSize: "LARGE",
+        species: "DOG",
+        breedId: 30,
+        weight: 28,
+      },
+    ],
     rating: 5,
-    usagePeriod: "180일",
+    usagePeriod: 180,
     palatability: null,
     text: "대형견이라 양이 많이 드는데 좋아요.",
     images: [REVIEW_PHOTO_URLS[1]],
+    liked: true,
     likeCount: 51,
     createdAt: "2026-09-20",
   },
   {
     reviewId: 11,
     nickname: "",
-    pets: [{ petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG" }],
+    pets: [
+      {
+        petId: 113,
+        name: "해피",
+        sex: "MALE",
+        age: 4,
+        breedSize: "MEDIUM",
+        species: "DOG",
+        breedId: 7,
+        weight: 12.5,
+      },
+    ],
     rating: 3.5,
-    usagePeriod: "14일",
+    usagePeriod: 14,
     palatability: null,
     text: "닉네임을 못 찾는 회원의 후기입니다.",
     images: null,
+    liked: false,
     likeCount: 0,
     createdAt: "2026-09-10",
   },
@@ -399,23 +443,26 @@ function productReviews(productId, url) {
   };
 }
 
-/** 공개 리뷰 상세. 사진 뷰어의 카드가 이걸로 채워진다 — nickname·likeCount가 없다 */
+/** 공개 리뷰 상세. 사진 뷰어의 카드가 이걸로 채워진다 */
 function reviewDetail(reviewId) {
   const review = REVIEWS.find((item) => String(item.reviewId) === reviewId);
   if (!review) return null;
   return {
     reviewId: review.reviewId,
     isMine: false,
+    nickname: review.nickname,
     product: { productId: 1, name: "관절 튼튼 영양제 90정", image: null },
     pets: review.pets,
     rating: review.rating,
-    usagePeriod: Number(review.usagePeriod.replace("일", "")),
+    usagePeriod: review.usagePeriod,
     answerValues: [],
     goodPoints: null,
     badPoints: null,
     matchScore: null,
     text: review.text,
     images: review.images,
+    likeCount: review.likeCount,
+    liked: review.liked,
     createdAt: review.createdAt,
   };
 }
