@@ -5,8 +5,12 @@
 // 무엇을 고른 것인지 알기 어려워서다. 그 문구를 만드는 자리가 이 파일이다.
 //
 // 사용 기한·나이·체중 모두 두 손잡이로 구간을 고른다(PD팀 확인).
-
-import type { MockReview } from "@/entities/review";
+//
+// **거르는 것은 서버다.** 조건을 요청 파라미터로 넘기고 화면에서 다시 거르지 않는다
+// (AGENTS.md 2.5). 이 파일은 조건을 들고 주소에 싣고 되읽는 일만 한다.
+//
+// **"재구매 여부만 보기"는 MVP 범위에서 빠졌다(PD).** 조건을 지웠고, 옛 주소에 남은
+// `repeat:1`은 `parseFilter`가 아는 키만 꺼내 쓰므로 조용히 무시된다.
 
 /** 슬라이더 오른쪽 끝은 1년+/15세+/30kg+로 열린 상한을 뜻한다 */
 export const PERIOD_RANGE = [1, 12] as const;
@@ -19,8 +23,6 @@ export type Neutered = "yes" | "no";
 export type ReviewFilter = {
   /** 사용 기간 구간(개월) */
   period: [number, number];
-  /** 재구매한 사람의 후기만 */
-  repeatOnly: boolean;
   species: Species | null;
   /** 골라 둔 품종 id들(#264). `GET /pets/breeds`가 준 id 그대로다 */
   breedIds: number[];
@@ -35,7 +37,6 @@ export type ReviewFilter = {
 
 export const DEFAULT_FILTER: ReviewFilter = {
   period: [...PERIOD_RANGE],
-  repeatOnly: false,
   species: null,
   breedIds: [],
   age: [...AGE_RANGE],
@@ -52,7 +53,6 @@ function untouchedRange(value: [number, number], range: readonly [number, number
 export function isDefault(filter: ReviewFilter) {
   return (
     untouchedRange(filter.period, PERIOD_RANGE) &&
-    !filter.repeatOnly &&
     filter.species === null &&
     filter.breedIds.length === 0 &&
     untouchedRange(filter.age, AGE_RANGE) &&
@@ -85,30 +85,6 @@ export function weightLabel(filter: ReviewFilter) {
 }
 
 /**
- * 조건에 맞는 후기만 남긴다.
- *
- * 실제로는 조건을 요청 파라미터로 넘겨 서버가 걸러 준다. 목업 단계라 여기서 거르고,
- * 연동하면 이 함수는 통째로 사라진다.
- */
-export function applyFilter(reviews: MockReview[], filter: ReviewFilter) {
-  // 양 끝을 건드리지 않았으면 범위 밖 목업 데이터도 그대로 둔다(예: 사용 3주차).
-  const inRange = (value: number, picked: [number, number], range: readonly [number, number]) =>
-    untouchedRange(picked, range) ||
-    (value >= picked[0] && (picked[1] === range[1] || value <= picked[1]));
-
-  return reviews.filter((review) => {
-    return (
-      inRange(review.usedMonths, filter.period, PERIOD_RANGE) &&
-      inRange(review.age, filter.age, AGE_RANGE) &&
-      inRange(review.weight, filter.weight, WEIGHT_RANGE) &&
-      (!filter.repeatOnly || review.repeatCount > 0) &&
-      (filter.species === null || review.species === filter.species) &&
-      (filter.neutered === null || review.neutered === (filter.neutered === "yes"))
-    );
-  });
-}
-
-/**
  * 조건을 주소 한 칸에 싣는다. 여덟 가지를 키마다 나누면 주소가 길어져,
  * 기본값과 다른 것만 모아 `period:3-6|weight:1-9` 꼴로 적는다.
  */
@@ -116,7 +92,6 @@ export function serializeFilter(filter: ReviewFilter) {
   const parts: string[] = [];
 
   if (!untouchedRange(filter.period, PERIOD_RANGE)) parts.push(`period:${filter.period.join("-")}`);
-  if (filter.repeatOnly) parts.push("repeat:1");
   if (filter.species) parts.push(`species:${filter.species}`);
   if (filter.breedIds.length > 0) parts.push(`breed:${filter.breedIds.join(",")}`);
   if (!untouchedRange(filter.age, AGE_RANGE)) parts.push(`age:${filter.age.join("-")}`);
@@ -164,7 +139,6 @@ export function parseFilter(param: string): ReviewFilter {
 
   return {
     period: parseRange(entries.get("period"), PERIOD_RANGE),
-    repeatOnly: entries.get("repeat") === "1",
     species: species === "dog" || species === "cat" ? species : null,
     breedIds: breed ? breed.split(",").map(Number).filter(Number.isFinite) : [],
     age: parseRange(entries.get("age"), AGE_RANGE),
