@@ -2,7 +2,7 @@
 // 그리드·타임딜은 서버가 조회해 준 결과를 그대로 그리는지만 본다 — 거르고 정렬하는
 // 건 서버 책임이라 여기서 다시 보지 않는다(entities/product/api/products.test.ts가
 // 요청 파라미터 조립을 본다).
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -52,12 +52,47 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
 const session: { value: boolean | null } = { value: true };
 vi.mock("@/shared/api/use-session-state", () => ({ useSessionState: () => session.value }));
 
+// 최근에 구매한 상품은 반응을 남길 수 있는 실제 구매다(#494). 서버 상태라 값만 세운다.
+// 받은 인자도 모아 로그인 게이트를 본다
+const PENDING = [
+  { orderProductId: "11", productId: "3", name: "치석 케어 덴탈껌 7개입", petId: null },
+  { orderProductId: "12", productId: "5", name: "관절 튼튼 트릿 200g", petId: "7" },
+];
+type PendingQuery = {
+  items: unknown;
+  isLoading: boolean;
+  isRetrying: boolean;
+  error: Error | null;
+  refetch: () => void;
+};
+const pendingIdle = (): PendingQuery => ({
+  items: PENDING,
+  isLoading: false,
+  isRetrying: false,
+  error: null,
+  refetch: vi.fn(),
+});
+let pendingQuery = pendingIdle();
+let pendingCalls: unknown[] = [];
+const submitFeedback = vi.fn();
+vi.mock("@/entities/review", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/review")>()),
+  useQueryPendingFeedbacks: (options: unknown) => {
+    pendingCalls.push(options);
+    return pendingQuery;
+  },
+  useMutateSubmitFeedback: () => ({ submitFeedback, isSubmitting: false }),
+}));
+
 import { HomeView } from "./home-view";
 
 afterEach(() => {
   petsQuery = { pets: PETS, isLoading: false };
   petsCalls = [];
   session.value = true;
+  pendingQuery = pendingIdle();
+  pendingCalls = [];
+  submitFeedback.mockReset();
 });
 
 const PUPPY_FOOD: ProductCard = {
@@ -265,7 +300,49 @@ describe("HomeView", () => {
     expect(await screen.findByText(/지금은 진행 중인 타임딜이 없어요/)).toBeDefined();
   });
 
-  it("반응을 남기면 어디에 쓰이는지 알린다", async () => {
+  // 목데이터 두 개가 누구에게나 뜨던 자리다 (#494)
+  it("최근에 구매한 상품은 반응을 남길 수 있는 실제 구매다", async () => {
+    await renderWith();
+
+    expect(screen.getByText("치석 케어 덴탈껌 7개입")).toBeDefined();
+    expect(screen.getByText("관절 튼튼 트릿 200g")).toBeDefined();
+    // 구매 후 며칠·몇 번째 구매는 응답에 없다. 지어내지 않는다
+    expect(screen.queryByText(/구매 후 \d+일|\d+번째 구매/)).toBeNull();
+    expect(pendingCalls).toContainEqual({ enabled: true });
+  });
+
+  it("남길 반응이 없으면 칸을 그리지 않는다", async () => {
+    pendingQuery = { ...pendingIdle(), items: [] };
+    await renderWith();
+
+    expect(screen.queryByText("최근에 구매한 상품, 아이는 어때요?")).toBeNull();
+  });
+
+  // 로그아웃 상태에서 부르면 방문할 때마다 401과 재발급 시도가 헛돈다
+  it("로그인하지 않았으면 부르지 않고 칸도 없다", async () => {
+    session.value = false;
+    pendingQuery = { ...pendingIdle(), items: undefined };
+    await renderWith();
+
+    expect(pendingCalls).toContainEqual({ enabled: false });
+    expect(pendingCalls).not.toContainEqual({ enabled: true });
+    expect(screen.queryByText("최근에 구매한 상품, 아이는 어때요?")).toBeNull();
+  });
+
+  // 조용히 비우면 남길 반응이 없는 것과 구별되지 않는다
+  it("받지 못하면 그 자리에서 알리고 다시 받는다", async () => {
+    const refetch = vi.fn();
+    pendingQuery = { ...pendingIdle(), items: undefined, error: new Error("503"), refetch };
+    await renderWith();
+
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("최근에 구매한 상품을 불러오지 못했어요");
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it("반응을 남기면 서버에 보내고 어디에 쓰이는지 알린다", async () => {
+    submitFeedback.mockResolvedValue(undefined);
     await renderWith();
 
     fireEvent.click(screen.getAllByRole("button", { name: /반응 남기기/ })[0]);
@@ -273,7 +350,33 @@ describe("HomeView", () => {
     fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
 
     // 남긴 반응이 추천으로 되돌아간다는 것이 이 서비스의 약속이다
-    expect(screen.getByText(/다음 추천 적합도에 반영할게요/)).toBeDefined();
+    expect(await screen.findByText(/다음 추천 적합도에 반영할게요/)).toBeDefined();
+    // 항목의 아이가 비어 있으면(백엔드가 아직 null) 메인에서 고른 아이다
+    expect(submitFeedback).toHaveBeenCalledWith({
+      productId: "3",
+      orderProductId: "11",
+      petId: "3",
+      submission: { answer: "GOOD" },
+    });
+  });
+
+  it("항목에 아이가 있으면 그 아이의 반응으로 묻고 보낸다", async () => {
+    submitFeedback.mockResolvedValue(undefined);
+    await renderWith();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /반응 남기기/ })[1]);
+    expect(screen.getByText("구름이에게 잘 맞았나요?")).toBeDefined();
+    fireEvent.click(screen.getByRole("radio", { name: "안 맞았어요" }));
+    fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+
+    await waitFor(() =>
+      expect(submitFeedback).toHaveBeenCalledWith({
+        productId: "5",
+        orderProductId: "12",
+        petId: "7",
+        submission: { answer: "BAD" },
+      }),
+    );
   });
 
   it("반응을 고르면 아직 이르다는 표시가 풀린다", async () => {
