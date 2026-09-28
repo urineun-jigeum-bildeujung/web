@@ -352,6 +352,18 @@ test("결제가 실패한 뒤 다시 눌러도 주문을 또 만들지 않는다
   expect(releaseOrder).not.toHaveBeenCalled();
 });
 
+// 시안(1586:24254)이 목록 첫 보기에만 "[기본]"을 붙인다. 상자와 주문에 실리는 값은 원래 문구다 (#441)
+test("요청사항 목록의 첫 보기에만 [기본]을 붙이고 상자에는 원래 문구를 보인다", async () => {
+  renderView();
+
+  const trigger = await screen.findByLabelText("배송 요청사항");
+  expect(trigger.textContent).toBe("문 앞에 놓아주세요");
+
+  fireEvent.click(trigger);
+  expect(screen.getByRole("option", { name: "[기본] 문 앞에 놓아주세요" })).toBeDefined();
+  expect(screen.getByRole("option", { name: "경비실에 맡겨주세요" })).toBeDefined();
+});
+
 // 옛 주문으로 결제하면 고친 내용이 반영되지 않는다. 본문이 달라지면 새로 만들어야 한다
 test("요청사항을 고치면 주문을 새로 만든다", async () => {
   createOrder.mockResolvedValue({ orderId: 77 });

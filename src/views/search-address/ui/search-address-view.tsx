@@ -1,5 +1,5 @@
 // 주소 검색. 검색어를 받아 결과를 우리 화면에 그린다.
-// UI 시안 기준(mypa_312_입력전, mypa_312, mypa_312_검색결과).
+// UI 페이지 시안 기준(mypa_312 입력 전 1507:40401, 결과를 고른 뒤 1507:40624).
 //
 // 디자인팀이 화면 커스텀을 요청해 다음 우편번호 위젯을 쓰지 않는다.
 // 행정안전부 도로명주소 API를 우리 Route Handler(`/api/juso`)를 거쳐 부른다 — 승인키가
@@ -100,8 +100,8 @@ export function SearchAddressView() {
     void setPage(1);
   };
 
-  // 시안은 검색어만 넣어도 `입력 완료`를 활성으로 그렸지만, 주소를 고르지 않으면 넘길 값이 없다.
-  // 골랐을 때만 활성으로 둔다 (#187).
+  // 주소를 골라야 `입력 완료`가 켜진다. 고르지 않으면 넘길 값이 없다 (#187). 시안도 결과를 고른
+  // 뒤(1507:40624)에만 켜져 있다.
   const submit = () => {
     if (!selectedInPage) {
       return;
@@ -134,20 +134,20 @@ export function SearchAddressView() {
         <label htmlFor="address-keyword" className="sr-only">
           주소 검색어
         </label>
+        {/* 시안 입력칸은 안내 글자 없이 비어 있다. 어떻게 찾는지는 아래 예시가 알려 준다 */}
         <Input
           id="address-keyword"
           value={keyword}
-          placeholder="예) 테헤란로 123"
           onChange={(event) => setKeyword(event.target.value)}
           onKeyDown={(event) => event.key === "Enter" && search()}
-          className="h-11 flex-1 border-0 px-0 text-body-medium-16 shadow-none placeholder:text-text-body-tertiary focus-visible:ring-0"
+          className="h-11 flex-1 border-0 px-0 text-body-medium-14 shadow-none focus-visible:ring-0"
         />
-        {/* 시안 button/s — 28px에 label/bold_14. 비활성은 흐려지지 않고 회색으로 채워진다 */}
+        {/* 시안 button/m — 32px에 label/medium_14, 모서리 6px. 비활성은 흐려지지 않고 회색으로 채워진다 */}
         <Button
           disabled={!canSearch}
           onClick={search}
           className={cn(
-            "h-7 shrink-0 rounded-lg px-3 text-label-bold-14",
+            "h-8 shrink-0 rounded-md px-1.5 text-label-medium-14",
             "disabled:bg-surface-disable disabled:text-text-label-disable disabled:opacity-100",
           )}
         >
@@ -160,7 +160,7 @@ export function SearchAddressView() {
         <dl className="flex flex-col gap-5">
           {SEARCH_EXAMPLES.map((item) => (
             <div key={item.label} className="flex gap-2">
-              <dt className="shrink-0 text-label-bold-14 text-foreground">{item.label}</dt>
+              <dt className="shrink-0 text-body-medium-14 text-foreground">{item.label}</dt>
               <dd className="text-body-regular-14 text-text-body-tertiary">{item.example}</dd>
             </div>
           ))}
@@ -188,9 +188,13 @@ export function SearchAddressView() {
           <>
             {/* 쪽을 넘기는 동안 앞 결과를 그대로 두되, 아직 오는 중임을 흐리게 보여 준다.
                 목록을 지우고 뼈대를 띄우면 넘길 때마다 화면이 들썩인다 */}
+            {/* 고르면 입력칸도 그 도로명으로 바뀐다(1507:40624). 다시 찾기 전까지 목록은 그대로다 */}
             <AddressResultList
               results={result.items}
-              onSelect={setSelected}
+              onSelect={(item) => {
+                setSelected(item);
+                setKeyword(item.roadAddr);
+              }}
               aria-busy={isRefreshing}
               className={cn(isRefreshing && "opacity-60 transition-opacity")}
             />

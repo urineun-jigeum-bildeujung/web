@@ -171,6 +171,15 @@ test("검색 화면에서 고른 주소가 주소 줄에 들어온다", () => {
   expect(screen.queryByText("주소 검색")).toBeNull();
 });
 
+// UI 페이지 시안(1505:39298)의 이름이다. 옛 와이어프레임은 "받을 곳 주소"였다 (#441)
+test("주소 칸 이름은 시안대로 주소다", () => {
+  renderAt("");
+
+  expect(screen.getByText("주소")).toBeDefined();
+  expect(screen.queryByText("받을 곳 주소")).toBeNull();
+  expect(screen.getByPlaceholderText("요청사항을 적어주세요")).toBeDefined();
+});
+
 // 고치러 들어와 새로 골랐으면 저장된 주소가 아니라 방금 고른 것이 보여야 한다
 test("저장된 곳을 열어 새 주소를 고르면 그것이 저장된 값을 덮는다", () => {
   renderAt(`?place=5&${PICKED}`);
@@ -192,7 +201,8 @@ test("다른 칸을 다 채워도 주소가 비어 있으면 입력 완료가 �
     ["연락처", "010-1234-5678"],
   ]);
 
-  expect(screen.getByText("주소 검색")).toBeDefined();
+  // 빈 주소 줄은 글자 없이 화살표만 있다. 링크 이름은 아이콘 라벨이 맡는다 (#441)
+  expect(screen.getByRole("link", { name: "주소 검색" }).textContent).toBe("");
   expect(submit().hasAttribute("disabled")).toBe(true);
 });
 

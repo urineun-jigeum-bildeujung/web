@@ -224,6 +224,18 @@ test("새 배송지면 place를 붙이지 않는다", async () => {
   expect(url.searchParams.has("place")).toBe(false);
 });
 
+// 시안(1507:40624)은 결과를 고르면 입력칸이 그 도로명으로 바뀐다. 목록은 다시 찾기 전까지 그대로다 (#441)
+test("결과를 고르면 입력칸이 고른 도로명으로 바뀐다", () => {
+  renderAt();
+
+  searchFor("테헤란로");
+  fireEvent.click(firstResult());
+
+  expect((screen.getByLabelText("주소 검색어") as HTMLInputElement).value).toBe(ITEMS[0].roadAddr);
+  expect(useQueryAddressSearch).toHaveBeenLastCalledWith("테헤란로", 1);
+  expect(screen.getByRole("button", { name: "입력 완료" }).hasAttribute("disabled")).toBe(false);
+});
+
 // 쪽을 넘기면 고른 것이 화면에서 사라진다. 남겨 두면 보이지 않는 주소로 넘어간다
 test("쪽을 넘기면 앞서 고른 것이 풀린다", async () => {
   renderAt();

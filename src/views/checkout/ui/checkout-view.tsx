@@ -58,7 +58,10 @@ import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget"
 /** 장바구니 응답에 `deliveryFee`가 없어 고정값을 쓴다. 장바구니 화면과 같은 값이다 (#214) */
 const SHIPPING_FEE = 3000;
 
-/** 시안(paym_001_드롭다운) 순서 그대로다. 마지막 하나만 성격이 달라 값으로 가른다 */
+/**
+ * 시안(paym_001_드롭다운) 순서 그대로다. 마지막 하나만 성격이 달라 값으로 가른다.
+ * 첫 보기가 기본값이라 목록에서만 "[기본]"을 붙인다 (1586:24254, #441)
+ */
 const REQUEST_DIRECT = "직접 입력";
 
 const REQUEST_OPTIONS = [
@@ -449,14 +452,15 @@ export function CheckoutView() {
                   높이를 못박아 같은 속성으로는 덮이지 않으므로 최소 높이로 올린다 */}
               <SelectTrigger
                 id="delivery-request"
-                className="min-h-11 w-full rounded-lg px-3 text-body-medium-16 text-foreground [&_svg]:size-5"
+                className="min-h-11 w-full rounded-lg px-3 text-body-medium-14 text-foreground [&_svg]:size-5"
               >
-                <SelectValue />
+                {/* 상자에는 "[기본]" 없이 원래 문구를 보인다. 비워 두면 고른 보기의 글자를 그대로 옮긴다 */}
+                <SelectValue>{request}</SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {REQUEST_OPTIONS.map((option) => (
+                {REQUEST_OPTIONS.map((option, index) => (
                   <SelectItem key={option} value={option}>
-                    {option}
+                    {index === 0 ? `[기본] ${option}` : option}
                   </SelectItem>
                 ))}
               </SelectContent>
