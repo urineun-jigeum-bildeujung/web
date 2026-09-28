@@ -1,8 +1,8 @@
 // 주문 상세. 결제일·주문 상품·결제상세·배송지 정보를 카드로 나눠 보여준다.
-// UI 시안 기준(mypa_161_준비중_주문상세 3324:37275, mypa_161_주문상세_배송완료 3324:36679)이다 (#405).
+// UI 시안 기준(mypa_161_준비중_주문상세 3324:37275, 배송완료 상세 3610:59567)이다 (#405, #462).
 //
 // 회색 바닥 위에 흰 카드 넷이 8px 간격으로 놓이고, 그 아래에 1:1 문의 안내가 온다.
-// 맨 아래에는 배송 전이면 주문 취소(#410), 배송이 끝났으면 반품·교환 버튼이 붙는다.
+// 맨 아래에는 배송 전이면 주문 취소(#410), 배송이 끝났으면 "구매확정"·"반품·교환" 두 버튼(#462)이 붙는다.
 //
 // **카드 머리를 이 화면에서 직접 그린다.** 결제상세·배송지 블록은 주문 완료(`paym_002`)와
 // 함께 쓰던 것인데, 2026-09-23 시안부터 제목·결제 일시·배송지 항목 이름의 글자가 주문 완료와
@@ -32,6 +32,7 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 
 import { CancelOrderAction } from "./cancel-order-action";
 import { ClaimActions } from "./claim-actions";
+import { ConfirmOrderAction } from "./confirm-order-action";
 import { OrderDetailSkeleton } from "./order-detail-skeleton";
 
 /** 배송지 항목. 이름이 진한 굵은 글씨, 값이 흐린 글씨다 (3324:36754) */
@@ -203,17 +204,26 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
               </Link>
             </div>
 
-            {/* 배송이 끝나야 반품·교환을 접수할 수 있다(mypa_161_주문상세_배송완료). 배송 전에는
-                주문 취소가 맞는 길이라 이 자리에 두지 않는다.
+            {/* 배송완료 주문의 맨 아래는 "구매확정"·"반품·교환" 두 버튼이 한 줄로 선다. 구매 확정은
+                주문 전체에 걸려 목록의 상품 줄마다 있던 것을 이리로 옮겼고, 버튼이 셋이 되자 PD팀이
+                반품과 교환을 하나로 묶어 시트에서 고르게 했다(2026-09-28, #462) */}
+            {status === "delivered" && (
+              <div className="flex gap-2">
+                <ConfirmOrderAction orderId={order.orderId} items={order.items} />
+                {/* 배송이 끝나야 반품·교환을 접수할 수 있다(배송완료 상세 3610:59567). 배송 전에는
+                    주문 취소가 맞는 길이라 이 자리에 두지 않는다.
 
-                **배송완료 뒤 7일까지만이다.** 기능명세서와 서버 `Order.isClaimableForReturn`이 같은
-                규칙이라, 화면이 안 막으면 눌러 놓고 접수에서 거절당한다 (#374).
+                    **배송완료 뒤 7일까지만이다.** 기능명세서와 서버 `Order.isClaimableForReturn`이 같은
+                    규칙이라, 화면이 안 막으면 눌러 놓고 접수에서 거절당한다 (#374).
 
-                **신청할 수 있는 상품이 하나도 없으면 감춘다.** 눌러 봐야 신청 화면이
-                "신청 진행 중"으로 되돌려 보낸다 (#334) */}
-            {status === "delivered" &&
-              isWithinClaimPeriod(order.deliveredAt) &&
-              claimableItems(order.items).length > 0 && <ClaimActions orderId={order.orderId} />}
+                    **신청할 수 있는 상품이 하나도 없으면 감춘다.** 눌러 봐야 신청 화면이
+                    "신청 진행 중"으로 되돌려 보낸다 (#334) */}
+                {isWithinClaimPeriod(order.deliveredAt) &&
+                  claimableItems(order.items).length > 0 && (
+                    <ClaimActions orderId={order.orderId} />
+                  )}
+              </div>
+            )}
 
             {/* 배송이 시작되기 전까지만 취소할 수 있다. 백엔드 전이 규칙도 `PAID`·`PREPARING`에서만
                 취소를 허용하는데, 화면은 그 둘을 한 단계로 묶는다. 취소는 주문 전체라 목록이 아니라
