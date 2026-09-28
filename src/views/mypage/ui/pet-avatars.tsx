@@ -60,6 +60,7 @@ export function PetAvatars() {
           className={`${CIRCLE} relative overflow-hidden bg-surface-disable`}
         >
           <PetPhoto
+            petId={pet.id}
             name={pet.name}
             photoUrl={pet.photoUrl}
             sizes="42px"

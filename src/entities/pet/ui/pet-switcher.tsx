@@ -114,6 +114,7 @@ export function PetSwitcher({
                 )}
               >
                 <PetPhoto
+                  petId={pet.id}
                   name={pet.name}
                   photoUrl={pet.photoUrl}
                   sizes={hero && selected ? "90px" : main ? "56px" : "48px"}
