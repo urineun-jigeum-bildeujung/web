@@ -17,7 +17,7 @@ type PendingFeedbackListResponse = {
     thumbnailUrl: string | null;
     /** ISO 시각. 이때부터 반응을 받을 수 있다 */
     checkAvailableAt: string;
-    /** 어느 아이에게 사 줬는지. **백엔드가 아직 `null`로 둔다** — 주문 서비스 내부 응답에 없어 "추후 연동" */
+    /** 어느 아이에게 사 줬는지. 2026-09-23부터 주문에 아이가 필수라 그 전 주문만 `null`이다 */
     petId: number | null;
   }[];
 };
