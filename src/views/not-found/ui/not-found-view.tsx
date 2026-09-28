@@ -12,7 +12,9 @@ import { Icon } from "@/shared/ui/icon/icon";
 
 export function NotFoundView() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center px-5 text-center">
+    // 폭을 스스로 진다. not-found.tsx가 `(constrained)` 그룹 밖 루트에 있어
+    // 420px 기둥을 물려받지 않는다(#491)
+    <main className="mx-auto flex min-h-dvh w-full max-w-105 flex-col items-center justify-center px-5 text-center">
       {/* 디자인 시스템 `icon_404`. 시안이 102px이라 세트 기본(24)에서 키운다 */}
       <Icon name="404" className="size-25.5 text-icon-fill-light-red" />
 

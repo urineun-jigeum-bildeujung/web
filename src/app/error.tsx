@@ -24,7 +24,13 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
   }, [error]);
 
   return (
-    <div role="alert" className="flex flex-1 flex-col items-center justify-center px-5 text-center">
+    // 폭과 높이를 스스로 진다. 이 파일은 `(constrained)` 그룹 밖 루트에 있어
+    // 420px 기둥을 물려받지 않고, 그룹 안에 복제해도 그룹 레이아웃 자체의 오류는
+    // 못 잡는다 — Next 문서가 "같은 세그먼트의 layout은 감싸지 않는다"고 적고 있다(#491)
+    <div
+      role="alert"
+      className="mx-auto flex min-h-dvh w-full max-w-105 flex-col items-center justify-center px-5 text-center"
+    >
       {/* 디자인 시스템 `icon_reload`. 시안이 102px이라 세트 기본(24)에서 키운다 */}
       <Icon name="reload" className="size-25.5 text-icon-fill-light-red" />
 
