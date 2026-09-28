@@ -51,6 +51,8 @@ export function ConfirmOrderAction({ orderId, items }: ConfirmOrderActionProps) 
             setOpen(false);
           }
         }}
+        // 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다. 보내는 동안은 끌어내리기 자체를 막는다(#474)
+        dismissible={!confirming}
         className="gap-2 px-5 pb-4"
       >
         <DrawerHeader className="gap-2 p-0">

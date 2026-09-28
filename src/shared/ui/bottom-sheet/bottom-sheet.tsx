@@ -24,6 +24,12 @@ type BottomSheetProps = {
   showHandle?: boolean;
   /** `floating`(기본)은 뜨는 카드, `full`은 화면 폭을 꽉 채우는 시트다 */
   variant?: "floating" | "full";
+  /**
+   * 거짓이면 끌어내리기·바깥 누르기·Esc로 닫히지 않는다. 보내는 동안 닫기를 거절해야 할 때 준다 —
+   * `onOpenChange`에서 거절만 하면 vaul이 끌어내린 위치를 되돌리지 않아 시트가 반쯤 내려간 채
+   * 멈춘다(#474)
+   */
+  dismissible?: boolean;
   className?: string;
 };
 
@@ -33,10 +39,11 @@ export function BottomSheet({
   children,
   showHandle = true,
   variant = "floating",
+  dismissible = true,
   className,
 }: BottomSheetProps) {
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={onOpenChange} dismissible={dismissible}>
       <DrawerPortal>
         {/* 시안의 덮개는 흐림 없이 어둡게만 깔린다 */}
         <DrawerOverlay className="bg-surface-overlay-dimmed supports-backdrop-filter:backdrop-blur-none" />
