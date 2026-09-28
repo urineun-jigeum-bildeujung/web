@@ -254,16 +254,28 @@ test("결제하기를 누르면 주문을 만들고 결제창을 띄운다", asy
   });
 });
 
-test("전체 동의를 켜면 네 줄이 함께 켜진다", () => {
+test("전체 동의를 켜면 필수 세 줄이 함께 켜진다", () => {
   renderView();
 
   fireEvent.click(screen.getByLabelText("[전체 동의]"));
 
   // 이 저장소는 jest-dom을 붙이지 않아 toBeChecked가 없다. shadcn Checkbox의 상태로 본다
-  expect(
-    screen.getByLabelText("[선택] 다음 주문을 위해 이 결제 수단 저장").getAttribute("data-state"),
-  ).toBe("checked");
+  for (const label of [
+    "[필수] 주문 상품 정보 동의",
+    "[필수] 개인정보 제3자 제공 동의",
+    "[필수] 결제 대행 서비스(PG) 이용 약관 동의",
+  ]) {
+    expect(screen.getByLabelText(label).getAttribute("data-state")).toBe("checked");
+  }
   expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(false);
+});
+
+// 서버가 결제 수단을 저장하지 않아 체크해도 실리는 곳이 없었다. 백엔드 요청·PD 동의로 뺐다 (#466)
+test("결제 수단 저장 줄이 없다", () => {
+  renderView();
+
+  expect(screen.queryByLabelText(/결제 수단 저장/)).toBeNull();
+  expect(screen.queryByText(/결제 수단 저장/)).toBeNull();
 });
 
 // 시안(paym_001_직접입력)은 직접 입력을 고른 뒤에만 칸을 연다
