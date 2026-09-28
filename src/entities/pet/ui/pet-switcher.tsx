@@ -9,10 +9,10 @@
 
 "use client";
 
-import Image from "next/image";
-
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
+
+import { PetPhoto } from "./pet-photo";
 
 export type PetSummary = {
   id: string;
@@ -103,24 +103,28 @@ export function PetSwitcher({
                     ),
               )}
             >
-              {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 회색 원만 남는다.
-                  시안(메인 1758-68897)은 사진 없으면 색+이름을 원 안에 넣지만, 그 색이
-                  서버 값일 가능성이 커 API 확정 전까지는 보류한다 */}
+              {/* 사진은 next/image로 그려 크기에 맞는 파일을 받는다. 없으면 시안(아이 원
+                  `state=default`)대로 이름 앞 두 글자를 넣는다(#470). 글자 크기는 시안의 원
+                  지름별 값이다 — 90px은 가장 가까운 96px의 title-bold-22, 메인 56px은
+                  title-bold-16, 48px은 label-bold-14 */}
               <span
                 className={cn(
                   "relative size-full overflow-hidden rounded-full",
                   main && "bg-surface-disable",
                 )}
               >
-                {pet.photoUrl && (
-                  <Image
-                    src={pet.photoUrl}
-                    alt=""
-                    fill
-                    sizes={hero && selected ? "90px" : main ? "56px" : "48px"}
-                    className="object-cover"
-                  />
-                )}
+                <PetPhoto
+                  name={pet.name}
+                  photoUrl={pet.photoUrl}
+                  sizes={hero && selected ? "90px" : main ? "56px" : "48px"}
+                  textClassName={
+                    hero && selected
+                      ? "text-title-bold-22"
+                      : main
+                        ? "text-title-bold-16"
+                        : "text-label-bold-14"
+                  }
+                />
               </span>
             </span>
             {withNames && (

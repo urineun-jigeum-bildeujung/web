@@ -12,6 +12,7 @@ export {
 } from "./ui/product-feedback-sheet";
 export { BreedPickerStep } from "./ui/breed-picker-step";
 export { PetSwitcher, type PetSummary } from "./ui/pet-switcher";
+export { PetPhoto } from "./ui/pet-photo";
 export {
   BODY_TYPE_GUIDE,
   BODY_TYPE_OPTIONS,

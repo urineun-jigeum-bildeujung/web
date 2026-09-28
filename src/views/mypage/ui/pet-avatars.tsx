@@ -8,9 +8,7 @@
 
 "use client";
 
-import Image from "next/image";
-
-import { useQueryPets } from "@/entities/pet";
+import { PetPhoto, useQueryPets } from "@/entities/pet";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 /** 원 하나의 지름. 시안(mypa_001)의 42px이다 */
@@ -39,7 +37,8 @@ export function PetAvatars() {
   }
 
   // 등록한 아이가 없으면 아무것도 그리지 않는다.
-  // 뒤따르는 점선 원이 "아이를 들이는 자리"로 남아 할 일을 알린다
+  // 뒤따르는 점선 원이 "아이를 들이는 자리"로 남아 할 일을 알린다.
+  // 사진이 없는 아이는 이름 앞 두 글자를 넣는다 — 회색 원만으로는 어느 아이인지 알 수 없었다(#470)
   return (
     <>
       {(pets ?? []).map((pet) => (
@@ -49,9 +48,13 @@ export function PetAvatars() {
           title={pet.name}
           className={`${CIRCLE} relative overflow-hidden bg-surface-disable`}
         >
-          {pet.photoUrl && (
-            <Image src={pet.photoUrl} alt="" fill sizes="42px" className="object-cover" />
-          )}
+          <PetPhoto
+            name={pet.name}
+            photoUrl={pet.photoUrl}
+            sizes="42px"
+            // 시안 아이 원 42px의 글자 스타일
+            textClassName="text-label-bold-14"
+          />
         </span>
       ))}
     </>
