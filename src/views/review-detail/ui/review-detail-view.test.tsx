@@ -24,6 +24,20 @@ vi.mock("@/entities/pet", () => ({
   }),
 }));
 
+// 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
+const { toggleWish, wish } = vi.hoisted(() => ({
+  toggleWish: vi.fn(),
+  wish: { status: undefined as boolean | undefined },
+}));
+vi.mock("@/features/toggle-wishlist", () => ({
+  useToggleWishlist: () => ({ signedIn: true, toggle: toggleWish }),
+}));
+vi.mock("@/entities/wishlist", () => ({
+  useQueryWishlistStatus: (productId: number) => ({
+    wished: productId === 7 ? wish.status : undefined,
+  }),
+}));
+
 import { ReviewDetailView } from "./review-detail-view";
 
 const REVIEW: ReviewDetail = {
@@ -117,6 +131,19 @@ test("props로 켜면 신고·도움돼요 줄과 구매 줄이 있고 바로 �
   expect(screen.getByRole("button", { name: "찜 목록에 담기" })).toBeDefined();
   fireEvent.click(screen.getByRole("button", { name: "바로 구매" }));
   expect(push).toHaveBeenCalledWith("/products/7");
+});
+
+// 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
+test("구매 줄의 하트는 이 후기 상품의 찜 여부로 채우고 누르면 뒤집는다", () => {
+  wish.status = true;
+  toggleWish.mockReturnValue(true);
+  render(<ReviewDetailView reviewId="1" showPurchaseBar />);
+
+  const heart = screen.getByRole("button", { name: "찜 목록에서 빼기" });
+  expect(heart.getAttribute("aria-pressed")).toBe("true");
+  fireEvent.click(heart);
+  expect(toggleWish).toHaveBeenCalledWith(7, false);
+  wish.status = undefined;
 });
 
 test("없는 리뷰는 찾을 수 없다고 알리고 다시 시도를 두지 않는다", () => {

@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { useQueryMyProfile } from "@/entities/member";
 import { useQueryPetDetail } from "@/entities/pet";
 import {
@@ -19,6 +20,7 @@ import {
   type ReviewDetail,
   type ReviewPet,
 } from "@/entities/review";
+import { useQueryWishlistStatus } from "@/entities/wishlist";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -205,10 +207,14 @@ function ReactionRow() {
 }
 
 /** 시안(943-15550)의 하단 줄. 장바구니·바로 구매는 옵션 시트가 상품 상세에 있어 그 화면으로 보낸다
-    (사진 리뷰 뷰어와 같은 결정). 찜은 서버에 보낼 곳이 아직 없어 뷰어와 같이 화면 안에서만 켜진다 */
+    (사진 리뷰 뷰어와 같은 결정). 찜은 서버에 저장한다(#483) — 가격을 몰라 좋아요 탭 목록에 먼저
+    넣을 줄은 넘기지 않고 재동기화에 맡긴다 */
 function PurchaseBar({ productId }: { productId: string }) {
   const router = useRouter();
-  const [liked, setLiked] = useState(false);
+  const heart = useToggleWishlist();
+  const { wished: liked = false } = useQueryWishlistStatus(Number(productId), {
+    enabled: heart.signedIn,
+  });
   const goToProduct = () => router.push(`/products/${productId}`);
 
   return (
@@ -217,9 +223,11 @@ function PurchaseBar({ productId }: { productId: string }) {
         type="button"
         aria-label={liked ? "찜 목록에서 빼기" : "찜 목록에 담기"}
         aria-pressed={liked}
+        // 대기 표시 없음 — 낙관적 갱신이라 누르는 즉시 바뀐다(AGENTS 5.8)
         onClick={() => {
-          setLiked(!liked);
-          if (!liked) showSnackbar("해당 상품을 찜 목록에 담았어요!");
+          if (heart.toggle(Number(productId), !liked) && !liked) {
+            showSnackbar("해당 상품을 찜 목록에 담았어요!");
+          }
         }}
         className="flex size-12 flex-none! items-center justify-center rounded-2xl border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       >

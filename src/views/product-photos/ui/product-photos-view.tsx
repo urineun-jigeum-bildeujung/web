@@ -196,6 +196,7 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
           직접 받으므로, 깊은 쪽 사진을 공유한 주소도 그대로 열린다 */}
       {openedReviewId && (
         <PhotoViewer
+          productId={Number(productId)}
           reviewId={openedReviewId}
           photoIndex={photoIndex}
           onPhotoChange={(next) => void setViewer({ n: next })}

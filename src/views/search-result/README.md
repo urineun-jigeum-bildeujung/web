@@ -3,8 +3,8 @@
 검색어에 걸린 상품을 2열로 보여준다. 정렬을 고를 수 있고, 그냥 검색하러 왔으면 카드마다 할인율·별점·찜하기를 담아 보여주지만, 비교 자리를 채우러 왔으면 체크만 하면 되니 이름·가격만 남긴다.
 
 - **라우트**: `/search/result?q=...` — `src/app/search/result/page.tsx`
-- **조립**: `widgets/bottom-nav` · `shared/ui`의 `product-grid-card` · `select` · `bottom-action-bar` · `button` · `skeleton` · `entities/product`(`searchProducts`)
-- **상태**: 검색어(`q`)와 정렬(`sort`) 모두 URL 쿼리. 상품 목록은 서버 컴포넌트(`page.tsx`)가 `entities/product`로 실제 조회한다(#282)
+- **조립**: `widgets/bottom-nav` · `features/toggle-wishlist` · `shared/ui`의 `product-grid-card` · `select` · `bottom-action-bar` · `button` · `skeleton` · `entities/product`(`searchProducts`)
+- **상태**: 검색어(`q`)와 정렬(`sort`) 모두 URL 쿼리. 상품 목록은 서버 컴포넌트(`page.tsx`)가 `entities/product`로 실제 조회한다(#282). 찜 하트는 전체 찜 목록(`useWishedProductIds`)으로 채우고 누르면 서버에서 뒤집는다(`features/toggle-wishlist`, #483)
 - **참고**: UI 시안 기준(#245, 2396-80432 일반 검색·1117-6424 비교 고르기)
 
 | 파일 | 설명 |
@@ -38,7 +38,7 @@
 
 **`GeneralResultList`·`PickingResultList`로 완전히 나눠 그린다.** `ProductGridCard` 하나에 `picking ? A : B` 삼항 prop을 여러 개(적합도·할인율·별점·찜하기·가격 크기) 쌓았다가, 그중 하나를 빠뜨려 비교 화면에 적합도 배지가 새는 사고가 났다. [component-convention](../../../docs/conventions/component-convention.md)의 "표시 항목이 화면마다 갈리면 조각으로 나눠 화면이 조립한다"를 그대로 따라, 총 개수·정렬·카드까지 통째로 두 컴포넌트로 나눴다. 라우트(`/search`, `/search/result`)는 그대로 둔다 — 사고 원인이 라우트 공유가 아니라 컴포넌트 하나에 표시 항목을 다 밀어 넣은 것이었고, `product-compare-view.tsx`가 이미 이 라우트에 `slot` 쿼리로 진입하고 있어 바꾸면 그쪽까지 함께 고쳐야 한다.
 
-**찜 하트는 `home-view`·`recommendations-view`의 흰 하트와 다르게 어두운 원판 위에 얹는다.** Figma(2396-80432)의 사진이 실사라 흰 하트만으로는 배경에 묻힌다. 원판(32px)은 이미지 모서리에서 정확히 4px 떨어져야 한다(2396-80461). 44px 탭 영역을 확보하려고 32px 원판을 더 큰 버튼으로 감싸면, 원판이 그 버튼 안에서 가운데 정렬되며 안쪽으로 밀려 4px이 아니게 된다 — 그래서 원판 자체를 버튼으로 쓰고 `after:` 의사요소로 탭 영역만 44px로 넓힌다(`home-view`의 텍스트 버튼과 같은 기법).
+**찜 하트는 `home-view`·`recommendations-view`의 흰 하트와 다르게 어두운 원판 위에 얹는다.** Figma(2396-80432)의 사진이 실사라 흰 하트만으로는 배경에 묻힌다. 원판(32px)은 이미지 모서리에서 정확히 4px 떨어져야 한다(2396-80461). 44px 탭 영역을 확보하려고 32px 원판을 더 큰 버튼으로 감싸면, 원판이 그 버튼 안에서 가운데 정렬되며 안쪽으로 밀려 4px이 아니게 된다 — 그래서 원판 자체를 버튼으로 쓰고 `after:` 의사요소로 탭 영역만 44px로 넓힌다(`home-view`의 텍스트 버튼과 같은 기법). 상품 상세의 함께 보면 좋은 상품도 같은 시안이라 `features/toggle-wishlist`의 `CardHeartButton` 한 벌을 쓴다(#483).
 
 **반대쪽 비교 자리에 이미 있는 상품은 고르기 목록에서 뺀다.** `slot`으로 채우러 온 자리 말고 반대쪽 자리의 현재 상품 id를 `other`(또는 상세 흐름의 `first`) 쿼리로 받아, 같은 상품을 또 고르면 비교 화면에서 두 자리가 같은 id를 가져 React key가 충돌하는 사고를 막는다(`alreadyPicked`, #245).
 

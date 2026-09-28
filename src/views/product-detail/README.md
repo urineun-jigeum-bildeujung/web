@@ -3,8 +3,8 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙는다(#484). 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이와 찜 여부는 화면 안 상태
+- **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` · `qna`), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙는다(#484). 상품 상태(정상·타임딜·품절)는 QA용으로 `status` 쿼리가 덮어쓴다. 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
 - **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
@@ -103,14 +103,13 @@
 
 | 항목 | 지금 |
 | --- | --- |
-| 찜 버튼 | 화면 안 `useState`다. 토글 API는 있지만(#390) 초기 찜 여부가 상세 응답에 없어 찜 목록을 따로 받아야 한다 |
 | 상세 로딩 표시 | 라우트의 `Suspense` 폴백이 빈 `div`다. 처음 그릴 때는 스켈레톤이 맞다(AGENTS 5.8) |
 | 리뷰 필터·맞춤보기 | 닫아 뒀다 (#472). 나이·사용 기간은 구간으로 풀렸지만 품종은 여전히 복수 ↔ 단수이고, 맞춤보기는 서버가 견주는 조건이 PD 확정과 다르다 |
 | 리뷰 카드의 아이 줄 | `소형견 · 8세 · 4kg`다. 품종명은 `GET /pets/breeds`에만 있는데 그 조회가 인증을 요구해 비로그인 상품 상세에서 401이 난다 (#471) |
 | 리뷰 도움돼요 | 수만 보이고 누를 수 없다. 토글이 로그인을 요구해 비로그인 UX를 정한 뒤에 켠다 (#471, 2026-09-29 검토) |
 | 리뷰 재구매 N회 배지 | 응답에 `repurchaseCount`가 없다. PD가 MVP로 확정해 백엔드에 요청해 뒀다 (#471) |
 | 문의 탭 | API가 없다 |
-| 함께 보면 좋은 상품 | AI 추천이 붙기 전까지 인기순이다. 카드의 찜 하트는 찜이 서버에 붙기 전까지 장식이다 |
+| 함께 보면 좋은 상품 | AI 추천이 붙기 전까지 인기순이다 |
 | 적합도·영양 성분 분석 | 서버 계산 대기 (#123) |
 | 제공고시 두 줄·배송 안내·판매자 | 응답에 자리가 없어 고정 목이다 |
 | 주의성분 표시 | #414 (백엔드 응답에 위험 등급 추가가 착수 조건) |

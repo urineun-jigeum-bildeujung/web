@@ -5,6 +5,9 @@
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 import { expect, test } from "@playwright/test";
 
+import { signIn } from "./fixtures/session";
+import { stubWishlist } from "./fixtures/wishlist";
+
 test("검색어를 넣고 엔터를 치면 결과 화면으로 간다", async ({ page }) => {
   await page.goto("/search");
 
@@ -78,4 +81,22 @@ test("검색한 말이 돌아와도 최근 검색어에 남는다", async ({ pag
   await expect(recent).toBeVisible();
   // 맨 앞으로 올라온다
   await expect(page.getByRole("listitem").first()).toContainText("무곡물");
+});
+
+// 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
+test("로그인했으면 찜한 상품의 하트가 채워져 있고 누르면 서버에서 뒤집는다", async ({ page }) => {
+  await signIn(page);
+  const wishlist = await stubWishlist(page, { wished: [4] });
+  await page.goto("/search/result?q=사료");
+
+  // 찜 목록은 하이드레이션 뒤에 받는다. 채워진 하트가 보이면 누를 수 있다
+  await expect(page.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+
+  const senior = page.getByRole("button", { name: "노령견 저지방 소화케어 사료 1kg 찜하기" });
+  await senior.click();
+  await expect(senior).toHaveAttribute("aria-pressed", "true");
+  expect(wishlist.toggled).toEqual([2]);
 });
