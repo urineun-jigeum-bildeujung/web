@@ -1,8 +1,9 @@
 // 주문 완료. 언제 도착하는지 먼저 알리고 무엇을 얼마에 샀는지 남긴다.
-// UI 시안 기준(paym_002 521:17632)이다.
+// UI 페이지 시안 기준(paym_002 1117:4759)이다.
 //
 // 흰 바닥에 요약 카드 하나만 떠 있고 결제상세·배송지는 카드 없이 그대로 놓인다.
-// 그 두 블록은 주문 상세(mypa_161)와 같아 `entities/order`의 조각을 쓴다 (#210).
+// 그 두 블록은 `entities/order`의 조각을 쓴다 (#210). 결제상세는 주문 상세(mypa_161)와 함께
+// 쓰지만 줄 이름과 배송비 줄이 달라 `variant`로 가른다 (#439).
 //
 // **클라이언트 컴포넌트다.** 결제 승인을 여기서 부르는데, 토큰이 브라우저에만 있어
 // 서버 렌더에서는 인증이 실리지 않는다 (#308).
@@ -42,8 +43,8 @@ import { CopyOrderNumber } from "./copy-order-number";
 /**
  * 대표로 보일 상품 한 줄.
  *
- * 시안(`paym_002`)이 상품 줄을 하나만 그린다. 여럿이면 첫 줄을 세우고 나머지는 수로 알린다 —
- * 주문 목록과 같은 방식이다 (#297).
+ * 시안(`paym_002`)이 상품 줄을 하나만 그리고 이름 아래 수량 줄이 없다. 여럿이면 첫 줄을 세우고
+ * 나머지는 "외 N건"으로만 알린다 — 적지 않으면 한 상품만 산 것처럼 보인다 (#297·#439).
  */
 function toProductRow(order: OrderDetail) {
   const [first, ...rest] = order.items;
@@ -53,7 +54,7 @@ function toProductRow(order: OrderDetail) {
 
   return {
     name: first.productName,
-    caption: rest.length > 0 ? `${first.quantity}개 외 ${rest.length}건` : `${first.quantity}개`,
+    caption: rest.length > 0 ? `외 ${rest.length}건` : null,
     imageUrl: first.thumbnailUrl,
   };
 }
@@ -290,19 +291,9 @@ export function CheckoutDoneView({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* 되돌아갈 곳이 없는 화면이라 뒤로가기 대신 닫기를 오른쪽에 둔다 (paym_002) */}
-      <PageHeader
-        leading="none"
-        right={
-          <Link
-            href="/"
-            aria-label="닫기"
-            className="flex size-11 items-center justify-center text-foreground"
-          >
-            <Icon name="cancel" />
-          </Link>
-        }
-      />
+      {/* 되돌아갈 곳이 없는 화면이라 뒤로가기를 두지 않는다. 시안(paym_002)은 닫기도 없이
+          아래 두 버튼으로 나가게 한다 (#439) */}
+      <PageHeader leading="none" />
 
       <main className="flex flex-1 flex-col gap-6 px-5 pt-3 pb-8">
         <div className="flex flex-col items-center gap-5">
@@ -347,9 +338,11 @@ export function CheckoutDoneView({
                   </span>
                   <div className="flex min-w-0 flex-col gap-1">
                     <p className="truncate text-title-bold-16 text-foreground">{row?.name}</p>
-                    <p className="truncate text-body-medium-14 text-text-body-secondary">
-                      {row?.caption}
-                    </p>
+                    {row?.caption && (
+                      <p className="truncate text-body-medium-14 text-text-body-secondary">
+                        {row.caption}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -365,11 +358,12 @@ export function CheckoutDoneView({
           <DetailSection title="결제상세" titleTrailing={formatPaidAt(payment?.approvedAt)}>
             {/* **주문이 없으면 세부 금액을 비운다.** 결제 금액만 알고 그 안을 가를 수 없는데
                 `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰) */}
+            {/* 시안이 배송비 줄을 두지 않는다. 결제금액과 판매 금액이 배송비만큼 다를 수 있어
+                PD 확인을 기다린다 (#439) */}
             <PaymentDetail
+              variant="complete"
               total={payment?.amount ?? order?.totalAmount ?? 0}
               itemPrice={order?.productAmount}
-              // 배송비 필드가 따로 없다. 결제 금액에서 상품 금액을 뺀다 (주문 상세와 같은 방식)
-              shippingFee={order && order.totalAmount - order.productAmount}
             />
           </DetailSection>
 
