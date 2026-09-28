@@ -8,6 +8,7 @@
 // 두면 같은 레이어 간 참조라 막힌다 (AGENTS.md 4절, #329).
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
@@ -18,25 +19,29 @@ import { Skeleton } from "@/shared/ui/skeleton";
 
 import type { Address } from "../api/addresses";
 import { groupAddresses } from "../model/group-addresses";
-import { placeIconOf } from "./place-icon";
+import { placeIconOf, type FixedPlaceName } from "./place-icon";
 
-/**
- * 배송지 하나를 여는 줄. **고치고 돌아올 곳을 함께 들려 보낸다.**
- *
- * 주소를 다시 고르면 검색 화면이 history에 쌓여, 저장 뒤 한 칸 되돌리면 그리로 간다 (#369).
- */
-function PlaceRow({ place, from }: { place: Address; from: string }) {
-  const icon = placeIconOf(place.addressName);
+type PlaceRowLayoutProps = {
+  href: string;
+  name: string;
+  isDefault?: boolean;
+  /** 둘째 줄. 저장한 곳은 주소, 빈 자리는 넣으라는 안내다 */
+  children: ReactNode;
+};
+
+/** 장소 한 줄의 모양. 저장한 곳과 빈 자리가 같은 틀을 쓴다 */
+function PlaceRowLayout({ href, name, isDefault = false, children }: PlaceRowLayoutProps) {
+  const icon = placeIconOf(name);
 
   return (
     <Link
-      href={`/mypage/address/new?${new URLSearchParams({ place: String(place.addressId), from })}`}
+      href={href}
       className="flex flex-col gap-2 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <span className="flex items-center gap-2">
         {icon && <Icon name={icon} aria-hidden />}
-        <span className="text-title-bold-16 text-foreground">{place.addressName}</span>
-        {place.isDefault && (
+        <span className="text-title-bold-16 text-foreground">{name}</span>
+        {isDefault && (
           <span className="flex h-6 items-center rounded-lg bg-primary px-2 text-label-medium-12 text-primary-foreground">
             기본 배송지
           </span>
@@ -44,16 +49,48 @@ function PlaceRow({ place, from }: { place: Address; from: string }) {
       </span>
 
       <span className="flex items-center justify-between gap-2">
-        <span className="min-w-0 text-body-medium-14 text-text-body-secondary">
-          {/* 도로명과 상세주소는 따로 오고 화면에서는 한 줄로 읽힌다 */}
-          {`${place.address} ${place.addressDetail}`.trim()}
-        </span>
+        {children}
         {/* 시안의 화살표는 18px이고 누르는 자리는 줄 전체다 */}
         <span aria-hidden className="flex size-8 shrink-0 items-center justify-center">
           <Icon name="right" className="size-4.5 text-icon-stroke-tertiary" />
         </span>
       </span>
     </Link>
+  );
+}
+
+/**
+ * 배송지 하나를 여는 줄. **고치고 돌아올 곳을 함께 들려 보낸다.**
+ *
+ * 주소를 다시 고르면 검색 화면이 history에 쌓여, 저장 뒤 한 칸 되돌리면 그리로 간다 (#369).
+ */
+function PlaceRow({ place, from }: { place: Address; from: string }) {
+  return (
+    <PlaceRowLayout
+      href={`/mypage/address/new?${new URLSearchParams({ place: String(place.addressId), from })}`}
+      name={place.addressName}
+      isDefault={place.isDefault}
+    >
+      <span className="min-w-0 text-body-medium-14 text-text-body-secondary">
+        {/* 도로명과 상세주소는 따로 오고 화면에서는 한 줄로 읽힌다 */}
+        {`${place.address} ${place.addressDetail}`.trim()}
+      </span>
+    </PlaceRowLayout>
+  );
+}
+
+/**
+ * 아직 주소를 넣지 않은 집·회사 자리. 시안(`paym_011` 1117:4825)이 늘 자리를 잡아 둔다.
+ *
+ * 누르면 **이름을 채운 채** 새 배송지를 넣으러 간다. 돌아올 곳도 함께 싣는다 (#455).
+ */
+function EmptyPlaceRow({ name, from }: { name: FixedPlaceName; from: string }) {
+  return (
+    <PlaceRowLayout href={`/mypage/address/new?${new URLSearchParams({ name, from })}`} name={name}>
+      <span className="min-w-0 text-body-medium-14 text-text-body-tertiary">
+        상품을 배송받을 주소를 입력해 주세요.
+      </span>
+    </PlaceRowLayout>
   );
 }
 
@@ -79,7 +116,9 @@ type AddressPlaceListProps = {
 };
 
 export function AddressPlaceList({ addresses, isLoading, error, from }: AddressPlaceListProps) {
-  const { top, rest } = groupAddresses(addresses);
+  const { top, empty, rest } = groupAddresses(addresses);
+  // 구분선 위 묶음. 저장한 곳 뒤에 아직 넣지 않은 집·회사 자리가 붙는다
+  const hasTop = top.length > 0 || empty.length > 0;
 
   return (
     <>
@@ -106,16 +145,19 @@ export function AddressPlaceList({ addresses, isLoading, error, from }: AddressP
           />
         ) : (
           <>
-            {top.length > 0 && (
+            {hasTop && (
               <div className="flex flex-col gap-3">
                 {top.map((place) => (
                   <PlaceRow key={place.addressId} place={place} from={from} />
+                ))}
+                {empty.map((name) => (
+                  <EmptyPlaceRow key={name} name={name} from={from} />
                 ))}
               </div>
             )}
 
             {/* 시안의 선은 좌우 여백을 넘어 화면을 가로지른다. 양쪽에 줄이 있을 때만 그린다 */}
-            {top.length > 0 && rest.length > 0 && <hr className="-mx-5 border-border" />}
+            {hasTop && rest.length > 0 && <hr className="-mx-5 border-border" />}
 
             {rest.map((place) => (
               <PlaceRow key={place.addressId} place={place} from={from} />

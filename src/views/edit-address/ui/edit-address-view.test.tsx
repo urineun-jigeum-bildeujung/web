@@ -16,7 +16,9 @@ const update = vi.fn();
 const useQueryAddresses = vi.fn();
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back, replace }) }));
-vi.mock("@/entities/address", () => ({
+// 훅만 바꾸고 나머지(빈 자리 이름 등)는 실제 것을 쓴다
+vi.mock("@/entities/address", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/address")>()),
   useQueryAddresses: () => useQueryAddresses(),
   useMutateAddress: () => ({ create, update, isSaving: false }),
 }));
@@ -178,6 +180,16 @@ test("주소 칸 이름은 시안대로 주소다", () => {
   expect(screen.getByText("주소")).toBeDefined();
   expect(screen.queryByText("받을 곳 주소")).toBeNull();
   expect(screen.getByPlaceholderText("요청사항을 적어주세요")).toBeDefined();
+});
+
+// 배송지 목록의 빈 회사 자리를 눌러 온 경우다. 이름을 다시 적지 않게 채워 둔다 (#455)
+test("빈 자리에서 왔으면 배송지 이름이 그 이름으로 채워진다", () => {
+  expect(renderAt("?name=회사").value).toBe("회사");
+});
+
+// 주소창은 누구나 고칠 수 있다. 집·회사 밖의 이름은 채우지 않는다
+test("집·회사가 아닌 이름은 채우지 않는다", () => {
+  expect(renderAt("?name=기숙사").value).toBe("");
 });
 
 // 고치러 들어와 새로 골랐으면 저장된 주소가 아니라 방금 고른 것이 보여야 한다

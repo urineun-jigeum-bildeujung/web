@@ -6,12 +6,16 @@
 import type { IconName } from "@/shared/ui/icon/icon-shapes";
 
 /**
- * 이 이름으로 저장한 곳에만 아이콘이 붙는다.
+ * 시안이 늘 자리를 잡아 두는 이름. 저장한 곳이 없어도 목록에 빈 줄로 선다 (`paym_011` 1117:4825).
  *
- * **시안은 주소를 아직 안 넣은 "회사" 자리도 그린다.** 등록 API가 주소를 필수로 받아
- * 빈 자리는 만들어지지 않으므로 그 상태는 오지 않는다. PD 확인 대상이다.
+ * 서버에는 빈 자리가 없다 — 등록 API가 주소를 필수로 받는다. 그래서 빈 줄은 화면만의 것이고,
+ * 누르면 이 이름을 채운 채 새 배송지를 넣으러 간다 (#455).
  */
-const ICON_BY_NAME: Record<string, IconName> = {
+export const FIXED_PLACE_NAMES = ["집", "회사"] as const;
+export type FixedPlaceName = (typeof FIXED_PLACE_NAMES)[number];
+
+/** 이 이름으로 저장한 곳에만 아이콘이 붙는다 */
+const ICON_BY_NAME: Record<FixedPlaceName, IconName> = {
   집: "home",
   회사: "building",
 };
@@ -24,5 +28,5 @@ const ICON_BY_NAME: Record<string, IconName> = {
  * 깨지고, 다시 시도해도 같은 데이터로 또 깨진다. 이름은 사용자가 짓고 서버도 막지 않는다 (#423).
  */
 export function placeIconOf(name: string): IconName | undefined {
-  return Object.hasOwn(ICON_BY_NAME, name) ? ICON_BY_NAME[name] : undefined;
+  return Object.hasOwn(ICON_BY_NAME, name) ? ICON_BY_NAME[name as FixedPlaceName] : undefined;
 }

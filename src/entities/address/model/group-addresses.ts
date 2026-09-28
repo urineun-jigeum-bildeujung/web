@@ -3,11 +3,13 @@
 // UI 페이지 시안 기준(`paym_011` 1117:4825)이다. 아이콘이 붙는 곳이 위, 구분선 아래가 나머지다.
 
 import type { Address } from "../api/addresses";
-import { placeIconOf } from "../ui/place-icon";
+import { FIXED_PLACE_NAMES, placeIconOf, type FixedPlaceName } from "../ui/place-icon";
 
 export type GroupedAddresses = {
   /** 구분선 위. 기본 배송지와 집·회사 */
   top: Address[];
+  /** 구분선 위 끝에 빈 줄로 그릴 이름. 집·회사 중 저장한 곳이 없는 것이다 (#455) */
+  empty: FixedPlaceName[];
   /** 구분선 아래. 사용자가 이름을 지어 더한 곳 */
   rest: Address[];
 };
@@ -23,6 +25,10 @@ export function groupAddresses(addresses: Address[] | undefined): GroupedAddress
   const others = addresses?.filter((place) => !place.isDefault) ?? [];
   const named = others.filter((place) => placeIconOf(place.addressName));
   const rest = others.filter((place) => !placeIconOf(place.addressName));
+  // 목록을 아직 모르면 빈 자리도 모른다. 받기 전에 그리면 저장한 집이 빈 줄로 잠깐 보인다
+  const empty = addresses
+    ? FIXED_PLACE_NAMES.filter((name) => !addresses.some((place) => place.addressName === name))
+    : [];
 
-  return { top: primary ? [primary, ...named] : named, rest };
+  return { top: primary ? [primary, ...named] : named, empty, rest };
 }
