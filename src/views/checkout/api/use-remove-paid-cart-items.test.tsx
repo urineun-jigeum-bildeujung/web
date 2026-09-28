@@ -50,7 +50,7 @@ test("결제한 줄을 모두 빼고 장바구니를 다시 받게 한다", asyn
 
 // 결제는 이미 끝났다. 빼기 실패로 던지면 완료 화면이 실패처럼 보인다 (#457)
 test("한 줄이 실패해도 던지지 않고 나머지는 빼며 기록만 한다", async () => {
-  removeCartItem.mockRejectedValueOnce(new Error("404")).mockResolvedValueOnce(undefined);
+  removeCartItem.mockRejectedValueOnce(new Error("연결 실패")).mockResolvedValueOnce(undefined);
   const { remove, invalidated } = setup();
 
   await expect(remove(PAID)).resolves.toBeUndefined();

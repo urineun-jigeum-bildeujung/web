@@ -54,9 +54,9 @@ describe("toAppMessageCode", () => {
     );
   });
 
-  // 백엔드가 새 코드를 추가하면 우리는 나중에 안다. 그동안에도 화면은 무언가를 보여줘야 한다
   // 남의 주문 id로 부른 경우다. 403이라고 "권한 없음"으로 떨어지면 남의 주문이 있다는 것만
-  // 알리고 무엇을 하라는 말은 없다. 결제 쪽 같은 경우와 같이 "주문 없음"으로 간다 (#442)
+  // 알리고 무엇을 하라는 말은 없다. 결제 쪽의 없는 주문(`PAYMENT_404_ORDER_NOT_FOUND`)과 같은
+  // "주문 없음"으로 간다 (#442)
   it("남의 주문을 부르면 없는 주문과 같은 문구로 간다", () => {
     expect(toAppMessageCode(apiError(403, "ORDER_403_OWNER_MISMATCH"))).toBe(
       APP_MESSAGE_CODE.order.notFound,
@@ -66,6 +66,7 @@ describe("toAppMessageCode", () => {
     );
   });
 
+  // 백엔드가 새 코드를 추가하면 우리는 나중에 안다. 그동안에도 화면은 무언가를 보여줘야 한다
   it("모르는 errorCode는 상태 코드 기준 문구로 떨어진다", () => {
     expect(toAppMessageCode(apiError(404, "ORDER_404_NOT_EXIST"))).toBe(
       APP_MESSAGE_CODE.common.notFound,

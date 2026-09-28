@@ -25,7 +25,8 @@ type Rollback = { previous: Cart | undefined };
  *
  * 수량만 먼저 그리면 다시 받기 전까지 그 줄의 합계가 옛 값이라, 결제 화면처럼 합계를 더해 금액을
  * 세는 곳이 수량과 다른 금액을 보인다 (#427). 합계는 장바구니 화면이 세는 방식과 같이
- * `price × quantity`다. 살 수 없는 줄은 값이 `null`이라 그대로 둔다.
+ * `price × quantity`다. 금액이 없는 줄(`unavailableWithoutInfo`)은 그대로 둔다. 살 수 없는 줄은
+ * 스테퍼가 서지 않아 수량이 바뀔 일이 없다.
  */
 function withQuantity(row: CartItem, quantity: number): CartItem {
   return {
