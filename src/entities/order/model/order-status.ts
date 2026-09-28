@@ -7,8 +7,14 @@
 // ```
 // PENDING(결제대기) → PAID(결제완료) → PREPARING(상품준비) → SHIPPING(배송중)
 //                  → DELIVERED(배송완료) → CONFIRMED(구매확정)
-// CANCELLED(취소) · PARTIAL_REFUND(부분환불) · REFUNDED(환불완료)
+//
+// PENDING · PAID · PREPARING    → CANCELLED(취소)
+// PAID · PREPARING · DELIVERED  → REFUNDED(환불완료)
+// DELIVERED                     → PARTIAL_REFUND(부분환불)
 // ```
+//
+// 구매확정·취소·부분환불·환불완료에서는 더 넘어가지 않는다. 배송중에서는 취소도 환불도 없다
+// (2026-09-28 `ALLOWED` 대조, #468).
 //
 // **아래 다섯만 옮긴다.** 시안(mypa_061)이 그리는 뱃지가 다섯이고 나머지 넷에 해당하는
 // 자리가 없다. 결제 전(`PENDING`)은 주문 목록에 설 일이 없고, **취소·환불된 주문의 시안은
