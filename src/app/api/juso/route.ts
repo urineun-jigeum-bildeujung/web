@@ -57,6 +57,11 @@ const PROBLEM_BY_JUSO_CODE: Record<string, { status: number; errorCode: string }
   E0010: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_LONG" },
   E0011: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_LONG" },
   E0013: { status: 400, errorCode: "JUSO_400_KEYWORD_FORBIDDEN_CHAR" },
+  // 개발 승인키의 사용 기간이 끝났다. E0001처럼 우리 설정 문제라 화면 문구는 같지만, 옮기지 않으면
+  // 기록에 행안부 장애(502)로 남아 키를 갈아야 한다는 것을 놓친다 (#476)
+  E0014: { status: 500, errorCode: "JUSO_500_KEY_EXPIRED" },
+  // 9천 번째 결과 너머 쪽을 달라고 했다. 넓은 검색어처럼 좁혀 달라는 안내가 맞다 (#476)
+  E0015: { status: 400, errorCode: "JUSO_400_KEYWORD_TOO_BROAD" },
 };
 
 /**
