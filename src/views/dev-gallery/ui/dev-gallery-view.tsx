@@ -40,6 +40,7 @@ import { InfoNotice } from "@/shared/ui/info-notice/info-notice";
 import { ListRowButton, ListRowLink, ListRowStatic } from "@/shared/ui/list-row/list-row";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { PolicyDocument } from "@/shared/ui/policy-document/policy-document";
 import { PreparingDialog } from "@/shared/ui/preparing-dialog/preparing-dialog";
 import { Price } from "@/shared/ui/price/price";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
@@ -644,6 +645,24 @@ export function DevGalleryView() {
               <Skeleton className="h-4 w-1/2" />
             </div>
           </div>
+        </Section>
+
+        <Section title="PolicyDocument">
+          <PolicyDocument
+            effectiveDate="2026년 9월 1일"
+            sections={[
+              {
+                id: "gallery-policy-1",
+                title: "제1조 (목적)",
+                paragraphs: ["조항 본문 문단이다."],
+              },
+              {
+                id: "gallery-policy-2",
+                title: "제2조 (정의)",
+                items: ["번호 목록 첫째", "번호 목록 둘째"],
+              },
+            ]}
+          />
         </Section>
 
         <Section title="PreparingDialog">
