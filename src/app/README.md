@@ -11,7 +11,7 @@ Next.js App Router의 라우팅 디렉터리이자 FSD의 최상위 레이어다
 ## 담지 않는 것
 
 - **화면 조립 로직.** `page.tsx`는 `views`의 컴포넌트를 불러 렌더하는 얇은 껍데기로 유지한다.
-- **Provider 조립.** 전역 Provider는 `shared/providers`에 두고 `layout`은 `AppProviders` 하나만 감싼다.
+- **Provider 조립.** 전역 Provider는 `shared/providers`에 두고 `layout`은 `AppProviders` 하나만 감싼다. 로그인이 필요한 구간의 `layout`은 `shared/providers`의 `SessionGuard` 하나만 감싼다(`mypage/layout.tsx`, #447).
 - 비즈니스 로직, 재사용 컴포넌트.
 
 ## 의존 방향
