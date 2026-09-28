@@ -11,7 +11,6 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
 import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
-import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { parseBirthDate } from "@/shared/lib/birth-date";
 import { toastAppError } from "@/shared/lib/app-toast";
@@ -99,7 +98,8 @@ export function OnboardingView() {
     registerPet({ request, photo: draft.photo })
       // 마지막 입력 단계를 완료로 바꿔 끼운다. push면 홈에서 뒤로가기가 완료 단계로 돌아온다(#371)
       .then(() => void setStep("done", { history: "replace" }))
-      .catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+      // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+      .catch(() => {});
   };
 
   return (

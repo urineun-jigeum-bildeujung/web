@@ -12,9 +12,6 @@ import { useId, useState } from "react";
 
 import { useMutateWithdraw } from "@/entities/member";
 
-import { toAppMessageCode } from "@/shared/api/error-message";
-import { toastAppError } from "@/shared/lib/app-toast";
-
 import { Icon } from "@/shared/ui/icon/icon";
 import {
   AlertDialog,
@@ -45,15 +42,16 @@ export function SettingsView() {
   const { withdraw, isWithdrawing } = useMutateWithdraw();
   const [confirmingWithdraw, setConfirmingWithdraw] = useState(false);
 
-  // 실패해도 기기의 토큰은 지워져 로그아웃은 끝난다. 서버 정리가 안 됐다는 것만 알린다
+  // 실패해도 기기의 토큰은 지워져 로그아웃은 끝난다. 서버 정리가 안 됐다는 것은 전역 토스트가 알린다
   const signOut = () => {
-    logout().catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+    // 실패 토스트는 전역 MutationCache가 띄운다(#359). 여기서는 거부만 삼킨다
+    logout().catch(() => {});
   };
 
   // **탈퇴는 실패하면 아무것도 지우지 않는다.** 계정이 살아 있는데 토큰만 비우면
   // 쫓겨난 채로 탈퇴됐는지도 알 수 없다. 로그아웃과 다른 점이다
   const leave = () => {
-    withdraw().catch((error: unknown) => toastAppError(toAppMessageCode(error), error));
+    withdraw().catch(() => {});
   };
 
   return (
