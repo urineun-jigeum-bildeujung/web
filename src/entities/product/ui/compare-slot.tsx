@@ -2,7 +2,6 @@
 // 담으라는 안내를 보여준다. UI 시안 기준(#245, comp_001·comp_001_empty, 1568-70143·1117-6319)이다.
 
 import Image from "next/image";
-import { IoImageOutline } from "react-icons/io5";
 
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
@@ -82,13 +81,20 @@ export function CompareSlot({
       <div className="flex w-full flex-col items-start gap-1">
         <div className="relative aspect-square w-full">
           {product.imageUrl ? (
-            <Image src={product.imageUrl} alt="" fill className="rounded-lg object-cover" />
+            // 비교 두 자리가 화면을 반씩 나눈다
+            <Image
+              src={product.imageUrl}
+              alt=""
+              fill
+              sizes="50vw"
+              className="rounded-lg object-cover"
+            />
           ) : (
             <span
               aria-hidden
               className="flex size-full items-center justify-center rounded-lg bg-muted text-muted-foreground"
             >
-              <IoImageOutline className="size-8" />
+              <Icon name="image" className="size-8" />
             </span>
           )}
           {onRemove && (

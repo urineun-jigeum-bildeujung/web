@@ -20,3 +20,18 @@ test("말줄임할 이름·옵션 줄은 폭을 카드에 묶는다", () => {
   expect(screen.getByText("연어&감자 그레인프리 사료 2kg").className).toContain("max-w-full");
   expect(screen.getByText("2kg").className).toContain("max-w-full");
 });
+
+// 카드는 화면 폭의 절반 이하다. sizes가 없으면 브라우저가 화면 폭만 한 이미지를 받는다 (#479)
+test("사진에 카드 크기에 맞는 sizes를 준다", () => {
+  const { container } = render(
+    <ProductGridCard
+      name="연어 사료 1kg"
+      price={31500}
+      imageUrl="https://image.leechs.shop/p.png"
+    />,
+  );
+
+  expect(container.querySelector("img")?.getAttribute("sizes")).toBe(
+    "(min-width: 768px) 240px, 50vw",
+  );
+});

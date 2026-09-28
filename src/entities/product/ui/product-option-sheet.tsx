@@ -8,10 +8,10 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { IoImageOutline } from "react-icons/io5";
 
 import { Button } from "@/shared/ui/button";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/shared/ui/drawer";
+import { Icon } from "@/shared/ui/icon/icon";
 import { formatWon } from "@/shared/ui/price/price";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
@@ -64,10 +64,10 @@ function SheetBody({ product, onAddToCart, adding = false }: SheetBodyProps) {
       <div className="flex items-center gap-3 px-5 pt-6 pb-3">
         <span className="relative size-15 shrink-0 overflow-hidden rounded-lg bg-muted">
           {product.imageUrl ? (
-            <Image src={product.imageUrl} alt="" fill className="object-cover" />
+            <Image src={product.imageUrl} alt="" fill sizes="60px" className="object-cover" />
           ) : (
             <span className="flex size-full items-center justify-center text-muted-foreground">
-              <IoImageOutline aria-hidden className="size-6" />
+              <Icon name="image" className="size-6" />
             </span>
           )}
         </span>

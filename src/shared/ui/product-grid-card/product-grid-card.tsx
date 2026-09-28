@@ -8,7 +8,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IoImageOutline } from "react-icons/io5";
 
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -68,9 +67,16 @@ export function ProductGridCard({
     <>
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-muted">
         {imageUrl ? (
-          <Image src={imageUrl} alt="" fill className="object-cover" />
+          // 2열 격자와 가로 목록(160px)에 놓인다. 태블릿에서도 카드 한 장이 240px을 넘지 않는다
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            sizes="(min-width: 768px) 240px, 50vw"
+            className="object-cover"
+          />
         ) : (
-          <IoImageOutline aria-hidden className="size-8 text-muted-foreground" />
+          <Icon name="image" className="size-8 text-muted-foreground" />
         )}
         {selectable && (
           // 시안(1117-6424)은 이미지 전체에 테두리를 두르지 않는다. 우상단 24px 원의
