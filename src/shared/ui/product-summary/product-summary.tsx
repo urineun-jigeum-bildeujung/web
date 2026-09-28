@@ -3,10 +3,10 @@
 // 타임딜은 시안이 있다(타임딜_진행중, 타임딜_오픈예정) — 이미지 위 상태 뱃지와 오른쪽 담기 버튼이 붙는다.
 
 import Image from "next/image";
-import { IoImageOutline } from "react-icons/io5";
 import type { ComponentProps, ReactNode } from "react";
 
 import { cn } from "@/shared/lib/utils";
+import { Icon } from "@/shared/ui/icon/icon";
 
 type ProductSummaryProps = {
   name: string;
@@ -55,7 +55,7 @@ export function ProductSummary({
             style={{ width: px, height: px }}
             className="flex items-center justify-center rounded-lg bg-muted text-muted-foreground"
           >
-            <IoImageOutline className="size-6" />
+            <Icon name="image" className="size-6" />
           </span>
         )}
         {imageBadge && <span className="absolute top-1 left-1">{imageBadge}</span>}
