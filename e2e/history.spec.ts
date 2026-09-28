@@ -3,6 +3,7 @@
 import { expect, test } from "@playwright/test";
 
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { signIn } from "./fixtures/session";
 
 // 아이 관리 화면이 아이 목록을 서버에서 받는다(#230). 세우지 않으면 401이라
 // 로그인으로 돌려보내져 탭·필터를 눌러 볼 자리가 없다
@@ -60,9 +61,11 @@ test("필터는 히스토리에 쌓이지 않는다", async ({ page }) => {
 });
 
 test("주소에 없는 아이 id가 와도 화면이 한 아이를 가리킨다", async ({ page }) => {
+  // 아이는 실제 목록이라 로그인했을 때만 부른다(#470)
+  await signIn(page);
   await page.goto("/recommendations?pet=unknown");
 
-  // 목록에 없는 id면 첫 아이로 되돌린다. 고르는 자리도 같은 아이를 가리켜야 한다
+  // 목록에 없는 id면 기본 아이로 되돌린다. 고르는 자리도 같은 아이를 가리켜야 한다
   await expect(page.getByRole("combobox", { name: "어느 아이의 추천을 볼지" })).toContainText(
     "코코",
   );
