@@ -20,7 +20,8 @@ export function useRemovePaidCartItems() {
   const queryClient = useQueryClient();
 
   return async (items: CartItemRef[]) => {
-    // 한 줄이 실패해도 나머지는 뺀다. 이미 빠진 줄(404)도 여기로 온다
+    // 한 줄이 실패해도 나머지는 뺀다. 이미 빠진 줄은 서버가 성공(204)으로 돌려준다 — 없는 줄을
+    // 지워도 막지 않는다(`RedisCartRepository.remove`의 HDEL)
     const results = await Promise.allSettled(items.map((item) => removeCartItem(item)));
     for (const result of results) {
       if (result.status === "rejected") {
