@@ -20,7 +20,9 @@ import { useQueryReviewPhotos, type ReviewPhoto } from "@/entities/review";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
 import { useLoadMore } from "@/shared/lib/list/use-load-more";
+import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -171,13 +173,20 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
             {hasNext && !nextError && <div ref={loadMoreRef} aria-hidden className="h-px" />}
             {isLoadingNext && <PhotoGridSkeleton />}
 
+            {/* 다음 쪽만 실패한 경우다. 저절로 다시 부르면 같은 실패가 되풀이되므로 사용자가 고른다.
+                **다시 받는 동안에도 오류 상태가 남아 이 버튼이 서 있다.** 잠그지 않으면 또 눌러
+                같은 쪽으로 요청이 한 번 더 나간다 (주문 목록·리뷰 목록과 같은 처리, #427) */}
             {nextError && (
-              <p
-                role="alert"
-                className="px-5 py-6 text-center text-body-medium-14 text-text-body-secondary"
+              <Button
+                variant="secondary"
+                className="mx-5 my-4 h-10 text-label-bold-14"
+                disabled={isLoadingNext}
+                onClick={() => loadNext()}
               >
-                사진을 더 불러오지 못했어요. 잠시 후 다시 시도해 주세요.
-              </p>
+                <LoadingSwap loading={isLoadingNext} label="사진을 더 불러오는 중">
+                  사진을 더 불러오지 못했어요. 다시 시도
+                </LoadingSwap>
+              </Button>
             )}
           </>
         )}
