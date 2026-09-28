@@ -12,7 +12,16 @@ import {
   IoSearchOutline,
 } from "react-icons/io5";
 
-import { ORDER_STATUSES, OrderStatusBadge } from "@/entities/order";
+import { AddPlaceLink, AddressPlaceList, type Address } from "@/entities/address";
+import {
+  DeliveryDetail,
+  DetailRow,
+  DetailSection,
+  ORDER_STATUSES,
+  OrderProductRow,
+  OrderStatusBadge,
+  PaymentDetail,
+} from "@/entities/order";
 import { PetSwitcher } from "@/entities/pet";
 import { CompareSlot, CompareTable, MatchScoreBadge } from "@/entities/product";
 import { AddressResultList } from "@/shared/ui/address-result-list/address-result-list";
@@ -76,6 +85,35 @@ const ADDRESSES = [
     jibunAddr: "서울특별시 강남구 역삼동 737",
   },
 ];
+
+/** 저장해 둔 배송지. 기본 배송지인 집과 이름을 지어 더한 곳이다 — 회사는 없어 빈 줄로 선다 */
+const PLACES: Address[] = [
+  {
+    addressId: 1,
+    addressName: "집",
+    receiver: "홍길동",
+    phone: "010-1234-5678",
+    zipCode: "06133",
+    address: "서울특별시 강남구 테헤란로 123",
+    addressDetail: "UI타워 4층 404호",
+    deliveryNote: null,
+    isDefault: true,
+  },
+  {
+    addressId: 2,
+    addressName: "자취방",
+    receiver: "홍길동",
+    phone: "010-1234-5678",
+    zipCode: "08832",
+    address: "서울특별시 관악구 관악로 145",
+    addressDetail: "3층",
+    deliveryNote: null,
+    isDefault: false,
+  },
+];
+
+/** 배송지를 불러오지 못한 경우. 서버에 닿지도 못한 연결 실패다 */
+const PLACES_ERROR = new TypeError("Failed to fetch");
 
 const COMPARE_ROWS = [
   { label: "10g당 가격", values: ["312원", "268원"] as [string, string] },
@@ -331,6 +369,83 @@ export function DevGalleryView() {
           </div>
         </Section>
 
+        <Section title="OrderProductRow · OrderProductThumbnail">
+          <p className="text-xs text-muted-foreground">
+            금액을 넘기지 않으면 그 줄을 비운다. 사진이 없으면 썸네일이 자리만 잡는다
+          </p>
+          <OrderProductRow name="연어 사료 1.2kg" quantity={2} amount={74800} />
+          <OrderProductRow name="관절 영양제" quantity={1} />
+        </Section>
+
+        <Section title="DetailSection · DetailRow">
+          {/* 카드 껍데기는 DetailSection이 갖지 않는다. 쓰는 쪽이 className으로 얹는다 */}
+          <DetailSection title="주문정보" titleTrailing="26.09.19 14:30">
+            <dl className="flex flex-col gap-3">
+              <DetailRow
+                term={<span className="text-label-bold-14 text-foreground">주문번호</span>}
+                description={
+                  <span className="text-body-regular-14 text-text-body-secondary">
+                    ORD-20260919-000001
+                  </span>
+                }
+              />
+              {/* 한 줄에 담기 어려운 값은 이름 아래로 내린다 */}
+              <DetailRow
+                stacked
+                term={<span className="text-label-bold-14 text-foreground">주문 상품</span>}
+                description={
+                  <span className="text-body-regular-14 text-text-body-secondary">
+                    연어 사료 1.2kg 외 1건
+                  </span>
+                }
+              />
+            </dl>
+          </DetailSection>
+        </Section>
+
+        <Section title="PaymentDetail · TossPayLogo">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">주문 완료 — 둘째 줄이 판매 금액이다</p>
+              <PaymentDetail
+                variant="complete"
+                total={77800}
+                itemPrice={74800}
+                shippingFee={3000}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">주문 상세 — 둘째 줄이 상품 옵션이다</p>
+              <PaymentDetail total={77800} itemPrice={74800} shippingFee={3000} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">
+                주문을 못 받아 온 자리 — 결제 금액만 알아 세부 줄을 비운다
+              </p>
+              <PaymentDetail variant="complete" total={77800} />
+            </div>
+          </div>
+        </Section>
+
+        <Section title="DeliveryDetail">
+          <div className="flex flex-col gap-6">
+            <DeliveryDetail
+              receiver="홍길동"
+              phone="010-1234-5678"
+              address="서울특별시 강남구 테헤란로 123 UI타워 4층 404호"
+              request="문 앞에 놓아주세요"
+            />
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-muted-foreground">요청사항 없이 주문하면 그 줄이 없다</p>
+              <DeliveryDetail
+                receiver="홍길동"
+                phone="010-1234-5678"
+                address="서울특별시 관악구 관악로 145 3층"
+              />
+            </div>
+          </div>
+        </Section>
+
         <Section title="ProductSummary">
           <ProductSummary name="연어 사료 1.2kg" meta="45,000원 · 1개" />
           <ProductSummary
@@ -409,6 +524,23 @@ export function DevGalleryView() {
 
         <Section title="AddressResultList">
           <AddressResultList results={ADDRESSES} onSelect={() => {}} />
+        </Section>
+
+        <Section title="AddressPlaceList · AddPlaceLink">
+          {/* 화면처럼 좌우 20px 안에 둔다. 목록의 구분선이 그 여백을 넘어 화면을 가로지른다 */}
+          <div className="-mx-4 flex flex-col gap-5 px-5">
+            <AddressPlaceList addresses={PLACES} isLoading={false} error={null} from="/dev" />
+            <AddPlaceLink from="/dev" />
+          </div>
+          <p className="text-xs text-muted-foreground">저장한 곳이 없을 때</p>
+          <AddressPlaceList addresses={[]} isLoading={false} error={null} from="/dev" />
+          <p className="text-xs text-muted-foreground">불러오지 못했을 때</p>
+          <AddressPlaceList
+            addresses={undefined}
+            isLoading={false}
+            error={PLACES_ERROR}
+            from="/dev"
+          />
         </Section>
 
         <Section title="PetSwitcher">
