@@ -138,6 +138,19 @@ test("재지 못한 아이에게는 점수를 채우지 않는다", async ({ pag
   ).toBeVisible();
 });
 
+// 예시 상품 셋은 없는 상품이라 누를 수 없었다(#481). 라우트가 기다리지 않고 넘긴 목록을
+// 화면이 읽는 길이라 단위 테스트로는 이어지는지 못 본다
+test("함께 보면 좋은 상품은 지금 상품을 뺀 인기순 실제 상품이다", async ({ page }) => {
+  await page.goto(PATH);
+
+  const related = page.getByRole("region", { name: "함께 보면 좋은 상품" });
+  const card = related.getByRole("link", { name: /노령견 저지방 소화케어 사료 1kg/ });
+  await expect(card).toHaveAttribute("href", "/products/2");
+  await expect(card.getByText("1g당 약 27원")).toBeVisible();
+  // 목 목록의 1번이 지금 보는 상품이다. 상세 목과 이름이 달라 목록 쪽 이름으로 본다
+  await expect(related.getByText("중소형견 소포장 사료 1kg")).toHaveCount(0);
+});
+
 test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온다", async ({ page }) => {
   await page.goto(PATH);
 

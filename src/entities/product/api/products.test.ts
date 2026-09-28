@@ -228,6 +228,15 @@ describe("getProducts", () => {
     expect(url).toBe("/api/v1/products?sort=RECOMMEND");
   });
 
+  it("size를 주면 쿼리로 보낸다", async () => {
+    const fetchMock = stubFetch(Response.json({ items: [], nextCursor: null, hasNext: false }));
+
+    await getProducts({ sort: "POPULAR", size: 7 });
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/v1/products?sort=POPULAR&size=7");
+  });
+
   it("응답 필드를 화면 모델로 옮기고 nextCursor·hasNext를 보존한다. totalCount는 없다", async () => {
     stubFetch(
       Response.json({

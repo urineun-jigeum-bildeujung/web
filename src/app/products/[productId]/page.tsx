@@ -3,15 +3,16 @@
 // 상세는 개인화가 없는 공개 데이터라 서버에서 받는다(AGENTS 5.2). 뷰가 클라이언트
 // 컴포넌트인 것은 탭·바텀시트 때문이지 데이터 때문이 아니다.
 //
-// views/deals처럼 promise를 넘기지 않고 여기서 await한다. 부를 것이 하나뿐이라
-// 병렬로 둘 이유가 없고, 없는 상품을 404로 보내는 notFound()는 렌더 중에 호출해야 한다.
+// 상품은 여기서 await한다. 없는 상품을 404로 보내는 notFound()는 렌더 중에 호출해야 한다.
+// "함께 보면 좋은 상품"은 기다리지 않고 promise로 넘긴다 — 그 칸만 기다리게 해 상품이 늦게
+// 뜨지 않는다(views/deals와 같은 방식, #481).
 
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ApiError } from "@/shared/api/client";
 import { getProductDetail } from "@/entities/product";
-import { ProductDetailView } from "@/views/product-detail";
+import { getRelatedProducts, ProductDetailView } from "@/views/product-detail";
 
 export default async function ProductDetailPage({ params }: PageProps<"/products/[productId]">) {
   const { productId } = await params;
@@ -24,11 +25,15 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 
   if (!product) notFound();
 
+  // **없는 상품이면 부르지 않는다** — 404로 끝나면 이 promise를 아무도 읽지 않아, 실패했을 때
+  // 처리되지 않은 거부로 남는다
+  const relatedPromise = getRelatedProducts(product.productId);
+
   // nuqs의 useQueryState가 내부에서 useSearchParams를 쓴다.
   // Suspense로 감싸지 않으면 정적 프리렌더가 실패한다.
   return (
     <Suspense fallback={<div className="min-h-dvh" />}>
-      <ProductDetailView productId={productId} product={product} />
+      <ProductDetailView productId={productId} product={product} relatedPromise={relatedPromise} />
     </Suspense>
   );
 }
