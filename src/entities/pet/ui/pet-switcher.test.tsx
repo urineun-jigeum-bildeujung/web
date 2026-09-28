@@ -32,3 +32,10 @@ test("selectedIds를 주면 체크박스로 여러 마리를 고른다", () => {
   fireEvent.click(screen.getByRole("checkbox", { name: "소리" }));
   expect(onToggle).toHaveBeenCalledWith("1");
 });
+
+// 회색 원만 있으면 어느 아이인지 알 수 없다(QA 1차 4번, #470)
+test("사진이 없는 아이는 원 안에 이름 앞 두 글자를 넣는다", () => {
+  render(<PetSwitcher pets={PETS} selectedId="1" onSelect={vi.fn()} />);
+
+  expect(screen.getByRole("radio", { name: "냥냥이" }).textContent).toBe("냥냥");
+});
