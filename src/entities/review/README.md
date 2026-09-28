@@ -24,7 +24,8 @@
 | `api/use-mutate-create-review.test.tsx` | 등록 뒤 그 상품의 목록·사진·대표 사진이 함께 낡은 것이 되는지, 다른 상품은 건드리지 않는지 |
 | `api/feedbacks.ts` | 구매 후 상태 체크(반응). 남길 수 있는 항목 조회와 등록(답변·보류), `PendingFeedback`·`FeedbackSubmission` 타입 |
 | `api/feedbacks.test.ts` | 응답 옮기기, 답변과 보류가 어떻게 실리는지 |
-| `api/use-query-pending-feedbacks.ts` | 남길 수 있는 항목을 받는 훅 |
+| `api/use-query-pending-feedbacks.ts` | 남길 수 있는 항목을 받는 훅. `enabled: false`면 부르지 않고 대기도 아니며, 받아 둔 목록도 내주지 않는다 — 로그인 없이 열리는 메인이 세션으로 건다(#494) |
+| `api/use-query-pending-feedbacks.test.tsx` | 꺼 두면 부르지 않는지, 껐다가는 받아 둔 목록을 내주지 않는지, 기본은 부르는지 |
 | `api/use-mutate-submit-feedback.ts` | 반응을 등록하는 훅. 성공하면 남길 수 있는 목록을 비운다 |
 | `index.ts` | 공개 API |
 
