@@ -18,6 +18,13 @@ type ProductGridCardProps = {
   option?: string;
   price: number;
   originalPrice?: number;
+  /**
+   * 서버가 계산해 준 할인율. 주면 이 값을 쓰고, 없으면 두 금액에서 계산한다.
+   *
+   * 서버는 HALF_UP으로 반올림하고 `calcDiscountRate`는 버림이라 19.9%가 20%와 19%로
+   * 갈린다 — 계약이 있는 값을 화면에서 다시 만들지 않는다.
+   */
+  discountRate?: number;
   imageUrl?: string;
   /** 가격 아래 붙는 것. 하루 급여비나 별점 */
   meta?: ReactNode;
@@ -45,6 +52,7 @@ export function ProductGridCard({
   option,
   price,
   originalPrice,
+  discountRate: givenDiscountRate,
   imageUrl,
   meta,
   imageBadge,
@@ -61,7 +69,8 @@ export function ProductGridCard({
   // 시안(ProductCard/Grid의 price 슬롯)은 이름·취소선·할인율+가격이 간격 없이
   // 붙어 있고, 그 아래 meta(하루 급여비·별점)와만 4px 떨어진다. 공용 Price
   // 컴포넌트는 아직 이 카드 시안 기준이 아니라서 값만 가져와 직접 그린다.
-  const discountRate = originalPrice ? calcDiscountRate(price, originalPrice) : 0;
+  const discountRate =
+    givenDiscountRate ?? (originalPrice ? calcDiscountRate(price, originalPrice) : 0);
 
   const body = (
     <>
