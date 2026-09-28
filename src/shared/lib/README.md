@@ -8,6 +8,7 @@
 | `date/display-date.test.ts` | 시안 형식, 자정 근처 값이 하루 밀리지 않는지, 오전·오후와 12시 경계, 읽을 수 없는 값을 본다 |
 | `birth-date.ts` | 생년월일을 치는 대로 다듬고 서버가 받는 `YYYY-MM-DD`로 옮긴다 |
 | `birth-date.test.ts` | 달력에 없는 날과 앞날을 거르는지 본다 |
+| `list/use-load-more.ts` | 목록 끝이 화면에 들어오면 다음 쪽을 부른다. 주문 목록과 상품 후기 사진이 쓴다 |
 | `josa/josa.ts` | 이름 뒤 조사를 받침에 맞춰 고른다 |
 | `josa/josa.test.ts` | 받침 유무와 ㄹ 예외, 한글이 아닌 이름을 본다 |
 | `typo/typo-tokens.ts` | `globals.css` 타이포 토큰 이름 목록. tailwind-merge가 `text-title-bold-20`을 글자색으로 오인하지 않게, 또 shadcn의 `font-medium`에 굵기가 죽지 않게 `cn`에 알려 준다 |

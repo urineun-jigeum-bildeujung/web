@@ -6,8 +6,9 @@
 import { Button } from "@/shared/ui/button";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 
+import { useLoadMore } from "@/shared/lib/list/use-load-more";
+
 import { OrdersSkeleton } from "./orders-skeleton";
-import { useLoadMore } from "./use-load-more";
 
 type LoadMoreFooterProps = {
   hasNext: boolean;

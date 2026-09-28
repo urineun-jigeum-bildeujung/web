@@ -17,7 +17,6 @@
 | `model/claim-entries.ts` | 취소 주문과 상세의 반품·교환 신청으로 탭의 건을 만들고 날짜마다 묶는다 (#462) |
 | `model/claim-entries.test.ts` | 상세를 받을 주문, 결제 없는 취소 빼기, 한 신청 모으기, 머리 이름이 다른 날짜를 섞지 않는지 |
 | `ui/orders-skeleton.tsx` | 불러오는 동안의 뼈대. 이어 부를 때는 한 장만 |
-| `ui/use-load-more.ts` | 목록 끝이 보이면 다음 쪽을 부른다 |
 | `ui/preparing-dialog.tsx` | 갈 곳이 아직 없는 버튼(배송 위치 보기)의 준비 중 안내 |
 | `index.ts` | 공개 API |
 
