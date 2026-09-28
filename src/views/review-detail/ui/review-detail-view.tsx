@@ -13,7 +13,12 @@ import { toast } from "sonner";
 
 import { useQueryMyProfile } from "@/entities/member";
 import { useQueryPetDetail } from "@/entities/pet";
-import { useQueryReviewDetail, type ReviewDetail, type ReviewPet } from "@/entities/review";
+import {
+  toUsageLabel,
+  useQueryReviewDetail,
+  type ReviewDetail,
+  type ReviewPet,
+} from "@/entities/review";
 import { ApiError } from "@/shared/api/client";
 import { cn } from "@/shared/lib/utils";
 import {
@@ -35,7 +40,7 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
-import { toReviewDate, toReviewPetProfile, toUsageLabel } from "../model/review-labels";
+import { toReviewDate, toReviewPetProfile } from "../model/review-labels";
 
 /** 어디서 보느냐에 따라 켜고 끄는 줄. 마이페이지의 내 리뷰는 둘 다 끈다 */
 type ReviewDetailOptions = {
