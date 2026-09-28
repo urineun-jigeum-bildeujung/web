@@ -224,6 +224,8 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
                   href={`/products/${product.productId}`}
                   name={product.name}
                   price={product.price}
+                  originalPrice={product.originalPrice ?? undefined}
+                  discountRate={product.discountRate}
                   imageUrl={product.thumbnailUrl ?? undefined}
                   meta={<CategoryProductMeta product={product} />}
                 />
@@ -356,6 +358,7 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
               name={item.name}
               price={item.price}
               originalPrice={item.originalPrice}
+              discountRate={item.discountRate}
               imageUrl={item.thumbnailUrl ?? undefined}
               meta={
                 item.unitLabel && (

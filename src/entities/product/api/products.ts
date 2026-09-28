@@ -16,6 +16,8 @@ type ProductCardResponse = {
   productName: string;
   discountRate: number;
   price: number;
+  /** 할인 전 가격. `Product.originalPrice` 열이 NULL을 허용한다 */
+  originalPrice: number | null;
   unitPrice: number;
   unitLabel: string;
   avgRating: number;
@@ -36,6 +38,11 @@ export type ProductCard = {
   name: string;
   thumbnailUrl: string | null;
   price: number;
+  originalPrice: number | null;
+  /**
+   * 서버가 `HALF_UP`으로 반올림해 준 값. 화면에서 두 금액으로 다시 계산하지 않는다 —
+   * 공용 `calcDiscountRate`는 버림이라 상품 상세와 다른 %로 보인다.
+   */
   discountRate: number;
   unitPrice: number;
   unitLabel: string;
@@ -63,6 +70,7 @@ function toProductCard(response: ProductCardResponse): ProductCard {
     name: response.productName,
     thumbnailUrl: response.thumbnailUrl,
     price: response.price,
+    originalPrice: response.originalPrice,
     discountRate: response.discountRate,
     unitPrice: response.unitPrice,
     unitLabel: response.unitLabel,
