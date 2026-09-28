@@ -5,14 +5,26 @@
 // 브라우저 page.route()로 못 가로채, `playwright.server-fetch.config.ts`가 이 스펙 전용
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 //
-// 적합도·영양 분석·문의는 아직 목이고(#123, #339), 배송·판매자·제공고시 두 줄도
-// 응답에 자리가 없어 고정 목데이터다.
-import { expect, test } from "@playwright/test";
-import { stubAddToCart } from "./fixtures/cart";
+// 적합도의 아이는 로그인한 보호자의 실제 아이다(#481). 아이 조회는 브라우저가 부르므로
+// page.route로 세운다. 점수·영양 분석·문의는 아직 목이고(#123, #339), 배송·판매자·제공고시
+// 두 줄도 응답에 자리가 없어 고정 목데이터다.
+import { expect, test, type Page } from "@playwright/test";
+import { stubAddToCart, stubCart } from "./fixtures/cart";
+import { stubNotifications } from "./fixtures/notifications";
+import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { signIn } from "./fixtures/session";
 
 const PATH = "/products/1";
 /** 목 API 서버가 주는 값. 목록 목데이터와 일부러 다른 이름·가격이다 */
 const NAME = "관절 튼튼 영양제 90정";
+
+/** 로그인하고 내 아이 둘(코코·보리)을 세운다. 헤더의 알림·장바구니도 로그인하면 서버를 부른다 */
+async function signInWithPets(page: Page) {
+  await signIn(page);
+  await stubPetCatalog(page);
+  await stubNotifications(page);
+  await stubCart(page);
+}
 
 // 화면이 목이던 시절엔 어느 상품을 열어도 같은 값이었다. 응답에서 온 값인지 보려고
 // 목 API 서버가 목록 목데이터와 다른 이름·가격을 준다.
@@ -111,31 +123,37 @@ test("없는 상품은 404 화면으로 간다", async ({ page }) => {
   await expect(page.getByRole("heading", { name: NAME, level: 1 })).toHaveCount(0);
 });
 
-test("아이를 바꾸면 적합도가 그 아이 기준으로 바뀐다", async ({ page }) => {
+// 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이 근거에까지 박혀 떴다 (#481)
+test("적합도는 내 아이 기준이고 아이를 바꾸면 함께 바뀐다", async ({ page }) => {
+  await signInWithPets(page);
   await page.goto(PATH);
 
-  await expect(page.getByRole("heading", { name: "소리와 잘 맞아요" })).toBeVisible();
+  // 스텁의 기본 아이는 코코(말티즈)다. 등록한 알레르기(닭고기)가 이 상품(계란)과 겹치지 않는다
+  await expect(page.getByRole("heading", { name: "코코와 잘 맞아요" })).toBeVisible();
+  await expect(page.getByText("(말티즈 · 4세 · 4kg 기준)")).toBeVisible();
+  await expect(page.getByText("코코에게 등록된 알레르기 유발 성분이 없어요")).toBeVisible();
 
   await page.getByRole("combobox", { name: "적합도 기준이 되는 아이" }).click();
-  await page.getByRole("option", { name: "냥이 기준으로 보기" }).click();
+  await page.getByRole("option", { name: "보리 기준으로 보기" }).click();
 
+  // 보리는 고양이다. 강아지 영양제에 점수를 매기지 않는다
   await expect(
-    page.getByRole("heading", { name: "냥이 기준으로는 아직 재지 못했어요" }),
+    page.getByRole("heading", { name: "보리 기준으로는 아직 재지 못했어요" }),
   ).toBeVisible();
+  await expect(page.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeVisible();
 });
 
 // 재 봤더니 안 맞는 것과 아직 재지 않은 것은 다른 이야기다(#119).
 // 0점으로 채워 두면 궁합이 나쁜 상품처럼 읽힌다.
 test("재지 못한 아이에게는 점수를 채우지 않는다", async ({ page }) => {
+  await signInWithPets(page);
   await page.goto(PATH);
 
   await page.getByRole("combobox", { name: "적합도 기준이 되는 아이" }).click();
-  await page.getByRole("option", { name: "냥이 기준으로 보기" }).click();
+  await page.getByRole("option", { name: "보리 기준으로 보기" }).click();
 
+  await expect(page.getByText("보리 기준으로는 아직 분석하지 못했어요.")).toBeVisible();
   await expect(page.getByText("0점")).toHaveCount(0);
-  await expect(
-    page.getByText("냥이 기준의 급여량이 등록되지 않아 아직 분석하지 못했어요."),
-  ).toBeVisible();
 });
 
 // 예시 상품 셋은 없는 상품이라 누를 수 없었다(#481). 라우트가 기다리지 않고 넘긴 목록을
