@@ -2,9 +2,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
-  INITIAL_RECENT,
   MAX_RECENT,
   getRecent,
+  getRecentOnServer,
   pushRecent,
   resetRecentCache,
   setRecent,
@@ -40,14 +40,20 @@ describe("저장", () => {
     expect(getRecent()).toEqual(["관절 영양제"]);
   });
 
-  it("저장된 것이 없으면 시안 값을 보인다", () => {
-    expect(getRecent()).toEqual(INITIAL_RECENT);
+  // 검색한 적 없는 사람에게 시안 예시를 보이면 하지 않은 검색이 기록처럼 뜬다 (#479)
+  it("저장된 것이 없으면 비어 있다", () => {
+    expect(getRecent()).toEqual([]);
   });
 
-  it("저장된 값이 깨졌으면 시안 값으로 돌아간다", () => {
+  it("저장된 값이 깨졌으면 비어 있다", () => {
     window.localStorage.setItem("recent-keywords", "{{");
 
-    expect(getRecent()).toEqual(INITIAL_RECENT);
+    expect(getRecent()).toEqual([]);
+  });
+
+  // 프리렌더에는 저장소가 없다. 빈 목록이라고 답하면 빈 상태가 잠깐 떴다 사라진다 (#479)
+  it("서버에서는 아직 모른다고 답한다", () => {
+    expect(getRecentOnServer()).toBeNull();
   });
 
   it("문자열이 아닌 것이 섞여 있으면 걸러 낸다", () => {

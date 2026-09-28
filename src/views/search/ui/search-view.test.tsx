@@ -13,6 +13,13 @@ vi.mock("next/navigation", () => ({
 
 import { SearchView } from "./search-view";
 
+/** 기기에 남아 있는 최근 검색어. 시안(검색 화면_검색 전)에 그려진 다섯 개다 */
+const SAVED = ["저자극 덴탈껌", "중소형견 사료", "사료", "고양이 화장실 모래", "양치 껌"];
+
+function saveRecent(keywords: string[] = SAVED) {
+  window.localStorage.setItem("recent-keywords", JSON.stringify(keywords));
+}
+
 function renderView(search = "") {
   return render(
     <NuqsTestingAdapter searchParams={search}>
@@ -35,7 +42,17 @@ describe("SearchView", () => {
     expect(screen.getByText("카테고리로 둘러보기")).toBeDefined();
   });
 
+  // 검색한 적 없는 사람에게 시안 예시를 보이면 하지 않은 검색이 기록처럼 뜬다 (#479)
+  it("검색한 적이 없으면 시안 예시 대신 빈 상태를 보인다", () => {
+    renderView();
+
+    expect(screen.getByText(/최근에 검색한 내역이 없어요/)).toBeDefined();
+    expect(screen.queryByRole("button", { name: "고양이 화장실 모래" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "전체삭제" })).toBeNull();
+  });
+
   it("최근 검색어를 하나씩 지운다", () => {
+    saveRecent();
     renderView();
 
     fireEvent.click(screen.getByLabelText("양치 껌 검색 기록 지우기"));
@@ -46,6 +63,7 @@ describe("SearchView", () => {
   });
 
   it("전체삭제를 누르면 비었다고 알린다", () => {
+    saveRecent();
     renderView();
 
     fireEvent.click(screen.getByRole("button", { name: "전체삭제" }));
@@ -125,6 +143,7 @@ describe("SearchView", () => {
   });
 
   it("최근 검색어를 다시 눌러도 목록에 하나만 남는다", () => {
+    saveRecent();
     renderView();
 
     // 목록 세 번째에 있던 말을 다시 검색한다

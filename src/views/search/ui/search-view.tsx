@@ -76,7 +76,7 @@ export function SearchView() {
     const trimmed = word.trim();
     if (!trimmed) return;
 
-    setRecent(pushRecent(recent, trimmed));
+    setRecent(pushRecent(recent ?? [], trimmed));
     // 종류 목록이 아니라 검색 결과 화면으로 보낸다. 어느 종류인지 알 수 없는 말을
     // 특정 카테고리로 보내면 "양치 껌"을 검색해도 사료 목록이 뜬다
     const forSlot = slot ? `&slot=${encodeURIComponent(slot)}` : "";
@@ -167,7 +167,7 @@ export function SearchView() {
             <section className="flex flex-col gap-3 px-4 pt-2">
               <div className="flex items-center justify-between">
                 <h2 className="text-title-bold-16 text-foreground">최근 검색어</h2>
-                {recent.length > 0 && (
+                {recent && recent.length > 0 && (
                   <button
                     type="button"
                     onClick={() => setRecent([])}
@@ -183,30 +183,33 @@ export function SearchView() {
                 )}
               </div>
 
-              {recent.length > 0 ? (
-                <ul className="flex flex-wrap gap-2">
-                  {recent.map((item) => (
-                    <li key={item}>
-                      <RecentKeywordChip
-                        keyword={item}
-                        onSearch={search}
-                        onRemove={(word) => setRecent(recent.filter((entry) => entry !== word))}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                // 공용 EmptyState는 72px 아이콘·18px 제목 시안(메인 타임딜) 기준이라 여기(40px
-                // 아이콘, 14px 두 줄, 2396-80473)와 맞지 않아 따로 그린다
-                <div className="flex flex-col items-center gap-2 py-9 text-center text-icon-fill-tertiary">
-                  <IoSearchOutline aria-hidden className="size-10" />
-                  <p className="text-label-medium-14">
-                    최근에 검색한 내역이 없어요
-                    <br />
-                    궁금한 상품을 검색해보세요
-                  </p>
-                </div>
-              )}
+              {/* 붙기 전에는 저장된 것을 아직 모른다(`null`). 빈 상태를 먼저 그리면 저장된 검색어가
+                  있는 사람에게 "내역이 없어요"가 잠깐 떴다 사라진다 (#479) */}
+              {recent !== null &&
+                (recent.length > 0 ? (
+                  <ul className="flex flex-wrap gap-2">
+                    {recent.map((item) => (
+                      <li key={item}>
+                        <RecentKeywordChip
+                          keyword={item}
+                          onSearch={search}
+                          onRemove={(word) => setRecent(recent.filter((entry) => entry !== word))}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  // 공용 EmptyState는 72px 아이콘·18px 제목 시안(메인 타임딜) 기준이라 여기(40px
+                  // 아이콘, 14px 두 줄, 2396-80473)와 맞지 않아 따로 그린다
+                  <div className="flex flex-col items-center gap-2 py-9 text-center text-icon-fill-tertiary">
+                    <IoSearchOutline aria-hidden className="size-10" />
+                    <p className="text-label-medium-14">
+                      최근에 검색한 내역이 없어요
+                      <br />
+                      궁금한 상품을 검색해보세요
+                    </p>
+                  </div>
+                ))}
             </section>
 
             {/* 비교 자리를 채우러 왔을 때는 시안(1117-9724)에 이 섹션이 없다 — 카테고리를
