@@ -38,6 +38,8 @@ import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
+import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
+import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -476,27 +478,16 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
   return (
     <div className="flex min-h-dvh flex-col">
       {/* 시안 header/type=logo. 실제 로고 이미지 자산이 아직 없어 글자를 그대로 둔다 */}
-      <header className="flex h-12 items-center justify-between px-5">
-        <p className="text-title-bold-18 text-brand">골라주개냥</p>
-        <nav
-          aria-label="바로 가기"
-          className="flex items-center gap-2.25 text-icon-stroke-tertiary"
-        >
-          {/* 보이는 자리는 시안대로 28px·9px 간격을 두고, 누르는 자리만 after로 안 보이게 넓힌다.
-              가로는 간격(9px)의 절반이 안 되게 4px만 넓혀 옆 아이콘 터치 영역과 겹치지 않게 한다.
-              전에 쓰던 4.5px(`-inset-x-1.125`)는 0.25 단위가 아니라 Tailwind가 만들지 않아 넓혀지지
-              않았다(#470 리뷰) */}
-          <Link
-            href="/search"
-            aria-label="검색"
-            className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
-          >
-            <Icon name="search" className="size-7" />
-          </Link>
-          <NotificationBell />
-          <CartLink />
-        </nav>
-      </header>
+      <PageHeader
+        leading="logo"
+        right={
+          <nav aria-label="바로 가기" className="flex items-center gap-1">
+            <HeaderIconLink href="/search" label="검색" icon="search" />
+            <NotificationBell />
+            <CartLink />
+          </nav>
+        }
+      />
 
       {/* 탭처럼 보이지만 탭 역할을 주지 않는다. 고르면 화면 구성이 통째로 바뀌고 주소도 달라져
           연결할 패널이 없다. 지금 어느 것을 보고 있는지는 aria-current로 알린다.

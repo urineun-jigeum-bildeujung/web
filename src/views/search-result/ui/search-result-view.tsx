@@ -13,7 +13,6 @@
 import { Suspense, use, useState } from "react";
 import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
-import { IoChevronBack, IoSearchOutline } from "react-icons/io5";
 
 import {
   CardHeartButton,
@@ -26,6 +25,7 @@ import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
+import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -310,15 +310,9 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
     // 빈 공간만 생긴다
     <div className="flex min-h-dvh flex-col">
       {/* 제목 자리를 검색바가 차지한다. PageHeader는 가운데 제목을 전제로 해서 쓰지 않는다 */}
-      <header className="flex h-14 items-center gap-1 px-2">
-        <button
-          type="button"
-          aria-label="뒤로"
-          onClick={() => router.back()}
-          className="flex size-11 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          <IoChevronBack aria-hidden className="size-6" />
-        </button>
+      {/* 검색 화면과 같은 머리말이다. 뒤로가기는 모든 헤더와 같은 조각이고 높이 48·좌우 20이다(#513) */}
+      <header className="flex h-12 items-center px-5">
+        <HeaderBackButton onClick={() => router.back()} />
 
         {/* 입력창처럼 보이지만 버튼이다. 여기서 고쳐 치는 게 아니라 검색 화면으로 되돌아간다 */}
         <button
@@ -331,9 +325,10 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
             )
           }
           // 시안(2396-80432 등)은 알약 모양이 아니라 8px 모서리에 옅은 회색(#eeeff1) 채움이다
-          className="flex min-h-11 flex-1 items-center gap-2 rounded-lg bg-secondary px-3 text-left transition-colors hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          // 돋보기는 검색 화면 입력창과 같게 안쪽 12px에 24px, 글자는 안쪽 40px에서 시작한다
+          className="flex min-h-11 flex-1 items-center gap-1 rounded-lg bg-secondary px-3 text-left transition-colors hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          <IoSearchOutline aria-hidden className="size-5 shrink-0 text-muted-foreground" />
+          <Icon name="search" className="size-6 shrink-0 text-icon-stroke-tertiary" />
           <span className="truncate text-sm text-foreground">{keyword}</span>
           <span className="sr-only">검색어 고치기</span>
         </button>
