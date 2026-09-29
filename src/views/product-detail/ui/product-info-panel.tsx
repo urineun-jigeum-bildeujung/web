@@ -180,13 +180,18 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
             {/* `AccordionContent`는 문단마다 `mb-4`를 붙인다. 이 안내는 줄 간격만으로 붙여 읽는
                 글이라(시안 3756-73239) 같은 변형 체인으로 0으로 덮는다 — 접두사가 다르면 안 이긴다 */}
             <AccordionContent className="[&_p:not(:last-child)]:mb-0">
-              <div className="flex flex-col gap-2 pb-2">
+              <div className="flex flex-col pb-2">
                 {sections.map((section) => (
-                  <section key={section.heading} aria-label={section.heading}>
-                    {/* 시안의 소제목은 본문과 굵기가 같고 크기·색만 다르다 */}
-                    <p className="text-caption-regular-13 text-text-body-default">
+                  // 묶음 사이 간격은 시안에 빈 줄이 있는 자리에만 준다. 본문 한 줄 높이(18px)다
+                  <div
+                    key={section.heading}
+                    className={section.spacedBefore ? "mt-4.5" : undefined}
+                  >
+                    {/* 아코디언 줄 제목이 h3(Radix `AccordionHeader`)이라 그 아래는 h4다.
+                        시안의 소제목은 본문과 굵기가 같고 크기·색만 다르다 */}
+                    <h4 className="text-caption-regular-13 text-text-body-default">
                       {section.heading}
-                    </p>
+                    </h4>
                     {section.lines.map((line) => (
                       <p
                         key={line}
@@ -195,7 +200,7 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
                         {line}
                       </p>
                     ))}
-                  </section>
+                  </div>
                 ))}
               </div>
             </AccordionContent>

@@ -144,15 +144,25 @@ describe("상품정보 하단 안내", () => {
     render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
 
     openGuide("상품정보 제공고시");
-    expect(screen.getByLabelText("1. 기본 상품 정보")).toBeDefined();
+    expect(screen.getByText("1. 기본 상품 정보")).toBeDefined();
 
     openGuide("배송 안내");
-    expect(screen.getByLabelText("3. 출고 마감 및 배송 소요일 (빠른출발 안내)")).toBeDefined();
+    expect(screen.getByText("3. 출고 마감 및 배송 소요일 (빠른출발 안내)")).toBeDefined();
 
     openGuide("교환/반품/환불 안내");
-    expect(screen.getByLabelText("1. 교환 및 반품 신청 기간")).toBeDefined();
+    expect(screen.getByText("1. 교환 및 반품 신청 기간")).toBeDefined();
 
     expect(screen.queryByText("안내 내용을 준비하고 있어요.")).toBeNull();
+  });
+
+  // 소제목을 랜드마크(`section`)로 감싸면 안내 하나에 region이 열다섯 개씩 생겨
+  // 낭독기 탐색이 도리어 복잡해진다. 아코디언 줄이 h3이므로 그 아래는 h4다
+  it("소제목을 랜드마크가 아니라 제목 요소로 그린다", () => {
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
+    openGuide("상품정보 제공고시");
+
+    expect(screen.getByRole("heading", { level: 4, name: "1. 기본 상품 정보" })).toBeDefined();
+    expect(screen.queryAllByRole("region", { name: "1. 기본 상품 정보" })).toHaveLength(0);
   });
 
   // 품명은 상품 상세 설명으로 넘기고 제공고시에는 서버 값을 쓰지 않는다(PD 확정 · #555).
