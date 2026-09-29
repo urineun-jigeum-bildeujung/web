@@ -62,12 +62,21 @@ describe("BottomNav", () => {
     expect(toastAppError).not.toHaveBeenCalled();
   });
 
+  // 마이페이지는 로그인하러 들어가는 입구다. 막지 않고 보내면 가드가 로그인 화면으로 보낸다
+  it("비로그인이 마이페이지 탭을 누르면 토스트 없이 이동한다", () => {
+    mockPathname = "/";
+    render(<BottomNav />);
+
+    expect(click("마이페이지")).toBe(false);
+    expect(toastAppError).not.toHaveBeenCalled();
+  });
+
   it("로그인했으면 막지 않는다", () => {
     saveTokens({ accessToken: "a", refreshToken: "r" });
     mockPathname = "/";
     render(<BottomNav />);
 
-    expect(click("마이페이지")).toBe(false);
+    expect(click("좋아요")).toBe(false);
     expect(toastAppError).not.toHaveBeenCalled();
   });
 });

@@ -11,7 +11,8 @@
 // 이 시안은 마우스 hover가 아니라 손가락으로 누르는 동안(active)만 나오는 터치
 // 피드백이라, hover가 아니라 active로 건다.
 //
-// 홈 말고는 로그인해야 열리는 화면이다. 비로그인이 누르면 이동하지 않고 로그인 필요 토스트만 띄운다 (#542).
+// 상품비교·좋아요는 비로그인이 누르면 이동하지 않고 로그인 필요 토스트만 띄운다 (#542).
+// 마이페이지는 막지 않는다. 로그인하러 들어가는 입구라, 가면 가드가 로그인 화면으로 보낸다.
 
 "use client";
 
@@ -28,7 +29,7 @@ type NavItem = {
   icon: IconName;
   /** 갈 화면이 아직 없으면 비운다. */
   href?: string;
-  /** 로그인해야 열리는 화면이면 true */
+  /** 비로그인이면 이동 대신 로그인 필요 토스트만 띄울 항목 */
   requiresSession?: boolean;
 };
 
@@ -36,7 +37,7 @@ const ITEMS: NavItem[] = [
   { label: "홈", icon: "home", href: "/" },
   { label: "상품비교", icon: "graph", href: "/compare", requiresSession: true },
   { label: "좋아요", icon: "heart_fill", href: "/likes", requiresSession: true },
-  { label: "마이페이지", icon: "user", href: "/mypage", requiresSession: true },
+  { label: "마이페이지", icon: "user", href: "/mypage" },
 ];
 
 /** 루트는 정확히 같을 때만 현재 화면이다. startsWith로 보면 모든 경로가 걸린다. */
