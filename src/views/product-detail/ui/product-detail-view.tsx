@@ -7,6 +7,9 @@
 //
 // 상품 자체(이름·가격·별점·품절·스펙)는 `GET /products/{id}`의 실데이터다(#413).
 // 적합도·영양 분석은 서버가 계산해 내려줄 값이라 지금도 `model/mock-product`의 목이다(#123).
+//
+// Q&A 탭은 PD 확인 결과 이번 MVP 범위 밖이다 — 좋아요 화면의 두 탭과 같은 방식으로
+// 탭은 시안대로 남기고 disabled로 막으며, tab 쿼리도 닿는 값만 받게 좁힌다(#549).
 
 "use client";
 
@@ -56,7 +59,9 @@ import { ProductInfoPanel } from "./product-info-panel";
 import { QnaPanel } from "./qna-panel";
 import { ReviewPanel } from "./review-panel";
 
-const TABS = ["info", "review", "qna"] as const;
+// 주소로 닿을 수 있는 탭. disabled는 클릭만 막아 `?tab=qna`로 들어오면 열리므로 함께 좁힌다.
+// 탭 줄 자체는 TAB_LABEL이 세 개 그대로 그린다
+const REACHABLE_TABS = ["info", "review"] as const;
 
 // QA용. `?status=`로 덮어써 일반/타임딜/품절을 새로고침 없이 확인한다.
 //
@@ -324,7 +329,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   // 그대로 두면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
   const [tab, setTab] = useQueryState(
     "tab",
-    parseAsStringLiteral(TABS).withDefault("info").withOptions({ history: "push" }),
+    parseAsStringLiteral(REACHABLE_TABS).withDefault("info").withOptions({ history: "push" }),
   );
 
   // 들어온 상품을 최근 본 상품으로 남긴다. 백엔드 API가 없어 이 브라우저에 기록한다(#509)
@@ -606,7 +611,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
 
         <Tabs
           value={tab}
-          onValueChange={(next) => void setTab(next as (typeof TABS)[number])}
+          onValueChange={(next) => void setTab(next as (typeof REACHABLE_TABS)[number])}
           className="gap-0 pt-4"
         >
           {/* 시안(x=24)이 본문 여백(20px)보다 살짝 더 넓다 — 시안 그대로 24px을 쓰되
@@ -615,7 +620,12 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <div className="px-6">
             <TabsList variant="segment" className="w-full [&>*]:flex-1">
               {TAB_LABEL.map(([value, label]) => (
-                <TabsTrigger key={value} value={value} className="text-label-bold-16">
+                <TabsTrigger
+                  key={value}
+                  value={value}
+                  disabled={value === "qna"}
+                  className="text-label-bold-16"
+                >
                   {label}
                 </TabsTrigger>
               ))}
