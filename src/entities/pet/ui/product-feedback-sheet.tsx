@@ -49,7 +49,8 @@ type ProductFeedbackSheetProps = {
   target: FeedbackTarget | null;
   petName: string;
   onOpenChange: (open: boolean) => void;
-  /** 반응을 남긴 뒤 그 상품을 보러 간다 */
+  /** 완료 화면의 "자세히 보러 갈게요". 어디로 갈지는 부르는 쪽이 정한다 — 마이페이지는 그 상품
+   * 상세, 메인은 아이 관리(메인 구조도, QA HM-042)다 */
   onSeeProduct?: (productId: string) => void;
   /** 감싸는 시트 모양. 메인 상태 체크는 `full`, 마이페이지 반응 시트는 기본값(`floating`) */
   variant?: "floating" | "full";
