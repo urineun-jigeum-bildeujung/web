@@ -10,8 +10,8 @@
 | `model/address-form-schema.test.ts` | 칸별 길이의 경계값(한 자 넘으면 막음), 앞뒤 공백 |
 | `model/address-draft.ts` | 적다 만 폼 값을 탭 안에서 들고 있는다 |
 | `model/address-draft.test.ts` | 대상이 다른 것, 절반만 적은 것, 막힌 저장소 |
-| `model/phone-number.ts` | 연락처를 치는 대로 숫자만 남기고 하이픈을 넣는다(`formatPhoneInput`). 010은 3-4-4, 서울은 2-3-4·2-4-4 (#526) |
-| `model/phone-number.test.ts` | 치는 도중의 모양, 숫자가 아닌 글자, 열한 자리를 넘는 값 |
+| `model/phone-number.ts` | 연락처를 치는 대로 숫자만 남기고 하이픈을 넣는다(`formatPhoneInput`). 010은 3-4-4, 서울은 2-3-4·2-4-4, 050 평생·안심번호는 4-3-4·4-4-4(열두 자리까지) (#526) |
+| `model/phone-number.test.ts` | 치는 도중의 모양, 숫자가 아닌 글자, 자리 수를 넘는 값, 050 번호 |
 | `model/return-to.ts` | 저장을 마치고 돌아갈 곳. 우리 경로만 통과시킨다 |
 | `model/return-to.test.ts` | 바깥을 가리키는 값, 탭·줄바꿈으로 감춘 값 |
 | `index.ts` | 공개 API |
