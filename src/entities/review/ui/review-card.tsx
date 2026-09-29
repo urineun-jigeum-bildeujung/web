@@ -6,6 +6,8 @@
 //
 // 아이가 여럿이면 글로만 적지 않고 원도 그만큼 포갠다. 원 하나에 아이 여럿을 담으면
 // 몇 마리인지가 원에서 사라진다 (#488).
+//
+// 신고는 로그인해야 한다. 비로그인이 누르면 확인창을 열지 않고 로그인 필요 토스트만 띄운다 (#542).
 
 "use client";
 
@@ -13,6 +15,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { useRequireSession } from "@/shared/api/use-require-session";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +45,7 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, hideAvatar, hidePhotos, className }: ReviewCardProps) {
   const [reporting, setReporting] = useState(false);
+  const requireSession = useRequireSession();
 
   return (
     <article className={cn("flex flex-col gap-2", className)}>
@@ -131,7 +135,7 @@ export function ReviewCard({ review, hideAvatar, hidePhotos, className }: Review
         {/* 신고는 되돌리기 어렵다. 누르는 순간 접수되는 것처럼 보이면 안 된다 */}
         <button
           type="button"
-          onClick={() => setReporting(true)}
+          onClick={() => requireSession() && setReporting(true)}
           className="flex min-h-11 items-center text-caption-regular-12 text-text-body-secondary underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           신고하기

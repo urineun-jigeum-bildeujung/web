@@ -6,10 +6,13 @@
 //
 // 문의를 상품과 배송으로 나눈 것도 이유가 있다. 배송 문의는 주문 건에 매여
 // 1:1 문의로 가야 하고, 상품 문의만 공개 목록에 쌓인다.
+//
+// 문의 링크는 모두 마이페이지로 가서 로그인해야 열린다. 비로그인이면 가지 않고 토스트만 띄운다 (#542).
 
 import Image from "next/image";
 import Link from "next/link";
 
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
@@ -23,22 +26,32 @@ type QnaPanelProps = {
 };
 
 export function QnaPanel({ inquiries }: QnaPanelProps) {
+  const requireSession = useRequireSession();
+  const guardLink = (event: React.MouseEvent) => {
+    if (!requireSession()) event.preventDefault();
+  };
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-3 p-4">
         <div className="flex gap-2">
           {/* 문의 작성 화면이 시안에 없다. 계약이 정해지면 이 자리에서 연다 */}
           <Button asChild className="min-h-11 flex-1 rounded-lg">
-            <Link href="/mypage/support">상품 문의</Link>
+            <Link href="/mypage/support" onClick={guardLink}>
+              상품 문의
+            </Link>
           </Button>
           <Button asChild className="min-h-11 flex-1 rounded-lg">
-            <Link href="/mypage/support/inquiries">배송 · 반품 · 교환 문의</Link>
+            <Link href="/mypage/support/inquiries" onClick={guardLink}>
+              배송 · 반품 · 교환 문의
+            </Link>
           </Button>
         </div>
 
         {/* 배송 문의는 주문 건에 매여 공개 목록에 쌓이지 않는다. 어디서 보는지 알려 준다 */}
         <Link
           href="/mypage/support/inquiries"
+          onClick={guardLink}
           className="flex min-h-11 items-center justify-center gap-1 text-caption-regular-13 text-text-body-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           배송 · 반품 · 교환 문의 답변은 1:1문의에서 확인해 보세요
