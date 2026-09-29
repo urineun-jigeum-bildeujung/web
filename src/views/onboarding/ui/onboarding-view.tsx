@@ -2,7 +2,8 @@
 // UI 시안 기준(onbo_001~onbo_005, onbo_011)이다.
 //
 // 화면 안에서 온보딩을 떠나는 길은 두지 않는다. 시안에 건너뛰기도 닫기도 없다.
-// 회원가입 직후 반드시 거치는 단계라는 뜻으로 읽힌다.
+// 회원가입 직후 반드시 거치는 단계라는 뜻으로 읽힌다. 아이 추가로 들어왔을 때만 첫 입력 단계의
+// "이전"이 들어온 화면으로 돌아간다(QA No.254, #527).
 
 "use client";
 
@@ -10,7 +11,14 @@ import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useSyncExternalStore } from "react";
 
-import { BreedPickerStep, type PetProfileDraft, type SpeciesBreed } from "@/entities/pet";
+import {
+  ADD_PET_ORIGINS,
+  BreedPickerStep,
+  canAddPet,
+  useQueryPets,
+  type PetProfileDraft,
+  type SpeciesBreed,
+} from "@/entities/pet";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { parseBirthDate } from "@/shared/lib/birth-date";
 import { toastAppError } from "@/shared/lib/app-toast";
@@ -30,6 +38,7 @@ import { DetailStep } from "./steps/detail-step";
 import { DoneStep } from "./steps/done-step";
 import { HealthStep } from "./steps/health-step";
 import { IntroStep } from "./steps/intro-step";
+import { PetLimitStep } from "./steps/pet-limit-step";
 
 export function OnboardingView() {
   const router = useRouter();
@@ -42,13 +51,25 @@ export function OnboardingView() {
     // WebView 앱으로 감쌀 예정이라 기기 뒤로가기가 실제 사용 경로다
     parseAsStringLiteral(ONBOARDING_STEPS).withDefault("intro").withOptions({ history: "push" }),
   );
+  // 아이 추가로 들어왔으면 들어온 화면이 실려 온다. 가입 직후 첫 등록에는 없다.
+  // **`router.back()`으로는 못 돌아간다.** 단계 이동이 모두 push라 상세에서 "이전"으로 돌아온
+  // 첫 단계에서 한 칸 되돌리면 상세로 가고, 버튼만 눌러서는 빠져나갈 수 없는 고리가 된다.
+  // 주소창에 실려 오는 값이라 추가 진입점만 받는다 — 아무 경로나 받으면 바깥으로 내보낼 수 있다
+  const [from] = useQueryState("from", parseAsStringLiteral(ADD_PET_ORIGINS));
+  // 5마리를 채웠으면 더 들이지 않는다(QA No.130, #527). 목록을 아직 모르면 막지 않는다
+  const { pets } = useQueryPets();
+  const canAddMore = canAddPet(pets);
+  // 추가 자리는 5마리면 모두 사라지지만 주소로 첫 입력 단계에 바로 들어올 수 있다. 입력칸 대신
+  // 까닭을 보인다. 첫 단계만 막는다 — 다섯째를 등록한 직후 목록이 먼저 갱신되면 건강 단계에
+  // 안내가 한 번 비칠 수 있다
+  const blocked = step === "basic" && !canAddMore;
   // 새로고침해도 남아야 한다. 단계만 URL에 있고 입력값이 사라지면
   // `?step=health`로 새로고침했을 때 고양이 보호자가 강아지 갈래를 만난다
   const draft = useSyncExternalStore(subscribeDraft, getDraft, getDraftOnServer);
 
   const patch = (next: Partial<PetProfileDraft>) => setDraft({ ...draft, ...next });
   const { registerPet, isSubmitting } = useMutateRegisterPet();
-  const progress = getStepProgress(step);
+  const progress = blocked ? null : getStepProgress(step);
 
   const pickBreed = (breed: SpeciesBreed) => {
     // 종이 바뀌면 앞서 고른 질환도 알레르기도 그 종의 목록에 없는 것이 된다.
@@ -113,8 +134,16 @@ export function OnboardingView() {
 
       {step === "intro" && <IntroStep onStart={() => void setStep("basic")} />}
 
-      {step === "basic" && (
-        <BasicStep draft={draft} onChange={patch} onNext={() => void setStep("detail")} />
+      {blocked && <PetLimitStep onLeave={() => router.replace("/mypage/pets")} />}
+
+      {step === "basic" && !blocked && (
+        <BasicStep
+          draft={draft}
+          onChange={patch}
+          onNext={() => void setStep("detail")}
+          // 떠난 화면으로 되돌아가며 이 단계를 기록에서 지운다. 쌓으면 그 화면의 뒤로가기가 다시 여기로 온다
+          onPrev={from ? () => router.replace(from) : undefined}
+        />
       )}
 
       {step === "detail" && (
@@ -151,6 +180,7 @@ export function OnboardingView() {
           onGoHome={() => finish(() => router.replace("/"))}
           // 시안에 이어지는 화면이 없어 같은 흐름을 처음부터 다시 돈다
           onAddProfile={() => finish(() => void setStep("basic"))}
+          canAddMore={canAddMore}
         />
       )}
     </div>

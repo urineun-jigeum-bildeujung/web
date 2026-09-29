@@ -8,10 +8,22 @@ import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import { EMPTY_PROFILE_DRAFT } from "@/entities/pet";
 
+// 등록한 아이 수를 보고 5마리면 더 들이지 않는다(QA No.130, #527). 기본은 가입 직후 첫 등록이다
+const petsQuery: { pets: { id: string; name: string; isDefault: boolean }[] | undefined } = {
+  pets: [],
+};
+const petsOf = (count: number) =>
+  Array.from({ length: count }, (_, index) => ({
+    id: `${index + 1}`,
+    name: `아이${index + 1}`,
+    isDefault: index === 0,
+  }));
+
 // 건강 단계가 선택지를 서버에서 받는다(#226). 못 받으면 넘어가지 못하게 막으므로 세운다.
 // 무엇을 보내고 어떻게 옮기는지는 `entities/pet/api/health-options.test.ts`가 본다
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryPets: () => ({ pets: petsQuery.pets, isLoading: false, error: null }),
   useQueryHealthOptions: () => ({
     options: {
       concerns: [{ label: "관절·뼈", items: [{ value: "슬개골 탈구", label: "슬개골 탈구" }] }],
@@ -49,7 +61,9 @@ beforeEach(() => {
   window.localStorage.clear();
   resetDraftCache();
   push.mockClear();
+  replace.mockClear();
   toastAppError.mockClear();
+  petsQuery.pets = [];
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
 });
@@ -100,6 +114,47 @@ test("첫 입력 단계는 세 항목이 다 차야 다음으로 넘어갈 수 �
 test("첫 입력 단계의 이전은 잠겨 있다", () => {
   renderAt("?step=basic");
   expect((screen.getByRole("button", { name: "이전" }) as HTMLButtonElement).disabled).toBe(true);
+});
+
+// 아이 추가로 들어간 첫 단계의 "이전"이 눌리지 않았다(QA No.254, #527). 들어온 화면으로 되돌아가며
+// 이 단계를 기록에서 지운다 — 쌓으면 그 화면의 뒤로가기가 다시 입력 단계로 온다
+test("아이 추가로 들어왔으면 첫 입력 단계의 이전이 들어온 화면으로 돌아간다", () => {
+  petsQuery.pets = petsOf(2);
+  renderAt("?step=basic&from=/mypage/pets");
+
+  const prev = screen.getByRole("button", { name: "이전" }) as HTMLButtonElement;
+  expect(prev.disabled).toBe(false);
+  fireEvent.click(prev);
+
+  expect(replace).toHaveBeenCalledWith("/mypage/pets");
+  expect(push).not.toHaveBeenCalled();
+});
+
+// 주소창에 실려 오는 값이다. 아무 경로나 받으면 "이전"이 바깥 사이트로 내보낸다
+test("돌아갈 곳이 아이 추가 진입점이 아니면 이전은 잠긴 채다", () => {
+  for (const from of ["https://evil.example", "//evil.example", "/cart"]) {
+    const { unmount } = renderAt(`?step=basic&from=${encodeURIComponent(from)}`);
+    expect((screen.getByRole("button", { name: "이전" }) as HTMLButtonElement).disabled).toBe(true);
+    unmount();
+  }
+});
+
+// 5마리째를 등록한 뒤에도 추가 자리가 남아 여섯째가 등록됐다(QA No.130, #527). 추가 자리는
+// 모두 사라지지만 주소로 첫 입력 단계에 바로 들어올 수 있다
+test("5마리를 채웠으면 첫 입력 단계에 들어와도 입력칸 대신 안내를 보인다", () => {
+  petsQuery.pets = petsOf(4);
+  const { unmount } = renderAt("?step=basic");
+  expect(screen.getByRole("heading", { name: "아이를 소개해 주세요" })).toBeDefined();
+  unmount();
+
+  petsQuery.pets = petsOf(5);
+  renderAt("?step=basic");
+
+  expect(screen.queryByRole("heading", { name: "아이를 소개해 주세요" })).toBeNull();
+  expect(screen.queryByRole("progressbar")).toBeNull();
+  expect(screen.getByText("아이는 5마리까지 등록할 수 있어요")).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "아이 관리로 가기" }));
+  expect(replace).toHaveBeenCalledWith("/mypage/pets");
 });
 
 test("건강 단계는 해당 없음 체크만으로도 넘어갈 수 있다", () => {
@@ -194,6 +249,28 @@ test("완료 화면의 프로필 추가는 초안을 비우고 첫 입력 단계
 
   expect(window.localStorage.getItem("onboarding-draft")).toBeNull();
   expect(screen.getByRole("heading", { name: "아이를 소개해 주세요" })).toBeDefined();
+});
+
+// 다섯째를 등록하고 나면 더 들일 수 없다(QA No.130, #527). 권유 문구만 두면 할 수 없는 일을 권한다
+test("5마리째를 등록한 완료 화면에는 프로필 추가와 권유 문구가 없다", () => {
+  petsQuery.pets = petsOf(5);
+  renderAt("?step=done");
+
+  expect(screen.getByRole("heading", { name: "아이의 프로필 등록이 끝났어요" })).toBeDefined();
+  expect(screen.queryByText(/함께할 다른 가족이 더 있나요/)).toBeNull();
+  expect(screen.queryByRole("button", { name: "프로필 추가" })).toBeNull();
+  expect(screen.getByRole("button", { name: "홈으로 이동" })).toBeDefined();
+});
+
+// 완료 화면에서 이어서 등록해도 들어온 화면은 주소창에 남아 있어야 한다(QA No.254, #527)
+test("아이 추가 흐름에서 프로필 추가로 다시 돌아도 첫 입력 단계의 이전이 들어온 화면으로 간다", () => {
+  petsQuery.pets = petsOf(2);
+  renderAt("?step=done&from=/mypage");
+
+  fireEvent.click(screen.getByRole("button", { name: "프로필 추가" }));
+  fireEvent.click(screen.getByRole("button", { name: "이전" }));
+
+  expect(replace).toHaveBeenCalledWith("/mypage");
 });
 
 // 마지막 단계의 "작성 완료"에서 프로필이 서버에 등록된다.

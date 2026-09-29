@@ -1,7 +1,8 @@
 // 사진·이름·성별·중성화 여부를 받는 첫 입력 단계.
 // UI 시안 기준(onbo_002_미입력·입력완료)이다.
 //
-// "이전"은 잠겨 있다. 시안이 첫 단계에서 비활성으로 그려 도입부로 돌아가는 길을 두지 않는다.
+// "이전"은 가입 직후 첫 등록에서 잠겨 있다. 시안이 첫 단계에서 비활성으로 그려 도입부로 돌아가는
+// 길을 두지 않는다. 아이 추가로 들어왔으면 들어온 화면으로 돌아간다(QA No.254, #527).
 
 "use client";
 
@@ -17,9 +18,11 @@ type BasicStepProps = {
   draft: PetProfileDraft;
   onChange: (patch: Partial<PetProfileDraft>) => void;
   onNext: () => void;
+  /** 들어온 화면으로 돌아간다. 없으면 "이전"이 잠긴다 — 가입 직후 첫 등록에는 돌아갈 곳이 없다 */
+  onPrev?: () => void;
 };
 
-export function BasicStep({ draft, onChange, onNext }: BasicStepProps) {
+export function BasicStep({ draft, onChange, onNext, onPrev }: BasicStepProps) {
   // 시안에서 세 항목이 모두 차야 다음 버튼이 켜진다
   const canProceed = Boolean(draft.name && draft.gender && draft.neutered);
 
@@ -70,7 +73,7 @@ export function BasicStep({ draft, onChange, onNext }: BasicStepProps) {
       </main>
 
       <BottomActionBar>
-        <Button variant="secondary" disabled>
+        <Button variant="secondary" disabled={!onPrev} onClick={onPrev}>
           이전
         </Button>
         <Button disabled={!canProceed} onClick={onNext}>
