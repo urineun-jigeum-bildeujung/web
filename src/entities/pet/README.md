@@ -9,6 +9,8 @@
 | `ui/body-type-slider.tsx` | 체형을 고르는 슬라이더와 눈금 문구 (`onbo_003_체구선택후`). 온보딩·체형 수정이 함께 쓴다 |
 | `ui/body-type-slider.test.tsx` | 손잡이 값이 숫자가 아니라 체형 이름으로 읽히는지 본다 |
 | `ui/size-guide.tsx` | 체구를 몇 kg으로 가르는지 보이는 물음표 말풍선 (`onbo_003_체구툴팁`) |
+| `ui/weight-field.tsx` | 몸무게 입력칸. 소수 첫째 자리까지만 받고 칸을 벗어나면 `4.5kg`처럼 단위를 붙인다. 온보딩 상세·정보 수정 체형이 함께 쓴다 (#524) |
+| `ui/weight-field.test.tsx` | 치는 동안 숫자만·벗어나면 kg·치다 만 모양 다듬기·지우기 |
 | `ui/body-type-guide.test.tsx` | 다섯 단계가 이름만이 아니라 설명까지 읽히는지 본다 |
 | `ui/breed-picker.tsx` | 품종 목록. 검색 전에는 종별 전체, 검색 중에는 걸러진 것 (`onbo_011_품종선택`) |
 | `ui/breed-picker.test.tsx` | 종별 묶음·검색·같은 이름을 id로 가르기 |
@@ -28,7 +30,12 @@
 | `ui/pet-photo.test.tsx` | 사진이 없을 때만 글자가 들어가는지, 바탕색이 아이 id로 갈리는지 |
 | `ui/product-feedback-sheet.tsx` | 산 제품이 아이에게 맞았는지 묻는 시트 (`mypa_021` 반응 시트). 메인의 상태 체크도 같은 것이다. `onSubmit`을 주면 서버에 보내고 없으면 화면만 완료로 바꾼다 |
 | `ui/product-feedback-sheet.test.tsx` | 답변·보류가 무엇으로 나가는지, 실패하면 완료로 안 가는지 |
-| `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터 |
+| `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터, 종·체구별 몸무게 예시 문구 |
+| `model/breeds.test.ts` | 몸무게 예시가 종·체구로 갈리는지 |
+| `model/profile-input.ts` | 입력칸이 받는 글자를 거른다. 이름은 이모티콘 빼기, 나이는 숫자 두 자리, 몸무게는 소수 첫째 자리까지 (#524) |
+| `model/profile-input.test.ts` | QA 시트에 적힌 값(`초코🐶😀`·`221asdf12@@#`·`4.567`)을 그대로 넣어 본다 |
+| `model/parse-profile-input.ts` | 자유 입력을 API 값으로 옮긴다. 나이 상한(30살), 몸무게 소수 첫째 자리 반올림, 나이 칸이 알릴 말 |
+| `model/parse-profile-input.test.ts` | 단위·부호·앞자리 0 없는 소수·상한·반올림 |
 | `model/body-groups.ts` | 리뷰 필터 품종 선택 화면(#264)용 체구그룹 상수와 `groupBreedsByBodySize` |
 | `model/body-groups.test.ts` | 정상 매칭·표기 차이·믹스·미매칭 기타 그룹 처리 |
 | `model/add-pet.ts` | 새 아이를 들이는 규칙. 상한 `MAX_PETS`(5마리)와 `canAddPet`, 추가 진입점(`ADD_PET_ORIGINS`)과 온보딩으로 가는 주소 `toAddPetHref` (#527) |
@@ -41,6 +48,14 @@
 | `api/health-options.test.ts` | 종 파라미터, 대분류 옮기기, 알레르기 코드·표시명 |
 | `api/use-query-health-options.ts` | 고른 종의 선택지를 받는 훅 |
 | `index.ts` | 공개 API |
+
+## 입력 규칙은 온보딩과 정보 수정이 같다
+
+**둘 다 뷰라서 서로 import할 수 없어 엔티티에 둔다.** 규칙을 따로 들었을 때 정보 수정만 이모티콘 이름·글자 섞인 나이를 받았다(QA No.230·233, #524). 칠 때 거르는 것은 `profile-input`, 걸러도 남는 잘못(상한을 넘는 나이, 0kg)을 읽고 알리는 것은 `parse-profile-input`이다.
+
+**나이 상한 30살은 기획값이 아니다.** 서버(`@Positive Integer`)에 상한이 없어 기록된 최고령 개(약 30살)를 기준으로 뒀다. 기획이 정하면 `MAX_PET_AGE` 하나만 바꾼다.
+
+**몸무게 칸은 벗어나면 kg을 붙인다.** 시안이 값을 `4kg`으로 그리는데 `FormField`의 `trailing`에 단위를 두면 지우기 버튼이 사라진다. 그래서 치는 동안은 숫자만, 벗어나면 뒤에 단위를 붙여 보인다. 초안과 요청에는 단위 없는 숫자만 간다.
 
 ## 아직 없는 것
 
