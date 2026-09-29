@@ -177,11 +177,13 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
                 className="text-icon-fill-default transition-transform group-aria-expanded/accordion-trigger:rotate-180"
               />
             </AccordionTrigger>
-            <AccordionContent>
+            {/* `AccordionContent`는 문단마다 `mb-4`를 붙인다. 이 안내는 줄 간격만으로 붙여 읽는
+                글이라(시안 3756-73239) 같은 변형 체인으로 0으로 덮는다 — 접두사가 다르면 안 이긴다 */}
+            <AccordionContent className="[&_p:not(:last-child)]:mb-0">
               <div className="flex flex-col gap-2 pb-2">
                 {sections.map((section) => (
                   <section key={section.heading} aria-label={section.heading}>
-                    {/* 시안(3756-73239)의 소제목은 본문과 굵기가 같고 크기·색만 다르다 */}
+                    {/* 시안의 소제목은 본문과 굵기가 같고 크기·색만 다르다 */}
                     <p className="text-caption-regular-13 text-text-body-default">
                       {section.heading}
                     </p>
