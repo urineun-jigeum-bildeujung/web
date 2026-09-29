@@ -71,7 +71,11 @@ export function PhotoViewer({
 
   const track = useRef<HTMLUListElement>(null);
 
+  // **자리를 먼저 옮기고 미끄러뜨린다.** 미끄러지는 동안에는 아직 `current`가 옛 값이라,
+  // 나중 자리를 여기서 갱신하지 않으면 연달아 누른 두 번이 같은 곳을 가리킨다 —
+  // 화살표는 키보드 초점에서만 나오므로 키보드로 넘길 때만 겪는 일이다 (리뷰 반영)
   const goTo = (index: number) => {
+    onPhotoChange(index);
     const list = track.current;
     if (list) list.scrollTo({ left: list.clientWidth * index, behavior: "smooth" });
   };
@@ -126,6 +130,9 @@ export function PhotoViewer({
             aria-label="후기 사진"
             onScroll={(event) => {
               const list = event.currentTarget;
+              // 창이 닫히는 중이거나 아직 자리를 못 잡았으면 폭이 0이다. 그대로 나누면
+              // `NaN`이 나오고 `NaN !== current`는 늘 참이라 주소에 `NaN`이 박힌다 (리뷰 반영)
+              if (list.clientWidth === 0) return;
               const next = Math.round(list.scrollLeft / list.clientWidth);
               // 주소(`n`)와 이어져 있어 실제로 바뀔 때만 알린다
               if (next !== current) onPhotoChange(next);
