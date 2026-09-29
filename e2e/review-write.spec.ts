@@ -79,6 +79,20 @@ test("별점·사용 기간·아이·후기를 채워야 등록되고, 단계는
   await expect(page).toHaveURL(/\/mypage\/reviews\?tab=written/);
 });
 
+// QA RV-020. 별점은 1점부터라 첫 별은 가르지 않은 한 칸이다. 칸 크기는 jsdom이 계산하지 못해 여기서 본다
+test("첫 별은 왼쪽 반을 눌러도 1점이 된다", async ({ page }) => {
+  await page.goto(PATH);
+
+  const one = page.getByRole("radio", { name: "5점 만점에 1점" });
+  await one.scrollIntoViewIfNeeded();
+  // 라디오의 부모가 44px 별 상자다. 1점 칸이 오른쪽 반만 덮으면 왼쪽 끝에는 누를 것이 없다
+  const star = await one.locator("..").boundingBox();
+  if (!star) throw new Error("첫 별 상자를 찾지 못했다");
+  await page.mouse.click(star.x + 3, star.y + star.height / 2);
+
+  await expect(one).toHaveAttribute("aria-checked", "true");
+});
+
 test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
   await page.goto(`${PATH}&step=detail`);
 
