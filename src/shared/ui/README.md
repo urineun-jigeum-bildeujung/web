@@ -46,7 +46,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣고, 손잡이가 없는 시안은 `showHandle={false}`. 보내는 동안 닫기를 막을 때는 `dismissible={false}` — `onOpenChange`에서 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다 (#474) |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동. 그림은 `icon` 세트를 72px로 키워 쓴다 |
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
-| `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을 둔다 |
+| `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을, `suffix`로 값 바로 뒤에 단위(몸무게 kg)를 둔다 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
 | `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
 | `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / brand / strong)으로 뜻에 따라 색을 고른다 |

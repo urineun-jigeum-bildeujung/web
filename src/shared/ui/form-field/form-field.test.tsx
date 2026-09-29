@@ -46,3 +46,17 @@ test("비활성 상태에서는 클리어 버튼을 그리지 않는다", () => 
   // 값을 고칠 수 없는 필드에서 지우기만 되면 안 된다
   expect(screen.queryByRole("button", { name: "입력 지우기" })).toBeNull();
 });
+
+// 몸무게 "4kg"처럼 단위를 곁에 그린다(#524). 값에 섞으면 칠 때마다 단위를 떼고 붙여야 한다
+test("suffix는 값이 있을 때만 값 뒤에 보이고 입력값에는 들어가지 않는다", () => {
+  const { rerender } = render(
+    <FormField label="몸무게" value="" onChange={() => {}} suffix="kg" />,
+  );
+  expect(screen.queryByText("kg")).toBeNull();
+
+  rerender(<FormField label="몸무게" value="4.5" onChange={() => {}} suffix="kg" />);
+
+  expect((screen.getByLabelText("몸무게") as HTMLInputElement).value).toBe("4.5");
+  // 입력값을 두 번 읽지 않게 화면 낭독기에서는 가린다
+  expect(screen.getByText("kg").closest("[aria-hidden]")).not.toBeNull();
+});
