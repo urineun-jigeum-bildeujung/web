@@ -105,11 +105,20 @@ export type OrderItemClaim = {
 /**
  * 상세에만 오는 상품 필드.
  *
- * `unitPrice`는 **낱개 값**이다. 명세 Example이 20,000원과 15,000원짜리 하나씩에
- * `productAmount` 35,000원이라 수량을 곱한 값이 아니다.
+ * 금액은 셋이다(백엔드 sever#170). **화면이 "낸 돈"으로 보일 것은 `paidUnitPrice`·`amount`다.**
+ * 전에는 `unitPrice`에 수량을 곱해 줄 금액으로 썼는데, 그 값은 할인 전이라 할인된 상품에서
+ * 결제 금액보다 크게 보였다 (#516).
  */
 export type OrderDetailItem = OrderItemBase & {
+  /** 할인 전 단가. 일반 상품은 정가(없으면 판매가), 타임딜은 딜 정상가 */
   unitPrice: number;
+  /** 할인이 반영된, 실제로 낸 단가. 반품 환불처럼 개당 돌려받을 돈은 이것으로 센다 */
+  paidUnitPrice: number;
+  /**
+   * 그 줄에 실제로 낸 돈 — `paidUnitPrice × quantity`. 줄마다 더하면 `productAmount`와 같다.
+   * 주문 수량 기준이라 취소·반품한 수량을 빼지 않는다
+   */
+  amount: number;
   /**
    * 상품별 상태. 주문 전체 상태와 따로 움직인다 — 한 상품만 반품 중일 수 있다.
    *

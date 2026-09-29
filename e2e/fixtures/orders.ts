@@ -107,6 +107,8 @@ const DETAIL = {
       productName: "테스트 사료",
       quantity: 2,
       unitPrice: 9345,
+      paidUnitPrice: 9345,
+      amount: 18690,
       itemStatus: "PAID",
       cancelledQuantity: 0,
       returnedQuantity: 0,
@@ -155,6 +157,8 @@ const OTHER_DETAILS: Record<string, OrderDetailStub> = {
         productName: "테스트 간식",
         quantity: 2,
         unitPrice: 10228,
+        paidUnitPrice: 10228,
+        amount: 20456,
         effectiveQuantity: 2,
         claims: [
           {
@@ -192,6 +196,8 @@ const OTHER_DETAILS: Record<string, OrderDetailStub> = {
         productName: "테스트 덴탈껌",
         quantity: 1,
         unitPrice: 12900,
+        paidUnitPrice: 12900,
+        amount: 12900,
         itemStatus: "CANCELLED",
         cancelledQuantity: 1,
         effectiveQuantity: 0,

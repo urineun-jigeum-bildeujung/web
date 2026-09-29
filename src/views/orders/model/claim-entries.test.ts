@@ -41,6 +41,8 @@ function makeDetail(orderId: number, claims: OrderItemClaim[] = []): OrderDetail
         productName: `상품 ${orderId}`,
         quantity: 1,
         unitPrice: 1000,
+        paidUnitPrice: 1000,
+        amount: 1000,
         itemStatus: "PAID",
         cancelledQuantity: 0,
         returnedQuantity: 0,

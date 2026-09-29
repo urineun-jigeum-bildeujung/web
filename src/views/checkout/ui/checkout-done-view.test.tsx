@@ -62,6 +62,8 @@ const ORDER: OrderDetail = {
       thumbnailUrl: null,
       quantity: 2,
       unitPrice: 4672,
+      paidUnitPrice: 4672,
+      amount: 9344,
       itemStatus: "PAID",
       cancelledQuantity: 0,
       returnedQuantity: 0,
