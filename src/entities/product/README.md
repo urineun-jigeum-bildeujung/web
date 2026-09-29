@@ -4,7 +4,7 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 첫 쪽 조회(`searchProducts`)와 다음 쪽 조회(`searchMoreProducts`, #532 — 다음 쪽 응답엔 개수가 null로 와서 돌려주지 않는다), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`), 딜가가 붙은 타임딜 상세 조회(`getTimeDealDetail`, #484 — 딜 번호는 새 응답의 `timeDeal`과 옛 응답의 최상위 필드를 둘 다 읽는다). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
+| `api/products.ts` | 검색 결과 첫 쪽 조회(`searchProducts`)와 다음 쪽 조회(`searchMoreProducts`, #532 — 다음 쪽 응답엔 개수가 null로 와서 돌려주지 않는다), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`), 딜가가 붙은 타임딜 상세 조회(`getTimeDealDetail`, #484 — 딜 번호는 새 응답의 `timeDeal`과 옛 응답의 최상위 필드를 둘 다 읽는다. 새 응답이면 딜 종료 시각과 지금 살 수 있는지도 `timeDeal`로 옮긴다, #539). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
 | `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
 | `api/use-query-product-details.ts` | 여러 상품의 상세를 한꺼번에 받는 훅(`useQueries`). 최근 본 상품 카드가 쓴다. 없어진 상품(404)과 실패를 가른다 (#509) |
 | `api/use-query-product-details.test.tsx` | 순서 유지, 404와 실패 구분, 실패만 다시 부르기 |

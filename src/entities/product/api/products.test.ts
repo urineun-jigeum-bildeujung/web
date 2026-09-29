@@ -233,6 +233,7 @@ describe("getProductDetail", () => {
     expect(product).toEqual({
       productId: 7,
       timeDealItemId: null,
+      timeDeal: null,
       images: ["https://example.com/a.jpg", "https://example.com/b.jpg"],
       name: "오메가3 피쉬오일 60캡슐",
       price: 21000,
@@ -316,6 +317,8 @@ describe("getTimeDealDetail", () => {
     const product = await getTimeDealDetail("1");
 
     expect(product.timeDealItemId).toBe(1);
+    // 배지·카운트다운을 실데이터로 그리는 값이다. 버리면 타임딜 화면이 개발용 `?status=deal`로만 뜬다(QA PD-063)
+    expect(product.timeDeal).toEqual({ endAt: "2026-09-29T22:00:00+09:00", purchasable: true });
   });
 
   it("옛 응답의 최상위 딜 번호도 읽는다", async () => {
@@ -324,6 +327,8 @@ describe("getTimeDealDetail", () => {
     const product = await getTimeDealDetail("1");
 
     expect(product.timeDealItemId).toBe(1);
+    // 옛 응답에는 기간이 없다. 타임딜 화면을 지어내지 않는다
+    expect(product.timeDeal).toBeNull();
   });
 });
 

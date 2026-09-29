@@ -143,6 +143,24 @@ type AllergenInfo = {
 };
 
 /**
+ * 백엔드 `ProductDetailResponse.TimeDealResponse` 그대로(sever#170). 시각은 오프셋이 붙은 ISO 문자열이다.
+ *
+ * `purchasable`은 서버가 **지금 이 딜로 살 수 있는지**를 끝까지 계산한 값이다 — 딜 기간 안이고
+ * 딜이 `ACTIVE`이며 딜 재고가 남았을 때만 true다(`TimeDealDetailService`). 예정 딜·끝난 직후·재고
+ * 소진이면 false다.
+ */
+type TimeDealResponse = {
+  timeDealItemId: number;
+  dealId: number;
+  /** 보이는 딜만 200이라 `ACTIVE`·`SCHEDULED` 둘 중 하나다 */
+  dealStatus: string;
+  startAt: string;
+  endAt: string;
+  serverTime: string;
+  purchasable: boolean;
+};
+
+/**
  * 백엔드 `ProductDetailResponse` 그대로.
  *
  * **null 여부는 OpenAPI가 아니라 엔티티에서 읽었다.** 명세에 `required`가 하나도 없어
@@ -158,8 +176,8 @@ type ProductDetailApiResponse = {
    * 옮겨 가 이 필드가 사라진다. 배포가 맞춰질 때까지 둘 다 읽는다 (#484)
    */
   timeDealItemId?: number | null;
-  /** 타임딜 상세에서만 온다(sever#170). 상태·기간도 담기지만 화면은 아직 딜 아이템 번호만 쓴다 */
-  timeDeal?: { timeDealItemId: number } | null;
+  /** 타임딜 상세에서만 온다(sever#170). 일반 상품 상세는 null이다 */
+  timeDeal?: TimeDealResponse | null;
   summary: {
     images: string[];
     productName: string;
@@ -217,6 +235,14 @@ export type ProductDetail = {
    * 일반 상품은 `NORMAL`+`productId`, 타임딜은 `TIME_DEAL`+`timeDealItemId`다.
    */
   timeDealItemId: number | null;
+  /**
+   * 타임딜 상세로 받았으면 그 딜의 종료 시각과 지금 살 수 있는지. 일반 상품 상세이거나 옛 응답(최상위
+   * `timeDealItemId`만 오던 때)이면 null이다.
+   *
+   * **종료 시각은 문자열로 둔다.** `time-deals.ts`와 같이 렌더링 경계(카운트다운)에서만 `Date`로 바꾼다.
+   * 서버 시각(`serverTime`)은 옮기지 않는다 — 타임딜 목록·메인처럼 기기 시계로 센다.
+   */
+  timeDeal: { endAt: string; purchasable: boolean } | null;
   images: string[];
   name: string;
   price: number;
@@ -237,6 +263,9 @@ function toProductDetail(response: ProductDetailApiResponse): ProductDetail {
   return {
     productId: response.productId,
     timeDealItemId: response.timeDeal?.timeDealItemId ?? response.timeDealItemId ?? null,
+    timeDeal: response.timeDeal
+      ? { endAt: response.timeDeal.endAt, purchasable: response.timeDeal.purchasable }
+      : null,
     images: response.summary.images,
     name: response.summary.productName,
     price: response.summary.price,
