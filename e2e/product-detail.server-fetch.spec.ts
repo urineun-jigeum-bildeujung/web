@@ -368,3 +368,24 @@ test("영양 배지가 화면 밖으로 넘치지 않는다", async ({ page }) =
     );
   }
 });
+
+// 최근 본 상품은 백엔드 API가 없어 이 브라우저에 기록한다(#509). 상세에 들어온 것이 좋아요의
+// "최근에 봤어요"까지 이어지는지, 카드 값이 상품 조회에서 오는지 본다
+test("상품 상세에 들어오면 좋아요의 최근에 봤어요에 남고, X로 빼면 비워진다", async ({ page }) => {
+  await page.goto(PATH);
+  await expect(page.getByRole("heading", { name: NAME, level: 1 })).toBeVisible();
+  // 기록은 하이드레이션 뒤 효과에서 한다. 저장된 뒤에 떠나야 흔들리지 않는다
+  await page.waitForFunction(() =>
+    (localStorage.getItem("gollaju.recentlyViewed") ?? "").includes('"productIds":[1]'),
+  );
+
+  await page.goto("/likes?tab=recent");
+
+  const card = page.getByRole("listitem").filter({ hasText: NAME });
+  await expect(card).toBeVisible();
+  await expect(card.getByText("18,000원")).toBeVisible();
+  await expect(card.getByText("25%")).toBeVisible();
+
+  await card.getByRole("button", { name: `${NAME} 최근 본 목록에서 빼기` }).click();
+  await expect(page.getByText("최근 본 상품이 없어요")).toBeVisible();
+});
