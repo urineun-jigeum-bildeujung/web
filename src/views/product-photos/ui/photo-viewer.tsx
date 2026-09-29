@@ -13,12 +13,12 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { ReviewCard, toUsageLabel, useQueryReviewDetail } from "@/entities/review";
 import { useQueryWishlistStatus } from "@/entities/wishlist";
-import { cn } from "@/shared/lib/utils";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -69,6 +69,24 @@ export function PhotoViewer({
   const images = review?.images ?? [];
   const current = images.length > 0 ? Math.min(Math.max(photoIndex, 0), images.length - 1) : 0;
 
+  const track = useRef<HTMLUListElement>(null);
+
+  const goTo = (index: number) => {
+    const list = track.current;
+    if (list) list.scrollTo({ left: list.clientWidth * index, behavior: "smooth" });
+  };
+
+  // 격자에서 고른 사진이 첫 장이 아닐 수 있고, 주소로 바로 들어올 수도 있다.
+  // 사진을 받아 온 뒤에야 줄이 그려지므로 그 시점에 자리를 맞춘다.
+  // **애니메이션 없이 건너뛴다** — 열자마자 첫 장에서 훑고 지나가면 엉뚱한 사진을 본다
+  useEffect(() => {
+    const list = track.current;
+    if (list) list.scrollLeft = list.clientWidth * current;
+    // 고른 사진이 바뀔 때마다 미끄러뜨리면 스크롤과 서로를 밀어낸다. 줄이 처음
+    // 그려질 때(사진 수가 정해질 때)만 맞춘다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
+
   return (
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent
@@ -99,27 +117,46 @@ export function PhotoViewer({
           {images.length > 0 ? `이 후기에 달린 사진 ${images.length}장` : "후기 사진을 불러오는 중"}
         </DialogDescription>
 
-        <div className="relative flex aspect-square w-full shrink-0 items-center justify-center bg-muted">
-          {images.length > 0 && (
-            <Image
-              src={images[current]}
-              alt={`후기 사진 ${current + 1}번째`}
-              fill
-              // 열자마자 보는 이 화면의 주인공이다
-              preload
-              sizes="100vw"
-              className="object-contain"
-            />
-          )}
+        <div className="relative aspect-square w-full shrink-0 bg-muted">
+          {/* 넘기는 것은 스크롤 스냅이 맡는다 — 시안(1758-54280)에 좌우 화살표가 없다.
+              리뷰 상세의 사진 줄과 같은 방식이고, 지금 몇 번째인지는 스크롤 위치에서
+              되읽는다. 따로 상태를 굴리면 손가락으로 넘긴 것과 표시가 어긋난다 */}
+          <ul
+            ref={track}
+            aria-label="후기 사진"
+            onScroll={(event) => {
+              const list = event.currentTarget;
+              const next = Math.round(list.scrollLeft / list.clientWidth);
+              // 주소(`n`)와 이어져 있어 실제로 바뀔 때만 알린다
+              if (next !== current) onPhotoChange(next);
+            }}
+            className="flex size-full snap-x snap-mandatory [scrollbar-width:none] overflow-x-auto [&::-webkit-scrollbar]:hidden"
+          >
+            {images.map((src, index) => (
+              <li key={src} className="relative size-full shrink-0 snap-start">
+                <Image
+                  src={src}
+                  alt={`후기 사진 ${index + 1}번째`}
+                  fill
+                  // 열자마자 보는 이 화면의 주인공이다
+                  preload={index === current}
+                  sizes="100vw"
+                  className="object-contain"
+                />
+              </li>
+            ))}
+          </ul>
 
           {images.length > 1 && (
             <>
+              {/* 시안에 없는 버튼이라 평소엔 안 보이고 키보드 초점이 올 때만 나온다 —
+                  넘기기를 스크롤에만 맡기면 키보드로는 넘길 수 없다 */}
               <button
                 type="button"
                 aria-label="이전 사진"
                 disabled={current === 0}
-                onClick={() => onPhotoChange(current - 1)}
-                className="absolute left-2 flex size-11 items-center justify-center rounded-full bg-background/80 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-30"
+                onClick={() => goTo(current - 1)}
+                className="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
               >
                 <IoChevronBack aria-hidden className="size-5" />
               </button>
@@ -127,26 +164,21 @@ export function PhotoViewer({
                 type="button"
                 aria-label="다음 사진"
                 disabled={current === images.length - 1}
-                onClick={() => onPhotoChange(current + 1)}
-                className="absolute right-2 flex size-11 items-center justify-center rounded-full bg-background/80 text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-30"
+                onClick={() => goTo(current + 1)}
+                className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
               >
                 <IoChevronForward aria-hidden className="size-5" />
               </button>
 
-              {/* 점 개수는 이 후기에 달린 사진 수다. 전체 장수를 넘기는 것이 아니다 */}
-              <div className="absolute bottom-3 flex gap-1.5">
+              {/* 시안은 점이 아니라 사진 우측 하단의 어두운 알약 안 `1/3`이다.
+                  세는 것은 이 후기에 달린 사진 수이지 전체 장수가 아니다.
+                  **낭독기에는 `1/3`을 그대로 들려주지 않는다** — 분수로도 날짜로도 읽혀서다 */}
+              <p className="absolute right-1 bottom-1 rounded-full bg-foreground/50 px-2 py-0.5 text-label-medium-12 text-text-body-static-white">
                 <span className="sr-only">{`${images.length}장 중 ${current + 1}번째`}</span>
-                {images.map((url, index) => (
-                  <span
-                    key={url}
-                    aria-hidden
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      index === current ? "bg-foreground" : "bg-foreground/30",
-                    )}
-                  />
-                ))}
-              </div>
+                <span aria-hidden>
+                  {current + 1}/{images.length}
+                </span>
+              </p>
             </>
           )}
         </div>
