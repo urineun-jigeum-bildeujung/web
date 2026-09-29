@@ -78,7 +78,10 @@ export function DeliveryNoteField({ id, value, onChange }: DeliveryNoteFieldProp
             placeholder={`배송 요청사항을 작성해주세요 (최대 ${DELIVERY_NOTE_MAX}자)`}
             maxLength={DELIVERY_NOTE_MAX}
             value={value}
-            onChange={(event) => onChange(event.target.value)}
+            // **`maxLength`만으로는 한글이 한 자 넘친다.** 조합 중인 글자는 길이 제한을 거치지 않아
+            // 101자째가 그대로 들어오고, 배송지 폼은 그 값을 검증에서 막아 입력 완료가 꺼진 채 남았다.
+            // 넘친 값을 받지 않도록 여기서 한 번 더 자른다 (QA No.175)
+            onChange={(event) => onChange(event.target.value.slice(0, DELIVERY_NOTE_MAX))}
             className="min-h-24"
           />
           <p className="self-end text-caption-regular-12 text-text-body-secondary">
