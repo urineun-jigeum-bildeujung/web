@@ -43,6 +43,7 @@ import {
   clearReviewDraft,
   getReviewDraft,
   getReviewDraftOnServer,
+  MIN_SCORE,
   setReviewDraft,
   subscribeReviewDraft,
   type ReviewDraft,
@@ -197,7 +198,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   const answeredAll = (questions: readonly Question[]) =>
     questions.every((question) => !question.required || responses[question.key] !== undefined);
 
-  const ratingReady = score > 0 && days.length > 0 && answeredAll(RATING_STEP_QUESTIONS);
+  const ratingReady = score >= MIN_SCORE && days.length > 0 && answeredAll(RATING_STEP_QUESTIONS);
   const ready =
     ratingReady &&
     petIds.length > 0 &&
@@ -281,6 +282,7 @@ function ReviewWriteForm({ productId }: { productId: string }) {
                   value={score}
                   onChange={(next) => patch({ score: next })}
                   label="상품 만족도"
+                  min={MIN_SCORE}
                 />
               </div>
 

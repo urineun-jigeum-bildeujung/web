@@ -5,7 +5,7 @@
 
 import type { ReviewCreateRequest } from "@/entities/review";
 
-import type { ReviewDraft } from "./draft-storage";
+import { MIN_SCORE, type ReviewDraft } from "./draft-storage";
 import { HANDLING_QUESTION, RATING_STEP_QUESTIONS } from "./questions";
 
 const QUESTIONS = [...RATING_STEP_QUESTIONS, HANDLING_QUESTION];
@@ -35,7 +35,7 @@ export function toCreateRequest(draft: ReviewDraft, productId: string): ReviewCr
   const text = draft.text.trim();
   const answerValues = answeredValues(draft.responses);
 
-  if (draft.score <= 0 || !Number.isInteger(usagePeriod) || usagePeriod <= 0) return null;
+  if (draft.score < MIN_SCORE || !Number.isInteger(usagePeriod) || usagePeriod <= 0) return null;
   if (petIds.length === 0 || !petIds.every(Number.isInteger) || !Number.isInteger(productIdNumber))
     return null;
   if (text.length === 0 || answerValues.length === 0) return null;

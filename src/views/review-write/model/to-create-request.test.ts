@@ -36,6 +36,8 @@ test("문자열로 든 값을 숫자로 옮기고 후기 앞뒤 공백을 지운
 
 test("필수가 비면 요청을 만들지 않는다", () => {
   expect(toCreateRequest({ ...FULL, score: 0 }, "7")).toBeNull();
+  // 서버가 별점을 1.0부터 받는다. 0.5점은 400으로 돌아온다 (QA RV-020)
+  expect(toCreateRequest({ ...FULL, score: 0.5 }, "7")).toBeNull();
   expect(toCreateRequest({ ...FULL, days: "" }, "7")).toBeNull();
   expect(toCreateRequest({ ...FULL, petIds: [] }, "7")).toBeNull();
   expect(toCreateRequest({ ...FULL, text: "   " }, "7")).toBeNull();
