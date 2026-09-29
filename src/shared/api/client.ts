@@ -41,10 +41,19 @@ export function isValidationError(
   );
 }
 
+// 한 요청이 기다리는 최대 시간. 서버가 응답을 붙잡고 있으면 조회 화면이 스켈레톤에서 넘어가지 못한다 (#511).
+export const REQUEST_TIMEOUT_MS = 10_000;
+
+// REQUEST_TIMEOUT_MS가 지나 fetch가 끊긴 경우다. `AbortSignal.timeout`은 이 이름의 DOMException으로 끊는다.
+export function isTimeoutError(error: unknown): boolean {
+  return error instanceof DOMException && error.name === "TimeoutError";
+}
+
 // TanStack Query 기본 retry에 넘기는 판단. 4xx는 다시 보내도 같은 답이 오므로 재시도하지 않는다.
+// 시간 초과도 재시도하지 않는다. 10초 동안 답이 없던 서버는 다시 보내도 막혀 있기 쉽고, 그만큼 스켈레톤이 두 배로 남는다.
 // 5xx와 네트워크 오류(ApiError가 아닌 TypeError 등)만 1회 더 시도한다.
 export function shouldRetryQuery(failureCount: number, error: unknown): boolean {
-  if (failureCount >= 1) {
+  if (failureCount >= 1 || isTimeoutError(error)) {
     return false;
   }
   return !(error instanceof ApiError && error.status < 500);
@@ -144,11 +153,18 @@ async function parseProblemDetail(response: Response): Promise<ProblemDetail | u
   }
 }
 
+// 부른 쪽이 준 signal이 있으면 시간 제한과 함께 건다. 덮어쓰면 부른 쪽의 취소가 조용히 사라진다.
+function withTimeout(signal: AbortSignal | null | undefined): AbortSignal {
+  const timeout = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+  return signal ? AbortSignal.any([signal, timeout]) : timeout;
+}
+
 function requestOnce(path: string, options: ApiRequestOptions): Promise<Response> {
-  const { body, headers, query, auth = true, ...rest } = options;
+  const { body, headers, query, auth = true, signal, ...rest } = options;
 
   return fetch(`${getApiBaseUrl()}${path}${buildQueryString(query)}`, {
     ...rest,
+    signal: withTimeout(signal),
     headers: buildHeaders(headers, body, auth),
     body: body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
   });

@@ -89,6 +89,13 @@ describe("toAppMessageCode", () => {
     );
   });
 
+  // 서버에 닿았지만 답이 없던 것이라 네트워크가 아니라 서버 사정으로 알린다 (#511)
+  it("시간 초과는 일시적인 오류로 간다", () => {
+    expect(toAppMessageCode(new DOMException("시간 초과", "TimeoutError"))).toBe(
+      APP_MESSAGE_CODE.common.serverError,
+    );
+  });
+
   it("정체를 알 수 없는 것은 기본 문구로 간다", () => {
     expect(toAppMessageCode(new Error("어디선가 터짐"))).toBe(
       APP_MESSAGE_CODE.common.requestFailed,
@@ -103,6 +110,7 @@ describe("toAppMessageCode", () => {
       apiError(404, "모르는코드"),
       apiError(401),
       new TypeError("Failed to fetch"),
+      new DOMException("시간 초과", "TimeoutError"),
       new Error("기타"),
     ];
 

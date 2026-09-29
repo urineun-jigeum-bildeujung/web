@@ -10,7 +10,7 @@
 
 import { APP_MESSAGE_CODE, type AppMessageCode } from "@/shared/config/app-message";
 
-import { ApiError } from "./client";
+import { ApiError, isTimeoutError } from "./client";
 import { ImageUploadError } from "./upload-image";
 
 /**
@@ -145,6 +145,10 @@ export function toAppMessageCode(error: unknown): AppMessageCode {
   // S3가 거절한 것이다. 우리 서버 응답이 아니라 `ApiError`가 아니고, 연결 실패도 아니다
   if (error instanceof ImageUploadError) {
     return APP_MESSAGE_CODE.image.uploadFailed;
+  }
+  // 서버에 닿았지만 답이 오지 않은 것이다. 연결 실패가 아니라 서버 쪽 사정이다 (#511)
+  if (isTimeoutError(error)) {
+    return APP_MESSAGE_CODE.common.serverError;
   }
   if (!(error instanceof ApiError)) {
     return error instanceof TypeError
