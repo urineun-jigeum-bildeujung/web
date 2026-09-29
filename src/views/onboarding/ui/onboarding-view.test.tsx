@@ -110,6 +110,17 @@ test("첫 입력 단계는 세 항목이 다 차야 다음으로 넘어갈 수 �
   expect((next as HTMLButtonElement).disabled).toBe(false);
 });
 
+// QA No.187. "초코🐶😀"가 들어가 이모티콘 섞인 이름으로 다음 단계가 켜졌다
+test("이름에 이모티콘은 들어가지 않고 숫자는 들어간다", () => {
+  renderAt("?step=basic");
+  const name = screen.getByLabelText("아이의 이름을 알려주세요") as HTMLInputElement;
+
+  fireEvent.change(name, { target: { value: "초코2🐶😀" } });
+
+  expect(name.value).toBe("초코2");
+  expect(getDraft().name).toBe("초코2");
+});
+
 // 시안 onbo_002가 첫 단계의 "이전"을 비활성으로 그린다. 도입부로 돌아가는 길은 없다
 test("첫 입력 단계의 이전은 잠겨 있다", () => {
   renderAt("?step=basic");
@@ -200,7 +211,7 @@ test("체구를 고르기 전에는 몸무게·체질 항목이 없다", () => {
   renderAt("?step=detail");
 
   // 시안 onbo_003_체구선택전에는 두 항목이 보이지 않는다
-  expect(screen.queryByPlaceholderText("평균 몸무게 5kg")).toBeNull();
+  expect(screen.queryByLabelText("대략적인 몸무게")).toBeNull();
   expect(screen.queryByRole("slider")).toBeNull();
 });
 
@@ -209,7 +220,8 @@ test("체구를 고르면 몸무게와 체질 항목이 나타난다", () => {
 
   fireEvent.click(screen.getByText("소형"));
 
-  expect(screen.getByPlaceholderText("평균 몸무게 5kg")).toBeDefined();
+  // 몸무게 예시는 고른 체구를 따른다(QA No.205)
+  expect(screen.getByPlaceholderText("소형견은 대개 10kg 미만이에요")).toBeDefined();
   expect(screen.getByRole("slider")).toBeDefined();
   expect(screen.getByText("보통")).toBeDefined();
 });
@@ -220,7 +232,10 @@ test("고양이면 체구 질문이 없고 몸무게를 바로 묻는다", () =>
   renderAt("?step=detail");
 
   expect(screen.queryByText("아이의 체구는 어느 정도인가요?")).toBeNull();
-  expect(screen.getByLabelText("대략적인 몸무게")).toBeDefined();
+  // 강아지 예시를 그대로 두지 않는다(QA No.205)
+  expect(
+    (screen.getByLabelText("대략적인 몸무게") as HTMLInputElement).getAttribute("placeholder"),
+  ).toBe("고양이는 대개 3~5kg이에요");
 });
 
 test("체구 물음표를 누르면 몇 kg으로 가르는지 보인다", () => {
@@ -398,9 +413,49 @@ test("몸무게에 숫자가 아닌 것은 들어가지 않는다", () => {
   resetDraftCache();
   renderAt("?step=detail");
 
-  fireEvent.change(screen.getByLabelText("대략적인 몸무게"), { target: { value: "4키로" } });
+  const weight = screen.getByLabelText("대략적인 몸무게") as HTMLInputElement;
+  fireEvent.focus(weight);
+  fireEvent.change(weight, { target: { value: "4키로" } });
 
-  expect((screen.getByLabelText("대략적인 몸무게") as HTMLInputElement).value).toBe("4");
+  expect(weight.value).toBe("4");
+});
+
+// QA No.206. 칸을 벗어나도 "4.567"이 그대로였고 kg이 없었다
+test("몸무게는 소수 첫째 자리까지만 들어가고 칸을 벗어나면 kg이 붙는다", () => {
+  setDraft({ ...EMPTY_PROFILE_DRAFT, breedId: 1, breedName: "말티즈", size: "small" });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  const weight = screen.getByLabelText("대략적인 몸무게") as HTMLInputElement;
+  fireEvent.focus(weight);
+  fireEvent.change(weight, { target: { value: "4.567" } });
+  fireEvent.blur(weight);
+
+  expect(weight.value).toBe("4.5kg");
+  // 초안에는 단위 없이 숫자만 남는다. 등록 요청이 그 값을 읽는다
+  expect(getDraft().weight).toBe("4.5");
+});
+
+// QA No.196. 999999세가 들어가 다음 단계가 켜졌다
+test("나이는 두 자리까지 들어가고 상한을 넘으면 알리고 다음으로 못 간다", () => {
+  setDraft({
+    ...EMPTY_PROFILE_DRAFT,
+    breedId: 1,
+    breedName: "말티즈",
+    size: "small",
+    weight: "4.2",
+  });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  const age = screen.getByLabelText("나이") as HTMLInputElement;
+  fireEvent.change(age, { target: { value: "999999" } });
+
+  expect(age.value).toBe("99");
+  expect(screen.getByText("나이는 30살까지 적을 수 있어요")).toBeDefined();
+  expect(
+    (screen.getByRole("button", { name: "다음 단계 작성하기" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
 });
 
 test("생년월일은 치는 대로 구분점이 붙는다", () => {
