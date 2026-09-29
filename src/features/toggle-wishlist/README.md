@@ -1,11 +1,11 @@
 # toggle-wishlist
 
-상품의 하트를 눌러 찜을 켜고 끈다. 로그인하지 않았으면 찜 대신 로그인으로 보낸다 (#483).
+상품의 하트를 눌러 찜을 켜고 끈다. 로그인하지 않았으면 찜 대신 로그인 필요 토스트만 띄운다 (#483, #542).
 
 | 파일 | 설명 |
 | --- | --- |
 | `index.ts` | 공개 API — `useToggleWishlist`·`useWishedProductIds`·`toWishlistItem`·`CardHeartButton` |
-| `model/use-toggle-wishlist.ts` | 로그인 여부를 보고 찜을 뒤집거나(`entities/wishlist`의 `toggle`) 로그인으로 보낸다. 찜 조회를 켤지(`signedIn`)도 함께 준다 |
+| `model/use-toggle-wishlist.ts` | 로그인 여부를 보고 찜을 뒤집거나(`entities/wishlist`의 `toggle`) 로그인 필요 토스트를 띄운다(`useRequireSession`). 찜 조회를 켤지(`signedIn`)도 함께 준다 |
 | `model/use-toggle-wishlist.test.tsx` | 로그인·로그아웃·아직 모름 세 경우 |
 | `model/use-wished-product-ids.ts` | 카드를 늘어놓는 화면이 쓸 찜한 상품 번호와 받는 중인지. 로그인했을 때만 전체 찜 목록을 읽는다 |
 | `model/use-wished-product-ids.test.tsx` | 로그인이면 번호를 뽑고, 로그아웃이면 부르지 않고 남은 캐시도 쓰지 않는지, 받는 중을 알리는지 |

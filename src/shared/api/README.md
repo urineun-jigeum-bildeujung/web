@@ -6,6 +6,8 @@
 | --- | --- |
 | `client.ts` | 공통 fetch 래퍼(`apiRequest`)와 `ApiError`·`ProblemDetail`, `isValidationError`·`isTimeoutError`·`shouldRetryQuery` — base URL·헤더·쿼리 조립·10초 시간 제한·401 재발급을 한 곳으로 모음 |
 | `client.test.ts` | `apiRequest` 단위 테스트 |
+| `use-require-session.ts` | 로그인해야 쓰는 버튼·링크가 부르는 확인 함수(`useRequireSession`). 비로그인이면 로그인 필요 토스트를 띄우고 false — 링크는 `preventDefault`로 이동을 막는다(#542) |
+| `use-require-session.test.tsx` | 로그인·비로그인에서 통과와 토스트 |
 | `use-has-session.ts` | 로그인돼 있는지를 렌더에 맞춰 읽는 훅. 세션이 끊기면 따라온다 |
 | `use-has-session.test.tsx` | 토큰 유무와 끊김 반영 |
 | `use-session-state.ts` | 로그인 여부를 세 상태로 읽는 훅. 서버 렌더·하이드레이션 첫 렌더에서는 `null`(모름)이라, 서버가 그리는 화면이 로그아웃 모양으로 나갔다가 밀리지 않게 그동안 뼈대를 그릴 수 있다(#470) |

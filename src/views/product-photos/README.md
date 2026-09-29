@@ -2,7 +2,7 @@
 
 후기에 달린 사진만 모아 보는 화면. 격자에서 고르면 그 사진을 남긴 후기가 함께 열린다.
 
-- **라우트**: `/products/[productId]/photos` — `src/app/products/[productId]/photos/page.tsx`
+- **라우트**: `/products/[productId]/photos` — `src/app/(constrained)/(member)/products/[productId]/photos/page.tsx`. 로그인해야 열린다(#542)
 - **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/review`(`ReviewCard` · 사진·상세 조회 훅) · `shared/ui`의 `page-header` · `empty-state` · `bottom-action-bar` · `button` · `skeleton`
 - **입력**: `productId`만 받는다. 사진은 `GET /reviews/products/{id}/photos`로 쪽 단위로 잇는다
 - **상태**: 뷰어 하단의 찜 하트는 서버의 찜 여부다(#483). 보고 있는 사진은 URL 쿼리 `photo`(**후기 번호**) · `n`(그 후기의 몇 번째). 전에는 배열 순번이었는데 쪽을 이어 받으면 같은 번호가 다른 사진을 가리켜 바꿨다 (#339)
