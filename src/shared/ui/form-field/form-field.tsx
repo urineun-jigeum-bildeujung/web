@@ -26,6 +26,9 @@ type FormFieldProps = {
   /** 입력칸 오른쪽 안에 놓는 것. 휴대폰 인증의 "인증" 칩처럼 그 칸에서 바로 하는 동작이다.
    *  지우기 버튼과 같은 자리라 이것이 있으면 지우기는 그리지 않는다 */
   trailing?: ReactNode;
+  /** 값 바로 뒤에 붙여 보이는 단위. 몸무게의 "kg"처럼 값이 있을 때만 보이고 입력값에는 들어가지 않는다.
+   *  `leading`과 함께 쓰지 않는다 — 단위를 값 글자 폭에 맞춰 놓는데 아이콘 자리를 세지 않는다 */
+  suffix?: ReactNode;
   /** 입력칸 모양. 테두리 상자가 기본이고 `underline`은 밑줄 하나다 */
   variant?: "outline" | "underline";
 } & Omit<ComponentProps<typeof Input>, "id" | "aria-describedby" | "aria-invalid">;
@@ -37,6 +40,7 @@ export function FormField({
   onClear,
   leading,
   trailing,
+  suffix,
   variant = "outline",
   className,
   value,
@@ -84,6 +88,18 @@ export function FormField({
           )}
           {...props}
         />
+        {suffix && filled && (
+          // 값을 보이지 않게 한 벌 깔고 그 뒤에 단위를 둬서, 단위가 값 끝에 바로 붙는다.
+          // 값을 "4kg"으로 바꿔 넣으면 칠 때마다 단위를 떼고 붙여야 하고 커서가 튄다.
+          // 입력칸의 테두리(1px)와 안쪽 여백(px-3)·글자 모양을 그대로 따른다
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 left-px flex items-center px-3 text-body-medium-14 whitespace-pre text-foreground"
+          >
+            <span className="invisible">{value}</span>
+            {suffix}
+          </span>
+        )}
         {trailing && (
           <span className="absolute inset-y-0 right-3 flex items-center">{trailing}</span>
         )}
