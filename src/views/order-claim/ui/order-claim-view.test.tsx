@@ -68,6 +68,8 @@ function makeItem(over: Partial<OrderDetailItem> = {}): OrderDetailItem {
     productName: "테스트 사료",
     quantity: 2,
     unitPrice: 20000,
+    paidUnitPrice: 20000,
+    amount: 40000,
     itemStatus: "PAID",
     cancelledQuantity: 0,
     returnedQuantity: 0,
@@ -455,6 +457,24 @@ test("반품은 환불 예상 금액을 보인다", async () => {
   // 환불 예상 금액과 환불 수단 옆에 같은 금액이 선다
   expect(screen.getAllByText("17,000원")).toHaveLength(2);
   expect(screen.getByText("상태 확인이 끝나면 바로 환불해드릴게요.", { exact: false }));
+});
+
+// 할인 전 단가(unitPrice)로 세면 정가 15,000원·판매가 12,900원 상품의 환불 예상액이 12,000원으로
+// 실제보다 2,100원 많게 보였다 (#516)
+test("할인된 상품은 실제로 낸 금액으로 줄 금액·개당 금액·환불 예상액을 센다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({ items: [makeItem({ unitPrice: 15000, paidUnitPrice: 12900, amount: 25800 })] }),
+  );
+  renderView("return");
+
+  // 상품 줄은 숫자와 "원"을 나눠 그린다
+  expect(await screen.findByText("25,800")).toBeDefined();
+  expect(screen.queryByText("30,000")).toBeNull();
+  await pickAndNext();
+  expect(screen.getByText(/개당 12,900원/)).toBeDefined();
+  await reasonAndNext();
+
+  expect(screen.getAllByText("9,900원")).toHaveLength(2);
 });
 
 // 교환은 환불이 없다. PD 답(2026-09-23)으로 옵션 줄이 빠지고 발송 안내만 남았다

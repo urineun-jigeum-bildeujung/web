@@ -19,11 +19,11 @@ import { estimateRefund } from "../model/refund-estimate";
 import { PICKUP_REQUEST_MAX } from "../model/to-claim-request";
 import { ClaimSection } from "./claim-section";
 
-/** 신청하는 상품 한 줄. 이름·개당 금액·신청 수량 */
+/** 신청하는 상품 한 줄. 이름·실제로 낸 개당 금액·신청 수량 */
 export type ClaimLine = {
   orderItemId: number;
   productName: string;
-  unitPrice: number;
+  paidUnitPrice: number;
   quantity: number;
 };
 

@@ -71,7 +71,8 @@ export function ClaimReasonStep({
                     {item.productName}
                   </p>
                   <p className="text-body-medium-14 text-foreground">
-                    개당 {formatWon(item.unitPrice)} · 구매 {item.quantity}개
+                    {/* 실제로 낸 개당 금액. 돌려받을 돈을 가늠하는 자리라 할인 전 단가를 쓰지 않는다 (#516) */}
+                    개당 {formatWon(item.paidUnitPrice)} · 구매 {item.quantity}개
                   </p>
                 </div>
               </div>
