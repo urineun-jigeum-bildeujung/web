@@ -29,7 +29,10 @@ export function toBuyNowPath({ itemType, itemId, quantity }: BuyNow): string {
 export function parseBuyNow(value: string | null): BuyNow | null {
   if (!value) return null;
 
-  const [itemType, rawId, rawQuantity] = value.split(":");
+  const parts = value.split(":");
+  // 칸이 더 붙은 값(`NORMAL:252:2:x`)도 앞 셋만 읽으면 통과한다. 정확히 셋이어야 한다 (#521 리뷰)
+  if (parts.length !== 3) return null;
+  const [itemType, rawId, rawQuantity] = parts;
   const itemId = Number(rawId);
   const quantity = Number(rawQuantity);
   const known = ITEM_TYPES.find((type) => type === itemType);
