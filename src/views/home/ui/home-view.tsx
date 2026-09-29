@@ -32,6 +32,12 @@ import {
   useQueryPendingFeedbacks,
   type PendingFeedback,
 } from "@/entities/review";
+import {
+  CardHeartButton,
+  toWishlistItem,
+  useToggleWishlist,
+  useWishedProductIds,
+} from "@/features/toggle-wishlist";
 import { useRequireSession } from "@/shared/api/use-require-session";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
@@ -208,6 +214,10 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
     category: category === "all" ? undefined : CATEGORY_TO_API[category],
     sort: SORT_TO_API[sort],
   });
+  // 찜은 서버에 저장한다. 다른 목록(#483)과 같이 전체 찜 목록으로 하트를 채우고, 로그인하지
+  // 않았으면 누를 때 로그인으로 보낸다(#534)
+  const heart = useToggleWishlist();
+  const { wishedIds, isLoading: wishLoading } = useWishedProductIds();
 
   return (
     <div className="flex flex-1 flex-col">
@@ -237,6 +247,23 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
                   originalPrice={product.originalPrice ?? undefined}
                   discountRate={product.discountRate}
                   imageUrl={product.thumbnailUrl ?? undefined}
+                  // 시안(Reaction Button)은 사진 모서리에서 12px 안쪽의 24px 하트다. 다른 목록과 같은
+                  // 원판(32px) 하트를 쓰므로 원판을 8px 안쪽에 두어 하트 자리를 시안과 맞춘다
+                  imageActionClassName="top-2 right-2"
+                  imageAction={
+                    <CardHeartButton
+                      name={product.name}
+                      wished={wishedIds.has(product.productId)}
+                      loading={wishLoading}
+                      onToggle={() =>
+                        heart.toggle(
+                          product.productId,
+                          !wishedIds.has(product.productId),
+                          toWishlistItem(product),
+                        )
+                      }
+                    />
+                  }
                   meta={<CategoryProductMeta product={product} />}
                 />
               </li>
