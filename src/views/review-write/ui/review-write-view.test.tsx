@@ -146,6 +146,15 @@ describe("ReviewWriteView 진입", () => {
     expect(await screen.findByText("오메가3 피쉬오일 60캡슐")).toBeDefined();
   });
 
+  // QA RV-001. 어떤 상품이었는지 다시 보고 싶을 때 상세로 갈 길이 있어야 한다
+  it("상품 줄을 누르면 그 상품 상세로 간다", async () => {
+    stubApi();
+    renderAt("?step=detail");
+
+    const link = await screen.findByRole("link", { name: "오메가3 피쉬오일 60캡슐" });
+    expect(link.getAttribute("href")).toBe("/products/7");
+  });
+
   // 스켈레톤으로 덮어 두면 기다리는 줄 안다. 못 받았으면 그렇다고 말하고 다시 시도할 길을 준다
   it("상품 정보를 못 받으면 알리고 다시 시도할 수 있다", async () => {
     const fetchMock = stubApi({ product: () => Response.json({}, { status: 500 }) });

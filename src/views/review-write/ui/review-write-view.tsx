@@ -113,10 +113,23 @@ function QueryFailed({
   );
 }
 
-/** 두 단계 머리의 상품 줄. 받는 동안은 같은 높이의 자리만 잡아 아래가 밀리지 않게 한다 */
+/**
+ * 두 단계 머리의 상품 줄. 받는 동안은 같은 높이의 자리만 잡아 아래가 밀리지 않게 한다.
+ *
+ * 누르면 상품 상세로 간다(QA RV-001). 입력값은 기기 초안에 남아 돌아와도 그대로지만,
+ * 사진은 `File`이라 남지 않는다.
+ */
 function ProductHeader({ productId }: { productId: string }) {
   const { product, isLoading, isRetrying, refetch } = useQueryProductSummary(productId);
-  if (product) return <ProductRow name={product.name} imageUrl={product.imageUrl} />;
+  if (product)
+    return (
+      <Link
+        href={`/products/${productId}`}
+        className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+      >
+        <ProductRow name={product.name} imageUrl={product.imageUrl} />
+      </Link>
+    );
   return (
     <div className="px-5 pt-1 pb-3">
       {isLoading ? (
