@@ -13,13 +13,15 @@ import { useState } from "react";
 import {
   BodyTypeGuide,
   BodyTypeSlider,
+  formatWeight,
   parseWeight,
   SIZE_OPTIONS,
   SizeGuide,
+  WeightField,
+  weightPlaceholder,
   type PetDetail,
 } from "@/entities/pet";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
-import { FormField } from "@/shared/ui/form-field/form-field";
 
 import { useEditPet } from "../model/use-edit-pet";
 import { EditPetScreen } from "./edit-pet-screen";
@@ -37,7 +39,8 @@ function BodyForm({ pet, isSaving, onSave }: BodyFormProps) {
   // 고양이는 체구를 묻지 않는다(#391). 서버도 고양이의 size를 null로 둔다
   const isCat = pet.species === "cat";
   const [size, setSize] = useState(pet.size);
-  const [weight, setWeight] = useState(String(pet.weight));
+  // 예전에 소수 여러 자리로 저장된 몸무게도 첫째 자리까지로 보인다(QA No.242)
+  const [weight, setWeight] = useState(formatWeight(pet.weight));
   // 서버는 체형을 1부터, 화면 눈금은 0부터 센다
   const [bodyType, setBodyType] = useState(pet.bcs - 1);
 
@@ -73,12 +76,13 @@ function BodyForm({ pet, isSaving, onSave }: BodyFormProps) {
           </div>
         )}
 
-        <FormField
+        {/* 소수 첫째 자리까지만 받고 칸을 벗어나면 kg을 붙인다. 온보딩과 같은 칸이다(QA No.242) */}
+        <WeightField
           label={`${pet.name}의 대략적인 몸무게를 알려주세요`}
           hint="정확하지 않아도 괜찮아요, 대략적으로 적어주세요"
+          placeholder={weightPlaceholder(pet.species, size)}
           value={weight}
-          onChange={(event) => setWeight(event.target.value)}
-          onClear={() => setWeight("")}
+          onValueChange={setWeight}
         />
 
         <div className="flex flex-col gap-3">
