@@ -130,9 +130,9 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                         name={item.productName}
                         quantity={item.quantity}
                         imageUrl={item.thumbnailUrl}
-                        // `unitPrice`는 낱개 값이다. 명세 Example의 `productAmount`가 낱개 값의
-                        // 합이라 수량을 곱해야 그 줄에 낸 돈이 된다
-                        amount={item.unitPrice * item.quantity}
+                        // 그 줄에 실제로 낸 돈이다. `unitPrice`는 할인 전 단가라 곱하면 할인된
+                        // 상품에서 결제상세 금액보다 크게 보였다 (#516)
+                        amount={item.amount}
                       />
                     </li>
                   ))}
