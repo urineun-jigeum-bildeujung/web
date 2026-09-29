@@ -23,6 +23,8 @@ function makeItem(orderItemId: number, claims: OrderItemClaim[] = []): OrderDeta
     productName: `상품 ${orderItemId}`,
     quantity: 1,
     unitPrice: 1000,
+    paidUnitPrice: 1000,
+    amount: 1000,
     itemStatus: "PAID",
     cancelledQuantity: 0,
     returnedQuantity: 0,

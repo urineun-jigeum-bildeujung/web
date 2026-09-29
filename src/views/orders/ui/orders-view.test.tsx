@@ -87,6 +87,8 @@ function makeDetail(orderId: number, over: Partial<OrderDetail> = {}): OrderDeta
         productName: `테스트 상품 ${orderId}`,
         quantity: 1,
         unitPrice: 1000,
+        paidUnitPrice: 1000,
+        amount: 1000,
         itemStatus: "PAID",
         cancelledQuantity: 0,
         returnedQuantity: 0,
