@@ -74,6 +74,19 @@ test("직접 입력을 고르면 빈 칸이 열리고 적은 글이 값이 된�
   expect(screen.getByText("12/100자")).toBeDefined();
 });
 
+// 한글은 조합 중인 글자가 `maxLength`를 거치지 않아 101자째가 들어왔다. 넘친 값을 넘기면
+// 배송지 폼은 입력 완료가 꺼지고, 결제는 서버 `@Size(max = 100)`에 걸린다 (QA No.175)
+test("100자를 넘겨 적어도 100자까지만 값으로 넘긴다", () => {
+  render(<Harness />);
+
+  choose("직접 입력");
+  fireEvent.change(direct()!, { target: { value: "가".repeat(101) } });
+
+  expect(direct()?.value).toBe("가".repeat(100));
+  expect(sent()).toBe("가".repeat(100));
+  expect(screen.getByText("100/100자")).toBeDefined();
+});
+
 // 저장해 둔 배송지를 고치러 들어온 경우다. 칸이 닫혀 있으면 적어 둔 글이 어디에도 안 보인다
 test("목록에 없는 글이 오면 직접 입력 칸을 연 채로 그 글을 보인다", () => {
   render(<Harness initial="벨 누르지 말아 주세요" />);

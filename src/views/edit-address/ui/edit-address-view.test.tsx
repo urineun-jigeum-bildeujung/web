@@ -338,6 +338,27 @@ test("고른 보기가 요청사항으로 나간다", async () => {
   expect(create.mock.calls[0][0].deliveryNote).toBe("경비실에 맡겨주세요");
 });
 
+// 한글은 조합 중인 글자가 `maxLength`를 거치지 않아 101자째가 들어왔고, 검증에 걸려 입력 완료가
+// 꺼진 채 남았다. 넘친 값은 받지 않는다 (QA No.175)
+test("요청사항을 100자 넘겨 적어도 입력 완료가 꺼지지 않고 100자까지 나간다", async () => {
+  renderAt(`?${PICKED}`);
+
+  fill([
+    ["배송지 이름", "자취방"],
+    ["받는 분 이름", "전경진"],
+    ["연락처", "010-0000-0000"],
+    ["상세 주소", "2층"],
+  ]);
+  chooseNote("직접 입력");
+  fill([["배송 요청사항 직접 입력", "가".repeat(101)]]);
+
+  expect(submit().hasAttribute("disabled")).toBe(false);
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(create).toHaveBeenCalled());
+  expect(create.mock.calls[0][0].deliveryNote).toBe("가".repeat(100));
+});
+
 // 고치러 들어왔을 때 저장해 둔 요청사항이 그대로 보여야 모르고 바꾸지 않는다
 test("저장된 요청사항이 보기 문구면 그 보기가 골라져 있다", () => {
   useQueryAddresses.mockReturnValue({
