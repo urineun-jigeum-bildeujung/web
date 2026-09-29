@@ -9,6 +9,13 @@ def isRealDeploy = false
 pipeline {
     options {
         disableConcurrentBuilds()
+        // disableConcurrentBuilds()는 같은 브랜치(같은 job) 내 재실행만 막는다.
+        // web-ci 멀티브랜치 프로젝트 안의 dev 브랜치 빌드와 fix/* 브랜치 빌드처럼
+        // 서로 다른 job은 이걸로 못 막아서, 두 Next.js 프로덕션 빌드가 동시에
+        // 실행되며 2vCPU 노드 CPU를 포화시켜 kubelet이 NotReady로 전환된 장애가
+        // 있었다(#545). ci-build는 sever-ci/ai-ci도 같은 노드 풀을 쓰는 CI 파이프라인
+        // 전체를 아우르는 공용 lock 이름이라, 브랜치는 물론 레포가 달라도 직렬화된다.
+        lock(resource: 'ci-build')
     }
 
     // sever와 동일하게 Kubernetes 동적 agent Pod. npm ci + npm run build를 kaniko
