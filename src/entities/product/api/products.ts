@@ -236,13 +236,13 @@ export type ProductDetail = {
    */
   timeDealItemId: number | null;
   /**
-   * 타임딜 상세로 받았으면 그 딜의 종료 시각과 지금 살 수 있는지. 일반 상품 상세이거나 옛 응답(최상위
-   * `timeDealItemId`만 오던 때)이면 null이다.
+   * 타임딜 상세로 받았으면 그 딜의 종료 시각, 서버가 응답을 만든 시각, 지금 살 수 있는지. 일반 상품
+   * 상세이거나 옛 응답(최상위 `timeDealItemId`만 오던 때)이면 null이다.
    *
-   * **종료 시각은 문자열로 둔다.** `time-deals.ts`와 같이 렌더링 경계(카운트다운)에서만 `Date`로 바꾼다.
-   * 서버 시각(`serverTime`)은 옮기지 않는다 — 타임딜 목록·메인처럼 기기 시계로 센다.
+   * **시각은 문자열로 둔다.** `time-deals.ts`와 같이 렌더링 경계(카운트다운)에서만 `Date`로 바꾼다.
+   * 서버 시각은 기기 시계가 서버와 다를 때 남은 시간을 서버 기준으로 세려고 옮긴다(QA PD-063).
    */
-  timeDeal: { endAt: string; purchasable: boolean } | null;
+  timeDeal: { endAt: string; serverTime: string; purchasable: boolean } | null;
   images: string[];
   name: string;
   price: number;
@@ -264,7 +264,11 @@ function toProductDetail(response: ProductDetailApiResponse): ProductDetail {
     productId: response.productId,
     timeDealItemId: response.timeDeal?.timeDealItemId ?? response.timeDealItemId ?? null,
     timeDeal: response.timeDeal
-      ? { endAt: response.timeDeal.endAt, purchasable: response.timeDeal.purchasable }
+      ? {
+          endAt: response.timeDeal.endAt,
+          serverTime: response.timeDeal.serverTime,
+          purchasable: response.timeDeal.purchasable,
+        }
       : null,
     images: response.summary.images,
     name: response.summary.productName,

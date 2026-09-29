@@ -555,13 +555,14 @@ describe("ProductDetailView", () => {
     });
   });
 
-  // QA용이다. 운영 빌드는 이 값을 듣지 않는다
-  it("개발용 ?status=deal은 딜이 아닌 상품에도 타임딜 화면을 씌운다", async () => {
+  // 타임딜 종료 시각은 응답에서만 온다. 딜이 아닌 상품에 타임딜 화면을 씌우려면 목 종료 시각이
+  // 있어야 해서 이 덮어쓰기를 뺐다(#539)
+  it("개발용 ?status=deal로는 딜이 아닌 상품에 타임딜 화면을 씌우지 않는다", async () => {
     await renderWith("?status=deal", { soldOut: false });
 
-    expect(screen.getByText("타임딜")).toBeDefined();
-    expect(screen.getByRole("button", { name: /타임딜 구매하기/ })).toBeDefined();
-    expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
+    expect(screen.queryByText("타임딜")).toBeNull();
+    expect(screen.queryByRole("button", { name: /타임딜 구매하기/ })).toBeNull();
+    expect(screen.getByRole("button", { name: /^장바구니$/ })).toBeDefined();
   });
 
   describe("타임딜 (#539)", () => {
@@ -570,7 +571,11 @@ describe("ProductDetailView", () => {
       return {
         soldOut: false,
         timeDealItemId: 77,
-        timeDeal: { endAt: new Date(Date.now() + msLeft).toISOString(), purchasable: true },
+        timeDeal: {
+          endAt: new Date(Date.now() + msLeft).toISOString(),
+          serverTime: new Date().toISOString(),
+          purchasable: true,
+        },
       };
     }
 
@@ -588,11 +593,38 @@ describe("ProductDetailView", () => {
       expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
     });
 
+    // 기기 시계로만 세면 시계가 빠른 기기는 딜을 서버보다 일찍 끝내고, 느린 기기는 서버가 닫은 딜에
+    // 구매 버튼을 남긴다
+    it("기기 시계가 서버와 달라도 남은 시간은 서버 시각 기준으로 센다", async () => {
+      vi.useFakeTimers();
+      try {
+        // 서버는 12시에 응답했고 딜은 14시에 끝난다. 기기 시계는 1시간 빠른 13시다
+        vi.setSystemTime(new Date("2026-09-29T13:00:00+09:00"));
+        await renderWith("?dealItem=77", {
+          soldOut: false,
+          timeDealItemId: 77,
+          timeDeal: {
+            endAt: "2026-09-29T14:00:00+09:00",
+            serverTime: "2026-09-29T12:00:00+09:00",
+            purchasable: true,
+          },
+        });
+
+        expect(screen.getAllByText("2시간 0분 남음")).toHaveLength(2);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
     // 기간 밖이거나 딜 재고가 떨어진 딜은 서버가 purchasable=false로 준다
     it("서버가 살 수 없다고 한 딜이면 타임딜 화면을 그리지 않는다", async () => {
       await renderWith("?dealItem=77", {
         ...liveDeal(),
-        timeDeal: { endAt: new Date(Date.now() + 60_000).toISOString(), purchasable: false },
+        timeDeal: {
+          endAt: new Date(Date.now() + 60_000).toISOString(),
+          serverTime: new Date().toISOString(),
+          purchasable: false,
+        },
       });
 
       expect(screen.queryByText("타임딜")).toBeNull();
@@ -681,7 +713,11 @@ describe("ProductDetailView", () => {
     await renderWith("?dealItem=77", {
       soldOut: true,
       timeDealItemId: 77,
-      timeDeal: { endAt: new Date(Date.now() + 60_000).toISOString(), purchasable: false },
+      timeDeal: {
+        endAt: new Date(Date.now() + 60_000).toISOString(),
+        serverTime: new Date().toISOString(),
+        purchasable: false,
+      },
     });
 
     expect(screen.queryByRole("button", { name: "재입고 알림 신청" })).toBeNull();

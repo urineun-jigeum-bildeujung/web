@@ -51,8 +51,9 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar, SNACKBAR_CLASS, SNACKBAR_OPTIONS } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
+import { toDeviceEndsAt } from "../model/deal-clock";
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
-import { DEAL_ENDS_AT, MOCK_PRODUCT } from "../model/mock-product";
+import { MOCK_PRODUCT } from "../model/mock-product";
 import { EXAMPLE_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
 import { showCartAddedSnackbar } from "./cart-added-snackbar";
 import { DetailOptionSheet } from "./detail-option-sheet";
@@ -65,12 +66,15 @@ import { ReviewPanel } from "./review-panel";
 // 탭 줄 자체는 TAB_LABEL이 세 개 그대로 그린다
 const REACHABLE_TABS = ["info", "review"] as const;
 
-// QA용. `?status=`로 덮어써 일반/타임딜/품절을 새로고침 없이 확인한다.
+// QA용. `?status=`로 덮어써 일반/품절을 새로고침 없이 확인한다.
 //
 // **개발 빌드에서만 듣는다.** 서버가 품절이라고 해도 `?status=normal`을 붙이면 구매
 // 버튼이 되살아나므로, 실데이터가 붙은 뒤로는 운영에 나가면 안 되는 장치다
 // (views/deals의 개발용 버튼과 같은 판단이다)
-const STATUS_OVERRIDES = ["normal", "deal", "soldout"] as const;
+//
+// **타임딜은 덮어쓰지 않는다.** 종료 시각이 타임딜 상세 응답에서만 오므로, 딜이 아닌 상품에 타임딜
+// 화면을 씌우려면 목 종료 시각이 있어야 했다. 타임딜 화면은 응답(`timeDeal.purchasable`)으로만 켠다(#539)
+const STATUS_OVERRIDES = ["normal", "soldout"] as const;
 
 const TAB_LABEL = [
   ["info", "상품 정보"],
@@ -409,11 +413,14 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   // **장바구니에 담는 식별자는 다르다** — 그건 아래에서 timeDealItemId로 가린다
   const dataStatus = product.timeDeal?.purchasable ? "deal" : "normal";
   const status = devStatusOverride ?? (product.soldOut ? "soldout" : dataStatus);
-  const isDealActive = status === "deal" && !dealOver;
   const isSoldOut = status === "soldout";
-  // 타임딜 목록·메인과 같이 기기 시계로 센다. 개발용 `?status=deal`은 딜이 아닌 상품에도 타임딜 화면을
-  // 씌우므로 그때만 목 종료 시각을 쓴다
-  const dealEndsAt = product.timeDeal ? new Date(product.timeDeal.endAt) : DEAL_ENDS_AT;
+  // 타임딜 중이면 그 종료 시각, 아니면 null이다. 서버 시각으로 기기 시계 차이를 보정해 센다 —
+  // 기기 시계가 빠르거나 느려도 서버가 딜을 닫는 순간에 맞춰 끝난다
+  const dealEndsAt =
+    status === "deal" && !dealOver && product.timeDeal
+      ? toDeviceEndsAt(product.timeDeal.endAt, product.timeDeal.serverTime)
+      : null;
+  const isDealActive = dealEndsAt !== null;
   // 딜이 끝나면 주소의 딜 아이템 번호를 뗀다. 라우트가 일반 상세를 다시 받아 가격·담는 식별자·버튼이
   // 함께 일반 상품으로 돌아간다 — 화면만 바꾸면 딜가로 딜 아이템이 담겨 서버가 거절했다(QA PD-064).
   // 서버가 다시 그려야 하므로 shallow를 끈다. 보던 탭과 스크롤은 그대로 남는다

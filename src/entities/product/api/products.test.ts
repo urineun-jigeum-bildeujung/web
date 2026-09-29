@@ -317,8 +317,13 @@ describe("getTimeDealDetail", () => {
     const product = await getTimeDealDetail("1");
 
     expect(product.timeDealItemId).toBe(1);
-    // 배지·카운트다운을 실데이터로 그리는 값이다. 버리면 타임딜 화면이 개발용 `?status=deal`로만 뜬다(QA PD-063)
-    expect(product.timeDeal).toEqual({ endAt: "2026-09-29T22:00:00+09:00", purchasable: true });
+    // 배지·카운트다운을 실데이터로 그리는 값이다. 버리면 타임딜 화면이 뜨지 않는다(QA PD-063).
+    // 서버 시각은 기기 시계가 틀려도 남은 시간을 서버 기준으로 세는 데 쓴다
+    expect(product.timeDeal).toEqual({
+      endAt: "2026-09-29T22:00:00+09:00",
+      serverTime: "2026-09-29T12:00:00+09:00",
+      purchasable: true,
+    });
   });
 
   it("옛 응답의 최상위 딜 번호도 읽는다", async () => {
