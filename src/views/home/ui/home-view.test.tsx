@@ -593,6 +593,19 @@ describe("HomeView", () => {
     expect(names).toEqual(["치석 케어 덴탈껌 7개입", "관절 튼튼 트릿 200g"]);
   });
 
+  // 카드는 사진·이름과 반응 버튼뿐이라 눌러도 아무 일이 없었다(QA HM-032)
+  it("최근 구매 카드의 상품을 누르면 그 상품 상세로 간다", async () => {
+    await renderWith();
+
+    const recent = screen.getByRole("list", { name: "최근에 구매한 상품" });
+    expect(
+      within(recent).getByRole("link", { name: "치석 케어 덴탈껌 7개입" }).getAttribute("href"),
+    ).toBe("/products/3");
+    expect(
+      within(recent).getByRole("link", { name: "관절 튼튼 트릿 200g" }).getAttribute("href"),
+    ).toBe("/products/5");
+  });
+
   it("반응을 고르면 아직 이르다는 표시가 풀린다", async () => {
     await renderWith();
 

@@ -750,7 +750,12 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                     {recentItems.map((item) => (
                       <ScrollRowItem key={item.orderProductId}>
                         <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4">
-                          <div className="flex items-center gap-3">
+                          {/* 사진·이름을 누르면 그 상품 상세로 간다(QA HM-032). 버튼은 링크 안에 둘 수
+                              없어 반응 남기기는 링크 밖에 따로 둔다. 사진이 60px라 누르는 자리는 44px를 넘는다 */}
+                          <Link
+                            href={`/products/${item.productId}`}
+                            className="flex items-center gap-3 rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                          >
                             {/* 이름이 바로 옆에 있어 사진은 꾸밈이다(alt="") */}
                             {item.imageUrl ? (
                               <Image
@@ -783,7 +788,7 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                               {/* 시안의 "구매 후 N일"·"N번째 구매" 뱃지는 응답에 값이 없어 그리지 않는다.
                               지어낸 숫자를 보이면 반응의 근거가 거짓이 된다 (#494) */}
                             </div>
-                          </div>
+                          </Link>
                           <Button
                             className="min-h-11 w-full bg-brand text-label-bold-16 font-bold text-brand-foreground hover:bg-brand/90"
                             aria-describedby={`${recentNameId}-${item.orderProductId}`}
