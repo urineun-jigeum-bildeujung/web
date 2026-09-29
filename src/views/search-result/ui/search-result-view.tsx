@@ -163,8 +163,10 @@ type PickingResultListProps = {
   onPick: (id: string) => void;
 };
 
-/** 비교 자리를 채우러 왔을 때. 시안(1117-6424)은 총 개수·정렬 없이 체크박스와
- *  이름·가격만 있다 — 무엇이 더 맞는지·싼지가 아니라 고르는 것 자체가 목적이다 */
+/** 비교 자리를 채우러 왔을 때. 시안(1117-6424)에 따라 이미지·이름·가격과 선택 상태만
+ *  보인다 — 무엇이 더 맞는지·싼지 견주는 목록이 아니라 고르는 흐름이라 총 개수·정렬·
+ *  별점·후기는 생략한다. 시안에 있는 하루 예상 급여비는 아이마다 달라지는 값이라
+ *  상품 응답(`ProductCard`)에 없어 함께 그리지 못한다 */
 function PickingResultList({ results, picked, onPick }: PickingResultListProps) {
   return (
     <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
@@ -176,6 +178,7 @@ function PickingResultList({ results, picked, onPick }: PickingResultListProps) 
               selectable
               selected={picked === id}
               onSelect={() => onPick(id)}
+              imageUrl={product.thumbnailUrl ?? undefined}
               name={product.name}
               price={product.price}
               priceClassName="text-title-bold-16"
