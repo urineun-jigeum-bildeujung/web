@@ -1,6 +1,7 @@
-// 장바구니에서 결제할 줄만 골라낸다.
+// 결제할 줄을 정한다. 장바구니에서 고른 줄이거나, "바로 구매"로 넘어온 상품 한 줄이다.
 
-import { cartItemKey, type CartItem } from "@/entities/cart";
+import { cartItemKey, type BuyNow, type CartItem } from "@/entities/cart";
+import type { ProductDetail } from "@/entities/product";
 
 import type { OrderItemRequest } from "../api/orders";
 
@@ -45,8 +46,32 @@ export function pickOrderItems(items: CartItem[] | undefined, selected: string |
  * `api`가 아니라 여기 있는 이유는 순수 변환이기 때문이다. 화면 테스트가 `api/orders`를
  * 통째로 목으로 바꿔서, 저기 두면 변환까지 사라진다.
  */
-export function toOrderItem(item: CartItem): OrderItemRequest {
+export function toOrderItem(item: OrderLine): OrderItemRequest {
   return item.itemType === "TIME_DEAL"
     ? { dealItemId: item.itemId, quantity: item.quantity }
     : { productId: item.itemId, quantity: item.quantity };
+}
+
+/**
+ * 결제 화면이 그리고 주문에 싣는 한 줄. 장바구니 줄에서 이 화면이 쓰는 값만 추린 모양이라,
+ * 장바구니 줄은 그대로 들어오고 바로 구매 상품은 `toBuyNowLine`으로 맞춰 들어온다.
+ */
+export type OrderLine = Pick<
+  CartItem,
+  "itemType" | "itemId" | "quantity" | "productName" | "thumbnailUrl" | "subtotal"
+>;
+
+/**
+ * 바로 구매 상품을 결제할 줄로 옮긴다 (#520). 금액은 불러온 상세의 판매가다 — 타임딜이면 딜
+ * 상세를 불러와 딜가가 온다. 실제 결제 금액은 서버가 주문을 만들며 다시 센다.
+ */
+export function toBuyNowLine(buyNow: BuyNow, product: ProductDetail): OrderLine {
+  return {
+    itemType: buyNow.itemType,
+    itemId: buyNow.itemId,
+    quantity: buyNow.quantity,
+    productName: product.name,
+    thumbnailUrl: product.images[0] ?? null,
+    subtotal: product.price * buyNow.quantity,
+  };
 }

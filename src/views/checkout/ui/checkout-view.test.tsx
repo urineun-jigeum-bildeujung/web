@@ -25,6 +25,7 @@ const { requestPayment, toastAppError, createOrder, releaseOrder, preparePayment
 const useQueryCart = vi.fn();
 const useQueryAddresses = vi.fn();
 const useQueryPets = vi.fn();
+const useQueryBuyNowProduct = vi.fn();
 
 vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
 
@@ -45,6 +46,9 @@ vi.mock("@/entities/address", () => ({ useQueryAddresses: () => useQueryAddresse
 vi.mock("@/entities/pet", () => ({ useQueryPets: () => useQueryPets() }));
 
 vi.mock("../api/orders", () => ({ createOrder, releaseOrder }));
+vi.mock("../api/use-query-buy-now-product", () => ({
+  useQueryBuyNowProduct: (buyNow: unknown) => useQueryBuyNowProduct(buyNow),
+}));
 vi.mock("../api/payment", () => ({ preparePayment }));
 
 // 위젯은 토스 서버에서 스크립트를 받아 온다. 테스트에서는 준비됐다고만 알린다
@@ -114,13 +118,22 @@ function renderView({
   cartState = {},
   addressState = {},
   petState = {},
+  buyNowState = {},
 }: {
   items?: CartItem[];
   addresses?: (typeof HOME)[];
   cartState?: Record<string, unknown>;
   addressState?: Record<string, unknown>;
   petState?: Record<string, unknown>;
+  /** 바로 구매 상품 조회. `?buy=`가 없으면 화면이 쓰지 않는다 */
+  buyNowState?: Record<string, unknown>;
 } = {}) {
+  useQueryBuyNowProduct.mockReturnValue({
+    data: undefined,
+    isPending: false,
+    error: null,
+    ...buyNowState,
+  });
   useQueryCart.mockReturnValue({
     cart: { memberId: 1, items, totalAmount: 9345 },
     isLoading: false,
@@ -462,6 +475,52 @@ test("주문을 만들 때 그 장바구니 줄을 함께 적어 둔다", async 
  * 새 키로 다시 보내면 서버가 같은 요청으로 못 알아봐 결제 대기 주문이 둘 된다. 같은 키로
  * 물으면 서버가 처음 만든 주문을 돌려준다 (#412).
  */
+/** 상품 상세에서 바로 구매로 넘어온 상품. 결제 화면이 쓰는 값만 채운다 */
+const BUY_NOW_PRODUCT = {
+  productId: 252,
+  name: "온스낵 오븐 쿠키 치즈 300g",
+  images: ["https://image.test/cookie.png"],
+  price: 8300,
+};
+
+// 전에는 바로 구매가 `/payment` 링크라 고른 상품 없이 왔다(QA PD-056, #520)
+test("바로 구매로 오면 장바구니 대신 그 상품만 주문하고 장바구니 줄을 적지 않는다", async () => {
+  searchParams = new URLSearchParams("buy=NORMAL:252:2");
+  createOrder.mockResolvedValue({ orderId: 77 });
+  preparePayment.mockResolvedValue(PREPARED);
+  // 장바구니에는 다른 상품이 있다. 이것까지 주문되면 안 된다
+  renderView({ buyNowState: { data: BUY_NOW_PRODUCT } });
+
+  expect(useQueryBuyNowProduct).toHaveBeenCalledWith({
+    itemType: "NORMAL",
+    itemId: 252,
+    quantity: 2,
+  });
+  expect(screen.getByText("온스낵 오븐 쿠키 치즈 300g")).toBeDefined();
+  expect(screen.getByText("2개")).toBeDefined();
+  expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
+
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+  fireEvent.click(screen.getByRole("button", { name: /결제하기/ }));
+
+  await waitFor(() => expect(requestPayment).toHaveBeenCalled());
+  expect(createOrder).toHaveBeenCalledWith(
+    expect.objectContaining({ items: [{ productId: 252, quantity: 2 }] }),
+    expect.anything(),
+  );
+  // 장바구니에서 온 것이 아니라 결제가 끝나도 장바구니에서 빼지 않는다
+  expect(readPendingOrder()?.cartItems).toEqual([]);
+});
+
+test("바로 구매 상품을 불러오는 동안에는 결제할 수 없다", () => {
+  searchParams = new URLSearchParams("buy=NORMAL:252:1");
+  renderView({ buyNowState: { isPending: true } });
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+
+  expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+});
+
 test("주문 생성 응답을 잃고 다시 누르면 같은 키로 묻는다", async () => {
   createOrder
     .mockRejectedValueOnce(new TypeError("Failed to fetch"))

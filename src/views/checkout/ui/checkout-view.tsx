@@ -23,7 +23,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { useQueryAddresses } from "@/entities/address";
-import { cartItemKey, useQueryCart, type CartItem } from "@/entities/cart";
+import { BUY_NOW_PARAM, cartItemKey, parseBuyNow, useQueryCart } from "@/entities/cart";
 import { OrderProductThumbnail } from "@/entities/order";
 import { useQueryPets } from "@/entities/pet";
 import { ApiError } from "@/shared/api/client";
@@ -44,7 +44,14 @@ import { Textarea } from "@/shared/ui/textarea";
 
 import { createOrder, releaseOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
-import { ITEMS_PARAM, pickOrderItems, toOrderItem } from "../model/order-items";
+import { useQueryBuyNowProduct } from "../api/use-query-buy-now-product";
+import {
+  ITEMS_PARAM,
+  pickOrderItems,
+  toBuyNowLine,
+  toOrderItem,
+  type OrderLine,
+} from "../model/order-items";
 import {
   clearPendingOrder,
   newPendingOrder,
@@ -125,7 +132,7 @@ function OrderItemSkeleton() {
 }
 
 /** 주문할 상품 한 줄. 사진·이름·옵션·수량 (`paym_001`) */
-function OrderItemRow({ item }: { item: CartItem }) {
+function OrderItemRow({ item }: { item: OrderLine }) {
   return (
     <div className="flex items-start gap-2">
       {/* 주문 화면들과 같은 80 썸네일이다. 사진이 없으면 자리만 잡는다 (#422) */}
@@ -261,7 +268,17 @@ export function CheckoutView() {
   // 아이 조회도 기본 아이를 앞으로 정렬한다(`getPets`). 기본이 없으면 맨 앞 아이다
   const pet = pets?.[0];
 
-  const items = pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
+  // **상품 상세의 "바로 구매"는 장바구니를 거치지 않는다** (#520). `?buy=`가 있으면 그 상품 한
+  // 줄로 주문하고, 없으면 장바구니에서 고른 줄이다. 둘이 섞이면 장바구니 상품까지 주문된다
+  const buyNow = parseBuyNow(searchParams.get(BUY_NOW_PARAM));
+  const buyNowProduct = useQueryBuyNowProduct(buyNow);
+  const itemsLoading = buyNow ? buyNowProduct.isPending : cartLoading;
+  const itemsError = buyNow ? buyNowProduct.error : cartError;
+  const items: OrderLine[] = buyNow
+    ? buyNowProduct.data
+      ? [toBuyNowLine(buyNow, buyNowProduct.data)]
+      : []
+    : pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
   const total = itemPrice + SHIPPING_FEE;
   const deliveryNote = request === REQUEST_DIRECT ? directRequest.trim() : request;
@@ -283,8 +300,9 @@ export function CheckoutView() {
   // **배송지는 id만이 아니라 내용까지 넣는다.** 서버는 주문을 만들 때 주소를 복사해 두고 바꾸지
   // 않아서, 같은 배송지의 주소를 고친 뒤 옛 주문을 쓰면 옛 주소로 간다 (#412)
   const orderSignature = JSON.stringify({ ...orderRequest, address });
-  // 결제가 끝나면 장바구니에서 뺄 줄. 주문과 함께 적어 두면 완료 화면이 꺼내 쓴다 (#457)
-  const cartItems = items.map(({ itemType, itemId }) => ({ itemType, itemId }));
+  // 결제가 끝나면 장바구니에서 뺄 줄. 주문과 함께 적어 두면 완료 화면이 꺼내 쓴다 (#457).
+  // 바로 구매는 장바구니에서 오지 않았다 — 같은 상품이 장바구니에 있어도 빼지 않는다 (#520)
+  const cartItems = buyNow ? [] : items.map(({ itemType, itemId }) => ({ itemType, itemId }));
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =
@@ -519,18 +537,18 @@ export function CheckoutView() {
               주지 않는다. 시안 문구를 그대로 두면 오늘이 며칠이든 "모레(9/3)"이라 지난 날짜가
               모든 주문에 뜬다 (#259 리뷰). 배송일을 받게 되면 `DeliveryNotice`로 되살린다 */}
 
-          {cartLoading && <OrderItemSkeleton />}
+          {itemsLoading && <OrderItemSkeleton />}
 
-          {cartError && (
+          {itemsError && (
             <EmptyState
               role="alert"
               className="py-6"
-              {...APP_MESSAGE[toAppMessageCode(cartError)]}
+              {...APP_MESSAGE[toAppMessageCode(itemsError)]}
             />
           )}
 
-          {!cartLoading &&
-            !cartError &&
+          {!itemsLoading &&
+            !itemsError &&
             (items.length === 0 ? (
               <EmptyState
                 className="py-6"
@@ -550,7 +568,7 @@ export function CheckoutView() {
 
           {/* **살 상품이 있을 때만 금액을 그린다.** 없을 때 그리면 배송비만 더한 "결제금액 3,000원"이
               "결제할 상품이 없어요" 옆에 뜬다. 장바구니 화면도 상품이 없으면 금액 줄을 숨긴다 (#422) */}
-          {!cartLoading && !cartError && items.length > 0 && (
+          {!itemsLoading && !itemsError && items.length > 0 && (
             // **dl 아래에는 이름·값 짝만 둔다.** 간격을 주려고 한 겹 더 감싸면 보조기기가 짝을 읽지
             // 못한다(`definition-list`·`dlitem`, #341). 묶음 간격은 dl 밖에서 준다 (#422)
             <div className="flex flex-col gap-2">

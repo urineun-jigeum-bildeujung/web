@@ -29,8 +29,10 @@
 | `api/use-mark-orders-stale.test.tsx` | 켜졌을 때만 표시하는지, 표시만 하고 다시 받지는 않는지 |
 | `api/use-remove-paid-cart-items.ts` | 결제를 마친 장바구니 줄을 뺀다. 실패는 기록만 하고 장바구니 캐시를 서버 것으로 맞춘다 (#457) |
 | `api/use-remove-paid-cart-items.test.tsx` | 줄을 모두 빼는지, 한 줄이 실패해도 던지지 않는지 |
+| `api/use-query-buy-now-product.ts` | "바로 구매"(`?buy=`)로 넘어온 상품 한 건을 불러온다. 일반 상품은 상품 상세, 타임딜은 딜가가 오는 딜 상세다 (#520) |
+| `api/use-query-buy-now-product.test.tsx` | 종류에 따라 부르는 곳을 가르는지, 바로 구매가 아니면 부르지 않는지 |
 | `api/payment.test.ts` | 무엇을 어떤 모양으로 보내는지, `orderId` 두 값이 제자리에 가는지, 결제 대기일 때만 푸는지 |
-| `model/order-items.ts` | 장바구니에서 결제할 줄만 고른다 |
+| `model/order-items.ts` | 결제할 줄을 정한다. 장바구니에서 고른 줄이거나 바로 구매 상품 한 줄(`toBuyNowLine`) |
 | `model/return-query.ts` | 결제창에서 돌아올 때 숫자 주문 id를 실어 보내고 읽는다. **토스가 붙이는 `orderId`와 이름이 겹치면 안 된다** (#301). 배송지를 등록하러 갔다 돌아올 경로도 여기서 만든다 (#369) |
 | `model/return-query.test.ts` | 복귀 주소 모양, 토스 쿼리와의 충돌, 읽을 수 없는 값 |
 | `model/order-items.test.ts` | 고른 값이 없을 때·살 수 없는 줄·종류가 다른 같은 id |
@@ -222,3 +224,8 @@ GET  /payments/{id}      결제 상세  명세·소스 모두 없음(2026-09-28 
 
 **실결제는 되지 않는다.** 사업자등록이 없어 테스트 키로만 돈다. `NEXT_PUBLIC_TOSS_CLIENT_KEY`는 브라우저에 노출되는 것이 정상이지만, **백엔드가 쓰는 테스트 상점의 결제위젯 클라이언트 키(`test_gck_`)를 받아 넣어야 한다.** 클라이언트 키와 승인용 시크릿 키는 한 상점의 세트라 짝이 안 맞으면 결제창은 떠도 승인에서 `INVALID_API_KEY`가 난다. 지금은 토스 문서의 공개 데모 키로 화면 확인만 한 상태다.
 
+## 바로 구매는 장바구니를 거치지 않는다 (#520)
+
+상품 상세의 "바로 구매"·"타임딜 구매하기"는 수량 시트를 거쳐 `/payment?buy=NORMAL:252:2`로 온다(규칙은 `entities/cart`의 `buy-now.ts`). `buy`가 있으면 **장바구니 대신 그 상품 한 줄로 주문하고**, 결제가 끝나도 장바구니에서 아무것도 빼지 않는다 — 같은 상품이 장바구니에 있어도 그대로 둔다. 서버의 주문 생성은 장바구니를 보지 않고 `productId`/`dealItemId`와 수량을 받아서 가능하다(백엔드 `CreateOrderRequest`).
+
+전에는 두 버튼이 `/payment` 링크일 뿐이라 고른 상품 없이 와서 "결제할 상품이 없어요"가 떴고, 장바구니에 다른 상품이 있으면 그것이 대신 결제 대상이 됐다(QA PD-056). 결제창에서 실패로 돌아올 때도 `buy`를 되돌려 싣는다(`toCheckoutPath`).

@@ -54,6 +54,8 @@ const timedealKeys = {
   list: (status?: string) => [...timedealKeys.listAll(), { status }] as const,
   detailAll: () => [...timedealKeys.all, "detail"] as const,
   detail: (dealId: ResourceId) => [...timedealKeys.detailAll(), dealId] as const,
+  /** 딜 아이템 한 건(`/time-deals/items/{번호}`). 딜 번호와 다른 번호라 키를 나눈다 (#520) */
+  item: (timeDealItemId: ResourceId) => [...timedealKeys.all, "item", timeDealItemId] as const,
 };
 
 const cartKeys = {
