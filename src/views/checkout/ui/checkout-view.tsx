@@ -269,14 +269,24 @@ export function CheckoutView() {
   const pet = pets?.[0];
 
   // **상품 상세의 "바로 구매"는 장바구니를 거치지 않는다** (#520). `?buy=`가 있으면 그 상품 한
-  // 줄로 주문하고, 없으면 장바구니에서 고른 줄이다. 둘이 섞이면 장바구니 상품까지 주문된다
-  const buyNow = parseBuyNow(searchParams.get(BUY_NOW_PARAM));
+  // 줄로 주문하고, 없으면 장바구니에서 고른 줄이다. 둘이 섞이면 장바구니 상품까지 주문된다.
+  // **값이 틀려도 `buy`가 있으면 바로 구매다.** 틀린 값을 없는 것으로 읽어 장바구니로 넘어가면
+  // 사용자가 고르지 않은 장바구니 상품이 결제 대상이 된다 — 빈 목록으로 둔다 (#521 리뷰)
+  const buyNowValue = searchParams.get(BUY_NOW_PARAM);
+  const isBuyNow = buyNowValue !== null;
+  const buyNow = parseBuyNow(buyNowValue);
   const buyNowProduct = useQueryBuyNowProduct(buyNow);
-  const itemsLoading = buyNow ? buyNowProduct.isPending : cartLoading;
-  const itemsError = buyNow ? buyNowProduct.error : cartError;
-  const items: OrderLine[] = buyNow
-    ? buyNowProduct.data
-      ? [toBuyNowLine(buyNow, buyNowProduct.data)]
+  const itemsLoading = isBuyNow ? buyNow !== null && buyNowProduct.isPending : cartLoading;
+  const itemsError = isBuyNow ? buyNowProduct.error : cartError;
+  // 품절이면 줄을 만들지 않는다. 상세에서 넘어온 뒤 재고가 떨어졌거나 주소로 다시 들어온
+  // 경우다 — 최종 재고 확인은 서버가 주문을 만들며 한다 (#521 리뷰)
+  const buyNowItem =
+    buyNow && buyNowProduct.data && !buyNowProduct.data.soldOut
+      ? toBuyNowLine(buyNow, buyNowProduct.data)
+      : null;
+  const items: OrderLine[] = isBuyNow
+    ? buyNowItem
+      ? [buyNowItem]
       : []
     : pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
@@ -302,7 +312,7 @@ export function CheckoutView() {
   const orderSignature = JSON.stringify({ ...orderRequest, address });
   // 결제가 끝나면 장바구니에서 뺄 줄. 주문과 함께 적어 두면 완료 화면이 꺼내 쓴다 (#457).
   // 바로 구매는 장바구니에서 오지 않았다 — 같은 상품이 장바구니에 있어도 빼지 않는다 (#520)
-  const cartItems = buyNow ? [] : items.map(({ itemType, itemId }) => ({ itemType, itemId }));
+  const cartItems = isBuyNow ? [] : items.map(({ itemType, itemId }) => ({ itemType, itemId }));
 
   const requiredIds = TERMS.filter((term) => term.required).map((term) => term.id);
   const canPay =

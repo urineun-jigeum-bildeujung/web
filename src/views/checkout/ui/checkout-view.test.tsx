@@ -521,6 +521,27 @@ test("바로 구매 상품을 불러오는 동안에는 결제할 수 없다", (
   expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
 });
 
+// 틀린 값을 없는 것으로 읽으면 장바구니 결제로 넘어가 고르지 않은 상품이 결제된다 (#521 리뷰)
+test("바로 구매 값이 틀리면 장바구니로 넘어가지 않고 결제할 상품이 없다고 알린다", () => {
+  searchParams = new URLSearchParams("buy=NORMAL:252:2:junk");
+  renderView();
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+
+  expect(screen.queryByText("종근당 캣츠벨")).toBeNull();
+  expect(screen.getByText("결제할 상품이 없어요")).toBeDefined();
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+});
+
+// 상세에서 넘어온 뒤 품절됐거나 주소로 다시 들어온 경우다 (#521 리뷰)
+test("바로 구매 상품이 품절이면 결제할 줄을 만들지 않는다", () => {
+  searchParams = new URLSearchParams("buy=NORMAL:252:1");
+  renderView({ buyNowState: { data: { ...BUY_NOW_PRODUCT, soldOut: true } } });
+  fireEvent.click(screen.getByLabelText("[전체 동의]"));
+
+  expect(screen.queryByText("온스낵 오븐 쿠키 치즈 300g")).toBeNull();
+  expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
+});
+
 test("주문 생성 응답을 잃고 다시 누르면 같은 키로 묻는다", async () => {
   createOrder
     .mockRejectedValueOnce(new TypeError("Failed to fetch"))

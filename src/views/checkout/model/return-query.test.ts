@@ -94,4 +94,7 @@ test("실패 복귀 주소는 바로 구매 상품도 되돌려 싣고 토스 �
   expect(url.pathname).toBe("/payment");
   expect(url.searchParams.get("buy")).toBe("NORMAL:252:2");
   expect(url.searchParams.get("code")).toBeNull();
+
+  // 빈 값도 옮긴다. 빼면 장바구니 결제로 읽힌다
+  expect(new URL(toFailUrl("https://leechs.shop", "?buy=")).searchParams.get("buy")).toBe("");
 });
