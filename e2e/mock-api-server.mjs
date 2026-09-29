@@ -107,6 +107,18 @@ const FOOD_PAGE_1 = [
     avgRating: 4.8,
     reviewCount: 108,
   },
+  // 이름이 칸보다 긴 상품. 카드가 이름 길이만큼 넓어져 옆 칸을 덮던 것을 본다(#534)
+  {
+    productId: 5,
+    productName: "담았냥 그레인프리 가다랑어 시니어 전연령 고양이 사료 1kg",
+    price: 24700,
+    discountRate: 0,
+    unitPrice: 25,
+    unitLabel: "g",
+    thumbnailUrl: null,
+    avgRating: 0,
+    reviewCount: 0,
+  },
 ];
 const FOOD_PAGE_2 = [
   {

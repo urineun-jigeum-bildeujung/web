@@ -55,6 +55,24 @@ test("더 보기를 누르면 다음 페이지를 이어 붙이고, 다 받으�
   await expect(page.getByRole("button", { name: "더 보기" })).not.toBeVisible();
 });
 
+// 칸(li)을 flex로 두고 카드에 flex-1을 주던 동안 카드의 최소 폭이 이름 전체 길이가 되어, 긴 이름의
+// 카드가 옆 칸을 덮고 화면이 가로로 밀렸다. QA HM-009·HM-011 "디자인 레이아웃이 안 맞는 것 같아요" (#534)
+test("종류 탭의 긴 상품명은 칸 안에서 말줄임되고 카드가 칸 폭을 넘지 않는다", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/?category=food");
+
+  const cell = page.getByRole("listitem").filter({ hasText: "담았냥 그레인프리" });
+  await expect(cell).toBeVisible();
+  const cellBox = await cell.boundingBox();
+  const cardBox = await cell.getByRole("link").boundingBox();
+  expect(cardBox!.width, "카드가 칸보다 넓다").toBeLessThanOrEqual(cellBox!.width + 0.5);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
+});
+
 // `screens.spec.ts`의 ROUTES 스모크에서 옮겨왔다 — `/`는 "전체" 탭에서 타임딜을
 // 서버 조회해(#289) 그 스위트의 dev 서버로는 확인할 수 없다. 같은 검사(콘솔 오류·
 // 가로 스크롤 없음)를 여기서 한다
