@@ -4,12 +4,14 @@
 
 | 파일 | 설명 |
 | --- | --- |
-| `api/products.ts` | 검색 결과 조회(`searchProducts`), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`), 딜가가 붙은 타임딜 상세 조회(`getTimeDealDetail`, #484 — 딜 번호는 새 응답의 `timeDeal`과 옛 응답의 최상위 필드를 둘 다 읽는다). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
+| `api/products.ts` | 검색 결과 첫 쪽 조회(`searchProducts`)와 다음 쪽 조회(`searchMoreProducts`, #532 — 다음 쪽 응답엔 개수가 null로 와서 돌려주지 않는다), 카테고리별 목록 조회(`getProducts`), 상품 상세 조회(`getProductDetail`)와 거기서 파생하는 요약(`getProductSummary`), 딜가가 붙은 타임딜 상세 조회(`getTimeDealDetail`, #484 — 딜 번호는 새 응답의 `timeDeal`과 옛 응답의 최상위 필드를 둘 다 읽는다). 일반 async 함수라 서버·클라이언트 어디서나 쓴다(#282, #289, #413) |
 | `api/use-query-product-summary.ts` | 상품 하나의 이름·대표 사진을 받는 훅. 리뷰 작성의 상품 줄이 쓴다 |
 | `api/use-query-product-details.ts` | 여러 상품의 상세를 한꺼번에 받는 훅(`useQueries`). 최근 본 상품 카드가 쓴다. 없어진 상품(404)과 실패를 가른다 (#509) |
 | `api/use-query-product-details.test.tsx` | 순서 유지, 404와 실패 구분, 실패만 다시 부르기 |
 | `api/use-product-list.ts` | `getProducts`의 커서 페이지네이션("더 보기") 상태를 관리하는 훅. 첫 페이지는 서버가 준 값을 받고 다음 페이지만 이어 붙입니다(#289) |
 | `api/use-product-list.test.ts` | 커서 이어 붙이기·중복 제거·실패 시 기존 목록 보존 단위 테스트 |
+| `api/use-product-search.ts` | 검색 결과의 커서 이어 받기 상태를 관리하는 훅. 첫 쪽은 서버가 준 값을 받고, 다음 쪽을 이어 붙이며 "총 N개"는 첫 쪽 값을 유지한다. 다시 시도하는 동안에도 실패 표시를 남긴다(#532) |
+| `api/use-product-search.test.ts` | 이어 붙이기·개수 유지·중복 제거·실패 후 다시 시도·다음 쪽이 없을 때 요청 안 함 |
 | `api/products.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
 | `api/time-deals.ts` | 타임딜 목록 조회(`getTimeDeals`). 백엔드가 딜 묶음 개수를 제한하지 않아 배열 그대로 보존한다(#282) |
 | `api/time-deals.test.ts` | 요청 파라미터·다중 딜 묶음 보존·`stockBadge` 매핑 단위 테스트 |
@@ -60,7 +62,7 @@
 
 찜 목록(`entities/wishlist`)은 서버 할인율이 없어 카드의 버림 계산을 그대로 씁니다.
 
-**`use-product-list.ts`는 TanStack Query로 감싸지 않았습니다.** 상품 목록은 공개 데이터라 서버 컴포넌트가
+**`use-product-list.ts`·`use-product-search.ts`는 TanStack Query로 감싸지 않았습니다.** 상품 목록은 공개 데이터라 서버 컴포넌트가
 첫 페이지를 직접 fetch하고, "더 보기"는 캐싱·무효화가 필요 없는 단순 이어 붙이기라 Query 캐시를 쓸 이유가
 없어서입니다(#289). Query가 필요해지는 지점(찜 여부처럼 사용자별로 갈리는 값 등)이 생기면 그때 다시 봅니다.
 

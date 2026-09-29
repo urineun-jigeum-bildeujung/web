@@ -24,13 +24,21 @@ type ProductCardResponse = {
   reviewCount: number;
 };
 
-/** 백엔드 `ProductSearchResponse` 그대로 */
+/**
+ * 백엔드 `ProductSearchResponse` 그대로.
+ *
+ * **`totalCount`는 커서 없이 부른 첫 쪽에서만 센다.** 다음 쪽(`cursor` 있음)은 null이다
+ * (`ProductSearchService`, 배포 API로도 확인 #532).
+ */
 type ProductSearchApiResponse = {
   items: ProductCardResponse[];
   nextCursor: string | null;
   hasNext: boolean;
-  totalCount: number;
+  totalCount: number | null;
 };
+
+/** 한 번에 받는 검색 결과 수. 서버 상한(30) 안이고, 다음 쪽도 같은 크기로 받는다 */
+const SEARCH_PAGE_SIZE = 20;
 
 /** 목록 카드 하나. 화면이 실제로 쓰는 필드만 이름을 옮겼다 */
 export type ProductCard = {
@@ -51,11 +59,8 @@ export type ProductCard = {
 };
 
 /**
- * 검색 결과 화면이 그대로 쓰는 모델.
- *
- * **`nextCursor`·`hasNext`를 지금 화면이 안 쓰더라도 갖고 있는다.** 지금은 첫 페이지
- * (`items`)만 보여주고 더보기를 만들지 않았는데, 나중에 커서 추가 로딩을 붙일 때 이
- * API 레이어를 다시 뜯지 않으려면 처음부터 다 보존해 둬야 한다.
+ * 검색 결과 첫 쪽. 화면의 "총 N개"는 여기 `totalCount`다 — 다음 쪽을 이어 받아도 바꾸지 않는다.
+ * 다음 쪽은 `nextCursor`로 `searchMoreProducts`를 불러 잇는다(#532).
  */
 export type ProductSearchResult = {
   items: ProductCard[];
@@ -63,6 +68,9 @@ export type ProductSearchResult = {
   nextCursor: string | null;
   hasNext: boolean;
 };
+
+/** 검색 결과 다음 쪽. 서버가 다음 쪽에선 개수를 세지 않아 `totalCount`가 없다 */
+export type ProductSearchNextPage = Omit<ProductSearchResult, "totalCount">;
 
 function toProductCard(response: ProductCardResponse): ProductCard {
   return {
@@ -80,24 +88,48 @@ function toProductCard(response: ProductCardResponse): ProductCard {
 }
 
 /**
- * 검색어로 상품을 찾는다. 공개 엔드포인트라 토큰을 붙이지 않는다.
+ * 검색어로 상품을 찾는다(첫 쪽). 공개 엔드포인트라 토큰을 붙이지 않는다.
  *
- * **`size`는 임시로 20을 못박아 둔다.** 서버가 큰 값을 거부하지 않는 걸 확인했지만
- * (예: 1000도 200을 준다), 내부에 숨은 상한이 있는지는 실제 데이터로 검증하지
- * 못했다. 그래서 "이 요청 하나로 전체를 받는다"고 가정하지 않는다 — 결과가 이
- * 크기를 넘으면 나머지는 지금 화면에서 접근할 방법이 없다(#282, 더보기/커서
- * 추가 로딩 붙이기 전까지 이슈를 닫지 않는다).
+ * **한 번에 전부 받지 않는다.** 서버가 `size`를 30으로 자른다(`product.list.max-size`).
+ * 그 뒤는 `searchMoreProducts`로 이어 받는다 — 첫 20개에서 끊기면 "총 N개"만큼 볼 수 없다(#532).
  */
 export function searchProducts(params: {
   keyword: string;
   sort: ProductSort;
 }): Promise<ProductSearchResult> {
-  return apiRequest<ProductSearchApiResponse>("/products/search", {
+  // 커서 없이 부르면 서버가 반드시 센다. null은 다음 쪽에서만 온다
+  return apiRequest<ProductSearchApiResponse & { totalCount: number }>("/products/search", {
     auth: false,
-    query: { keyword: params.keyword, sort: params.sort, size: 20 },
+    query: { keyword: params.keyword, sort: params.sort, size: SEARCH_PAGE_SIZE },
   }).then((response) => ({
     items: response.items.map(toProductCard),
     totalCount: response.totalCount,
+    nextCursor: response.nextCursor,
+    hasNext: response.hasNext,
+  }));
+}
+
+/**
+ * 검색 결과 다음 쪽. 앞 쪽의 `nextCursor`를 그대로 넘긴다.
+ *
+ * **검색어·정렬은 첫 쪽과 같아야 한다.** 커서에 둘이 새겨져 있어 다르면 서버가 거절한다
+ * (`PageCursor.validate`). 개수는 돌려주지 않는다 — 다음 쪽 응답엔 null이 온다.
+ */
+export function searchMoreProducts(params: {
+  keyword: string;
+  sort: ProductSort;
+  cursor: string;
+}): Promise<ProductSearchNextPage> {
+  return apiRequest<ProductSearchApiResponse>("/products/search", {
+    auth: false,
+    query: {
+      keyword: params.keyword,
+      sort: params.sort,
+      cursor: params.cursor,
+      size: SEARCH_PAGE_SIZE,
+    },
+  }).then((response) => ({
+    items: response.items.map(toProductCard),
     nextCursor: response.nextCursor,
     hasNext: response.hasNext,
   }));
