@@ -13,7 +13,7 @@ const PAGE_SIZE = 30;
  * 상품의 후기 사진을 가져온다.
  *
  * 후기 목록과 달리 **응답에 `hasNext`가 있어** 그대로 쓴다.
- * `totalCount`는 후기 수가 아니라 사진 장수다 — 화면의 "사진이 있는 리뷰 N장"이 이 값이다.
+ * `totalCount`는 후기 수가 아니라 사진 장수다 — 화면의 "후기 사진 N장"이 이 값이다.
  */
 export function useQueryReviewPhotos(productId: string) {
   const query = useInfiniteQuery({

@@ -100,7 +100,7 @@ describe("격자", () => {
 
     renderView();
 
-    expect(screen.getByText(/사진이 있는 리뷰/).textContent).toContain("3");
+    expect(screen.getByText(/후기 사진/).textContent).toContain("3");
     expect(screen.getAllByRole("button", { name: /크게 보기/ })).toHaveLength(3);
   });
 
