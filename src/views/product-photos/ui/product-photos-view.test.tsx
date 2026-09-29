@@ -61,6 +61,16 @@ const DETAIL: ReviewDetail = {
   createdAt: "2026-08-31",
 };
 
+/** 화살표를 두 번 눌러도 끝에 닿지 않도록 세 장짜리를 따로 둔다 */
+const THREE_PHOTO_DETAIL: ReviewDetail = {
+  ...DETAIL,
+  images: [
+    "https://img.example/7-a.webp",
+    "https://img.example/7-b.webp",
+    "https://img.example/7-c.webp",
+  ],
+};
+
 function photosState(part: Record<string, unknown> = {}) {
   return {
     photos: PHOTOS,
@@ -164,6 +174,45 @@ describe("주소로 자리를 가리킨다", () => {
 
     // 두 장뿐이므로 마지막 장으로 잘린다
     expect(screen.getByText("2장 중 2번째")).toBeDefined();
+  });
+
+  // 화살표는 키보드 초점에서만 나오므로 이 경로가 깨져도 눈에 띄지 않는다.
+  // 주소가 다시 그려지기를 기다렸다면 두 번째 누름이 같은 자리를 가리켰을 것이다 (리뷰 반영)
+  it("화살표를 연달아 눌러도 누른 만큼 넘어간다", async () => {
+    const updates: UrlUpdateEvent[] = [];
+    useQueryReviewPhotos.mockReturnValue(photosState());
+    useQueryReviewDetail.mockReturnValue({ review: THREE_PHOTO_DETAIL, isLoading: false });
+
+    renderView("?photo=7&n=0", (event) => updates.push(event));
+
+    // jsdom은 레이아웃을 재지 않아 폭이 늘 0이다. 자리 계산이 그 값을 나누므로 세워 둔다
+    const track = screen.getByRole("list", { name: "후기 사진" });
+    Object.defineProperty(track, "clientWidth", { value: 393, configurable: true });
+
+    const next = screen.getByRole("button", { name: "다음 사진" });
+    fireEvent.click(next);
+    fireEvent.click(next);
+
+    // 다시 그려지기를 기다리지 않고 줄의 실제 자리에서 읽으므로 두 번이 모두 먹는다
+    expect(track.scrollLeft).toBe(393 * 2);
+    await waitFor(() => expect(updates.at(-1)?.searchParams.get("n")).toBe("2"));
+  });
+
+  it("첫 장에서 이전을 눌러도 범위를 벗어나지 않는다", () => {
+    useQueryReviewPhotos.mockReturnValue(photosState());
+    useQueryReviewDetail.mockReturnValue({ review: THREE_PHOTO_DETAIL, isLoading: false });
+
+    renderView("?photo=7&n=1");
+
+    const track = screen.getByRole("list", { name: "후기 사진" });
+    Object.defineProperty(track, "clientWidth", { value: 393, configurable: true });
+    track.scrollLeft = 393;
+
+    const prev = screen.getByRole("button", { name: "이전 사진" });
+    fireEvent.click(prev);
+    fireEvent.click(prev);
+
+    expect(track.scrollLeft).toBe(0);
   });
 });
 

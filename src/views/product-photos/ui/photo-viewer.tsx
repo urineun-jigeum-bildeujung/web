@@ -71,13 +71,20 @@ export function PhotoViewer({
 
   const track = useRef<HTMLUListElement>(null);
 
-  // **자리를 먼저 옮기고 미끄러뜨린다.** 미끄러지는 동안에는 아직 `current`가 옛 값이라,
-  // 나중 자리를 여기서 갱신하지 않으면 연달아 누른 두 번이 같은 곳을 가리킨다 —
-  // 화살표는 키보드 초점에서만 나오므로 키보드로 넘길 때만 겪는 일이다 (리뷰 반영)
-  const goTo = (index: number) => {
-    onPhotoChange(index);
+  // **지금 어디인지는 React 상태가 아니라 줄의 실제 위치에서 읽는다.** `current`는 주소에서
+  // 오는 값이라 다시 그려진 뒤에야 바뀌는데, 화살표를 연달아 누르면 그 사이에 다음 누름이
+  // 들어와 같은 곳을 두 번 가리킨다. 미끄러뜨리지 않고 자리를 바로 옮기는 것도 같은 이유다 —
+  // 애니메이션이 끝나기 전에 다음 누름이 오면 중간 위치를 현재로 읽는다.
+  // 화살표는 키보드 초점에서만 나오므로 손으로 넘길 때의 부드러움은 그대로다 (리뷰 반영)
+  const goTo = (step: -1 | 1) => {
     const list = track.current;
-    if (list) list.scrollTo({ left: list.clientWidth * index, behavior: "smooth" });
+    if (!list || list.clientWidth === 0) return;
+
+    const at = Math.round(list.scrollLeft / list.clientWidth);
+    const next = Math.min(Math.max(at + step, 0), images.length - 1);
+
+    list.scrollLeft = list.clientWidth * next;
+    onPhotoChange(next);
   };
 
   // 격자에서 고른 사진이 첫 장이 아닐 수 있고, 주소로 바로 들어올 수도 있다.
@@ -162,7 +169,7 @@ export function PhotoViewer({
                 type="button"
                 aria-label="이전 사진"
                 disabled={current === 0}
-                onClick={() => goTo(current - 1)}
+                onClick={() => goTo(-1)}
                 className="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
               >
                 <IoChevronBack aria-hidden className="size-5" />
@@ -171,7 +178,7 @@ export function PhotoViewer({
                 type="button"
                 aria-label="다음 사진"
                 disabled={current === images.length - 1}
-                onClick={() => goTo(current + 1)}
+                onClick={() => goTo(1)}
                 className="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-background/80 text-foreground opacity-0 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-0"
               >
                 <IoChevronForward aria-hidden className="size-5" />
