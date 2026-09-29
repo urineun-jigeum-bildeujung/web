@@ -67,6 +67,12 @@ export const APP_MESSAGE = {
     title: "로그인 실패",
     description: "다시 시도해 주세요.",
   },
+  // 비로그인이 공개 화면에서 로그인해야 쓸 수 있는 버튼을 누른 경우다. 세션이 끊긴 것이 아니라
+  // 처음부터 없는 것이라 "다시 로그인"을 권하는 `common.unauthorized`와 나눈다 (#542)
+  "auth.loginRequired": {
+    title: "로그인 필요",
+    description: "로그인하면 이용할 수 있어요.",
+  },
 
   // `@MemberId`를 쓰는 모든 엔드포인트가 이 코드를 낸다. 토큰은 있는데 가입을 마치지
   // 않아 회원 번호가 없는 상태다 — "권한 없음"으로 덮으면 무엇을 해야 할지 알 수 없다
@@ -271,6 +277,7 @@ export const APP_MESSAGE_CODE = {
   },
   auth: {
     signInFailed: "auth.signInFailed",
+    loginRequired: "auth.loginRequired",
   },
   member: {
     signupRequired: "member.signupRequired",
