@@ -118,8 +118,8 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* 시안(1755-53664)의 헤더 제목은 "사진 리뷰"다. 목록 요약 줄(사진이 있는
-          리뷰 N장)이 따로 있어 헤더까지 "전체보기"를 안 붙인다 */}
+      {/* 시안(1755-53664)의 헤더 제목은 "사진 리뷰"다. 목록 요약 줄(후기 사진 N장)이
+          따로 있어 헤더까지 "전체보기"를 안 붙인다 */}
       <PageHeader title="사진 리뷰" />
 
       <main className="flex flex-1 flex-col">
@@ -141,9 +141,9 @@ export function ProductPhotosView({ productId }: ProductPhotosViewProps) {
 
         {list.length > 0 && (
           <>
+            {/* 시안(1755-53779)은 줄 전체가 body/medium_16 한 덩어리다. 단위만 굵게 뽑지 않는다 */}
             <p className="px-5 py-3 text-body-medium-16 text-text-body-default">
-              사진이 있는 리뷰 {totalCount ?? list.length}
-              <span className="text-label-bold-16">장</span>
+              후기 사진 {totalCount ?? list.length}장
             </p>
 
             {/* 시안은 좌우 20px 여백에 4px 간격 3열이다 */}
