@@ -398,6 +398,8 @@ test("영양 배지가 화면 밖으로 넘치지 않는다", async ({ page }) =
 // 최근 본 상품은 백엔드 API가 없어 이 브라우저에 기록한다(#509). 상세에 들어온 것이 좋아요의
 // "최근에 봤어요"까지 이어지는지, 카드 값이 상품 조회에서 오는지 본다
 test("상품 상세에 들어오면 좋아요의 최근에 봤어요에 남고, X로 빼면 비워진다", async ({ page }) => {
+  // 좋아요는 로그인해야 열린다(#542)
+  await signInWithPets(page);
   await page.goto(PATH);
   await expect(page.getByRole("heading", { name: NAME, level: 1 })).toBeVisible();
   // 기록은 하이드레이션 뒤 효과에서 한다. 저장된 뒤에 떠나야 흔들리지 않는다

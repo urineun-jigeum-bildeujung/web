@@ -5,12 +5,16 @@
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 import { expect, test } from "@playwright/test";
 
-import { stubAddToCart } from "./fixtures/cart";
+import { stubAddToCart, stubCart } from "./fixtures/cart";
+import { stubNotifications } from "./fixtures/notifications";
 import { signIn } from "./fixtures/session";
 
-// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542).
+// 로그인하면 헤더 장바구니와 알림 폴링이 서버를 부른다. 목 서버에 없어 404가 콘솔에 남지 않게 세운다
 test.beforeEach(async ({ page }) => {
   await signIn(page);
+  await stubCart(page);
+  await stubNotifications(page);
 });
 
 test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ page }) => {
