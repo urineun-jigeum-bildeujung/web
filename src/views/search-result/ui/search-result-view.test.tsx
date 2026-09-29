@@ -1,12 +1,12 @@
 // 서버가 준 결과를 그대로 그리는지, 걸리는 게 없을 때 무엇을 보이는지, 검색바가
-// 어디로 보내는지 본다. 검색어로 거르고 정렬하는 건 서버 책임이라 여기서 다시 보지 않는다
-// (entities/product/api/products.test.ts가 요청 파라미터 조립을 본다).
-import { act, fireEvent, render, screen } from "@testing-library/react";
+// 어디로 보내는지, 목록 끝에서 다음 쪽을 이어 받는지 본다. 검색어로 거르고 정렬하는 건
+// 서버 책임이라 여기서 다시 보지 않는다(entities/product/api/products.test.ts가 요청 파라미터 조립을 본다).
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { ErrorBoundary } from "react-error-boundary";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ProductCard, ProductSearchResult } from "@/entities/product";
+import type { ProductCard, ProductSearchResult, ProductSort } from "@/entities/product";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -63,6 +63,9 @@ function toResult(items: ProductCard[]): ProductSearchResult {
   return { items, totalCount: items.length, nextCursor: null, hasNext: false };
 }
 
+/** 첫 쪽을 부른 검색어·정렬. 다음 쪽이 없는 테스트에선 쓰이지 않는다 */
+const QUERY: { keyword: string; sort: ProductSort } = { keyword: "사료", sort: "RECOMMEND" };
+
 // `use()`가 첫 렌더에서 항상 한 번 suspend했다가 promise가 풀리면 다시 그린다 — 이미
 // resolve된 promise를 넘겨도 마찬가지라, act()로 감싸 그 재렌더까지 기다리고 반환한다
 async function renderWith(search: string, items: ProductCard[] = [PUPPY_FOOD]) {
@@ -70,7 +73,7 @@ async function renderWith(search: string, items: ProductCard[] = [PUPPY_FOOD]) {
   await act(async () => {
     result = render(
       <NuqsTestingAdapter searchParams={search}>
-        <SearchResultView resultsPromise={Promise.resolve(toResult(items))} />
+        <SearchResultView resultsPromise={Promise.resolve(toResult(items))} resultsQuery={QUERY} />
       </NuqsTestingAdapter>,
     );
   });
@@ -255,7 +258,7 @@ describe("SearchResultView", () => {
       render(
         <NuqsTestingAdapter searchParams="?q=사료">
           <ErrorBoundary onError={onError} fallbackRender={() => <p>문제가 생겼어요</p>}>
-            <SearchResultView resultsPromise={rejected} />
+            <SearchResultView resultsPromise={rejected} resultsQuery={QUERY} />
           </ErrorBoundary>
         </NuqsTestingAdapter>,
       );
@@ -276,5 +279,164 @@ describe("SearchResultView", () => {
     fireEvent.click(heart);
     expect(toggle).not.toHaveBeenCalled();
     wished.loading = false;
+  });
+});
+
+// 첫 20개만 그리던 동안 "총 200개" 아래 카드가 20개에서 끝났다(QA SR-014, #532).
+// 목록 끝을 지켜보는 관찰자는 jsdom에 없어, 끝이 화면에 들어오는 순간을 직접 흉내 낸다
+describe("SearchResultView 다음 쪽 이어 받기", () => {
+  const observers = new Set<(entries: { isIntersecting: boolean }[]) => void>();
+
+  beforeEach(() => {
+    observers.clear();
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        private readonly callback: (entries: { isIntersecting: boolean }[]) => void;
+        constructor(callback: (entries: { isIntersecting: boolean }[]) => void) {
+          this.callback = callback;
+        }
+        observe() {
+          observers.add(this.callback);
+        }
+        unobserve() {}
+        // 관찰을 끊은 뒤엔 부르지 않는다. 브라우저도 끊긴 관찰자에겐 알리지 않는다
+        disconnect() {
+          observers.delete(this.callback);
+        }
+      },
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function scrollToEnd() {
+    await act(async () => {
+      for (const callback of [...observers]) {
+        callback([{ isIntersecting: true }]);
+      }
+    });
+  }
+
+  /** 서버 응답 모양(`ProductCardResponse`)의 SENIOR_FOOD */
+  const SENIOR_FOOD_RESPONSE = {
+    productId: 2,
+    thumbnailUrl: null,
+    productName: "노령견 저지방 소화케어 사료 1kg",
+    discountRate: 15,
+    price: 27200,
+    originalPrice: 31900,
+    unitPrice: 27,
+    unitLabel: "g",
+    avgRating: 4.5,
+    reviewCount: 108,
+  };
+
+  /** 서버는 다음 쪽에서 개수를 세지 않고 null을 준다 */
+  const LAST_PAGE = {
+    items: [SENIOR_FOOD_RESPONSE],
+    nextCursor: null,
+    hasNext: false,
+    totalCount: null,
+  };
+
+  /** 두 개 중 첫 쪽 하나만 받은 상태 */
+  const FIRST_PAGE: ProductSearchResult = {
+    items: [PUPPY_FOOD],
+    totalCount: 2,
+    nextCursor: "page-2",
+    hasNext: true,
+  };
+
+  function view(search: string, first: ProductSearchResult, query = QUERY) {
+    return (
+      <NuqsTestingAdapter searchParams={search}>
+        <SearchResultView resultsPromise={Promise.resolve(first)} resultsQuery={query} />
+      </NuqsTestingAdapter>
+    );
+  }
+
+  it("목록 끝에 닿으면 다음 쪽을 이어 붙여 총 개수만큼 보이고, 개수는 바뀌지 않는다", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(LAST_PAGE)));
+    await act(async () => {
+      render(view("?q=사료", FIRST_PAGE));
+    });
+    expect(await screen.findByText("총 2개")).toBeDefined();
+
+    await scrollToEnd();
+
+    expect(await screen.findByText("노령견 저지방 소화케어 사료 1kg")).toBeDefined();
+    expect(screen.getByText("퍼피 성장기 사료 1kg")).toBeDefined();
+    expect(screen.getByText("총 2개")).toBeDefined();
+  });
+
+  // 정렬을 고르면 URL이 서버의 새 첫 쪽보다 먼저 바뀐다. 그 사이 이전 목록의 커서를 새 정렬로
+  // 보내면 서버가 커서를 거절한다(커서에 정렬이 새겨져 있다)
+  it("다음 쪽은 URL의 정렬이 아니라 첫 쪽을 부른 정렬로 부른다", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(Response.json(LAST_PAGE));
+    vi.stubGlobal("fetch", fetchMock);
+    await act(async () => {
+      render(view("?q=사료&sort=price-low", FIRST_PAGE, { keyword: "사료", sort: "RECOMMEND" }));
+    });
+    await screen.findByText("총 2개");
+
+    await scrollToEnd();
+
+    await screen.findByText("노령견 저지방 소화케어 사료 1kg");
+    const url = String(fetchMock.mock.calls[0]?.[0]);
+    expect(url).toContain("sort=RECOMMEND");
+    expect(url).toContain("cursor=page-2");
+  });
+
+  it("검색어·정렬이 바뀌면 이어 받은 목록을 버리고 새 첫 쪽부터 그린다", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(LAST_PAGE)));
+    let rendered: ReturnType<typeof render>;
+    await act(async () => {
+      rendered = render(view("?q=사료", FIRST_PAGE));
+    });
+    await scrollToEnd();
+    await screen.findByText("노령견 저지방 소화케어 사료 1kg");
+
+    // 서버가 높은 가격순으로 새로 센 첫 쪽이다. 이전 정렬로 이어 붙인 퍼피 사료가 남으면 안 된다
+    await act(async () => {
+      rendered.rerender(
+        view("?q=사료&sort=price-high", toResult([SENIOR_FOOD]), {
+          keyword: "사료",
+          sort: "PRICE_DESC",
+        }),
+      );
+    });
+
+    await waitFor(() => expect(screen.queryByText("퍼피 성장기 사료 1kg")).toBeNull());
+    expect(screen.getByText("노령견 저지방 소화케어 사료 1kg")).toBeDefined();
+    expect(screen.getByText("총 1개")).toBeDefined();
+  });
+
+  it("다음 쪽을 못 받으면 받은 목록은 두고, 다시 시도를 누르면 이어 받는다", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValueOnce(Response.json({ code: "ERR" }, { status: 500 }))
+        .mockResolvedValueOnce(Response.json(LAST_PAGE)),
+    );
+    await act(async () => {
+      render(view("?q=사료", FIRST_PAGE));
+    });
+    await screen.findByText("총 2개");
+
+    await scrollToEnd();
+
+    const retry = await screen.findByRole("button", {
+      name: "상품을 더 불러오지 못했어요. 다시 시도",
+    });
+    expect(screen.getByText("퍼피 성장기 사료 1kg")).toBeDefined();
+
+    fireEvent.click(retry);
+
+    expect(await screen.findByText("노령견 저지방 소화케어 사료 1kg")).toBeDefined();
+    expect(screen.queryByRole("button", { name: /다시 시도/ })).toBeNull();
   });
 });

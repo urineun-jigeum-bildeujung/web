@@ -7,6 +7,7 @@
 // 목록은 서버가 조회해 준다(#282). `/app/search/result/page.tsx`가 만든 Promise를
 // `resultsPromise`로 받아 `use()`로 푼다 — 헤더·검색바·제목은 그 결과를 기다리지 않고
 // 바로 그려지고, 결과 개수·정렬·목록·빈 상태만 한 덩어리로 묶여 대기한다.
+// 첫 쪽 뒤는 목록 끝에 닿을 때마다 브라우저가 이어 받는다 — "총 N개"만큼 볼 수 있어야 한다(#532).
 
 "use client";
 
@@ -20,12 +21,20 @@ import {
   useToggleWishlist,
   useWishedProductIds,
 } from "@/features/toggle-wishlist";
-import { formatUnitPrice, type ProductCard, type ProductSearchResult } from "@/entities/product";
+import {
+  formatUnitPrice,
+  useProductSearch,
+  type ProductCard,
+  type ProductSearchResult,
+  type ProductSort,
+} from "@/entities/product";
 import { useRequireSession } from "@/shared/api/use-require-session";
+import { useLoadMore } from "@/shared/lib/list/use-load-more";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -191,8 +200,52 @@ function PickingResultList({ results, picked, onPick }: PickingResultListProps) 
   );
 }
 
+type NextPageFooterProps = {
+  hasNext: boolean;
+  loading: boolean;
+  /** 다음 쪽만 실패한 경우. 이미 받은 상품은 그대로 둔다 */
+  failed: boolean;
+  onLoadMore: () => void;
+};
+
+/** 목록 맨 아래. 끝이 보이면 다음 쪽을 부르고, 받는 동안 카드 자리를, 다음 쪽만 실패하면
+ *  다시 시도를 보인다. 시안(2396-80432)에 더 보기 버튼 자리가 없어 주문·후기 목록처럼 스크롤로 잇는다 */
+function NextPageFooter({ hasNext, loading, failed, onLoadMore }: NextPageFooterProps) {
+  // 가져오는 중이거나 방금 실패했으면 멈춘다 — 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다
+  const loadMoreRef = useLoadMore(onLoadMore, hasNext && !loading && !failed);
+
+  return (
+    <>
+      {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
+      {hasNext && !failed && <div ref={loadMoreRef} aria-hidden className="h-px" />}
+      {loading && (
+        <div role="status" aria-label="상품을 더 불러오는 중" className="pt-5">
+          <SkeletonCards count={2} />
+        </div>
+      )}
+
+      {/* 다음 쪽만 실패한 경우다. 저절로 다시 부르면 같은 실패가 되풀이되므로 사용자가 고른다.
+          다시 받는 동안에도 이 버튼이 서 있으므로 잠그고 대기를 보인다 (주문·후기 목록과 같은 처리, #427) */}
+      {failed && (
+        <Button
+          variant="secondary"
+          className="mt-5 min-h-11 text-label-bold-14"
+          disabled={loading}
+          onClick={onLoadMore}
+        >
+          <LoadingSwap loading={loading} label="상품을 더 불러오는 중">
+            상품을 더 불러오지 못했어요. 다시 시도
+          </LoadingSwap>
+        </Button>
+      )}
+    </>
+  );
+}
+
 type ResultsRegionProps = {
   resultsPromise: Promise<ProductSearchResult>;
+  /** `resultsPromise`를 만든 검색어·정렬. 다음 쪽도 이 값으로 부른다 */
+  resultsQuery: { keyword: string; sort: ProductSort };
   alreadyPicked: string | null;
   picking: boolean;
   picked: string | null;
@@ -208,6 +261,7 @@ type ResultsRegionProps = {
  *  바깥의 Suspense가 이 자리만 ResultsSkeleton으로 가린다 */
 function ResultsRegion({
   resultsPromise,
+  resultsQuery,
   alreadyPicked,
   picking,
   picked,
@@ -218,26 +272,56 @@ function ResultsRegion({
   wishLoading,
   onToggleLike,
 }: ResultsRegionProps) {
-  const { items, totalCount } = use(resultsPromise);
+  const firstPage = use(resultsPromise);
+  // "총 N개"는 첫 쪽이 센 전체 개수다. 목록은 끝에 닿을 때마다 다음 쪽을 이어 붙여 그 개수까지
+  // 닿는다 — 첫 20개만 그리던 동안 "총 200개" 아래 카드가 20개에서 끝났다(QA SR-014, #532)
+  const { items, totalCount, hasNext, loading, failed, loadMore } = useProductSearch(
+    firstPage,
+    resultsQuery,
+  );
   // 반대쪽 자리에 이미 있는 상품은 고르는 목록에서 뺀다(#245) — key 충돌 방지
   const results = items.filter((item) => String(item.productId) !== alreadyPicked);
 
   if (results.length === 0) {
     return <NoResults />;
   }
-  if (picking) {
-    return <PickingResultList results={results} picked={picked} onPick={onPick} />;
-  }
   return (
-    <GeneralResultList
-      results={results}
-      totalCount={totalCount}
-      sort={sort}
-      onSortChange={onSortChange}
-      wishedIds={wishedIds}
-      wishLoading={wishLoading}
-      onToggleLike={onToggleLike}
-    />
+    <>
+      {picking ? (
+        <PickingResultList results={results} picked={picked} onPick={onPick} />
+      ) : (
+        <GeneralResultList
+          results={results}
+          totalCount={totalCount}
+          sort={sort}
+          onSortChange={onSortChange}
+          wishedIds={wishedIds}
+          wishLoading={wishLoading}
+          onToggleLike={onToggleLike}
+        />
+      )}
+      <NextPageFooter
+        hasNext={hasNext}
+        loading={loading}
+        failed={failed}
+        onLoadMore={() => void loadMore()}
+      />
+    </>
+  );
+}
+
+/** 카드 자리. 처음 그릴 때와 다음 쪽을 받을 때 함께 쓴다 */
+function SkeletonCards({ count }: { count: number }) {
+  return (
+    <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+      {Array.from({ length: count }, (_, index) => (
+        <li key={index} className="flex flex-col gap-2">
+          <Skeleton className="aspect-square w-full rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -249,25 +333,23 @@ function ResultsSkeleton() {
         <Skeleton className="h-5 w-16" />
         <Skeleton className="h-5 w-14" />
       </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
-        {Array.from({ length: 8 }, (_, index) => (
-          <li key={index} className="flex flex-col gap-2">
-            <Skeleton className="aspect-square w-full rounded-lg" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-          </li>
-        ))}
-      </ul>
+      <SkeletonCards count={8} />
     </div>
   );
 }
 
 type SearchResultViewProps = {
-  /** `app/search/result/page.tsx`가 서버에서 만든, 아직 안 기다린 조회 결과 */
+  /** `app/search/result/page.tsx`가 서버에서 만든, 아직 안 기다린 조회 결과(첫 쪽) */
   resultsPromise: Promise<ProductSearchResult>;
+  /**
+   * `resultsPromise`를 만든 검색어·정렬. 다음 쪽은 화면의 정렬 상태가 아니라 이 값으로 부른다 —
+   * 정렬을 바꾸면 URL이 서버의 새 첫 쪽보다 먼저 바뀌어, 그 사이 이전 목록의 커서를 새 정렬로
+   * 보내면 서버가 거절한다(커서에 정렬이 새겨져 있다). 홈 카테고리 목록의 `productsKey`와 같은 이유다(#289)
+   */
+  resultsQuery: { keyword: string; sort: ProductSort };
 };
 
-export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
+export function SearchResultView({ resultsPromise, resultsQuery }: SearchResultViewProps) {
   const router = useRouter();
   // 비교는 로그인해야 열린다. 고르기 모드는 주소로도 들어올 수 있어 확정할 때 한 번 더 본다 (#542 리뷰)
   const requireSession = useRequireSession();
@@ -349,8 +431,12 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
         </h1>
 
         <Suspense fallback={<ResultsSkeleton />}>
+          {/* 검색어·정렬이 바뀌면 이어 받던 목록·커서를 버리고 새 첫 쪽부터 다시 세운다. key가 없으면
+              새 첫 쪽이 와도 이전 정렬로 이어 붙인 목록이 그대로 남는다 */}
           <ResultsRegion
+            key={`${resultsQuery.keyword}:${resultsQuery.sort}`}
             resultsPromise={resultsPromise}
+            resultsQuery={resultsQuery}
             alreadyPicked={alreadyPicked}
             picking={picking}
             picked={picked}

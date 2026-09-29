@@ -26,15 +26,17 @@ export default async function SearchResultPage({ searchParams }: PageProps<"/sea
   // 검색어 없이 이 화면에 들어오는 경우(주소를 직접 친 경우 등)는 검색 API가 요구하는
   // keyword 최소 길이(1)를 못 채운다. 빈 검색어로 뭘 보여줄지는 정책이 없어, 요청을
   // 보내지 않고 바로 빈 결과로 처리한다 — "검색 결과 없음" 화면으로 자연스럽게 이어진다
+  // 첫 쪽을 부른 조건을 화면에 함께 넘긴다. 다음 쪽은 이 조건 그대로 이어 받아야 한다(#532)
+  const resultsQuery = { keyword, sort: SORT_TO_API[sort] };
   const resultsPromise: Promise<ProductSearchResult> = keyword
-    ? searchProducts({ keyword, sort: SORT_TO_API[sort] })
+    ? searchProducts(resultsQuery)
     : Promise.resolve({ items: [], totalCount: 0, nextCursor: null, hasNext: false });
 
   // nuqs의 useQueryState가 내부에서 useSearchParams를 쓴다.
   // Suspense로 감싸지 않으면 정적 프리렌더가 실패한다.
   return (
     <Suspense fallback={<div className="min-h-dvh" />}>
-      <SearchResultView resultsPromise={resultsPromise} />
+      <SearchResultView resultsPromise={resultsPromise} resultsQuery={resultsQuery} />
     </Suspense>
   );
 }

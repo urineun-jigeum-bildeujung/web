@@ -3,14 +3,14 @@
 검색어에 걸린 상품을 2열로 보여준다. 정렬을 고를 수 있고, 그냥 검색하러 왔으면 카드마다 할인율·별점·찜하기를 담아 보여주지만, 비교 자리를 채우러 왔으면 체크만 하면 되니 이름·가격만 남긴다.
 
 - **라우트**: `/search/result?q=...` — `src/app/search/result/page.tsx`
-- **조립**: `widgets/bottom-nav` · `features/toggle-wishlist` · `shared/ui`의 `product-grid-card` · `select` · `bottom-action-bar` · `button` · `skeleton` · `entities/product`(`searchProducts`)
-- **상태**: 검색어(`q`)와 정렬(`sort`) 모두 URL 쿼리. 상품 목록은 서버 컴포넌트(`page.tsx`)가 `entities/product`로 실제 조회한다(#282). 찜 하트는 전체 찜 목록(`useWishedProductIds`)으로 채우고 누르면 서버에서 뒤집는다(`features/toggle-wishlist`, #483)
+- **조립**: `widgets/bottom-nav` · `features/toggle-wishlist` · `shared/ui`의 `product-grid-card` · `select` · `bottom-action-bar` · `button` · `skeleton` · `loading-swap` · `shared/lib/list`(`useLoadMore`) · `entities/product`(`searchProducts`·`useProductSearch`)
+- **상태**: 검색어(`q`)와 정렬(`sort`) 모두 URL 쿼리. 상품 목록 첫 쪽은 서버 컴포넌트(`page.tsx`)가 `entities/product`로 실제 조회하고(#282), 그 뒤 쪽은 목록 끝에 닿을 때 브라우저가 이어 받는다(`useProductSearch`, #532). 찜 하트는 전체 찜 목록(`useWishedProductIds`)으로 채우고 누르면 서버에서 뒤집는다(`features/toggle-wishlist`, #483)
 - **참고**: UI 시안 기준(#245, 2396-80432 일반 검색·1117-6424 비교 고르기)
 
 | 파일 | 설명 |
 | --- | --- |
-| `ui/search-result-view.tsx` | 화면 조립. `resultsPromise` prop을 받아 결과 영역만 `use()`+`Suspense`로 대기시킨다 |
-| `ui/search-result-view.test.tsx` | 서버가 준 결과 렌더링·빈 결과·검색바 이동·조회 실패 시 오류 전파 검증 |
+| `ui/search-result-view.tsx` | 화면 조립. `resultsPromise`(첫 쪽)와 그걸 부른 조건 `resultsQuery`를 받아 결과 영역만 `use()`+`Suspense`로 대기시키고, 목록 끝에서 다음 쪽을 이어 받는다 |
+| `ui/search-result-view.test.tsx` | 서버가 준 결과 렌더링·빈 결과·검색바 이동·조회 실패 시 오류 전파·다음 쪽 이어 받기(개수 유지·첫 쪽 정렬로 요청·정렬 바뀌면 처음부터·실패 후 다시 시도) 검증 |
 | `model/sort.ts` | 정렬 값·라벨·백엔드 enum 매핑. 서버 페이지(`page.tsx`)도 같이 써서 `"use client"`가 아닌 이 파일에 둔다 |
 | `index.ts` | 공개 API |
 
@@ -40,6 +40,14 @@
 
 **찜 하트는 `home-view`·`recommendations-view`의 흰 하트와 다르게 어두운 원판 위에 얹는다.** Figma(2396-80432)의 사진이 실사라 흰 하트만으로는 배경에 묻힌다. 원판(32px)은 이미지 모서리에서 정확히 4px 떨어져야 한다(2396-80461). 44px 탭 영역을 확보하려고 32px 원판을 더 큰 버튼으로 감싸면, 원판이 그 버튼 안에서 가운데 정렬되며 안쪽으로 밀려 4px이 아니게 된다 — 그래서 원판 자체를 버튼으로 쓰고 `after:` 의사요소로 탭 영역만 44px로 넓힌다(`home-view`의 텍스트 버튼과 같은 기법). 상품 상세의 함께 보면 좋은 상품도 같은 시안이라 `features/toggle-wishlist`의 `CardHeartButton` 한 벌을 쓴다(#483).
 
+**"총 N개"는 서버가 센 전체 개수이고, 목록은 끝에 닿을 때마다 다음 쪽을 이어 받아 그 개수까지 닿는다(#532).** 첫 20개만 그리던 동안 `사료` 검색이 "총 200개" 아래 카드 20개에서 끝났다(QA SR-014). 개수 자체는 맞았다 — 배포 API를 커서로 끝까지 받아 보면 정렬 넷 모두 200개, 중복 없이 모인다. 서버는 목록 조회와 같은 조건(`baseWhere`)으로 센다. 그래서 개수를 받은 개수로 줄이지 않고 목록을 늘렸다. 받은 개수("총 20개")로 바꾸면 180개가 없는 것처럼 읽힌다.
+
+- **개수는 첫 쪽 값을 유지한다.** 서버는 커서 없는 첫 쪽에서만 세고, 다음 쪽 응답의 `totalCount`는 null이다(`ProductSearchService`).
+- **다음 쪽은 첫 쪽을 부른 검색어·정렬(`resultsQuery`)로 부른다.** 정렬을 고르면 URL이 서버의 새 첫 쪽보다 먼저 바뀌는데, 그 사이 이전 목록의 커서를 새 정렬로 보내면 서버가 거절한다 — 커서에 검색어·정렬이 새겨져 있다(`PageCursor.validate`). `page.tsx`가 첫 쪽과 함께 넘긴다.
+- **검색어·정렬이 바뀌면 `ResultsRegion`을 `key`로 다시 마운트한다.** 새 첫 쪽이 와도 컴포넌트가 그대로면 이전 정렬로 이어 붙인 목록이 남는다. 홈 카테고리 목록의 `productsKey`와 같은 이유다(#289).
+- **더 보기 버튼이 아니라 스크롤로 잇는다.** 시안(2396-80432)에 버튼 자리가 없다. 주문·후기 사진 목록과 같은 `useLoadMore`를 쓰고, 받는 동안 카드 자리 두 장을, 다음 쪽만 실패하면 다시 시도 버튼을 보인다.
+- **필터는 이 화면에 없다.** 백엔드 검색은 `category`를 받지만 화면이 보내지 않아, 개수는 검색어 하나로만 갈린다. 정렬은 개수를 바꾸지 않는다(같은 조건을 다른 순서로 세운다).
+
 **반대쪽 비교 자리에 이미 있는 상품은 고르기 목록에서 뺀다.** `slot`으로 채우러 온 자리 말고 반대쪽 자리의 현재 상품 id를 `other`(또는 상세 흐름의 `first`) 쿼리로 받아, 같은 상품을 또 고르면 비교 화면에서 두 자리가 같은 id를 가져 React key가 충돌하는 사고를 막는다(`alreadyPicked`, #245).
 
 ## 아직 정하지 않은 것
@@ -49,8 +57,6 @@
 **정가(취소선 가격)는 서버 `originalPrice`로 그린다 (#458).** 백엔드가 `ProductCardResponse`에 이 필드를 더해, #282 때 "정가 필드가 없다"고 적어 둔 제약이 풀렸다. 할인율은 역산하지 않고 응답의 `discountRate`를 `ProductGridCard`에 그대로 넘긴다 — 서버는 `HALF_UP`, 공용 `calcDiscountRate`는 버림이라 같은 상품이 상세와 다른 %로 보이기 때문이다. `originalPrice`가 `null`인 상품은 취소선 없이 판매가만 나온다.
 
 **비교 자리를 채우러 온 목록(`PickingResultList`)엔 정가·할인율을 넣지 않는다.** 시안(1117-6424)이 이름과 가격만 그리는 자리다.
-
-**첫 페이지(20개)만 보인다 — 더 많은 결과에 접근할 방법이 없다.** `searchProducts`는 `size=20`을 못박아 보낸다. 서버 응답의 `totalCount`가 20을 넘어도 지금 화면엔 더보기·다음 페이지로 갈 수단이 없다. `nextCursor`·`hasNext`는 이미 화면 모델에 보존해 뒀으니, 스크롤 끝에서 다음 페이지를 이어 부르는 방식을 필요할 때 별도 이슈로 붙인다.
 
 **최초 로딩 대기(Skeleton)만 있고, 정렬 변경 시 재조회 대기(LoadingSwap)는 아직 없다.** `sort`가 바뀌면 `ResultsRegion`이 다시 `Suspense` fallback(Skeleton)으로 가려지는데, 이미 보이던 목록이 통째로 사라졌다 다시 뜨는 방식이다. `useTransition`으로 이전 목록을 유지한 채 대기 표시만 하는 개선은 다음 단계로 미뤘다.
 

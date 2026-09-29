@@ -1,4 +1,4 @@
-// searchProducts·getProducts·getProductDetail·getTimeDealDetail·getProductSummary 단위 테스트.
+// searchProducts·searchMoreProducts·getProducts·getProductDetail·getTimeDealDetail·getProductSummary 단위 테스트.
 // 요청 파라미터 조립과 응답 필드 매핑을 본다.
 import { afterEach, describe, expect, it, test, vi } from "vitest";
 
@@ -7,6 +7,7 @@ import {
   getProducts,
   getProductSummary,
   getTimeDealDetail,
+  searchMoreProducts,
   searchProducts,
 } from "./products";
 
@@ -75,6 +76,72 @@ describe("searchProducts", () => {
       ],
       totalCount: 42,
       nextCursor: "abc",
+      hasNext: true,
+    });
+  });
+});
+
+// 첫 20개에서 끊겨 "총 N개"만큼 볼 수 없었다(QA SR-014, #532)
+describe("searchMoreProducts", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("첫 쪽의 검색어·정렬에 커서를 실어 같은 크기로 다음 쪽을 부른다", async () => {
+    const fetchMock = stubFetch(
+      Response.json({ items: [], nextCursor: null, hasNext: false, totalCount: null }),
+    );
+
+    await searchMoreProducts({ keyword: "사료", sort: "PRICE_ASC", cursor: "abc" });
+
+    const [url] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      "/api/v1/products/search?keyword=%EC%82%AC%EB%A3%8C&sort=PRICE_ASC&cursor=abc&size=20",
+    );
+  });
+
+  // 서버는 다음 쪽에서 개수를 세지 않고 null을 준다. 그 값을 옮기면 "총 null개"가 된다
+  it("다음 쪽은 개수 없이 목록과 커서만 돌려준다", async () => {
+    stubFetch(
+      Response.json({
+        items: [
+          {
+            productId: 2,
+            thumbnailUrl: null,
+            productName: "노령견 저지방 소화케어 사료 1kg",
+            discountRate: 0,
+            price: 27200,
+            originalPrice: null,
+            unitPrice: 27,
+            unitLabel: "g",
+            avgRating: 4.5,
+            reviewCount: 108,
+          },
+        ],
+        nextCursor: "def",
+        hasNext: true,
+        totalCount: null,
+      }),
+    );
+
+    const page = await searchMoreProducts({ keyword: "사료", sort: "RECOMMEND", cursor: "abc" });
+
+    expect(page).toEqual({
+      items: [
+        {
+          productId: 2,
+          name: "노령견 저지방 소화케어 사료 1kg",
+          thumbnailUrl: null,
+          price: 27200,
+          originalPrice: null,
+          discountRate: 0,
+          unitPrice: 27,
+          unitLabel: "g",
+          rating: 4.5,
+          reviewCount: 108,
+        },
+      ],
+      nextCursor: "def",
       hasNext: true,
     });
   });
