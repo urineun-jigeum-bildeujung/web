@@ -242,7 +242,7 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
             lines={pickedItems.map((item) => ({
               orderItemId: item.orderItemId,
               productName: item.productName,
-              unitPrice: item.unitPrice,
+              paidUnitPrice: item.paidUnitPrice,
               quantity: selection[item.orderItemId] ?? 1,
             }))}
             dateOptions={dateOptions}

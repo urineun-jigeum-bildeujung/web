@@ -42,7 +42,8 @@ export function ClaimItemCard({ item, checked, disabled, onToggle }: ClaimItemCa
           <OrderProductRow
             name={item.productName}
             quantity={item.quantity}
-            amount={item.unitPrice * item.quantity}
+            // 그 줄에 실제로 낸 돈. 주문 상세 줄과 같은 값이다 (#516)
+            amount={item.amount}
             imageUrl={item.thumbnailUrl}
           />
         </div>

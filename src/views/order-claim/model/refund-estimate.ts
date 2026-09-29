@@ -11,7 +11,7 @@
 export const RETURN_FEE = 3000;
 
 export type RefundEstimate = {
-  /** 반품하는 상품의 개당 금액 × 수량 합 */
+  /** 반품하는 상품의 실제로 낸 개당 금액 × 수량 합 */
   productAmount: number;
   shippingFee: number;
   returnFee: number;
@@ -19,10 +19,14 @@ export type RefundEstimate = {
   refundAmount: number;
 };
 
-type RefundLine = { unitPrice: number; quantity: number };
+/**
+ * 반품하는 줄. **실제로 낸 단가(`paidUnitPrice`)다.** 주문 상세의 `unitPrice`는 할인 전 단가라
+ * 그것으로 세면 할인된 상품의 환불액이 실제보다 크게 보였다 (#516)
+ */
+type RefundLine = { paidUnitPrice: number; quantity: number };
 
 export function estimateRefund(lines: RefundLine[]): RefundEstimate {
-  const productAmount = lines.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0);
+  const productAmount = lines.reduce((sum, line) => sum + line.paidUnitPrice * line.quantity, 0);
 
   return {
     productAmount,
