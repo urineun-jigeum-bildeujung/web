@@ -95,11 +95,15 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
         <h3 id="spec-heading" className="pb-2 text-title-bold-18 text-text-body-default">
           상세 설명
         </h3>
-        {/* 폭이 넓어지면 항목이 옆으로 눕는다(시안 2679-41337). **전환점을 잡지 않는다** —
+        {/* 폭이 넓어지면 항목이 옆으로 눕는다(시안 2679-41419). **전환점을 잡지 않는다** —
             한 줄을 353px로 고정하고 사이를 22px 띄우면 393에서 하나, 768에서 둘,
             1143부터 셋이 된다. `lg:`(1024)로 세 칸을 강제하면 1024~1142에서 줄을 넘는다.
             구분선은 줄 전체가 아니라 항목마다 따로 간다 — 그래서 `divide-y`가 아니라
-            각 행이 `border-b`를 갖는다 */}
+            각 행이 `border-b`를 갖는다.
+
+            **마지막 항목만 선이 없는 것은 시안 그대로다.** 세 열로 누운 시안에서도
+            아홉 중 여덟에만 아래 선이 있고 DOM 마지막(`보관방법`)에는 없다 —
+            같은 행의 옆 항목과 달라 보이지만 그것이 확정된 모양이라 `last:border-b-0`을 지킨다 */}
         <dl className="flex flex-wrap gap-x-5.5">
           {specRows.map(([term, description]) => (
             <DefinitionRow
@@ -109,7 +113,7 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
               // 표 안에서는 값이 길어도 잘리지 않고 줄이 바뀌어야 읽힌다. 시안(1716-34202)처럼
               // 행 높이를 min-h로 고정하지 않고 값이 두 줄이면 항목명이 첫 줄에 맞도록
               // items-start로 정렬한다
-              className="min-h-0 w-full max-w-88.25 items-start gap-4 border-b border-border px-0 [&>dd]:whitespace-normal"
+              className="min-h-0 w-full max-w-88.25 items-start gap-4 border-b border-border px-0 last:border-b-0 [&>dd]:whitespace-normal"
               termClassName="w-22 text-label-medium-14 text-text-body-default"
               descriptionClassName="text-body-medium-14 text-text-body-secondary"
             />
@@ -143,9 +147,12 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
           </p>
         ) : (
           <>
-            {/* 상세 설명 표와 같은 규칙으로 눕는다(시안 2679-41419) — 353px 고정에 사이 22px.
+            {/* 상세 설명 표와 같은 규칙으로 눕는다 — 353px 고정에 사이 22px.
                 **구분선을 `divide-y`로 주지 않는다.** 그것은 세로 한 줄을 전제해서, 옆으로
-                누우면 줄 전체를 가로지르는 선이 생긴다. 시안은 항목마다 따로 긋는다 */}
+                누우면 줄 전체를 가로지르는 선이 생긴다. 항목마다 따로 긋고 마지막만 뺀다.
+
+                넓은 폭 시안 노드를 찾지 못해 상세 설명 표(2679-41419)의 규칙을 그대로 옮겼다.
+                모바일 동작은 전과 같다 — `divide-y`도 마지막 아래에는 선을 긋지 않았다 */}
             <ul className="flex flex-wrap gap-x-5.5">
               {match.nutrients.map((nutrient) => (
                 <li
