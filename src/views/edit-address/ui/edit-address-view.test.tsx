@@ -97,6 +97,27 @@ test("저장된 곳을 열면 연락처도 함께 채워진다", () => {
   expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("010-1234-5678");
 });
 
+// `inputMode`는 자판만 바꿔 붙여 넣은 글자가 그대로 적혔다 (QA No.165)
+test("연락처는 숫자만 받고 치는 대로 하이픈을 넣는다", () => {
+  renderAt("");
+
+  fill([["연락처", "010abc12345678"]]);
+
+  expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("010-1234-5678");
+});
+
+// 하이픈 없이 저장해 둔 곳을 열어도 치는 대로 보이는 모양과 같아야 한다 (QA No.165)
+test("하이픈 없이 저장된 연락처도 하이픈을 넣어 보인다", () => {
+  useQueryAddresses.mockReturnValue({
+    addresses: [{ ...HOME, phone: "01012345678" }],
+    isLoading: false,
+    error: null,
+  });
+  renderAt("?place=5");
+
+  expect((screen.getByLabelText("연락처") as HTMLInputElement).value).toBe("010-1234-5678");
+});
+
 // 배송지는 길게 저장돼도 주문이 복사해 두는 컬럼이 짧아, 그 배송지로 결제하면 500이 난다 (#437)
 test("입력칸은 주문이 받는 길이까지만 적힌다", () => {
   renderAt("");
@@ -245,7 +266,7 @@ test("고른 주소의 우편번호가 함께 나간다", async () => {
   fill([
     ["배송지 이름", "자취방"],
     ["받는 분 이름", "전경진"],
-    ["연락처", "010-0000-0000"],
+    ["연락처", "01000000000"],
     ["상세 주소", "3층"],
   ]);
   fireEvent.click(submit());
@@ -254,6 +275,7 @@ test("고른 주소의 우편번호가 함께 나간다", async () => {
   expect(create.mock.calls[0][0]).toMatchObject({
     addressName: "자취방",
     receiver: "전경진",
+    // 하이픈을 넣은 채로 보낸다. 명세 예시가 `010-1234-5678`이고 결제·주문 상세가 그대로 보인다 (QA No.165)
     phone: "010-0000-0000",
     zipCode: "04039",
     address: PICKED_ROAD,

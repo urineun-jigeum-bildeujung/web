@@ -41,6 +41,7 @@ import {
   addressFormSchema,
   type AddressFormValues,
 } from "../model/address-form-schema";
+import { formatPhoneInput } from "../model/phone-number";
 import { toInternalPath } from "../model/return-to";
 
 export function EditAddressView() {
@@ -176,7 +177,8 @@ function EditAddressForm({
     defaultValues: {
       addressName: saved?.addressName ?? presetName ?? "",
       receiver: saved?.receiver ?? "",
-      phone: saved?.phone ?? "",
+      // 하이픈 없이 저장된 옛 번호도 입력할 때와 같은 모양으로 보인다 (QA No.165)
+      phone: formatPhoneInput(saved?.phone ?? ""),
       addressDetail: saved?.addressDetail ?? "",
       deliveryNote: saved?.deliveryNote ?? "",
       isDefault: saved?.isDefault ?? false,
@@ -298,6 +300,9 @@ function EditAddressForm({
             inputMode="numeric"
             maxLength={ADDRESS_FIELD_MAX.phone}
             {...field}
+            // 숫자만 받고 치는 대로 하이픈을 넣는다. `inputMode`는 자판만 바꿀 뿐 붙여 넣은
+            // 글자는 막지 못한다 (QA No.165)
+            onChange={(event) => field.onChange(formatPhoneInput(event.target.value))}
             onClear={() => field.onChange("")}
           />
         )}

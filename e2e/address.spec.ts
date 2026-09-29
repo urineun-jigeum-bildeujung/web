@@ -46,7 +46,8 @@ test("배송지를 등록하면 들어온 화면으로 돌아오고 적던 값�
   await expect(page.getByText("서울특별시 강남구 테헤란로 123 (역삼동)")).toBeVisible();
   await expect(page.getByLabel("배송지 이름")).toHaveValue("본가");
   await expect(page.getByLabel("받는 분 이름")).toHaveValue("전지호");
-  await expect(page.getByLabel("연락처")).toHaveValue("01087654321");
+  // 숫자만 쳐도 하이픈이 들어간 채로 남는다 (QA No.165)
+  await expect(page.getByLabel("연락처")).toHaveValue("010-8765-4321");
 
   await page.getByLabel("상세 주소").fill("3층 301호");
   await page.getByRole("button", { name: "입력 완료" }).click();
@@ -58,7 +59,7 @@ test("배송지를 등록하면 들어온 화면으로 돌아오고 적던 값�
       {
         addressName: "본가",
         receiver: "전지호",
-        phone: "01087654321",
+        phone: "010-8765-4321",
         addressDetail: "3층 301호",
         deliveryNote: null,
         isDefault: false,
