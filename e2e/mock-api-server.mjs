@@ -490,8 +490,25 @@ function reviewDetail(reviewId) {
   };
 }
 
+/**
+ * 비교 화면이 검색에서 고른 4번을 상세로 받는다(#535). 검색 카드(`PUPPY_FOOD`)와 이름·가격을 맞춘다 —
+ * 비교 자리는 이 응답의 이름을 그린다
+ */
+const PUPPY_FOOD_DETAIL = {
+  ...PRODUCT_DETAIL,
+  productId: 4,
+  summary: {
+    ...PRODUCT_DETAIL.summary,
+    productName: PUPPY_FOOD.productName,
+    price: PUPPY_FOOD.price,
+    originalPrice: PUPPY_FOOD.price,
+    discountRate: 0,
+  },
+};
+
 function productDetail(productId) {
   if (productId === "1") return PRODUCT_DETAIL;
+  if (productId === "4") return PUPPY_FOOD_DETAIL;
   if (productId === "101") return TIME_DEAL_PRODUCT;
   return null;
 }
