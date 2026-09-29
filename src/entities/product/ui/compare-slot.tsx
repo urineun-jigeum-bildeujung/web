@@ -49,9 +49,9 @@ export function CompareSlot({
       <div className={cn("flex min-w-0 flex-col items-start gap-3", className)}>
         <div className="flex w-full flex-col items-start gap-2">
           <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-border-secondary">
-            {/* 시안(1568-71123)의 "+"는 실측 25%(172px 기준 약 43px) 크기에 색은
+            {/* 시안(1568-71123)은 빈 통 그림이고 크기는 카드의 25%(160px 기준 40px), 색은
                 #565d6d(text-body-secondary)다 — icon-fill-tertiary는 다른(더 옅은) 회색이다 */}
-            <Icon name="plus" aria-hidden className="size-11 text-text-body-secondary" />
+            <Icon name="empty_box" aria-hidden className="size-11 text-text-body-secondary" />
           </div>
           <p className="text-sm text-foreground">
             고민되는 사료를

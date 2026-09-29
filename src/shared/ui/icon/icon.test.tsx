@@ -8,8 +8,8 @@ import { ICON_NAMES } from "./icon-shapes";
 test("Figma 아이콘 페이지의 이름을 전부 그린다", () => {
   // count 배지가 붙는 cart_noti는 아이콘이 아니라 조합이라 뺐다.
   // 2026-09-18에 PD팀이 refresh·pencil·404·reload·bag 다섯을 더해 51종, 2026-09-21에 camera·image로 53종,
-  // 2026-09-28에 refund·change로 55종이 됐다
-  expect(ICON_NAMES).toHaveLength(55);
+  // 2026-09-28에 refund·change로 55종, 2026-09-29에 empty_box로 56종이 됐다
+  expect(ICON_NAMES).toHaveLength(56);
 
   for (const name of ICON_NAMES) {
     const { container, unmount } = render(<Icon name={name} />);
