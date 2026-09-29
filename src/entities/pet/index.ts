@@ -29,6 +29,13 @@ export {
   type PetSpecies,
 } from "./model/breeds";
 export { groupBreedsByBodySize, type BodySizeGroup } from "./model/body-groups";
+export {
+  ADD_PET_ORIGINS,
+  MAX_PETS,
+  canAddPet,
+  toAddPetHref,
+  type AddPetOrigin,
+} from "./model/add-pet";
 export { getBreeds, type Breed, type SpeciesBreed } from "./api/breeds";
 export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";
