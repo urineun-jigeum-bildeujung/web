@@ -76,6 +76,12 @@ const fill = (values: [string, string][]) => {
 
 const submit = () => screen.getByRole("button", { name: /입력 완료/ });
 
+/** 요청사항 보기 목록을 열어 하나를 고른다 */
+const chooseNote = (name: string) => {
+  fireEvent.click(screen.getByRole("combobox", { name: "요청사항" }));
+  fireEvent.click(screen.getByRole("option", { name }));
+};
+
 test("새 배송지는 빈 칸으로 시작한다", () => {
   const input = renderAt("");
 
@@ -127,7 +133,9 @@ test("입력칸은 주문이 받는 길이까지만 적힌다", () => {
   expect(maxLength("받는 분 이름")).toBe("50");
   expect(maxLength("연락처")).toBe("20");
   expect(maxLength("상세 주소")).toBe("100");
-  expect(maxLength("요청사항")).toBe("100");
+  // 요청사항은 보기 목록이라 직접 입력을 골라야 적는 칸이 열린다 (QA No.174)
+  chooseNote("직접 입력");
+  expect(maxLength("배송 요청사항 직접 입력")).toBe("100");
 });
 
 // `maxLength`는 적는 것만 막고 불러온 값은 자르지 않는다. 전에 길게 저장한 곳은 줄여야 저장된다
@@ -205,7 +213,6 @@ test("주소 칸 이름은 시안대로 주소다", () => {
 
   expect(screen.getByText("주소")).toBeDefined();
   expect(screen.queryByText("받을 곳 주소")).toBeNull();
-  expect(screen.getByPlaceholderText("요청사항을 적어주세요")).toBeDefined();
 });
 
 // 배송지 목록의 빈 회사 자리를 눌러 온 경우다. 이름을 다시 적지 않게 채워 둔다 (#455)
@@ -297,6 +304,53 @@ test("요청사항을 비우면 null로 보낸다", async () => {
 
   await waitFor(() => expect(create).toHaveBeenCalled());
   expect(create.mock.calls[0][0].deliveryNote).toBeNull();
+});
+
+// 배송지 폼에는 적는 칸 하나만 있어 결제 화면의 보기를 고를 수 없었다 (QA No.174)
+test("요청사항은 결제 화면과 같은 보기 목록에서 고른다", () => {
+  renderAt("");
+
+  fireEvent.click(screen.getByRole("combobox", { name: "요청사항" }));
+
+  expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+    "[기본] 문 앞에 놓아주세요",
+    "경비실에 맡겨주세요",
+    "부재 시 전화 부탁드려요",
+    "배송 전 미리 연락 주세요",
+    "직접 받을게요",
+    "직접 입력",
+  ]);
+});
+
+test("고른 보기가 요청사항으로 나간다", async () => {
+  renderAt(`?${PICKED}`);
+
+  fill([
+    ["배송지 이름", "자취방"],
+    ["받는 분 이름", "전경진"],
+    ["연락처", "010-0000-0000"],
+    ["상세 주소", "2층"],
+  ]);
+  chooseNote("경비실에 맡겨주세요");
+  fireEvent.click(submit());
+
+  await waitFor(() => expect(create).toHaveBeenCalled());
+  expect(create.mock.calls[0][0].deliveryNote).toBe("경비실에 맡겨주세요");
+});
+
+// 고치러 들어왔을 때 저장해 둔 요청사항이 그대로 보여야 모르고 바꾸지 않는다
+test("저장된 요청사항이 보기 문구면 그 보기가 골라져 있다", () => {
+  useQueryAddresses.mockReturnValue({
+    addresses: [{ ...HOME, deliveryNote: "부재 시 전화 부탁드려요" }],
+    isLoading: false,
+    error: null,
+  });
+  renderAt("?place=5");
+
+  expect(screen.getByRole("combobox", { name: "요청사항" }).textContent).toBe(
+    "부재 시 전화 부탁드려요",
+  );
+  expect(screen.queryByLabelText("배송 요청사항 직접 입력")).toBeNull();
 });
 
 test("고치던 곳이면 등록이 아니라 수정을 부른다", async () => {
@@ -397,9 +451,14 @@ test("상세주소를 비우면 입력 완료가 꺼진다", () => {
  * 옛 문구가 그대로 남았다. 수정에는 빈 문자열을 보낸다 (#314).
  */
 test("수정에서 요청사항을 지우면 빈 문자열을 보낸다", async () => {
+  useQueryAddresses.mockReturnValue({
+    addresses: [{ ...HOME, deliveryNote: "벨 누르지 말아 주세요" }],
+    isLoading: false,
+    error: null,
+  });
   renderAt("?place=5");
 
-  fill([["요청사항", ""]]);
+  fill([["배송 요청사항 직접 입력", ""]]);
   fireEvent.click(submit());
 
   await waitFor(() => expect(update).toHaveBeenCalled());

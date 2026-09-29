@@ -22,7 +22,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { useQueryAddresses } from "@/entities/address";
+import { DELIVERY_NOTE_OPTIONS, DeliveryNoteField, useQueryAddresses } from "@/entities/address";
 import { BUY_NOW_PARAM, cartItemKey, parseBuyNow, useQueryCart } from "@/entities/cart";
 import { OrderProductThumbnail } from "@/entities/order";
 import { useQueryPets } from "@/entities/pet";
@@ -38,9 +38,7 @@ import { Label } from "@/shared/ui/label";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { Textarea } from "@/shared/ui/textarea";
 
 import { createOrder, releaseOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
@@ -64,24 +62,6 @@ import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget"
 
 /** 장바구니 응답에 `deliveryFee`가 없어 고정값을 쓴다. 장바구니 화면과 같은 값이다 (#214) */
 const SHIPPING_FEE = 3000;
-
-/**
- * 시안(paym_001_드롭다운) 순서 그대로다. 마지막 하나만 성격이 달라 값으로 가른다.
- * 첫 보기가 기본값이라 목록에서만 "[기본]"을 붙인다 (1586:24254, #441)
- */
-const REQUEST_DIRECT = "직접 입력";
-
-const REQUEST_OPTIONS = [
-  "문 앞에 놓아주세요",
-  "경비실에 맡겨주세요",
-  "부재 시 전화 부탁드려요",
-  "배송 전 미리 연락 주세요",
-  "직접 받을게요",
-  REQUEST_DIRECT,
-];
-
-/** 직접 입력 칸의 길이 제한. 시안이 `0/100자`로 세어 보인다 */
-const REQUEST_MAX = 100;
 
 /**
  * 결제 전 받아야 하는 동의.
@@ -225,8 +205,8 @@ function shouldForgetOrder(error: unknown, creating: boolean): boolean {
 }
 
 export function CheckoutView() {
-  const [request, setRequest] = useState(REQUEST_OPTIONS[0]);
-  const [directRequest, setDirectRequest] = useState("");
+  // 고른 보기의 문구이거나 직접 적은 글. 첫 보기가 결제의 기본값이다 (1586:24254)
+  const [request, setRequest] = useState(DELIVERY_NOTE_OPTIONS[0]);
   const [agreed, setAgreed] = useState<string[]>([]);
   // 위젯이 준비되면 결제창을 띄우는 함수를 준다. 준비 전에는 버튼을 잠근다
   const [requestPayment, setRequestPayment] = useState<RequestPayment | null>(null);
@@ -291,7 +271,7 @@ export function CheckoutView() {
     : pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
   const total = itemPrice + SHIPPING_FEE;
-  const deliveryNote = request === REQUEST_DIRECT ? directRequest.trim() : request;
+  const deliveryNote = request.trim();
 
   // **보내려는 주문 본문을 렌더 단계에서 만든다.** `pay` 안에서 만들면 지문과 실제 요청이
   // 갈릴 수 있고, React Compiler가 try 블록 안의 값 계산을 만나면 최적화를 포기한다 (#223)
@@ -499,44 +479,8 @@ export function CheckoutView() {
             >
               배송 요청사항
             </Label>
-            <Select value={request} onValueChange={setRequest}>
-              {/* 시안이 44px 박스에 20px 화살표를 둔다. shadcn이 `data-[size=default]:h-8`로
-                  높이를 못박아 같은 속성으로는 덮이지 않으므로 최소 높이로 올린다 */}
-              <SelectTrigger
-                id="delivery-request"
-                className="min-h-11 w-full rounded-lg px-3 text-body-medium-14 text-foreground [&_svg]:size-5"
-              >
-                {/* 상자에는 "[기본]" 없이 원래 문구를 보인다. 비워 두면 고른 보기의 글자를 그대로 옮긴다 */}
-                <SelectValue>{request}</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {REQUEST_OPTIONS.map((option, index) => (
-                  <SelectItem key={option} value={option}>
-                    {index === 0 ? `[기본] ${option}` : option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* 직접 입력을 고른 뒤에만 칸이 열린다(paym_001_직접입력) */}
-            {request === REQUEST_DIRECT && (
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="direct-request" className="sr-only">
-                  배송 요청사항 직접 입력
-                </Label>
-                <Textarea
-                  id="direct-request"
-                  placeholder={`배송 요청사항을 작성해주세요 (최대 ${REQUEST_MAX}자)`}
-                  maxLength={REQUEST_MAX}
-                  value={directRequest}
-                  onChange={(event) => setDirectRequest(event.target.value)}
-                  className="min-h-24"
-                />
-                <p className="self-end text-caption-regular-12 text-text-body-secondary">
-                  {directRequest.length}/{REQUEST_MAX}자
-                </p>
-              </div>
-            )}
+            {/* 배송지 등록·수정과 같은 보기 목록·같은 칸이다 (#526) */}
+            <DeliveryNoteField id="delivery-request" value={request} onChange={setRequest} />
           </div>
         </Section>
 
