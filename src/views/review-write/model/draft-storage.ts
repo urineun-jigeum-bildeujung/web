@@ -9,8 +9,14 @@
 
 import { HANDLING_QUESTION, RATING_STEP_QUESTIONS } from "./questions";
 
+/**
+ * 매길 수 있는 가장 낮은 별점. 백엔드가 `starRate`를 `@DecimalMin("1.0")`으로 받는다.
+ * 0.5점으로 등록하면 400이 와서 완료되지 않았다(QA RV-020)
+ */
+export const MIN_SCORE = 1;
+
 export type ReviewDraft = {
-  /** 0이면 아직 안 매겼다. 반 개 단위 */
+  /** 0이면 아직 안 매겼다. 반 개 단위이고 매겼으면 `MIN_SCORE` 이상이다 */
   score: number;
   days: string;
   responses: Record<string, string | undefined>;
@@ -45,8 +51,9 @@ function normalize(raw: unknown): ReviewDraft {
   if (typeof raw !== "object" || raw === null) return EMPTY_REVIEW_DRAFT;
   const saved = raw as Partial<Record<keyof ReviewDraft, unknown>>;
 
+  // 하한 아래 값은 이 수정 전에 저장된 0.5점이다. 반 별로 그려 두면 "다음"이 왜 잠겼는지 모른다
   const score =
-    typeof saved.score === "number" && saved.score >= 0 && saved.score <= 5
+    typeof saved.score === "number" && saved.score >= MIN_SCORE && saved.score <= 5
       ? Math.round(saved.score * 2) / 2
       : 0;
 

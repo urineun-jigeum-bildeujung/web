@@ -77,6 +77,17 @@ describe("review draft-storage", () => {
     expect(draft.responses).toEqual({ DIGESTION: "POSITIVE" });
   });
 
+  // 별점이 1점부터가 되기 전(QA RV-020)에 저장한 0.5점은 반 별로 남기지 않고 다시 매기게 한다
+  it("1점 미만 별점은 버린다", () => {
+    window.localStorage.setItem(
+      "review-draft:product:p1",
+      JSON.stringify({ score: 0.5, days: "5", responses: {}, petIds: [], text: "" }),
+    );
+    resetReviewDraftCache();
+
+    expect(getReviewDraft("p1").score).toBe(0);
+  });
+
   it("지우면 빈 초안으로 돌아간다", () => {
     setReviewDraft("p1", { score: 3, days: "1", responses: {}, petIds: [], text: "" });
     clearReviewDraft("p1");

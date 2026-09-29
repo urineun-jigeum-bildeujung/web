@@ -274,6 +274,25 @@ describe("ReviewWriteView 1단계", () => {
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4점" }));
   });
 
+  // QA RV-020. 서버가 1.0점부터 받는다. 0.5점으로 등록하면 400이 와서 완료되지 않았다
+  it("별점은 1점부터라 첫 별은 한 칸이고, 화살표로도 1점 아래로 내려가지 않는다", () => {
+    renderAt();
+
+    expect(screen.queryByRole("radio", { name: "5점 만점에 0.5점" })).toBeNull();
+    const one = screen.getByRole("radio", { name: "5점 만점에 1점" });
+    // 아무것도 고르지 않았을 때 Tab을 받는 칸이다
+    expect(one.getAttribute("tabindex")).toBe("0");
+
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 1.5점" }));
+    fireEvent.keyDown(screen.getByRole("radio", { name: "5점 만점에 1.5점" }), {
+      key: "ArrowLeft",
+    });
+    expect(document.activeElement).toBe(one);
+    fireEvent.keyDown(one, { key: "ArrowLeft" });
+
+    expect(one.getAttribute("aria-checked")).toBe("true");
+  });
+
   it("새로고침해도 별점과 사용 기간이 남는다", async () => {
     const first = renderAt();
     fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));

@@ -2,7 +2,10 @@
 // UI 시안 기준(리뷰작성 1884-29400의 별 44px 다섯, 4.5점 표시)이다.
 //
 // 별 하나를 좌우 22px로 갈라 왼쪽이 반 개, 오른쪽이 한 개다. 시안 값(44px)을 그대로 쓴다.
-// 라디오 열 개가 되고 화살표 키는 0.5씩 움직인다.
+// 반쪽마다 라디오 하나가 되고 화살표 키는 0.5씩 움직인다.
+//
+// `min`보다 낮은 반쪽은 두지 않는다. 리뷰는 1점부터라(QA RV-020) 첫 별은 가르지 않고 한 칸이 1점이다.
+// 0.5점 칸을 남겨 두고 1점으로 올려 주면 "0.5점"이라 읽힌 칸이 한 번도 선택되지 않는다.
 
 "use client";
 
@@ -17,16 +20,26 @@ type RatingInputProps = {
   /** 무엇에 매기는 점수인지. 화면에는 보이지 않고 스크린 리더가 읽는다 */
   label: string;
   max?: number;
+  /** 매길 수 있는 가장 낮은 점수. 0.5 단위다 */
+  min?: number;
   className?: string;
 };
 
-export function RatingInput({ value, onChange, label, max = 5, className }: RatingInputProps) {
+export function RatingInput({
+  value,
+  onChange,
+  label,
+  max = 5,
+  min = 0.5,
+  className,
+}: RatingInputProps) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
   const steps = max * 2;
+  const minSteps = min * 2;
 
   /** 값을 바꾸고 그 반쪽으로 초점도 옮긴다. 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다 */
   const move = (nextHalves: number) => {
-    const clamped = Math.min(steps, Math.max(1, nextHalves));
+    const clamped = Math.min(steps, Math.max(minSteps, nextHalves));
     onChange(clamped / 2);
     buttons.current[clamped - 1]?.focus();
   };
@@ -44,8 +57,11 @@ export function RatingInput({ value, onChange, label, max = 5, className }: Rati
             {/* 왼쪽 반이 n+0.5점, 오른쪽 반이 n+1점이다 */}
             {[1, 2].map((half) => {
               const step = index * 2 + half;
+              if (step < minSteps) return null;
               const score = step / 2;
               const checked = step === halves;
+              // 왼쪽 반이 하한 아래라 빠졌으면 오른쪽 칸이 별 전체를 덮는다
+              const whole = half === 2 && step - 1 < minSteps;
 
               return (
                 <button
@@ -58,8 +74,8 @@ export function RatingInput({ value, onChange, label, max = 5, className }: Rati
                   aria-checked={checked}
                   aria-label={`${max}점 만점에 ${score}점`}
                   // 고르지 않은 반쪽에도 초점이 가야 화살표 키로 옮겨 다닐 수 있다.
-                  // 아무것도 고르지 않았으면 첫 반쪽이 Tab을 받는다
-                  tabIndex={checked || (halves === 0 && step === 1) ? 0 : -1}
+                  // 아무것도 고르지 않았으면 가장 낮은 칸이 Tab을 받는다
+                  tabIndex={checked || (halves === 0 && step === minSteps) ? 0 : -1}
                   onClick={() => onChange(score)}
                   onKeyDown={(event) => {
                     if (event.key === "ArrowRight" || event.key === "ArrowUp") {
@@ -72,8 +88,12 @@ export function RatingInput({ value, onChange, label, max = 5, className }: Rati
                     }
                   }}
                   className={cn(
-                    "absolute inset-y-0 w-1/2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    half === 1 ? "left-0 rounded-l-md" : "right-0 rounded-r-md",
+                    "absolute inset-y-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    whole
+                      ? "inset-x-0 rounded-md"
+                      : half === 1
+                        ? "left-0 w-1/2 rounded-l-md"
+                        : "right-0 w-1/2 rounded-r-md",
                   )}
                 />
               );
