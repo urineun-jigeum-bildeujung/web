@@ -6,6 +6,12 @@
 import { expect, test } from "@playwright/test";
 
 import { stubAddToCart } from "./fixtures/cart";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ page }) => {
   await page.goto("/deals");

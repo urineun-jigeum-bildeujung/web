@@ -3,6 +3,12 @@
 // 출발점이 상품 상세라 서버 조회 전용 스위트에 있다(#413). 리뷰 목록·사진·대표 사진은
 // 브라우저에서 부르는데, 이 설정은 `NEXT_PUBLIC_API_BASE_URL`도 목 서버를 가리켜 함께 닿는다.
 import { expect, test } from "@playwright/test";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
   await page.goto("/products/1?tab=review");

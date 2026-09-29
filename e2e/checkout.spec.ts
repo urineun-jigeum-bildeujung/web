@@ -1,6 +1,12 @@
 // 결제: 필수 동의 전에는 결제할 수 없는지, 직접 입력 칸이 골랐을 때만 열리는지 본다.
 import { expect, test, type Page } from "@playwright/test";
 import { stubOrders } from "./fixtures/orders";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 /**
  * 토스 결제위젯을 막는다.
