@@ -104,6 +104,7 @@ const ITEM: CartItem = {
   discountRate: 0,
   subtotal: 9345,
   dealEndAt: null,
+  addedAt: "2026-09-29T01:00:00Z",
 };
 
 /** 조회가 끝나 배송지와 상품이 모두 있는 평상시 화면 */

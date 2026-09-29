@@ -36,10 +36,10 @@ export type CartItem = {
   /** 타임딜이 끝나는 시각 */
   dealEndAt: string | null;
   /**
-   * 담은 시각. 백엔드 sever#170부터 온다 — 그 배포 전 응답에는 없다. 예전 방식으로 저장된 줄은
-   * 서버가 1970년으로 채운다
+   * 담은 시각(ISO). 백엔드 sever#170(2026-09-29 배포)부터 늘 온다. 예전 방식으로 저장된 줄은
+   * 서버가 `1970-01-01T00:00:00Z`로 채워 정렬에서 맨 아래로 간다 (#518)
    */
-  addedAt?: string;
+  addedAt: string;
 };
 
 export type Cart = {
@@ -60,19 +60,18 @@ function itemPath({ itemType, itemId }: CartItemRef): string {
   return `/carts/items/${itemType}/${itemId}`;
 }
 
-const addedTime = (item: CartItem) => (item.addedAt ? Date.parse(item.addedAt) : 0);
-
 /**
  * 장바구니를 가져온다. **최근에 담은 줄이 맨 위다** (#486).
  *
  * 서버는 먼저 담은 순서로 주고 방향을 고르는 값은 받지 않는다 — 반대 순서는 담은 시각으로
  * 하라고 했다(sever#170). 시안에 순서가 없어 흔히 쓰는 방식을 따른다. 담자마자 장바구니로
- * 오면 방금 담은 것이 바로 보인다. 담은 시각이 없는 응답은 받은 순서 그대로다(정렬이 안정적이다).
+ * 오면 방금 담은 것이 바로 보인다. 담은 시각이 같은 줄(예전 방식으로 저장돼 1970년으로 채워진
+ * 줄끼리)은 받은 순서 그대로다(정렬이 안정적이다).
  */
 export function getCart(): Promise<Cart> {
   return apiRequest<Cart>("/carts").then((cart) => ({
     ...cart,
-    items: [...cart.items].sort((a, b) => addedTime(b) - addedTime(a)),
+    items: [...cart.items].sort((a, b) => Date.parse(b.addedAt) - Date.parse(a.addedAt)),
   }));
 }
 

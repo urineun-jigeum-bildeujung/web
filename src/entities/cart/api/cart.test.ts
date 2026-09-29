@@ -1,13 +1,13 @@
-// getCart 단위 테스트. 최근에 담은 줄이 맨 위로 오는지, 담은 시각이 없으면 받은 순서를 지키는지 본다.
+// getCart 단위 테스트. 최근에 담은 줄이 맨 위로 오는지, 담은 시각이 같으면 받은 순서를 지키는지 본다.
 import { afterEach, expect, test, vi } from "vitest";
 
 import { getCart } from "./cart";
 
-const row = (itemId: number, addedAt?: string) => ({
+const row = (itemId: number, addedAt: string) => ({
   itemType: "NORMAL",
   itemId,
   quantity: 1,
-  ...(addedAt && { addedAt }),
+  addedAt,
   available: true,
   unavailableReason: null,
   productName: `상품 ${itemId}`,
@@ -50,11 +50,12 @@ test("담은 시각이 1970년인 옛 줄은 맨 아래로 간다", async () => 
   expect(cart.items.map((item) => item.itemId)).toEqual([2, 1]);
 });
 
-// sever#170 배포 전 응답에는 담은 시각이 없다
-test("담은 시각이 없으면 받은 순서 그대로다", async () => {
-  stubCart([row(2), row(1), row(3)]);
+// 옛 줄은 모두 1970년이라 시각으로는 가를 수 없다. 서버가 준 순서(키 순)를 지킨다
+test("옛 줄끼리는 받은 순서 그대로 맨 아래에 남는다", async () => {
+  const EPOCH = "1970-01-01T00:00:00Z";
+  stubCart([row(2, EPOCH), row(1, EPOCH), row(4, "2026-09-29T02:00:00Z"), row(3, EPOCH)]);
 
   const cart = await getCart();
 
-  expect(cart.items.map((item) => item.itemId)).toEqual([2, 1, 3]);
+  expect(cart.items.map((item) => item.itemId)).toEqual([4, 2, 1, 3]);
 });

@@ -47,6 +47,7 @@ function makeItem(
     discountRate: null,
     subtotal: price,
     dealEndAt: null,
+    addedAt: "2026-09-29T01:00:00Z",
     ...over,
   };
 }
