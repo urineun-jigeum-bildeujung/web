@@ -124,6 +124,19 @@ test("배송지는 도로명과 상세를 이어 보이고 기본에 표시를 �
   expect(screen.getByText("기본 배송지")).toBeDefined();
 });
 
+// 돌아올 곳을 싣지 않으면 배송지 화면이 저장 뒤 한 칸 되돌리기로 떠난다. 주소를 새로 골랐으면
+// 그 한 칸이 주소 검색 화면이라, 내 정보 관리로 돌아오지 못했다 (QA No.178)
+test("배송지 줄과 장소 추가는 저장 뒤 돌아올 곳으로 이 화면을 싣는다", () => {
+  renderView();
+
+  const queryOf = (name: RegExp) =>
+    new URLSearchParams(screen.getByRole("link", { name }).getAttribute("href")!.split("?")[1]);
+  const edit = queryOf(/테헤란로 123/);
+  expect(edit.get("place")).toBe("1");
+  expect(edit.get("from")).toBe("/mypage/info");
+  expect(queryOf(/장소 추가하기/).get("from")).toBe("/mypage/info");
+});
+
 // 값 자리만 자리를 잡는다. 줄과 레이블은 서버에서 오는 것이 아니다
 test("불러오는 동안 값 자리를 잡아 둔다", () => {
   query.profile = undefined;

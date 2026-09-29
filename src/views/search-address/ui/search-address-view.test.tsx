@@ -13,9 +13,10 @@ import { ApiError } from "@/shared/api/client";
 import type { AddressResult } from "@/shared/ui/address-result-list/address-result-list";
 
 const push = vi.fn();
+const replace = vi.fn();
 const useQueryAddressSearch = vi.fn();
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace, back: vi.fn() }) }));
 // 조회 훅을 가짜로 둔다. 무엇을 보내고 돌아온 것을 어떻게 다루는지는 `api/address-search.test.ts`가 본다
 vi.mock("../api/use-query-address-search", () => ({
   useQueryAddressSearch: (...args: unknown[]) => useQueryAddressSearch(...args),
@@ -58,6 +59,7 @@ const ITEMS: AddressResult[] = [
 
 beforeEach(() => {
   push.mockClear();
+  replace.mockClear();
   // 9건을 4개씩 나누면 4·4·1이라 마지막 쪽이 덜 차는 경우까지 덮는다
   useQueryAddressSearch.mockReset();
   useQueryAddressSearch.mockImplementation((keyword: string, page: number) => ({
@@ -181,12 +183,25 @@ test("고른 주소를 우편번호와 함께 배송지 화면으로 넘긴다",
   fireEvent.click(firstResult());
   fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
 
-  expect(push).toHaveBeenCalledTimes(1);
-  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  expect(replace).toHaveBeenCalledTimes(1);
+  const url = new URL(replace.mock.calls[0][0], "http://localhost");
 
   expect(url.pathname).toBe("/mypage/address/new");
   expect(url.searchParams.get("zipNo")).toBe("06133");
   expect(url.searchParams.get("roadAddr")).toBe(ITEMS[0].roadAddr);
+});
+
+// 쌓으면 폼에서 뒤로가기가 방금 고른 이 화면으로 돌아가고, 저장한 뒤 들어온 화면에서 뒤로가기를
+// 눌러도 여기로 온다. 이 화면을 폼으로 바꿔치기한다 (QA No.178)
+test("주소를 고르면 기록을 쌓지 않고 이 화면을 배송지 화면으로 바꾼다", async () => {
+  renderAt();
+
+  searchFor("테헤란로");
+  fireEvent.click(firstResult());
+  fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
+
+  expect(replace).toHaveBeenCalledTimes(1);
+  expect(push).not.toHaveBeenCalled();
 });
 
 // 고치던 대상을 잃으면 배송지 화면이 새 배송지로 다시 서서 먼저 적어 둔 값이 날아간다
@@ -197,7 +212,7 @@ test("고치던 배송지(place)를 그대로 돌려준다", async () => {
   fireEvent.click(firstResult());
   fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
 
-  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  const url = new URL(replace.mock.calls[0][0], "http://localhost");
   expect(url.searchParams.get("place")).toBe("home");
 });
 
@@ -209,7 +224,7 @@ test("돌아갈 곳(from)을 그대로 돌려준다", async () => {
   fireEvent.click(firstResult());
   fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
 
-  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  const url = new URL(replace.mock.calls[0][0], "http://localhost");
   expect(url.searchParams.get("from")).toBe("/payment/address");
 });
 
@@ -221,7 +236,7 @@ test("채워 둔 이름(name)을 그대로 돌려준다", async () => {
   fireEvent.click(firstResult());
   fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
 
-  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  const url = new URL(replace.mock.calls[0][0], "http://localhost");
   expect(url.searchParams.get("name")).toBe("회사");
 });
 
@@ -232,7 +247,7 @@ test("새 배송지면 place를 붙이지 않는다", async () => {
   fireEvent.click(firstResult());
   fireEvent.click(screen.getByRole("button", { name: "입력 완료" }));
 
-  const url = new URL(push.mock.calls[0][0], "http://localhost");
+  const url = new URL(replace.mock.calls[0][0], "http://localhost");
   expect(url.searchParams.has("place")).toBe(false);
 });
 

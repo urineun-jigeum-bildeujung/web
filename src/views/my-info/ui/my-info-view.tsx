@@ -27,6 +27,14 @@ const NOT_SET = "등록 전이에요";
 /** 조회가 실패한 칸. 비어 있는 것과 구분해야 적을 자리를 찾아 헤매지 않는다 */
 const LOAD_FAILED = "불러오지 못했어요";
 
+/**
+ * 배송지를 저장하고 돌아올 곳. 배송지 화면이 `?from=`으로 받는다.
+ *
+ * **싣지 않으면 저장 뒤 한 칸 되돌리기로 떠나는데, 주소를 새로 골랐으면 그 한 칸이 주소 검색
+ * 화면이다** (QA No.178, #526). 배송지 관리·결제는 이미 싣고 있었다 (#369).
+ */
+const ADDRESS_RETURN_PATH = "/mypage/info";
+
 /** 지은 이름으로 아이콘을 고른다. 시안(mypa_011)이 집·회사에만 그림을 둔다 */
 const ICON_BY_NAME: Record<string, { name: "home" | "building"; className: string }> = {
   집: { name: "home", className: "text-icon-fill-brand" },
@@ -146,7 +154,10 @@ export function MyInfoView() {
                 <Link
                   key={item.addressId}
                   // 같은 화면이 새 배송지와 수정 두 가지를 맡는다. 어느 곳인지는 쿼리로 넘긴다
-                  href={`/mypage/address/new?place=${item.addressId}`}
+                  href={`/mypage/address/new?${new URLSearchParams({
+                    place: String(item.addressId),
+                    from: ADDRESS_RETURN_PATH,
+                  })}`}
                   className="flex flex-col gap-2 rounded-lg transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >
                   <span className="flex items-center gap-2">
@@ -166,7 +177,7 @@ export function MyInfoView() {
 
             <div className="flex justify-center">
               <Link
-                href="/mypage/address/new"
+                href={`/mypage/address/new?${new URLSearchParams({ from: ADDRESS_RETURN_PATH })}`}
                 className="flex h-8 items-center gap-1.5 rounded-md px-2 text-label-medium-14 text-text-label-default transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               >
                 장소 추가하기

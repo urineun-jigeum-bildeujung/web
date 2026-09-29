@@ -126,7 +126,11 @@ export function SearchAddressView() {
     if (name) {
       query.set("name", name);
     }
-    router.push(`/mypage/address/new?${query}`);
+    // **쌓지 않고 이 화면을 바꿔치기한다** (QA No.178). `push`로 쌓으면 폼에서 뒤로가기가
+    // 방금 고른 이 검색 화면으로 돌아가고, 저장한 뒤 들어온 화면에서 뒤로가기를 눌러도 여기로
+    // 온다. 폼에서 이 화면으로는 `push`로 오므로, 바꿔치기하면 한 칸 아래는 주소를 고르기 전의 폼이다.
+    // 쪽을 넘겼으면 앞 쪽들은 남는다 — 쪽 이동이 뒤로가기로 앞 쪽을 보게 하려고 기록을 쌓아서다
+    router.replace(`/mypage/address/new?${query}`);
   };
 
   return (
