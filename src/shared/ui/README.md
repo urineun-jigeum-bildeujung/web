@@ -41,7 +41,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | --- | --- |
 | `snackbar/` | 장바구니 담기·찜하기 같은 가벼운 확인을 하단에 알리는 스낵바. `showSnackbar(text)` 하나면 대부분 충분하고, 안에 버튼을 더 넣어야 하면 `SNACKBAR_CLASS`로 직접 그린다 |
 | `icon/` | 디자인 시스템 아이콘 55종. `name`으로 고르고 색은 글자색, 크기는 `size-*`. `icon-shapes.ts`는 Figma에서 스크립트로 만든 파일이라 손으로 고치지 않는다 |
-| `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기 기본 버튼 |
+| `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기·로고 기본 모양(`page-header.tsx`), 머리말을 직접 짜는 화면도 쓰는 뒤로가기(`header-back-button.tsx`), 오른쪽 아이콘 슬롯(`header-icon-link.tsx`). 값은 시안 공용 header 컴포넌트(3581:82062)다(#513) |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
 | `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣고, 손잡이가 없는 시안은 `showHandle={false}`. 보내는 동안 닫기를 막을 때는 `dismissible={false}` — `onOpenChange`에서 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다 (#474) |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동. 그림은 `icon` 세트를 72px로 키워 쓴다 |
@@ -73,4 +73,4 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 
 만드는 규칙은 [component-convention](../../../docs/conventions/component-convention.md)을 따른다. 컴포넌트마다 폴더를 만들고 안에 구현과 테스트를 함께 둔다.
 
-**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`·`bottom-sheet`는 UI 시안(온보딩)에, `page-header`·`single-input-screen`은 UI 시안(로그인·회원가입)에, `filter-chips`·`badge`는 UI 시안(아이 관리)에, `list-row`·`setting-group`은 UI 시안(마이페이지 홈)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
+**PD팀 Figma가 와이어프레임에서 UI 시안으로 바뀌는 중이다.** 시안을 근거로 만든 컴포넌트는 파일 헤더 주석에 어느 단계의 어느 화면(ID)을 따랐는지 남긴다. `step-progress`·`avatar-uploader`·`chip-select`·`checkbox-row`·`bottom-action-bar`·`form-field`·`bottom-sheet`는 UI 시안(온보딩)에, `single-input-screen`은 UI 시안(로그인·회원가입)에, `page-header`는 UI 시안의 공용 header 컴포넌트(3581:82062)에, `filter-chips`·`badge`는 UI 시안(아이 관리)에, `list-row`·`setting-group`은 UI 시안(마이페이지 홈)에 맞췄고, 나머지는 아직 와이어프레임 기준이다.
