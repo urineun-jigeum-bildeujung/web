@@ -6,8 +6,8 @@
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 //
 // 적합도의 아이는 로그인한 보호자의 실제 아이다(#481). 아이 조회는 브라우저가 부르므로
-// page.route로 세운다. 점수·영양 분석·문의는 아직 목이고(#123, #339), 배송·판매자·제공고시
-// 두 줄도 응답에 자리가 없어 고정 목데이터다.
+// page.route로 세운다. 점수·영양 분석·문의는 아직 목이고(#123, #339), 상단 요약의 배송·판매자
+// 줄도 응답에 자리가 없어 고정 목데이터다. 아래 세 안내는 목이 아니라 PD가 확정한 고정 문구다(#555).
 import { expect, test, type Page } from "@playwright/test";
 import { stubAddToCart, stubCart } from "./fixtures/cart";
 import { stubNotifications } from "./fixtures/notifications";
@@ -106,17 +106,25 @@ test("상세 설명 표가 응답으로 채워지고 빈 항목은 줄째로 빠
   await expect(spec.getByText("보관방법")).toHaveCount(0);
 });
 
-test("제공고시 품명은 응답의 상품명을 쓴다", async ({ page }) => {
+// PD가 세 항목을 모두 고정값으로 확정해 제공고시도 서버 값을 쓰지 않는다 (#555).
+// 품명 자리가 응답의 상품명으로 되돌아가거나 자리표시 상담 번호가 되살아나면 실패한다
+test("세 안내는 응답과 무관한 고정 문구를 쓴다", async ({ page }) => {
   await page.goto(PATH);
 
   await page.getByRole("button", { name: "상품정보 제공고시" }).click();
-
-  // 항목명만 보면 품명이 옛 목데이터로 남아 있어도 통과한다. 값이 응답의 상품명인지 본다
   const notice = page.getByRole("region", { name: "상품정보 제공고시" });
-  await expect(notice.getByText("품명 및 모델명")).toBeVisible();
-  await expect(notice.getByText(NAME, { exact: true })).toBeVisible();
-  // 배송·판매자·수입식품 여부·상담 전화는 응답에 자리가 없어 아직 고정 목데이터다
-  await expect(notice.getByText("해당 없음")).toBeVisible();
+  await expect(notice.getByText("품명 및 모델명: 상품 상단 및 상세설명 별도 표기")).toBeVisible();
+  await expect(notice.getByText(NAME, { exact: true })).toHaveCount(0);
+  await expect(notice.getByText("1234-5678")).toHaveCount(0);
+
+  // 셋 다 펼쳐 본다. 아코디언이 하나만 열리므로 앞의 것은 닫힌다
+  await page.getByRole("button", { name: "배송 안내" }).click();
+  const shipping = page.getByRole("region", { name: "배송 안내" });
+  await expect(shipping.getByText("기본 배송비: 3,000원")).toBeVisible();
+
+  await page.getByRole("button", { name: "교환/반품/환불 안내" }).click();
+  const returns = page.getByRole("region", { name: "교환/반품/환불 안내" });
+  await expect(returns.getByText("지정 택배사: CJ대한통운")).toBeVisible();
 });
 
 test("없는 상품은 404 화면으로 간다", async ({ page }) => {
