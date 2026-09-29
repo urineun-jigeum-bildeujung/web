@@ -188,7 +188,8 @@ async function goToHealthAsCat(page: import("@playwright/test").Page) {
   await expect(page.getByRole("radiogroup", { name: "아이의 체구" })).toHaveCount(0);
   // 나이도 등록에 필수라 채워야 다음으로 간다(#226)
   await page.getByLabel("나이").fill("4");
-  await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
+  // 예시 문구는 종·체구에 따라 바뀌어(#524) 이름으로 찾는다
+  await page.getByLabel("대략적인 몸무게").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
   // nuqs가 URL을 잠깐 뒤에 바꾼다. 바로 새로고침하면 아직 detail이라 건강 단계가 아니다
   await page.waitForURL(/step=health/);
@@ -221,7 +222,8 @@ test("종이 바뀌면 앞서 고른 질환을 비운다", async ({ page }) => {
   // 고양이로 바뀌면 체구 질문이 사라진다(#391)
   await expect(page.getByRole("radiogroup", { name: "아이의 체구" })).toHaveCount(0);
   await page.getByLabel("나이").fill("4");
-  await page.getByPlaceholder("평균 몸무게 5kg").fill("4");
+  // 예시 문구는 종·체구에 따라 바뀌어(#524) 이름으로 찾는다
+  await page.getByLabel("대략적인 몸무게").fill("4");
   await page.getByRole("button", { name: "다음 단계 작성하기" }).click();
 
   await expect(page.getByRole("button", { name: "걱정되는 질환" })).not.toContainText(
