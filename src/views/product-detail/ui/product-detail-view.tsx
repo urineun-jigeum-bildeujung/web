@@ -19,6 +19,7 @@ import { toast } from "sonner";
 
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
+import { useRecordRecentlyViewed } from "@/features/recently-viewed";
 import {
   CardHeartButton,
   toWishlistItem,
@@ -321,6 +322,9 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
     "tab",
     parseAsStringLiteral(TABS).withDefault("info").withOptions({ history: "push" }),
   );
+
+  // 들어온 상품을 최근 본 상품으로 남긴다. 백엔드 API가 없어 이 브라우저에 기록한다(#509)
+  useRecordRecentlyViewed(product.productId);
 
   const [petId, setPetId] = useState<string | null>(null);
   // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도

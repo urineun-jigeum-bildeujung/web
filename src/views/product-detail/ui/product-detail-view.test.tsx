@@ -59,6 +59,7 @@ vi.mock("sonner", () => ({
 
 import type { ProductCard, ProductDetail } from "@/entities/product";
 
+import { useRecentlyViewedStore } from "@/features/recently-viewed";
 import { ProductDetailView } from "./product-detail-view";
 
 // 라우트가 서버에서 받아 넘기는 값이다. 상태(정상·품절)는 soldOut이 가른다
@@ -173,6 +174,15 @@ function signedIn() {
 }
 
 describe("ProductDetailView", () => {
+  // 최근 본 상품은 백엔드 API가 없어 이 브라우저에 기록한다(#509)
+  it("들어온 상품을 최근 본 상품 맨 앞에 남긴다", async () => {
+    useRecentlyViewedStore.setState({ productIds: [5] });
+
+    await renderWith();
+
+    expect(useRecentlyViewedStore.getState().productIds).toEqual([PRODUCT.productId, 5]);
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     signedIn();
