@@ -11,7 +11,7 @@
 | `model/use-wished-product-ids.test.tsx` | 로그인이면 번호를 뽑고, 로그아웃이면 부르지 않고 남은 캐시도 쓰지 않는지, 받는 중을 알리는지 |
 | `model/to-wishlist-item.ts` | 화면의 상품 값을 찜 목록 한 줄로 옮긴다. 정가가 없으면 판매가로 채운다 |
 | `model/to-wishlist-item.test.ts` | 정가가 없을 때와 있을 때 |
-| `ui/card-heart-button.tsx` | 상품 카드 사진 위의 찜 하트(어두운 원판 + 흰 하트). 검색 결과와 함께 보면 좋은 상품이 쓴다. 찜 여부를 받는 동안(`loading`)은 막고 하트 자리에 대기를 보인다 |
+| `ui/card-heart-button.tsx` | 상품 카드 사진 위의 찜 하트(어두운 원판 + 흰 하트). 검색 결과·함께 보면 좋은 상품·메인 종류 탭(#534)이 쓴다. 찜 여부를 받는 동안(`loading`)은 막고 하트 자리에 대기를 보인다 |
 | `ui/card-heart-button.test.tsx` | 눌림 상태와 누르면 토글을 부르는지, 받는 동안 막히는지 |
 
 ## 짚어둘 것
