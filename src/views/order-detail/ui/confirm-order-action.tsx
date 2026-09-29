@@ -71,7 +71,7 @@ export function ConfirmOrderAction({ orderId, items }: ConfirmOrderActionProps) 
                 name={item.productName}
                 quantity={item.quantity}
                 // 위 "주문 상품" 카드와 같은 값이다. 같은 화면에서 두 금액이 갈리면 안 된다
-                amount={item.unitPrice * item.quantity}
+                amount={item.amount}
                 imageUrl={item.thumbnailUrl}
               />
             </li>

@@ -48,6 +48,8 @@ function makeDetail(over: Partial<OrderDetail> = {}): OrderDetail {
         productName: "테스트 상품 A",
         quantity: 1,
         unitPrice: 35000,
+        paidUnitPrice: 35000,
+        amount: 35000,
         itemStatus: "PAID",
         cancelledQuantity: 0,
         returnedQuantity: 0,
@@ -208,6 +210,40 @@ test("구매확정은 시트에서 확정할 상품을 보여 준 뒤 서버를 
   expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
 });
 
+// 시트의 금액도 실제로 낸 돈이다. 할인 전 단가로 세면 위 카드와 다른 값이 된다 (#516)
+test("구매확정 시트는 할인된 상품을 실제로 낸 금액으로 보인다", async () => {
+  getOrderDetail.mockResolvedValue(
+    makeDetail({
+      orderStatus: "DELIVERED",
+      deliveredAt: daysAgo(1),
+      productAmount: 31500,
+      totalAmount: 34500,
+      items: [
+        {
+          orderItemId: 2,
+          thumbnailUrl: null,
+          productName: "테스트 상품 A",
+          quantity: 1,
+          unitPrice: 35000,
+          paidUnitPrice: 31500,
+          amount: 31500,
+          itemStatus: "PAID",
+          cancelledQuantity: 0,
+          returnedQuantity: 0,
+          effectiveQuantity: 1,
+          claims: [],
+        },
+      ],
+    }),
+  );
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  fireEvent.click(await screen.findByRole("button", { name: "구매확정" }));
+  const sheet = await screen.findByRole("dialog", { name: "무사히 잘 도착했나요?" });
+  expect(sheet.textContent).toContain("31,500");
+  expect(sheet.textContent).not.toContain("35,000");
+});
+
 // 보내는 중에 시트가 닫히면 요청만 남아 끝났을 때 확정됐는지 알 수 없다 (#293 리뷰)
 test("구매를 확정하는 동안에는 시트를 닫을 수 없다", async () => {
   getOrderDetail.mockResolvedValue(
@@ -243,6 +279,8 @@ test("진행 중인 신청이 걸린 상품뿐이면 반품·교환 버튼을 �
           productName: "테스트 상품 A",
           quantity: 1,
           unitPrice: 35000,
+          paidUnitPrice: 35000,
+          amount: 35000,
           itemStatus: "PAID",
           cancelledQuantity: 0,
           returnedQuantity: 0,
@@ -282,6 +320,8 @@ test("끝난 신청만 있으면 다시 신청할 수 있다", async () => {
           productName: "테스트 상품 A",
           quantity: 1,
           unitPrice: 35000,
+          paidUnitPrice: 35000,
+          amount: 35000,
           itemStatus: "PAID",
           cancelledQuantity: 0,
           returnedQuantity: 0,
@@ -328,7 +368,10 @@ test("상품이 여럿이면 모두 보여주고 줄마다 낸 돈을 적는다"
           thumbnailUrl: null,
           productName: "사료",
           quantity: 2,
+          // 정가 10,000원을 8,000원에 샀다
           unitPrice: 10000,
+          paidUnitPrice: 8000,
+          amount: 16000,
           itemStatus: "PAID",
           cancelledQuantity: 0,
           returnedQuantity: 0,
@@ -341,6 +384,8 @@ test("상품이 여럿이면 모두 보여주고 줄마다 낸 돈을 적는다"
           productName: "간식",
           quantity: 1,
           unitPrice: 15000,
+          paidUnitPrice: 15000,
+          amount: 15000,
           itemStatus: "PAID",
           cancelledQuantity: 0,
           returnedQuantity: 0,
@@ -353,8 +398,9 @@ test("상품이 여럿이면 모두 보여주고 줄마다 낸 돈을 적는다"
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   expect(await screen.findByRole("heading", { name: "주문 상품 2개" })).toBeDefined();
-  // 낱개 값에 수량을 곱한 것이 그 줄에 낸 돈이다
-  expect(productRowText("사료")).toBe("사료2개20,000원");
+  // 서버가 준 줄 금액, 곧 실제로 낸 돈이다. 할인 전 단가에 수량을 곱하면 20,000원으로
+  // 결제 금액보다 크게 보였다 (#516)
+  expect(productRowText("사료")).toBe("사료2개16,000원");
   expect(productRowText("간식")).toBe("간식1개15,000원");
 });
 
