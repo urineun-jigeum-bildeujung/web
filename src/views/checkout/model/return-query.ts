@@ -40,8 +40,9 @@ export function toCheckoutPath(search: string) {
   if (items !== null) {
     query.set(ITEMS_PARAM, items);
   }
+  // 빈 값도 옮긴다. 빼면 장바구니 결제로 읽혀 고르지 않은 상품이 결제 대상이 된다
   const buyNow = from.get(BUY_NOW_PARAM);
-  if (buyNow) {
+  if (buyNow !== null) {
     query.set(BUY_NOW_PARAM, buyNow);
   }
   const suffix = query.toString();
