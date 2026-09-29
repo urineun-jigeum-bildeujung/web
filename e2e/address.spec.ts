@@ -70,4 +70,9 @@ test("배송지를 등록하면 들어온 화면으로 돌아오고 적던 값�
 
   // 방금 떠난 주소 검색 화면이 아니라 들어온 화면으로 돌아온다 (#369)
   await expect(page).toHaveURL(/\/mypage\/address$/);
+
+  // 뒤로가기도 주소 검색 화면으로 가지 않는다. 검색 화면이 폼으로 돌아올 때 자기 자리를
+  // 바꿔치기해서, 한 칸 아래는 주소를 고르기 전의 폼이다 (QA No.178)
+  await page.goBack();
+  await expect(page).toHaveURL(/\/mypage\/address\/new\?from=%2Fmypage%2Faddress$/);
 });

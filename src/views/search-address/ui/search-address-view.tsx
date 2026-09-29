@@ -99,7 +99,9 @@ export function SearchAddressView() {
       return;
     }
     void setQuery(keyword.trim());
-    void setPage(1);
+    // **새로 찾는 것은 쪽 이동이 아니라 기록을 쌓지 않는다** (QA No.178). 쪽의 `push`를 그대로
+    // 물려받으면 찾을 때마다 한 칸씩 쌓여, 주소를 골라 저장한 뒤 뒤로가기가 빈 검색 화면으로 갔다
+    void setPage(1, { history: "replace" });
   };
 
   // 주소를 골라야 `입력 완료`가 켜진다. 고르지 않으면 넘길 값이 없다 (#187). 시안도 결과를 고른

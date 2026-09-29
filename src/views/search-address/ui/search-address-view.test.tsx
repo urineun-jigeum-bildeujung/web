@@ -6,7 +6,7 @@
 // NuqsTestingAdapter는 `hasMemory`로 우리가 쓴 값만 기억할 뿐, 밖에서 주소창을 바꾸는 것은 흉내내지 못한다.
 // 그 경우는 화면 쪽에서 렌더 중에 앞 값과 견주어 입력칸을 맞춘다.
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { NuqsTestingAdapter, type OnUrlUpdateFunction } from "nuqs/adapters/testing";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { ApiError } from "@/shared/api/client";
@@ -76,11 +76,11 @@ beforeEach(() => {
   }));
 });
 
-function renderAt(search = "") {
+function renderAt(search = "", onUrlUpdate?: OnUrlUpdateFunction) {
   render(
     // hasMemory가 없으면 searchParams가 초기값에 얼어붙어 setQuery가 반영되지 않는다.
     // 그러면 검색을 눌러도 결과가 영영 오지 않는다
-    <NuqsTestingAdapter searchParams={search} hasMemory>
+    <NuqsTestingAdapter searchParams={search} hasMemory onUrlUpdate={onUrlUpdate}>
       <SearchAddressView />
     </NuqsTestingAdapter>,
   );
@@ -202,6 +202,30 @@ test("주소를 고르면 기록을 쌓지 않고 이 화면을 배송지 화면
 
   expect(replace).toHaveBeenCalledTimes(1);
   expect(push).not.toHaveBeenCalled();
+});
+
+// 쪽의 `push`를 물려받으면 찾을 때마다 한 칸씩 쌓여, 바꿔치기를 해도 그 아래 빈 검색 화면이
+// 남는다. 저장한 뒤 뒤로가기가 그리로 갔다 (QA No.178)
+test("새로 찾는 것은 기록을 쌓지 않는다", async () => {
+  const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+  renderAt("", onUrlUpdate);
+
+  searchFor("테헤란로");
+
+  // 주소창 반영은 묶어서 한 박자 늦게 나간다
+  await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+  expect(onUrlUpdate.mock.calls.map(([event]) => event.options.history)).not.toContain("push");
+});
+
+// 위 테스트가 쪽 이동까지 막지 않았는지 뒤집어 본다. 쪽은 뒤로가기로 앞 쪽에 돌아가야 한다
+test("쪽을 넘기는 것은 기록을 쌓는다", async () => {
+  const onUrlUpdate = vi.fn<OnUrlUpdateFunction>();
+  renderAt("?query=테헤란로", onUrlUpdate);
+
+  fireEvent.click(screen.getByRole("button", { name: "다음 페이지" }));
+
+  await waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+  expect(onUrlUpdate.mock.lastCall?.[0].options.history).toBe("push");
 });
 
 // 고치던 대상을 잃으면 배송지 화면이 새 배송지로 다시 서서 먼저 적어 둔 값이 날아간다
