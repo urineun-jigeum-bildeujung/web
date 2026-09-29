@@ -232,15 +232,27 @@ test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page 
   await expect(omega.getByText("부족", { exact: true })).toHaveCount(0);
 });
 
-// 로그인하지 않았으면 찜 대신 로그인으로 보낸다 (#483)
-test("로그인하지 않고 찜을 누르면 로그인 화면으로 간다", async ({ page }) => {
+// 로그인하지 않았으면 찜 대신 로그인 필요 토스트만 띄운다 (#483, #542)
+test("로그인하지 않고 찜을 누르면 이동하지 않고 로그인 필요를 알린다", async ({ page }) => {
   await page.goto(PATH);
   // 로그인 여부를 아는 것은 하이드레이션 뒤다. 그전에는 적합도 자리의 뼈대가 있다
   await expect(page.getByRole("status", { name: "적합도를 불러오는 중" })).toHaveCount(0);
 
   await page.getByRole("button", { name: "찜 목록에 담기" }).click();
 
-  await expect(page).toHaveURL(/\/login$/);
+  await expect(page.getByText("로그인 필요")).toBeVisible();
+  await expect(page).toHaveURL(new RegExp(`${PATH}$`));
+});
+
+// 비로그인은 이 화면을 볼 수 있지만 담지는 못한다. 수량 시트를 열기 전에 막는다 (#542)
+test("로그인하지 않고 장바구니를 누르면 수량 시트 대신 로그인 필요를 알린다", async ({ page }) => {
+  await page.goto(PATH);
+  await expect(page.getByRole("status", { name: "적합도를 불러오는 중" })).toHaveCount(0);
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+
+  await expect(page.getByText("로그인 필요")).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
 // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)
@@ -294,6 +306,8 @@ test("함께 보면 좋은 상품의 하트는 찜 목록으로 채우고 누르
 });
 
 test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 수 있다", async ({ page }) => {
+  // 담기는 로그인해야 한다(#542)
+  await signInWithPets(page);
   // 담기가 서버를 부른다. 실패하면 시트가 열린 채 남는 것이 의도된 동작이라 세워 둔다 (#316)
   await stubAddToCart(page);
   await page.goto(PATH);
@@ -315,6 +329,8 @@ test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 
 // 타임딜 상품을 그냥 상품으로 담으면 딜가가 아니라 정가로 들어간다(#413).
 // 딜가·딜 번호는 일반 상품 상세에 오지 않아, 타임딜에서 온 주소의 딜 번호로 타임딜 상세를 받는다(#484)
 test("타임딜에서 들어오면 딜가로 보이고 딜 아이템 식별자로 담는다", async ({ page }) => {
+  // 담기는 로그인해야 한다(#542)
+  await signInWithPets(page);
   const sent: string[] = [];
   await page.route("**/api/v1/carts/items", (route) => {
     sent.push(route.request().postData() ?? "");
@@ -334,6 +350,8 @@ test("타임딜에서 들어오면 딜가로 보이고 딜 아이템 식별자�
 
 // 딜 번호 없이 들어오면(검색·추천) 서버가 주는 대로 일반 상품이다. 딜가를 지어내지 않는다
 test("딜 번호 없이 열면 정가로 보이고 일반 상품으로 담는다", async ({ page }) => {
+  // 담기는 로그인해야 한다(#542)
+  await signInWithPets(page);
   const sent: string[] = [];
   await page.route("**/api/v1/carts/items", (route) => {
     sent.push(route.request().postData() ?? "");

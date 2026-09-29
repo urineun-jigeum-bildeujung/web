@@ -33,6 +33,7 @@ import { toBuyNowPath, useMutateCartItem } from "@/entities/cart";
 import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
 import { formatUnitPrice, type ProductCard, type ProductDetail } from "@/entities/product";
 import { useQueryWishlistStatus } from "@/entities/wishlist";
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -337,8 +338,14 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
 
   const [petId, setPetId] = useState<string | null>(null);
   // 찜은 서버에 저장한다(#483). 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도
-  // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인으로 보낸다
+  // 뜨지 않았다. 로그인하지 않았으면 누를 때 로그인 필요 토스트만 띄운다(#542)
   const heart = useToggleWishlist();
+  // 비로그인은 이 화면을 볼 수 있지만 담기·구매·비교·알림 신청은 못 한다. 누르면 토스트만 띄운다(#542)
+  const requireSession = useRequireSession();
+  /** 로그인해야 열리는 화면으로 가는 링크에 건다 */
+  const guardLink = (event: React.MouseEvent) => {
+    if (!requireSession()) event.preventDefault();
+  };
   const wishStatus = useQueryWishlistStatus(product.productId, { enabled: heart.signedIn });
   const liked = wishStatus.wished ?? false;
   const toggleLike = () => {
@@ -362,6 +369,8 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   // 수량 시트를 장바구니로 열었는지 바로 구매로 열었는지 (#520)
   const [sheetAction, setSheetAction] = useState<"cart" | "buy">("cart");
   const openSheet = (action: "cart" | "buy") => {
+    // 시트를 열기 전에 막는다. 열고 나서 담기에서 막히면 401 토스트만 뜨고 시트가 남는다
+    if (!requireSession()) return;
     setSheetAction(action);
     setOptionSheetOpen(true);
   };
@@ -479,6 +488,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
                 variant="default"
                 className="min-h-11 shrink-0 px-2 text-label-bold-14"
                 onClick={() =>
+                  requireSession() &&
                   toast.custom(
                     (toastId) => (
                       <div role="status" className={cn(SNACKBAR_CLASS, "justify-between gap-2")}>
@@ -509,6 +519,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           {isDealActive && (
             <Link
               href="/deals"
+              onClick={guardLink}
               className="flex items-center gap-2 rounded-xl bg-surface-info-weak p-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               <span className="flex-1 text-body-medium-14 text-text-body-info-strong">
@@ -664,6 +675,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <Link
             href="/cart"
             aria-label="장바구니"
+            onClick={guardLink}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <Icon name="cart" aria-hidden className="size-6 text-icon-stroke-tertiary" />
@@ -712,7 +724,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           // 눌러도 버튼이 그대로고 스낵바로만 알린다 — 장바구니 담기와 같은 방식이다
           <Button
             className="min-h-11"
-            onClick={() => showSnackbar("재입고되면 바로 알려드릴게요!")}
+            onClick={() => requireSession() && showSnackbar("재입고되면 바로 알려드릴게요!")}
           >
             재입고 알림 신청
           </Button>

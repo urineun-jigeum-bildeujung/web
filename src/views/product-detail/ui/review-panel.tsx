@@ -26,6 +26,7 @@ import {
   type ReviewSort,
 } from "@/entities/review";
 import { toAppMessageCode } from "@/shared/api/error-message";
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { APP_MESSAGE } from "@/shared/config/app-message";
 import { useLoadMore } from "@/shared/lib/list/use-load-more";
 import { Button } from "@/shared/ui/button";
@@ -62,6 +63,11 @@ function ReviewSkeleton({ count = 2 }: { count?: number }) {
 }
 
 export function ReviewPanel({ productId }: ReviewPanelProps) {
+  // 사진 모아보기는 로그인해야 열린다. 비로그인이 사진을 누르면 가지 않고 토스트만 띄운다 (#542)
+  const requireSession = useRequireSession();
+  const guardLink = (event: React.MouseEvent) => {
+    if (!requireSession()) event.preventDefault();
+  };
   // 정렬은 같은 목록을 다시 세우는 것이라 히스토리에 쌓지 않는다.
   // 쌓으면 뒤로가기를 여러 번 눌러야 화면을 떠난다
   const [sort, setSort] = useQueryState(
@@ -120,6 +126,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
             </h3>
             <Link
               href={`/products/${productId}/photos`}
+              onClick={guardLink}
               className="flex min-h-11 min-w-11 items-center justify-center text-body-medium-14 text-text-body-secondary focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               전체보기
@@ -136,6 +143,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
                     `photoId`·`imageIndex`를 요청해 둔 상태다 */}
                 <Link
                   href={`/products/${productId}/photos?photo=${photo.reviewId}&n=0`}
+                  onClick={guardLink}
                   aria-label="이 후기의 첫 사진 크게 보기"
                   className="relative block aspect-square w-full overflow-hidden rounded-lg bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 >

@@ -10,12 +10,15 @@
 // 눌렀을 때 배경(#eeeff1, surface/secondary)은 시안의 pressed 상태 그대로 반영한다.
 // 이 시안은 마우스 hover가 아니라 손가락으로 누르는 동안(active)만 나오는 터치
 // 피드백이라, hover가 아니라 active로 건다.
+//
+// 홈 말고는 로그인해야 열리는 화면이다. 비로그인이 누르면 이동하지 않고 로그인 필요 토스트만 띄운다 (#542).
 
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 import type { IconName } from "@/shared/ui/icon/icon-shapes";
@@ -25,13 +28,15 @@ type NavItem = {
   icon: IconName;
   /** 갈 화면이 아직 없으면 비운다. */
   href?: string;
+  /** 로그인해야 열리는 화면이면 true */
+  requiresSession?: boolean;
 };
 
 const ITEMS: NavItem[] = [
   { label: "홈", icon: "home", href: "/" },
-  { label: "상품비교", icon: "graph", href: "/compare" },
-  { label: "좋아요", icon: "heart_fill", href: "/likes" },
-  { label: "마이페이지", icon: "user", href: "/mypage" },
+  { label: "상품비교", icon: "graph", href: "/compare", requiresSession: true },
+  { label: "좋아요", icon: "heart_fill", href: "/likes", requiresSession: true },
+  { label: "마이페이지", icon: "user", href: "/mypage", requiresSession: true },
 ];
 
 /** 루트는 정확히 같을 때만 현재 화면이다. startsWith로 보면 모든 경로가 걸린다. */
@@ -44,6 +49,7 @@ const ITEM_CLASS =
 
 export function BottomNav() {
   const pathname = usePathname();
+  const requireSession = useRequireSession();
 
   return (
     <nav
@@ -69,6 +75,9 @@ export function BottomNav() {
             key={item.label}
             href={item.href}
             aria-current={current ? "page" : undefined}
+            onClick={(event) => {
+              if (item.requiresSession && !requireSession()) event.preventDefault();
+            }}
             className={cn(
               ITEM_CLASS,
               tone,

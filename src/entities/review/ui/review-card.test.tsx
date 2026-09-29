@@ -1,10 +1,22 @@
 // 리뷰 카드 테스트. 아이 정보가 읽히는지, 계약이 없는 상호작용이 붙지 않았는지 본다.
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { clearTokens, saveTokens } from "@/shared/api/token-store";
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 
 import type { Review, ReviewPet } from "../model/review";
 
 import { ReviewCard } from "./review-card";
+
+vi.mock("@/shared/lib/app-toast", () => ({ toastAppError: vi.fn() }));
+
+afterEach(() => {
+  clearTokens();
+  window.localStorage.clear();
+  vi.clearAllMocks();
+});
 
 const BORI: ReviewPet = {
   id: "10",
@@ -129,11 +141,21 @@ describe("ReviewCard", () => {
 
   // 신고는 되돌리기 어렵다. 누르는 순간 접수되면 안 된다
   it("신고하기를 눌러도 바로 접수되지 않고 확인창이 먼저 뜬다", () => {
+    saveTokens({ accessToken: "a", refreshToken: "r" });
     render(<ReviewCard review={REVIEW} />);
 
     fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
 
     expect(screen.getByText("이 후기를 신고할까요?")).toBeDefined();
+  });
+
+  it("로그인하지 않았으면 신고 확인창 대신 로그인 필요 토스트를 띄운다", () => {
+    render(<ReviewCard review={REVIEW} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "신고하기" }));
+
+    expect(screen.queryByText("이 후기를 신고할까요?")).toBeNull();
+    expect(toastAppError).toHaveBeenCalledWith(APP_MESSAGE_CODE.auth.loginRequired);
   });
 
   it("사진이 없으면 사진 자리를 그리지 않는다", () => {

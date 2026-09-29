@@ -32,6 +32,7 @@ import {
   useQueryPendingFeedbacks,
   type PendingFeedback,
 } from "@/entities/review";
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -101,6 +102,9 @@ function SectionTitle({
   href?: string;
   className?: string;
 }) {
+  // 더보기가 가는 맞춤 추천은 로그인해야 열린다. 비로그인이면 가지 않고 토스트만 띄운다 (#542)
+  const requireSession = useRequireSession();
+
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <h2 className="text-title-bold-20 text-foreground">{children}</h2>
@@ -109,6 +113,9 @@ function SectionTitle({
         // min-h-11을 쓰면 이 줄 전체가 44px로 늘어나 제목과 격자 사이 간격이 밀린다
         <Link
           href={href}
+          onClick={(event) => {
+            if (!requireSession()) event.preventDefault();
+          }}
           className="relative text-label-medium-14 text-text-body-tertiary after:absolute after:-inset-2.75"
         >
           더보기
@@ -292,6 +299,8 @@ type TimeDealPreviewProps = {
 function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
   const { groups } = use(dealsPromise);
   const [notified, setNotified] = useState(false);
+  // 알림 신청과 특가 더보기(타임딜 화면)는 로그인해야 쓴다. 비로그인이면 토스트만 띄운다 (#542)
+  const requireSession = useRequireSession();
   // 서버가 다시 알려준 게 아니라, 이 화면에서 카운트다운이 다 돼 로컬로만 숨긴 딜 id들
   const [endedDealIds, setEndedDealIds] = useState<number[]>([]);
 
@@ -323,7 +332,9 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setNotified(true)}
+                  onClick={() => {
+                    if (requireSession()) setNotified(true);
+                  }}
                   className="flex min-h-11 items-center gap-1 px-2.5 text-body-medium-14 text-brand"
                 >
                   <Icon name="bell" className="size-5" />
@@ -377,7 +388,14 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
 
       <div className="pr-5">
         <Button variant="outline" className="min-h-11 w-full text-label-bold-16 font-bold" asChild>
-          <Link href="/deals">특가 더보기</Link>
+          <Link
+            href="/deals"
+            onClick={(event) => {
+              if (!requireSession()) event.preventDefault();
+            }}
+          >
+            특가 더보기
+          </Link>
         </Button>
       </div>
     </>
