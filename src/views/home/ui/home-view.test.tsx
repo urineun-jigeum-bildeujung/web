@@ -606,6 +606,20 @@ describe("HomeView", () => {
     ).toBe("/products/5");
   });
 
+  // 메인 구조도는 "반응 체크 → 마이페이지로 이동"인데 상품 상세로 갔다(QA HM-042)
+  it("반응을 남긴 뒤 자세히 보러 가면 상품 상세가 아니라 아이 관리로 간다", async () => {
+    submitFeedback.mockResolvedValue(undefined);
+    pushMock.mockClear();
+    await renderWith();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /반응 남기기/ })[0]);
+    fireEvent.click(screen.getByRole("radio", { name: "잘 맞았어요" }));
+    fireEvent.click(screen.getByRole("button", { name: "등록하기" }));
+    fireEvent.click(await screen.findByRole("button", { name: "자세히 보러 갈게요" }));
+
+    expect(pushMock).toHaveBeenCalledExactlyOnceWith("/mypage/pets");
+  });
+
   it("반응을 고르면 아직 이르다는 표시가 풀린다", async () => {
     await renderWith();
 

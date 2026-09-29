@@ -897,7 +897,9 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
         }
         petName={feedbackPetName}
         onOpenChange={(open) => !open && setFeedback(null)}
-        onSeeProduct={(productId) => router.push(`/products/${productId}`)}
+        // "자세히 보러 갈게요"는 상품이 아니라 아이 관리로 간다. 메인 구조도가 "반응 체크 → 마이페이지로
+        // 이동"이다(QA HM-042). 남긴 반응은 제품 탭에서 빠지므로 탭은 기본(내 아이 관리)으로 둔다
+        onSeeProduct={() => router.push("/mypage/pets")}
         onSubmit={submitRecent}
         isSubmitting={isSubmitting}
         variant="full"
