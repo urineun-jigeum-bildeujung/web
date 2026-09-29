@@ -45,6 +45,12 @@ type ProductGridCardProps = {
   priceClassName?: string;
   /** 기본은 이미지 오른쪽 위(top-3 right-3). 시안이 다르게 그린 화면만 자리를 덮어쓴다 */
   imageActionClassName?: string;
+  /**
+   * 카드가 실제로 그려지는 폭. 기본값은 420px 기둥 안(`(constrained)` 그룹)의 2열 격자 기준이다.
+   * 그 기둥 밖으로 나와 열 수가 늘어나는 화면만 제 값을 넘긴다 — 안 넘기면 Next가
+   * 실제보다 작은 후보를 골라 이미지가 뭉개진다(#496).
+   */
+  imageSizes?: string;
 };
 
 export function ProductGridCard({
@@ -65,6 +71,7 @@ export function ProductGridCard({
   className,
   priceClassName,
   imageActionClassName,
+  imageSizes = "(min-width: 768px) 240px, 50vw",
 }: ProductGridCardProps) {
   // 시안(ProductCard/Grid의 price 슬롯)은 이름·취소선·할인율+가격이 간격 없이
   // 붙어 있고, 그 아래 meta(하루 급여비·별점)와만 4px 떨어진다. 공용 Price
@@ -76,14 +83,9 @@ export function ProductGridCard({
     <>
       <div className="relative flex aspect-square items-center justify-center overflow-hidden rounded-lg bg-muted">
         {imageUrl ? (
-          // 2열 격자와 가로 목록(160px)에 놓인다. 태블릿에서도 카드 한 장이 240px을 넘지 않는다
-          <Image
-            src={imageUrl}
-            alt=""
-            fill
-            sizes="(min-width: 768px) 240px, 50vw"
-            className="object-cover"
-          />
+          // 2열 격자와 가로 목록(160·208px)에 놓인다. 기본값은 420px 기둥 안 기준이고,
+          // 그 밖으로 나온 화면은 `imageSizes`로 제 폭을 넘긴다
+          <Image src={imageUrl} alt="" fill sizes={imageSizes} className="object-cover" />
         ) : (
           <Icon name="image" className="size-8 text-muted-foreground" />
         )}

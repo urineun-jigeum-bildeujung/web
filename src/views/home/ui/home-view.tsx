@@ -164,7 +164,10 @@ function ProductGridSkeleton() {
       <div className="flex justify-end">
         <Skeleton className="h-5 w-14" />
       </div>
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-6">
+      {/* 열 수는 임시다 — 받은 홈 시안이 전체 탭뿐이라 이 격자가 나오는
+          사료·간식·영양제 탭 시안이 없다. PD 확정 전까지 1200에서 카드가
+          맞춤 상품(208)·타임딜(160)과 같은 밀도가 되게 잡았다(#496) */}
+      <ul className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, index) => (
           <li key={index} className="flex flex-col gap-2">
             <Skeleton className="aspect-square w-full rounded-lg" />
@@ -207,11 +210,15 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
         </p>
       ) : (
         <div className="flex flex-col gap-4 px-5">
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-6">
+          {/* 열 수는 임시다 — 위 뼈대와 같은 이유로 PD 확정 전 기준이다(#496) */}
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
             {items.map((product) => (
               <li key={product.productId} className="flex">
                 <ProductGridCard
                   className="flex-1"
+                  // 격자가 px-5(40) 안에서 gap-x-3(12)으로 나뉜다. 1200에서 멈추므로
+                  // (1200 − 40 − 36) ÷ 4 = 281px이 실제 최대 폭이다
+                  imageSizes="(min-width: 1200px) 281px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
                   href={`/products/${product.productId}`}
                   name={product.name}
                   price={product.price}
@@ -476,7 +483,12 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
       : Promise.resolve();
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    // 이 화면은 `(constrained)` 그룹 밖이라 폭을 스스로 진다(#496).
+    // 1200은 브레이크포인트가 아니라 최대 폭이다 — 768~1199는 뷰포트를 다 쓰고
+    // 1200부터 멈춰 가운데 선다. 거터 20px은 컨테이너가 아니라 섹션이 갖는다.
+    // 헤더·카테고리 탭·하단 탭바가 모두 이 안에 있어 함께 1200에 맞춰진다
+    // (BottomNav가 sticky라 흐름 안에 있다).
+    <div className="mx-auto flex min-h-dvh w-full max-w-300 flex-col">
       {/* 시안 header/type=logo. 실제 로고 이미지 자산이 아직 없어 글자를 그대로 둔다 */}
       <PageHeader
         leading="logo"
@@ -520,13 +532,14 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
                 {/* 이미지 안 문구가 곧 내용이라 대체 텍스트로 옮긴다. 첫 화면 가장 큰 이미지라 먼저 받는다(AGENTS 5.6) —
                     Next 16에서 `priority`가 `preload`로 이름이 바뀌었다(next/dist/docs의 image.md).
-                    화면 폭은 레이아웃이 420px(max-w-105)로 묶고 좌우 여백이 20씩이다 */}
+                    폭은 이 화면이 직접 정한다(#496). 섹션이 p-5로 좌우 20씩 먹으므로
+                    1200에서 멈춘 뒤에는 1160px이고, 그 아래로는 뷰포트를 따라간다 */}
                 <Image
                   src="/images/home/promo-banner.webp"
                   alt="매주 목요일 밤 12시 타임딜 특가. 놓치면 아쉬운 한정 특가"
                   fill
                   preload
-                  sizes="(min-width: 420px) 380px, calc(100vw - 40px)"
+                  sizes="(min-width: 1200px) 1160px, calc(100vw - 40px)"
                   className="object-cover"
                 />
               </div>
