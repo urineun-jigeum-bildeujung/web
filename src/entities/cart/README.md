@@ -7,7 +7,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `api/cart.ts` | 조회·**담기**·수량 변경·빼기 요청 함수와 `Cart`·`CartItem` 타입. 조회는 최근에 담은 줄을 맨 위로 둔다(#486) |
-| `api/cart.test.ts` | 최근에 담은 순서, 1970년으로 채운 옛 줄, 담은 시각이 없을 때 받은 순서 |
+| `api/cart.test.ts` | 최근에 담은 순서, 1970년으로 채운 옛 줄은 맨 아래에서 받은 순서 그대로 |
 | `api/use-query-cart.ts` | 장바구니를 가져오는 훅 |
 | `api/use-query-cart-count.ts` | 담은 가짓수(줄 수). 헤더 장바구니 뱃지가 쓴다. 같은 캐시를 써 담거나 빼면 바로 바뀐다. **로그인 여부는 부르는 쪽이 `enabled`로 준다** — 여기서 `useHasSession`을 부르면 서버 페이지(`app/payment`)가 이 공개 API를 들이면서 `useSyncExternalStore`가 서버 컴포넌트 그래프에 들어가 깨진다 (#470) |
 | `api/use-query-cart-count.test.tsx` | 꺼 두면 부르지 않는지, 껐다가는 받아 둔 수를 내주지 않는지(세션이 끊긴 뒤 옛 뱃지가 남지 않게), 수량이 아니라 줄 수를 세는지 |

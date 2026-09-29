@@ -20,6 +20,7 @@ function sellable(itemId: number, itemType: CartItem["itemType"] = "NORMAL"): Ca
     discountRate: 0,
     subtotal: 1000,
     dealEndAt: null,
+    addedAt: "2026-09-29T01:00:00Z",
   };
 }
 

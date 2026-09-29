@@ -30,6 +30,7 @@ const ROW: CartItem = {
   discountRate: 0,
   subtotal: 10000,
   dealEndAt: null,
+  addedAt: "2026-09-29T01:00:00Z",
 };
 
 /** 한 줄이 든 장바구니를 받아 둔 상태 */
