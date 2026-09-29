@@ -177,42 +177,55 @@ describe("주소로 자리를 가리킨다", () => {
   });
 
   // 화살표는 키보드 초점에서만 나오므로 이 경로가 깨져도 눈에 띄지 않는다.
-  // 주소가 다시 그려지기를 기다렸다면 두 번째 누름이 같은 자리를 가리켰을 것이다 (리뷰 반영)
-  it("화살표를 연달아 눌러도 누른 만큼 넘어간다", async () => {
+  //
+  // **주소와 줄의 자리를 일부러 어긋내 둔다.** 연달아 누르는 것을 그대로 흉내 내면
+  // `fireEvent`가 act()로 감싸져 누름 사이에 주소 갱신이 반영되므로, 실제로 겪는
+  // "주소가 아직 안 바뀐 창"이 jsdom에서는 열리지 않는다 — 그 모양으로는 옛 방식
+  // (`current + step`)으로 되돌려도 통과해 회귀를 잡지 못한다 (리뷰 반영)
+  it("화살표는 주소가 아니라 줄의 실제 자리에서 다음을 센다", async () => {
     const updates: UrlUpdateEvent[] = [];
     useQueryReviewPhotos.mockReturnValue(photosState());
     useQueryReviewDetail.mockReturnValue({ review: THREE_PHOTO_DETAIL, isLoading: false });
 
+    // 주소는 첫 장을 가리키는데
     renderView("?photo=7&n=0", (event) => updates.push(event));
 
     // jsdom은 레이아웃을 재지 않아 폭이 늘 0이다. 자리 계산이 그 값을 나누므로 세워 둔다
     const track = screen.getByRole("list", { name: "후기 사진" });
     Object.defineProperty(track, "clientWidth", { value: 393, configurable: true });
+    // 줄은 이미 두 번째 장에 가 있다 — 연달아 누르는 중 주소만 뒤처진 그 순간이다
+    track.scrollLeft = 393;
 
-    const next = screen.getByRole("button", { name: "다음 사진" });
-    fireEvent.click(next);
-    fireEvent.click(next);
+    fireEvent.click(screen.getByRole("button", { name: "다음 사진" }));
 
-    // 다시 그려지기를 기다리지 않고 줄의 실제 자리에서 읽으므로 두 번이 모두 먹는다
+    // 주소(0)를 기준으로 셌다면 첫 장 다음인 393에 머문다
     expect(track.scrollLeft).toBe(393 * 2);
     await waitFor(() => expect(updates.at(-1)?.searchParams.get("n")).toBe("2"));
   });
 
-  it("첫 장에서 이전을 눌러도 범위를 벗어나지 않는다", () => {
+  // 여기서도 주소와 줄을 어긋내야 한다. 둘이 같으면 첫 장에서 이전 버튼이 `disabled`라
+  // 눌러도 아무 일이 없어, 자르는 계산을 통째로 지워도 통과한다 (리뷰 반영)
+  it("줄이 이미 첫 장이면 이전을 눌러도 범위를 벗어나지 않는다", async () => {
+    const updates: UrlUpdateEvent[] = [];
     useQueryReviewPhotos.mockReturnValue(photosState());
     useQueryReviewDetail.mockReturnValue({ review: THREE_PHOTO_DETAIL, isLoading: false });
 
-    renderView("?photo=7&n=1");
+    // 주소는 둘째 장이라 이전 버튼이 살아 있고
+    renderView("?photo=7&n=1", (event) => updates.push(event));
 
     const track = screen.getByRole("list", { name: "후기 사진" });
     Object.defineProperty(track, "clientWidth", { value: 393, configurable: true });
-    track.scrollLeft = 393;
+    // 줄은 이미 첫 장에 와 있다
+    track.scrollLeft = 0;
 
-    const prev = screen.getByRole("button", { name: "이전 사진" });
-    fireEvent.click(prev);
-    fireEvent.click(prev);
+    fireEvent.click(screen.getByRole("button", { name: "이전 사진" }));
 
+    // 자르지 않았다면 -1장째, 곧 -393으로 갔을 자리다
     expect(track.scrollLeft).toBe(0);
+    // `n`은 기본값이 0이라 0으로 돌아가면 nuqs가 쿼리에서 지운다. 자르지 않았다면
+    // 기본값이 아닌 -1이 실려 남는다
+    await waitFor(() => expect(updates.length).toBeGreaterThan(0));
+    expect(updates.at(-1)?.searchParams.get("n")).toBeNull();
   });
 });
 
