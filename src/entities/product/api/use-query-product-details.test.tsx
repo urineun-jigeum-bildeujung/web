@@ -87,3 +87,21 @@ test("다시 시도는 404가 아닌 실패만 다시 부른다", async () => {
   await waitFor(() => expect(getProductDetail).toHaveBeenCalledTimes(1));
   expect(getProductDetail).toHaveBeenCalledWith("5");
 });
+
+// 받은 것이 없는 채로 다시 부르면 TanStack이 상태를 받는 중으로 되돌린다(query-core fetchState).
+// 그래서 탭은 실패 안내 대신 그 자리에 뼈대를 그리고, 다시 시도를 거듭 누를 자리가 남지 않는다
+test("다시 시도를 누르면 실패가 받는 중으로 바뀐다", async () => {
+  getProductDetail.mockRejectedValue(new ApiError(503, "잠시 문제"));
+  const { result } = renderHook(() => useQueryProductDetails([5]), {
+    wrapper: createQueryWrapper(),
+  });
+  await waitFor(() => expect(result.current.entries[0].isError).toBe(true));
+  getProductDetail.mockReturnValue(new Promise(() => {}));
+
+  act(() => result.current.refetchFailed());
+
+  await waitFor(() =>
+    expect(result.current.entries[0]).toMatchObject({ isLoading: true, isError: false }),
+  );
+  expect(result.current.error).toBeNull();
+});
