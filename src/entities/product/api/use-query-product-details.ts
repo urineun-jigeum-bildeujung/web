@@ -17,7 +17,7 @@ export type ProductDetailEntry = {
   isLoading: boolean;
   /** 없어진 상품(404). 목록에서 조용히 빼면 된다 — 실패로 알릴 일이 아니다 */
   notFound: boolean;
-  /** 404가 아닌 실패. 다시 시도할 수 있다 */
+  /** 404가 아닌 실패로 아직 받은 것이 없다. 다시 시도할 수 있다 */
   isError: boolean;
 };
 
@@ -38,12 +38,16 @@ export function useQueryProductDetails(productIds: number[]) {
       product: result.data,
       isLoading: result.isPending,
       notFound,
-      isError: result.isError && !notFound,
+      // 받아 둔 상품은 뒤이은 재조회가 실패해도 그대로 둔다. TanStack은 이때도 상태를 오류로 바꿔,
+      // 창에 다시 들어왔다 한 번 실패하면 보이던 카드가 사라졌다(#509 리뷰)
+      isError: result.isError && !notFound && result.data === undefined,
     };
   });
 
   return {
     entries,
+    /** 카드를 막고 있는 첫 실패. 화면 문구를 고르는 데 쓴다 */
+    error: results.find((_, index) => entries[index].isError)?.error ?? null,
     /** 404가 아닌 실패만 다시 부른다 */
     refetchFailed: () => {
       results.forEach((result, index) => {
