@@ -216,9 +216,11 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
               <li key={product.productId} className="flex">
                 <ProductGridCard
                   className="flex-1"
-                  // 격자가 px-5(40) 안에서 gap-x-3(12)으로 나뉜다. 1200에서 멈추므로
-                  // (1200 − 40 − 36) ÷ 4 = 281px이 실제 최대 폭이다
-                  imageSizes="(min-width: 1200px) 281px, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+                  // 격자가 px-5(40) 안에서 gap-x-3(12)으로 나뉜다 — 칸 폭은
+                  // (100vw − 40 − 12×(열−1)) ÷ 열이고 1200에서 멈춘다.
+                  // 여백을 빼지 않고 25vw·33vw로 어림하면 실제보다 19~26px 크게 잡혀
+                  // 520~599 · 776~870 · 1024~1124px 구간에서 256이면 될 것을 384로 받는다
+                  imageSizes="(min-width: 1200px) 281px, (min-width: 1024px) calc(25vw - 19px), (min-width: 768px) calc(33.333vw - 21.333px), calc(50vw - 26px)"
                   href={`/products/${product.productId}`}
                   name={product.name}
                   price={product.price}
