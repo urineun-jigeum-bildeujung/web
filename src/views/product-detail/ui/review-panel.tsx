@@ -92,7 +92,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
 
   return (
     <div className="flex flex-col">
-      <section aria-label="별점 요약" className="flex flex-col items-start gap-1 p-5">
+      <section aria-label="별점 요약" className="flex flex-col items-start gap-1 px-5 pt-3 pb-4">
         {/* 평가가 없으면 빈 별 다섯만 두고 숫자를 적지 않는다 — `Rating`은 빈 별을 이미
             회색(icon/fill/disable)으로 그린다 */}
         <Rating
