@@ -220,11 +220,12 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
       ) : (
         <div className="flex flex-col gap-4 px-5">
           {/* 열 수는 임시다 — 위 뼈대와 같은 이유로 PD 확정 전 기준이다(#496) */}
+          {/* 카드는 칸 폭을 그대로 받는다. 칸(li)을 flex로 두고 카드에 flex-1을 주던 동안 카드의 최소
+              폭이 이름 전체 길이가 되어, 긴 이름의 카드가 옆 칸을 덮고 사진도 정사각형 칸보다 커졌다(#534) */}
           <ul className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
             {items.map((product) => (
-              <li key={product.productId} className="flex">
+              <li key={product.productId}>
                 <ProductGridCard
-                  className="flex-1"
                   // 격자가 px-5(40) 안에서 gap-x-3(12)으로 나뉜다 — 칸 폭은
                   // (100vw − 40 − 12×(열−1)) ÷ 열이고 1200에서 멈춘다.
                   // 여백을 빼지 않고 25vw·33vw로 어림하면 실제보다 19~26px 크게 잡혀
