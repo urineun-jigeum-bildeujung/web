@@ -8,6 +8,12 @@
 import { expect, test } from "@playwright/test";
 
 import { stubCart } from "./fixtures/cart";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test("고른 줄만 결제로 넘긴다", async ({ page }) => {
   await stubCart(page);

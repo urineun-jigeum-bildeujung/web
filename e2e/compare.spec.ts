@@ -4,6 +4,12 @@
 // `e2e/server-fetch/compare.spec.ts`로 옮겼다(#282) — 이 파일의 나머지 테스트는
 // /compare에 직접 진입해 검색을 거치지 않는다.
 import { expect, test } from "@playwright/test";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 // 시안 comp_001_에러. 사료와 간식은 기준이 달라 나란히 놓으면 착시가 생긴다.
 // other=1을 명시해야 반대쪽 자리가 채워진다 — 없으면 그 자리는 비워 둔다(#245)

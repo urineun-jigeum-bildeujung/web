@@ -12,6 +12,8 @@ import { signIn } from "./fixtures/session";
 // 로그인으로 돌려보내져 탭·필터를 눌러 볼 자리가 없다
 test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
+  // 좋아요·온보딩·맞춤 추천은 로그인해야 열린다(#542)
+  await signIn(page);
 });
 
 // 좋아요 화면은 "최근에 봤어요"가 브라우저 기록으로 열리며(#509) 찜 탭과 오갈 탭이 생겼다.

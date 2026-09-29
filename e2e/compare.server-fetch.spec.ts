@@ -4,6 +4,12 @@
 // 서버가 필요하다. 나머지 비교 화면 테스트(`e2e/compare.spec.ts`)는 검색을 거치지
 // 않아 기본 스위트에 그대로 남아 있다.
 import { expect, test } from "@playwright/test";
+import { signIn } from "./fixtures/session";
+
+// 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 // 고르기 화면(comp_011)이 시안에서 빠지고 검색으로 통일됐다(#144).
 // 비교 → 검색 → 결과 → 비교로 돌아오는 한 바퀴가 이어져야 자리를 채울 수 있다.
