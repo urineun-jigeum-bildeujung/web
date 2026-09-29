@@ -24,6 +24,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/likes",
 }));
 
+// 최근에 봤어요 탭의 목록·빼기·찜은 `recent-tab.test.tsx`가 본다. 여기서는 탭이 열리는지만 본다
+vi.mock("./recent-tab", () => ({ RecentTab: () => <p>최근 본 상품 목록</p> }));
+
 vi.mock("@/entities/wishlist/api/wishlist", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/wishlist/api/wishlist")>()),
   getWishlist,
@@ -125,28 +128,45 @@ describe("LikesView", () => {
     expect(await screen.findAllByRole("listitem")).toHaveLength(4);
   });
 
-  it("최근에 봤어요·자주 샀어요 탭은 눌러도 반응하지 않는다", async () => {
+  // 백엔드 API가 없어 브라우저 기록으로 연다(#509)
+  it("최근에 봤어요 탭을 누르면 최근 본 상품으로 바뀐다", async () => {
     renderWith();
     await screen.findByLabelText("상품 분류");
 
-    fireEvent.click(screen.getByRole("tab", { name: "최근에 봤어요" }));
-    fireEvent.click(screen.getByRole("tab", { name: "자주 샀어요" }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "최근에 봤어요" }));
+
+    expect(await screen.findByText("최근 본 상품 목록")).toBeDefined();
+    expect(screen.queryByLabelText("상품 분류")).toBeNull();
+  });
+
+  // 마이페이지의 옛 주소(/mypage/recently-viewed)가 이 주소로 보낸다
+  it("주소로 최근에 봤어요에 들어오면 그 탭이 열린다", async () => {
+    renderWith("?tab=recent");
+
+    expect(await screen.findByText("최근 본 상품 목록")).toBeDefined();
+  });
+
+  it("자주 샀어요 탭은 눌러도 반응하지 않는다", async () => {
+    renderWith();
+    await screen.findByLabelText("상품 분류");
+
+    fireEvent.mouseDown(screen.getByRole("tab", { name: "자주 샀어요" }));
 
     // MVP 범위 밖이라 탭 전환 없이 찜 탭 내용이 그대로 남는다
     expect(screen.getByLabelText("상품 분류")).toBeDefined();
   });
 
-  // disabled는 클릭만 막는다. 주소로 ?tab=recent를 직접 치고 들어오는 건 별도로 막아야
-  // 한다(CodeRabbit 지적) — tab 쿼리 파서가 liked 밖의 값을 안 받게 좁혔다
-  it("주소로 최근에 봤어요·자주 샀어요에 들어가도 찜 탭으로 떨어진다", async () => {
-    renderWith("?tab=recent");
+  // disabled는 클릭만 막는다. 주소로 ?tab=often을 직접 치고 들어오는 건 별도로 막아야
+  // 한다(CodeRabbit 지적) — tab 쿼리 파서가 열린 탭 밖의 값을 안 받게 좁혔다
+  it("주소로 자주 샀어요에 들어가도 찜 탭으로 떨어진다", async () => {
+    renderWith("?tab=often");
 
     expect(screen.queryByLabelText(/목록에서 빼기/)).toBeNull();
     expect(await screen.findByLabelText("상품 분류")).toBeDefined();
   });
 
-  // 최근에 봤어요·자주 샀어요는 탭도 주소도 막혀 있어 그 안의 목록·지우기 로직(코드에는
-  // 남아 있다)을 사용자 관점에서 도달할 방법이 없다 — 재활성화 전까지는 직접 테스트하지 않는다
+  // 자주 샀어요는 탭도 주소도 막혀 있어 그 안의 목록·지우기 로직(코드에는 남아 있다)을
+  // 사용자 관점에서 도달할 방법이 없다 — 재활성화 전까지는 직접 테스트하지 않는다
 
   it("찜을 풀면 확인 없이 바로 목록에서 빠진다", async () => {
     renderWith("?tab=liked");

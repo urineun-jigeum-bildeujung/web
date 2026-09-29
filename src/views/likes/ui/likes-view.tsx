@@ -1,9 +1,9 @@
 // 찜한 상품·최근에 본 상품·자주 산 상품을 탭으로 나눠 본다.
-// UI 시안 기준(#274, 찜 탭 1117-4972, 빈 상태 2022-158710)이다. "최근에 봤어요"·
-// "자주 샀어요"는 PD 확인 결과 이번 MVP 범위 밖이다(#274 QA 답변) — 탭은 남겨두고
-// 눌러도 반응하지 않게 disabled로 막는다.
+// UI 시안 기준(#274, 찜 탭 1117-4972, 빈 상태 2022-158710)이다.
 //
-// 찜 탭은 실제 API로 연동했다(#390). 나머지 두 탭은 여전히 목데이터다.
+// 찜 탭은 실제 API로 연동했다(#390). "최근에 봤어요"는 백엔드 API가 없어 브라우저에 남긴 기록으로
+// 연다(#509, 팀장 결정) — `recent-tab.tsx`. "자주 샀어요"는 PD 확인 결과 이번 MVP 범위 밖이라
+// (#274 QA 답변) 탭은 남겨두고 눌러도 반응하지 않게 disabled로 막는다. 목록은 여전히 목데이터다.
 
 "use client";
 
@@ -41,12 +41,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
 import { CATEGORIES, CATEGORY_VALUES, type LikesCategory } from "../model/category";
 
-const TABS = ["liked", "recent", "often"] as const;
-// 최근에 봤어요·자주 샀어요는 탭을 눌러도 안 바뀌지만, 주소로 ?tab=recent를 직접
-// 치고 들어오면 그건 막지 못했다(CodeRabbit 지적) — URL이 받는 값도 찜 탭 하나로 좁힌다
-const REACHABLE_TABS = ["liked"] as const;
+import { RecentTab } from "./recent-tab";
 
-type MockTab = Exclude<(typeof TABS)[number], "liked">;
+const TABS = ["liked", "recent", "often"] as const;
+// 자주 샀어요는 탭을 눌러도 안 바뀌지만, 주소로 ?tab=often을 직접 치고 들어오면 그건 막지
+// 못했다(CodeRabbit 지적) — URL이 받는 값도 열린 탭(찜·최근 본 상품)으로 좁힌다
+const REACHABLE_TABS = ["liked", "recent"] as const;
+
+/** 아직 목데이터인 탭. 최근에 봤어요가 실제 기록으로 바뀌어(#509) 자주 샀어요만 남았다 */
+type MockTab = "often";
 
 type Product = {
   id: string;
@@ -68,14 +71,8 @@ function toLikedProduct(item: WishlistItem): Product {
   };
 }
 
-/** "최근에 봤어요"·"자주 샀어요" 전용, API 연동 전까지 화면 확인용 값 */
+/** "자주 샀어요" 전용, API 연동 전까지 화면 확인용 값 */
 const MOCK: Record<MockTab, Product[]> = {
-  recent: Array.from({ length: 4 }, (_, index) => ({
-    id: `r${index}`,
-    name: "그레인프리 연어 사료 2kg",
-    price: 31200,
-    originalPrice: 39000,
-  })),
   often: [
     {
       id: "o0",
@@ -109,7 +106,6 @@ const MOCK: Record<MockTab, Product[]> = {
 
 /** 확인창 문구. 찜 탭 하트는 확인 없이 바로 풀려 이 표엔 없다 */
 const REMOVE_TITLE: Record<MockTab, string> = {
-  recent: "최근 본 목록에서 이 상품을 뺄까요?",
   often: "자주 사는 목록에서 이 상품을 뺄까요?",
 };
 
@@ -164,8 +160,8 @@ export function LikesView() {
     toLikedProduct,
   );
 
-  // 어느 탭(최근에 봤어요·자주 샀어요)에서 뺀 것인지를 `tab`(항상 "liked") 대신
-  // 직접 받는다 — 찜 탭이 실제 API로 바뀌면서 이 로컬 상태는 그 두 탭 전용이 됐다
+  // 어느 탭에서 뺀 것인지를 `tab` 대신 직접 받는다 — 찜 탭은 실제 API, 최근에 봤어요는 브라우저 기록이라
+  // 이 로컬 상태는 자주 샀어요 전용이다
   const remove = (tabKey: MockTab, id: string) => {
     setItems((prev) => ({ ...prev, [tabKey]: prev[tabKey].filter((item) => item.id !== id) }));
     setRemoving(null);
@@ -237,14 +233,14 @@ export function LikesView() {
             >
               찜했어요
             </TabsTrigger>
-            {/* MVP 범위 밖이라 눌러도 반응하지 않는다(#274 QA 답변) — 탭 자체는 시안대로 둔다 */}
+            {/* 백엔드 API가 없어 브라우저에 남긴 기록으로 연다(#509) */}
             <TabsTrigger
               value="recent"
-              disabled
               className="h-8.5 flex-1 rounded-none text-body-medium-16 text-text-body-secondary after:bottom-0 after:h-[1.5px] after:bg-border-strong data-active:text-title-bold-16 data-active:text-primary"
             >
               최근에 봤어요
             </TabsTrigger>
+            {/* MVP 범위 밖이라 눌러도 반응하지 않는다(#274 QA 답변) — 탭 자체는 시안대로 둔다 */}
             <TabsTrigger
               value="often"
               disabled
@@ -255,6 +251,13 @@ export function LikesView() {
           </TabsList>
 
           {TABS.map((value) => {
+            if (value === "recent") {
+              return (
+                <TabsContent key={value} value={value} className="flex flex-col gap-4 pt-4">
+                  <RecentTab />
+                </TabsContent>
+              );
+            }
             const isLiked = value === "liked";
             const visible = isLiked ? likedVisible : items[value as MockTab];
 
@@ -384,8 +387,8 @@ export function LikesView() {
           "좋아요" 탭이 그대로 켜진다(#273의 /recommendations와 다른 점) */}
       <BottomNav />
 
-      {/* 빼기는 되돌릴 수 없어 확인 창으로 막는다. 찜 탭(하트)은 확인 없이 바로 빠져
-          이 모달을 거치지 않는다 — 최근에 봤어요·자주 샀어요 전용이다 */}
+      {/* 빼기는 되돌릴 수 없어 확인 창으로 막는다. 찜 탭(하트)은 확인 없이 바로 빠지고, 최근에 봤어요의
+          X도 PRD("[터치] 목록에서 제거")대로 바로 빠져 이 모달을 거치지 않는다 — 자주 샀어요 전용이다 */}
       <AlertDialog open={removing !== null} onOpenChange={(open) => !open && setRemoving(null)}>
         <AlertDialogContent>
           <AlertDialogTitle>{removing && REMOVE_TITLE[removing.tab]}</AlertDialogTitle>
