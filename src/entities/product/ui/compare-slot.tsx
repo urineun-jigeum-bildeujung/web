@@ -49,8 +49,11 @@ export function CompareSlot({
       <div className={cn("flex min-w-0 flex-col items-start gap-3", className)}>
         <div className="flex w-full flex-col items-start gap-2">
           <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-border-secondary">
-            {/* 시안(1568-71123)은 빈 통 그림이고 크기는 카드의 25%(160px 기준 40px), 색은
-                #565d6d(text-body-secondary)다 — icon-fill-tertiary는 다른(더 옅은) 회색이다 */}
+            {/* 시안(1568-71123)은 빈 통 그림이고 색은 #565d6d(text-body-secondary)다 —
+                icon-fill-tertiary는 다른(더 옅은) 회색이다.
+                **크기는 시안의 40px이 아니라 그 비율(카드의 25%)을 따른다.** 시안 카드는
+                160px 고정인데 이 카드는 flex-1이라 393 화면에서 168.5px이고(353 − gap 16, 반),
+                25%면 42px이라 44px이 40px보다 가깝다 */}
             <Icon name="empty_box" aria-hidden className="size-11 text-text-body-secondary" />
           </div>
           <p className="text-sm text-foreground">
