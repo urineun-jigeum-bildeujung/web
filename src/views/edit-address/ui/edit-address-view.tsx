@@ -9,13 +9,14 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import {
+  DeliveryNoteField,
   FIXED_PLACE_NAMES,
   useQueryAddresses,
   useMutateAddress,
@@ -27,6 +28,7 @@ import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
+import { Label } from "@/shared/ui/label";
 import { SingleInputScreen } from "@/shared/ui/single-input-screen/single-input-screen";
 import { Skeleton } from "@/shared/ui/skeleton";
 
@@ -136,6 +138,7 @@ function EditAddressForm({
 }: EditAddressFormProps) {
   const router = useRouter();
   const { create, update, isSaving } = useMutateAddress();
+  const deliveryNoteId = useId();
 
   // 검색 화면이 실어 보낸 값. 시안이 도로명만 보여줘서 화면에 쓰는 것은 그것뿐이지만,
   // 우편번호는 등록에 **필수**라 함께 읽어 보낸다 (`zipNo → zipCode`, `roadAddr → address`).
@@ -344,19 +347,20 @@ function EditAddressForm({
         />
       </div>
 
-      <Controller
-        control={control}
-        name="deliveryNote"
-        render={({ field }) => (
-          <FormField
-            label="요청사항"
-            placeholder="요청사항을 적어주세요"
-            maxLength={ADDRESS_FIELD_MAX.deliveryNote}
-            {...field}
-            onClear={() => field.onChange("")}
-          />
-        )}
-      />
+      {/* **결제 화면과 같은 보기 목록에서 고른다** (QA No.174). 시안(1505:39298)은 적는 칸
+          하나였지만 QA가 결제와 같은 목록을 기대했다. 고른 것이 없으면 요청사항 없이 저장한다 */}
+      <div className="flex flex-col gap-3">
+        <Label htmlFor={deliveryNoteId} className="text-title-bold-16">
+          요청사항
+        </Label>
+        <Controller
+          control={control}
+          name="deliveryNote"
+          render={({ field }) => (
+            <DeliveryNoteField id={deliveryNoteId} value={field.value} onChange={field.onChange} />
+          )}
+        />
+      </div>
 
       {/* **이미 기본인 배송지는 끄지 못한다.** 서버가 마지막 기본 배송지를 지키느라
           `LAST_DEFAULT_ADDRESS`로 저장 전체를 거절해, 같이 고친 이름·연락처까지 무산된다.

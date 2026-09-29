@@ -42,7 +42,11 @@ vi.mock("@/entities/cart", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/cart")>()),
   useQueryCart: () => useQueryCart(),
 }));
-vi.mock("@/entities/address", () => ({ useQueryAddresses: () => useQueryAddresses() }));
+// 조회 훅만 바꾸고 요청사항 칸(`DeliveryNoteField`)은 배송지 폼과 함께 쓰는 실제 것을 그린다 (#526)
+vi.mock("@/entities/address", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/address")>()),
+  useQueryAddresses: () => useQueryAddresses(),
+}));
 vi.mock("@/entities/pet", () => ({ useQueryPets: () => useQueryPets() }));
 
 vi.mock("../api/orders", () => ({ createOrder, releaseOrder }));

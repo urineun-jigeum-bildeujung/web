@@ -11,6 +11,8 @@
 
 import { z } from "zod";
 
+import { DELIVERY_NOTE_MAX } from "@/entities/address";
+
 /**
  * 칸마다 적을 수 있는 길이. 입력칸의 `maxLength`도 이 값을 쓴다.
  *
@@ -24,8 +26,8 @@ export const ADDRESS_FIELD_MAX = {
   receiver: 50,
   phone: 20,
   addressDetail: 100,
-  /** 서버 `@Size(max = 100)`. 배송지 등록 자체의 제약이다 */
-  deliveryNote: 100,
+  /** 서버 `@Size(max = 100)`. 배송지 등록 자체의 제약이다. 결제 화면과 함께 쓰는 요청사항 칸의 값이다 (#526) */
+  deliveryNote: DELIVERY_NOTE_MAX,
 } as const;
 
 export const addressFormSchema = z.object({
