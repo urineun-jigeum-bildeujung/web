@@ -32,7 +32,10 @@ type PageHeaderProps = {
 /** 브라우저 뒤로가기일 때만 라우터를 부른다. 누를 때 할 일을 받은 곳은 라우터 없이도 그려진다 */
 function RouterBackButton({ icon }: { icon: "back" | "close" }) {
   const router = useRouter();
-  return <HeaderBackButton icon={icon} onClick={() => router.back()} />;
+  // 공유 링크·새 탭으로 바로 들어오면 되돌릴 기록이 없어 눌러도 아무 일이 없었다. 그때는 홈으로
+  // 간다(QA PD-004.1, #522)
+  const goBack = () => (window.history.length > 1 ? router.back() : router.push("/"));
+  return <HeaderBackButton icon={icon} onClick={goBack} />;
 }
 
 function LeadingSlot({
