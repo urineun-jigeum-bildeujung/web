@@ -103,7 +103,7 @@ function PhotoCarousel({ images }: { images: string[] }) {
               fill
               sizes="(max-width: 420px) 100vw, 420px"
               className="object-cover"
-              priority={index === 0}
+              preload={index === 0}
             />
           </li>
         ))}

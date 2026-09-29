@@ -152,7 +152,7 @@ function ProductImages({ images, name }: { images: string[]; name: string }) {
             <Image
               src={src}
               // 첫 장이 이 화면의 LCP다. 나머지는 넘겨야 보이므로 lazy로 둔다
-              priority={imageIndex === 0}
+              preload={imageIndex === 0}
               alt={imageIndex === 0 ? name : `${name} 사진 ${imageIndex + 1}`}
               fill
               sizes="(max-width: 420px) 100vw, 420px"

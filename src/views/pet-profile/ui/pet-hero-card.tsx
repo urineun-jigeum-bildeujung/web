@@ -70,7 +70,7 @@ export function PetHeroCard({ profile }: PetHeroCardProps) {
             alt=""
             fill
             sizes="353px"
-            priority
+            preload
             className="object-cover object-top"
           />
           {/* 같은 사진을 흐리게 한 장 더 얹고 마스크로 위로 갈수록 지운다. backdrop-filter는

@@ -33,12 +33,12 @@ vi.mock("@/shared/lib/app-toast", () => ({
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace, back: vi.fn() }) }));
 // 도입부 목업 이미지. jsdom에는 이미지 최적화가 없어 img로 대신한다
-type MockImageProps = ComponentProps<"img"> & { fill?: boolean; priority?: boolean };
+type MockImageProps = ComponentProps<"img"> & { fill?: boolean; preload?: boolean };
 vi.mock("next/image", () => ({
-  default: ({ fill, priority, alt, ...props }: MockImageProps) => {
-    // fill·priority는 next/image 전용이라 img에 넘기면 경고가 난다
+  default: ({ fill, preload, alt, ...props }: MockImageProps) => {
+    // fill·preload는 next/image 전용이라 img에 넘기면 경고가 난다
     void fill;
-    void priority;
+    void preload;
     // eslint-disable-next-line @next/next/no-img-element
     return <img alt={alt} {...props} />;
   },
