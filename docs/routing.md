@@ -34,7 +34,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
 | `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `photo`, `n` | 구현됨 |
 | `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
-| `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭만 UI 시안 반영(#274). 나머지 두 탭은 와이어프레임이고 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
+| `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked\|recent`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭은 UI 시안 반영(#274). 최근에 봤어요는 브라우저에 남긴 기록으로 연다(#509). 자주 샀어요는 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
 
 ### 장바구니·결제
 
