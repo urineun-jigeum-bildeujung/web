@@ -186,7 +186,8 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   const { profile } = useQueryMyProfile();
   const { createReview, isSubmitting } = useMutateCreateReview();
 
-  const answer = (key: string, value: string) =>
+  // 보기를 다시 눌러 풀면 undefined가 온다. 필수 검사와 요청 변환이 둘 다 빈 답으로 본다
+  const answer = (key: string, value: string | undefined) =>
     patch({ responses: { ...responses, [key]: value } });
 
   // **시안이 정한 필수 문항을 본다.** 그전에는 "반응 문항 하나 이상"이라는 임시 규칙이었다 —
