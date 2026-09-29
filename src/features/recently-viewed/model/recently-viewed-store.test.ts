@@ -75,3 +75,53 @@ test("목록은 번호만 브라우저에 남기고, 다시 열면 그대로 읽
 
   expect(useRecentlyViewedStore.getState().productIds).toEqual([5, 4]);
 });
+
+// 손으로 고쳤거나 형식이 바뀐 값이 통째로 들어오면 400으로 영영 빠지지 않거나 카드 키가 겹친다
+test("저장된 값은 쓸 수 있는 번호만 한 칸씩 옮긴다", async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({ state: { productIds: [5, "x", 5, -1, 2.5, null, 4] }, version: 1 }),
+  );
+  await useRecentlyViewedStore.persist.rehydrate();
+  expect(useRecentlyViewedStore.getState().productIds).toEqual([5, 4]);
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { productIds: "5,4" }, version: 1 }));
+  await useRecentlyViewedStore.persist.rehydrate();
+  expect(useRecentlyViewedStore.getState().productIds).toEqual([]);
+
+  const tooMany = Array.from({ length: RECENTLY_VIEWED_LIMIT + 3 }, (_, index) => index + 1);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { productIds: tooMany }, version: 1 }));
+  await useRecentlyViewedStore.persist.rehydrate();
+  expect(useRecentlyViewedStore.getState().productIds).toHaveLength(RECENTLY_VIEWED_LIMIT);
+});
+
+// 기록하다 예외가 나면 상품 상세가 통째로 죽는다
+test("저장소가 가득 차 쓰지 못해도 예외 없이 화면 안에서는 기록한다", () => {
+  const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new DOMException("가득 참", "QuotaExceededError");
+  });
+
+  expect(() => useRecentlyViewedStore.getState().record(3)).not.toThrow();
+  expect(useRecentlyViewedStore.getState().productIds).toEqual([3]);
+  setItem.mockRestore();
+});
+
+test("저장소에 접근조차 막힌 브라우저에서도 읽기·기록이 멈추지 않는다", async () => {
+  // 사이트 데이터 저장을 막으면 localStorage를 읽기만 해도 SecurityError가 난다
+  const original = Object.getOwnPropertyDescriptor(window, "localStorage");
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    get: () => {
+      throw new DOMException("막힘", "SecurityError");
+    },
+  });
+  try {
+    await expect(useRecentlyViewedStore.persist.rehydrate()).resolves.toBeUndefined();
+    expect(() => useRecentlyViewedStore.getState().record(2)).not.toThrow();
+    expect(useRecentlyViewedStore.getState().productIds).toEqual([2]);
+  } finally {
+    if (original) Object.defineProperty(window, "localStorage", original);
+    else Reflect.deleteProperty(window, "localStorage");
+  }
+  expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+});
