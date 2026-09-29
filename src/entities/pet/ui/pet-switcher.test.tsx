@@ -33,6 +33,25 @@ test("selectedIds를 주면 체크박스로 여러 마리를 고른다", () => {
   expect(onToggle).toHaveBeenCalledWith("1");
 });
 
+// 360px 폭에서 60px 원 다섯 칸이면 넘치는데, 줄이 아니라 페이지 전체가 옆으로 밀렸다(QA HM-016).
+// jsdom은 레이아웃을 계산하지 않아 여기서는 줄이 스크롤을 맡고 칸이 줄지 않는지만 본다.
+// 실제 넘침은 e2e/home.spec.ts가 360px 브라우저에서 잰다
+test("메인 모양은 넘치면 줄만 옆으로 밀리고 칸은 줄어들지 않는다", () => {
+  render(
+    <PetSwitcher pets={PETS} selectedId="1" onSelect={vi.fn()} onAdd={vi.fn()} variant="main" />,
+  );
+
+  expect(screen.getByRole("radiogroup", { name: "아이 고르기" }).className).toContain(
+    "overflow-x-auto",
+  );
+  for (const item of [
+    ...screen.getAllByRole("radio"),
+    screen.getByRole("button", { name: "새 아이 추가" }),
+  ]) {
+    expect(item.className).toContain("shrink-0");
+  }
+});
+
 // 회색 원만 있으면 어느 아이인지 알 수 없다(QA 1차 4번, #470)
 test("사진이 없는 아이는 원 안에 이름 앞 두 글자를 넣는다", () => {
   render(<PetSwitcher pets={PETS} selectedId="1" onSelect={vi.fn()} />);
