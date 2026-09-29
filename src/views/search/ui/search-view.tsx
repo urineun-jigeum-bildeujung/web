@@ -1,4 +1,4 @@
-// 검색 화면. 최근 검색어와 카테고리 바로가기로 시작하고, 글자를 넣으면 추천어를 보인다.
+// 검색 화면. 최근 검색어로 시작하고, 글자를 넣으면 추천어를 보인다.
 // UI 시안 기준(#245, 2396-80473·2396-80487, 검색어 입력 1117-6366)이다.
 //
 // 이 화면은 제목 대신 입력창이 머리말 자리에 온다. 들어오자마자 칠 수 있어야 하는 화면이라
@@ -6,7 +6,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -27,13 +26,6 @@ import {
   subscribeRecent,
 } from "../model/recent-keywords";
 import { SuggestionItem } from "./suggestion-item";
-
-// 시안(2396-80487)은 칩에 아이콘 없이 글자만 있다
-const CATEGORIES = [
-  { value: "food", label: "사료" },
-  { value: "snack", label: "간식" },
-  { value: "supplement", label: "영양제" },
-] as const;
 
 // 목 데이터. 실제로는 무엇을 추천할지 기획 확정 후 서버에서 받는다
 const SUGGESTIONS = [
@@ -163,77 +155,53 @@ export function SearchView() {
             ))}
           </ul>
         ) : (
-          <>
-            <section className="flex flex-col gap-3 px-4 pt-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-title-bold-16 text-foreground">최근 검색어</h2>
-                {recent && recent.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setRecent([])}
-                    // 시안(2396-80487)은 고르러 온 화면(picking)일 때만 옅은 회색(#b1b3bb,
-                    // text-body-unselect)이고, 일반 검색(1117-9724)은 #565d6d다
-                    className={cn(
-                      "flex min-h-11 min-w-11 items-center justify-center px-1 text-label-medium-14 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                      picking ? "text-text-body-unselect" : "text-text-body-secondary",
-                    )}
-                  >
-                    전체삭제
-                  </button>
-                )}
-              </div>
+          <section className="flex flex-col gap-3 px-4 pt-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-title-bold-16 text-foreground">최근 검색어</h2>
+              {recent && recent.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setRecent([])}
+                  // 고르러 온 화면(picking, 1117-9724)만 옅은 회색(#b1b3bb,
+                  // text-body-unselect)이고, 일반 검색(2396-80487)은 #565d6d다
+                  className={cn(
+                    "flex min-h-11 min-w-11 items-center justify-center px-1 text-label-medium-14 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    picking ? "text-text-body-unselect" : "text-text-body-secondary",
+                  )}
+                >
+                  전체삭제
+                </button>
+              )}
+            </div>
 
-              {/* 붙기 전에는 저장된 것을 아직 모른다(`null`). 빈 상태를 먼저 그리면 저장된 검색어가
-                  있는 사람에게 "내역이 없어요"가 잠깐 떴다 사라진다 (#479) */}
-              {recent !== null &&
-                (recent.length > 0 ? (
-                  <ul className="flex flex-wrap gap-2">
-                    {recent.map((item) => (
-                      <li key={item}>
-                        <RecentKeywordChip
-                          keyword={item}
-                          onSearch={search}
-                          onRemove={(word) => setRecent(recent.filter((entry) => entry !== word))}
-                        />
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  // 공용 EmptyState는 72px 아이콘·18px 제목 시안(메인 타임딜) 기준이라 여기(40px
-                  // 아이콘, 14px 두 줄, 2396-80473)와 맞지 않아 따로 그린다
-                  <div className="flex flex-col items-center gap-2 py-9 text-center text-icon-fill-tertiary">
-                    <IoSearchOutline aria-hidden className="size-10" />
-                    <p className="text-label-medium-14">
-                      최근에 검색한 내역이 없어요
-                      <br />
-                      궁금한 상품을 검색해보세요
-                    </p>
-                  </div>
-                ))}
-            </section>
-
-            {/* 비교 자리를 채우러 왔을 때는 시안(1117-9724)에 이 섹션이 없다 — 카테고리를
-                둘러보다 다른 상품에 눈을 돌리게 하는 대신 검색으로만 좁혀 들어오게 한다 */}
-            {!picking && (
-              <section className="flex flex-col gap-3 px-4 pt-6">
-                <h2 className="text-title-bold-16 text-foreground">카테고리로 둘러보기</h2>
+            {/* 붙기 전에는 저장된 것을 아직 모른다(`null`). 빈 상태를 먼저 그리면 저장된 검색어가
+                있는 사람에게 "내역이 없어요"가 잠깐 떴다 사라진다 (#479) */}
+            {recent !== null &&
+              (recent.length > 0 ? (
                 <ul className="flex flex-wrap gap-2">
-                  {CATEGORIES.map((category) => (
-                    <li key={category.value}>
-                      <Link
-                        href={`/?category=${category.value}`}
-                        // 시안(2396-80487)의 칩은 보이는 높이가 40px이다. 누르는 자리는
-                        // home-view와 같은 after: 기법으로 44px을 지킨다
-                        className="relative inline-flex h-10 items-center rounded-full border border-border px-3 text-sm text-foreground transition-colors after:absolute after:inset-x-0 after:-inset-y-0.5 hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                      >
-                        {category.label}
-                      </Link>
+                  {recent.map((item) => (
+                    <li key={item}>
+                      <RecentKeywordChip
+                        keyword={item}
+                        onSearch={search}
+                        onRemove={(word) => setRecent(recent.filter((entry) => entry !== word))}
+                      />
                     </li>
                   ))}
                 </ul>
-              </section>
-            )}
-          </>
+              ) : (
+                // 공용 EmptyState는 72px 아이콘·18px 제목 시안(메인 타임딜) 기준이라 여기(40px
+                // 아이콘, 14px 두 줄, 2396-80473)와 맞지 않아 따로 그린다
+                <div className="flex flex-col items-center gap-2 py-9 text-center text-icon-fill-tertiary">
+                  <IoSearchOutline aria-hidden className="size-10" />
+                  <p className="text-label-medium-14">
+                    최근에 검색한 내역이 없어요
+                    <br />
+                    궁금한 상품을 검색해보세요
+                  </p>
+                </div>
+              ))}
+          </section>
         )}
       </main>
 
