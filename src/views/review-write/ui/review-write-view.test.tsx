@@ -228,6 +228,40 @@ describe("ReviewWriteView 1단계", () => {
     expect(screen.getByRole("button", { name: "다음" }).hasAttribute("disabled")).toBe(false);
   });
 
+  // QA RV-007. 라디오는 원래 풀리지 않아 잘못 누른 답을 되돌릴 길이 없었다
+  it("고른 보기를 다시 누르면 풀리고, 기호성을 풀면 다음이 다시 잠긴다", () => {
+    renderAt();
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "16" } });
+    pick("잘 먹었나요?", "잘 먹어요");
+    const next = screen.getByRole("button", { name: "다음" });
+    expect(next.hasAttribute("disabled")).toBe(false);
+
+    pick("잘 먹었나요?", "잘 먹어요");
+
+    const palatability = within(screen.getByRole("radiogroup", { name: "잘 먹었나요?" }));
+    expect(
+      palatability.getByRole("radio", { name: "잘 먹어요" }).getAttribute("aria-checked"),
+    ).toBe("false");
+    expect(next.hasAttribute("disabled")).toBe(true);
+  });
+
+  // 화면에서 누르는 것은 숨긴 라디오가 아니라 보기 글자(레이블)다
+  it("선택 문항도 보기 글자를 다시 누르면 풀린다", () => {
+    renderAt();
+    const digestion = within(screen.getByRole("radiogroup", { name: "배변 상태는 어땠나요?" }));
+
+    fireEvent.click(digestion.getByText("좋아졌어요"));
+    expect(digestion.getByRole("radio", { name: "좋아졌어요" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+
+    fireEvent.click(digestion.getByText("좋아졌어요"));
+    expect(digestion.getByRole("radio", { name: "좋아졌어요" }).getAttribute("aria-checked")).toBe(
+      "false",
+    );
+  });
+
   it("별은 반 개 단위로 매기고 화살표 키로 반 개씩 옮긴다", () => {
     renderAt();
 
@@ -309,6 +343,19 @@ describe("ReviewWriteView 2단계", () => {
 
     pick("아이에게 급여하기 편했나요?", "편해요");
     expect(submitButton().hasAttribute("disabled")).toBe(false);
+  });
+
+  // QA RV-007. 2단계의 필수 문항도 풀 수 있고, 풀면 다시 막힌다
+  it("급여 편의성을 다시 눌러 풀면 등록이 다시 잠긴다", async () => {
+    stubApi();
+    renderAt();
+    goToDetail();
+    await fillDetail();
+    expect(submitButton().hasAttribute("disabled")).toBe(false);
+
+    pick("아이에게 급여하기 편했나요?", "편해요");
+
+    expect(submitButton().hasAttribute("disabled")).toBe(true);
   });
 
   it("이전은 뒤로가기 없이도 1단계로 돌아간다", () => {

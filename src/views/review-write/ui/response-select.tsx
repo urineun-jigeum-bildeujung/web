@@ -2,6 +2,9 @@
 // UI 시안 기준(리뷰작성 1884-29400의 문항 상자)이다. 높이 44, 모서리 12, 글자 label/medium_12.
 //
 // 겉모습은 버튼 줄이지만 라디오로 만든다. 배타적 선택이라 스크린 리더가 "3개 중 1번째"로 읽어야 한다.
+//
+// 고른 칸을 다시 누르면 답하지 않은 상태로 돌아간다(QA RV-007). 라디오는 원래 풀리지 않아,
+// 모르는 항목을 잘못 눌렀을 때 아무 답이나 남기게 된다 — 선택 문항에서 그 답이 추천 근거를 흐린다.
 
 "use client";
 
@@ -16,7 +19,8 @@ import type { Question } from "../model/questions";
 type ResponseSelectProps = {
   question: Question;
   value?: string;
-  onValueChange: (value: string) => void;
+  /** 고른 칸을 다시 눌러 풀면 `undefined`가 온다 */
+  onValueChange: (value: string | undefined) => void;
   className?: string;
 };
 
@@ -62,6 +66,13 @@ export function ResponseSelect({ question, value, onValueChange, className }: Re
               <RadioGroupItem
                 id={itemId}
                 value={option.value}
+                // Radix는 고르지 않은 칸을 누를 때만 값을 바꾼다. 고른 칸이면 그 처리를 막고 푼다.
+                // 레이블을 눌러도, Space를 눌러도 이 버튼의 click으로 들어온다
+                onClick={(event) => {
+                  if (!selected) return;
+                  event.preventDefault();
+                  onValueChange(undefined);
+                }}
                 className="peer sr-only absolute size-px"
               />
               <label
