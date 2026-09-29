@@ -19,7 +19,7 @@ tools: Read, Glob, Grep, Bash
 - **디자인**: HEX 하드코딩 금지(시맨틱 토큰). 조건부 className은 `cn()`. 라이트·다크 양쪽 값이 정의됐는지. **4px 스케일 환산 중 소수 단위는 ESLint가 못 잡으니 직접 본다** — `h-[14px]`→`h-3.5`, `gap-[6px]`→`gap-1.5`, `p-[2px]`→`p-0.5`. 정수 환산만 자동 검출된다.
 - **터치 UX·접근성**: 최소 44×44, hover 의존 금지, 색 단독 정보전달 금지, 포커스 링 제거 금지. 아이콘만 있는 버튼에 접근 가능한 이름이 있는지. 클릭 가능한 `div` 대신 `button`인지.
 - **아이콘**: 화면에 직접 배치하는 아이콘은 react-icons. `src/shared/ui/` 안의 lucide import는 건드리지 않았는지.
-- **이미지**: `next/image` 사용(원시 `img` 금지), width·height 또는 fill 지정, 의미 있는 alt, 첫 화면 핵심 이미지에만 priority.
+- **이미지**: `next/image` 사용(원시 `img` 금지), width·height 또는 fill 지정, 의미 있는 alt, 첫 화면 핵심 이미지에만 `preload`(Next 16에서 `priority`가 바뀐 이름. 새 코드의 `priority`는 지적한다).
 - **차트**: `accessibilityLayer` 켰는지, `next/dynamic`으로 지연 로드했는지. 단순 게이지에 Recharts를 쓰지 않았는지.
 - **네이밍/SRP**: 파일 kebab-case·컴포넌트 PascalCase·상수 UPPER_SNAKE. 한 컴포넌트가 폼 관리·페칭·렌더를 모두 하지 않는지.
 - **파일 헤더**: 새 소스 파일 첫 줄에 한국어 역할 주석. 단 `src/shared/ui/`의 shadcn 생성 파일은 예외다.

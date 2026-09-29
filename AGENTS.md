@@ -299,7 +299,7 @@ shadcn은 라이브러리가 아니라 코드가 저장소에 복사되는 방�
 | --- | --- |
 | `next/image` 사용, 원시 `img` 태그 금지 | WebP·AVIF 자동 변환. 국내 3사 모두 미사용 |
 | 모든 이미지에 width·height 또는 fill 지정 | 컬리 CLS 0.77 사례 |
-| 첫 화면 핵심 이미지에 priority 적용 | 펫프렌즈·컬리 LCP Load delay 75~80% |
+| 첫 화면 핵심 이미지에 `preload` 적용. Next 16에서 `priority`가 폐기 예정이 되고 이 이름으로 바뀌었다(`next/dist/docs`의 `image.md`) | 펫프렌즈·컬리 LCP Load delay 75~80% |
 | 목록 이미지는 lazy 유지 | 어바웃펫 이미지 464개 즉시 로드 사례 |
 
 ### 5.7 React Compiler
