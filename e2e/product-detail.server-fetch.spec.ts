@@ -177,10 +177,10 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
 
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
 
-  await page.getByRole("tab", { name: "Q&A" }).click();
-  // Q&A 탭은 문의 목록을 담는다(#153). 예전의 빈 문구와 문의하기 버튼은 없어졌다
-  await expect(page.getByRole("link", { name: "상품 문의" })).toBeVisible();
-  await expect(page.getByText("하루에 몇 알씩 급여하면 되나요?")).toBeVisible();
+  // 상품 문의는 이번 MVP 범위 밖이라 탭을 막아 뒀다(#549) — 옮길 수 있는 탭은 리뷰뿐이다
+  await expect(page.getByRole("tab", { name: "Q&A" })).toBeDisabled();
+
+  await page.getByRole("tab", { name: "리뷰" }).click();
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeHidden();
 
   // nuqs 기본은 replace라, push로 두지 않으면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
