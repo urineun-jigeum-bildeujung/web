@@ -11,15 +11,14 @@ const isHydrated = () => useRecentlyViewedStore.persist.hasHydrated();
 const isHydratedOnServer = () => false;
 
 export function useRecentlyViewed() {
-  // **하이드레이션 중에는 서버와 같게 그린다.** 서버 화면은 늘 빈 목록인데 브라우저의 스토어는 만들
-  // 때 이미 복원돼 있어, 곧바로 목록을 그리면 서버 HTML과 어긋난다. 서버 스냅숏(false)으로 한 번 그린
-  // 뒤 바로 true로 다시 그린다
+  // **하이드레이션 중에는 서버와 같게 그린다.** 서버 스냅숏(false)으로 한 번 그린 뒤 바로 true로 다시
+  // 그린다. 목록은 zustand가 같은 때에 복원 전 초기값(빈 배열)을 주므로 따로 가리지 않는다
   const ready = useSyncExternalStore(subscribeHydration, isHydrated, isHydratedOnServer);
   const productIds = useRecentlyViewedStore((state) => state.productIds);
   const remove = useRecentlyViewedStore((state) => state.remove);
 
   return {
-    productIds: ready ? productIds : [],
+    productIds,
     /** 저장된 목록을 읽었는지. 거짓인 동안은 목록이 비어 보여도 아직 모르는 것이다 */
     ready,
     remove,
