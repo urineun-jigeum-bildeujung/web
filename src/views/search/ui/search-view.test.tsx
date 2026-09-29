@@ -35,10 +35,12 @@ describe("SearchView", () => {
     resetRecentCache();
   });
 
-  it("들어오면 최근 검색어를 보인다", () => {
+  it("들어오면 최근 검색어만 보인다", () => {
     renderView();
 
     expect(screen.getByText("최근 검색어")).toBeDefined();
+    // PD 확정으로 걷어낸 섹션이다. 되살아나면 여기서 잡는다 (#499)
+    expect(screen.queryByRole("heading", { name: "카테고리로 둘러보기" })).toBeNull();
   });
 
   // 검색한 적 없는 사람에게 시안 예시를 보이면 하지 않은 검색이 기록처럼 뜬다 (#479)
