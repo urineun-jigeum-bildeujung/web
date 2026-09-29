@@ -208,7 +208,8 @@ export function ProductFeedbackSheet({
                     role="radio"
                     aria-checked={selected}
                     onClick={() => {
-                      setPicked(item.value);
+                      // 고른 것을 다시 누르면 풀린다(QA HM-035). 잘못 눌렀을 때 시트를 닫지 않고 되돌린다
+                      setPicked(selected ? undefined : item.value);
                       // 둘 다 켜지면 무엇을 답한 것인지 알 수 없다
                       setTooEarly(false);
                     }}
@@ -347,7 +348,8 @@ export function ProductFeedbackSheet({
                   role="radio"
                   aria-checked={selected}
                   onClick={() => {
-                    setPicked(item.value);
+                    // 고른 것을 다시 누르면 풀린다(QA HM-035). 잘못 눌렀을 때 시트를 닫지 않고 되돌린다
+                    setPicked(selected ? undefined : item.value);
                     // 둘 다 켜지면 무엇을 답한 것인지 알 수 없다
                     setTooEarly(false);
                   }}

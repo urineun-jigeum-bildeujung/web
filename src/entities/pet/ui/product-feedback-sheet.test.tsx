@@ -68,6 +68,25 @@ it("보내는 중에 닫으면 늦게 온 완료를 버린다", async () => {
   expect(screen.getByRole("radio", { name: "잘 맞았어요" })).toBeDefined();
 });
 
+// 잘못 누른 반응을 되돌릴 길이 "아직 이르다"를 켜거나 시트를 닫는 것뿐이었다(QA HM-035).
+// 두 모양이 반응 칸을 따로 그려서 둘 다 본다
+it.each(["floating", "full"] as const)(
+  "%s 모양에서 고른 반응을 다시 누르면 풀리고 등록하기가 잠긴다",
+  (variant) => {
+    renderSheet({ variant, onSubmit: vi.fn() });
+    const good = screen.getByRole("radio", { name: "잘 맞았어요" });
+    const submit = screen.getByRole("button", { name: "등록하기" });
+
+    fireEvent.click(good);
+    expect(good.getAttribute("aria-checked")).toBe("true");
+    expect(submit.hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(good);
+    expect(good.getAttribute("aria-checked")).toBe("false");
+    expect(submit.hasAttribute("disabled")).toBe(true);
+  },
+);
+
 it("보내는 동안 등록이 막힌다", () => {
   renderSheet({ onSubmit: vi.fn(), isSubmitting: true });
 
