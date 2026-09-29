@@ -367,12 +367,12 @@ describe("LikesView", () => {
     expect(await screen.findAllByRole("listitem")).toHaveLength(4);
   });
 
-  // 시안(header, 1585:18342)은 뒤로가기 화살표 + 검색·알림·장바구니고 제목이 없다(#274).
-  // 바텀내비 탭 루트라 로고형일 거라 짐작했던 게 틀렸다는 것을 여기서 고정해 둔다
-  it("머리말에 뒤로가기가 있고 검색·알림·장바구니로 이동한다", async () => {
+  // PD팀 확정(2026-09-29, #513): 홈·마이페이지처럼 로고형이고 뒤로가기가 없다
+  it("머리말은 로고와 검색·알림·장바구니이고 뒤로가기가 없다", async () => {
     renderWith();
 
-    expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
+    expect(screen.getByText("골라주개냥")).toBeDefined();
+    expect(screen.queryByRole("button", { name: "이전 화면으로" })).toBeNull();
     expect(screen.getByRole("link", { name: "검색" }).getAttribute("href")).toBe("/search");
     expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
       "/mypage/notifications",
