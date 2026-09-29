@@ -21,6 +21,7 @@ import {
   useWishedProductIds,
 } from "@/features/toggle-wishlist";
 import { formatUnitPrice, type ProductCard, type ProductSearchResult } from "@/entities/product";
+import { useRequireSession } from "@/shared/api/use-require-session";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -268,6 +269,8 @@ type SearchResultViewProps = {
 
 export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
   const router = useRouter();
+  // 비교는 로그인해야 열린다. 고르기 모드는 주소로도 들어올 수 있어 확정할 때 한 번 더 본다 (#542 리뷰)
+  const requireSession = useRequireSession();
 
   const [keyword] = useQueryState("q", parseAsString.withDefault(""));
   // 비교 화면이 자리를 채우러 보냈으면 그 자리 번호가 담겨 온다.
@@ -366,7 +369,7 @@ export function SearchResultView({ resultsPromise }: SearchResultViewProps) {
           <Button
             disabled={!picked}
             onClick={() => {
-              if (!picked) return;
+              if (!picked || !requireSession()) return;
               router.push(
                 `/compare?slot=${encodeURIComponent(slot)}&product=${picked}${otherContext}${detailContext}`,
               );
