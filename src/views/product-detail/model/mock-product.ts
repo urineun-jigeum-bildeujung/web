@@ -40,7 +40,10 @@ export type PetMatch = {
 /** 상품 하나는 한 시점에 이 중 하나다. 타임딜이면서 동시에 품절인 상태는 다루지 않는다 */
 export type ProductStatus = "normal" | "deal" | "soldout";
 
-/** 타임딜 종료 시각. 실제로는 서버가 준다 */
+/**
+ * 개발용 `?status=deal`이 딜이 아닌 상품에 타임딜 화면을 씌울 때만 쓰는 종료 시각.
+ * 실제 종료 시각은 타임딜 상세 응답의 `timeDeal.endAt`이다(QA PD-063). 운영 빌드는 오버라이드를 듣지 않는다
+ */
 export const DEAL_ENDS_AT = new Date(Date.now() + 2 * 3600_000 + 14 * 60_000 + 33_000);
 
 /**

@@ -14,8 +14,19 @@ function nullIfNotFound(error: unknown): null {
 }
 
 /**
- * 딜이 끝났거나(404) 주소의 상품과 다른 딜이면 일반 상세로 둔다. 정가로 보이는 편이 남의 상품
- * 딜가를 붙이는 것보다 낫다. 상품 자체가 없으면 null이다 — 라우트가 404로 보낸다.
+ * 딜 상세로 보여줄 딜인지. 지금 살 수 있거나 딜 재고가 떨어졌으면(딜 품절로 보인다) 딜 상세다.
+ *
+ * **서버가 200을 줘도 살 수 없는 딜이 있다.** 예정 딜과, 종료 시각이 지났는데 아직 `ENDED`로
+ * 넘어가지 않은 딜이다(`purchasable=false`). 딜 상세로 두면 딜가가 보이고 딜 아이템으로 담겨
+ * 서버가 거절한다(QA PD-064). 옛 응답(`timeDeal` 없음)은 가를 값이 없어 전처럼 딜 상세로 둔다.
+ */
+function isShowableDeal(deal: ProductDetail): boolean {
+  return !deal.timeDeal || deal.timeDeal.purchasable || deal.soldOut;
+}
+
+/**
+ * 딜이 끝났거나(404) 지금 살 수 없는 딜이거나 주소의 상품과 다른 딜이면 일반 상세로 둔다. 정가로
+ * 보이는 편이 남의 상품 딜가를 붙이는 것보다 낫다. 상품 자체가 없으면 null이다 — 라우트가 404로 보낸다.
  */
 export async function getDetailProduct(
   productId: string,
@@ -23,7 +34,7 @@ export async function getDetailProduct(
 ): Promise<ProductDetail | null> {
   if (dealItemId) {
     const deal = await getTimeDealDetail(dealItemId).catch(nullIfNotFound);
-    if (deal && String(deal.productId) === productId) return deal;
+    if (deal && String(deal.productId) === productId && isShowableDeal(deal)) return deal;
   }
   return getProductDetail(productId).catch(nullIfNotFound);
 }

@@ -1,6 +1,6 @@
 // 적합도가 아이에 따라 갈리는지, 재지 못한 아이를 0점으로 읽히지 않게 하는지 본다.
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -73,6 +73,8 @@ vi.mock("@/entities/wishlist", async (importOriginal) => ({
 vi.mock("sonner", () => ({
   toast: { custom: vi.fn(), dismiss: vi.fn(), success: vi.fn(), error: vi.fn() },
 }));
+// 리뷰 탭은 서버에서 후기를 받는다. 이 화면 테스트에는 QueryClient가 없어 자리만 그린다
+vi.mock("./review-panel", () => ({ ReviewPanel: () => <p>후기 목록</p> }));
 
 import type { ProductCard, ProductDetail } from "@/entities/product";
 
@@ -83,6 +85,7 @@ import { ProductDetailView } from "./product-detail-view";
 const PRODUCT: ProductDetail = {
   productId: 1,
   timeDealItemId: null,
+  timeDeal: null,
   images: [],
   name: "면역 지원 영양제 90정",
   price: 21_000,
@@ -139,11 +142,12 @@ async function renderWith(
   search = "",
   product: Partial<ProductDetail> = {},
   relatedPromise: Promise<ProductCard[]> = relatedOf(),
+  onUrlUpdate?: (event: UrlUpdateEvent) => void,
 ) {
   let result: ReturnType<typeof render> | undefined;
   await act(async () => {
     result = render(
-      <NuqsTestingAdapter searchParams={search}>
+      <NuqsTestingAdapter searchParams={search} onUrlUpdate={onUrlUpdate}>
         <ProductDetailView
           productId="1"
           product={{ ...PRODUCT, ...product }}
@@ -406,6 +410,32 @@ describe("ProductDetailView", () => {
     expect(screen.queryByText("하루에 몇 알씩 급여하면 되나요?")).toBeNull();
   });
 
+  // 탭은 사진·적합도·함께 보면 좋은 상품 아래라 첫 화면 밖이다. 탭 값만 바꾸면 눌러도 아무 일이 없어 보였다(QA PD-002)
+  it("제목 아래 후기 수를 누르면 리뷰 탭으로 바꾸고 탭 자리로 내려간다", async () => {
+    // jsdom에는 scrollIntoView가 없다
+    const scrollIntoView = vi.fn();
+    Element.prototype.scrollIntoView = scrollIntoView;
+    try {
+      await renderWith();
+
+      const summary = screen.getByRole("region", { name: PRODUCT.name });
+      fireEvent.click(within(summary).getByRole("button", { name: "후기 108개" }));
+
+      expect(screen.getByRole("tab", { name: "리뷰" }).getAttribute("aria-selected")).toBe("true");
+      expect(screen.getByText("후기 목록")).toBeDefined();
+      expect(scrollIntoView).toHaveBeenCalledExactlyOnceWith({
+        behavior: "smooth",
+        block: "start",
+      });
+      // 내려가는 곳은 탭 묶음이다. 탭 줄이 맨 위에 오고 그 아래로 리뷰가 이어진다
+      expect(scrollIntoView.mock.contexts[0]).toBe(
+        screen.getByRole("tablist").closest("[data-slot=tabs]"),
+      );
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it("상품 정보 탭에 영양 성분 분석이 있다", async () => {
     await renderWith();
 
@@ -525,13 +555,89 @@ describe("ProductDetailView", () => {
     });
   });
 
-  // 종료 시각이 상세 응답에 없어 타임딜 화면은 아직 개발용 오버라이드로만 본다(#413)
-  it("타임딜 중에는 카운트다운이 붙은 구매 버튼 하나만 있다", async () => {
+  // QA용이다. 운영 빌드는 이 값을 듣지 않는다
+  it("개발용 ?status=deal은 딜이 아닌 상품에도 타임딜 화면을 씌운다", async () => {
     await renderWith("?status=deal", { soldOut: false });
 
     expect(screen.getByText("타임딜")).toBeDefined();
     expect(screen.getByRole("button", { name: /타임딜 구매하기/ })).toBeDefined();
     expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
+  });
+
+  describe("타임딜 (#539)", () => {
+    /** 타임딜 상세 응답에서 온 진행 중 딜. 남은 시간을 정해 둬야 카운트다운 숫자를 볼 수 있다 */
+    function liveDeal(msLeft = 2 * 3_600_000 + 30_000): Partial<ProductDetail> {
+      return {
+        soldOut: false,
+        timeDealItemId: 77,
+        timeDeal: { endAt: new Date(Date.now() + msLeft).toISOString(), purchasable: true },
+      };
+    }
+
+    // 전에는 개발용 `?status=deal`로만 켜져 배포 사이트에서는 타임딜 화면이 뜨지 않았다(QA PD-063)
+    it("서버가 지금 살 수 있다고 한 딜이면 배지·카운트다운·구매 버튼 하나를 응답의 종료 시각으로 그린다", async () => {
+      await renderWith("?dealItem=77", liveDeal());
+
+      expect(screen.getByText("타임딜")).toBeDefined();
+      expect(screen.getByRole("link", { name: /타임딜 종료까지/ }).getAttribute("href")).toBe(
+        "/deals",
+      );
+      // 목 종료 시각(2시간 14분)이 아니라 응답의 종료 시각으로 센다. 배너와 구매 버튼 둘이다
+      expect(screen.getAllByText("2시간 0분 남음")).toHaveLength(2);
+      expect(screen.getByRole("button", { name: /타임딜 구매하기/ })).toBeDefined();
+      expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
+    });
+
+    // 기간 밖이거나 딜 재고가 떨어진 딜은 서버가 purchasable=false로 준다
+    it("서버가 살 수 없다고 한 딜이면 타임딜 화면을 그리지 않는다", async () => {
+      await renderWith("?dealItem=77", {
+        ...liveDeal(),
+        timeDeal: { endAt: new Date(Date.now() + 60_000).toISOString(), purchasable: false },
+      });
+
+      expect(screen.queryByText("타임딜")).toBeNull();
+      expect(screen.queryByRole("button", { name: /타임딜 구매하기/ })).toBeNull();
+      expect(screen.getByRole("button", { name: /^장바구니$/ })).toBeDefined();
+    });
+
+    // 화면만 일반 상품으로 바꾸면 가격은 딜가, 담는 식별자는 딜 아이템 그대로라 서버가 거절했다(QA PD-064)
+    it("딜이 끝나면 주소에서 딜 번호만 떼고 서버가 일반 상세를 다시 그리게 한다", async () => {
+      vi.useFakeTimers();
+      try {
+        const updates: UrlUpdateEvent[] = [];
+        await renderWith("?dealItem=77&tab=review", liveDeal(2_000), relatedOf(), (update) =>
+          updates.push(update),
+        );
+        expect(screen.getByText("타임딜")).toBeDefined();
+
+        await act(async () => {
+          vi.advanceTimersByTime(3_000);
+        });
+
+        const last = updates.at(-1);
+        expect(last?.searchParams.has("dealItem")).toBe(false);
+        // 보던 탭은 그대로 둔다
+        expect(last?.searchParams.get("tab")).toBe("review");
+        // 서버 컴포넌트가 일반 상세를 다시 받아야 한다. 주소만 바꾸면 딜가가 남는다
+        expect(last?.options.shallow).toBe(false);
+        expect(screen.queryByText("타임딜")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    // 전에는 `/cart` 링크라 장바구니 화면으로 옮겨 갈 뿐 이 상품이 담기지 않았다(QA PD-066)
+    it("타임딜 중 장바구니 아이콘을 누르면 수량 시트가 열리고 딜 아이템으로 담는다", async () => {
+      await renderWith("?dealItem=77", liveDeal());
+
+      fireEvent.click(screen.getByRole("button", { name: "장바구니 담기" }));
+      fireEvent.click(screen.getByRole("button", { name: "21,000원 장바구니 담기" }));
+
+      await waitFor(() =>
+        expect(add).toHaveBeenCalledWith({ itemType: "TIME_DEAL", itemId: 77 }, 1),
+      );
+      expect(push).not.toHaveBeenCalled();
+    });
   });
 
   // 전에는 `/payment` 링크라 결제 화면에 고른 상품이 없었다(QA PD-056, #520)
@@ -568,6 +674,39 @@ describe("ProductDetailView", () => {
     const renderToast = vi.mocked(toast.custom).mock.calls[0][0];
     render(renderToast("restock-toast"));
     expect(screen.getByRole("status").textContent).toContain("재입고되면 바로 알려드릴게요!");
+  });
+
+  // 딜 한정 수량이 바닥난 것이라 재입고 알림은 맞지 않는 약속이다(상품 상세 구조도, QA PD-067)
+  it("딜 재고가 떨어진 타임딜 상품은 재입고 알림 대신 누를 수 없는 품절 버튼만 둔다", async () => {
+    await renderWith("?dealItem=77", {
+      soldOut: true,
+      timeDealItemId: 77,
+      timeDeal: { endAt: new Date(Date.now() + 60_000).toISOString(), purchasable: false },
+    });
+
+    expect(screen.queryByRole("button", { name: "재입고 알림 신청" })).toBeNull();
+    expect(screen.getByRole("button", { name: "품절" })).toHaveProperty("disabled", true);
+    expect(screen.queryByRole("button", { name: /타임딜 구매하기/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
+  });
+
+  // 시안(품절 1702-19204·19653)은 대표 이미지를 통째로 50% 흐리게 둔다(QA PD-059)
+  describe("품절 사진", () => {
+    const IMAGES = ["/images/e2e/product-photo-1.png", "/images/e2e/product-photo-2.png"];
+
+    it("품절이면 사진 자리를 흐리게 둔다", async () => {
+      await renderWith("", { images: IMAGES });
+
+      const photo = screen.getByRole("img", { name: PRODUCT.name });
+      expect(photo.closest(".opacity-50")).not.toBeNull();
+    });
+
+    it("살 수 있는 상품의 사진은 흐리지 않는다", async () => {
+      await renderWith("", { images: IMAGES, soldOut: false });
+
+      const photo = screen.getByRole("img", { name: PRODUCT.name });
+      expect(photo.closest(".opacity-50")).toBeNull();
+    });
   });
 
   describe("찜 (#483)", () => {
