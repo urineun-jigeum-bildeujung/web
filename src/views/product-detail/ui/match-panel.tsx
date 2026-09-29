@@ -24,6 +24,14 @@ type MatchPanelProps = {
   match: PetMatch;
 };
 
+/**
+ * 제목 뒷말. 80점 이상은 시안(상품 상세 프레임, 예: 3756:73239)의 "잘 맞는 상품이에요"다 — 홈·마이페이지
+ * 배지가 쓰는 짧은 "잘 맞아요"와 자리가 달라 이 화면에서만 바꾼다. 다른 구간은 시안이 없어 배지 문구 그대로다 (#528)
+ */
+function headlineOf(level: ReturnType<typeof getMatchLevel>) {
+  return level.tone === "high" ? "잘 맞는 상품이에요" : level.label;
+}
+
 export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
   const level = getMatchLevel(match.score);
   // 이름은 적합도에서 가져온다. 목록에서 따로 찾으면 둘이 어긋났을 때
@@ -70,7 +78,7 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
           <h2 id="match-heading" className="text-title-bold-16 text-text-body-default">
             {match.score === null
               ? `${petName} 기준으로는 아직 재지 못했어요`
-              : `${withJosa(petName, "과/와")} ${level.label}`}
+              : `${withJosa(petName, "과/와")} ${headlineOf(level)}`}
           </h2>
           <p className="text-caption-regular-12 text-text-body-secondary">
             ({match.profileLabel} 기준)

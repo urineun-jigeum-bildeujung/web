@@ -132,7 +132,7 @@ test("적합도는 내 아이 기준이고 아이를 바꾸면 함께 바뀐다"
   await page.goto(PATH);
 
   // 스텁의 기본 아이는 코코(말티즈)다. 등록한 알레르기(닭고기)가 이 상품(계란)과 겹치지 않는다
-  await expect(page.getByRole("heading", { name: "코코와 잘 맞아요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "코코와 잘 맞는 상품이에요" })).toBeVisible();
   await expect(page.getByText("(말티즈 · 4세 · 4kg 기준)")).toBeVisible();
   await expect(page.getByText("코코에게 등록된 알레르기 유발 성분이 없어요")).toBeVisible();
 
@@ -241,7 +241,7 @@ test("로그인하고 찜을 누르면 서버에 걸려 새로고침해도 남�
   const wishlist = await stubWishlist(page);
   await page.goto(PATH);
   // 하이드레이션 뒤에만 뜬다. 그전에 누르면 아무 일도 없다
-  await expect(page.getByRole("heading", { name: "코코와 잘 맞아요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "코코와 잘 맞는 상품이에요" })).toBeVisible();
 
   const like = page.getByRole("button", { name: "찜 목록에 담기" });
   await expect(like).toHaveAttribute("aria-pressed", "false");

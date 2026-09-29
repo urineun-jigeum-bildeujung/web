@@ -225,7 +225,7 @@ describe("ProductDetailView", () => {
   it("가격 아래에 적합도와 근거가 함께 있다", async () => {
     await renderWith();
 
-    expect(screen.getByRole("heading", { name: "초코와 잘 맞아요" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "초코와 잘 맞는 상품이에요" })).toBeDefined();
     expect(screen.getByText("관절 건강에 도움되는 글루코사민이 들어있어요")).toBeDefined();
   });
 
@@ -261,7 +261,7 @@ describe("ProductDetailView", () => {
     });
     await renderWith();
 
-    expect(screen.getByRole("heading", { name: "콩과 잘 맞아요" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "콩과 잘 맞는 상품이에요" })).toBeDefined();
   });
 
   it("로그인하지 않았으면 적합도 칸을 그리지 않는다", async () => {
@@ -351,7 +351,7 @@ describe("ProductDetailView", () => {
 
     expect(screen.queryByRole("heading", { name: "함께 보면 좋은 상품" })).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("heading", { name: "초코와 잘 맞아요" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "초코와 잘 맞는 상품이에요" })).toBeDefined();
 
     consoleError.mockRestore();
   });
