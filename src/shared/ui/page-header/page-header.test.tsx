@@ -18,6 +18,33 @@ test("기본은 뒤로가기 버튼이고 읽을 수 있는 이름을 가진다"
   expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
 });
 
+// 시안 공용 header(3581:82062): 누르는 자리 48×48이 왼쪽 여백에서 시작하고 32px 화살표가 그 왼쪽에 붙는다.
+// 44px 가운데 24px이던 때는 화살표가 작고 7px 오른쪽으로 밀려 화면마다 달라 보였다(#513)
+test("뒤로가기 화살표는 시안 크기(32px)로 누르는 자리 왼쪽에 붙는다", () => {
+  render(<PageHeader title="배송지 관리" />);
+
+  const button = screen.getByRole("button", { name: "이전 화면으로" });
+  expect(button.className).toContain("size-12");
+  expect(button.className).toContain("justify-start");
+  expect(button.querySelector("svg")?.getAttribute("class")).toContain("size-8");
+});
+
+// 홈과 마이페이지가 로고를 각자 그려 색과 여백이 달랐다(#513)
+test("leading이 logo면 버튼 없이 서비스 이름을 둔다", () => {
+  render(<PageHeader leading="logo" />);
+
+  expect(screen.getByText("골라주개냥")).toBeDefined();
+  expect(screen.queryByRole("button")).toBeNull();
+});
+
+// 다이얼로그는 제목이 다이얼로그 이름이어야 해서 DialogTitle을 그대로 받는다
+test("제목에 요소를 넘기면 h1로 감싸지 않고 그대로 둔다", () => {
+  render(<PageHeader title={<h2>사진 리뷰</h2>} />);
+
+  expect(screen.getByRole("heading", { level: 2, name: "사진 리뷰" })).toBeDefined();
+  expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+});
+
 test("leading이 close면 닫기 버튼이 된다", () => {
   render(<PageHeader leading="close" />);
   expect(screen.getByRole("button", { name: "닫기" })).toBeDefined();
@@ -57,7 +84,7 @@ test("오른쪽 슬롯에 버튼이 여럿이어도 제목 자리가 흔들리�
 
   // 좌우 열에 같은 유연 폭을 주는 3열 그리드여야 제목이 화면 중앙에 온다
   const header = container.querySelector("header");
-  expect(header?.className).toContain("grid-cols-[minmax(2.75rem,1fr)_auto_minmax(2.75rem,1fr)]");
+  expect(header?.className).toContain("grid-cols-[minmax(3rem,1fr)_auto_minmax(3rem,1fr)]");
 });
 
 test("제목이 없어도 오른쪽 슬롯이 오른쪽 칸에 남는다", () => {
