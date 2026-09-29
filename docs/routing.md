@@ -57,7 +57,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | `/mypage/address/new` | 배송지 추가·수정 | 인증 필요 | 장소 검색 결과 쿼리 | 구현됨 |
 | `/mypage/address/search` | 주소 검색 | 인증 필요 | 검색 결과 선택 상태 | 구현됨 |
 | `/mypage/notifications` | 알림 목록 | 인증 필요 | 없음 | 스캐폴딩 |
-| `/mypage/recently-viewed` | 최근 본 상품 | 인증 필요 | 없음 | 스캐폴딩 |
+| `/mypage/recently-viewed` | 최근 본 상품 | 인증 필요 | 없음 | `/likes?tab=recent`로 보냄(#509) |
 | `/mypage/restock` | 재입고 알림 | 인증 필요 | 선택 모드는 로컬 상태 | 구현됨 |
 | `/mypage/settings` | 설정 | 인증 필요 | 없음 | 구현됨 |
 
