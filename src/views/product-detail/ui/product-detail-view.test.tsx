@@ -370,7 +370,14 @@ describe("ProductDetailView", () => {
   it("Q&A 탭은 눌러도 열리지 않는다", async () => {
     await renderWith();
 
-    fireEvent.click(screen.getByRole("tab", { name: "Q&A" }));
+    // 클릭 결과만 보면 이벤트 연결이 끊겨도 통과한다. 막아 둔 수단 자체를 함께 본다
+    const qnaTab = screen.getByRole("tab", { name: "Q&A" });
+    expect(qnaTab.hasAttribute("disabled")).toBe(true);
+
+    // 나머지 탭까지 같이 막히면 화면이 통째로 굳는다
+    expect(screen.getByRole("tab", { name: "리뷰" }).hasAttribute("disabled")).toBe(false);
+
+    fireEvent.click(qnaTab);
 
     // 탭 전환 없이 상품 정보 탭 내용이 그대로 남는다
     expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();

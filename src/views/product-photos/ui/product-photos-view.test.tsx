@@ -100,7 +100,8 @@ describe("격자", () => {
 
     renderView();
 
-    expect(screen.getByText(/후기 사진/).textContent).toContain("3");
+    // 문구와 단위까지 PD 확정이라 통째로 단정한다 — "후기 사진 3개"로 바뀌어도 걸리게
+    expect(screen.getByText("후기 사진 3장")).toBeDefined();
     expect(screen.getAllByRole("button", { name: /크게 보기/ })).toHaveLength(3);
   });
 
