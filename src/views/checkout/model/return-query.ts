@@ -14,6 +14,8 @@
 // 토스 문서가 이 방법을 안내한다 — "적은 양의 데이터라면 successUrl의 쿼리 파라미터로
 // 추가하세요" (주문서형 결제 연동하기).
 
+import { BUY_NOW_PARAM } from "@/entities/cart";
+
 import { ITEMS_PARAM } from "./order-items";
 
 /**
@@ -26,15 +28,21 @@ export const ORDER_PARAM = "order";
 /**
  * 지금 고른 것을 그대로 들고 결제 화면으로 돌아오는 경로.
  *
- * **`items`만 옮긴다.** 복귀 주소에는 토스가 붙인 `code`·`message`·`orderId`도 있는데
- * 그것까지 실어 돌면 실패 안내가 옛 값으로 다시 뜨고 주소가 회차마다 길어진다.
+ * **고른 것(`items`·`buy`)만 옮긴다.** 복귀 주소에는 토스가 붙인 `code`·`message`·`orderId`도
+ * 있는데 그것까지 실어 돌면 실패 안내가 옛 값으로 다시 뜨고 주소가 회차마다 길어진다.
+ * 바로 구매(`buy`)가 빠지면 장바구니 전체가 결제 대상으로 읽힌다 (#520).
  */
 export function toCheckoutPath(search: string) {
   const query = new URLSearchParams();
-  const items = new URLSearchParams(search).get(ITEMS_PARAM);
+  const from = new URLSearchParams(search);
+  const items = from.get(ITEMS_PARAM);
   // **빈 문자열도 값이다.** `?items=`는 전체가 아니라 빈 선택이라 그대로 되돌려야 한다
   if (items !== null) {
     query.set(ITEMS_PARAM, items);
+  }
+  const buyNow = from.get(BUY_NOW_PARAM);
+  if (buyNow) {
+    query.set(BUY_NOW_PARAM, buyNow);
   }
   const suffix = query.toString();
   return suffix ? `/payment?${suffix}` : "/payment";

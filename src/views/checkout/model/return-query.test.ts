@@ -84,3 +84,14 @@ test("결제 화면 경로에 토스가 붙인 값은 옮기지 않는다", () =
     "/payment?items=NORMAL%3A1",
   );
 });
+
+// 바로 구매가 빠지면 실패 뒤 다시 누를 때 장바구니 전체가 결제 대상이 된다 (#520)
+test("실패 복귀 주소는 바로 구매 상품도 되돌려 싣고 토스 값은 버린다", () => {
+  const url = new URL(
+    toFailUrl("https://leechs.shop", "?buy=NORMAL:252:2&code=PAY_PROCESS_CANCELED"),
+  );
+
+  expect(url.pathname).toBe("/payment");
+  expect(url.searchParams.get("buy")).toBe("NORMAL:252:2");
+  expect(url.searchParams.get("code")).toBeNull();
+});
