@@ -363,13 +363,26 @@ describe("ProductDetailView", () => {
     expect(screen.getByText("나트륨 함량이 또래 평균보다 다소 높은 편이에요")).toBeDefined();
   });
 
-  it("탭을 옮기면 그 탭 내용이 나온다", async () => {
+  // 리뷰 탭 전환은 여기서 보지 않는다 — ReviewPanel이 QueryClient를 요구해 이 harness로는
+  // 열 수 없고, 그 탭 안의 동작은 review-panel.test.tsx가 맡는다.
+  //
+  // 상품 문의는 이번 MVP 범위 밖이다(PD) — 좋아요 화면의 두 탭과 같은 방식으로 막는다
+  it("Q&A 탭은 눌러도 열리지 않는다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Q&A" }));
+
+    // 탭 전환 없이 상품 정보 탭 내용이 그대로 남는다
+    expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
+    expect(screen.queryByRole("link", { name: "상품 문의" })).toBeNull();
+  });
+
+  // disabled는 클릭만 막는다. 주소로 직접 들어오는 건 tab 쿼리 파서를 좁혀 막았다
+  it("주소로 Q&A에 들어가도 상품 정보 탭으로 떨어진다", async () => {
     await renderWith("?tab=qna");
 
-    // Q&A 탭은 문의 목록을 담는다(#153). 예전의 빈 문구와 문의하기 버튼은 없어졌다
-    expect(screen.getByRole("link", { name: "상품 문의" })).toBeDefined();
-    expect(screen.getByText("하루에 몇 알씩 급여하면 되나요?")).toBeDefined();
-    expect(screen.queryByRole("heading", { name: "영양 성분 분석" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
+    expect(screen.queryByText("하루에 몇 알씩 급여하면 되나요?")).toBeNull();
   });
 
   it("상품 정보 탭에 영양 성분 분석이 있다", async () => {
