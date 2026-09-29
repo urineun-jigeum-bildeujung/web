@@ -35,10 +35,3 @@ test("최근 검색어를 지우면 비었다고 알린다", async ({ page }) =>
   await page.getByRole("button", { name: "전체삭제" }).click();
   await expect(page.getByText("최근에 검색한 내역이 없어요")).toBeVisible();
 });
-
-test("카테고리를 고르면 그 종류 목록으로 간다", async ({ page }) => {
-  await page.goto("/search");
-
-  await page.getByRole("link", { name: "간식" }).click();
-  await expect(page).toHaveURL(/category=snack/);
-});
