@@ -1,22 +1,49 @@
-// 상품 비교 테스트. 자리가 비면 무엇이 달라지는지 본다.
-import { fireEvent, render, screen } from "@testing-library/react";
+// 상품 비교 테스트. 자리를 무엇으로 채우는지, 자리가 비면 무엇이 달라지는지, 장바구니에 실제로 담는지 본다.
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
-const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+import type { ProductDetail } from "@/entities/product";
+import { ApiError } from "@/shared/api/client";
+import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
-// 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 QueryClient가 없어 링크만 대신 그린다(#395)
+const { push, showSnackbar, getProductDetail, addCartItem, getCart } = vi.hoisted(() => ({
+  push: vi.fn(),
+  showSnackbar: vi.fn(),
+  getProductDetail: vi.fn(),
+  addCartItem: vi.fn(),
+  getCart: vi.fn(),
+}));
+
+// 서버로 가는 것만 갈아끼운다. 상세 훅·장바구니 훅은 진짜를 써서 캐시 무효화까지 지나가게 한다
+vi.mock("@/entities/product/api/products", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/product/api/products")>()),
+  getProductDetail,
+}));
+vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/cart/api/cart")>()),
+  addCartItem,
+  getCart,
+}));
+
+// 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 알림 API가 없어 링크만 대신 그린다(#395)
 vi.mock("@/widgets/notification-bell", () => ({
   NotificationBell: ({ className }: { className?: string }) => (
     <a href="/mypage/notifications" aria-label="알림" className={className} />
   ),
   NewNotificationToaster: () => null,
 }));
-// 헤더 장바구니도 서버 상태를 읽는 위젯이라 링크만 대신 그린다(#470)
-vi.mock("@/widgets/cart-link", () => ({
-  CartLink: () => <a href="/cart" aria-label="장바구니" />,
-}));
+// 헤더 장바구니는 세션을 읽는 위젯이라 수를 세는 훅만 그대로 써서 대신 그린다(#470).
+// 담은 뒤 이 수가 바뀌는지가 QA CP-010이다
+vi.mock("@/widgets/cart-link", async () => {
+  const { useQueryCartCount } = await import("@/entities/cart");
+  return {
+    CartLink: function CartLink() {
+      const count = useQueryCartCount();
+      return <a href="/cart" aria-label={count > 0 ? `장바구니에 ${count}개` : "장바구니"} />;
+    },
+  };
+});
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, back: vi.fn() }),
   usePathname: () => "/compare",
@@ -26,36 +53,152 @@ vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
 import { ProductCompareView } from "./product-compare-view";
 
+/** 배포 API에서 본 상품과 같은 모양의 상세. 이름·가격·이미지만 번호마다 다르다 */
+function detail(productId: number, name: string, price: number): ProductDetail {
+  return {
+    productId,
+    timeDealItemId: null,
+    images: [`https://image.leechs.shop/products/${productId}.png`],
+    name,
+    price,
+    originalPrice: price,
+    discountRate: 0,
+    rating: null,
+    reviewCount: 0,
+    soldOut: false,
+    detail: {
+      manufacturer: null,
+      brandName: null,
+      originCountry: null,
+      netQuantityValue: 1,
+      netQuantityUnit: "kg",
+      ingredients: [],
+      feedingTarget: null,
+      targetBreedSize: null,
+      targetAgeGroup: null,
+      targetSpecies: [],
+      feedingMethod: null,
+      allergens: [],
+      cautions: [],
+      consumptionPeriodDisplay: null,
+      shelfLifeAfterOpeningDays: null,
+      storageMethod: null,
+    },
+  };
+}
+
+const PRODUCTS: Record<string, ProductDetail> = {
+  "1": detail(1, "한끼 그레인프리 곤충 시니어 1kg", 19000),
+  "2": detail(2, "한끼 그레인프리 곤충 시니어 4kg", 50400),
+  "4": detail(4, "한끼 웰니스 닭고기 시니어 2kg", 34000),
+  "8": detail(8, "한끼 클래식 칠면조 시니어 2kg", 30300),
+  "33": detail(33, "한끼 웰니스 사슴 어덜트 4kg", 48200),
+  "75": detail(75, "담았냥 그레인프리 가다랑어 시니어 1kg", 24700),
+  "123": detail(123, "한포 면역 지원 영양제 90정", 21000),
+};
+
+beforeEach(() => {
+  getProductDetail.mockImplementation((id: string) =>
+    PRODUCTS[id] ? Promise.resolve(PRODUCTS[id]) : Promise.reject(new ApiError(404, "없음")),
+  );
+  getCart.mockResolvedValue({ memberId: 1, items: [], totalAmount: 0 });
+  addCartItem.mockResolvedValue(undefined);
+});
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
 function renderView(search = "") {
-  render(
-    <NuqsTestingAdapter searchParams={search}>
-      <ProductCompareView />
-    </NuqsTestingAdapter>,
+  const Wrapper = createQueryWrapper();
+  return render(
+    <Wrapper>
+      <NuqsTestingAdapter searchParams={search}>
+        <ProductCompareView />
+      </NuqsTestingAdapter>
+    </Wrapper>,
   );
 }
 
-test("두 자리가 차 있으면 비교표를 보여준다", () => {
+// 담지 않았는데 예시 상품 둘이 담겨 있고, 빼고 다시 와도 되살아났다(QA HM-000)
+test("고른 상품이 없으면 두 자리 모두 빈 칸으로 시작한다", () => {
   renderView();
-  expect(screen.getByRole("table")).toBeDefined();
+
+  expect(screen.getAllByRole("button", { name: "상품 추가하기" })).toHaveLength(2);
+  expect(screen.queryByRole("button", { name: /비교에서 빼기/ })).toBeNull();
+  expect(screen.queryByText("맞춤 분석")).toBeNull();
+  expect(getProductDetail).not.toHaveBeenCalled();
 });
 
-test("한 자리를 비우면 견줄 것이 없어 표가 사라진다", () => {
-  renderView();
+// 검색이 돌려준 실제 번호(33)를 목업 맵에서 찾아 자리가 빈 채로 남았다(QA CP-022).
+// 목업 상품에는 이미지도 없었다(QA CP-001)
+test("주소의 상품 번호로 상세를 받아 이름·가격·이미지를 채운다", async () => {
+  const { container } = renderView("?slot=0&product=33&other=75");
 
-  fireEvent.click(screen.getAllByRole("button", { name: /비교에서 빼기/ })[0]);
+  expect(
+    await screen.findByRole("button", { name: "한끼 웰니스 사슴 어덜트 4kg 비교에서 빼기" }),
+  ).toBeDefined();
+  expect(
+    await screen.findByRole("button", {
+      name: "담았냥 그레인프리 가다랑어 시니어 1kg 비교에서 빼기",
+    }),
+  ).toBeDefined();
+  expect(screen.getByText("48,200원")).toBeDefined();
+  expect(getProductDetail).toHaveBeenCalledWith("33");
+  expect(getProductDetail).toHaveBeenCalledWith("75");
 
-  expect(screen.queryByRole("table")).toBeNull();
-  expect(screen.getByText(/담아주세요/)).toBeDefined();
+  const sources = Array.from(container.querySelectorAll("img")).map((img) =>
+    decodeURIComponent(img.getAttribute("src") ?? ""),
+  );
+  expect(sources.some((src) => src.includes("https://image.leechs.shop/products/33.png"))).toBe(
+    true,
+  );
+  expect(sources.some((src) => src.includes("https://image.leechs.shop/products/75.png"))).toBe(
+    true,
+  );
+});
+
+test("상품을 받는 동안 그 자리에 뼈대를 보인다", () => {
+  getProductDetail.mockImplementation(() => new Promise(() => {}));
+  renderView("?slot=0&product=33&other=none");
+
+  expect(screen.getByRole("status", { name: "비교할 상품을 불러오는 중" })).toBeDefined();
+  // 반대쪽 빈 자리는 기다리지 않는다
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
 });
 
-test("상품 상세에서 담아 온 경우 현재 상품만 첫 자리에 보여준다", () => {
+test("상품을 받지 못하면 그 자리에 다시 시도를 보이고, 누르면 다시 부른다", async () => {
+  getProductDetail.mockRejectedValue(new ApiError(503, "잠시 문제"));
+  renderView("?slot=0&product=33&other=none");
+
+  expect(await screen.findByText("상품을 불러오지 못했어요.")).toBeDefined();
+
+  getProductDetail.mockResolvedValue(PRODUCTS["33"]);
+  fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+
+  expect(
+    await screen.findByRole("button", { name: "한끼 웰니스 사슴 어덜트 4kg 비교에서 빼기" }),
+  ).toBeDefined();
+  expect(getProductDetail).toHaveBeenCalledTimes(2);
+});
+
+test("없어진 상품(404)은 빈 자리로 둔다", async () => {
+  renderView("?slot=0&product=999&other=none");
+
+  await waitFor(() => expect(getProductDetail).toHaveBeenCalledWith("999"));
+  await waitFor(() =>
+    expect(screen.getAllByRole("button", { name: "상품 추가하기" })).toHaveLength(2),
+  );
+  expect(screen.queryByRole("alert")).toBeNull();
+});
+
+test("상품 상세에서 담아 온 경우 그 상품만 첫 자리에 보여준다", async () => {
   renderView("?slot=0&product=123&from=detail");
 
-  expect(screen.getByText("면역 지원 영양제 90정")).toBeDefined();
+  expect(await screen.findByText("한포 면역 지원 영양제 90정")).toBeDefined();
   expect(screen.getByText("21,000원")).toBeDefined();
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
-  expect(screen.queryByRole("table")).toBeNull();
+  expect(screen.queryByText("맞춤 분석")).toBeNull();
 });
 
 test("두 번째 상품을 고르러 갈 때 첫 상품 ID를 함께 전달한다", () => {
@@ -66,25 +209,22 @@ test("두 번째 상품을 고르러 갈 때 첫 상품 ID를 함께 전달한�
   expect(push).toHaveBeenCalledWith("/search?slot=1&from=detail&first=123");
 });
 
-test("검색에서 두 번째 상품을 고르고 돌아와도 상세 상품이 첫 자리에 남는다", () => {
+test("검색에서 두 번째 상품을 고르고 돌아와도 상세 상품이 첫 자리에 남는다", async () => {
   renderView("?slot=1&product=4&from=detail&first=123");
 
-  expect(screen.getByText("면역 지원 영양제 90정")).toBeDefined();
-  expect(screen.getByText("퍼피 성장기 사료 1kg")).toBeDefined();
-  expect(screen.queryByText("중소형견 소포장 사료 1kg")).toBeNull();
+  expect(await screen.findByText("한포 면역 지원 영양제 90정")).toBeDefined();
+  expect(await screen.findByText("한끼 웰니스 닭고기 시니어 2kg")).toBeDefined();
 });
 
-// 검색에서 돌아왔을 때 반대쪽 자리를 항상 MOCK_PRODUCTS 기본값(2번)으로 되돌리던 버그.
-// 자리 1이 실제로는 8번인데 자리 0에서 그 기본값과 같은 2번을 고르면, 두 자리가
-// 우연히 같은 id("2")를 가져 React가 "두 자식이 같은 key를 가졌다"는 경고를 내고
-// CompareSlot이 하나로 뭉개졌다(#245)
-test("반대쪽 자리가 검색 기본값과 겹쳐도 각 자리를 실제 값대로 되살린다", () => {
+// 검색에서 돌아왔을 때 반대쪽 자리를 항상 기본값으로 되돌리던 버그. 두 자리가 우연히 같은
+// id를 가져 React가 "두 자식이 같은 key를 가졌다"는 경고를 내고 자리가 하나로 뭉개졌다(#245)
+test("검색에서 돌아오면 각 자리를 주소의 번호대로 되살린다", async () => {
   const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
   renderView("?slot=0&product=2&other=8");
 
-  expect(screen.getByText("노령견 저지방 소화케어 사료 1kg")).toBeDefined();
-  expect(screen.getByText("관절 건강 영양제 60정")).toBeDefined();
+  expect(await screen.findByText("한끼 그레인프리 곤충 시니어 4kg")).toBeDefined();
+  expect(await screen.findByText("한끼 클래식 칠면조 시니어 2kg")).toBeDefined();
   expect(consoleError.mock.calls.some((call) => String(call[0]).includes("same key"))).toBe(false);
 
   consoleError.mockRestore();
@@ -102,125 +242,111 @@ test("검색으로 갈 때 반대쪽 자리의 현재 상품 id를 함께 전달
 // 정상 흐름(goSelect)은 절대 같은 id를 만들지 않지만, 주소를 손으로 조작하면
 // product와 other가 같은 값일 수 있다. 그대로 믿으면 두 자리가 같은 상품이 되어
 // React key가 겹친다(코드리뷰 지적)
-test("product와 other가 같은 id면 반대쪽 자리를 비운다", () => {
+test("product와 other가 같은 id면 반대쪽 자리를 비운다", async () => {
   renderView("?slot=0&product=1&other=1");
 
+  expect(await screen.findAllByText("한끼 그레인프리 곤충 시니어 1kg")).toHaveLength(1);
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
-  expect(screen.getAllByText("중소형견 소포장 사료 1kg")).toHaveLength(1);
 });
 
-// 자리를 비우고 검색을 한 바퀴 돌고 와도 비운 자리가 화면 확인용 기본값으로
-// 되살아나지 않아야 한다. "other" 자체가 없는 것과 구분하려고 "none"을 쓴다
-test("두 자리를 다 비우고 검색에 가면 other가 none으로 담긴다", () => {
-  renderView();
+// 자리를 비우고 검색을 한 바퀴 돌고 와도 비운 자리가 되살아나지 않아야 한다
+test("두 자리를 다 비우고 검색에 가면 other가 none으로 담긴다", async () => {
+  renderView("?slot=0&product=1&other=2");
 
-  fireEvent.click(screen.getAllByRole("button", { name: /비교에서 빼기/ })[0]);
-  fireEvent.click(screen.getByRole("button", { name: /비교에서 빼기/ }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
+  );
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 4kg 비교에서 빼기" }),
+  );
   fireEvent.click(screen.getAllByRole("button", { name: "상품 추가하기" })[0]);
 
   expect(push).toHaveBeenCalledWith("/search?slot=0&other=none");
 });
 
-test("other가 none이면 그 자리를 비운 채로 되살린다", () => {
+test("other가 none이면 그 자리를 비운 채로 되살린다", async () => {
   renderView("?slot=1&product=8&other=none");
 
-  expect(screen.getByText("관절 건강 영양제 60정")).toBeDefined();
+  expect(await screen.findByText("한끼 클래식 칠면조 시니어 2kg")).toBeDefined();
   expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
-  expect(screen.queryByRole("table")).toBeNull();
-});
-
-// 상세 상품(면역 지원 영양제)은 supplement라, 검색에서 같은 종류를 고를 수 있어야
-// 비교표가 뜬다. 고를 수 있는 게 없으면 상세→비교 흐름이 늘 안내만 보고 끝난다
-test("상세에서 온 상품과 같은 종류를 고르면 비교표가 뜬다", () => {
-  renderView("?slot=1&product=8&from=detail&first=123");
-
-  expect(screen.getByRole("table")).toBeDefined();
-  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
-});
-
-// 시안 comp_001_에러. 사료와 간식은 10g당 가격도 칼로리도 기준이 달라 견줄 수 없다
-test("종류가 다른 둘을 담으면 표 대신 안내가 나온다", () => {
-  // 자리 1에 간식(저자극 덴탈껌)을 담는다. 자리 0은 사료(1번)로 명시한다 —
-  // other 없이는 반대쪽이 더는 자동으로 채워지지 않는다(#245)
-  renderView("?slot=1&product=5&other=1");
-
-  expect(screen.queryByRole("table")).toBeNull();
-  expect(screen.getByText(/건식은 건식끼리/)).toBeDefined();
-});
-
-// MOCK_ROWS는 정확히 1번·2번 조합의 실제 값으로 쓴 것이다. 이 조합일 때만 표를 보인다
-test("실제 값이 있는 조합(1·2번)은 표가 그대로 보인다", () => {
-  renderView("?slot=1&product=2&other=1");
-
-  expect(screen.getByRole("table")).toBeDefined();
-  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
-});
-
-// 자리에 반대 순서로 담기면(2번이 첫 자리) 값도 같이 뒤집어야 한다. 안 뒤집으면
-// 화면엔 2번 이름 옆에 1번 값이 붙어 값의 주인이 바뀐다
-test("반대 순서로 담아도 값이 그 상품 것으로 붙는다", () => {
-  renderView("?slot=0&product=2&other=1");
-
-  const priceRow = screen.getByRole("row", { name: /10g당 가격/ });
-  // 원래 값은 (150원, 176원)이 (1번, 2번) 순인데, 여기선 2번이 첫 자리라 176원이 앞에 와야 한다
-  expect(priceRow.textContent).toMatch(/176원.*10g당 가격.*150원/);
-});
-
-// food는 1·2번 말고도 3·4·7번이 있다. 같은 종류라도 MOCK_ROWS는 1·2번 값이라
-// 다른 조합에 그대로 붙이면 고르지도 않은 상품의 스펙을 보여주게 된다(#245 후속)
-test("같은 종류라도 실제 값이 없는 조합은 표 대신 준비 중 안내가 나온다", () => {
-  renderView("?slot=1&product=3&other=1");
-
-  expect(screen.queryByRole("table")).toBeNull();
-  expect(screen.getByText(/아직 준비 중/)).toBeDefined();
-  // 종류가 달라서가 아니라 값이 없어서라, 종류 안내 문구와는 다르다
-  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
-});
-
-// 점수가 갈리면 높은 쪽을 브랜드색·큰 글자로, 낮은 쪽을 회색·작은 글자로 강조한다
-test("적합도가 높은 자리를 브랜드색으로 강조한다", () => {
-  renderView();
-
-  expect(screen.getByText("92점").className).toContain("text-text-body-brand-default");
-  expect(screen.getByText("86점").className).toContain("text-text-body-unselect");
-});
-
-test("AI 맞춤 분석 콜아웃이 실제로 담긴 두 상품 이름으로 문장을 만든다", () => {
-  renderView();
-
-  expect(screen.getByText("맞춤 분석")).toBeDefined();
-  expect(
-    screen.getByText(
-      "중소형견 소포장 사료 1kg이(가) 노령견 저지방 소화케어 사료 1kg보다 우리 아이에게 더 잘 맞아요.",
-    ),
-  ).toBeDefined();
-});
-
-test("종류가 달라 표가 안 뜨면 맞춤 분석도 뜨지 않는다", () => {
-  renderView("?slot=1&product=5&other=1");
-
   expect(screen.queryByText("맞춤 분석")).toBeNull();
 });
 
-// 미측정(null)은 "비슷하다"가 아니라 "아직 모른다"다. 근거 없이 비슷하다고
-// 단정하면 실제로는 한쪽이 크게 나을 수도 있는 상황을 감춘다
-test("한쪽이 미측정이면 비슷하다고 하지 않고 아직 못 쟀다고 알린다", () => {
-  renderView("?slot=1&product=7&other=1");
+// 항목별 값·적합도 API가 없다. 목업 상품의 표를 실제 상품 이름 아래 붙이지 않는다(#245 후속)
+test("두 자리가 차면 맞춤 분석과 준비 중 안내가 나오고 목업 표는 그리지 않는다", async () => {
+  renderView("?slot=0&product=1&other=2");
 
-  expect(screen.getByText(/아직 적합도를 재지 못했어요/)).toBeDefined();
-  expect(screen.queryByText(/비슷해요/)).toBeNull();
+  expect(await screen.findByText("두 상품 모두 아직 적합도를 재지 못했어요.")).toBeDefined();
+  expect(screen.getByText(/아직 준비 중/)).toBeDefined();
+  expect(screen.queryByRole("table")).toBeNull();
+  // 종류를 모르면 종류로 막지 않는다
+  expect(screen.queryByText(/건식은 건식끼리/)).toBeNull();
 });
 
-test("장바구니 추가를 누르면 담겼다고 알린다", () => {
-  renderView();
+test("한 자리를 비우면 견줄 것이 없어 비교 영역이 사라진다", async () => {
+  renderView("?slot=0&product=1&other=2");
 
-  fireEvent.click(screen.getAllByRole("button", { name: "장바구니 추가" })[0]);
+  await screen.findByText("두 상품 모두 아직 적합도를 재지 못했어요.");
+  fireEvent.click(
+    screen.getByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
+  );
 
-  expect(showSnackbar).toHaveBeenCalledWith("장바구니에 담겼어요");
+  expect(screen.queryByText("맞춤 분석")).toBeNull();
+  expect(screen.getByText(/담아주세요/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
+});
+
+// 예전엔 담지 않고 토스트만 띄웠다. 시트도 없었다(QA CP-006·007)
+test("장바구니 추가를 누르면 수량 시트가 열리고 고른 수량대로 담는다", async () => {
+  renderView("?slot=0&product=33&other=none");
+
+  fireEvent.click(await screen.findByRole("button", { name: "장바구니 추가" }));
+  // 시트의 담기 버튼은 금액을 함께 읽힌다(기본 수량 1개)
+  expect(await screen.findByRole("button", { name: "48,200원 장바구니 담기" })).toBeDefined();
+  // 옵션은 없는 개념이라 지금 담는 용량을 알린다(상품 상세 시트와 같다)
+  expect(screen.getByText("1kg")).toBeDefined();
+
+  fireEvent.click(screen.getByLabelText("한끼 웰니스 사슴 어덜트 4kg 수량 하나 늘리기"));
+  fireEvent.click(screen.getByRole("button", { name: "96,400원 장바구니 담기" }));
+
+  await waitFor(() =>
+    expect(addCartItem).toHaveBeenCalledWith({ itemType: "NORMAL", itemId: 33 }, 2),
+  );
+  await waitFor(() => expect(showSnackbar).toHaveBeenCalledWith("장바구니에 담겼어요"));
+  await waitFor(() => expect(screen.queryByRole("button", { name: /장바구니 담기$/ })).toBeNull());
+});
+
+// 담아도 헤더 장바구니 수가 그대로였다(QA CP-010)
+test("담고 나면 헤더 장바구니 수를 다시 받아 갱신한다", async () => {
+  renderView("?slot=0&product=33&other=none");
+
+  expect(await screen.findByRole("link", { name: "장바구니" })).toBeDefined();
+
+  getCart.mockResolvedValue({
+    memberId: 1,
+    items: [{ itemType: "NORMAL", itemId: 33, quantity: 1, addedAt: "2026-09-29T01:00:00Z" }],
+    totalAmount: 48200,
+  });
+  fireEvent.click(await screen.findByRole("button", { name: "장바구니 추가" }));
+  fireEvent.click(await screen.findByRole("button", { name: "48,200원 장바구니 담기" }));
+
+  expect(await screen.findByRole("link", { name: "장바구니에 1개" })).toBeDefined();
+});
+
+test("담기가 거부되면 시트가 열린 채 남고 담겼다고 알리지 않는다", async () => {
+  addCartItem.mockRejectedValue(new ApiError(503, "잠시 문제"));
+  renderView("?slot=0&product=33&other=none");
+
+  fireEvent.click(await screen.findByRole("button", { name: "장바구니 추가" }));
+  fireEvent.click(await screen.findByRole("button", { name: "48,200원 장바구니 담기" }));
+
+  await waitFor(() => expect(addCartItem).toHaveBeenCalled());
+  expect(await screen.findByRole("button", { name: "48,200원 장바구니 담기" })).toBeDefined();
+  expect(showSnackbar).not.toHaveBeenCalledWith("장바구니에 담겼어요");
 });
 
 // 헤더에 title·leading을 안 줘서 뒤로가기와 "상품비교" 제목이 통째로 빠져 있었다(1568-70276)
-test("머리말에 뒤로가기와 제목이 있다", () => {
+test("머리말에 뒤로가기와 제목이 있다", async () => {
   renderView();
 
   expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
@@ -228,7 +354,9 @@ test("머리말에 뒤로가기와 제목이 있다", () => {
   expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
     "/mypage/notifications",
   );
-  expect(screen.getByRole("link", { name: "장바구니" }).getAttribute("href")).toBe("/cart");
+  expect((await screen.findByRole("link", { name: "장바구니" })).getAttribute("href")).toBe(
+    "/cart",
+  );
 });
 
 test("하단 이동 줄에서 현재 화면을 알린다", () => {

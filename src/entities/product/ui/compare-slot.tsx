@@ -16,7 +16,8 @@ export type CompareProduct = {
   id: string;
   name: string;
   price: number;
-  kind: ProductKind;
+  /** 상품 상세 응답에 분류가 없어 실제 상품은 모른다(null). 모르면 종류로 막지 않는다(#535) */
+  kind: ProductKind | null;
   imageUrl?: string;
   /** 우리 아이 기준 적합도. 영양 정보가 없어 재지 못했으면 null(#119) */
   matchScore: number | null;

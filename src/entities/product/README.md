@@ -19,12 +19,11 @@
 | `model/category.test.ts` | snack→TREAT 등 매핑이 단순 대문자 변환이 아님을 고정 |
 | `model/unit-price.ts` | 서버 단가(정규화 단위 기호 + 한 단위 가격)를 시안의 "1개당 약 680원" 꼴로 옮긴다(`formatUnitPrice`). 기호만 앞에 붙이면 "g 11원"으로 읽힌다(#479) |
 | `model/unit-price.test.ts` | 단가 줄 문장과 천 단위 쉼표 |
-| `model/mock-detail-product.ts` | API 연동 전 상품 상세·비교 화면이 공유하는 상품 요약 목데이터 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |
 | `ui/compare-slot.tsx` | 비교할 자리 하나. 비어 있으면 담으라고 안내하고, 채워지면 적합도 우열과 장바구니 추가를 보여준다 (`comp_001`, `comp_001_empty`) |
 | `ui/compare-slot.test.tsx` | 빈 자리 안내, 적합도 유무·우열, 장바구니·빼기 콜백 |
-| `ui/product-option-sheet.tsx` | 목록에서 바로 구성과 수량을 골라 담는 바텀시트 (타임딜_옵션 선택 바텀시트) |
+| `ui/product-option-sheet.tsx` | 목록에서 바로 구성과 수량을 골라 담는 바텀시트 (타임딜_옵션 선택 바텀시트). 타임딜과 상품 비교의 "장바구니 추가"가 쓴다(#535) |
 | `index.ts` | 공개 API |
 
 ## 상세 조회가 요약의 원본이다

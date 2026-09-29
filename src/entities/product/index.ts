@@ -31,5 +31,4 @@ export {
 export { MatchScoreBadge, getMatchLevel } from "./ui/match-score-badge";
 export { CompareTable, type CompareRow } from "./ui/compare-table";
 export { CompareSlot, type CompareProduct, type ProductKind } from "./ui/compare-slot";
-export { MOCK_DETAIL_PRODUCT } from "./model/mock-detail-product";
 export { ProductOptionSheet, type OptionSheetProduct } from "./ui/product-option-sheet";
