@@ -84,6 +84,19 @@ vi.mock("@/entities/review", async (importOriginal) => ({
   useMutateSubmitFeedback: () => ({ submitFeedback, isSubmitting: false }),
 }));
 
+// 종류 탭 카드의 찜 하트(#534). 찜 목록·토글은 서버 상태라 값만 세우고, 로그인 확인과 하트 버튼은
+// 진짜(`features/toggle-wishlist`)를 그린다 — 로그아웃이면 로그인으로 보내는지까지 이 화면에서 본다
+let wishlistQuery: { items: { productId: number }[] | undefined; isLoading: boolean } = {
+  items: [],
+  isLoading: false,
+};
+const toggleWish = vi.fn();
+vi.mock("@/entities/wishlist", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/wishlist")>()),
+  useQueryWishlist: () => wishlistQuery,
+  useMutateWishlist: () => ({ toggle: toggleWish }),
+}));
+
 import { HomeView } from "./home-view";
 
 afterEach(() => {
@@ -93,6 +106,9 @@ afterEach(() => {
   pendingQuery = pendingIdle();
   pendingCalls = [];
   submitFeedback.mockReset();
+  wishlistQuery = { items: [], isLoading: false };
+  toggleWish.mockReset();
+  pushMock.mockReset();
 });
 
 const PUPPY_FOOD: ProductCard = {
@@ -209,6 +225,64 @@ describe("HomeView", () => {
     // 정가가 없는 상품은 판매가만 나온다 — 취소선은 둘 중 하나에만 붙는다
     expect(screen.getByText("21,000원")).toBeDefined();
     expect(container.querySelectorAll(".line-through")).toHaveLength(1);
+  });
+
+  // 시안(1758-69075 등)의 카드마다 있는 하트가 없었다. QA HM-009 "각 상품 카드 내 좋아요 버튼 부재" (#534)
+  it("종류 탭 카드에도 찜 하트가 있고, 찜한 상품은 눌린 하트다", async () => {
+    wishlistQuery = { items: [{ productId: 2 }], isLoading: false };
+    await renderWith("?category=food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
+
+    expect(
+      screen
+        .getByRole("button", { name: "노령견 저지방 소화케어 사료 1kg 찜하기" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(
+      screen
+        .getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" })
+        .getAttribute("aria-pressed"),
+    ).toBe("false");
+  });
+
+  it("하트를 누르면 그 상품의 찜을 서버에서 뒤집는다", async () => {
+    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+
+    fireEvent.click(screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" }));
+
+    // 정가가 없는 상품은 찜 응답처럼 판매가로 채워 좋아요 탭 목록에 먼저 넣는다
+    expect(toggleWish).toHaveBeenCalledWith({
+      productId: 4,
+      wished: true,
+      item: {
+        productId: 4,
+        name: "퍼피 성장기 사료 1kg",
+        thumbnailUrl: null,
+        price: 21000,
+        originalPrice: 21000,
+      },
+    });
+  });
+
+  // 다른 목록(#483)과 같다. 로그아웃 상태에서 찜을 보내면 401과 재발급 시도만 헛돈다
+  it("로그인하지 않았으면 하트를 눌렀을 때 찜 대신 로그인으로 간다", async () => {
+    session.value = false;
+    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+
+    fireEvent.click(screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" }));
+
+    expect(pushMock).toHaveBeenCalledWith("/login");
+    expect(toggleWish).not.toHaveBeenCalled();
+  });
+
+  // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
+  it("찜 목록을 받는 동안은 하트를 누를 수 없다", async () => {
+    wishlistQuery = { items: undefined, isLoading: true };
+    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+
+    const heart = screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" });
+    expect(heart).toHaveProperty("disabled", true);
+    fireEvent.click(heart);
+    expect(toggleWish).not.toHaveBeenCalled();
   });
 
   it("카테고리에 상품이 없으면 없다고 알린다", async () => {
