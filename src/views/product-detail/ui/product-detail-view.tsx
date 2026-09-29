@@ -26,7 +26,7 @@ import {
   useToggleWishlist,
   useWishedProductIds,
 } from "@/features/toggle-wishlist";
-import { useMutateCartItem } from "@/entities/cart";
+import { toBuyNowPath, useMutateCartItem } from "@/entities/cart";
 import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
 import { formatUnitPrice, type ProductCard, type ProductDetail } from "@/entities/product";
 import { useQueryWishlistStatus } from "@/entities/wishlist";
@@ -350,6 +350,12 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
     }
   };
   const [optionSheetOpen, setOptionSheetOpen] = useState(false);
+  // 수량 시트를 장바구니로 열었는지 바로 구매로 열었는지 (#520)
+  const [sheetAction, setSheetAction] = useState<"cart" | "buy">("cart");
+  const openSheet = (action: "cart" | "buy") => {
+    setSheetAction(action);
+    setOptionSheetOpen(true);
+  };
   // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리. 실제로는
   // 상품 상태와 타임딜 종료 시각을 서버가 준다(#123)
   const [dealOver, setDealOver] = useState(false);
@@ -677,17 +683,16 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           </button>
         )}
         {isDealActive ? (
-          // 타임딜 중에는 장바구니·바로 구매 두 버튼 대신 카운트다운이 붙은 구매 버튼 하나다
-          <Button asChild className="min-h-11 gap-1.5">
-            <Link href="/payment">
-              <Countdown
-                compact
-                endsAt={DEAL_ENDS_AT}
-                onEnd={() => setDealOver(true)}
-                className="rounded bg-surface-info px-1 py-0.5 text-label-bold-12 text-text-body-static-white"
-              />
-              타임딜 구매하기
-            </Link>
+          // 타임딜 중에는 장바구니·바로 구매 두 버튼 대신 카운트다운이 붙은 구매 버튼 하나다.
+          // 바로 구매와 같이 수량 시트를 거쳐 딜 아이템으로 결제 화면에 간다 (#520)
+          <Button className="min-h-11 gap-1.5" onClick={() => openSheet("buy")}>
+            <Countdown
+              compact
+              endsAt={DEAL_ENDS_AT}
+              onEnd={() => setDealOver(true)}
+              className="rounded bg-surface-info px-1 py-0.5 text-label-bold-12 text-text-body-static-white"
+            />
+            타임딜 구매하기
           </Button>
         ) : isSoldOut ? (
           // 살 수 없으니 장바구니·바로 구매 대신 재입고 알림만 남는다. 시안(1702-19653)은
@@ -700,15 +705,13 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           </Button>
         ) : (
           <>
-            <Button
-              variant="secondary"
-              className="min-h-11"
-              onClick={() => setOptionSheetOpen(true)}
-            >
+            <Button variant="secondary" className="min-h-11" onClick={() => openSheet("cart")}>
               장바구니
             </Button>
-            <Button asChild className="min-h-11">
-              <Link href="/payment">바로 구매</Link>
+            {/* 전에는 `/payment` 링크일 뿐이라 결제 화면에 고른 상품이 없었다(QA PD-056, #520).
+                수량을 고른 뒤 이 상품만 `?buy=`로 싣고 간다 — 장바구니에는 담지 않는다 */}
+            <Button className="min-h-11" onClick={() => openSheet("buy")}>
+              바로 구매
             </Button>
           </>
         )}
@@ -717,10 +720,17 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
       <DetailOptionSheet
         open={optionSheetOpen}
         onOpenChange={setOptionSheetOpen}
-        adding={isAdding}
-        onAddToCart={async (quantity) => {
+        action={sheetAction}
+        adding={sheetAction === "cart" && isAdding}
+        onConfirm={async (quantity) => {
           // **타임딜 중인 상품은 담는 식별자가 다르다.** 딜 아이템으로 담아야 딜가가
-          // 적용된다 — 그냥 상품으로 담으면 정가로 들어간다 (views/deals와 같은 방식)
+          // 적용된다 — 그냥 상품으로 담으면 정가로 들어간다 (views/deals와 같은 방식).
+          // 바로 구매도 같은 식별자로 주문한다
+          if (sheetAction === "buy") {
+            setOptionSheetOpen(false);
+            router.push(toBuyNowPath({ ...cartItemRef, quantity }));
+            return;
+          }
           await add(cartItemRef, quantity);
           setOptionSheetOpen(false);
           showSnackbar("상품이 장바구니에 담겼어요");

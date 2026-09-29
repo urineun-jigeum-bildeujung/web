@@ -21,7 +21,11 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }
 
 const { add } = vi.hoisted(() => ({ add: vi.fn() }));
 // 담기는 서버를 부른다. 이 화면 테스트의 관심은 담은 뒤의 표시라 호출만 세운다 (#316)
-vi.mock("@/entities/cart", () => ({ useMutateCartItem: () => ({ add, isAdding: false }) }));
+// 바로 구매 주소(`toBuyNowPath`)는 결제 화면과 같은 규칙이어야 해 진짜를 그대로 둔다
+vi.mock("@/entities/cart", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/cart")>()),
+  useMutateCartItem: () => ({ add, isAdding: false }),
+}));
 // 적합도는 내 아이 기준이다(#481). 로그인·아이 목록·아이 상세는 서버 상태라 값만 세운다
 const { useSessionState, useQueryPets, useQueryPetDetail } = vi.hoisted(() => ({
   useSessionState: vi.fn(),
@@ -441,8 +445,30 @@ describe("ProductDetailView", () => {
     await renderWith("?status=deal", { soldOut: false });
 
     expect(screen.getByText("타임딜")).toBeDefined();
-    expect(screen.getByRole("link", { name: /타임딜 구매하기/ })).toBeDefined();
+    expect(screen.getByRole("button", { name: /타임딜 구매하기/ })).toBeDefined();
     expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
+  });
+
+  // 전에는 `/payment` 링크라 결제 화면에 고른 상품이 없었다(QA PD-056, #520)
+  it("바로 구매는 수량을 고른 뒤 이 상품만 싣고 결제 화면으로 가며 장바구니에 담지 않는다", async () => {
+    await renderWith("", { soldOut: false });
+
+    fireEvent.click(screen.getByRole("button", { name: "바로 구매" }));
+    fireEvent.click(screen.getByRole("button", { name: "면역 지원 영양제 90정 수량 하나 늘리기" }));
+    fireEvent.click(screen.getByRole("button", { name: "42,000원 바로 구매" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/payment?buy=NORMAL%3A1%3A2"));
+    expect(add).not.toHaveBeenCalled();
+  });
+
+  // 타임딜 구매도 딜 아이템으로 가야 딜가로 주문된다
+  it("타임딜 상품의 바로 구매는 딜 아이템 번호로 결제 화면에 간다", async () => {
+    await renderWith("", { soldOut: false, timeDealItemId: 7 });
+
+    fireEvent.click(screen.getByRole("button", { name: "바로 구매" }));
+    fireEvent.click(screen.getByRole("button", { name: "21,000원 바로 구매" }));
+
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/payment?buy=TIME_DEAL%3A7%3A1"));
   });
 
   it("품절이면 재입고 알림 버튼만 있고 누르면 안내가 뜬다", async () => {
