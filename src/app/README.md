@@ -24,6 +24,12 @@ Next.js App Router의 라우팅 디렉터리이자 FSD의 최상위 레이어다
 
 라우트 그룹은 URL에 들어가지 않는다. `(constrained)/cart/page.tsx`는 그대로 `/cart`다.
 
+**그룹 밖으로 나온 화면은 뷰 최상위 래퍼가 제 폭을 진다.** 홈(`home-view.tsx`)과 상품 상세(`product-detail-view.tsx`)가 둘 다 `mx-auto flex min-h-dvh w-full max-w-300 flex-col`로 1200px 기둥을 세운다 — 라우트 레이아웃을 따로 만들지 않는다. **거터는 컨테이너가 아니라 섹션이 갖는다**(`px-5`). 상품 이미지와 가로 스크롤 줄이 화면 끝까지 흘러야 해서, 래퍼가 좌우 여백을 쥐면 그 구역마다 음수 마진으로 다시 취소해야 한다.
+
+**`fixed`와 포털은 그 기둥을 물려받지 못한다.** 뷰포트 기준이거나 body 아래 그려져서다. 상품 상세의 맨 위로 가기 버튼과 리뷰 필터 다이얼로그가 같은 `max-w-300`을 각자 한 번 더 적는 이유다. 다이얼로그는 shadcn 베이스가 `sm:max-w-sm`이라 **`sm:` 접두사까지 같이 줘야 이긴다.**
+
+**상품 상세 하위의 사진 모음은 `(constrained)`에 남겨 뒀다**(#497). 그 화면은 반응형 시안이 없어 420px 기둥을 그대로 둔다 — 시안이 오면 라우트를 그룹 밖으로 옮기면서 격자 열 수와 이미지 `sizes`를 함께 정한다. 두 라우트가 만드는 주소가 달라(`/products/:id`와 `/products/:id/photos`) 서로 다른 그룹에 있어도 충돌하지 않는다.
+
 **옮기지 않는 것이 있다.**
 
 - `api/` · `metrics/` · `firebase-messaging-sw.js` — route handler라 레이아웃과 무관하다

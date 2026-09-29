@@ -235,11 +235,11 @@ export function ReviewFilterPicker({ open, onOpenChange, ...body }: ReviewFilter
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton={false}
-        // 데스크톱처럼 넓은 뷰포트에서도 layout.tsx의 앱 기둥(420px, mx-auto max-w-105)
-        // 폭에 맞춰야 한다. 기본 DialogContent의 `sm:max-w-sm`은 접두사가 없는
-        // `max-w-*`로는 안 지워져(tailwind-merge가 변형 체인이 다르면 충돌로 안 봄)
-        // `sm:max-w-105`를 똑같이 붙여야 실제로 이긴다
-        className="inset-0 mx-auto flex h-dvh max-w-105 translate-0 flex-col gap-0 overflow-hidden rounded-none p-0 ring-0 sm:max-w-105"
+        // 포털로 body 아래 그려져 뷰 최상위의 기둥을 물려받지 못한다. 넓은 뷰포트에서도
+        // 상품 상세와 같은 폭에 맞춰야 해서 같은 값을 여기서 한 번 더 적는다 (#497로 1200이 됐다).
+        // 기본 DialogContent의 `sm:max-w-sm`은 접두사가 없는 `max-w-*`로는 안 지워져
+        // (tailwind-merge가 변형 체인이 다르면 충돌로 안 봄) `sm:max-w-300`을 똑같이 붙여야 이긴다
+        className="inset-0 mx-auto flex h-dvh max-w-300 translate-0 flex-col gap-0 overflow-hidden rounded-none p-0 ring-0 sm:max-w-300"
       >
         {/* 열 때마다 새로 그려 지금 값에서 시작한다. 열린 채 갈래를 넘나들며
             고른 것이 다음에 열 때도 그대로 있어야 한다 */}

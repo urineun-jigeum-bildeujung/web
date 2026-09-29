@@ -200,10 +200,10 @@ function ScrollTopButton() {
   if (!visible) return null;
 
   return (
-    // fixed는 실제 브라우저 뷰포트 기준이라, 화면 폭을 420px로 묶는 루트 레이아웃의
-    // mx-auto 기둥과는 무관하다. 좁은 화면 밖(데스크톱 등)에서는 이 뼈대로 기둥 폭을
-    // 맞추고, 실제 버튼은 그 안에서 시안대로 오른쪽 20px에 절대 위치시킨다
-    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 mx-auto max-w-105">
+    // fixed는 실제 브라우저 뷰포트 기준이라 뷰 최상위의 mx-auto 기둥을 물려받지 못한다.
+    // 그래서 같은 폭을 여기서 한 번 더 적는다 — 넓은 화면에서 이 뼈대로 기둥 폭을 맞추고,
+    // 실제 버튼은 그 안에서 시안대로 오른쪽 20px에 절대 위치시킨다 (#497로 1200이 됐다)
+    <div className="pointer-events-none fixed inset-x-0 bottom-20 z-40 mx-auto max-w-300">
       <button
         type="button"
         aria-label="맨 위로"
@@ -256,7 +256,9 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
         <h2 id="related-heading" className="text-title-bold-20 text-text-body-default">
           함께 보면 좋은 상품
         </h2>
-        <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%" edgeInset={5} bleedRight={false}>
+        {/* 시안(2679-41351)의 카드는 폭이 커져도 170px 그대로다 — 카드가 늘어나는 것이 아니라
+            더 많이 보인다(홈의 가로 목록과 같다). 비율로 두면 1200 폭에서 531px이 된다 */}
+        <ScrollRow label="함께 보면 좋은 상품" itemWidth="170px" edgeInset={5} bleedRight={false}>
           {related.map((item) => (
             <ScrollRowItem key={item.productId}>
               <ProductGridCard
@@ -416,7 +418,13 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
     : undefined;
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    // 태블릿·웹 시안이 와서 이 화면은 `(constrained)` 그룹 밖에 있다 — 폭을 스스로 정한다(#497).
+    // 홈과 같은 방식이고 자리도 같다(뷰 최상위 래퍼, `src/app/README.md`).
+    //
+    // **거터는 여기서 주지 않는다.** 상품 이미지와 가로 스크롤 줄이 화면 끝까지 흘러야 해서,
+    // 이 래퍼가 `px-*`를 쥐면 그 구역마다 음수 마진으로 다시 취소해야 한다. 좌우 20px은
+    // 섹션이 각자 갖는다(시안도 섹션마다 `padding: 16px 20px`이다)
+    <div className="mx-auto flex min-h-dvh w-full max-w-300 flex-col">
       <PageHeader
         right={
           // 시안(공용 header)이 알림·장바구니 두 아이콘을 함께 둔다. 홈 화면 헤더와
