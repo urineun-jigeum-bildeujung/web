@@ -45,6 +45,29 @@ export const SIZE_GUIDE = [
   "대형견은 25kg 이상이에요",
 ] as const;
 
+/** 고른 체구별 몸무게 예시. 범위는 `SIZE_GUIDE`와 같다. 소형은 초소형(4kg 미만)까지 받는다 */
+const DOG_WEIGHT_PLACEHOLDER: Record<string, string> = {
+  small: "소형견은 대개 10kg 미만이에요",
+  medium: "중형견은 대개 10~25kg이에요",
+  large: "대형견은 대개 25kg 이상이에요",
+};
+
+/**
+ * 몸무게 칸의 예시 문구 (QA No.205).
+ *
+ * **품종이 아니라 종과 체구로 가른다.** 시안(onbo_003)은 "말티즈의 평균 몸무게는 5kg이에요"처럼
+ * 품종별 평균을 적는데, 품종 조회(`GET /pets/breeds`)와 서버 품종 표(`breed_master`)에 체중이
+ * 없다. 강아지는 보호자가 고른 체구의 범위를, 체구를 묻지 않는 고양이(#391)는 종 하나의 범위를
+ * 보인다. **고양이 범위(3~5kg)는 흔히 쓰는 성묘 체중이고 PD 확정값이 아니다.**
+ */
+export function weightPlaceholder(species: PetSpecies, size: string | null): string {
+  if (species === "cat") {
+    return "고양이는 대개 3~5kg이에요";
+  }
+  // 체구가 없는 강아지는 예전에 체구 없이 저장된 아이뿐이다. 범위 없이 단위만 알린다
+  return DOG_WEIGHT_PLACEHOLDER[size ?? ""] ?? "몸무게를 kg으로 적어주세요";
+}
+
 /** 시안 onbo_003_체구선택후의 슬라이더 5단계 */
 export const BODY_TYPE_OPTIONS = ["매우 마름", "마름", "보통", "통통", "비만"] as const;
 export const DEFAULT_BODY_TYPE_INDEX = 2;

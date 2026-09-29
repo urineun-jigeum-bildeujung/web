@@ -2,6 +2,7 @@
 export { BodyTypeGuide } from "./ui/body-type-guide";
 export { BodyTypeSlider } from "./ui/body-type-slider";
 export { SizeGuide } from "./ui/size-guide";
+export { WeightField } from "./ui/weight-field";
 export { BreedPicker } from "./ui/breed-picker";
 export {
   ProductFeedbackSheet,
@@ -25,6 +26,7 @@ export {
   SIZE_OPTIONS,
   SPECIES_LABEL,
   SPECIES_PARAM,
+  weightPlaceholder,
   type PetProfileDraft,
   type PetSpecies,
 } from "./model/breeds";
@@ -41,7 +43,8 @@ export { useQueryBreeds } from "./api/use-query-breeds";
 export { HealthPickerSheet } from "./ui/health-picker-sheet";
 export { HealthPickerField } from "./ui/health-picker-field";
 export { toLabels, type HealthGroup, type HealthOption } from "./model/health";
-export { parseAge, parseWeight } from "./model/parse-profile-input";
+export { describeAgeError, formatWeight, parseAge, parseWeight } from "./model/parse-profile-input";
+export { toAgeInput, toPetNameInput } from "./model/profile-input";
 export { getHealthOptions, type HealthOptions } from "./api/health-options";
 export { useQueryHealthOptions } from "./api/use-query-health-options";
 export {
