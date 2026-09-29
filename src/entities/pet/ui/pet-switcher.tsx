@@ -67,7 +67,12 @@ export function PetSwitcher({
         "flex items-center gap-3 px-4 py-3",
         // 크기가 다른 원을 아래 선에 맞춘다
         hero && "items-end gap-4 px-5 py-0",
-        main && "gap-4 px-5 py-0",
+        // 메인은 60px 원이라 360px 폭에서 다섯 칸이면 넘친다. 넘친 만큼 페이지 전체가 옆으로
+        // 밀렸다(QA HM-016). 이 줄만 옆으로 밀게 한다(shared/ui/scroll-row와 같은 방식).
+        // 스크롤을 걸면 위아래도 잘려 포커스 링(2px)이 사라지므로, 4px 여백을 주고 같은 값의
+        // 음수 마진으로 되돌려 시안 간격은 그대로 둔다
+        main &&
+          "-my-1 [scrollbar-width:none] gap-4 overflow-x-auto px-5 py-1 [&::-webkit-scrollbar]:hidden",
         className,
       )}
     >
@@ -84,6 +89,8 @@ export function PetSwitcher({
             className={cn(
               "flex flex-col items-center gap-1 rounded-full transition-colors",
               "focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              // 가로로 미는 줄에서 칸이 줄어들면 이름이 글자마다 꺾인다
+              main && "shrink-0",
             )}
           >
             <span
@@ -149,7 +156,10 @@ export function PetSwitcher({
           type="button"
           aria-label="새 아이 추가"
           onClick={onAdd}
-          className="flex flex-col items-center gap-1 rounded-full text-icon-fill-tertiary transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className={cn(
+            "flex flex-col items-center gap-1 rounded-full text-icon-fill-tertiary transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            main && "shrink-0",
+          )}
         >
           <span
             aria-hidden

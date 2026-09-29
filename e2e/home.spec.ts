@@ -31,6 +31,46 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   await expect(page.getByText("AI가 골라주는 보리 맞춤 상품")).toBeVisible();
 });
 
+// 60px 원 다섯 칸이면 360px(갤럭시) 폭을 넘는다. 줄에 스크롤이 없어 페이지 전체가 옆으로
+// 밀렸다(QA HM-016). jsdom은 폭을 재지 못해 실제 브라우저에서 본다
+test("360px에서 아이 줄이 넘치면 그 줄만 옆으로 밀리고 페이지는 밀리지 않는다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await signIn(page);
+  await stubPetCatalog(page);
+  await stubNotifications(page);
+  await stubCart(page);
+  // 나중에 세운 route가 먼저 잡는다. 아이 목록만 다섯 마리로 바꾼다
+  await page.route("**/members/me/pets", (route) =>
+    route.fulfill({
+      json: ["코코", "보리", "두부", "콩이", "하루"].map((name, index) => ({
+        petId: index + 1,
+        name,
+        image: null,
+        isDefault: index === 0,
+      })),
+    }),
+  );
+
+  await page.goto("/");
+
+  const switcher = page.getByRole("radiogroup", { name: "아이 고르기" });
+  await expect(switcher.getByRole("radio")).toHaveCount(5);
+
+  // 줄은 넘친 만큼 스크롤을 품고, 페이지는 화면 폭 그대로다
+  const row = await switcher.evaluate((element) => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(row.scrollWidth).toBeGreaterThan(row.clientWidth);
+  const pageWidth = await page.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  }));
+  expect(pageWidth.scrollWidth).toBeLessThanOrEqual(pageWidth.clientWidth);
+});
+
 // "종류를 고르면 상품 목록으로 바뀐다"는 카테고리 탭이 서버 조회를 타면서(#289)
 // `home.server-fetch.spec.ts`로 옮겼다 — 이 파일이 쓰는 일반 E2E 잡은 백엔드가
 // 없어 실제 조회가 실패하고, 그 결과를 이 스펙으로는 더 이상 확인할 수 없다
