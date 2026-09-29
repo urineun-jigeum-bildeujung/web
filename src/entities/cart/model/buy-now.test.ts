@@ -25,4 +25,5 @@ test("종류·번호·수량이 맞지 않으면 없는 것으로 본다", () =>
   expect(parseBuyNow("NORMAL:252:0")).toBeNull();
   expect(parseBuyNow("NORMAL:252:1.5")).toBeNull();
   expect(parseBuyNow("NORMAL:252")).toBeNull();
+  expect(parseBuyNow("NORMAL:252:2:junk")).toBeNull();
 });
