@@ -89,12 +89,16 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
         </div>
       </div>
 
-      <ul className="flex flex-col gap-2">
+      {/* 폭이 넓어지면 근거가 옆으로 눕는다. **전환점을 잡지 않는다** — 시안이 한 줄을
+          353px로 고정하고 사이를 22px 띄워, 들어갈 만큼만 한 줄에 놓이게 해 뒀다.
+          393에서 하나(353+40), 768에서 둘(353×2+22+40), 1143부터 셋이 된다.
+          `lg:`(1024)로 세 칸을 강제하면 1024~1142에서 줄을 넘는다 */}
+      <ul className="flex flex-wrap gap-x-5.5 gap-y-2">
         {match.reasons.map((reason) => (
           <li
             key={reason.text}
             className={cn(
-              "flex items-center gap-1 text-body-medium-14",
+              "flex w-full max-w-88.25 items-center gap-1 text-body-medium-14",
               reason.tone === "good"
                 ? "text-text-body-info-strong"
                 : "text-text-body-danger-strong",
