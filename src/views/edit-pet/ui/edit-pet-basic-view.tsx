@@ -2,6 +2,7 @@
 // UI 시안 기준(정보 수정 기본, 1555-49797)이다.
 //
 // 입력 항목은 온보딩과 같지만 화면 구성이 다르다. 온보딩은 단계로 나뉘고 여기는 한 화면이다.
+// **입력칸이 받는 글자는 온보딩과 같은 규칙이다**(`entities/pet`의 `profile-input`, #524).
 
 "use client";
 
@@ -10,15 +11,18 @@ import { useState } from "react";
 
 import {
   BreedPickerStep,
+  describeAgeError,
   GENDER_OPTIONS,
   NEUTERED_OPTIONS,
   parseAge,
   SPECIES_PARAM,
+  toAgeInput,
+  toPetNameInput,
   type PetDetail,
   type PetSpecies,
 } from "@/entities/pet";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
-import { parseBirthDate } from "@/shared/lib/birth-date";
+import { formatBirthDateInput, parseBirthDate } from "@/shared/lib/birth-date";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -57,9 +61,11 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
   const [breedName, setBreedName] = useState(pet.breedName);
   // 품종을 고르면 종도 함께 정해진다. 종은 저장 요청에 실어 보낸다
   const [species, setSpecies] = useState<PetSpecies>(pet.species);
-  const [name, setName] = useState(pet.name);
+  // 예전에 이모티콘과 함께 저장된 이름도 걷어 낸 채로 보인다. 보이는 그대로 저장된다(QA No.230)
+  const [name, setName] = useState(toPetNameInput(pet.name));
   const [age, setAge] = useState(String(pet.age));
-  const [birthday, setBirthday] = useState(pet.birthDate ?? "");
+  // 저장된 `2022-04-08`도 치는 모양(`2022. 04. 08`)으로 맞춰 보인다
+  const [birthday, setBirthday] = useState(formatBirthDateInput(pet.birthDate ?? ""));
   const [gender, setGender] = useState<string>(pet.gender);
   const [neutered, setNeutered] = useState(pet.neutered ? "yes" : "no");
   // 새로 고른 사진. 저장할 때 올린다. 안 골랐으면 `image`를 보내지 않아 저장된 사진이 남는다
@@ -79,6 +85,13 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
   const birthdayBroken =
     (birthday.trim().length > 0 && parsedBirth === null) ||
     (hadBirthDate && birthday.trim().length === 0);
+  const birthdayError =
+    hadBirthDate && birthday.trim().length === 0
+      ? "생일은 지울 수 없어요. 고치려면 새 날짜를 적어주세요"
+      : // 온보딩과 같이 여덟 자를 다 쳤는데 달력에 없는 날이면 알린다
+        birthday.replace(/\D/g, "").length === 8 && parsedBirth === null
+        ? "달력에 없는 날이에요"
+        : undefined;
 
   const submit = () => {
     if (parsedAge === null || birthdayBroken) return;
@@ -133,10 +146,12 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
       </div>
 
       <div className="flex flex-col gap-4 px-5">
+        {/* 이모티콘은 칠 때 걷어 낸다(QA No.230). 칸을 넘는 이름은 말줄임표로 줄인다(QA No.231) */}
         <FormField
           label="아이의 이름을 알려주세요"
+          className="[&_input]:truncate"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => setName(toPetNameInput(event.target.value))}
           onClear={() => setName("")}
         />
 
@@ -162,24 +177,23 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
             </p>
           </div>
           <div className="flex gap-2">
+            {/* 나이·생일은 숫자만 받는다(QA No.233). 나이 상한은 온보딩과 같다(QA No.196) */}
             <FormField
               label="나이"
               className="flex-1 [&>label]:sr-only"
               inputMode="numeric"
               value={age}
-              onChange={(event) => setAge(event.target.value)}
+              error={describeAgeError(age)}
+              onChange={(event) => setAge(toAgeInput(event.target.value))}
             />
             <FormField
               label="생일"
               className="flex-1 [&>label]:sr-only"
               placeholder="0000. 00. 00"
+              inputMode="numeric"
               value={birthday}
-              onChange={(event) => setBirthday(event.target.value)}
-              error={
-                hadBirthDate && birthday.trim().length === 0
-                  ? "생일은 지울 수 없어요. 고치려면 새 날짜를 적어주세요"
-                  : undefined
-              }
+              onChange={(event) => setBirthday(formatBirthDateInput(event.target.value))}
+              error={birthdayError}
             />
           </div>
         </div>
