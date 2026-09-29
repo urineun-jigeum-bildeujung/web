@@ -19,6 +19,22 @@ export const DELIVERY_NOTE_OPTIONS: readonly string[] = [
 export const DELIVERY_NOTE_MAX = 100;
 
 /**
+ * 직접 적은 글을 100자로 자른다 (QA No.175).
+ *
+ * 길이는 `maxLength`·서버 `@Size`와 같이 UTF-16 단위로 센다. **이모지처럼 두 단위로 된 글자가
+ * 경계에 걸리면 그 글자를 통째로 뺀다** — 반만 남기면 깨진 글자가 요청사항에 저장된다 (#526 리뷰).
+ */
+export function clampDeliveryNote(text: string): string {
+  if (text.length <= DELIVERY_NOTE_MAX) {
+    return text;
+  }
+  const cut = text.slice(0, DELIVERY_NOTE_MAX);
+  const last = cut.charCodeAt(cut.length - 1);
+  // 앞 단위(high surrogate)로 끝났으면 뒤 단위가 잘려 나간 것이다
+  return last >= 0xd800 && last <= 0xdbff ? cut.slice(0, -1) : cut;
+}
+
+/**
  * 직접 적은 글인지. 보기 문구와 똑같지 않으면 직접 적은 것이다.
  *
  * **"직접 입력"이라는 글자 자체도 직접 적은 것이다.** 보기로 읽으면 상자에 "직접 입력"이 뜨는데
