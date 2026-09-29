@@ -115,10 +115,10 @@ function RatingSummary({
           onClick={onReviewClick}
           className="relative flex items-center text-body-medium-14 text-text-body-secondary after:absolute after:inset-x-0 after:-inset-y-2.75 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          후기 {reviewCount}
+          후기 {reviewCount}개
         </button>
       ) : (
-        <span className="text-body-medium-14 text-text-body-secondary">후기 {reviewCount}</span>
+        <span className="text-body-medium-14 text-text-body-secondary">후기 {reviewCount}개</span>
       )}
     </span>
   );

@@ -186,7 +186,7 @@ describe("ProductDetailView", () => {
 
       const summary = screen.getByRole("region", { name: PRODUCT.name });
       expect(within(summary).queryByText("0.0")).toBeNull();
-      expect(within(summary).getByRole("button", { name: "후기 0" })).toBeDefined();
+      expect(within(summary).getByRole("button", { name: "후기 0개" })).toBeDefined();
       expect(summary.querySelector(".text-icon-fill-disable")).not.toBeNull();
       expect(summary.querySelector(".text-icon-fill-accent")).toBeNull();
     });

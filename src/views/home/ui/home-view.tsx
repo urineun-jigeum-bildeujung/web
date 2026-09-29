@@ -81,7 +81,7 @@ function ProductMeta({ product }: { product: (typeof MOCK_PRODUCTS)[number] }) {
           </span>
         </span>
         <span className="text-label-medium-14 text-text-body-tertiary">
-          후기 {product.reviewCount}
+          후기 {product.reviewCount}개
         </span>
       </div>
     </>
