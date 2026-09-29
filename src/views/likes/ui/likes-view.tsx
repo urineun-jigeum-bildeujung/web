@@ -198,11 +198,11 @@ export function LikesView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      {/* 시안(header, 1585:18342)은 로고가 아니라 뒤로가기 화살표 + 검색·알림·장바구니고
-          제목이 없다. /likes가 바텀내비 탭 루트라 home-view와 같은 로고형이라고 판단해
-          PageHeader를 걷어냈던 게 틀렸다 — 원래대로 되돌린다(leading 기본값 back 그대로).
-          오른쪽 아이콘은 모든 헤더가 같은 공용 슬롯(HeaderIconLink)을 쓴다(#513) */}
+      {/* 로고형 헤더에 검색·알림·장바구니다. 시안에 뒤로가기형(1117:4972)과 로고형(2022:158710)이
+          함께 있어 #274에서는 뒤로가기형을 따랐는데, PD팀이 로고형으로 확정했다(2026-09-29, #513).
+          홈·마이페이지와 같은 바텀내비 탭 첫 화면이라 같은 헤더다 */}
       <PageHeader
+        leading="logo"
         right={
           <nav aria-label="바로 가기" className="flex items-center gap-1">
             <HeaderIconLink href="/search" label="검색" icon="search" />
