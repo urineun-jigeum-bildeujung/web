@@ -149,12 +149,36 @@ function PromiseErrorFallback({ router }: { router: ReturnType<typeof useRouter>
   );
 }
 
-/** 카테고리 그리드 상품 하나의 가격 아래 자리. 적합도가 응답에 없어(#289) 단가만 보인다 */
+/**
+ * 카테고리 그리드 상품 하나의 가격 아래 자리. 시안(1758-69075 등의 Rating Container)대로 단가 아래에
+ * 별 하나 + 평점 + 후기 수를 둔다. 적합도는 응답에 없어(#289) 그리지 않는다.
+ *
+ * **평점이 있는지는 후기 수로 가른다.** `avgRating`은 후기가 없으면 null로도 0으로도 온다
+ * (entities/product README). 시안도 후기 0개면 회색 별에 "-"다 — 0.0으로 두면 평이 나쁜 상품처럼 읽힌다 (#534)
+ */
 function CategoryProductMeta({ product }: { product: ApiProductCard }) {
+  const rated = product.reviewCount > 0;
   return (
-    <p className="text-label-medium-11 text-text-body-tertiary">
-      {formatUnitPrice(product.unitLabel, product.unitPrice)}
-    </p>
+    <>
+      <p className="text-label-medium-11 text-text-body-tertiary">
+        {formatUnitPrice(product.unitLabel, product.unitPrice)}
+      </p>
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-0.5">
+          {rated && <span className="sr-only">5점 만점에 {product.rating.toFixed(1)}점</span>}
+          <Icon
+            name="star"
+            className={cn("size-4", rated ? "text-icon-fill-accent" : "text-icon-fill-disable")}
+          />
+          <span aria-hidden className="text-label-medium-14 text-text-body-tertiary">
+            {rated ? product.rating.toFixed(1) : "-"}
+          </span>
+        </span>
+        <span className="text-label-medium-14 text-text-body-tertiary">
+          후기 {product.reviewCount}개
+        </span>
+      </div>
+    </>
   );
 }
 
