@@ -105,7 +105,7 @@ export function PhotoViewer({
               alt={`후기 사진 ${current + 1}번째`}
               fill
               // 열자마자 보는 이 화면의 주인공이다
-              priority
+              preload
               sizes="100vw"
               className="object-contain"
             />

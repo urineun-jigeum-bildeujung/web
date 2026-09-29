@@ -25,7 +25,7 @@ export function IntroStep({ onStart }: IntroStepProps) {
             alt="코코의 건강 고민을 덜어줄 맞춤 상품을 보여주는 홈 화면 미리보기"
             fill
             sizes="317px"
-            priority
+            preload
             className="object-cover object-top"
           />
         </div>
