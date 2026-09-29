@@ -285,6 +285,23 @@ describe("HomeView", () => {
     expect(toggleWish).not.toHaveBeenCalled();
   });
 
+  // 시안의 Rating Container다. 후기가 없는 상품은 회색 별에 "-" — 0.0이면 평이 나쁜 상품처럼 읽힌다 (#534)
+  it("단가 아래에 별점과 후기 수를 보이고, 후기가 없으면 별점 대신 -를 보인다", async () => {
+    const NEW_FOOD: ProductCard = { ...PUPPY_FOOD, productId: 9, rating: 0, reviewCount: 0 };
+    await renderWith("?category=food", toProducts([SENIOR_FOOD, NEW_FOOD]));
+
+    const card = (name: RegExp) => screen.getByRole("link", { name }).closest("li")!;
+    const senior = card(/노령견 저지방/);
+    const fresh = card(/퍼피 성장기/);
+    expect(within(senior).getByText("1g당 약 27원")).toBeDefined();
+    expect(within(senior).getByText("5점 만점에 4.5점")).toBeDefined();
+    expect(within(senior).getByText("후기 108개")).toBeDefined();
+
+    expect(within(fresh).getByText("-")).toBeDefined();
+    expect(within(fresh).getByText("후기 0개")).toBeDefined();
+    expect(within(fresh).queryByText(/0\.0|5점 만점에/)).toBeNull();
+  });
+
   it("카테고리에 상품이 없으면 없다고 알린다", async () => {
     await renderWith("?category=snack", EMPTY_PRODUCTS);
 
