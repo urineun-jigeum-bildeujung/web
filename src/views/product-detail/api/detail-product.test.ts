@@ -84,6 +84,60 @@ test("다른 상품의 딜이면 그 딜가를 붙이지 않고 일반 상세로
   expect(product?.price).toBe(32000);
 });
 
+/** 새 응답(sever#170)의 딜 정보. 딜 번호는 여기서만 온다 */
+const withTimeDeal = (purchasable: boolean, soldOut = false) => ({
+  ...detail(101, 24000, null),
+  timeDealItemId: undefined,
+  timeDeal: {
+    timeDealItemId: 1,
+    dealId: 1,
+    dealStatus: "ACTIVE",
+    startAt: "2026-09-29T00:00:00+09:00",
+    endAt: "2026-09-29T12:00:00+09:00",
+    serverTime: "2026-09-29T12:00:01+09:00",
+    purchasable,
+  },
+  summary: { ...detail(101, 24000, null).summary, soldOut },
+});
+
+// 종료 시각이 지났는데 아직 ENDED로 넘어가지 않은 딜은 200을 준다. 딜가로 담기면 서버가 거절한다(QA PD-064)
+test("서버가 살 수 없다고 한 딜이면 일반 상세로 둔다", async () => {
+  stubRoutes({
+    "/api/v1/time-deals/items/1": () => Response.json(withTimeDeal(false)),
+    "/api/v1/products/101": () => Response.json(detail(101, 32000, null)),
+  });
+
+  const product = await getDetailProduct("101", "1");
+
+  expect(product?.price).toBe(32000);
+  expect(product?.timeDealItemId).toBeNull();
+});
+
+// 딜 재고가 떨어진 딜은 살 수 없어도 딜 상세로 둔다. 화면이 딜 품절로 그린다(QA PD-067)
+test("딜 재고가 떨어진 딜은 딜 상세로 둔다", async () => {
+  const fetchMock = stubRoutes({
+    "/api/v1/time-deals/items/1": () => Response.json(withTimeDeal(false, true)),
+  });
+
+  const product = await getDetailProduct("101", "1");
+
+  expect(product?.timeDealItemId).toBe(1);
+  expect(product?.soldOut).toBe(true);
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
+test("지금 살 수 있는 딜이면 딜 상세다", async () => {
+  const fetchMock = stubRoutes({
+    "/api/v1/time-deals/items/1": () => Response.json(withTimeDeal(true)),
+  });
+
+  const product = await getDetailProduct("101", "1");
+
+  expect(product?.price).toBe(24000);
+  expect(product?.timeDeal?.purchasable).toBe(true);
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+});
+
 test("상품이 없으면 null이다", async () => {
   stubRoutes({ "/api/v1/products/999": notFound });
 

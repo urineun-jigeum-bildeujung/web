@@ -203,6 +203,26 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
 });
 
+// 탭은 사진·요약·함께 보면 좋은 상품 아래라 모바일 첫 화면 밖이다. 탭 값만 바꾸면 눌러도
+// 아무 일이 없어 보였다(QA PD-002, #539). 스크롤은 jsdom이 계산하지 못해 여기서 본다
+test("모바일에서 제목 아래 후기 수를 누르면 리뷰 탭으로 바뀌고 탭 자리로 내려간다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto(PATH);
+
+  const tabs = page.getByRole("tablist");
+  await expect(tabs).not.toBeInViewport();
+
+  await page
+    .getByRole("region", { name: NAME })
+    .getByRole("button", { name: "후기 312개" })
+    .click();
+
+  await expect(page.getByRole("tab", { name: "리뷰" })).toHaveAttribute("aria-selected", "true");
+  await expect(tabs).toBeInViewport();
+});
+
 // 시안은 부족/적정/과다를 색으로만 구분한다(굵기는 셋 다 같다). 그 줄은
 // aria-hidden이라 화면 낭독기는 값 배지의 접근성 이름("12%, 과다")으로 듣는다.
 test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
@@ -385,8 +405,12 @@ test("낮은 화면에서는 수량 시트 안에서 밀어 담기 버튼까지 
 });
 
 // 타임딜 상품을 그냥 상품으로 담으면 딜가가 아니라 정가로 들어간다(#413).
-// 딜가·딜 번호는 일반 상품 상세에 오지 않아, 타임딜에서 온 주소의 딜 번호로 타임딜 상세를 받는다(#484)
-test("타임딜에서 들어오면 딜가로 보이고 딜 아이템 식별자로 담는다", async ({ page }) => {
+// 딜가·딜 번호는 일반 상품 상세에 오지 않아, 타임딜에서 온 주소의 딜 번호로 타임딜 상세를 받는다(#484).
+// 타임딜 화면도 그 응답으로 켠다. 전에는 개발용 `?status=deal`로만 켜졌고(QA PD-063), 하단
+// 장바구니 아이콘은 `/cart` 링크라 이 상품이 담기지 않았다(QA PD-066, #539)
+test("타임딜에서 들어오면 딜가와 타임딜 화면으로 보이고 장바구니 아이콘으로 딜 아이템을 담는다", async ({
+  page,
+}) => {
   // 담기는 로그인해야 한다(#542)
   await signInWithPets(page);
   const sent: string[] = [];
@@ -398,8 +422,10 @@ test("타임딜에서 들어오면 딜가로 보이고 딜 아이템 식별자�
 
   const summary = page.getByRole("region", { name: "오리&고구마 소형견 사료 1.5kg" });
   await expect(summary.getByText("24,000원")).toBeVisible();
+  await expect(summary.getByText("타임딜", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /타임딜 구매하기/ })).toBeVisible();
 
-  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  await page.getByRole("button", { name: "장바구니 담기", exact: true }).click();
   await page.getByRole("button", { name: "24,000원 장바구니 담기" }).click();
 
   await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();

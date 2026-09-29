@@ -16,8 +16,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { Suspense, use, useEffect, useState } from "react";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { Suspense, use, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { CartLink } from "@/widgets/cart-link";
@@ -132,20 +132,38 @@ function RatingSummary({
   );
 }
 
-/** 상품 사진. 좌우로 넘기고 아래 점이 지금 몇 번째인지 알린다 */
-function ProductImages({ images, name }: { images: string[]; name: string }) {
+/**
+ * 상품 사진. 좌우로 넘기고 아래 점이 지금 몇 번째인지 알린다.
+ *
+ * 품절이면 사진 자리 전체를 50% 흐리게 둔다. 시안(품절 1702-19204·19653)의 대표 이미지 인스턴스가
+ * 통째로 opacity 0.5라 점 표시까지 함께 흐려진다(QA PD-059). 블러 필터가 아니라 투명도다
+ */
+function ProductImages({
+  images,
+  name,
+  soldOut,
+}: {
+  images: string[];
+  name: string;
+  soldOut: boolean;
+}) {
   const [index, setIndex] = useState(0);
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-square items-center justify-center bg-muted">
+      <div
+        className={cn(
+          "flex aspect-square items-center justify-center bg-muted",
+          soldOut && "opacity-50",
+        )}
+      >
         <span className="text-sm text-muted-foreground">상품 이미지</span>
       </div>
     );
   }
 
   return (
-    <div className="relative">
+    <div className={cn("relative", soldOut && "opacity-50")}>
       <div
         // 스냅으로 한 장씩 멈춘다. 지금 몇 번째인지는 스크롤 위치에서 되읽는다 —
         // 따로 상태를 굴리면 손가락으로 넘긴 것과 점이 어긋난다
@@ -380,18 +398,37 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
     setSheetAction(action);
     setOptionSheetOpen(true);
   };
-  // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리. 실제로는
-  // 상품 상태와 타임딜 종료 시각을 서버가 준다(#123)
+  // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리
   const [dealOver, setDealOver] = useState(false);
   const [statusOverride] = useQueryState("status", parseAsStringLiteral(STATUS_OVERRIDES));
   // 운영 빌드에서는 주소에 무엇을 적든 듣지 않는다
   const devStatusOverride = process.env.NODE_ENV === "production" ? null : statusOverride;
-  // 타임딜 배지·카운트다운은 종료 시각이 상세 응답에 없어 아직 목이다(#413 범위 밖).
-  // 그래서 실데이터로는 정상·품절만 판정하고, 타임딜 화면은 개발 오버라이드로만 본다.
+  // 타임딜 화면은 타임딜 상세 응답의 `timeDeal`로 켠다. 서버가 지금 살 수 있다고 한 딜만이다 —
+  // 예정·종료 직후 딜은 라우트가 이미 일반 상세로 바꿔 둔다(`getDetailProduct`). 전에는 종료 시각이
+  // 응답에 없어 개발용 `?status=deal`로만 켜져, 배포 사이트에서는 타임딜 화면이 한 번도 뜨지 않았다(QA PD-063).
   // **장바구니에 담는 식별자는 다르다** — 그건 아래에서 timeDealItemId로 가린다
-  const status = devStatusOverride ?? (product.soldOut ? "soldout" : "normal");
+  const dataStatus = product.timeDeal?.purchasable ? "deal" : "normal";
+  const status = devStatusOverride ?? (product.soldOut ? "soldout" : dataStatus);
   const isDealActive = status === "deal" && !dealOver;
   const isSoldOut = status === "soldout";
+  // 타임딜 목록·메인과 같이 기기 시계로 센다. 개발용 `?status=deal`은 딜이 아닌 상품에도 타임딜 화면을
+  // 씌우므로 그때만 목 종료 시각을 쓴다
+  const dealEndsAt = product.timeDeal ? new Date(product.timeDeal.endAt) : DEAL_ENDS_AT;
+  // 딜이 끝나면 주소의 딜 아이템 번호를 뗀다. 라우트가 일반 상세를 다시 받아 가격·담는 식별자·버튼이
+  // 함께 일반 상품으로 돌아간다 — 화면만 바꾸면 딜가로 딜 아이템이 담겨 서버가 거절했다(QA PD-064).
+  // 서버가 다시 그려야 하므로 shallow를 끈다. 보던 탭과 스크롤은 그대로 남는다
+  const [, setDealItem] = useQueryState("dealItem", parseAsString.withOptions({ shallow: false }));
+  const endDeal = () => {
+    setDealOver(true);
+    void setDealItem(null);
+  };
+  // 탭은 사진·적합도·함께 보면 좋은 상품 아래라 첫 화면 밖이다. 제목 아래 "후기 N개"가 탭 값만 바꾸면
+  // 화면이 그대로라 눌러도 아무 일이 없어 보였다(QA PD-002). 탭 묶음 위치로 함께 내려간다
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const showReviews = () => {
+    void setTab("review");
+    tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   // **적합도는 내 아이 기준이다.** 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이
   // 근거에까지 박혀 떴다 (#481). 고르기 전에는 기본 아이다(목록이 기본 아이를 앞에 둔다).
@@ -443,7 +480,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
       />
 
       <main className="flex flex-1 flex-col">
-        <ProductImages images={product.images} name={product.name} />
+        <ProductImages images={product.images} name={product.name} soldOut={isSoldOut} />
 
         <section aria-labelledby="product-heading" className="flex flex-col gap-4 p-5">
           {/* 제목 줄과 가격 줄 사이는 12px, 이 둘 다음(타임딜 배너나 배송표)까지는
@@ -464,11 +501,11 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
                 <h1 id="product-heading" className="text-title-bold-20 text-text-body-default">
                   {product.name}
                 </h1>
-                {/* 리뷰는 이 화면의 탭이다. 다른 화면으로 보내지 않고 탭만 바꾼다 */}
+                {/* 리뷰는 이 화면의 탭이다. 다른 화면으로 보내지 않고 탭을 바꿔 그 자리로 내려간다 */}
                 <RatingSummary
                   rating={product.rating}
                   reviewCount={product.reviewCount}
-                  onReviewClick={() => void setTab("review")}
+                  onReviewClick={showReviews}
                 />
               </div>
 
@@ -540,8 +577,8 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
                 타임딜 종료까지{" "}
                 <Countdown
                   compact
-                  endsAt={DEAL_ENDS_AT}
-                  onEnd={() => setDealOver(true)}
+                  endsAt={dealEndsAt}
+                  onEnd={endDeal}
                   className="text-body-medium-14 text-text-body-info-strong"
                 />{" "}
                 남음
@@ -635,6 +672,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
         </ErrorBoundary>
 
         <Tabs
+          ref={tabsRef}
           value={tab}
           onValueChange={(next) => void setTab(next as (typeof REACHABLE_TABS)[number])}
           className="gap-0 pt-4"
@@ -685,15 +723,19 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           다른 화면 button/xl 기준)은 그대로 두고 이 화면만 덮어쓴다 */}
       <BottomActionBar className="[&>*]:text-label-bold-14">
         {isDealActive ? (
-          // 시안(1702-18950)은 타임딜 중엔 찜 대신 장바구니 아이콘으로 바뀐다
-          <Link
-            href="/cart"
-            aria-label="장바구니"
-            onClick={guardLink}
+          // 시안(1702-18950)은 타임딜 중엔 찜 대신 장바구니 아이콘으로 바뀐다. 누르면 평소의 "장바구니"
+          // 버튼처럼 수량 시트를 열어 이 상품을 딜 아이템으로 담는다. 전에는 `/cart` 링크라 장바구니
+          // 화면으로 옮겨 갈 뿐 담기지 않았다(QA PD-066). 시안에 연결이 없어 PM 시나리오를 따른다.
+          // 로그인 전이면 `openSheet`가 시트를 열지 않고 토스트만 띄운다(#542)
+          <button
+            type="button"
+            // 헤더의 장바구니 링크("장바구니")와 구별되게 하는 일을 이름에 적는다
+            aria-label="장바구니 담기"
+            onClick={() => openSheet("cart")}
             className="flex size-11 flex-none! items-center justify-center rounded-md border border-border transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             <Icon name="cart" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-          </Link>
+          </button>
         ) : (
           <button
             type="button"
@@ -727,11 +769,18 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <Button className="min-h-11 gap-1.5" onClick={() => openSheet("buy")}>
             <Countdown
               compact
-              endsAt={DEAL_ENDS_AT}
-              onEnd={() => setDealOver(true)}
+              endsAt={dealEndsAt}
+              onEnd={endDeal}
               className="rounded bg-surface-info px-1 py-0.5 text-label-bold-12 text-text-body-static-white"
             />
             타임딜 구매하기
+          </Button>
+        ) : isSoldOut && product.timeDealItemId ? (
+          // 타임딜 재고가 떨어졌다. 딜 한정 수량이 바닥난 것이라 재입고 알림은 맞지 않는 약속이다 —
+          // 상품 상세 구조도도 "품절이어도 타임딜 대상이면 재입고 알림 신청 없음"이다(QA PD-067).
+          // 살 수 없다는 것만 누를 수 없는 버튼으로 남긴다. 문구는 시안에 없어 PD 확인 거리다
+          <Button disabled className="min-h-11">
+            품절
           </Button>
         ) : isSoldOut ? (
           // 살 수 없으니 장바구니·바로 구매 대신 재입고 알림만 남는다. 시안(1702-19653)은
