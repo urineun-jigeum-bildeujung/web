@@ -15,6 +15,8 @@
 import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
+import { toastAppError } from "@/shared/lib/app-toast";
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 
@@ -42,9 +44,13 @@ export function PhotoPicker({ files, onChange, max = 3, className }: PhotoPicker
 
   const full = files.length >= max;
 
-  /** 남은 자리만큼만 받는다. 한 번에 여러 장을 골라도 넘치지 않는다 */
+  /**
+   * 남은 자리만큼만 받는다. 한 번에 여러 장을 골라도 넘치지 않는다.
+   * 넘친 사진을 말없이 버리면 왜 덜 붙었는지 몰라 한도를 알린다(QA RV-016)
+   */
   const add = (input: HTMLInputElement) => {
     const picked = Array.from(input.files ?? []);
+    if (files.length + picked.length > max) toastAppError(APP_MESSAGE_CODE.image.limitExceeded);
     onChange([...files, ...picked].slice(0, max));
     // 같은 파일을 다시 고를 수 있게 값을 비운다
     input.value = "";

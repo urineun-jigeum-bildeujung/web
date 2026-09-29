@@ -224,6 +224,11 @@ export const APP_MESSAGE = {
     title: "쓸 수 없는 사진 형식",
     description: "JPG · PNG · WEBP · GIF 사진을 골라 주세요.",
   },
+  // 리뷰 사진은 서버가 세 장까지 받는다(`@Size(max = 3) images`). 넘치게 고르면 넘친 것을 빼고 붙이는데, 말없이 빼면 왜 덜 붙었는지 모른다
+  "image.limitExceeded": {
+    title: "사진 첨부 한도 초과",
+    description: "사진은 최대 3장까지 첨부할 수 있어요.",
+  },
   // 리뷰는 상품마다 한 번이고 구매 확정 뒤에만 쓸 수 있다. 둘 다 사용자가 고칠 수 있는 것이 아니라 왜인지만 알린다
   "review.alreadyReviewed": {
     title: "이미 후기를 남긴 상품이에요",
@@ -321,6 +326,7 @@ export const APP_MESSAGE_CODE = {
   image: {
     uploadFailed: "image.uploadFailed",
     unsupportedType: "image.unsupportedType",
+    limitExceeded: "image.limitExceeded",
   },
   review: {
     alreadyReviewed: "review.alreadyReviewed",
