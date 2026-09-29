@@ -75,9 +75,20 @@ function resolveItems(keyword, sort) {
   return [];
 }
 
+// `1kg`만 두 쪽으로 나눠 목록 끝에서 다음 쪽을 이어 받는지 본다(#532). 서버처럼 개수는
+// 커서 없는 첫 쪽에서만 세고, 다음 쪽(cursor 있음)은 null을 준다(`ProductSearchService`)
+const ONE_KG_PAGE_1 = [SMALL_BREED_FOOD, SENIOR_FOOD];
+const ONE_KG_PAGE_2 = [ALLERGY_FOOD, PUPPY_FOOD];
+
 function searchProducts(url) {
   const keyword = url.searchParams.get("keyword") ?? "";
   const sort = url.searchParams.get("sort");
+  const cursor = url.searchParams.get("cursor");
+  if (keyword === "1kg") {
+    return cursor === "1kg-page-2"
+      ? { items: ONE_KG_PAGE_2, nextCursor: null, hasNext: false, totalCount: null }
+      : { items: ONE_KG_PAGE_1, nextCursor: "1kg-page-2", hasNext: true, totalCount: 4 };
+  }
   const items = resolveItems(keyword, sort);
   return { items, nextCursor: null, hasNext: false, totalCount: items.length };
 }
