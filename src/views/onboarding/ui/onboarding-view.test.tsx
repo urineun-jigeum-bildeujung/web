@@ -413,25 +413,22 @@ test("몸무게에 숫자가 아닌 것은 들어가지 않는다", () => {
   resetDraftCache();
   renderAt("?step=detail");
 
-  const weight = screen.getByLabelText("대략적인 몸무게") as HTMLInputElement;
-  fireEvent.focus(weight);
-  fireEvent.change(weight, { target: { value: "4키로" } });
+  fireEvent.change(screen.getByLabelText("대략적인 몸무게"), { target: { value: "4키로" } });
 
-  expect(weight.value).toBe("4");
+  expect((screen.getByLabelText("대략적인 몸무게") as HTMLInputElement).value).toBe("4");
 });
 
 // QA No.206. 칸을 벗어나도 "4.567"이 그대로였고 kg이 없었다
-test("몸무게는 소수 첫째 자리까지만 들어가고 칸을 벗어나면 kg이 붙는다", () => {
+test("몸무게는 소수 첫째 자리까지만 들어가고 값 뒤에 kg이 붙는다", () => {
   setDraft({ ...EMPTY_PROFILE_DRAFT, breedId: 1, breedName: "말티즈", size: "small" });
   resetDraftCache();
   renderAt("?step=detail");
 
   const weight = screen.getByLabelText("대략적인 몸무게") as HTMLInputElement;
-  fireEvent.focus(weight);
   fireEvent.change(weight, { target: { value: "4.567" } });
-  fireEvent.blur(weight);
 
-  expect(weight.value).toBe("4.5kg");
+  expect(weight.value).toBe("4.5");
+  expect(screen.getByText("kg")).toBeDefined();
   // 초안에는 단위 없이 숫자만 남는다. 등록 요청이 그 값을 읽는다
   expect(getDraft().weight).toBe("4.5");
 });
