@@ -635,7 +635,6 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <TabsContent value="info">
             <ProductInfoPanel
               detail={product.detail}
-              productName={product.name}
               match={match ?? EXAMPLE_MATCH_WITHOUT_PET}
               petName={match?.petName}
             />
