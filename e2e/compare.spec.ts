@@ -1,9 +1,10 @@
-// 상품 비교: 빈 칸으로 시작하는지, 자리를 상품 상세로 채우는지, 장바구니에 실제로 담는지 본다.
+// 상품 비교: 빈 칸으로 시작하는지, 뺀 상품이 되살아나지 않는지, 자리를 상품 상세로 채우는지,
+// 장바구니에 실제로 담는지 본다.
 //
 // "빈 자리를 검색에서 골라 채운다"는 /search/result를 거쳐 서버 검색 API를 타서
 // `e2e/compare.server-fetch.spec.ts`로 옮겼다(#282) — 이 파일의 나머지 테스트는
-// /compare에 직접 진입해 검색을 거치지 않는다. 자리의 상품 상세는 브라우저가 부르므로
-// page.route로 세운다(#535).
+// 서버 검색을 거치지 않는다(/search 입력 화면까지만 간다). 자리의 상품 상세는 브라우저가
+// 부르므로 page.route로 세운다(#535).
 import { expect, test, type Page } from "@playwright/test";
 
 import { stubCart } from "./fixtures/cart";
@@ -67,6 +68,29 @@ async function stubProductDetails(page: Page) {
 test("고른 상품이 없으면 두 자리 모두 빈 칸으로 시작한다", async ({ page }) => {
   await page.goto("/compare");
 
+  await expect(page.getByRole("button", { name: "상품 추가하기" })).toHaveCount(2);
+  await expect(page.getByRole("button", { name: /비교에서 빼기/ })).toHaveCount(0);
+});
+
+// 빼도 주소에 번호가 남아, 검색에서 뒤로 오거나 새로고침해 다시 마운트되면 뺀 상품이
+// 되살아났다(QA HM-000). 하단 탭으로 /compare에 새로 들어올 때만 비어 있었다
+test("뺀 상품은 검색에서 뒤로 오거나 새로고침해도 되살아나지 않는다", async ({ page }) => {
+  await stubProductDetails(page);
+  await page.goto("/compare?slot=0&product=1&other=none");
+
+  await page.getByRole("button", { name: "비교 테스트 사료 1kg 비교에서 빼기" }).click();
+  await expect(page).toHaveURL(/\/compare$/);
+
+  await page.getByRole("button", { name: "상품 추가하기" }).first().click();
+  await expect(page).toHaveURL(/\/search\?slot=0&other=none$/);
+  // 입력창 초점은 하이드레이션 뒤 효과가 준다. 그 전에 누르면 뒤로가기가 먹지 않는다
+  await expect(page.getByLabel("상품 검색")).toBeFocused();
+  await page.getByRole("button", { name: "이전 화면으로" }).click();
+
+  await expect(page).toHaveURL(/\/compare$/);
+  await expect(page.getByRole("button", { name: "상품 추가하기" })).toHaveCount(2);
+
+  await page.reload();
   await expect(page.getByRole("button", { name: "상품 추가하기" })).toHaveCount(2);
   await expect(page.getByRole("button", { name: /비교에서 빼기/ })).toHaveCount(0);
 });
