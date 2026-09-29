@@ -243,11 +243,14 @@ function RelatedProducts({ productsPromise }: { productsPromise: Promise<Product
 
   return (
     <>
-      <section aria-labelledby="related-heading" className="flex flex-col gap-3 p-5">
+      {/* 시안(1666-57181)의 스크롤 줄은 폭이 393이 아니라 373이다 — 왼쪽 20px에서 시작해
+          오른쪽은 화면 끝까지 카드가 흘러나간다. 그래서 오른쪽 padding을 두지 않고
+          `ScrollRow`에도 `bleedRight={false}`를 준다 (홈의 가로 목록과 같은 방식) */}
+      <section aria-labelledby="related-heading" className="flex flex-col gap-3 py-5 pl-5">
         <h2 id="related-heading" className="text-title-bold-20 text-text-body-default">
           함께 보면 좋은 상품
         </h2>
-        <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%">
+        <ScrollRow label="함께 보면 좋은 상품" itemWidth="45%" edgeInset={5} bleedRight={false}>
           {related.map((item) => (
             <ScrollRowItem key={item.productId}>
               <ProductGridCard
@@ -300,7 +303,8 @@ function RelatedProductsSkeleton() {
       <div
         role="status"
         aria-label="함께 보면 좋은 상품을 불러오는 중"
-        className="flex flex-col gap-3 p-5"
+        // 받아 온 뒤 그릴 칸과 같은 여백이어야 자리가 튀지 않는다
+        className="flex flex-col gap-3 py-5 pl-5"
       >
         <Skeleton className="h-7 w-44" />
         <div className="flex gap-3">
