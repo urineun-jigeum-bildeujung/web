@@ -14,17 +14,13 @@ test.beforeEach(async ({ page }) => {
 // 고르기 화면(comp_011)이 시안에서 빠지고 검색으로 통일됐다(#144).
 // 비교 → 검색 → 결과 → 비교로 돌아오는 한 바퀴가 이어져야 자리를 채울 수 있다.
 test("빈 자리를 검색에서 골라 채운다", async ({ page }) => {
+  // 고른 상품이 없으면 두 자리 모두 빈 칸이다(QA HM-000, #535). 반대쪽이 비어 있다는 것도
+  // other=none으로 들고 다녀야 돌아왔을 때 그 자리가 되살아나지 않는다(#245)
   await page.goto("/compare");
 
-  // 한 자리를 비워 담을 곳을 만든다. 남은 자리(2번)는 검색을 다녀오는 동안
-  // other 파라미터로 들고 다녀야 되돌아왔을 때 사라지지 않는다(#245)
-  await page
-    .getByRole("button", { name: /비교에서 빼기/ })
-    .first()
-    .click();
-  await page.getByRole("button", { name: "상품 추가하기" }).click();
+  await page.getByRole("button", { name: "상품 추가하기" }).first().click();
 
-  await expect(page).toHaveURL(/\/search\?slot=0&other=2$/);
+  await expect(page).toHaveURL(/\/search\?slot=0&other=none$/);
   await expect(page.getByRole("heading", { name: "최근 검색어" })).toBeVisible();
 
   await page.getByLabel("상품 검색").fill("퍼피");
@@ -35,8 +31,9 @@ test("빈 자리를 검색에서 골라 채운다", async ({ page }) => {
   await page.getByRole("button", { name: /퍼피 성장기 사료/ }).click();
   await page.getByRole("button", { name: "선택 완료" }).click();
 
-  await expect(page).toHaveURL(/\/compare\?slot=0&product=4&other=2$/);
-  // 이름은 카드·표 머리·표 설명 세 곳에 나온다. 자리에 담겼는지는 그 자리의 빼기 버튼으로 본다
+  await expect(page).toHaveURL(/\/compare\?slot=0&product=4&other=none$/);
+  // 검색이 돌려준 실제 번호(4)를 상품 상세로 받아 그 자리에 넣는다. 예전엔 목업 맵에서 찾아
+  // 없으면 빈 채로 남았다(QA CP-022). 자리에 담겼는지는 그 자리의 빼기 버튼으로 본다
   await expect(
     page.getByRole("button", { name: "퍼피 성장기 사료 1kg 비교에서 빼기" }),
   ).toBeVisible();
