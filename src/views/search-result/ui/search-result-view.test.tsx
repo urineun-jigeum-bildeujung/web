@@ -25,6 +25,12 @@ vi.mock("@/features/toggle-wishlist", async (importOriginal) => ({
   useWishedProductIds: () => ({ wishedIds: wished.ids, isLoading: wished.loading }),
 }));
 
+// 비교로 확정하기 전에 로그인을 본다(#542). 토스트는 훅 테스트가 보므로 여기서는 통과 여부만 세운다
+const session = vi.hoisted(() => ({ signedIn: true }));
+vi.mock("@/shared/api/use-require-session", () => ({
+  useRequireSession: () => () => session.signedIn,
+}));
+
 import { SearchResultView } from "./search-result-view";
 
 const PUPPY_FOOD: ProductCard = {
@@ -122,6 +128,23 @@ describe("SearchResultView", () => {
 
     fireEvent.click(complete);
     expect(push).toHaveBeenCalledWith("/compare?slot=1&product=4");
+  });
+
+  // 고르기 모드는 주소로도 들어온다. 비교는 로그인해야 열리므로 비로그인이면 가지 않는다
+  it("로그인하지 않았으면 선택 완료를 눌러도 비교 화면으로 가지 않는다", async () => {
+    session.signedIn = false;
+    // 앞 테스트가 비교로 보낸 기록이 남아 있다
+    push.mockClear();
+    try {
+      await renderWith("?q=퍼피&slot=1");
+
+      fireEvent.click(await screen.findByRole("button", { name: /퍼피 성장기 사료/ }));
+      fireEvent.click(screen.getByRole("button", { name: "선택 완료" }));
+
+      expect(push).not.toHaveBeenCalledWith(expect.stringContaining("/compare"));
+    } finally {
+      session.signedIn = true;
+    }
   });
 
   it("체크한 카드를 다시 누르면 선택이 풀리고 선택 완료가 다시 비활성된다", async () => {
