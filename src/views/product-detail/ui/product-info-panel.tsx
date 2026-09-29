@@ -17,16 +17,14 @@ import { Icon } from "@/shared/ui/icon/icon";
 
 import type { ProductDetailInfo } from "@/entities/product";
 
+import { PRODUCT_GUIDES } from "../config/guide-sections";
 import type { PetMatch } from "../model/mock-product";
-import { MOCK_PRODUCT } from "../model/mock-product";
 import { DescriptionCollapse } from "./description-collapse";
 import { NutrientBar } from "./nutrient-bar";
 
 type ProductInfoPanelProps = {
   /** 상세 설명 표가 그대로 쓰는 응답값 */
   detail: ProductDetailInfo;
-  /** 제공고시의 품명. 응답의 상품명을 그대로 쓴다 */
-  productName: string;
   match: PetMatch;
   petName?: string;
 };
@@ -83,18 +81,13 @@ function toSpecRows(detail: ProductDetailInfo): [string, string][] {
 const GUIDE_TRIGGER_CLASS =
   "h-11 items-center rounded-none border-0 py-0 text-body-medium-14 text-text-body-default hover:no-underline [&_svg[data-slot=accordion-trigger-icon]]:hidden!";
 
-const PENDING_GUIDES = [
-  { value: "shipping", label: "배송 안내" },
-  { value: "returns", label: "교환/반품/환불 안내" },
-] as const;
-
 const NUTRIENT_LEGEND = [
   { label: "부족", src: "/images/product-detail/nutrient-legend-low.svg" },
   { label: "적정", src: "/images/product-detail/nutrient-legend-proper.svg" },
   { label: "과다", src: "/images/product-detail/nutrient-legend-high.svg" },
 ] as const;
 
-export function ProductInfoPanel({ detail, productName, match, petName }: ProductInfoPanelProps) {
+export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelProps) {
   const specRows = toSpecRows(detail);
   return (
     <div className="flex flex-col">
@@ -175,32 +168,7 @@ export function ProductInfoPanel({ detail, productName, match, petName }: Produc
       <div className="h-2 bg-muted" />
 
       <Accordion type="single" collapsible className="bg-surface-default px-5">
-        <AccordionItem value="notice" className="not-last:border-b-0">
-          <AccordionTrigger className={GUIDE_TRIGGER_CLASS}>
-            상품정보 제공고시
-            <Icon
-              name="down"
-              className="text-icon-fill-default transition-transform group-aria-expanded/accordion-trigger:rotate-180"
-            />
-          </AccordionTrigger>
-          <AccordionContent>
-            <dl className="flex flex-col">
-              {[["품명 및 모델명", productName] as const, ...MOCK_PRODUCT.notice].map(
-                ([term, description]) => (
-                  <DefinitionRow
-                    key={term}
-                    term={term}
-                    description={description}
-                    className="min-h-0 items-start gap-4 border-b border-border px-0 last:border-b-0 [&>dd]:whitespace-normal"
-                    termClassName="w-22 text-label-medium-14 text-text-body-default"
-                    descriptionClassName="text-body-medium-14 text-text-body-secondary"
-                  />
-                ),
-              )}
-            </dl>
-          </AccordionContent>
-        </AccordionItem>
-        {PENDING_GUIDES.map(({ value, label }) => (
+        {PRODUCT_GUIDES.map(({ value, label, sections }) => (
           <AccordionItem key={value} value={value} className="not-last:border-b-0">
             <AccordionTrigger className={GUIDE_TRIGGER_CLASS}>
               {label}
@@ -210,9 +178,24 @@ export function ProductInfoPanel({ detail, productName, match, petName }: Produc
               />
             </AccordionTrigger>
             <AccordionContent>
-              <p className="text-body-medium-14 text-text-body-secondary">
-                안내 내용을 준비하고 있어요.
-              </p>
+              <div className="flex flex-col gap-2 pb-2">
+                {sections.map((section) => (
+                  <section key={section.heading} aria-label={section.heading}>
+                    {/* 시안(3756-73239)의 소제목은 본문과 굵기가 같고 크기·색만 다르다 */}
+                    <p className="text-caption-regular-13 text-text-body-default">
+                      {section.heading}
+                    </p>
+                    {section.lines.map((line) => (
+                      <p
+                        key={line}
+                        className="text-caption-regular-12 break-keep text-text-body-secondary"
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </section>
+                ))}
+              </div>
             </AccordionContent>
           </AccordionItem>
         ))}

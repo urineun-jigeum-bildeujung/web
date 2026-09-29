@@ -40,7 +40,7 @@ const BASE: PetMatch = {
 describe("상세 설명 표", () => {
   // 종은 체구 뒤에 접미로 붙는다(시안 1702-18844). 응답은 "강아지"·"고양이" 표시명으로 온다
   it("급여 대상을 체구 뒤에 종 접미를 붙여 한 문구로 적는다", () => {
-    render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
 
     expect(screen.getByText("8세 이상 소형견")).toBeDefined();
   });
@@ -48,7 +48,7 @@ describe("상세 설명 표", () => {
   // 응답의 allergens는 들어 있는 성분이다. 성분명만 적으면 시안 문구("불포함") 때문에
   // 뜻이 정반대로 읽힌다
   it("알레르기 성분 뒤에 포함을 붙인다", () => {
-    render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
 
     expect(screen.getByText("계란 포함")).toBeDefined();
   });
@@ -57,7 +57,6 @@ describe("상세 설명 표", () => {
     render(
       <ProductInfoPanel
         detail={{ ...DETAIL, originCountry: null, storageMethod: null }}
-        productName="면역 지원 영양제 90정"
         match={BASE}
       />,
     );
@@ -70,14 +69,7 @@ describe("상세 설명 표", () => {
 
 describe("종합 점수 카드", () => {
   it("영양 성분 상태의 부족·적정·과다 범례를 보여준다", () => {
-    render(
-      <ProductInfoPanel
-        detail={DETAIL}
-        productName="면역 지원 영양제 90정"
-        match={BASE}
-        petName="소리"
-      />,
-    );
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} petName="소리" />);
 
     const legend = within(screen.getByRole("list", { name: "영양 성분 상태 범례" }));
     expect(legend.getByText("부족")).toBeDefined();
@@ -86,14 +78,7 @@ describe("종합 점수 카드", () => {
   });
 
   it("점수와 한 줄이 다 있으면 보인다", () => {
-    render(
-      <ProductInfoPanel
-        detail={DETAIL}
-        productName="면역 지원 영양제 90정"
-        match={BASE}
-        petName="소리"
-      />,
-    );
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} petName="소리" />);
 
     expect(screen.getByText(/종합 92점/)).toBeDefined();
   });
@@ -104,7 +89,6 @@ describe("종합 점수 카드", () => {
     render(
       <ProductInfoPanel
         detail={DETAIL}
-        productName="면역 지원 영양제 90정"
         match={{ ...BASE, score: null, summary: null }}
         petName="소리"
       />,
@@ -117,14 +101,7 @@ describe("종합 점수 카드", () => {
   });
 
   it("한 줄만 비어도 카드를 그리지 않는다", () => {
-    render(
-      <ProductInfoPanel
-        detail={DETAIL}
-        productName="면역 지원 영양제 90정"
-        match={{ ...BASE, summary: null }}
-        petName="소리"
-      />,
-    );
+    render(<ProductInfoPanel detail={DETAIL} match={{ ...BASE, summary: null }} petName="소리" />);
 
     expect(screen.queryByText(/종합/)).toBeNull();
     expect(screen.queryByText(/기능성 성분/)).toBeNull();
@@ -132,22 +109,20 @@ describe("종합 점수 카드", () => {
 
   // 이유를 지어내지 않는다. 예전 문구("급여량이 등록되지 않아")는 종이 달라 재지 않은 아이에게도 떴다 (#481)
   it("성분이 없으면 그 아이 기준으로는 아직 분석하지 못했다고 알린다", () => {
-    render(
-      <ProductInfoPanel
-        detail={DETAIL}
-        productName="면역 지원 영양제 90정"
-        match={{ ...BASE, nutrients: [] }}
-        petName="냥이"
-      />,
-    );
+    render(<ProductInfoPanel detail={DETAIL} match={{ ...BASE, nutrients: [] }} petName="냥이" />);
 
     expect(screen.getByText("냥이 기준으로는 아직 분석하지 못했어요.")).toBeDefined();
   });
 });
 
 describe("상품정보 하단 안내", () => {
+  // 아코디언이 닫혀 있는 동안에는 본문이 DOM에 없다. 단정 전에 그 항목을 펼친다
+  function openGuide(name: string) {
+    fireEvent.click(screen.getByRole("button", { name }));
+  }
+
   it("세 항목이 내용 유무와 관계없이 펼쳐지고 다시 접힌다", () => {
-    render(<ProductInfoPanel detail={DETAIL} productName="면역 지원 영양제 90정" match={BASE} />);
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
 
     const noticeTrigger = screen.getByRole("button", { name: "상품정보 제공고시" });
     fireEvent.click(noticeTrigger);
@@ -163,5 +138,41 @@ describe("상품정보 하단 안내", () => {
     expect(returnsTrigger.getAttribute("aria-expanded")).toBe("true");
     fireEvent.click(returnsTrigger);
     expect(returnsTrigger.getAttribute("aria-expanded")).toBe("false");
+  });
+
+  it("세 항목 모두 자리표시가 아니라 실제 안내 문구를 그린다", () => {
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
+
+    openGuide("상품정보 제공고시");
+    expect(screen.getByLabelText("1. 기본 상품 정보")).toBeDefined();
+
+    openGuide("배송 안내");
+    expect(screen.getByLabelText("3. 출고 마감 및 배송 소요일 (빠른출발 안내)")).toBeDefined();
+
+    openGuide("교환/반품/환불 안내");
+    expect(screen.getByLabelText("1. 교환 및 반품 신청 기간")).toBeDefined();
+
+    expect(screen.queryByText("안내 내용을 준비하고 있어요.")).toBeNull();
+  });
+
+  // 품명은 상품 상세 설명으로 넘기고 제공고시에는 서버 값을 쓰지 않는다(PD 확정 · #555).
+  // 자리표시용 가짜 상담 번호도 이때 함께 사라졌다 — 되살아나면 운영에 그대로 나간다
+  it("제공고시에 서버 값도 자리표시 상담 번호도 넣지 않는다", () => {
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
+    openGuide("상품정보 제공고시");
+
+    expect(screen.getByText("품명 및 모델명: 상품 상단 및 상세설명 별도 표기")).toBeDefined();
+    expect(screen.queryByText(/1234-5678/)).toBeNull();
+    expect(screen.queryByText("소비자상담 관련 전화번호")).toBeNull();
+  });
+
+  // 시안은 "3만원 이상 무료배송"인데 확정 정책은 3,000원 고정이다(백엔드 2026-09-21 · #214).
+  // 시안을 그대로 옮기면 안내와 실제 결제 금액이 어긋난다
+  it("배송비를 확정 정책인 3,000원 고정으로 적는다", () => {
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
+    openGuide("배송 안내");
+
+    expect(screen.getByText("기본 배송비: 3,000원")).toBeDefined();
+    expect(screen.queryByText(/무료배송/)).toBeNull();
   });
 });
