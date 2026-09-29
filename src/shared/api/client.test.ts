@@ -6,6 +6,7 @@ import {
   apiRequest,
   buildQueryString,
   isValidationError,
+  REQUEST_TIMEOUT_MS,
   shouldRetryQuery,
 } from "./client";
 import { clearTokens, getRefreshToken, saveTokens } from "./token-store";
@@ -114,6 +115,51 @@ describe("apiRequest", () => {
   });
 });
 
+describe("apiRequest 시간 제한", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  /** 시간 제한 signal을 손에 쥐고, 끊기면 브라우저처럼 그 사유로 거절하는 fetch를 건다 */
+  function stubHangingFetch() {
+    const controller = new AbortController();
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+    const fetchMock = vi.fn(
+      (_url: string, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+        }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const expire = () => controller.abort(new DOMException("시간 초과", "TimeoutError"));
+    return { timeoutSpy, fetchMock, expire };
+  }
+
+  it("응답이 10초 안에 오지 않으면 요청을 끊고 TimeoutError를 던진다", async () => {
+    const { timeoutSpy, expire } = stubHangingFetch();
+
+    const request = apiRequest("/reviews/writable");
+    expire();
+
+    await expect(request).rejects.toMatchObject({ name: "TimeoutError" });
+    expect(timeoutSpy).toHaveBeenCalledWith(REQUEST_TIMEOUT_MS);
+    expect(REQUEST_TIMEOUT_MS).toBe(10_000);
+  });
+
+  it("부른 쪽이 준 signal도 그대로 살아 있다", async () => {
+    const { fetchMock } = stubHangingFetch();
+    const caller = new AbortController();
+
+    const request = apiRequest("/reviews/writable", { signal: caller.signal });
+    caller.abort(new DOMException("취소", "AbortError"));
+
+    await expect(request).rejects.toMatchObject({ name: "AbortError" });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(init.signal).not.toBe(caller.signal);
+  });
+});
+
 describe("apiRequest base URL", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -210,6 +256,10 @@ describe("shouldRetryQuery", () => {
     expect(shouldRetryQuery(0, new ApiError(502, "bad gateway"))).toBe(true);
     expect(shouldRetryQuery(0, new TypeError("Failed to fetch"))).toBe(true);
     expect(shouldRetryQuery(1, new ApiError(502, "bad gateway"))).toBe(false);
+  });
+
+  it("시간 초과는 재시도하지 않는다", () => {
+    expect(shouldRetryQuery(0, new DOMException("시간 초과", "TimeoutError"))).toBe(false);
   });
 });
 
