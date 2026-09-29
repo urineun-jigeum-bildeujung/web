@@ -5,11 +5,13 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/edit-address-view.tsx` | 배송지 추가·수정 |
-| `ui/edit-address-view.test.tsx` | 주소창이 가리키는 값이 채워지는지, 고른 주소가 들어오는지, 빈 집·회사 자리에서 온 이름이 채워지는지 |
+| `ui/edit-address-view.test.tsx` | 주소창이 가리키는 값이 채워지는지, 고른 주소가 들어오는지, 빈 집·회사 자리에서 온 이름이 채워지는지, 연락처에 하이픈이 들어가는지 |
 | `model/address-form-schema.ts` | 폼 검증 규칙. 서버 제약을 옮겨 둔 zod 스키마와 칸별 길이(`ADDRESS_FIELD_MAX`) |
 | `model/address-form-schema.test.ts` | 칸별 길이의 경계값(한 자 넘으면 막음), 앞뒤 공백 |
 | `model/address-draft.ts` | 적다 만 폼 값을 탭 안에서 들고 있는다 |
 | `model/address-draft.test.ts` | 대상이 다른 것, 절반만 적은 것, 막힌 저장소 |
+| `model/phone-number.ts` | 연락처를 치는 대로 숫자만 남기고 하이픈을 넣는다(`formatPhoneInput`). 010은 3-4-4, 서울은 2-3-4·2-4-4 (#526) |
+| `model/phone-number.test.ts` | 치는 도중의 모양, 숫자가 아닌 글자, 열한 자리를 넘는 값 |
 | `model/return-to.ts` | 저장을 마치고 돌아갈 곳. 우리 경로만 통과시킨다 |
 | `model/return-to.test.ts` | 바깥을 가리키는 값, 탭·줄바꿈으로 감춘 값 |
 | `index.ts` | 공개 API |
@@ -64,7 +66,7 @@
 | --- | --- |
 | 배송지 이름 | `addressName` |
 | 받는 분 이름 | `receiver` |
-| 연락처 | `phone` |
+| 연락처 | `phone` — **하이픈을 넣은 채로 보낸다**(`010-1234-5678`). 서버는 형식을 보지 않고 받은 그대로 저장하며, 결제 화면과 주문 상세가 그 값을 그대로 보인다. 명세 예시도 이 꼴이다. 칸은 숫자만 받고 치는 대로 하이픈을 넣으며, 하이픈 없이 저장된 옛 번호도 같은 꼴로 보인다 (#526) |
 | 주소 | `address` · `zipCode`(주소창에서 함께 온다) |
 | 상세 주소 | `addressDetail` |
 | 요청사항 | `deliveryNote` — **적지 않으면 빈 문자열이 아니라 `null`이다.** 명세에서 유일한 nullable. 라벨은 PD 확인으로 "요청사항"이다 (#448) |
