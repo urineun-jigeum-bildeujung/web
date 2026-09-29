@@ -35,6 +35,7 @@ import { FilterChips } from "@/shared/ui/filter-chips/filter-chips";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
@@ -200,19 +201,11 @@ export function LikesView() {
       {/* 시안(header, 1585:18342)은 로고가 아니라 뒤로가기 화살표 + 검색·알림·장바구니고
           제목이 없다. /likes가 바텀내비 탭 루트라 home-view와 같은 로고형이라고 판단해
           PageHeader를 걷어냈던 게 틀렸다 — 원래대로 되돌린다(leading 기본값 back 그대로).
-          오른쪽 아이콘도 home-view 헤더와 같은 조합(아이콘 28px·4px 간격)이라 그 마크업을
-          그대로 쓴다 — deals-view의 44px 터치영역·24px 아이콘은 제목이 있는 다른 헤더 값이다 */}
+          오른쪽 아이콘은 모든 헤더가 같은 공용 슬롯(HeaderIconLink)을 쓴다(#513) */}
       <PageHeader
         right={
-          <nav aria-label="바로 가기" className="flex items-center gap-2.25">
-            <Link
-              href="/search"
-              aria-label="검색"
-              // 가로 4px만 넓힌다. `-inset-x-1.125`는 Tailwind가 만들지 않아 넓혀지지 않았다(#470 리뷰)
-              className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
-            >
-              <Icon name="search" className="size-7" />
-            </Link>
+          <nav aria-label="바로 가기" className="flex items-center gap-1">
+            <HeaderIconLink href="/search" label="검색" icon="search" />
             <NotificationBell />
             <CartLink />
           </nav>

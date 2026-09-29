@@ -76,19 +76,16 @@ const MENU_GROUPS = [
   },
 ];
 
-/** API 연동 전까지 화면 확인용 값 */
-const HEADER_ICON =
-  "flex size-11 items-center justify-center rounded-md text-icon-stroke-tertiary transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
-
 export function MypageView() {
   return (
     <div className="flex min-h-dvh flex-col bg-bg-secondary">
+      {/* 시안(mypa_001) header/type=logo에 알림·장바구니. 홈과 같은 로고·슬롯을 쓴다 (#513) */}
       <PageHeader
-        left={<span className="px-2 text-title-bold-18 text-foreground">골라주개냥</span>}
+        leading="logo"
         right={
           <>
-            <NotificationBell className={HEADER_ICON} />
-            <CartLink className={HEADER_ICON} />
+            <NotificationBell />
+            <CartLink />
           </>
         }
         className="bg-transparent"

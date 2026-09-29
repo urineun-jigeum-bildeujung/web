@@ -8,7 +8,6 @@
 
 "use client";
 
-import Link from "next/link";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useState } from "react";
 
@@ -21,6 +20,7 @@ import { useSessionState } from "@/shared/api/use-session-state";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -125,15 +125,9 @@ export function RecommendationsView() {
       <PageHeader
         title="맞춤 추천"
         right={
-          // 시안(1576-87320) 헤더의 검색·알림·장바구니. 메인 헤더와 같은 순서·아이콘·누르는 자리다
+          // 시안(1576-87320) 헤더의 검색·알림·장바구니. 모든 헤더와 같은 공용 슬롯이다(#513)
           <>
-            <Link
-              href="/search"
-              aria-label="검색"
-              className="relative flex size-7 items-center justify-center after:absolute after:-inset-x-1 after:-inset-y-2"
-            >
-              <Icon name="search" className="size-7" />
-            </Link>
+            <HeaderIconLink href="/search" label="검색" icon="search" />
             <NotificationBell />
             <CartLink />
           </>
