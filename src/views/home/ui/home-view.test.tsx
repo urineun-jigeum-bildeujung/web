@@ -158,12 +158,26 @@ describe("HomeView", () => {
     expect(screen.getByText(/최근에 구매한 상품/)).toBeDefined();
   });
 
-  it("새 아이 추가를 누르면 온보딩 기본 정보 단계로 간다", async () => {
+  // 첫 입력 단계의 "이전"이 메인으로 돌아오도록 돌아올 곳을 싣는다(QA No.254, #527)
+  it("새 아이 추가를 누르면 메인을 돌아올 곳으로 싣고 온보딩 기본 정보 단계로 간다", async () => {
     await renderWith();
 
     fireEvent.click(screen.getByRole("button", { name: "새 아이 추가" }));
 
-    expect(pushMock).toHaveBeenCalledWith("/onboarding?step=basic");
+    expect(pushMock).toHaveBeenCalledWith("/onboarding?step=basic&from=/");
+  });
+
+  // 5마리째를 등록한 뒤에도 추가 자리가 남아 여섯째가 등록됐다(QA No.130, #527)
+  it("5마리를 채우면 새 아이 추가 칸이 없다", async () => {
+    petsQuery = {
+      pets: ["1", "2", "3", "4", "5"].map((id) => ({ id, name: `아이${id}`, isDefault: false })),
+      isLoading: false,
+    };
+    await renderWith();
+
+    const switcher = screen.getByRole("radiogroup", { name: "아이 고르기" });
+    expect(within(switcher).getAllByRole("radio")).toHaveLength(5);
+    expect(screen.queryByRole("button", { name: "새 아이 추가" })).toBeNull();
   });
 
   it("종류를 고르면 서버가 준 상품 목록을 그대로 그린다", async () => {
