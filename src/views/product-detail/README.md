@@ -22,8 +22,8 @@
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
 | `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환 |
-| `ui/detail-option-sheet.tsx` | 수량 시트. 용량 표기·수량과 장바구니 담기 버튼. 고를 옵션은 없다 |
-| `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기 동작 |
+| `ui/detail-option-sheet.tsx` | 수량 시트. 용량 표기·수량과 장바구니 담기 또는 바로 구매 버튼. 고를 옵션은 없다 |
+| `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기·바로 구매 동작 |
 | `ui/match-panel.tsx` | 적합도 블록. 아이 고르기, 점수, 근거 세 줄 |
 | `ui/product-info-panel.tsx` | 상품 정보 탭. 상세 설명 표(응답의 `detailInfo`)·영양 분석·상품 설명 자리·제공고시 |
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지 |
@@ -143,3 +143,9 @@
 **과다·적정 배지의 글자색은 각각 `destructive-foreground`·`success-foreground`를 사용한다.** Figma 컴포넌트에 맞춰 두 토큰 모두 흰색을 사용한다. WCAG 비율 공식으로는 대비가 기준에 못 미치지만, PD팀이 APCA 기준으로 재평가해 유지하기로 했다.
 
 **아이 고르는 Select는 `position="popper"`다.** 기본값(`item-aligned`)은 고른 항목을 트리거 위에 겹쳐 놓아서, 트리거가 화면 아래쪽에 있으면 나머지 항목이 화면 밖으로 밀린다.
+
+## 바로 구매는 수량을 고른 뒤 결제 화면으로 간다 (#520)
+
+"바로 구매"와 타임딜 중의 "타임딜 구매하기"는 장바구니와 같은 수량 시트를 연다. 시트 버튼이 "○원 바로 구매"로 바뀌고, 누르면 **장바구니에 담지 않고** `/payment?buy=종류:번호:수량`으로 간다. 타임딜 상품은 딜 아이템 번호로 싣는다 — 장바구니 담기와 같은 식별자(`cartItemRef`)다. 전에는 두 버튼이 `/payment` 링크일 뿐이라 결제 화면에 고른 상품이 없었다(QA PD-056).
+
+시안에는 바로 구매가 어디로 가는지 연결이 없고 전용 시트도 없다. 결제 화면에 수량을 고를 자리가 없어 이 시트를 함께 쓴다 — **PD 확인 거리**다.
