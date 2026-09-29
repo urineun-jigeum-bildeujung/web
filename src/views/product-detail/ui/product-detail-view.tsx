@@ -162,7 +162,10 @@ function ProductImages({ images, name }: { images: string[]; name: string }) {
               preload={imageIndex === 0}
               alt={imageIndex === 0 ? name : `${name} 사진 ${imageIndex + 1}`}
               fill
-              sizes="(max-width: 420px) 100vw, 420px"
+              // 이 이미지는 거터 없이 컨테이너를 통째로 쓴다 — 표시 폭이 곧 컨테이너 폭이고
+              // #497로 그 상한이 420에서 1200이 됐다. 옛 값(420px 고정)을 두면 넓은 화면에서
+              // 브라우저가 420px짜리 후보를 골라 흐려진다
+              sizes="(min-width: 1200px) 1200px, 100vw"
               className="object-cover"
             />
           </div>
