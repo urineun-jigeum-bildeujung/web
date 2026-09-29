@@ -7,8 +7,9 @@ import type { ProductDetail } from "@/entities/product";
 import { ApiError } from "@/shared/api/client";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
-const { push, showSnackbar, getProductDetail, addCartItem, getCart } = vi.hoisted(() => ({
+const { push, replace, showSnackbar, getProductDetail, addCartItem, getCart } = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
   showSnackbar: vi.fn(),
   getProductDetail: vi.fn(),
   addCartItem: vi.fn(),
@@ -45,7 +46,7 @@ vi.mock("@/widgets/cart-link", async () => {
   };
 });
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, back: vi.fn() }),
+  useRouter: () => ({ push, replace, back: vi.fn() }),
   usePathname: () => "/compare",
 }));
 
@@ -262,6 +263,70 @@ test("두 자리를 다 비우고 검색에 가면 other가 none으로 담긴다
   fireEvent.click(screen.getAllByRole("button", { name: "상품 추가하기" })[0]);
 
   expect(push).toHaveBeenCalledWith("/search?slot=0&other=none");
+});
+
+/** 빼기가 바꾼 주소의 쿼리. 이 쿼리로 다시 여는 것이 검색에서 뒤로 오거나 새로고침한 것과 같다 */
+function searchOf(href: string) {
+  return new URL(href, "http://localhost").search;
+}
+
+// 빼도 주소에 번호가 남아, 검색에서 뒤로 오거나 새로고침하면 다시 마운트되며 뺀 상품이
+// 되살아났다(QA HM-000). 하단 탭으로 /compare에 새로 들어올 때만 비어 있었다
+test("하나 남은 상품을 빼면 주소도 비워, 그 주소로 다시 열면 빈 칸이다", async () => {
+  const { unmount } = renderView("?slot=0&product=33&other=none");
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 웰니스 사슴 어덜트 4kg 비교에서 빼기" }),
+  );
+
+  expect(replace).toHaveBeenCalledWith("/compare", { scroll: false });
+
+  unmount();
+  getProductDetail.mockClear();
+  renderView(searchOf(replace.mock.calls[0][0]));
+
+  expect(screen.getAllByRole("button", { name: "상품 추가하기" })).toHaveLength(2);
+  expect(getProductDetail).not.toHaveBeenCalled();
+});
+
+test("두 자리 중 하나를 빼면 남은 자리만 주소에 남는다", async () => {
+  const { unmount } = renderView("?slot=0&product=1&other=2");
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
+  );
+
+  expect(replace).toHaveBeenCalledWith("/compare?slot=1&product=2&other=none", { scroll: false });
+
+  unmount();
+  renderView(searchOf(replace.mock.calls[0][0]));
+
+  expect(await screen.findByText("한끼 그레인프리 곤충 시니어 4kg")).toBeDefined();
+  expect(screen.queryByText("한끼 그레인프리 곤충 시니어 1kg")).toBeNull();
+  expect(screen.getByRole("button", { name: "상품 추가하기" })).toBeDefined();
+});
+
+// 상세에서 온 흐름도 other 형식으로 적는다. 검색 화면은 other와 from=detail&first를 똑같이
+// "반대쪽 자리에 이미 있는 상품"으로 읽어, 다시 고르러 가도 상세 상품이 목록에서 빠진다
+test("상세에서 온 흐름에서 두 번째 상품을 빼면 상세 상품만 주소에 남는다", async () => {
+  const { unmount } = renderView("?slot=1&product=4&from=detail&first=123");
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 웰니스 닭고기 시니어 2kg 비교에서 빼기" }),
+  );
+
+  expect(replace).toHaveBeenCalledWith("/compare?slot=0&product=123&other=none", {
+    scroll: false,
+  });
+
+  unmount();
+  renderView(searchOf(replace.mock.calls[0][0]));
+
+  expect(await screen.findByText("한포 면역 지원 영양제 90정")).toBeDefined();
+  expect(screen.queryByText("한끼 웰니스 닭고기 시니어 2kg")).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "상품 추가하기" }));
+  expect(push).toHaveBeenCalledWith("/search?slot=1&other=123");
 });
 
 test("other가 none이면 그 자리를 비운 채로 되살린다", async () => {
