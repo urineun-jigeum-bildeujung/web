@@ -40,3 +40,4 @@ features/
 | --- | --- |
 | `toggle-theme` | 다크 모드 토글 버튼 (디자인 확정 전 데모) |
 | `toggle-wishlist` | 상품 하트로 찜을 켜고 끈다. 로그인하지 않았으면 로그인으로 보낸다 (#483) |
+| `recently-viewed` | 최근 본 상품을 이 브라우저에 기록한다. 백엔드 API가 없어 Zustand `persist`로 상품 번호만 남긴다 (#509) |
