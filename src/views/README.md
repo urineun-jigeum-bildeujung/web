@@ -67,7 +67,6 @@ views/
 | `edit-address` | `/mypage/address/new` | 배송지 추가·수정 |
 | `search-address` | `/mypage/address/search` | 주소 검색 |
 | `restock-alarm` | `/mypage/restock` | 재입고 알림 목록·선택 모드 |
-| `recently-viewed` | `/mypage/recently-viewed` | 최근 본 상품 목록 (자리 표시) |
 | `my-reviews` | `/mypage/reviews` | 나의 상품 후기 (탭) |
 | `orders` | `/mypage/orders` | 주문·배송 확인 |
 | `order-detail` | `/mypage/orders/[orderId]` | 주문 상세 |
