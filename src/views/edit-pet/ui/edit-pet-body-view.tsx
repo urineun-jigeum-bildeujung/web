@@ -76,7 +76,7 @@ function BodyForm({ pet, isSaving, onSave }: BodyFormProps) {
           </div>
         )}
 
-        {/* 소수 첫째 자리까지만 받고 칸을 벗어나면 kg을 붙인다. 온보딩과 같은 칸이다(QA No.242) */}
+        {/* 소수 첫째 자리까지만 받고 값 뒤에 kg을 붙인다. 온보딩과 같은 칸이다(QA No.242) */}
         <WeightField
           label={`${pet.name}의 대략적인 몸무게를 알려주세요`}
           hint="정확하지 않아도 괜찮아요, 대략적으로 적어주세요"

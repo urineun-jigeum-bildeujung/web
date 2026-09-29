@@ -54,18 +54,17 @@ test("강아지는 체구를 묻고 고른 체구를 함께 저장한다", () =>
 });
 
 // QA No.242. 10.11111이 그대로 저장되고 칸에 kg이 없었다
-test("몸무게는 소수 첫째 자리까지만 받아 저장하고 칸을 벗어나면 kg을 붙인다", () => {
+test("몸무게는 소수 첫째 자리까지만 받아 저장하고 값 뒤에 kg을 붙인다", () => {
   state.pet = { ...state.pet, id: "5", weight: 10.11111 };
   render(<EditPetBodyView />);
   const weight = screen.getByLabelText("코코의 대략적인 몸무게를 알려주세요") as HTMLInputElement;
 
   // 예전에 저장된 값도 첫째 자리까지로 보인다
-  expect(weight.value).toBe("10.1kg");
+  expect(weight.value).toBe("10.1");
+  expect(screen.getByText("kg")).toBeDefined();
 
-  fireEvent.focus(weight);
   fireEvent.change(weight, { target: { value: "4.567" } });
-  fireEvent.blur(weight);
-  expect(weight.value).toBe("4.5kg");
+  expect(weight.value).toBe("4.5");
 
   fireEvent.click(screen.getByRole("button", { name: "수정완료" }));
   expect(save).toHaveBeenCalledWith({ size: "SMALL", weight: 4.5, bcs: 3 });
