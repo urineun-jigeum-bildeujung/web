@@ -4,8 +4,9 @@ import { expect, test, vi } from "vitest";
 
 import { PageHeader } from "./page-header";
 
+const { back, push } = vi.hoisted(() => ({ back: vi.fn(), push: vi.fn() }));
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back: vi.fn() }),
+  useRouter: () => ({ back, push }),
 }));
 
 test("제목이 heading으로 렌더링된다", () => {
@@ -43,6 +44,20 @@ test("제목에 요소를 넘기면 h1로 감싸지 않고 그대로 둔다", ()
 
   expect(screen.getByRole("heading", { level: 2, name: "사진 리뷰" })).toBeDefined();
   expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+});
+
+// 공유 링크·새 탭으로 바로 들어오면 되돌릴 기록이 없다(QA PD-004.1, #522)
+test("되돌릴 기록이 없으면 뒤로가기가 홈으로 가고, 있으면 이전 화면으로 간다", () => {
+  const length = vi.spyOn(window.history, "length", "get").mockReturnValue(1);
+  render(<PageHeader title="상품 상세" />);
+  fireEvent.click(screen.getByRole("button", { name: "이전 화면으로" }));
+  expect(push).toHaveBeenCalledWith("/");
+  expect(back).not.toHaveBeenCalled();
+
+  length.mockReturnValue(3);
+  fireEvent.click(screen.getByRole("button", { name: "이전 화면으로" }));
+  expect(back).toHaveBeenCalledOnce();
+  length.mockRestore();
 });
 
 test("leading이 close면 닫기 버튼이 된다", () => {
