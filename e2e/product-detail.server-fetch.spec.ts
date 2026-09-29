@@ -43,7 +43,7 @@ test("응답의 상품이 상단 요약에 그대로 그려진다", async ({ pag
   // 서버가 준 할인율을 쓴다. 두 금액으로 다시 계산하지 않는다
   await expect(summary.getByText("25%")).toBeVisible();
   await expect(summary.getByText("4.7")).toBeVisible();
-  await expect(summary.getByRole("button", { name: "후기 312" })).toBeVisible();
+  await expect(summary.getByRole("button", { name: "후기 312개" })).toBeVisible();
 });
 
 // 보는 것은 **응답의 사진이 화면에 닿고 캐러셀이 움직이는가**다. 목 응답이 사진을 비워 두면

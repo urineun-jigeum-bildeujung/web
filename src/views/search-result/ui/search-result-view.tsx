@@ -142,10 +142,9 @@ function GeneralResultList({
                           {product.rating}
                         </span>
                       </span>
-                      <span aria-hidden className="text-label-medium-14 text-text-body-tertiary">
-                        후기 {product.reviewCount}
+                      <span className="text-label-medium-14 text-text-body-tertiary">
+                        후기 {product.reviewCount}개
                       </span>
-                      <span className="sr-only">{`후기 ${product.reviewCount}개`}</span>
                     </span>
                   </>
                 }

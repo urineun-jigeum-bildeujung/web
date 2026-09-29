@@ -318,10 +318,9 @@ export function RecommendationsView() {
                           </span>
                         </span>
                         <span aria-hidden className="h-4 w-px bg-border" />
-                        <span aria-hidden className="text-body-medium-14 text-text-body-secondary">
-                          후기 {product.reviewCount}
+                        <span className="text-body-medium-14 text-text-body-secondary">
+                          후기 {product.reviewCount}개
                         </span>
-                        <span className="sr-only">{`후기 ${product.reviewCount}개`}</span>
                       </span>
                     </>
                   }
