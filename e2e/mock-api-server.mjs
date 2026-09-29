@@ -240,10 +240,12 @@ const IMAGE_PATHS = ["/images/e2e/product-photo-1.png", "/images/e2e/product-pho
  *
  * 비어 올 수 있는 열도 일부러 섞는다. 제조국·보관방법을 null로 두어 표가 그 줄을 통째로
  * 빼는지 본다. 별점은 값이 있는 쪽으로 둔다 — 별점 없는 상품은 단위 테스트가 맡는다.
+ *
+ * 실제 서버(sever#170)처럼 일반 상품 상세는 `timeDeal: null`이고 최상위 딜 번호가 없다(#539).
  */
 const PRODUCT_DETAIL = {
   productId: 1,
-  timeDealItemId: null,
+  timeDeal: null,
   summary: {
     images: IMAGE_PATHS,
     productName: "관절 튼튼 영양제 90정",
@@ -276,13 +278,12 @@ const PRODUCT_DETAIL = {
 
 /**
  * 진행 중 딜(`timeDeals("ACTIVE")`)의 상품 101을 **일반 상품 상세로** 부른 것. 실제 서버처럼
- * 딜 중이어도 정가와 빈 딜 번호를 준다 — 전에는 여기에 딜 번호를 넣어 두어, 상세가 딜가를
+ * 딜 중이어도 정가와 `timeDeal: null`을 준다 — 전에는 여기에 딜 번호를 넣어 두어, 상세가 딜가를
  * 한 번도 받지 못하는데도 E2E가 통과했다 (#484)
  */
 const TIME_DEAL_PRODUCT = {
   ...PRODUCT_DETAIL,
   productId: 101,
-  timeDealItemId: null,
   summary: {
     ...PRODUCT_DETAIL.summary,
     productName: "오리&고구마 소형견 사료 1.5kg",
@@ -301,7 +302,6 @@ function timeDealDetail(timeDealItemId) {
   if (timeDealItemId !== "1") return null;
   return {
     ...TIME_DEAL_PRODUCT,
-    timeDealItemId: undefined,
     timeDeal: {
       timeDealItemId: 1,
       dealId: 1,
