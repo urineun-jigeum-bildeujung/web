@@ -3,6 +3,11 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const toastAppError = vi.fn();
+vi.mock("@/shared/lib/app-toast", () => ({
+  toastAppError: (...args: unknown[]) => toastAppError(...args),
+}));
+
 import { PhotoPicker } from "./photo-picker";
 
 function makeFile(name: string) {
@@ -15,6 +20,7 @@ const sheet = () => screen.queryByRole("dialog", { name: "사진 첨부하기" }
 
 describe("PhotoPicker", () => {
   beforeEach(() => {
+    toastAppError.mockClear();
     // jsdom에는 없다. 몇 번 만들고 거둬들이는지 세려는 목적도 겸한다
     URL.createObjectURL = vi.fn((file) => `blob:${(file as File).name}`);
     URL.revokeObjectURL = vi.fn();
@@ -24,7 +30,8 @@ describe("PhotoPicker", () => {
     vi.restoreAllMocks();
   });
 
-  it("남은 자리만큼만 받는다", () => {
+  // QA RV-016. 넘친 사진을 말없이 버리면 왜 덜 붙었는지 모른다
+  it("남은 자리만큼만 받고, 넘치면 한도를 알린다", () => {
     const onChange = vi.fn();
     render(<PhotoPicker files={[makeFile("a.png")]} onChange={onChange} max={3} />);
 
@@ -33,6 +40,19 @@ describe("PhotoPicker", () => {
     });
 
     expect(onChange.mock.calls[0][0]).toHaveLength(3);
+    expect(toastAppError).toHaveBeenCalledWith("image.limitExceeded");
+  });
+
+  it("남은 자리 안에서 고르면 알리지 않는다", () => {
+    const onChange = vi.fn();
+    render(<PhotoPicker files={[makeFile("a.png")]} onChange={onChange} max={3} />);
+
+    fireEvent.change(galleryInput(), {
+      target: { files: [makeFile("b.png"), makeFile("c.png")] },
+    });
+
+    expect(onChange.mock.calls[0][0]).toHaveLength(3);
+    expect(toastAppError).not.toHaveBeenCalled();
   });
 
   it("다 채우면 더할 자리가 사라진다", () => {
