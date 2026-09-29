@@ -58,11 +58,16 @@ const query = {
 };
 const refetchItems = vi.fn();
 const submitFeedback = vi.fn();
+// 상세를 어느 아이로 불렀는지 적어 둔다. 목이 인자를 버리면 고른 아이를 무시해도 통과한다
+const detailCalls: (string | undefined)[] = [];
 
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets: () => ({ pets: query.pets, isLoading: false, error: query.petsError }),
-  useQueryPetDetail: () => ({ pet: query.pet, isLoading: false, error: query.petError }),
+  useQueryPetDetail: (petId?: string) => {
+    detailCalls.push(petId);
+    return { pet: query.pet, isLoading: false, error: query.petError };
+  },
 }));
 vi.mock("@/entities/review", () => ({
   useQueryPendingFeedbacks: () => ({
@@ -83,6 +88,7 @@ beforeEach(() => {
   toastAppError.mockClear();
   refetchItems.mockClear();
   submitFeedback.mockReset().mockResolvedValue(undefined);
+  detailCalls.length = 0;
   query.pets = PETS;
   query.petsError = null;
   query.pet = DETAIL;
@@ -247,11 +253,39 @@ test("아이를 고르면 그 아이가 선택 상태가 된다", () => {
   expect(first.getAttribute("aria-checked")).toBe("false");
 });
 
-test("새 아이 추가는 온보딩 기본 정보 단계로 간다", () => {
+// 마이페이지 아이 원이 누른 아이를 싣는다. 화면 안 상태로만 들고 있을 때는 어느 원을 눌러도
+// 기본 아이로 열렸다(QA No.129·181, #527)
+test("주소창의 아이를 고른 채로 열고 그 아이의 상세를 받는다", () => {
+  renderView("?pet=7");
+
+  expect(screen.getByRole("radio", { name: "보리" }).getAttribute("aria-checked")).toBe("true");
+  expect(screen.getByRole("radio", { name: "코코" }).getAttribute("aria-checked")).toBe("false");
+  expect(detailCalls.at(-1)).toBe("7");
+});
+
+// 지운 아이나 손으로 고친 주소면 아무 아이도 고르지 않은 채 카드가 실패로 남는다
+test("주소창의 아이가 목록에 없으면 기본 아이로 연다", () => {
+  renderView("?pet=99");
+
+  expect(screen.getByRole("radio", { name: "코코" }).getAttribute("aria-checked")).toBe("true");
+  expect(detailCalls.at(-1)).toBe("3");
+});
+
+// 첫 입력 단계의 "이전"이 아이 관리로 돌아오도록 돌아올 곳을 싣는다(QA No.254, #527)
+test("새 아이 추가는 아이 관리를 돌아올 곳으로 싣고 온보딩 기본 정보 단계로 간다", () => {
   renderView();
 
   fireEvent.click(screen.getByRole("button", { name: "새 아이 추가" }));
-  expect(push).toHaveBeenCalledWith("/onboarding?step=basic");
+  expect(push).toHaveBeenCalledWith("/onboarding?step=basic&from=/mypage/pets");
+});
+
+// 5마리째를 등록한 뒤에도 추가 자리가 남아 여섯째가 등록됐다(QA No.130, #527)
+test("5마리를 채우면 새 아이 추가 칸이 없다", () => {
+  query.pets = ["1", "2", "3", "4", "5"].map((id) => ({ id, name: `아이${id}`, isDefault: false }));
+  renderView();
+
+  expect(screen.getAllByRole("radio")).toHaveLength(5);
+  expect(screen.queryByRole("button", { name: "새 아이 추가" })).toBeNull();
 });
 
 // 저장은 코드로 하지만 상세가 표시명을 함께 준다. 코드를 찍으면 사람이 읽지 못한다
@@ -278,7 +312,7 @@ test("아이가 없으면 등록하러 가는 자리를 보인다", () => {
 
   expect(screen.getByText("아직 등록한 아이가 없어요")).toBeDefined();
   fireEvent.click(screen.getByRole("button", { name: "아이 등록하기" }));
-  expect(push).toHaveBeenCalledWith("/onboarding?step=basic");
+  expect(push).toHaveBeenCalledWith("/onboarding?step=basic&from=/mypage/pets");
 });
 
 test("불러오지 못하면 그 사실을 알린다", () => {

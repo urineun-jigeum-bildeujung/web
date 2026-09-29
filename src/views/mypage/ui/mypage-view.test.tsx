@@ -68,21 +68,40 @@ test("알림·서비스 안내가 각 화면으로 이어진다", () => {
   );
 });
 
-test("반려동물 프로필 영역이 마이페이지_반려동물 화면으로 이어진다", () => {
+// 줄 전체가 링크 하나라 어느 원을 눌러도 첫 아이 프로필이 열렸다(QA No.129·181, #527)
+test("아이 원을 누르면 그 아이를 고른 아이 관리로 간다", () => {
   renderView();
 
-  expect(screen.getByRole("link", { name: "반려동물 프로필 관리" }).getAttribute("href")).toBe(
-    "/mypage/pets",
+  expect(screen.getByRole("link", { name: "코코 프로필 관리" }).getAttribute("href")).toBe(
+    "/mypage/pets?pet=3",
+  );
+  expect(screen.getByRole("link", { name: "보리 프로필 관리" }).getAttribute("href")).toBe(
+    "/mypage/pets?pet=7",
   );
 });
 
-// 점선 원이 아이 관리 링크 안에 있어 누르면 첫 아이 프로필이 열렸다(QA 1차 5번, #470)
-test("점선 원은 아이 관리가 아니라 새 아이 등록으로 간다", () => {
+// 점선 원이 아이 관리 링크 안에 있어 누르면 첫 아이 프로필이 열렸다(QA 1차 5번, #470).
+// 첫 입력 단계의 "이전"이 돌아올 곳도 함께 싣는다(QA No.254, #527)
+test("점선 원은 아이 관리가 아니라 새 아이 등록으로 가며 마이페이지를 돌아올 곳으로 싣는다", () => {
   renderView();
 
   const add = screen.getByRole("link", { name: "새 아이 추가" });
-  expect(add.getAttribute("href")).toBe("/onboarding?step=basic");
-  expect(add.closest('a[href="/mypage/pets"]')).toBeNull();
+  expect(add.getAttribute("href")).toBe("/onboarding?step=basic&from=/mypage");
+  expect(add.closest('a[href^="/mypage/pets"]')).toBeNull();
+});
+
+// 5마리째를 등록한 뒤에도 추가 자리가 남아 여섯째가 등록됐다(QA No.130, #527)
+test("5마리를 채우면 점선 원을 그리지 않는다", () => {
+  const pets = ["1", "2", "3", "4", "5"].map((id) => ({ id, name: `아이${id}`, isDefault: false }));
+  petsQuery = { pets: pets.slice(0, 4), isLoading: false, error: null };
+  const { unmount } = renderView();
+  expect(screen.getByRole("link", { name: "새 아이 추가" })).toBeDefined();
+  unmount();
+
+  petsQuery = { pets, isLoading: false, error: null };
+  renderView();
+  expect(screen.getAllByRole("link", { name: /프로필 관리$/ })).toHaveLength(5);
+  expect(screen.queryByRole("link", { name: "새 아이 추가" })).toBeNull();
 });
 
 // 회색 원만 있으면 어느 아이인지 알 수 없었다(QA 1차 4번, #470)
@@ -103,7 +122,7 @@ test("아이가 없거나 목록을 못 받았으면 아이 관리 링크를 그
     petsQuery = { pets, isLoading: false, error: null };
     const { unmount } = renderView();
 
-    expect(screen.queryByRole("link", { name: "반려동물 프로필 관리" })).toBeNull();
+    expect(screen.queryByRole("link", { name: /프로필 관리$/ })).toBeNull();
     expect(screen.getByRole("link", { name: "새 아이 추가" })).toBeDefined();
     unmount();
   }

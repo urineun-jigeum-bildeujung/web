@@ -10,8 +10,10 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useId, useRef, useState, useTransition } from "react";
 
 import {
+  canAddPet,
   PetSwitcher,
   ProductFeedbackSheet,
+  toAddPetHref,
   useQueryPets,
   type FeedbackChoice,
 } from "@/entities/pet";
@@ -569,8 +571,9 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                   pets={pets}
                   selectedId={pet?.id}
                   onSelect={setPetId}
-                  // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다
-                  onAdd={() => router.push("/onboarding?step=basic")}
+                  // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다. 5마리를 채웠으면
+                  // 추가 칸을 그리지 않는다(QA No.130, #527)
+                  onAdd={canAddPet(pets) ? () => router.push(toAddPetHref("/")) : undefined}
                   withNames
                   variant="main"
                 />

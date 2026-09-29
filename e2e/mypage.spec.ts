@@ -40,16 +40,29 @@ test("점선 원을 누르면 첫 아이 프로필이 아니라 새 아이 등�
 
   await page.getByRole("link", { name: "새 아이 추가" }).click();
 
-  await expect(page).toHaveURL(/\/onboarding\?step=basic$/);
+  await expect(page).toHaveURL(/\/onboarding\?step=basic&from=\/mypage$/);
 });
 
-test("아이 원은 그대로 아이 관리로 간다", async ({ page }) => {
+// 아이 추가 첫 단계의 "이전"이 눌리지 않았다(QA No.254, #527)
+test("아이 추가 첫 단계의 이전을 누르면 마이페이지로 돌아간다", async ({ page }) => {
+  await page.goto("/mypage");
+  await page.getByRole("link", { name: "새 아이 추가" }).click();
+  await expect(page.getByRole("heading", { name: "아이를 소개해 주세요" })).toBeVisible();
+
+  await page.getByRole("button", { name: "이전" }).click();
+
+  await expect(page).toHaveURL(/\/mypage$/);
+});
+
+// 줄 전체가 링크 하나라 어느 원을 눌러도 첫 아이 프로필이 열렸다(QA No.129·181, #527)
+test("아이 원을 누르면 그 아이를 고른 아이 관리가 열린다", async ({ page }) => {
   await page.goto("/mypage");
 
-  await expect(page.getByRole("link", { name: "반려동물 프로필 관리" })).toHaveAttribute(
-    "href",
-    "/mypage/pets",
-  );
+  await page.getByRole("link", { name: "보리 프로필 관리" }).click();
+
+  await expect(page).toHaveURL(/\/mypage\/pets\?pet=7$/);
+  await expect(page.getByRole("radio", { name: "보리" })).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByText("코리안 숏헤어 · 2세 · 남자아이")).toBeVisible();
 });
 
 // 전에는 메인·상품 상세 뱃지가 늘 "5"였고 마이페이지는 뱃지가 없었다

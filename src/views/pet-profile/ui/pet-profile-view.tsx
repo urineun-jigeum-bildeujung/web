@@ -10,12 +10,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 
 import {
+  canAddPet,
   PetSwitcher,
   ProductFeedbackSheet,
+  toAddPetHref,
   useQueryPetDetail,
   useQueryPets,
   type FeedbackChoice,
@@ -74,10 +76,14 @@ export function PetProfileView() {
     // 프로필과 제품 관리는 서로 다른 화면이라 뒤로가기로 되돌아와야 한다
     parseAsStringLiteral(TABS).withDefault("profile").withOptions({ history: "push" }),
   );
-  // 목록을 받기 전에는 고른 아이가 없다. 받고 나면 기본 아이(맨 앞)를 쓴다
-  const [pickedId, setPickedId] = useState<string | null>(null);
+  // **고른 아이는 주소창에 둔다.** 마이페이지 아이 원이 누른 아이를 실어 보낸다 — 화면 안 상태로만
+  // 들고 있을 때는 어느 원을 눌러도 기본 아이로 열렸다(QA No.129·181, #527). 맞춤 추천의 `?pet=`과
+  // 같은 이름이다. 아이를 바꾸는 것은 같은 화면 안의 선택이라 기록을 쌓지 않는다(기본 replace).
+  // 아이 id는 서버에서 오는 값이라 보기를 미리 적을 수 없어 parseAsStringLiteral을 쓰지 못한다.
+  // 대신 목록에 없는 id(지운 아이·손으로 고친 주소)면 기본 아이(맨 앞)로 되돌린다
+  const [pickedId, setPickedId] = useQueryState("pet", parseAsString);
   const { pets, error: petsError } = useQueryPets();
-  const selectedPetId = pickedId ?? pets?.[0]?.id;
+  const selectedPetId = pets?.find((item) => item.id === pickedId)?.id ?? pets?.[0]?.id;
   const { pet, error: petError } = useQueryPetDetail(selectedPetId);
 
   const noPets = pets?.length === 0;
@@ -163,7 +169,9 @@ export function PetProfileView() {
               title="아직 등록한 아이가 없어요"
               description="아이를 등록하면 프로필과 먹은 제품을 여기서 관리할 수 있어요."
               action={
-                <Button onClick={() => router.push("/onboarding?step=basic")}>아이 등록하기</Button>
+                <Button onClick={() => router.push(toAddPetHref("/mypage/pets"))}>
+                  아이 등록하기
+                </Button>
               }
             />
           ) : profile ? (
@@ -182,14 +190,15 @@ export function PetProfileView() {
             />
           )}
 
-          {/* 아이 전환 줄은 화면 아래에 붙는다. 새 아이는 온보딩 기본 정보 단계에서 등록한다 */}
+          {/* 아이 전환 줄은 화면 아래에 붙는다. 새 아이는 온보딩 기본 정보 단계에서 등록한다.
+              5마리를 채웠으면 추가 칸을 그리지 않는다(QA No.130, #527) */}
           <div className="mt-auto pb-[calc(env(safe-area-inset-bottom)+2rem)]">
             <PetSwitcher
               variant="hero"
               pets={pets ?? []}
               selectedId={selectedPetId}
               onSelect={setPickedId}
-              onAdd={() => router.push("/onboarding?step=basic")}
+              onAdd={canAddPet(pets) ? () => router.push(toAddPetHref("/mypage/pets")) : undefined}
             />
           </div>
         </TabsContent>

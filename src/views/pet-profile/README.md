@@ -4,13 +4,13 @@
 
 - **라우트**: `/mypage/pets` — `src/app/mypage/pets/page.tsx`
 - **조립**: `entities/pet`의 `PetSwitcher`(`variant="hero"`) · `ProductFeedbackSheet` · 목록·상세 조회 훅, `entities/review`의 `useQueryPendingFeedbacks` · `useMutateSubmitFeedback`, `shared/ui`의 `page-header` · `tabs` · `badge` · `empty-state` · `skeleton`
-- **상태**: 탭은 URL 쿼리 `tab`(`profile` · `products`). 고른 아이와 열린 반응 시트는 화면 안 상태
+- **상태**: 탭은 URL 쿼리 `tab`(`profile` · `products`), 고른 아이는 `pet`(아이 id). 열린 반응 시트는 화면 안 상태
 - **참고**: UI 시안 기준(`mypa_021` 내 아이 관리 `1514-44230` · 아이 제품 관리 `1551-46897` · 반응 시트 `1551-47882`)
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/pet-profile-view.tsx` | 두 탭과 반응 시트를 조립한다 |
-| `ui/pet-profile-view.test.tsx` | 탭 전환·수정 링크·반응 시트와 등록·빈 상태·새 아이 추가 경로 |
+| `ui/pet-profile-view.test.tsx` | 탭 전환·수정 링크·반응 시트와 등록·빈 상태·주소창의 아이로 열기·새 아이 추가 경로와 5마리 상한 |
 | `model/to-hero-profile.ts` | 상세 조회로 받은 아이를 사진 카드가 그릴 모양으로 옮긴다 |
 | `ui/pet-hero-card.tsx` | 내 아이 관리 탭의 사진 카드. 이름·몸무게·질환 세 줄과 수정 화살표 |
 | `ui/pet-product-card.tsx` | 아이 제품 관리 탭의 제품 한 장과 "반응 남기기" 버튼. 구매일·배지는 응답에 있을 때만 |
@@ -20,7 +20,7 @@
 
 **탭을 주소창에 둔다.** `?tab=products`로 다룬다. 제품을 눌러 상세로 갔다 돌아왔을 때 보던 탭이 남아야 하기 때문이다.
 
-**새 아이는 온보딩에서 등록한다.** 아이 전환 줄의 점선 원이 `/onboarding?step=basic`으로 간다. 온보딩 완료 화면의 "프로필 추가"와 같은 길이고, 시안에 별도 등록 화면이 없어 도입 화면(`/mypage/pets/new`)은 걷어냈다(#189).
+**새 아이는 온보딩에서 등록한다.** 아이 전환 줄의 점선 원이 온보딩 기본 정보 단계로 가며 아이 관리를 돌아올 곳으로 싣는다(`/onboarding?step=basic&from=/mypage/pets`, #527) — 첫 입력 단계의 "이전"이 그리로 돌아간다. 온보딩 완료 화면의 "프로필 추가"와 같은 길이고, 시안에 별도 등록 화면이 없어 도입 화면(`/mypage/pets/new`)은 걷어냈다(#189). **5마리를 채웠으면 점선 원을 그리지 않는다**(QA No.130, #527).
 
 **제품 카드는 반응만 받는다.** 와이어프레임에 있던 후기 시트(좋았던 점·아쉬운 점)는 시안에 없어 걷어냈다. 제품 탭 이름의 주황 점은 남길 반응이 있을 때만 찍힌다.
 
@@ -37,6 +37,8 @@
 `GET /members/me/pets`로 전환 줄을, `GET /members/me/pets/{petId}`로 사진 카드를 채운다(#230).
 
 **기본 아이가 처음 고른 아이다.** 목록에 `ORDER BY`가 없어 순서가 DB에 달려서, `entities/pet`의 조회가 `isDefault`를 앞으로 올려 준다. 그 첫 아이를 쓰고, 보호자가 다른 아이를 누르면 그때부터 그 아이를 따른다.
+
+**고른 아이는 주소창 `?pet=`에 둔다**(#527). 마이페이지 아이 원이 누른 아이를 실어 보낸다 — 화면 안 상태로만 들고 있을 때는 어느 원을 눌러도 기본 아이로 열렸다(QA No.129·181). 맞춤 추천의 `?pet=`과 같은 이름이다. 아이를 바꾸는 것은 같은 화면 안의 선택이라 기록을 쌓지 않는다(기본 `replace`). 아이 id는 보기를 미리 적을 수 없어 `parseAsString`으로 받고, **목록에 없는 id(지운 아이·손으로 고친 주소)면 기본 아이로 되돌린다.**
 
 **알레르기는 상세가 준 표시명을 그대로 쓴다.** 저장은 코드로 하지만 응답이 `{ code, displayName }`을 함께 주므로 선택지를 따로 받을 일이 없다(#267). 이 화면이 아이의 종을 알 필요도 없다.
 
