@@ -309,6 +309,22 @@ describe("ReviewWriteView 1단계", () => {
     expect(submitButton().hasAttribute("disabled")).toBe(false);
   });
 
+  // QA RV-021. "0"도 칸은 차 있어 다음이 열렸고, 등록하면 까닭 없는 토스트만 떴다
+  it("사용 기간이 0일이면 다음으로 가지 않는다", () => {
+    renderAt();
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    pick("잘 먹었나요?", "잘 먹어요");
+    const next = screen.getByRole("button", { name: "다음" });
+
+    for (const zero of ["0", "00", "000"]) {
+      fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: zero } });
+      expect(next.hasAttribute("disabled")).toBe(true);
+    }
+
+    fireEvent.change(screen.getByLabelText("사용 기간"), { target: { value: "010" } });
+    expect(next.hasAttribute("disabled")).toBe(false);
+  });
+
   it("사용 기간에는 숫자만 남는다", () => {
     renderAt();
 
@@ -373,6 +389,19 @@ describe("ReviewWriteView 2단계", () => {
     expect(submitButton().hasAttribute("disabled")).toBe(false);
 
     pick("아이에게 급여하기 편했나요?", "편해요");
+
+    expect(submitButton().hasAttribute("disabled")).toBe(true);
+  });
+
+  // QA RV-021. 2단계 주소로 바로 들어와도 1단계 값을 다시 본다
+  it("저장된 사용 기간이 0일이면 등록할 수 없다", async () => {
+    stubApi();
+    window.localStorage.setItem(
+      "review-draft:product:7",
+      JSON.stringify({ score: 4, days: "0", responses: { PALATABILITY: "POSITIVE" } }),
+    );
+    renderAt("?step=detail");
+    await fillDetail();
 
     expect(submitButton().hasAttribute("disabled")).toBe(true);
   });

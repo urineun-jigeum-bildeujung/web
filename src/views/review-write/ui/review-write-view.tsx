@@ -198,7 +198,8 @@ function ReviewWriteForm({ productId }: { productId: string }) {
   const answeredAll = (questions: readonly Question[]) =>
     questions.every((question) => !question.required || responses[question.key] !== undefined);
 
-  const ratingReady = score >= MIN_SCORE && days.length > 0 && answeredAll(RATING_STEP_QUESTIONS);
+  // 사용 기간은 칸이 차 있는 것으로 모자란다. "0"·"000"도 차 있지만 서버가 1일부터 받는다(QA RV-021)
+  const ratingReady = score >= MIN_SCORE && Number(days) > 0 && answeredAll(RATING_STEP_QUESTIONS);
   const ready =
     ratingReady &&
     petIds.length > 0 &&
