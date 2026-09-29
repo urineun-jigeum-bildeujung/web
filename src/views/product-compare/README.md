@@ -26,7 +26,7 @@
 
 **장바구니 담기는 토스트만 띄운다.** `entities/cart`에 "새로 담기" API가 아직 없어(변경·삭제만 있다) `deals-view`·`product-detail-view`와 같은 방식으로 담겼다고만 알린다.
 
-**머리말은 `PageHeader`에 `title`을 준다.** 예전엔 `leading="none"`만 있고 `title`이 없어 뒤로가기와 "상품비교" 제목이 통째로 빠져 있었다(1568-70276). 오른쪽 알림·장바구니 아이콘도 react-icons가 아니라 `home-view`와 같은 방식(`Icon` 세트, `size-7`, `after:` 의사요소로 탭 영역 확장)으로 맞추고, 장바구니가 #214로 이미 나와 있어 `/cart`·`/mypage/notifications`로 실제 링크를 건다.
+**머리말은 `PageHeader`에 `title`을 준다.** 예전엔 `leading="none"`만 있고 `title`이 없어 뒤로가기와 "상품비교" 제목이 통째로 빠져 있었다(1568-70276). 오른쪽 알림·장바구니 아이콘도 react-icons가 아니라 모든 헤더와 같은 공용 슬롯(`HeaderIconLink`, 시안 33×32 슬롯에 28px 아이콘, #513)으로 맞추고, 장바구니가 #214로 이미 나와 있어 `/cart`·`/mypage/notifications`로 실제 링크를 건다.
 
 ## 아직 없는 것
 

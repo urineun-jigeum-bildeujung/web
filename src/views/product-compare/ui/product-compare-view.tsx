@@ -259,11 +259,9 @@ export function ProductCompareView() {
       <PageHeader
         title="상품비교"
         right={
-          // home-view와 같은 순서(알림→장바구니)·아이콘 세트다(1568-70276). 첫 슬롯은
-          // 시안(touch_gudie)처럼 아이콘 없이 자리만 차지한다 — PageHeader가 여백·간격을
-          // 공용 header 컴포넌트 값(20px·9px)으로 맞춰 주므로 여기선 아이콘만 놓는다
+          // home-view와 같은 순서(알림→장바구니)·아이콘 세트다(1568-70276). 시안의 첫 슬롯은 아이콘 없이
+          // 비어 있는데, 오른쪽 칸이 오른쪽 끝에 붙어 있어 빈 자리를 따로 두지 않아도 두 아이콘 자리가 같다
           <>
-            <span aria-hidden className="size-7" />
             <NotificationBell />
             <CartLink />
           </>

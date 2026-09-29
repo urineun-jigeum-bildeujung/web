@@ -34,6 +34,7 @@ import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
+import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { formatWon } from "@/shared/ui/price/price";
 import { ProductSummary } from "@/shared/ui/product-summary/product-summary";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
@@ -451,17 +452,11 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
       <PageHeader
         title="타임딜"
         right={
-          // 시안(1905-32416)의 공용 header 아이콘 방식이다(product-detail·product-compare와 동일).
+          // 시안(1905-32416)의 공용 header 아이콘 슬롯이다. 모든 헤더와 같은 HeaderIconLink를 쓴다(#513).
           // 장바구니 개수 뱃지는 실제 담은 수다(#470)
           <>
-            <Link
-              href="/search"
-              aria-label="검색"
-              className="relative flex size-7 items-center justify-center after:absolute after:-inset-2"
-            >
-              <Icon name="search" className="size-7" />
-            </Link>
-            <CartLink className="after:-inset-2" />
+            <HeaderIconLink href="/search" label="검색" icon="search" />
+            <CartLink />
           </>
         }
       />
