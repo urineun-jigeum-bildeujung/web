@@ -4,16 +4,14 @@
 // 통째로 거절하고(`Failed to read request`), 몸무게에 "모르겠어요"를 적으면 등록이 막힌다.
 // 그런데 사용자는 적었으니 저장된 줄 안다. 칠 때 걸러 내고 그래도 어긋나면 알린다.
 
-/** 숫자만 남긴다. 몸무게는 소수점도 받는다 */
-export function digitsOnly(text: string, { decimal = false } = {}): string {
-  const cleaned = text.replace(decimal ? /[^\d.]/g : /\D/g, "");
-  if (!decimal) {
-    return cleaned;
-  }
-  // **소수점이 둘 이상이면 첫 소수부까지만 남긴다.** "4.2.3"을 "4.23"으로 이어 붙이면
-  // 사용자가 적지 않은 몸무게가 된다. 잘못 친 뒤는 버리고 앞은 살린다
-  const [whole, first] = cleaned.split(".");
-  return first === undefined ? cleaned : `${whole}.${first}`;
+/**
+ * 숫자만 남긴다.
+ *
+ * 이름·나이·몸무게가 받는 글자는 정보 수정과 함께 쓰려고 `entities/pet`의 `profile-input`으로
+ * 옮겼다 (#524). 여기에는 생년월일 다듬기만 남는다.
+ */
+export function digitsOnly(text: string): string {
+  return text.replace(/\D/g, "");
 }
 
 /**

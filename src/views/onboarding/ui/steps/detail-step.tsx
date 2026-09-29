@@ -6,10 +6,13 @@
 import {
   BodyTypeGuide,
   BodyTypeSlider,
-  parseAge,
+  describeAgeError,
   parseWeight,
   SIZE_OPTIONS,
   SizeGuide,
+  toAgeInput,
+  WeightField,
+  weightPlaceholder,
   type PetProfileDraft,
 } from "@/entities/pet";
 import { parseBirthDate } from "@/shared/lib/birth-date";
@@ -40,8 +43,9 @@ export function DetailStep({
   // 체구를 골라야 몸무게·체질 항목이 나타난다. 시안 onbo_003_체구선택후.
   // 숫자를 못 뽑으면 등록 요청을 만들지 못한다. 다음 단계로 보내 놓고 마지막에 막지 않는다
   const weightError = draft.weight && parseWeight(draft.weight) === null;
-  // 나이는 등록에 필수다. 여기서 안 막으면 마지막 단계에서 까닭 모를 오류만 뜬다
-  const ageError = draft.age && parseAge(draft.age) === null;
+  // 나이는 등록에 필수다. 여기서 안 막으면 마지막 단계에서 까닭 모를 오류만 뜬다.
+  // 상한을 넘으면 그 사실을 따로 알린다(QA No.196)
+  const ageError = describeAgeError(draft.age);
   // 생일은 선택이라 비어 있어도 되지만, 적었는데 달력에 없는 날이면 알린다.
   // 그대로 보내면 서버가 본문을 통째로 거절한다
   const birthdayError =
@@ -99,8 +103,8 @@ export function DetailStep({
                 placeholder="나이를 적어주세요"
                 inputMode="numeric"
                 value={draft.age}
-                error={ageError && "나이를 적어주세요"}
-                onChange={(event) => onChange({ age: digitsOnly(event.target.value) })}
+                error={ageError}
+                onChange={(event) => onChange({ age: toAgeInput(event.target.value) })}
               />
               <FormField
                 label="생년월일"
@@ -141,19 +145,15 @@ export function DetailStep({
                     정확하지 않아도 괜찮아요, 대략적으로 적어주세요
                   </p>
                 </div>
-                {/* 시안은 "말티즈의 평균 몸무게는 5kg이에요"처럼 품종별 평균을 적는데,
-                    아직 그 데이터가 없어 일반 문구로 둔다 */}
-                <FormField
+                {/* 시안은 "말티즈의 평균 몸무게는 5kg이에요"처럼 품종별 평균을 적는데, 품종 데이터에
+                    체중이 없어 종·체구로 가른다(QA No.205). 소수 자리와 kg은 칸이 맡는다 */}
+                <WeightField
                   label="대략적인 몸무게"
                   className="[&>label]:sr-only"
-                  placeholder="평균 몸무게 5kg"
-                  inputMode="decimal"
+                  placeholder={weightPlaceholder(draft.species, draft.size)}
                   value={draft.weight}
                   error={weightError && "숫자로 적어주세요"}
-                  onChange={(event) =>
-                    onChange({ weight: digitsOnly(event.target.value, { decimal: true }) })
-                  }
-                  onClear={() => onChange({ weight: "" })}
+                  onValueChange={(weight) => onChange({ weight })}
                 />
               </div>
 

@@ -6,7 +6,12 @@
 
 "use client";
 
-import { GENDER_OPTIONS, NEUTERED_OPTIONS, type PetProfileDraft } from "@/entities/pet";
+import {
+  GENDER_OPTIONS,
+  NEUTERED_OPTIONS,
+  toPetNameInput,
+  type PetProfileDraft,
+} from "@/entities/pet";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
@@ -43,10 +48,12 @@ export function BasicStep({ draft, onChange, onNext, onPrev }: BasicStepProps) {
         </div>
 
         <div className="flex flex-col gap-4 px-5">
+          {/* 이모티콘은 칠 때 걷어 낸다(QA No.187). 칸을 넘는 이름은 말줄임표로 줄인다(QA No.231) */}
           <FormField
             label="아이의 이름을 알려주세요"
+            className="[&_input]:truncate"
             value={draft.name}
-            onChange={(event) => onChange({ name: event.target.value })}
+            onChange={(event) => onChange({ name: toPetNameInput(event.target.value) })}
             onClear={() => onChange({ name: "" })}
           />
 
