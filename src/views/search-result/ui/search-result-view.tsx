@@ -413,8 +413,10 @@ export function SearchResultView({ resultsPromise, resultsQuery }: SearchResultV
             )
           }
           // 시안(2396-80432 등)은 알약 모양이 아니라 8px 모서리에 옅은 회색(#eeeff1) 채움이다
-          // 돋보기는 검색 화면 입력창과 같게 안쪽 12px에 24px, 글자는 안쪽 40px에서 시작한다
-          className="flex min-h-11 flex-1 items-center gap-1 rounded-lg bg-secondary px-3 text-left transition-colors hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          // 돋보기는 검색 화면 입력창과 같게 안쪽 12px에 24px, 글자는 안쪽 40px에서 시작한다.
+          // min-w-0이 없으면 flex-1이어도 검색어 길이만큼 넓어져 안쪽 truncate가 먹지 않는다 —
+          // 띄어쓰기 없는 200자 검색어에 문서 폭이 1618px까지 늘었다(#532)
+          className="flex min-h-11 min-w-0 flex-1 items-center gap-1 rounded-lg bg-secondary px-3 text-left transition-colors hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Icon name="search" className="size-6 shrink-0 text-icon-stroke-tertiary" />
           <span className="truncate text-sm text-foreground">{keyword}</span>
