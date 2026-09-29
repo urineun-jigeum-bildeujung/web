@@ -5,6 +5,7 @@ import { expect, test } from "@playwright/test";
 import { stubCart } from "./fixtures/cart";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { stubWishlist } from "./fixtures/wishlist";
 import { signIn } from "./fixtures/session";
 
 // 아이 관리 화면이 아이 목록을 서버에서 받는다(#230). 세우지 않으면 401이라
@@ -13,12 +14,27 @@ test.beforeEach(async ({ page }) => {
   await stubPetCatalog(page);
 });
 
-// 좋아요 화면의 "최근에 봤어요"·"자주 샀어요" 탭은 MVP 범위 밖이라 탭도 주소도
-// 찜 탭 하나로 막혀 있다(#274 리뷰) — 옮겨 갈 다른 탭이 없어 이 화면에서는
-// 탭 전환 뒤로가기를 더 시험할 수 없다. 여러 탭을 오가는 이 패턴은
-// `home.server-fetch.spec.ts`의 "종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다"가
-// 대신 커버한다 — 메인이 카테고리 탭에서 서버 조회를 타서(#289) 이 파일이 쓰는
-// 일반 E2E 잡(백엔드 없음)으로는 더 이상 확인할 수 없다
+// 좋아요 화면은 "최근에 봤어요"가 브라우저 기록으로 열리며(#509) 찜 탭과 오갈 탭이 생겼다.
+// "자주 샀어요"는 여전히 MVP 범위 밖이라 막혀 있다(#274 리뷰)
+test("좋아요에서 최근에 봤어요로 옮긴 뒤 뒤로가기를 누르면 찜 탭으로 돌아온다", async ({
+  page,
+}) => {
+  await stubWishlist(page);
+  await page.goto("/likes");
+
+  await page.getByRole("tab", { name: "최근에 봤어요" }).click();
+  await expect(page).toHaveURL(/tab=recent/);
+  await expect(page.getByText("최근 본 상품이 없어요")).toBeVisible();
+
+  await page.goBack();
+  // 좋아요를 떠나지 않고 찜 탭으로 돌아온다
+  await expect(page).toHaveURL(/\/likes/);
+  await expect(page).not.toHaveURL(/tab=recent/);
+  await expect(page.getByRole("tab", { name: "찜했어요" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+});
 
 test("온보딩에서 입력하다 뒤로가기를 눌러도 입력값이 남는다", async ({ page }) => {
   await page.goto("/onboarding");
