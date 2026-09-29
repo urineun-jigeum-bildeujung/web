@@ -17,6 +17,8 @@ import { Button } from "@/shared/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/shared/ui/dialog";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
+import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
+import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Skeleton } from "@/shared/ui/skeleton";
 
 export type PickerGroup = {
@@ -74,16 +76,11 @@ function PickerBody({
     <div className="flex h-dvh flex-col">
       <DialogTitle className="sr-only">{title}</DialogTitle>
 
-      <header className="flex h-12 shrink-0 items-center px-2">
-        <button
-          type="button"
-          aria-label="닫기"
-          onClick={onClose}
-          className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          <Icon name="left" aria-hidden className="size-6" />
-        </button>
-      </header>
+      {/* 시안(1651-48070)은 공용 header에 제목 없이 뒤로가기만 둔다. 모든 헤더와 같은 PageHeader다(#513) */}
+      <PageHeader
+        className="shrink-0"
+        left={<HeaderBackButton aria-label="닫기" onClick={onClose} />}
+      />
 
       {/* 종에 따라 갈래·항목이 갈린다(#226). 여기서 바꾸면 왼쪽 갈래 목록부터 다시 받는다 */}
       <div role="group" aria-label="종" className="flex shrink-0 gap-2 px-5 pb-3">

@@ -9,13 +9,15 @@
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { IoChevronBack, IoCloseCircle, IoSearchOutline } from "react-icons/io5";
+import { IoCloseCircle, IoSearchOutline } from "react-icons/io5";
 
 import { BottomNav } from "@/widgets/bottom-nav";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { Icon } from "@/shared/ui/icon/icon";
 import { Input } from "@/shared/ui/input";
+import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
 
 import { RecentKeywordChip } from "./recent-keyword-chip";
 import {
@@ -89,16 +91,11 @@ export function SearchView() {
     // 가릴 콘텐츠가 없고, 그래서 하단에 별도 여백(pb)이 필요 없다 — 넣으면 네브 아래
     // 빈 공간만 생긴다
     <div className="flex min-h-dvh flex-col">
-      {/* 제목 자리를 입력창이 차지한다. PageHeader는 가운데 제목을 전제로 해서 쓰지 않는다 */}
-      <header className="flex h-14 items-center gap-1 px-2">
-        <button
-          type="button"
-          aria-label="이전 화면으로"
-          onClick={() => router.back()}
-          className="flex size-11 shrink-0 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          <IoChevronBack aria-hidden className="size-6" />
-        </button>
+      {/* 제목 자리를 입력창이 차지한다. PageHeader는 가운데 제목을 전제로 해서 쓰지 않는다.
+          뒤로가기는 모든 헤더와 같은 조각이고, 높이 48·좌우 20에 입력창이 뒤로가기 누르는 자리
+          바로 옆에서 시작하는 것은 시안(1117-9724) 그대로다(#513) */}
+      <header className="flex h-12 items-center px-5">
+        <HeaderBackButton onClick={() => router.back()} />
 
         <form
           role="search"
@@ -111,9 +108,10 @@ export function SearchView() {
           <label htmlFor="search-keyword" className="sr-only">
             상품 검색
           </label>
-          <IoSearchOutline
-            aria-hidden
-            className="absolute top-1/2 left-3 size-5 -translate-y-1/2 text-muted-foreground"
+          {/* 시안은 입력창 안쪽 12px에 24px 돋보기(icon/stroke/tertiary)다 */}
+          <Icon
+            name="search"
+            className="pointer-events-none absolute top-1/2 left-3 size-6 -translate-y-1/2 text-icon-stroke-tertiary"
           />
           <Input
             id="search-keyword"

@@ -13,7 +13,7 @@
 "use client";
 
 import Image from "next/image";
-import { IoChevronBack, IoChevronForward, IoClose } from "react-icons/io5";
+import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { ReviewCard, toUsageLabel, useQueryReviewDetail } from "@/entities/review";
@@ -22,6 +22,8 @@ import { cn } from "@/shared/lib/utils";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
+import { PageHeader } from "@/shared/ui/page-header/page-header";
 import {
   Dialog,
   DialogClose,
@@ -76,23 +78,22 @@ export function PhotoViewer({
         // 덮지 않으면 640px 이상에서 384px로 남는다(tailwind-merge는 변형이 다르면 안 합친다)
         className="inset-0 flex h-dvh w-full max-w-none translate-0 flex-col gap-0 overflow-y-auto rounded-none p-0 ring-0 sm:max-w-none"
       >
-        {/* 시안(1758-54280)의 헤더는 48px, 제목은 18px 굵게다 */}
-        <header className="flex h-12 shrink-0 items-center px-2">
-          <DialogClose asChild>
-            <button
-              type="button"
-              aria-label="닫기"
-              className="flex size-11 items-center justify-center rounded-md text-foreground transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
-              <IoClose aria-hidden className="size-6" />
-            </button>
-          </DialogClose>
-          <DialogTitle className="flex-1 text-center text-title-bold-18 text-text-body-default">
-            사진 리뷰
-          </DialogTitle>
-          {/* 제목을 가운데 두려고 닫기 버튼만큼 자리를 비운다 */}
-          <span aria-hidden className="size-11" />
-        </header>
+        {/* 시안(1758-54280)은 공용 header에 뒤로가기 화살표와 "사진 리뷰"다. X가 아니다 — 모든 헤더와
+            같은 PageHeader를 쓰고, 다이얼로그라 누르면 닫는다(#513). 제목은 다이얼로그의 이름이라
+            DialogTitle로 넘긴다 */}
+        <PageHeader
+          className="shrink-0"
+          left={
+            <DialogClose asChild>
+              <HeaderBackButton aria-label="닫기" />
+            </DialogClose>
+          }
+          title={
+            <DialogTitle className="truncate text-center text-title-bold-18 text-text-body-default">
+              사진 리뷰
+            </DialogTitle>
+          }
+        />
 
         <DialogDescription className="sr-only">
           {images.length > 0 ? `이 후기에 달린 사진 ${images.length}장` : "후기 사진을 불러오는 중"}
