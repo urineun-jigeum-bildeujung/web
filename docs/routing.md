@@ -12,6 +12,14 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 - 상품 목록과 상품 상세는 서버 컴포넌트를 우선한다.
 - 인증과 API 계약이 필요한 동작은 계약 확정 전 추측해 구현하지 않는다.
 
+## 접근 정책
+
+**비로그인은 메인(`/`)·상품 상세(`/products/[productId]`)·검색(`/search`, `/search/result`)만 볼 수 있다**(PM·PD 확정, 2026-09-29, #542). 로그인·가입 흐름(`/login`, `/auth/callback`, `/signup`)도 열려 있다. 개발용 `/dev`는 사용자 화면이 아니라 이 정책 밖이다.
+
+- **그 밖의 화면은 `src/app/(constrained)/(member)/` 아래에 둔다.** 그 `layout`의 `SessionGuard`가 비로그인을 `/login`으로 보낸다. 새 화면을 만들 때 폴더 자리가 곧 보호 여부다.
+- **공개 화면 안에서 로그인이 필요한 버튼·링크**(찜·장바구니·구매·알림·하단 탭·타임딜/추천 더보기·사진 전체보기·문의 등)는 비로그인이면 이동하지 않고 "로그인 필요" 토스트만 띄운다. 판단은 `shared/api`의 `useRequireSession` 하나가 한다.
+- **proxy로 막지 않는다.** 토큰이 메모리와 localStorage에 있어 서버에서 도는 proxy가 로그인 여부를 볼 수 없다.
+
 ## 현재 라우트
 
 ### 공개·진입 화면
@@ -28,19 +36,19 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 
 | 라우트 | 화면 | 접근 정책 | URL 상태·식별자 | 상태 |
 | --- | --- | --- | --- | --- |
-| `/search` | 상품 검색·결과 | 공개 후보 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
-| `/deals` | 타임딜 목록 | 공개 후보 | `tab=live\|upcoming` | UI 시안 반영(#275). 담긴 상품·딜 종료는 화면 안 상태라 URL에 없음 |
-| `/recommendations` | 맞춤 추천 | 인증 필요 후보 | `pet`(아이 id, 서버 전달 방식 미확정), `category=all\|food\|snack\|supplement`, `sort=recommend\|latest\|rating-high\|rating-low` | 메인 "맞춤 추천" 섹션 더보기로 진입하는 서브 화면(#273). `PageHeader` 사용 |
-| `/products/[productId]` | 상품 상세 | 공개 후보 | `productId`, `tab`, `reviewSort` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
-| `/products/[productId]/photos` | 사진 리뷰 전체보기 | 공개 후보 | `productId`, `photo`, `n` | 구현됨 |
-| `/compare` | 상품 비교 | 공개 후보 | `slot`, `product` | 구현됨 |
-| `/likes` | 좋아요 목록 | 인증 필요 후보 | `tab=liked\|recent`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭은 UI 시안 반영(#274). 최근에 봤어요는 브라우저에 남긴 기록으로 연다(#509). 자주 샀어요는 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
+| `/search` · `/search/result` | 상품 검색·결과 | 공개 | `slot`(비교할 자리), 검색어·필터·정렬·페이지 계약 미확정 | 스캐폴딩 |
+| `/deals` | 타임딜 목록 | 인증 필요 | `tab=live\|upcoming` | UI 시안 반영(#275). 담긴 상품·딜 종료는 화면 안 상태라 URL에 없음 |
+| `/recommendations` | 맞춤 추천 | 인증 필요 | `pet`(아이 id, 서버 전달 방식 미확정), `category=all\|food\|snack\|supplement`, `sort=recommend\|latest\|rating-high\|rating-low` | 메인 "맞춤 추천" 섹션 더보기로 진입하는 서브 화면(#273). `PageHeader` 사용 |
+| `/products/[productId]` | 상품 상세 | 공개 | `productId`, `tab`, `reviewSort` — 값은 아래 쿼리 계약 표 | 스캐폴딩 |
+| `/products/[productId]/photos` | 사진 리뷰 전체보기 | 인증 필요 | `productId`, `photo`, `n` | 구현됨 |
+| `/compare` | 상품 비교 | 인증 필요 | `slot`, `product` | 구현됨 |
+| `/likes` | 좋아요 목록 | 인증 필요 | `tab=liked\|recent`(다른 값은 주소로 직접 넣어도 `liked`로 떨어진다), `category=all\|food\|snack\|supplement`(찜 탭 전용, `/recommendations`와 같은 값) | 찜 탭은 UI 시안 반영(#274). 최근에 봤어요는 브라우저에 남긴 기록으로 연다(#509). 자주 샀어요는 PD 확인 결과 MVP 범위 밖이라 탭 자체(클릭·주소 모두)가 막혀 있다 |
 
 ### 장바구니·결제
 
 | 라우트 | 화면 | 접근 정책 | URL 상태·식별자 | 상태 |
 | --- | --- | --- | --- | --- |
-| `/cart` | 장바구니 | 인증 필요 후보 | 없음 | 구현됨. 목록이 목업이라 새로고침하면 초기화된다 |
+| `/cart` | 장바구니 | 인증 필요 | 없음 | 구현됨. 목록이 목업이라 새로고침하면 초기화된다 |
 | `/payment` | 결제하기 | 인증 필요 | 선택 상품 식별 방식 미확정 | 구현됨. 실제 결제 승인은 아직 붙지 않았다 |
 | `/payment/address` | 배송지 설정 | 인증 필요 | 없음 | 구현됨. 고른 배송지가 결제 화면에 반영되지 않는다 |
 | `/payment/done` | 주문 완료 | 인증 필요 | 완료 주문 식별 방식 미확정 | 구현됨 |
@@ -81,10 +89,10 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 
 | 라우트 | 화면 | 접근 정책 | URL 상태·식별자 | 상태 |
 | --- | --- | --- | --- | --- |
-| `/mypage/support` | 고객지원·FAQ | 인증 필요 후보 | 없음 | 구현됨 |
+| `/mypage/support` | 고객지원·FAQ | 인증 필요 | 없음 | 구현됨 |
 | `/mypage/support/inquiries` | 1:1 문의 내역 | 인증 필요 | 없음 | 외부 문의 연동 방식 확인 필요 |
-| `/mypage/support/notices` | 공지사항 | 공개 후보 | 공지 상세 방식 미확정 | 스캐폴딩 |
-| `/mypage/service` | 서비스 안내 | 인증 필요 후보 | 없음 | 스캐폴딩 |
+| `/mypage/support/notices` | 공지사항 | 인증 필요 | 공지 상세 방식 미확정 | 스캐폴딩 |
+| `/mypage/service` | 서비스 안내 | 인증 필요 | 없음 | 스캐폴딩 |
 | `/mypage/service/terms` | 서비스 이용약관 | 현재 마이페이지 하위 | 없음 | 회원가입 접근을 위해 공개 경로 이동 검토 필요 |
 | `/mypage/service/privacy` | 개인정보 처리방침 | 현재 마이페이지 하위 | 없음 | 회원가입 접근을 위해 공개 경로 이동 검토 필요 |
 
@@ -139,4 +147,4 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 관리자 타임딜 | 사용자 앱 저장소 범위 밖으로 제외 | 저장소 담당 |
 | 반려동물 식별자 전달 방식 | 현재 `/mypage/pets`·`/mypage/pets/basic`·`/mypage/pets/body`·`/mypage/pets/health`에는 `petId`가 없다. 여러 아이 중 어느 아이를 다루는지는 화면 내 상태(PetSwitcher)로 정한다. API 계약과 상태 관리 방식이 확정된 뒤 동적 세그먼트 또는 쿼리 사용 여부를 결정한다 | PM·PD·백엔드 |
 
-인증 미들웨어, API 호출, 결제 콜백, 동적 리소스의 `notFound()` 처리는 관련 계약이 확정된 뒤 구현한다.
+API 호출, 결제 콜백, 동적 리소스의 `notFound()` 처리는 관련 계약이 확정된 뒤 구현한다. 로그인 확인은 위 "접근 정책"을 따른다.

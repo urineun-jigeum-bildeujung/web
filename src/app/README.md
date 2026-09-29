@@ -11,7 +11,7 @@ Next.js App Router의 라우팅 디렉터리이자 FSD의 최상위 레이어다
 ## 담지 않는 것
 
 - **화면 조립 로직.** `page.tsx`는 `views`의 컴포넌트를 불러 렌더하는 얇은 껍데기로 유지한다.
-- **Provider 조립.** 전역 Provider는 `shared/providers`에 두고 `layout`은 `AppProviders` 하나만 감싼다. 로그인이 필요한 구간의 `layout`은 `shared/providers`의 `SessionGuard` 하나만 감싼다(`mypage/layout.tsx`, #447).
+- **Provider 조립.** 전역 Provider는 `shared/providers`에 두고 `layout`은 `AppProviders` 하나만 감싼다. 로그인이 필요한 구간의 `layout`은 `shared/providers`의 `SessionGuard` 하나만 감싼다(`(constrained)/(member)/layout.tsx`, #447·#542).
 - 비즈니스 로직, 재사용 컴포넌트.
 
 ## `(constrained)` 라우트 그룹
@@ -28,6 +28,15 @@ Next.js App Router의 라우팅 디렉터리이자 FSD의 최상위 레이어다
 
 - `api/` · `metrics/` · `firebase-messaging-sw.js` — route handler라 레이아웃과 무관하다
 - `error.tsx` · `not-found.tsx` · `global-error.tsx` — 그룹 밖 루트에 두고 **폭과 높이를 각자 직접 가진다.** 그룹 안에 복제해도 그룹 레이아웃 자체에서 난 오류는 잡지 못한다(Next 문서: 같은 세그먼트의 `layout`은 감싸지 않는다)
+
+## `(member)` 라우트 그룹
+
+**로그인해야 열리는 화면을 모두 담는다**(#542). `(constrained)/(member)/layout.tsx`의 `SessionGuard`가 비로그인을 `/login`으로 보낸다. 비로그인은 메인·상품 상세·검색만 볼 수 있다(PM·PD, 2026-09-29) — 그 네 화면과 로그인·가입 흐름(`login`·`auth/callback`·`signup`), 개발용 `dev`만 그룹 밖에 있다.
+
+- **새 화면은 기본적으로 이 그룹 안에 만든다.** 가드를 화면마다 두면 새 화면에서 빠뜨린다. 폴더 자리가 곧 보호 여부다.
+- **같은 URL 줄기가 두 그룹에 나뉠 수 있다.** 상품 상세 `products/[productId]`는 공개라 밖에, 사진 모아보기 `products/[productId]/photos`는 안에 있다.
+- proxy로 막지 않는다. 토큰이 메모리와 localStorage에 있어 서버가 볼 수 없다.
+- 시안이 와서 `(constrained)` 밖으로 나가는 화면이 로그인을 요구하면, 루트에도 `(member)` 그룹을 두어 같은 가드를 씌운다.
 
 ## 의존 방향
 
