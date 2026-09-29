@@ -106,3 +106,47 @@ test("로그인했으면 찜한 상품의 하트가 채워져 있고 누르면 �
   await expect(senior).toHaveAttribute("aria-pressed", "true");
   expect(wishlist.toggled).toEqual([2]);
 });
+
+// 첫 20개만 그리던 동안 "총 200개" 아래 카드가 20개에서 끝났다(QA SR-014, #532).
+// 목 서버는 `1kg`을 두 개씩 두 쪽으로 나눠 주고, 다음 쪽에선 서버처럼 개수를 null로 준다
+test("목록 끝까지 내리면 다음 쪽을 이어 받아 총 개수만큼 카드가 보인다", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto("/search/result?q=1kg");
+
+  await expect(page.getByText("총 4개")).toBeVisible();
+  const cards = page.getByRole("main").getByRole("link");
+  await cards.last().scrollIntoViewIfNeeded();
+
+  await expect(cards).toHaveCount(4);
+  await expect(page.getByRole("link", { name: /퍼피 성장기 사료 1kg/ })).toBeVisible();
+  // 더 받아도 개수는 첫 쪽이 센 값 그대로다
+  await expect(page.getByText("총 4개")).toBeVisible();
+});
+
+// 검색바 버튼에 min-w-0이 없어 안쪽 truncate가 먹지 않았다. 띄어쓰기 없는 200자 검색어에
+// 문서 폭이 1618px까지 늘어 화면 전체가 옆으로 밀렸다(#532). jsdom은 폭을 재지 못해 여기서 본다
+test("띄어쓰기 없는 긴 검색어도 검색바 안에서 잘리고 화면이 옆으로 넘치지 않는다", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  const keyword = "a".repeat(200);
+  await page.goto(`/search/result?q=${keyword}`);
+
+  const searchBar = page.getByRole("button", { name: /검색어 고치기/ });
+  const keywordText = searchBar.getByText(keyword, { exact: true });
+  await expect(keywordText).toBeVisible();
+
+  const layout = await page.evaluate(() => ({
+    documentWidth: document.documentElement.scrollWidth,
+    viewportWidth: document.documentElement.clientWidth,
+  }));
+  expect(layout.documentWidth).toBeLessThanOrEqual(layout.viewportWidth);
+
+  // 검색바는 화면 안에 들고, 검색어는 그 안에서 한 줄로 잘린다(말줄임)
+  const bar = await searchBar.evaluate((element) => element.getBoundingClientRect().right);
+  expect(bar).toBeLessThanOrEqual(layout.viewportWidth);
+  const clipped = await keywordText.evaluate(
+    (element) => element.scrollWidth > element.clientWidth,
+  );
+  expect(clipped).toBe(true);
+});
