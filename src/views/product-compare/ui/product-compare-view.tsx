@@ -41,6 +41,17 @@ function toProductId(value: string | null): number | undefined {
 }
 
 /**
+ * 자리 상태를 주소로 옮긴다. 아래 `slots` 초기화가 이 주소를 읽으면 같은 두 자리가 나온다.
+ * 상세에서 온 흐름도 `other`로 적는다 — 검색 화면은 `other`와 `from=detail&first`를 똑같이
+ * "반대쪽 자리에 이미 있는 상품"으로만 읽는다
+ */
+function toCompareHref([first, second]: SlotIds) {
+  if (second !== undefined) return `/compare?slot=1&product=${second}&other=${first ?? "none"}`;
+  if (first !== undefined) return `/compare?slot=0&product=${first}&other=none`;
+  return "/compare";
+}
+
+/**
  * 상품 상세를 비교 자리 모양으로 옮긴다. **이름·가격·이미지만 API에서 온다.**
  *
  * 종류(`kind`)와 적합도(`matchScore`)는 상세 응답에 없어 null(모름)이다. 종류를 모르면 종류로
@@ -200,6 +211,16 @@ export function ProductCompareView() {
     router.push(`/search?slot=${index}${otherContext}${detailContext}`);
   };
 
+  // 빼면 주소도 남은 자리로 바꾼다. 화면 상태만 비우면 주소에 뺀 번호가 남아, 검색에서
+  // 뒤로 오거나 새로고침해 다시 마운트될 때 위 초기화가 그 번호로 자리를 되살렸다(QA HM-000).
+  // 쿼리만 바뀌는 이동이라 이 화면은 다시 마운트되지 않는다. 기록은 쌓지 않는다(replace)
+  const removeAt = (index: number) => {
+    const next: SlotIds = [slots[0], slots[1]];
+    next[index] = undefined;
+    setSlots(next);
+    router.replace(toCompareHref(next), { scroll: false });
+  };
+
   // "장바구니 추가"는 수량을 고르는 바텀시트를 연다(QA CP-006·007). 예전엔 담지 않고
   // 담겼다는 토스트만 띄워 장바구니 수도 그대로였다(QA CP-010)
   const { add, isAdding } = useMutateCartItem();
@@ -251,13 +272,7 @@ export function ProductCompareView() {
                 }
                 onAdd={() => goSelect(index)}
                 onAddToCart={() => setCartTarget(entry?.product ?? null)}
-                onRemove={() =>
-                  setSlots((prev) => {
-                    const next: SlotIds = [prev[0], prev[1]];
-                    next[index] = undefined;
-                    return next;
-                  })
-                }
+                onRemove={() => removeAt(index)}
               />
             );
           })}
