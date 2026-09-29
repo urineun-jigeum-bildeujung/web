@@ -1,6 +1,11 @@
 // "최근에 봤어요" 탭 테스트. 브라우저 기록을 최신순으로 그리고, 빼기·찜·빈 상태·받는 중·없어진 상품·실패를 본다.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { renderToString } from "react-dom/server";
 import { beforeEach, expect, test, vi } from "vitest";
+
+import { ApiError } from "@/shared/api/client";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
 
 type EntryState = {
   product?: object;
@@ -8,6 +13,8 @@ type EntryState = {
   notFound?: boolean;
   isError?: boolean;
 };
+
+const SERVER_ERROR = new ApiError(503, "잠시 문제");
 
 const { details, refetchFailed, toggle } = vi.hoisted(() => ({
   /** 상품 번호마다 조회가 어떤 상태인지. 없으면 받은 것도 실패도 아닌 기본값이다 */
@@ -26,6 +33,7 @@ vi.mock("@/entities/product", async (importOriginal) => ({
       isError: false,
       ...details.get(productId),
     })),
+    error: productIds.some((productId) => details.get(productId)?.isError) ? SERVER_ERROR : null,
     refetchFailed,
   }),
 }));
@@ -148,7 +156,16 @@ test("하나도 받지 못하면 불러오지 못했다고 알리고 다시 부�
   render(<RecentTab />);
 
   const alert = screen.getByRole("alert");
-  expect(alert.textContent).toContain("최근 본 상품을 불러오지 못했어요");
+  // 찜 탭과 같게 실패 코드로 고른 문구다(app-message-convention)
+  expect(alert.textContent).toContain(APP_MESSAGE[toAppMessageCode(SERVER_ERROR)].title);
   fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
   expect(refetchFailed).toHaveBeenCalledOnce();
+});
+
+// 서버에는 저장된 목록이 없다. 그대로 그리면 기록이 있는 사람에게도 "없어요"가 먼저 스친다
+test("저장된 목록을 읽기 전(서버 렌더)에는 빈 상태가 아니라 뼈대를 그린다", () => {
+  const html = renderToString(<RecentTab />);
+
+  expect(html).not.toContain("최근 본 상품이 없어요");
+  expect(html).toContain("최근 본 상품을 불러오는 중");
 });

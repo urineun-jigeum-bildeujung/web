@@ -17,6 +17,8 @@ import {
   useToggleWishlist,
   useWishedProductIds,
 } from "@/features/toggle-wishlist";
+import { toAppMessageCode } from "@/shared/api/error-message";
+import { APP_MESSAGE } from "@/shared/config/app-message";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -35,7 +37,7 @@ function CardSkeleton() {
 
 export function RecentTab() {
   const { productIds, ready, remove } = useRecentlyViewed();
-  const { entries, refetchFailed } = useQueryProductDetails(productIds);
+  const { entries, error, refetchFailed } = useQueryProductDetails(productIds);
   const { wishedIds, isLoading: isLoadingWishes } = useWishedProductIds();
   const heart = useToggleWishlist();
 
@@ -79,14 +81,13 @@ export function RecentTab() {
 
   // 본 상품이 있는데 하나도 받지 못했다. 비어 있다고 말하면 사실과 다르다. 다시 시도를 누르면 조회가
   // 받는 중으로 돌아가 이 칸 대신 뼈대가 보인다
-  if (shown.length === 0 && entries.some((entry) => entry.isError)) {
+  if (shown.length === 0 && error) {
     return (
       <EmptyState
         role="alert"
         className="flex-1"
-        icon={<Icon name="clock" />}
-        title="최근 본 상품을 불러오지 못했어요"
-        description="잠시 후 다시 시도해 주세요"
+        // 찜 탭의 조회 실패와 같게 실패 코드로 문구를 고른다(app-message-convention)
+        {...APP_MESSAGE[toAppMessageCode(error)]}
         action={
           <Button variant="outline" size="sm" className="min-h-11 px-3" onClick={refetchFailed}>
             다시 시도
@@ -121,8 +122,9 @@ export function RecentTab() {
               discountRate={product.discountRate}
               imageUrl={product.images[0]}
               // 와이어프레임(717:4385)은 X를 사진 오른쪽 위, 하트를 오른쪽 아래에 둔다. 사진 위 자리 하나를
-              // 사진 높이만큼 늘려 위아래로 나눈다
-              imageActionClassName="top-1 right-1 bottom-1 flex flex-col justify-between"
+              // 사진 높이만큼 늘려 위아래로 나눈다. 늘린 자리 자체는 누르지 않게 둬 X와 하트 사이를 눌러도
+              // 상세로 간다
+              imageActionClassName="pointer-events-none top-1 right-1 bottom-1 flex flex-col justify-between [&>*]:pointer-events-auto"
               imageAction={
                 <>
                   <button
