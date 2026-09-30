@@ -3,9 +3,11 @@ import { expect, test } from "vitest";
 
 import {
   ORDER_PARAM,
+  isOpenedFromCheckout,
   readAddressId,
   readOrderId,
   toAddressPickerPath,
+  toAddressPickerPathFromCheckout,
   toCheckoutPath,
   toFailUrl,
   toPickedAddressPath,
@@ -133,4 +135,21 @@ test("배송지 id는 양의 정수만 읽는다", () => {
   expect(readAddressId("0")).toBeNull();
   expect(readAddressId("abc")).toBeNull();
   expect(readAddressId("1.5")).toBeNull();
+});
+
+// 결제 화면에서 바로 연 목록만 한 칸 뒤가 결제 화면이다. 고르면 그 기록으로 되돌아간다 (#595 리뷰)
+test("결제 화면의 배송지 변경은 바로 왔다는 표시를 달고, 다른 경로에는 옮기지 않는다", () => {
+  const picker = toAddressPickerPathFromCheckout("?items=NORMAL%3A1&address=5");
+  expect(picker).toBe("/payment/address?items=NORMAL%3A1&address=5&via=checkout");
+  expect(isOpenedFromCheckout(picker.split("?")[1])).toBe(true);
+
+  // 수정·장소 추가에서 돌아올 목록과 결제 화면에는 싣지 않는다. 그사이 기록이 쌓여 한 칸 뒤가
+  // 결제 화면이 아니다
+  expect(toAddressPickerPath("?items=NORMAL%3A1&via=checkout")).toBe(
+    "/payment/address?items=NORMAL%3A1",
+  );
+  expect(toPickedAddressPath("?items=NORMAL%3A1&via=checkout", 9)).toBe(
+    "/payment?items=NORMAL%3A1&address=9",
+  );
+  expect(isOpenedFromCheckout("?items=NORMAL%3A1")).toBe(false);
 });

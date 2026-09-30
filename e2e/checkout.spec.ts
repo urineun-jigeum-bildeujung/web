@@ -1,5 +1,6 @@
 // 결제: 필수 동의 전에는 결제할 수 없는지, 직접 입력 칸이 골랐을 때만 열리는지 본다.
 import { expect, test, type Page } from "@playwright/test";
+import { stubCart } from "./fixtures/cart";
 import { stubOrders } from "./fixtures/orders";
 import { signIn } from "./fixtures/session";
 
@@ -84,6 +85,81 @@ test("직접 입력을 고르면 100자 제한 칸이 열린다", async ({ page 
   await expect(field).toBeVisible();
   await expect(field).toHaveAttribute("maxlength", "100");
   await expect(page.getByText("0/100자")).toBeVisible();
+});
+
+/** 기본 배송지(집)와 이번 주문에 고를 곳(자취방). 고른 뒤 결제 화면의 주소가 바뀌는지 본다 */
+async function stubTwoAddresses(page: Page) {
+  const home = {
+    addressId: 1,
+    addressName: "집",
+    receiver: "권도형",
+    phone: "01012345678",
+    zipCode: "06234",
+    address: "서울특별시 강남구 테헤란로 123",
+    addressDetail: "UI타워 4층",
+    deliveryNote: null,
+    isDefault: true,
+  };
+  const studio = {
+    ...home,
+    addressId: 9,
+    addressName: "자취방",
+    address: "서울특별시 마포구 양화로 45",
+    addressDetail: "3층 301호",
+    isDefault: false,
+  };
+  await page.route("**/members/me/addresses", (route) => route.fulfill({ json: [home, studio] }));
+}
+
+const HOME_LINE = "서울특별시 강남구 테헤란로 123 UI타워 4층";
+const STUDIO_LINE = "서울특별시 마포구 양화로 45 3층 301호";
+
+/** 장바구니에서 한 줄을 골라 결제 화면으로 간다. 기록이 `장바구니 → 결제`로 쌓인다 */
+async function goToCheckoutFromCart(page: Page) {
+  await page.goto("/cart");
+  await page.getByRole("checkbox", { name: "테스트 사료 고르기" }).check();
+  await page.getByRole("link", { name: "결제하기" }).click();
+  // 개발 서버가 결제 경로를 처음 컴파일하면 5초를 넘긴다
+  await expect(page).toHaveURL(/\/payment\?items=NORMAL(:|%3A)1$/, { timeout: 30_000 });
+  await expect(page.getByText(HOME_LINE)).toBeVisible();
+}
+
+// 고른 뒤 뒤로가기 한 번이면 결제 전 화면이다. 고르기 전 배송지의 결제 화면이 기록에 남으면
+// 뒤로가기가 그리로 가고 방금 고른 배송지도 되돌아간다 (#595 리뷰)
+test("배송지를 고른 뒤 뒤로가기 한 번이면 장바구니로 돌아간다", async ({ page }) => {
+  await blockTossPayments(page);
+  await stubCart(page);
+  await stubTwoAddresses(page);
+  await goToCheckoutFromCart(page);
+
+  await page.getByRole("link", { name: "배송지 변경" }).click();
+  await page.getByRole("link", { name: "자취방", exact: true }).click();
+
+  await expect(page).toHaveURL(/\/payment\?items=NORMAL(:|%3A)1&address=9$/, { timeout: 30_000 });
+  await expect(page.getByText(STUDIO_LINE)).toBeVisible();
+  // 고른 곳은 주소가 든다. 새로고침해도 남는다
+  await page.reload();
+  await expect(page.getByText(STUDIO_LINE)).toBeVisible();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/cart$/);
+});
+
+// 고르지 않았으면 목록은 그냥 한 칸 쌓인 화면이다. 뒤로가면 보던 결제 화면 그대로다
+test("배송지 목록에서 고르지 않고 뒤로가면 보던 결제 화면으로 돌아간다", async ({ page }) => {
+  await blockTossPayments(page);
+  await stubCart(page);
+  await stubTwoAddresses(page);
+  await goToCheckoutFromCart(page);
+
+  await page.getByRole("link", { name: "배송지 변경" }).click();
+  await expect(page.getByRole("link", { name: "자취방", exact: true })).toBeVisible({
+    timeout: 30_000,
+  });
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/payment\?items=NORMAL(:|%3A)1$/);
+  await expect(page.getByText(HOME_LINE)).toBeVisible();
 });
 
 // 주문번호는 문의할 때 사용자가 대는 유일한 식별자다.

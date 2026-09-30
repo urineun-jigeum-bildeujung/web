@@ -248,8 +248,9 @@ test("기본 배송지를 보여준다", () => {
 
   expect(screen.getByText(HOME.receiver)).toBeDefined();
   expect(screen.getByText(`${HOME.address} ${HOME.addressDetail}`)).toBeDefined();
+  // 결제 화면에서 바로 간다는 표시다. 거기서 고르면 이 기록으로 되돌아온다 (#595 리뷰)
   expect(screen.getByRole("link", { name: "배송지 변경" }).getAttribute("href")).toBe(
-    "/payment/address",
+    "/payment/address?via=checkout",
   );
 });
 
@@ -263,13 +264,34 @@ test("배송지 설정에서 고른 곳이 있으면 기본 배송지 대신 그
   expect(screen.getByText(`${STUDIO.address} ${STUDIO.addressDetail}`)).toBeDefined();
   // 배송지를 다시 바꾸러 갈 때 고른 상품과 고른 곳을 들고 간다
   expect(screen.getByRole("link", { name: "배송지 변경" }).getAttribute("href")).toBe(
-    "/payment/address?items=NORMAL%3A1&address=9",
+    "/payment/address?items=NORMAL%3A1&address=9&via=checkout",
   );
 
   agreeRequired();
   fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
   await waitFor(() => expect(createOrder).toHaveBeenCalled());
   expect(createOrder.mock.calls[0][0].addressId).toBe(STUDIO.addressId);
+});
+
+// 배송지 설정은 고르면 새 결제 화면을 쌓지 않고 이 기록으로 되돌아온다. 넘겨받은 곳을 이 기록의
+// 주소에 옮겨야 고른 뒤 뒤로가기 한 번이 장바구니다 (#595 리뷰)
+test("배송지 설정에서 넘겨받은 곳을 이 기록의 주소에 옮겨 적고 지운다", async () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1", address: String(HOME.addressId) });
+  sessionStorage.setItem("checkout.pickedAddress", String(STUDIO.addressId));
+  renderView({ addresses: [HOME, STUDIO] });
+
+  await waitFor(() =>
+    expect(replace).toHaveBeenCalledWith("/payment?items=NORMAL%3A1&address=9", { scroll: false }),
+  );
+  // 남기면 다음에 연 결제 화면이 또 배송지를 바꾼다
+  expect(sessionStorage.getItem("checkout.pickedAddress")).toBeNull();
+});
+
+test("넘겨받은 곳이 없으면 주소를 바꾸지 않는다", () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1" });
+  renderView({ addresses: [HOME, STUDIO] });
+
+  expect(replace).not.toHaveBeenCalled();
 });
 
 // 고른 곳을 그사이 지웠거나 주소창으로 고친 값이면 기본 배송지로 돌아간다

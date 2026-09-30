@@ -80,6 +80,31 @@ export function toAddressPickerPath(search: string) {
   return withQuery("/payment/address", checkoutQuery(search));
 }
 
+/**
+ * 결제 화면의 "배송지 변경"이 바로 연 목록이라는 표시 (#595 리뷰).
+ *
+ * **이 표시가 있으면 한 칸 뒤 기록이 그 결제 화면이다.** 그래서 고르면 새 결제 화면을 쌓거나
+ * 바꿔 끼우지 않고 한 칸 되돌아가 그 기록의 배송지만 바꾼다 — 목록을 바꿔 끼우면 옛 결제 화면이
+ * 남아, 고른 뒤 뒤로가기가 장바구니가 아니라 고르기 전 결제로 간다.
+ *
+ * 수정·장소 추가에서 돌아온 목록에는 없다. 돌아올 곳(`from`)을 `toAddressPickerPath`로 만들어
+ * 떨어지고, 그사이 기록이 쌓여 한 칸 뒤가 결제 화면이 아니기 때문이다.
+ */
+const VIA_PARAM = "via";
+const VIA_CHECKOUT = "checkout";
+
+/** 결제 화면의 "배송지 변경"이 여는 경로. 고른 것을 들고 가고 결제에서 바로 왔다고 표시한다 */
+export function toAddressPickerPathFromCheckout(search: string) {
+  const query = checkoutQuery(search);
+  query.set(VIA_PARAM, VIA_CHECKOUT);
+  return withQuery("/payment/address", query);
+}
+
+/** 한 칸 뒤 기록이 결제 화면인지. 고른 곳을 그 기록에 넘기고 되돌아가도 되는지 가린다 */
+export function isOpenedFromCheckout(search: string) {
+  return new URLSearchParams(search).get(VIA_PARAM) === VIA_CHECKOUT;
+}
+
 /** 배송지 설정에서 한 곳을 골라 결제 화면으로 돌아가는 경로. 고른 상품은 그대로 둔다 (#595) */
 export function toPickedAddressPath(search: string, addressId: number) {
   const query = checkoutQuery(search);

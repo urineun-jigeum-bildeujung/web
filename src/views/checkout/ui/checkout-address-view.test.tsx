@@ -2,16 +2,17 @@
 //
 // **목록이 무엇을 어떻게 그리는지는 여기서 보지 않는다.** `entities/address`의
 // `address-place-list.test.tsx`가 값을 직접 넣어 시험한다 (#329).
-import { render, screen } from "@testing-library/react";
-import { expect, test, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { beforeEach, expect, test, vi } from "vitest";
 
 const useQueryAddresses = vi.fn();
+const { back } = vi.hoisted(() => ({ back: vi.fn() }));
 
 // PageHeader의 뒤로가기가 useRouter를 쓴다
 // 목록은 결제 화면이 실어 보낸 쿼리(고른 상품)를 읽는다
 let searchParams = new URLSearchParams();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ back: vi.fn() }),
+  useRouter: () => ({ back }),
   useSearchParams: () => searchParams,
 }));
 
@@ -22,6 +23,12 @@ vi.mock("@/entities/address", async (importOriginal) => ({
 }));
 
 import { CheckoutAddressView } from "./checkout-address-view";
+
+beforeEach(() => {
+  back.mockClear();
+  sessionStorage.clear();
+  searchParams = new URLSearchParams();
+});
 
 const HOME = {
   addressId: 5,
@@ -59,4 +66,33 @@ test("줄을 누르면 고른 상품을 그대로 들고 그 배송지로 결제
   const edit = screen.getByRole("link", { name: "집 수정" });
   const query = new URLSearchParams(edit.getAttribute("href")!.split("?")[1]);
   expect(query.get("from")).toBe("/payment/address?items=NORMAL%3A1");
+});
+
+// 결제 화면에서 바로 왔으면 한 칸 뒤가 그 결제 화면이다. 새 결제 화면을 쌓거나 바꿔 끼우면 옛 결제
+// 화면이 기록에 남아, 고른 뒤 뒤로가기가 장바구니가 아니라 고르기 전 배송지로 간다 (#595 리뷰)
+test("결제 화면에서 바로 왔으면 고른 곳을 넘기고 한 칸 되돌아간다", () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1", via: "checkout" });
+  useQueryAddresses.mockReturnValue({ addresses: [HOME], isLoading: false, error: null });
+  render(<CheckoutAddressView />);
+
+  // 링크가 옮기지 않는다(`false`는 기본 동작을 막았다는 뜻이다)
+  expect(fireEvent.click(screen.getByRole("link", { name: "집" }))).toBe(false);
+  expect(back).toHaveBeenCalledTimes(1);
+  expect(sessionStorage.getItem("checkout.pickedAddress")).toBe("5");
+  // 수정하고 돌아올 목록에는 표시를 싣지 않는다. 돌아온 뒤로는 한 칸 뒤가 결제 화면이 아니다
+  const edit = screen.getByRole("link", { name: "집 수정" });
+  expect(new URLSearchParams(edit.getAttribute("href")!.split("?")[1]).get("from")).toBe(
+    "/payment/address?items=NORMAL%3A1",
+  );
+});
+
+// 수정·장소 추가를 거쳐 돌아온 목록이다. 한 칸 뒤가 결제 화면이 아니라 되돌아가면 엉뚱한 곳에 간다
+test("결제 화면에서 바로 오지 않았으면 되돌아가지 않고 링크대로 간다", () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1" });
+  useQueryAddresses.mockReturnValue({ addresses: [HOME], isLoading: false, error: null });
+  render(<CheckoutAddressView />);
+
+  expect(fireEvent.click(screen.getByRole("link", { name: "집" }))).toBe(true);
+  expect(back).not.toHaveBeenCalled();
+  expect(sessionStorage.getItem("checkout.pickedAddress")).toBeNull();
 });
