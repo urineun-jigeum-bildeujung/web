@@ -1,5 +1,6 @@
-// 설정 테스트. 알림 스위치(권한·토큰 등록·끄기), 계정 항목, 로그아웃을 검증한다.
+// 설정 테스트. 푸시 스위치(권한·토큰 등록·끄기), 테마 스위치, 계정 항목, 로그아웃을 검증한다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { ThemeProvider } from "next-themes";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
@@ -50,11 +51,12 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.clear();
+  document.documentElement.classList.remove("dark");
 });
 
-test("알림설정에 스위치가 있고 처음에는 꺼져 있다", () => {
+test("푸시알림에 스위치가 있고 처음에는 꺼져 있다", () => {
   renderView();
-  expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+  expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
     "false",
   );
 });
@@ -64,12 +66,12 @@ test("스위치를 켜면 권한을 묻고 받은 토큰을 서버에 등록한 
   vi.stubGlobal("fetch", fetchMock);
   renderView();
 
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
   // 등록이 끝나면 저장된 표시와 허용된 권한이 함께 있어야 켜짐이다
   push.granted = true;
 
   await waitFor(() =>
-    expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+    expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
       "true",
     ),
   );
@@ -86,13 +88,13 @@ test("권한을 거부하면 켜지지 않고 그 까닭을 알린다", async ()
   push.requestPushToken.mockResolvedValue({ status: "denied" });
   renderView();
 
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
 
   await waitFor(() =>
     expect(toastAppError).toHaveBeenCalledWith("notification.pushPermissionDenied"),
   );
   expect(fetchMock).not.toHaveBeenCalled();
-  expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+  expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
     "false",
   );
 });
@@ -101,15 +103,15 @@ test("켜져 있던 스위치를 끄면 이 기기의 토큰을 지우고 꺼진
   window.localStorage.setItem("push-enabled", "1");
   push.granted = true;
   renderView();
-  expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+  expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
     "true",
   );
 
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
 
   await waitFor(() => expect(push.deletePushToken).toHaveBeenCalled());
   await waitFor(() =>
-    expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+    expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
       "false",
     ),
   );
@@ -124,10 +126,10 @@ test("켰다는 표시를 저장하지 못하면 등록한 토큰을 지우고 �
   });
   renderView();
 
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
 
   await waitFor(() => expect(push.deletePushToken).toHaveBeenCalled());
-  expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+  expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
     "false",
   );
   setItem.mockRestore();
@@ -140,11 +142,11 @@ test("끄다가 토큰 삭제가 실패하면 켜짐으로 되돌리고, 되돌�
   push.deletePushToken.mockRejectedValue(new Error("network"));
   renderView();
 
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
   await waitFor(() => expect(push.deletePushToken).toHaveBeenCalled());
   // 표시가 되살아나 켜진 채다
   await waitFor(() =>
-    expect(screen.getByRole("switch", { name: "알림설정" }).getAttribute("aria-checked")).toBe(
+    expect(screen.getByRole("switch", { name: "푸시알림" }).getAttribute("aria-checked")).toBe(
       "true",
     ),
   );
@@ -152,7 +154,7 @@ test("끄다가 토큰 삭제가 실패하면 켜짐으로 되돌리고, 되돌�
   const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
     throw new Error("QuotaExceededError");
   });
-  fireEvent.click(screen.getByRole("switch", { name: "알림설정" }));
+  fireEvent.click(screen.getByRole("switch", { name: "푸시알림" }));
   await waitFor(() => expect(reportError).toHaveBeenCalledWith("push.restore", expect.any(Error)));
   setItem.mockRestore();
 });
@@ -161,17 +163,36 @@ test("푸시를 받을 수 없는 환경이면 스위치를 잠그고 까닭을 
   push.supported = false;
   renderView();
 
-  expect(screen.getByRole("switch", { name: /알림설정/ }).hasAttribute("disabled")).toBe(true);
+  expect(screen.getByRole("switch", { name: /푸시알림/ }).hasAttribute("disabled")).toBe(true);
   expect(screen.getByText("이 환경에서는 켤 수 없어요")).toBeDefined();
 });
 
-test("테마설정은 자리만 있고 아직 누를 수 없다", () => {
-  renderView();
+test("테마설정 스위치를 켜면 다크 모드가 되고 기기에 남는다", async () => {
+  // next-themes가 시스템 테마를 읽으려 matchMedia를 부른다. jsdom에는 없다
+  vi.stubGlobal("matchMedia", () => ({
+    matches: false,
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+  }));
+  const QueryWrapper = createQueryWrapper();
+  render(<SettingsView />, {
+    wrapper: ({ children }) => (
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+        <QueryWrapper>{children}</QueryWrapper>
+      </ThemeProvider>
+    ),
+  });
 
-  // 이어질 동작이 정해지지 않아 표시용 줄로 둔다. 누를 수 있게 두면 눌렀을 때
-  // 아무 일도 없어 고장으로 읽힌다
-  expect(screen.getByText("테마설정")).toBeDefined();
-  expect(screen.queryByRole("button", { name: /테마설정/ })).toBeNull();
+  const theme = screen.getByRole("switch", { name: "테마설정" });
+  expect(theme.getAttribute("aria-checked")).toBe("false");
+
+  fireEvent.click(theme);
+
+  await waitFor(() => expect(document.documentElement.classList.contains("dark")).toBe(true));
+  expect(theme.getAttribute("aria-checked")).toBe("true");
+  expect(window.localStorage.getItem("theme")).toBe("dark");
 });
 
 // 탈퇴는 되돌릴 수 없다. 바로 보내면 잘못 누른 사람이 계정을 잃는다
