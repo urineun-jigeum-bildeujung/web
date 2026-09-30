@@ -20,7 +20,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DELIVERY_NOTE_OPTIONS, DeliveryNoteField, useQueryAddresses } from "@/entities/address";
 import { BUY_NOW_PARAM, cartItemKey, parseBuyNow, useQueryCart } from "@/entities/cart";
@@ -272,12 +272,14 @@ export function CheckoutView() {
       : []
     : pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
   // **고른 상품이 그사이 품절돼 빠졌으면 알린다(QA No.20, #591).** 조용히 빼면 금액이 왜 줄었는지
-  // 모른다. 값이 거짓에서 참으로 바뀔 때만 뜬다 — 장바구니를 다시 받아도(창 포커스 등) 참이 이어지면
-  // 다시 뜨지 않는다
+  // 모른다. 한 화면에서 한 번만 뜬다 — 장바구니를 다시 받아 품절 → 재입고 → 품절로 바뀌어도
+  // 다시 알리지 않도록 알린 이력을 ref에 남긴다
   const droppedUnavailable =
     !isBuyNow && hasUnavailablePick(cart?.items, searchParams.get(ITEMS_PARAM));
+  const notifiedDropRef = useRef(false);
   useEffect(() => {
-    if (droppedUnavailable) {
+    if (droppedUnavailable && !notifiedDropRef.current) {
+      notifiedDropRef.current = true;
       showSnackbar("품절된 상품은 제외했어요");
     }
   }, [droppedUnavailable]);
