@@ -1,4 +1,4 @@
-// 배송지 연락처 하이픈 자동 처리 테스트 (QA No.165, #526).
+// 전화번호 하이픈 자동 처리 테스트 (QA No.165, #526).
 import { expect, test } from "vitest";
 
 import { formatPhoneInput } from "./phone-number";

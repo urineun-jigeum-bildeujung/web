@@ -24,6 +24,7 @@ import {
 } from "@/entities/address";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
+import { formatPhoneInput } from "@/shared/lib/phone/phone-number";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { FormField } from "@/shared/ui/form-field/form-field";
@@ -43,7 +44,6 @@ import {
   addressFormSchema,
   type AddressFormValues,
 } from "../model/address-form-schema";
-import { formatPhoneInput } from "../model/phone-number";
 import { toInternalPath } from "../model/return-to";
 
 export function EditAddressView() {
