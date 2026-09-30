@@ -16,7 +16,7 @@ import { useQueryDealProductId } from "../api/use-query-deal-product-id";
  * (`?dealItem=`, #484) — 붙이지 않으면 상세가 정가로 보인다.
  *
  * 갈 곳을 모르면 `null`이다. 상품 정보가 없는 줄(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`)과, 딜 상세에서
- * 상품 번호를 아직 못 받았거나 못 받는 줄(끝난 딜은 404)이다.
+ * 상품 번호를 아직 못 받았거나 못 받는 줄이다.
  */
 function toDetailPath(item: CartItem, dealProductId: number | undefined): string | null {
   if (item.productName === null) return null;
@@ -32,8 +32,14 @@ type CartItemLinkProps = {
 };
 
 export function CartItemLink({ item, name, className }: CartItemLinkProps) {
+  // **끝난 딜은 부르지 않는다.** 딜 상세가 진행 중·예정 딜만 보여 주고 끝난 딜은 404라
+  // (`TimeDealDetailService`) 받을 것이 없는데 요청만 나가고, 브라우저 콘솔에 실패가 찍힌다
   const dealProductId = useQueryDealProductId(
-    item.itemType === "TIME_DEAL" && item.productName !== null ? item.itemId : null,
+    item.itemType === "TIME_DEAL" &&
+      item.productName !== null &&
+      item.unavailableReason !== "DEAL_ENDED"
+      ? item.itemId
+      : null,
   );
   const href = toDetailPath(item, dealProductId);
 

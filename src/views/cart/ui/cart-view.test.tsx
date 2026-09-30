@@ -363,9 +363,21 @@ describe("CartView QA", () => {
     expect(getTimeDealDetail).toHaveBeenCalledWith("5");
   });
 
-  // 끝난 딜은 딜 상세가 404다. 엉뚱한 상품으로 보내느니 링크를 걸지 않는다
-  it("상품 번호를 모르는 줄은 링크를 걸지 않는다", async () => {
+  // 딜 상세를 받지 못하면 상품 번호를 모른다. 엉뚱한 상품으로 보내느니 링크를 걸지 않는다
+  it("상품 번호를 받지 못한 딜 줄은 링크를 걸지 않는다", async () => {
     getTimeDealDetail.mockRejectedValue(new Error("404"));
+    renderCart([makeItem(5, "딜 사료", 12000, { itemType: "TIME_DEAL" })]);
+
+    expect(await screen.findByText("딜 사료")).toBeDefined();
+    await waitFor(() => expect(getTimeDealDetail).toHaveBeenCalledWith("5"));
+    expect(screen.queryByRole("link", { name: "딜 사료" })).toBeNull();
+  });
+
+  /**
+   * **끝난 딜과 이름이 안 오는 줄은 부르지도 않는다.** 끝난 딜은 딜 상세가 404라(`TimeDealDetailService`)
+   * 받을 것이 없는데 요청만 나가 브라우저 콘솔에 실패가 찍히고, 이름이 안 오는 줄은 갈 상세가 없다.
+   */
+  it("끝난 딜 줄과 이름이 없는 줄은 딜 상세를 부르지 않고 링크도 없다", async () => {
     renderCart([
       makeItem(5, "끝난 딜", 12000, {
         itemType: "TIME_DEAL",
@@ -374,6 +386,7 @@ describe("CartView QA", () => {
         subtotal: null,
       }),
       makeItem(9, null, null, {
+        itemType: "TIME_DEAL",
         available: false,
         unavailableReason: "NOT_FOUND",
         subtotal: null,
@@ -381,11 +394,9 @@ describe("CartView QA", () => {
     ]);
 
     expect(await screen.findByText("끝난 딜")).toBeDefined();
-    await waitFor(() => expect(getTimeDealDetail).toHaveBeenCalledWith("5"));
     expect(screen.queryByRole("link", { name: "끝난 딜" })).toBeNull();
-    // 이름이 안 오는 줄은 갈 상세가 없어 부르지도 않는다
     expect(screen.queryByRole("link", { name: "더 이상 없는 상품이에요" })).toBeNull();
-    expect(getTimeDealDetail).toHaveBeenCalledTimes(1);
+    expect(getTimeDealDetail).not.toHaveBeenCalled();
   });
 
   it("할인 상품이면 할인율과 정가 취소선을 함께 보인다 (No.10)", async () => {
