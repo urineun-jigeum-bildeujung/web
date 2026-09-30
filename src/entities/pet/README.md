@@ -32,8 +32,8 @@
 | `ui/product-feedback-sheet.test.tsx` | 답변·보류가 무엇으로 나가는지, 실패하면 완료로 안 가는지 |
 | `model/breeds.ts` | 성별·중성화·체구 선택지, 체형 다섯 단계와 설명, 프로필 초안 타입, 종 파라미터, 종·체구별 몸무게 예시 문구 |
 | `model/breeds.test.ts` | 몸무게 예시가 종·체구로 갈리는지 |
-| `model/profile-input.ts` | 입력칸이 받는 글자를 거른다. 이름은 이모티콘 빼기, 나이는 숫자 두 자리, 몸무게는 소수 첫째 자리까지 (#524) |
-| `model/profile-input.test.ts` | QA 시트에 적힌 값(`초코🐶😀`·`221asdf12@@#`·`4.567`)을 그대로 넣어 본다 |
+| `model/profile-input.ts` | 입력칸이 받는 글자를 거른다. 이름은 이모티콘 빼고 10자까지(`PET_NAME_MAX`, #602), 나이는 숫자 두 자리, 몸무게는 소수 첫째 자리까지 (#524) |
+| `model/profile-input.test.ts` | QA 시트에 적힌 값(`초코🐶😀`·`221asdf12@@#`·`4.567`)을 그대로 넣어 본다. 이름 10자 경계와 거기 걸린 두 단위 글자 |
 | `model/parse-profile-input.ts` | 자유 입력을 API 값으로 옮긴다. 나이 상한(30살), 몸무게 소수 첫째 자리 반올림, 나이 칸이 알릴 말 |
 | `model/parse-profile-input.test.ts` | 단위·부호·앞자리 0 없는 소수·상한·반올림 |
 | `model/body-groups.ts` | 리뷰 필터 품종 선택 화면(#264)용 체구그룹 상수와 `groupBreedsByBodySize` |
@@ -52,6 +52,8 @@
 ## 입력 규칙은 온보딩과 정보 수정이 같다
 
 **둘 다 뷰라서 서로 import할 수 없어 엔티티에 둔다.** 규칙을 따로 들었을 때 정보 수정만 이모티콘 이름·글자 섞인 나이를 받았다(QA No.230·233, #524). 칠 때 거르는 것은 `profile-input`, 걸러도 남는 잘못(상한을 넘는 나이, 0kg)을 읽고 알리는 것은 `parse-profile-input`이다.
+
+**이름은 10자까지다(QA 온보딩, #602).** 근거는 PM QA 기대 결과이고 서버(`PetRegisterRequest.name`)는 `@NotBlank`뿐이다. 입력칸의 `maxLength`만으로는 한글 조합 중인 글자가 한 자 넘쳐, `toPetNameInput`이 값도 자른다 — 배송 요청사항(#526)과 같다. 이모티콘을 먼저 걷고 센다. 예전에 10자 넘게 저장된 이름은 정보 수정을 열면 10자로 잘린 채 채워져, 보이는 그대로 저장된다.
 
 **나이 상한 30살은 기획값이 아니다.** 서버(`@Positive Integer`)에 상한이 없어 기록된 최고령 개(약 30살)를 기준으로 뒀다. 기획이 정하면 `MAX_PET_AGE` 하나만 바꾼다.
 

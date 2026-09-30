@@ -9,6 +9,7 @@
 import {
   GENDER_OPTIONS,
   NEUTERED_OPTIONS,
+  PET_NAME_MAX,
   toPetNameInput,
   type PetProfileDraft,
 } from "@/entities/pet";
@@ -51,10 +52,12 @@ export function BasicStep({ draft, onChange, onNext, onPrev }: BasicStepProps) {
         </div>
 
         <div className="flex flex-col gap-4 px-5">
-          {/* 이모티콘은 칠 때 걷어 낸다(QA No.187). 칸을 넘는 이름은 말줄임표로 줄인다(QA No.231) */}
+          {/* 이모티콘은 칠 때 걷어 내고 10자에서 멈춘다(QA No.187, #602). 칸을 넘는 이름은
+              말줄임표로 줄인다(QA No.231) */}
           <FormField
             label="아이의 이름을 알려주세요"
             className="[&_input]:truncate"
+            maxLength={PET_NAME_MAX}
             value={draft.name}
             onChange={(event) => onChange({ name: toPetNameInput(event.target.value) })}
             onClear={() => onChange({ name: "" })}
