@@ -102,6 +102,8 @@ useQueryState("tab", parseAsStringLiteral(TABS).withDefault("liked"));
 | 클라이언트가 이미 받은 데이터로 거르는 값 | 기본값 그대로 |
 | 서버가 다시 조회해야 하는 값 (검색 정렬, 페이지, 서버 필터) | `shallow: false` |
 
+**그 값으로 화면 구성까지 가르면 nuqs 값으로 그리지 않는다.** `shallow: false`는 주소를 먼저 바꾸고 서버 요청을 따로 건다. 전환이 끝나기 전에 뒤로가면 nuqs 값이 이전 값에 남고 "주소만 바뀐 상태"가 늦게 커밋될 수 있다(#560, 느린 CPU에서 매번 재현). 홈의 종류 탭처럼 서버 데이터와 짝이 맞아야 하는 값은 `page.tsx`가 목록과 같은 렌더에서 넘긴 값으로 그리고, 바꿀 때는 `useTransition` 안에서 `router.push`/`replace`를 부른다(`views/home` README).
+
 **`useQueryState`를 쓰는 화면은 라우트에서 `Suspense`로 감싼다.** 내부에서 `useSearchParams`를 부르므로 감싸지 않으면 정적 프리렌더가 실패한다(`missing-suspense-with-csr-bailout`). 빌드에서만 드러나고 dev에서는 통과하므로 화면을 만들 때 함께 넣는다.
 
 ```tsx
