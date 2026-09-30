@@ -43,7 +43,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `icon/` | 디자인 시스템 아이콘 56종. `name`으로 고르고 색은 글자색, 크기는 `size-*`. `icon-shapes.ts`는 Figma에서 스크립트로 만든 파일이라 손으로 고치지 않는다 — 다만 그 스크립트가 저장소에 없어 `empty_box` 한 종은 손으로 더했다(#501) |
 | `page-header/` | 화면 상단 머리말. left·title·right 슬롯과 뒤로가기·닫기·로고 기본 모양(`page-header.tsx`), 머리말을 직접 짜는 화면도 쓰는 뒤로가기(`header-back-button.tsx`), 오른쪽 아이콘 슬롯(`header-icon-link.tsx`). 값은 시안 공용 header 컴포넌트(3581:82062)다(#513) |
 | `bottom-action-bar/` | 화면 하단 고정 버튼 줄. safe-area 여백을 여기서 처리한다 |
-| `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣고, 손잡이가 없는 시안은 `showHandle={false}`. 보내는 동안 닫기를 막을 때는 `dismissible={false}` — `onOpenChange`에서 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다 (#474) |
+| `bottom-sheet/` | 아래에서 올라와 가장자리에서 떨어져 떠 있는 시트. shadcn Drawer 조각으로 시안 모양을 조립한다. 제목은 `DrawerTitle`로 넣고, 손잡이가 없는 시안은 `showHandle={false}`. 보내는 동안 닫기를 막을 때는 `dismissible={false}` — `onOpenChange`에서 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다 (#474). 스크롤은 시트 본체가 아니라 손잡이 아래 안쪽 상자가 맡고 `className`(여백·간격)도 그 상자에 붙는다 — 본체가 스크롤 영역이면 vaul이 본체에 붙이는 꼬리(`::after`)만큼 빈 스크롤이 생긴다. 손잡이는 상자 밖이라 `gap`이 닿지 않아, 손잡이와의 간격은 `pt-*`로 준다. `floating`은 그 꼬리를 끈다 (#561) |
 | `empty-state/` | 목록이 비었을 때 안내와 다음 행동. 그림은 `icon` 세트를 72px로 키워 쓴다 |
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을, `suffix`로 값 바로 뒤에 단위(몸무게 kg)를 둔다 |
