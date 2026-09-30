@@ -77,14 +77,14 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
         <div className="flex min-w-0 flex-col gap-0.5">
           <h2 id="match-heading" className="text-title-bold-16 text-text-body-default">
             {match.score === null
-              ? `${petName} 기준으로는 아직 재지 못했어요`
+              ? `${petName} 기준으로 확인한 안전 정보예요`
               : `${withJosa(petName, "과/와")} ${headlineOf(level)}`}
           </h2>
           <p className="text-caption-regular-12 text-text-body-secondary">
             ({match.profileLabel} 기준)
           </p>
           <p className="sr-only">
-            {match.score === null ? "상품 정보를 확인하는 중입니다" : `적합도 ${match.score}점`}
+            {match.score === null ? "영양 적합도 점수는 아직 제공되지 않습니다" : `적합도 ${match.score}점`}
           </p>
         </div>
       </div>
