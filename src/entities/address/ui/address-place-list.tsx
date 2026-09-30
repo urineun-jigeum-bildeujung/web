@@ -9,9 +9,10 @@
 //
 // **결제에서는 줄이 고르는 자리다** (QA No.40, #595). `pickHref`를 주면 줄을 누를 때 그 곳을 이번
 // 주문 배송지로 고르고, 고치는 길은 줄 끝의 "수정"으로 옮긴다. 마이페이지는 주지 않아 줄이 곧 수정이다.
+// 고른 뒤 어느 기록으로 갈지는 부르는 화면이 `onPick`으로 정한다 — 목록은 결제 화면의 기록을 모른다.
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE } from "@/shared/config/app-message";
@@ -97,16 +98,23 @@ function PlaceRow({ place, from }: { place: Address; from: string }) {
   );
 }
 
+type PickPlaceRowProps = {
+  place: Address;
+  from: string;
+  href: string;
+  onPick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+};
+
 /**
  * 결제에서 이번 주문 배송지를 고르는 줄 (QA No.40, #595).
  *
  * **이름 링크의 `::after`가 줄을 통째로 덮어** 어디를 눌러도 고른다. "수정"은 링크 속 링크가 되지
  * 않게 밖에 두고 덮개 위로 올린다(`relative z-10`) — 장바구니 줄(`cart-item-link`)과 같은 방식이다.
  *
- * **고르면 이 화면을 결제 화면으로 바꿔 끼운다(`replace`).** 쌓으면 결제에서 뒤로가기가 이 목록으로
- * 되돌아온다.
+ * **링크 자체는 이 화면을 결제 화면으로 바꿔 끼운다(`replace`).** 쌓으면 결제에서 뒤로가기가 이 목록으로
+ * 되돌아온다. `onPick`이 기본 동작을 막으면 부르는 쪽이 대신 옮긴다(#595 리뷰).
  */
-function PickPlaceRow({ place, from, href }: { place: Address; from: string; href: string }) {
+function PickPlaceRow({ place, from, href, onPick }: PickPlaceRowProps) {
   const icon = placeIconOf(place.addressName);
 
   return (
@@ -116,6 +124,7 @@ function PickPlaceRow({ place, from, href }: { place: Address; from: string; hre
         <Link
           href={href}
           replace
+          onClick={onPick}
           className="text-title-bold-16 text-foreground after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring"
         >
           {place.addressName}
@@ -176,6 +185,11 @@ type AddressPlaceListProps = {
    * 고른 것은 그 주문에만 쓰고 기본 배송지는 바꾸지 않는다 (QA No.40, #595)
    */
   pickHref?: (place: Address) => string;
+  /**
+   * 줄을 눌렀을 때. `event.preventDefault()`를 부르면 링크가 옮기지 않고 부르는 쪽이 옮긴다.
+   * 결제는 한 칸 뒤 결제 화면으로 되돌아가려고 쓴다 (#595 리뷰)
+   */
+  onPick?: (place: Address, event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
 export function AddressPlaceList({
@@ -184,10 +198,17 @@ export function AddressPlaceList({
   error,
   from,
   pickHref,
+  onPick,
 }: AddressPlaceListProps) {
   const renderPlace = (place: Address) =>
     pickHref ? (
-      <PickPlaceRow key={place.addressId} place={place} from={from} href={pickHref(place)} />
+      <PickPlaceRow
+        key={place.addressId}
+        place={place}
+        from={from}
+        href={pickHref(place)}
+        onPick={onPick && ((event) => onPick(place, event))}
+      />
     ) : (
       <PlaceRow key={place.addressId} place={place} from={from} />
     );

@@ -6,15 +6,26 @@
 //
 // **고르는 API는 없다.** 줄을 누르면 그 `addressId`를 주소(`?address=`)에 실어 결제 화면으로
 // 돌아가고, 결제 화면이 그것을 주문 생성에 넘긴다. 기본 배송지는 바꾸지 않는다 (QA No.40, #595).
+//
+// **결제 화면에서 바로 왔으면 새 결제 화면을 만들지 않고 한 칸 되돌아간다** (#595 리뷰). 목록을
+// 결제 화면으로 바꿔 끼우면 기록이 `장바구니 → 고르기 전 결제 → 고른 뒤 결제`로 남아, 고른 뒤
+// 뒤로가기 한 번이 장바구니가 아니라 고르기 전 배송지의 결제로 간다. 고른 곳은 `picked-address`로
+// 넘기고 결제 화면이 그 기록의 주소에 옮겨 적는다. 수정·장소 추가를 거쳐 돌아왔거나 저장소가 막혀
+// 넘기지 못하면 전처럼 바꿔 끼운다.
 
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { AddPlaceLink, AddressPlaceList, useQueryAddresses } from "@/entities/address";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 
-import { toAddressPickerPath, toPickedAddressPath } from "../model/return-query";
+import { writePickedAddress } from "../model/picked-address";
+import {
+  isOpenedFromCheckout,
+  toAddressPickerPath,
+  toPickedAddressPath,
+} from "../model/return-query";
 
 export function CheckoutAddressView() {
   // 대기 표시 없음 — 첫 그림뿐이라 목록의 Skeleton이 덮는다. 줄을 눌러 기다리는 자리가 없다
@@ -23,6 +34,7 @@ export function CheckoutAddressView() {
   const search = useSearchParams().toString();
   // 등록·수정을 마치면 이 화면으로 돌아온다. 결제를 이어가야 해서다 (#369). 고른 상품도 함께다
   const here = toAddressPickerPath(search);
+  const router = useRouter();
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -38,6 +50,12 @@ export function CheckoutAddressView() {
           error={error}
           from={here}
           pickHref={(place) => toPickedAddressPath(search, place.addressId)}
+          onPick={(place, event) => {
+            // 한 칸 뒤가 결제 화면일 때만 되돌아간다. 아니면 링크대로 바꿔 끼운다
+            if (!isOpenedFromCheckout(search) || !writePickedAddress(place.addressId)) return;
+            event.preventDefault();
+            router.back();
+          }}
         />
         <AddPlaceLink from={here} />
       </main>

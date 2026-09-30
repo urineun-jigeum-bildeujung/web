@@ -59,11 +59,13 @@ import {
   readPendingOrder,
   writePendingOrder,
 } from "../model/pending-order";
+import { takePickedAddress } from "../model/picked-address";
 import {
   ADDRESS_PARAM,
   readAddressId,
-  toAddressPickerPath,
+  toAddressPickerPathFromCheckout,
   toCheckoutPath,
+  toPickedAddressPath,
 } from "../model/return-query";
 import { DeliveryNotice } from "./delivery-notice";
 import { FieldRow } from "./field-row";
@@ -260,6 +262,16 @@ export function CheckoutView() {
       router.replace(toCheckoutPath(searchParams.toString()), { scroll: false });
     }
   }, [failCode, router, searchParams]);
+
+  // **배송지 설정에서 고르고 되돌아왔으면 이 기록의 주소에 옮겨 적는다** (#595 리뷰). 목록이 새 결제
+  // 화면을 쌓지 않고 한 칸 되돌아오므로, 고른 뒤 뒤로가기 한 번이 장바구니(바로 구매면 상품 상세)다.
+  // 넘겨받은 값은 읽는 즉시 지워진다 — 주소에 옮긴 뒤로는 새로고침에도 주소가 들고 있다
+  useEffect(() => {
+    const picked = takePickedAddress();
+    if (picked !== null) {
+      router.replace(toPickedAddressPath(searchParams.toString(), picked), { scroll: false });
+    }
+  }, [router, searchParams]);
 
   const { cart, isLoading: cartLoading, error: cartError } = useQueryCart();
   const { addresses, isLoading: addressLoading, error: addressError } = useQueryAddresses();
@@ -467,8 +479,8 @@ export function CheckoutView() {
               <Link
                 href={
                   address
-                    ? // 고른 상품을 들고 간다. 거기서 한 곳을 고르면 이 화면으로 돌아온다 (#595)
-                      toAddressPickerPath(searchParams.toString())
+                    ? // 고른 상품을 들고 간다. 거기서 한 곳을 고르면 이 기록으로 되돌아온다 (#595)
+                      toAddressPickerPathFromCheckout(searchParams.toString())
                     : // 등록을 마치면 이 화면으로 돌아온다. **고른 것을 들고 간다** —
                       // 빠뜨리면 돌아왔을 때 장바구니 전체로 읽힌다 (#364와 같은 자리다)
                       `/mypage/address/new?${new URLSearchParams({
