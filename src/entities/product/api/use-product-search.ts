@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { searchMoreProducts, type ProductSearchResult, type ProductSort } from "./products";
 
@@ -25,9 +25,13 @@ export function useProductSearch(
   const [hasNext, setHasNext] = useState(first.hasNext);
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
+  // `loading`은 렌더 때 값이라, 목록 끝 관찰자가 effect 정리 전에 한 번 더 부르면 두 호출 모두
+  // 통과해 같은 커서로 두 번 요청한다. 요청 잠금은 렌더를 기다리지 않는 ref로 건다 (#557 리뷰)
+  const inFlight = useRef(false);
 
   const loadMore = async () => {
-    if (loading || !nextCursor) return;
+    if (inFlight.current || !nextCursor) return;
+    inFlight.current = true;
     // 실패 표시는 다시 받는 동안에도 남긴다. 화면의 다시 시도 버튼이 그 자리에서 대기를
     // 보이며 잠겨 있어야, 또 눌러 같은 커서로 요청이 한 번 더 나가지 않는다(주문·후기 목록과 같다, #427)
     setLoading(true);
@@ -46,6 +50,7 @@ export function useProductSearch(
       // 이미 받은 목록은 그대로 두고 다시 시도할 수 있게 한다
       setFailed(true);
     } finally {
+      inFlight.current = false;
       setLoading(false);
     }
   };
