@@ -3,7 +3,7 @@
 휴대폰 번호 인증. 통신사를 고르고 번호를 받아 인증번호로 확인한다.
 
 - **라우트**: `/mypage/info/phone` — `src/app/mypage/info/phone/page.tsx`
-- **조립**: `shared/ui`의 `single-input-screen` · `select` · `form-field`(`trailing` 칩) · `button`, `shared/lib/app-toast`
+- **조립**: `shared/ui`의 `single-input-screen` · `select` · `form-field`(`trailing` 칩) · `button`, `shared/lib/app-toast` · `shared/lib/phone`
 - **상태**: 통신사·번호·인증번호·완료 여부는 화면 안 상태
 - **참고**: UI 시안 기준(`mypa_212` 다섯 장, `1500-38228`~`1500-38659`)
 
@@ -12,7 +12,7 @@
 | `ui/verify-phone-view.tsx` | 휴대폰 번호 인증 |
 | `api/phone-verification.ts` | 인증번호 발송·확인 요청 |
 | `api/use-mutate-phone-verification.ts` | 두 단계를 한 훅으로 낸다 |
-| `ui/verify-phone-view.test.tsx` | 단계별 노출과 완료 조건 |
+| `ui/verify-phone-view.test.tsx` | 단계별 노출과 완료 조건, 번호 하이픈과 인증 칩 노출 조건 |
 | `index.ts` | 공개 API |
 
 ## MVP에서는 목업으로 간다
@@ -44,6 +44,10 @@
 **번호는 숫자만 보낸다.** 서버가 Redis 키(`P<번호>`)로 쓰기 때문에 하이픈이 섞이면 발송과 확인이 서로 다른 키를 본다. **인증번호는 숫자로 보낸다** — 백엔드가 `int`로 받아 문자열을 주면 본문을 통째로 거절한다.
 
 ## 짚어둘 것
+
+**번호는 치는 대로 3-4-4로 끊는다**(QA No.150, #594). 숫자만 열한 자리까지 받고 `shared/lib/phone`의 `formatPhoneInput`으로 하이픈을 넣는다 — 배송지 연락처와 같은 함수다. 서버에는 여전히 숫자만 간다(`digitsOf`).
+
+**"인증" 칩은 휴대폰 번호 모양일 때만 보인다**(QA No.151, #594). 자리 수만 셌을 때는 `0212345678`처럼 휴대폰이 아닌 번호로도 요청할 수 있었다. `^01[016789]\d{7,8}$`를 통과해야 칩이 나타나고, 통신사를 고르기 전에는 보인 채 잠긴다 — 고를 것이 남았다는 것을 칩이 알린다.
 
 **"인증" 칩은 입력칸 안에 있다.** 시안의 32px 검정 칩이고 `FormField`의 `trailing`으로 놓는다. 번호 칸과 인증번호 칸의 칩이 둘 다 "인증"이라 스크린 리더용 이름은 "인증 번호 받기"·"인증 번호 확인"으로 나눴다.
 

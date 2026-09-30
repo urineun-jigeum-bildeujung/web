@@ -56,3 +56,13 @@ export function formatPhoneInput(text: string): string {
   }
   return `${digits.slice(0, 3)}-${digits.slice(3, middleEnd)}-${digits.slice(middleEnd)}`;
 }
+
+/**
+ * 휴대폰 번호 모양인지 본다. 하이픈은 떼고 숫자로만 견준다.
+ *
+ * `01`로 시작하고 셋째 자리가 이동통신 식별번호(0·1·6·7·8·9)이며, 뒤로 일곱이나 여덟 자리가
+ * 붙는다. 010은 열한 자리, 옛 011·016 등은 열 자리도 있다 (QA No.151, #594).
+ */
+export function isMobilePhoneNumber(text: string): boolean {
+  return /^01[016789]\d{7,8}$/.test(text.replace(/-/g, ""));
+}

@@ -1,7 +1,7 @@
-// 전화번호 하이픈 자동 처리 테스트 (QA No.165, #526).
+// 전화번호 하이픈 자동 처리(QA No.165, #526)와 휴대폰 번호 검사(QA No.151, #594) 테스트.
 import { expect, test } from "vitest";
 
-import { formatPhoneInput } from "./phone-number";
+import { formatPhoneInput, isMobilePhoneNumber } from "./phone-number";
 
 // 치는 도중의 모양까지 본다. 한 자씩 칠 때마다 이 함수를 거친다
 test.each([
@@ -46,4 +46,23 @@ test("열한 자리를 넘는 숫자는 버린다", () => {
 test("050 번호는 열두 자리까지 받고 그 뒤는 버린다", () => {
   expect(formatPhoneInput("0504-1234-5678")).toBe("0504-1234-5678");
   expect(formatPhoneInput("0504123456789")).toBe("0504-1234-5678");
+});
+
+// 휴대폰 인증은 이 검사를 통과할 때만 인증 버튼을 보인다 (QA No.151)
+test.each(["01012345678", "010-1234-5678", "0111234567", "011-123-4567", "01912345678"])(
+  "%s는 휴대폰 번호다",
+  (text) => {
+    expect(isMobilePhoneNumber(text)).toBe(true);
+  },
+);
+
+test.each([
+  ["", "비었다"],
+  ["010123456", "아홉 자리다"],
+  ["010123456789", "열두 자리다"],
+  ["01212345678", "012는 이동통신 번호가 아니다"],
+  ["0212345678", "서울 지역번호다"],
+  ["010-1234-567a", "숫자가 아닌 글자가 섞였다"],
+])("%s는 휴대폰 번호가 아니다 (%s)", (text) => {
+  expect(isMobilePhoneNumber(text)).toBe(false);
 });
