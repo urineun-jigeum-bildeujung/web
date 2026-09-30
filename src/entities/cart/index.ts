@@ -10,4 +10,5 @@ export {
 export { useMutateCartItem } from "./api/use-mutate-cart-item";
 export { useQueryCart } from "./api/use-query-cart";
 export { useQueryCartCount } from "./api/use-query-cart-count";
+export { useQueryCartItemQuantity } from "./api/use-query-cart-item-quantity";
 export { BUY_NOW_PARAM, parseBuyNow, toBuyNowPath, type BuyNow } from "./model/buy-now";
