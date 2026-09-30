@@ -92,13 +92,6 @@ test("빼기는 확인창을 거쳐야 서버로 간다", async ({ page }) => {
   await expect.poll(() => calls).toEqual(["DELETE /carts/items/NORMAL/1"]);
 });
 
-/** 끝난 딜은 딜 상세가 404다(`TimeDealDetailService`). 픽스처의 딜 줄이 끝난 딜이라 그대로 세운다 */
-async function stubEndedDeal(page: Parameters<typeof stubCart>[0]) {
-  await page.route("**/api/v1/time-deals/items/**", (route) =>
-    route.fulfill({ status: 404, json: { errorCode: "TIME_DEAL_ITEM_NOT_FOUND" } }),
-  );
-}
-
 /**
  * **줄 어디를 눌러도 상세로 가고, 돌아와도 고른 줄이 그대로다** (QA No.9·No.23, #563).
  *
@@ -107,7 +100,6 @@ async function stubEndedDeal(page: Parameters<typeof stubCart>[0]) {
  */
 test("줄을 누르면 상품 상세로 가고, 돌아와도 고른 줄이 그대로다", async ({ page }) => {
   await stubCart(page);
-  await stubEndedDeal(page);
   await page.goto("/cart");
 
   await page.getByRole("checkbox", { name: "테스트 사료 고르기" }).check();
@@ -128,7 +120,6 @@ test("줄을 누르면 상품 상세로 가고, 돌아와도 고른 줄이 그�
 // 앱을 완전히 끄고 다시 여는 것과 같다. 고른 것은 이 브라우저에 남는다 (QA No.24, #563)
 test("탭을 닫고 새 탭에서 열어도 고른 줄이 그대로다", async ({ context, page }) => {
   await stubCart(page);
-  await stubEndedDeal(page);
   await page.goto("/cart");
   await page.getByRole("checkbox", { name: "테스트 간식 고르기" }).check();
   await expect(page.getByText("전체선택 (1/2)")).toBeVisible();
@@ -138,7 +129,6 @@ test("탭을 닫고 새 탭에서 열어도 고른 줄이 그대로다", async (
   const next = await context.newPage();
   await signIn(next);
   await stubCart(next);
-  await stubEndedDeal(next);
   await next.goto("/cart");
 
   await expect(next.getByRole("checkbox", { name: "테스트 간식 고르기" })).toBeChecked();

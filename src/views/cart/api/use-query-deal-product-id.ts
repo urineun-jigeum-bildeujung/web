@@ -14,7 +14,8 @@ import { QUERY_KEYS } from "@/shared/config/query-keys";
  * 딜 아이템의 상품 번호. `null`을 주면 부르지 않는다(일반 줄은 줄 번호가 곧 상품 번호다).
  *
  * **끝난 딜은 받지 못한다.** 딜 상세가 진행 중·예정인 딜만 보여 주고 나머지는 404다
- * (`TimeDealDetailService`). 그때는 `undefined`라 부르는 쪽이 링크를 걸지 않는다.
+ * (`TimeDealDetailService`). 그래서 부르는 쪽이 끝난 딜 줄(`DEAL_ENDED`)에는 `null`을 준다. 그 밖에
+ * 받지 못한 경우도 `undefined`라 부르는 쪽이 링크를 걸지 않는다.
  */
 export function useQueryDealProductId(dealItemId: number | null): number | undefined {
   const id = String(dealItemId ?? "");

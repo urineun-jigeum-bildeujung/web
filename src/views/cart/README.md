@@ -65,7 +65,7 @@ GET    /time-deals/items/{timeDealItemId}  타임딜 줄의 상품 번호 (공�
 
 - 일반 줄은 `/products/{itemId}`다. 줄 번호가 곧 상품 번호다.
 - **타임딜 줄은 상품 번호를 모른다.** 장바구니 응답에 딜 아이템 번호만 온다(백엔드 `CartItemResponse`). 공개 API인 딜 상세에서 상품 번호를 받아 딜가로 보이는 주소(`/products/{상품}?dealItem={딜 아이템}`, #484)로 보낸다. 딜 줄마다 한 번 나가고 바로 구매와 캐시를 함께 쓴다.
-- 갈 곳을 모르면 이름만 두고 링크를 걸지 않는다 — 이름이 안 오는 줄(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`)과 끝난 딜(딜 상세가 404)이다.
+- 갈 곳을 모르면 이름만 두고 링크를 걸지 않는다 — 이름이 안 오는 줄(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`), 끝난 딜(`DEAL_ENDED`), 딜 상세를 받지 못한 줄이다. **끝난 딜은 딜 상세를 부르지도 않는다** — 진행 중·예정 딜만 보여 주는 API라 404가 확실한데, 부르면 브라우저 콘솔에 실패가 찍혀 화면 스모크(`screens.spec.ts`)가 오류로 센다.
 
 ## 할인과 품절
 
