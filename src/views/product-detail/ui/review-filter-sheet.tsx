@@ -18,7 +18,7 @@ import {
   useQueryHealthOptions,
   type PetSpecies,
 } from "@/entities/pet";
-import { cn } from "@/shared/lib/utils";
+import { Badge } from "@/shared/ui/badge/badge";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
@@ -48,15 +48,24 @@ import { ReviewFilterPicker, type PickerGroup } from "./review-filter-picker";
 const REVIEW_CHIP_CLASS =
   "relative min-h-0 h-8 rounded-full px-3 py-0 text-label-medium-12 after:absolute after:-inset-y-1.5 after:inset-x-0";
 
-/** 시안(1716:48026)의 "품종 선택하기"·"건강 관심사 선택하기" 줄. 골라 둔 것이
-    있으면 그 이름을, 없으면 안내 문구를 보인다. 눌러야 여는 전체화면은
-    review-filter-picker.tsx다(#264) */
+/** 시안(1716:48026·1755:53110)의 "품종 선택하기"·"건강 관심사 선택하기" 줄. 골라 둔 것이
+    있으면 그 이름을 Badge로 늘어놓고, 없으면 안내 문구를 보인다. 눌러야 여는 전체화면은
+    review-filter-picker.tsx다(#264)
+
+    개별 × 는 시안에 없다. 하나만 빼려면 피커를 다시 열고, 전체 해제는 시트 하단
+    "초기화"가 맡는다.
+
+    **줄을 넘치면 말줄임으로 자른다(PD 확정).** 배지마다 필요한 만큼 줄어들게 두는 것이
+    개수와 무관하게 테두리가 잘리지 않는 유일한 방법이다 — 마지막 배지만 줄이면 네 개째부터
+    앞 배지가 칸 밖으로 밀려 테두리가 그대로 잘린다(실측). **자르는 것은 안쪽 span이다.**
+    Badge가 inline-flex라 배지 자체에는 text-overflow가 듣지 않아 말줄임표 없이 잘리고,
+    가운데 정렬 탓에 앞글자까지 깎인다. */
 function PickerRow({
-  label,
+  labels,
   placeholder,
   onClick,
 }: {
-  label: string | null;
+  labels: string[];
   placeholder: string;
   onClick: () => void;
 }) {
@@ -64,25 +73,24 @@ function PickerRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex h-11 w-full items-center justify-between rounded-lg border border-border px-3 text-left"
+      className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border px-3 text-left"
     >
-      <span
-        className={cn(
-          "truncate text-body-medium-14",
-          label ? "text-text-body-default" : "text-text-body-tertiary",
-        )}
-      >
-        {label ?? placeholder}
-      </span>
+      {labels.length > 0 ? (
+        <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
+          {labels.map((label) => (
+            <Badge key={label} className="min-w-0 text-label-bold-12">
+              <span className="truncate">{label}</span>
+            </Badge>
+          ))}
+        </span>
+      ) : (
+        <span className="min-w-0 flex-1 truncate text-body-medium-14 text-text-body-tertiary">
+          {placeholder}
+        </span>
+      )}
       <Icon name="right" aria-hidden className="size-6 shrink-0 text-text-body-tertiary" />
     </button>
   );
-}
-
-/** 여러 개 고른 값을 줄 하나로 요약한다. "말티즈 외 1개"처럼 */
-function summarize(labels: string[]) {
-  if (labels.length === 0) return null;
-  return labels.length === 1 ? labels[0] : `${labels[0]} 외 ${labels.length - 1}개`;
 }
 
 type ReviewFilterSheetProps = {
@@ -289,7 +297,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
 
               <Field title="품종">
                 <PickerRow
-                  label={summarize(breedLabels)}
+                  labels={breedLabels}
                   placeholder="품종 선택하기"
                   onClick={() => setBreedOpen(true)}
                 />
@@ -356,7 +364,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
 
               <Field title="건강 관심사">
                 <PickerRow
-                  label={summarize(healthLabels)}
+                  labels={healthLabels}
                   placeholder="건강 관심사 선택하기"
                   onClick={() => setHealthOpen(true)}
                 />
