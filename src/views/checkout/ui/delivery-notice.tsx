@@ -13,7 +13,8 @@ export function DeliveryNotice({ children, className }: DeliveryNoticeProps) {
   return (
     <p
       className={cn(
-        "flex items-center gap-2 rounded-md bg-surface-tertiary p-2 text-body-medium-14 text-surface-primary",
+        // 지금 시안(1586:23984의 callout)은 파란 안내 칸이다. 상품 상세의 타임딜 안내 칸과 같은 토큰이다
+        "flex items-center gap-2 rounded-md bg-surface-info-weak p-2 text-body-medium-14 text-text-body-info-strong",
         className,
       )}
     >
