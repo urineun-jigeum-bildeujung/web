@@ -6,6 +6,15 @@ import { beforeEach, expect, test, vi } from "vitest";
 import type { PetDetail } from "@/entities/pet";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
+// 품종 목록은 서버에서 온다. 이 파일은 다녀오는 흐름만 보므로 고르기 화면은 되돌아가는 버튼만 둔다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  BreedPickerStep: ({ onCancel }: { onCancel: () => void }) => (
+    <button type="button" onClick={onCancel}>
+      이전 화면으로
+    </button>
+  ),
+}));
 
 const save = vi.fn();
 const COCO: PetDetail = {
@@ -116,4 +125,28 @@ test("달력에 없는 날을 적으면 알리고 저장을 막는다", () => {
 
   expect(screen.getByText("달력에 없는 날이에요")).toBeDefined();
   expect(submit().disabled).toBe(true);
+});
+
+// 품종 고르기는 이 화면을 통째로 바꿔 끼워, 돌아오면 사진 칸이 새로 그려진다. 사진을 안에만 들 때는
+// 고른 사진 대신 저장된 옛 사진이 보였는데 저장에는 고른 사진이 실렸다 (#602)
+test("사진을 고르고 품종 고르기에 다녀와도 고른 사진이 보인다", () => {
+  URL.createObjectURL = vi.fn(() => "blob:preview");
+  URL.revokeObjectURL = vi.fn();
+  state.pet = { ...COCO, photoUrl: "https://image.leechs.shop/old.png" };
+  render(
+    <NuqsTestingAdapter hasMemory>
+      <EditPetBasicView />
+    </NuqsTestingAdapter>,
+  );
+  const photo = new File(["bytes"], "coco.jpg", { type: "image/jpeg" });
+
+  fireEvent.change(screen.getByLabelText("아이 사진", { selector: "input" }), {
+    target: { files: [photo] },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "품종 고르기. 지금은 말티즈" }));
+  fireEvent.click(screen.getByRole("button", { name: "이전 화면으로" }));
+
+  expect(screen.getByRole("presentation").getAttribute("src")).toBe("blob:preview");
+  fireEvent.click(submit());
+  expect(save.mock.calls[0][1]).toBe(photo);
 });

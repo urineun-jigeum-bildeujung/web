@@ -142,6 +142,7 @@ function BasicForm({ pet, isSaving, onSave }: BasicFormProps) {
           label="아이 사진"
           placeholder={<Icon name="dog" className="size-12 text-icon-fill-tertiary" />}
           defaultImageUrl={pet.photoUrl}
+          file={photo}
           onFileChange={setPhoto}
         />
       </div>

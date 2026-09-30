@@ -29,6 +29,9 @@ export const PET_NAME_MAX = 10;
  * **`maxLength`만으로는 한글이 한 자 넘친다.** 조합 중인 글자는 길이 제한을 거치지 않는다 — 배송
  * 요청사항(#526)과 같다. 길이는 `maxLength`와 같이 UTF-16 단위로 세고, 두 단위로 된 글자가 경계에
  * 걸리면 반만 남기지 않고 통째로 뺀다.
+ *
+ * **붙여넣기는 브라우저가 먼저 자른다.** 입력칸의 `maxLength`가 이 함수보다 앞서 붙여넣은 글을
+ * 10자로 잘라, 이모티콘이 섞인 긴 글은 이모티콘이 자리를 차지한 채 잘린 뒤 걸러진다.
  */
 export function toPetNameInput(text: string): string {
   const name = text.replace(EMOJI, "");
