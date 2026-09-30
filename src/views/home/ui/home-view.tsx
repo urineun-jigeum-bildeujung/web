@@ -203,12 +203,10 @@ function ProductGridSkeleton() {
       <div className="flex justify-end">
         <Skeleton className="h-5 w-14" />
       </div>
-      {/* 열 수는 임시다 — 받은 홈 시안이 전체 탭뿐이라 이 격자가 나오는
-          사료·간식·영양제 탭 시안이 없다. PD 확정 전까지 1200에서 카드가
-          맞춤 상품(208)·타임딜(160)과 같은 밀도가 되게 잡았다(#496) */}
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
+      {/* 본체와 같은 규칙으로 눕는다(#569) — 카드 170px 고정, 사이 13px */}
+      <ul className="flex flex-wrap gap-x-3.25 gap-y-6">
         {Array.from({ length: 4 }, (_, index) => (
-          <li key={index} className="flex flex-col gap-2">
+          <li key={index} className="flex w-42.5 flex-col gap-2">
             <Skeleton className="aspect-square w-full rounded-lg" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-4 w-1/2" />
@@ -253,18 +251,21 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
         </p>
       ) : (
         <div className="flex flex-col gap-4 px-5">
-          {/* 열 수는 임시다 — 위 뼈대와 같은 이유로 PD 확정 전 기준이다(#496) */}
+          {/* **전환점을 잡지 않는다**(#569). PD 확정이 카드 170px 고정·사이 13px이고,
+              폭이 넓어지면 카드가 커지는 것이 아니라 한 줄에 더 들어간다. 거터 20px(px-5)을 빼면
+              393에서 둘(170×2+13=353), 768에서 넷(170×4+13×3=719), 1200부터 여섯(170×6+13×5=1085)이
+              저절로 나와 `md:`·`lg:`가 필요 없다 — 상품 상세의 353px 줄(#497)과 같은 방식이다.
+              비교 고르기 시안이 네 폭 모두 같은 값이라 목록 전체가 한 규칙을 쓴다.
+              오른쪽이 고르지 않게 남는 것도 시안 그대로다(1920 시안이 5장에서 258px을 비운다) */}
           {/* 카드는 칸 폭을 그대로 받는다. 칸(li)을 flex로 두고 카드에 flex-1을 주던 동안 카드의 최소
               폭이 이름 전체 길이가 되어, 긴 이름의 카드가 옆 칸을 덮고 사진도 정사각형 칸보다 커졌다(#534) */}
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-6 md:grid-cols-3 lg:grid-cols-4">
+          <ul className="flex flex-wrap gap-x-3.25 gap-y-6">
             {items.map((product) => (
-              <li key={product.productId}>
+              <li key={product.productId} className="w-42.5">
                 <ProductGridCard
-                  // 격자가 px-5(40) 안에서 gap-x-3(12)으로 나뉜다 — 칸 폭은
-                  // (100vw − 40 − 12×(열−1)) ÷ 열이고 1200에서 멈춘다.
-                  // 여백을 빼지 않고 25vw·33vw로 어림하면 실제보다 19~26px 크게 잡혀
-                  // 520~599 · 776~870 · 1024~1124px 구간에서 256이면 될 것을 384로 받는다
-                  imageSizes="(min-width: 1200px) 281px, (min-width: 1024px) calc(25vw - 19px), (min-width: 768px) calc(33.333vw - 21.333px), calc(50vw - 26px)"
+                  // 카드가 폭과 무관하게 170px이라 후보도 하나면 된다(#569).
+                  // 폭 따라 커지던 때는 구간별 계산식이 필요했는데 그 이유가 사라졌다
+                  imageSizes="170px"
                   href={`/products/${product.productId}`}
                   name={product.name}
                   price={product.price}
