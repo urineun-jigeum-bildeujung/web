@@ -414,19 +414,20 @@ test.describe("태블릿 폭에서도 좁은 기둥을 지킨다", () => {
     test(`${route} — 420px 기둥 안에 가운데로 있다`, async ({ page }) => {
       await page.goto(route, { waitUntil: "networkidle" });
 
-      // `(constrained)/layout.tsx`가 세우는 기둥 자체를 잰다
-      const column = await page.evaluate(() => {
-        const box = document.querySelector("div.max-w-105")!.getBoundingClientRect();
-        return {
-          width: Math.round(box.width),
-          left: Math.round(box.left),
-          viewport: document.documentElement.clientWidth,
-        };
-      });
+      // `(constrained)/layout.tsx`가 세우는 기둥 자체를 잰다. 뜻 없는 레이아웃 래퍼라
+      // role·label 대신 접근성 트리에 들어가지 않는 테스트 식별자로 집는다 (PR #592 리뷰)
+      const column = page.getByTestId("constrained-layout");
+      await expect(column).toBeVisible();
 
-      expect(column.width, "기둥이 풀려 화면이 퍼졌다").toBeLessThanOrEqual(420);
-      expect(column.left, "가운데 정렬이 아니다").toBe(
-        Math.round((column.viewport - column.width) / 2),
+      const box = await column.boundingBox();
+      expect(box, "constrained 레이아웃의 크기를 재지 못했다").not.toBeNull();
+
+      // 스크롤바가 있으면 뷰포트 폭과 다르므로 문서 쪽에서 받는다
+      const viewport = await page.evaluate(() => document.documentElement.clientWidth);
+
+      expect(Math.round(box!.width), "기둥이 풀려 화면이 퍼졌다").toBeLessThanOrEqual(420);
+      expect(Math.round(box!.x), "가운데 정렬이 아니다").toBe(
+        Math.round((viewport - box!.width) / 2),
       );
     });
   }
