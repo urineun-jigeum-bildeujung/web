@@ -10,9 +10,10 @@
 | `session-guard.test.tsx` | 세션 없음·있음·refreshToken만 남은 새로고침 |
 | `push-message-listener.tsx` | 푸시를 켠 기기에서 탭이 보이는 동안 온 푸시로 알림 캐시를 비운다. 앱 안에서는 앱이 넘겨 준 수신 신호로 같은 일을 한다. 토스트는 `widgets/notification-bell`의 폴링 토스터가 한 번만 띄운다 (#354, #395, #403) |
 | `push-message-listener.test.tsx` | 켜 두지 않으면 구독하지 않는 것, 브라우저 푸시·앱 신호로 캐시 무효화, 내려갈 때 끊는 것 |
-| `app-providers.tsx` | `QueryClientProvider` 조립. Provider가 늘어나면 이 파일 안에서 중첩한다 |
+| `app-providers.tsx` | `ThemeProvider`(다크 모드)·`NuqsAdapter`·`QueryClientProvider` 조립. Provider가 늘어나면 이 파일 안에서 중첩한다 |
 
 - **참고**: `QueryClient`를 `useState(() => new QueryClient())`로 고정하는 이유는 요청마다 새 인스턴스를 만들되 리렌더 시 재생성되지 않게 하기 위함이다. React Compiler가 켜져 있어도 이건 메모이제이션이 아니라 인스턴스 고정이므로 유지한다.
 - Provider는 `<html>` 전체가 아니라 `{children}`만 감싼다. 서버 컴포넌트의 정적 영역을 최대한 남기기 위해서다.
+- **다크 모드는 `next-themes`의 `ThemeProvider`가 `html`에 `dark` 클래스를 붙여 켠다.** 기본은 라이트, 시스템 설정은 따르지 않는다. 하이드레이션 전에 클래스가 붙어 서버가 그린 `html`과 달라지므로 `app/layout.tsx`의 `<html>`에만 `suppressHydrationWarning`을 둔다 (#565).
 - **세션이 끝나면 로그인으로 보내는 자리는 여기 하나다.** `apiRequest`가 재발급까지 실패하면 토큰을 지우고 401을 그대로 던진다. 그 뒤를 화면마다 처리하면 빠뜨린 곳에서 목록이 조용히 비어 보이고 보호자는 왜 안 되는지 알지 못한다. `shared/api/README.md`가 정해 둔 `subscribeTokensCleared` 계약을 `SessionExpiryRedirect`가 구독한다.
 - **토큰이 처음부터 없던 경우는 이 구독이 잡지 못한다.** `clearTokens`가 지울 것이 있었을 때만 알리기 때문이다(그러지 않으면 로그아웃 뒤 요청마다 울린다). 세션 없이 열면 안 되는 화면은 그 라우트의 `layout`을 `SessionGuard`로 감싼다. 로그인해야 열리는 화면 전체가 `app/(constrained)/(member)/layout.tsx` 하나로 막힌다(#447, #542). 가드는 서버가 토큰을 볼 수 없어 클라이언트에서 돌고, 하이드레이션 첫 렌더의 서버 값(false)으로 판단하면 로그인한 사람도 쫓겨나므로 효과 안에서 보관소를 바로 읽는다.

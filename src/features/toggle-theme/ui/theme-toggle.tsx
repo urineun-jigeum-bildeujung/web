@@ -1,20 +1,14 @@
 "use client";
-// 다크 모드를 켜고 끄는 데모 토글 버튼. 선택 저장·시스템 테마 연동은 정식 테마 도구 도입 시점에 결정한다.
+// 다크 모드를 켜고 끄는 아이콘 버튼. 개발용 화면 목록에서 쓴다. 설정 화면은 `ThemeSwitch`를 쓴다.
 
-import { useState } from "react";
 import { LuMoon, LuSun } from "react-icons/lu";
 
 import { Button } from "@/shared/ui/button";
 
-export function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+import { useDarkMode } from "../model/use-dark-mode";
 
-  const handleToggle = () => {
-    const next = !isDark;
-    setIsDark(next);
-    // 다크 모드는 html의 .dark 클래스로 동작한다. (globals.css의 @custom-variant dark)
-    document.documentElement.classList.toggle("dark", next);
-  };
+export function ThemeToggle() {
+  const { isDark, ready, setDark } = useDarkMode();
 
   return (
     <Button
@@ -23,7 +17,8 @@ export function ThemeToggle() {
       // shadcn의 icon 크기는 32px이라 터치 최소 44×44px에 못 미친다.
       // shared/ui는 CLI 소유라 호출부에서 덮는다. (design-convention)
       className="size-11"
-      onClick={handleToggle}
+      disabled={!ready}
+      onClick={() => setDark(!isDark)}
       aria-label={isDark ? "라이트 모드로 전환" : "다크 모드로 전환"}
     >
       {isDark ? <LuSun aria-hidden /> : <LuMoon aria-hidden />}
