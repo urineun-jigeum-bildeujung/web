@@ -179,6 +179,38 @@ test("찾는 동안 뼈대를 보여준다", () => {
   expect(screen.getByRole("status")).toBeDefined();
 });
 
+// 결제에서 들어온 목록은 줄을 누르면 이번 주문 배송지로 고른다. 기본 배송지를 바꾸는 요청은 없고,
+// 고치는 길은 "수정"으로 옮긴다 (QA No.40, #595)
+test("고를 주소를 주면 줄은 고르는 링크, 수정은 따로 간다", () => {
+  const from = "/payment/address?items=NORMAL%3A1";
+  renderList({
+    addresses: [HOME, STUDIO],
+    from,
+    pickHref: (place) => `/payment?address=${place.addressId}`,
+  });
+
+  const pick = screen.getByRole("link", { name: "자취방" });
+  expect(pick.getAttribute("href")).toBe("/payment?address=9");
+  // 줄 전체를 덮는다. 주소를 눌러도 고른다
+  expect(pick.className).toContain("after:absolute");
+
+  const edit = screen.getByRole("link", { name: "자취방 수정" });
+  const query = new URLSearchParams(edit.getAttribute("href")!.split("?")[1]);
+  expect(query.get("place")).toBe("9");
+  expect(query.get("from")).toBe(from);
+  // 덮개 위로 올라와야 눌린다
+  expect(edit.className).toContain("z-10");
+});
+
+test("고를 주소가 없으면 줄이 곧 수정이다", () => {
+  renderList({ addresses: [STUDIO] });
+
+  expect(screen.getByRole("link", { name: /자취방/ }).getAttribute("href")).toContain(
+    "/mypage/address/new?",
+  );
+  expect(screen.queryByRole("link", { name: "자취방 수정" })).toBeNull();
+});
+
 test("장소를 더 넣을 수 있고 돌아올 곳을 들고 간다", () => {
   render(<AddPlaceLink from="/payment/address" />);
 

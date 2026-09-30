@@ -6,9 +6,9 @@
 //
 // **승인은 시크릿 키를 쥔 백엔드가 맡는다** — 우리는 결제창을 띄우는 데까지다.
 //
-// **배송지는 기본 배송지를 쓴다.** 회원가입·온보딩 어디에도 배송지를 입력받는 화면이 없고,
-// 시안이 `paym_011`에 `기본 배송지` 뱃지만 두고 "이 주소로 배송" 같은 확정 버튼을 그리지
-// 않았다. 없을 때는 `empty_dilivery 2`(2022:157931)대로 등록하러 보낸다 (#255).
+// **배송지는 배송지 설정에서 고른 곳, 고르지 않았으면 기본 배송지를 쓴다.** 고른 곳은 이번 주문
+// 한 번만 쓰는 값이라 주소(`?address=`)가 들고 다니고 기본 배송지는 바꾸지 않는다 (QA No.40, #595).
+// 없을 때는 `empty_dilivery 2`(2022:157931)대로 등록하러 보낸다 (#255).
 //
 // **결제할 줄은 장바구니에서 고른 것이다.** `?items=NORMAL:1,TIME_DEAL:3`으로 받고,
 // 없으면 살 수 있는 줄 전부를 본다 — 주소창으로 바로 들어와도 화면이 성립해야 한다.
@@ -58,7 +58,12 @@ import {
   readPendingOrder,
   writePendingOrder,
 } from "../model/pending-order";
-import { toCheckoutPath } from "../model/return-query";
+import {
+  ADDRESS_PARAM,
+  readAddressId,
+  toAddressPickerPath,
+  toCheckoutPath,
+} from "../model/return-query";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -245,8 +250,14 @@ export function CheckoutView() {
   const { addresses, isLoading: addressLoading, error: addressError } = useQueryAddresses();
   const { pets } = useQueryPets();
 
-  // 기본 배송지가 없는 계정도 있다. 그때는 목록 맨 앞을 쓴다 — 조회가 기본을 앞으로 정렬한다
-  const address = addresses?.find((place) => place.isDefault) ?? addresses?.[0];
+  // **배송지 설정에서 고른 곳이 먼저다** (QA No.40, #595). 고르지 않았거나 고른 곳을 그사이 지웠으면
+  // 기본 배송지로 돌아간다. 기본 배송지가 없는 계정도 있다. 그때는 목록 맨 앞을 쓴다 — 조회가 기본을
+  // 앞으로 정렬한다
+  const pickedAddressId = readAddressId(searchParams.get(ADDRESS_PARAM));
+  const address =
+    addresses?.find((place) => place.addressId === pickedAddressId) ??
+    addresses?.find((place) => place.isDefault) ??
+    addresses?.[0];
   // 아이 조회도 기본 아이를 앞으로 정렬한다(`getPets`). 기본이 없으면 맨 앞 아이다
   const pet = pets?.[0];
 
@@ -441,7 +452,8 @@ export function CheckoutView() {
               <Link
                 href={
                   address
-                    ? "/payment/address"
+                    ? // 고른 상품을 들고 간다. 거기서 한 곳을 고르면 이 화면으로 돌아온다 (#595)
+                      toAddressPickerPath(searchParams.toString())
                     : // 등록을 마치면 이 화면으로 돌아온다. **고른 것을 들고 간다** —
                       // 빠뜨리면 돌아왔을 때 장바구니 전체로 읽힌다 (#364와 같은 자리다)
                       `/mypage/address/new?${new URLSearchParams({

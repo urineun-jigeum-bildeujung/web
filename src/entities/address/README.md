@@ -12,8 +12,8 @@
 | `api/addresses.test.ts` | 무엇을 어떤 모양으로 보내는지, 기본 배송지 정렬 |
 | `api/use-query-addresses.ts` | 목록을 가져오는 훅 |
 | `api/use-mutate-address.ts` | 등록·수정 훅. 실패 토스트는 전역에 맡긴다 |
-| `ui/address-place-list.tsx` | 장소 목록과 "장소 추가하기". 두 화면이 함께 쓴다. `from`으로 등록·수정을 마치고 돌아올 경로를 받는다 (#369) |
-| `ui/address-place-list.test.tsx` | 무엇을 어떤 차례로 그리는지, 실패·빈 상태, 저장하지 않은 집·회사 빈 줄 |
+| `ui/address-place-list.tsx` | 장소 목록과 "장소 추가하기". 두 화면이 함께 쓴다. `from`으로 등록·수정을 마치고 돌아올 경로를 받는다 (#369). 결제는 `pickHref`를 줘 줄을 이번 주문 배송지를 고르는 링크로 쓰고 수정은 줄 끝 "수정"으로 옮긴다 (QA No.40, #595) |
+| `ui/address-place-list.test.tsx` | 무엇을 어떤 차례로 그리는지, 실패·빈 상태, 저장하지 않은 집·회사 빈 줄, 고르는 줄과 "수정"이 갈리는지 |
 | `ui/place-icon.ts` | 장소 이름으로 아이콘을 고른다(`placeIconOf`). 표의 제 키만 봐서 `toString` 같은 이름에 물려받은 값이 나오지 않는다 (#423). 목록이 늘 자리를 잡는 이름(`FIXED_PLACE_NAMES`, 집·회사)도 여기 있다 (#455) |
 | `ui/delivery-note-field.tsx` | 배송 요청사항. 보기 목록에서 고르고 "직접 입력"을 고르면 아래에 적는 칸이 열린다. 결제 화면과 배송지 등록·수정이 함께 쓴다 (#526) |
 | `ui/delivery-note-field.test.tsx` | 보기 목록과 "[기본]", 고른 것이 없을 때, 직접 입력 칸이 언제 열리고 무엇을 값으로 넘기는지, 100자를 넘긴 글 |

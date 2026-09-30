@@ -8,7 +8,12 @@ import { expect, test, vi } from "vitest";
 const useQueryAddresses = vi.fn();
 
 // PageHeader의 뒤로가기가 useRouter를 쓴다
-vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
+// 목록은 결제 화면이 실어 보낸 쿼리(고른 상품)를 읽는다
+let searchParams = new URLSearchParams();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ back: vi.fn() }),
+  useSearchParams: () => searchParams,
+}));
 
 // **모듈을 통째로 갈아끼우지 않는다.** 목록 컴포넌트가 같은 슬라이스에 있어 함께 사라진다
 vi.mock("@/entities/address", async (importOriginal) => ({
@@ -39,4 +44,19 @@ test("머리말이 서고 저장해 둔 장소가 목록에 온다", () => {
   expect(screen.getByRole("button", { name: "이전 화면으로" })).toBeDefined();
   expect(screen.getByText("집")).toBeDefined();
   expect(screen.getByRole("link", { name: /장소 추가하기/ })).toBeDefined();
+});
+
+// 결제 중에는 줄이 이번 주문 배송지를 고르는 자리다. 기본 배송지는 바꾸지 않는다 (QA No.40, #595)
+test("줄을 누르면 고른 상품을 그대로 들고 그 배송지로 결제 화면에 돌아간다", () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1" });
+  useQueryAddresses.mockReturnValue({ addresses: [HOME], isLoading: false, error: null });
+  render(<CheckoutAddressView />);
+
+  expect(screen.getByRole("link", { name: "집" }).getAttribute("href")).toBe(
+    "/payment?items=NORMAL%3A1&address=5",
+  );
+  // 고치고 오면 이 목록으로, 고른 상품을 든 채 돌아온다 (#369)
+  const edit = screen.getByRole("link", { name: "집 수정" });
+  const query = new URLSearchParams(edit.getAttribute("href")!.split("?")[1]);
+  expect(query.get("from")).toBe("/payment/address?items=NORMAL%3A1");
 });
