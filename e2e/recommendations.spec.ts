@@ -8,6 +8,7 @@ import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { RECOMMENDED_ITEMS, stubRecommendations } from "./fixtures/recommendations";
 import { signIn } from "./fixtures/session";
+import { stubWishlist } from "./fixtures/wishlist";
 
 test.beforeEach(async ({ page }) => {
   // 아이 목록은 로그인했을 때만 부른다
@@ -163,4 +164,24 @@ test("추천이 실패하면 격자만 알리고 분류·정렬은 남는다", a
   await expect(page.getByText("맞춤 상품을 불러오지 못했어요. 다시 시도해 주세요.")).toBeVisible();
   await expect(page.getByRole("navigation", { name: "상품 분류" })).toBeVisible();
   await expect(page.getByRole("combobox", { name: "정렬" })).toBeVisible();
+});
+
+// 화면 상태(useState)라 서버에 가지 않고 새로고침하면 사라졌다(QA r36, #611)
+test("찜한 상품은 눌린 하트로 열리고, 누르면 서버에서 뒤집혀 새로고침해도 남는다", async ({
+  page,
+}) => {
+  await stubRecommendations(page);
+  const wishlist = await stubWishlist(page, { wished: [301] });
+  await page.goto("/recommendations");
+
+  const heart = (name: string) => page.getByRole("button", { name: `${name} 찜하기` });
+  await expect(heart("닭고기 동결건조 트릿")).toHaveAttribute("aria-pressed", "true");
+  await expect(heart("한입 크림 파우치 연어살 20포")).toHaveAttribute("aria-pressed", "false");
+
+  await heart("한입 크림 파우치 연어살 20포").click();
+  await expect(heart("한입 크림 파우치 연어살 20포")).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => wishlist.toggled).toEqual([219]);
+
+  await page.reload();
+  await expect(heart("한입 크림 파우치 연어살 20포")).toHaveAttribute("aria-pressed", "true");
 });

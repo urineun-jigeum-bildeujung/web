@@ -8,6 +8,7 @@ import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { stubRecommendations } from "./fixtures/recommendations";
 import { signIn } from "./fixtures/session";
 import { expectNoBlankScroll } from "./fixtures/sheet";
+import { stubWishlist } from "./fixtures/wishlist";
 
 test("메인이 렌더링된다", async ({ page }) => {
   await page.goto("/");
@@ -32,6 +33,8 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   // 추천도 고른 아이를 따라간다(#600)
   await page.getByRole("radio", { name: "보리" }).click();
   await expect(page.getByText("AI가 골라주는 보리 맞춤 상품")).toBeVisible();
+  // 누구 기준으로 바뀌었는지 알린다(QA r18, #611)
+  await expect(page.getByRole("status").filter({ hasText: "보리로 바꿨어요" })).toBeVisible();
   await expect.poll(() => recommendations.sent.at(-1)).toEqual({ pet_id: 7, size: 9 });
 });
 
@@ -82,6 +85,30 @@ test.describe("AI가 골라주는 맞춤 상품", () => {
     ).toBeVisible();
     await expect(page.getByText("최근에 구매한 상품, 아이는 어때요?")).toBeVisible();
     await expect(page.getByText("치석 케어 덴탈껌 7개입")).toBeVisible();
+  });
+
+  // 하트가 누를 수 없는 그림이라 찜이 저장되지 않았다(QA r22~r30, #611). 스텁이 찜 여부와 목록을
+  // 한 상태로 묶어, 새로고침해도 서버에 남은 찜으로 다시 켜지는지까지 본다
+  test("하트를 누르면 곧바로 켜지며 서버에 찜하고, 다시 누르면 풀린다", async ({ page }) => {
+    await stubRecommendations(page);
+    const wishlist = await stubWishlist(page);
+
+    await page.goto("/");
+
+    const heart = () =>
+      recommended(page).getByRole("button", { name: "한입 크림 파우치 연어살 20포 찜하기" });
+    await expect(heart()).toHaveAttribute("aria-pressed", "false");
+
+    await heart().click();
+    await expect(heart()).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => wishlist.toggled).toEqual([219]);
+
+    await page.reload();
+    await expect(heart()).toHaveAttribute("aria-pressed", "true");
+
+    await heart().click();
+    await expect(heart()).toHaveAttribute("aria-pressed", "false");
+    await expect.poll(() => wishlist.toggled).toEqual([219, 219]);
   });
 
   test("추천이 비었으면 아직 찾지 못했다고 알린다", async ({ page }) => {
