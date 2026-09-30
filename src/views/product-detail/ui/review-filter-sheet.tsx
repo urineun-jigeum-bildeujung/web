@@ -73,6 +73,9 @@ function PickerRow({
     <button
       type="button"
       onClick={onClick}
+      // 값이 있으면 이름을 직접 적는다. 배지 사이에 공백 텍스트가 없어 그냥 두면
+      // "말티즈포메라니안"처럼 한 단어로 읽히고, 이 버튼이 무엇을 여는 것인지도 소리에 없다
+      aria-label={labels.length > 0 ? `${placeholder}, 고른 값 ${labels.join(", ")}` : undefined}
       className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border px-3 text-left"
     >
       {labels.length > 0 ? (
