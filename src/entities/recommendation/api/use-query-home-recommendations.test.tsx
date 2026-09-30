@@ -37,6 +37,31 @@ test("고른 아이·분류·개수로 부르고, 받는 동안은 기다리는 
   expect(getHomeRecommendations).toHaveBeenCalledWith({ petId: 3, category: "snack", size: 50 });
 });
 
+// 메인 아이 줄·추천 화면 알약에서 아이를 바꾸는 흐름이다. 키에 아이가 없으면 앞 아이의 추천·적합도가
+// 캐시에서 그대로 나온다(PM QA 온보딩-메인페이지 r17·r20·r21·r32·r33)
+test("아이를 바꾸면 그 아이로 다시 부르고 앞 아이의 추천을 보이지 않는다", async () => {
+  getHomeRecommendations.mockImplementation(({ petId }: { petId: number }) =>
+    Promise.resolve([{ productId: petId * 100 }]),
+  );
+  const { result, rerender } = renderHook(
+    ({ petId }: { petId: number }) => useQueryHomeRecommendations({ petId, size: 9 }),
+    { wrapper: createQueryWrapper(), initialProps: { petId: 3 } },
+  );
+  await waitFor(() => expect(result.current.items).toEqual([{ productId: 300 }]));
+
+  rerender({ petId: 7 });
+
+  expect(result.current.items).toBeUndefined();
+  expect(result.current.isLoading).toBe(true);
+  await waitFor(() => expect(result.current.items).toEqual([{ productId: 700 }]));
+  expect(getHomeRecommendations).toHaveBeenCalledTimes(2);
+  expect(getHomeRecommendations).toHaveBeenLastCalledWith({
+    petId: 7,
+    category: undefined,
+    size: 9,
+  });
+});
+
 // 추천 칸만 오류 경계로 대체하고 같은 화면의 다른 칸은 남긴다
 test("받아 둔 것 없이 실패하면 오류를 던져 감싼 경계가 받는다", async () => {
   getHomeRecommendations.mockRejectedValue(new Error("boom"));

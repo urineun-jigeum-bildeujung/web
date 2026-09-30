@@ -7,7 +7,7 @@
 | `api/recommendations.ts` | `POST /recommend/home` 호출(`getHomeRecommendations`). 아이·분류·개수를 snake_case로 보내고 항목을 화면 모양으로 옮긴다 |
 | `api/recommendations.test.ts` | 요청 경로·본문(간식은 `treat`, 전체·기본 개수는 안 보냄)과 응답 옮기기 |
 | `api/use-query-home-recommendations.ts` | 맞춤 추천 조회 훅. 아이가 없으면 부르지 않고, 받아 둔 것 없이 실패하면 오류 경계로 던진다 |
-| `api/use-query-home-recommendations.test.tsx` | 부르지 않는 조건, 받은 인자, 실패를 경계가 받는지 |
+| `api/use-query-home-recommendations.test.tsx` | 부르지 않는 조건, 받은 인자, 아이를 바꾸면 그 아이로 다시 부르는지(키에 아이가 들어가는지), 실패를 경계가 받는지 |
 | `model/recommendation.ts` | 응답 타입(snake_case)과 화면 타입(camelCase), 분류·점수·상태·단가 변환과 단가 줄 문장(`formatUnitPriceLine`) |
 | `model/recommendation.test.ts` | 변환 규칙 |
 | `model/sort.ts` | 정렬 값(추천순·최신순·별점 높은순·낮은순)과 받은 목록 안에서의 정렬 |
