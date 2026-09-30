@@ -26,13 +26,22 @@ import { ITEMS_PARAM } from "./order-items";
 export const ORDER_PARAM = "order";
 
 /**
- * 지금 고른 것을 그대로 들고 결제 화면으로 돌아오는 경로.
+ * 이번 주문만 받을 배송지를 싣는 쿼리 이름 (QA No.40, #595).
  *
- * **고른 것(`items`·`buy`)만 옮긴다.** 복귀 주소에는 토스가 붙인 `code`·`message`·`orderId`도
- * 있는데 그것까지 실어 돌면 실패 안내가 옛 값으로 다시 뜨고 주소가 회차마다 길어진다.
- * 바로 구매(`buy`)가 빠지면 장바구니 전체가 결제 대상으로 읽힌다 (#520).
+ * **회원의 기본 배송지(`isDefault`)는 건드리지 않는다.** 배송지 설정에서 고른 곳은 이 주문 한 번만
+ * 쓰는 값이라 서버에 적지 않고 주소창이 들고 다닌다 — 새로고침·결제창 실패 복귀에도 남아야 한다
+ * (AGENTS.md 5.1 "URL 쿼리").
  */
-export function toCheckoutPath(search: string) {
+export const ADDRESS_PARAM = "address";
+
+/**
+ * 결제 화면이 들고 다니는 쿼리만 추린다.
+ *
+ * **고른 것(`items`·`buy`)과 고른 배송지(`address`)만 옮긴다.** 복귀 주소에는 토스가 붙인
+ * `code`·`message`·`orderId`도 있는데 그것까지 실어 돌면 실패 안내가 옛 값으로 다시 뜨고 주소가
+ * 회차마다 길어진다. 바로 구매(`buy`)가 빠지면 장바구니 전체가 결제 대상으로 읽힌다 (#520).
+ */
+function checkoutQuery(search: string) {
   const query = new URLSearchParams();
   const from = new URLSearchParams(search);
   const items = from.get(ITEMS_PARAM);
@@ -45,8 +54,48 @@ export function toCheckoutPath(search: string) {
   if (buyNow !== null) {
     query.set(BUY_NOW_PARAM, buyNow);
   }
+  // 빠지면 결제창에서 실패로 돌아오거나 배송지를 등록하고 올 때 고른 곳이 기본 배송지로 돌아간다
+  const address = from.get(ADDRESS_PARAM);
+  if (address !== null) {
+    query.set(ADDRESS_PARAM, address);
+  }
+  return query;
+}
+
+function withQuery(path: string, query: URLSearchParams) {
   const suffix = query.toString();
-  return suffix ? `/payment?${suffix}` : "/payment";
+  return suffix ? `${path}?${suffix}` : path;
+}
+
+/** 지금 고른 것을 그대로 들고 결제 화면으로 돌아오는 경로 */
+export function toCheckoutPath(search: string) {
+  return withQuery("/payment", checkoutQuery(search));
+}
+
+/**
+ * 배송지 설정으로 가는 경로. **고른 것을 그대로 들고 간다** — 거기서 배송지를 고르면 이 값에
+ * `address`만 바꿔 결제 화면으로 돌아온다 (#595).
+ */
+export function toAddressPickerPath(search: string) {
+  return withQuery("/payment/address", checkoutQuery(search));
+}
+
+/** 배송지 설정에서 한 곳을 골라 결제 화면으로 돌아가는 경로. 고른 상품은 그대로 둔다 (#595) */
+export function toPickedAddressPath(search: string, addressId: number) {
+  const query = checkoutQuery(search);
+  query.set(ADDRESS_PARAM, String(addressId));
+  return withQuery("/payment", query);
+}
+
+/**
+ * 주소의 배송지 id를 읽는다. 없거나 이상하면 `null`이고, 그때는 기본 배송지를 쓴다.
+ *
+ * 주소창으로 고쳐 들어온 값이나 지운 배송지를 가리키는 옛 주소가 있다. 목록에 없는 id는 부르는
+ * 쪽이 찾지 못해 기본 배송지로 돌아간다.
+ */
+export function readAddressId(raw: string | null): number | null {
+  const addressId = Number(raw);
+  return raw && Number.isSafeInteger(addressId) && addressId > 0 ? addressId : null;
 }
 
 /**

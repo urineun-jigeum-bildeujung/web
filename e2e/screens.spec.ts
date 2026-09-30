@@ -181,8 +181,8 @@ for (const route of ["/payment/address", "/mypage/address"]) {
 
     await page.goto(route, { waitUntil: "networkidle" });
 
-    // `stubMemberProfile`이 돌려주는 한 건이다
-    await expect(page.getByRole("link", { name: /집/ })).toBeVisible();
+    // `stubMemberProfile`이 돌려주는 한 건이다. 결제의 목록은 줄 링크 옆에 "집 수정"이 따로 선다 (#595)
+    await expect(page.getByRole("link", { name: /집/ }).first()).toBeVisible();
     await expect(page.getByText("서울특별시 강남구 테헤란로 123 UI타워 4층")).toBeVisible();
   });
 }

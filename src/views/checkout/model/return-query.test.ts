@@ -1,7 +1,16 @@
 // 복귀 쿼리. 토스가 붙이는 이름과 겹치면 주문 상세로 갈 값을 잃는다.
 import { expect, test } from "vitest";
 
-import { ORDER_PARAM, readOrderId, toCheckoutPath, toFailUrl, toSuccessUrl } from "./return-query";
+import {
+  ORDER_PARAM,
+  readAddressId,
+  readOrderId,
+  toAddressPickerPath,
+  toCheckoutPath,
+  toFailUrl,
+  toPickedAddressPath,
+  toSuccessUrl,
+} from "./return-query";
 
 test("복귀 주소에 숫자 주문 id를 싣는다", () => {
   expect(toSuccessUrl("https://leechs.shop", 12)).toBe("https://leechs.shop/payment/done?order=12");
@@ -97,4 +106,31 @@ test("실패 복귀 주소는 바로 구매 상품도 되돌려 싣고 토스 �
 
   // 빈 값도 옮긴다. 빼면 장바구니 결제로 읽힌다
   expect(new URL(toFailUrl("https://leechs.shop", "?buy=")).searchParams.get("buy")).toBe("");
+});
+
+// 이번 주문만 받을 곳이다. 빠지면 결제창에서 실패로 돌아오거나 배송지를 등록하고 올 때
+// 기본 배송지로 돌아간다 (QA No.40, #595)
+test("고른 배송지를 결제 화면 경로에 함께 싣는다", () => {
+  expect(toCheckoutPath("?items=NORMAL%3A1&address=9&code=X")).toBe(
+    "/payment?items=NORMAL%3A1&address=9",
+  );
+});
+
+test("배송지 설정으로 갈 때 고른 것을 들고 가고, 고르면 배송지만 바꿔 돌아온다", () => {
+  expect(toAddressPickerPath("?buy=NORMAL%3A252%3A2&address=5")).toBe(
+    "/payment/address?buy=NORMAL%3A252%3A2&address=5",
+  );
+  expect(toAddressPickerPath("")).toBe("/payment/address");
+  expect(toPickedAddressPath("?buy=NORMAL%3A252%3A2&address=5", 9)).toBe(
+    "/payment?buy=NORMAL%3A252%3A2&address=9",
+  );
+});
+
+test("배송지 id는 양의 정수만 읽는다", () => {
+  expect(readAddressId("9")).toBe(9);
+  expect(readAddressId(null)).toBeNull();
+  expect(readAddressId("")).toBeNull();
+  expect(readAddressId("0")).toBeNull();
+  expect(readAddressId("abc")).toBeNull();
+  expect(readAddressId("1.5")).toBeNull();
 });

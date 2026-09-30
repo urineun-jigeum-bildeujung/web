@@ -198,6 +198,33 @@ test("기본 배송지를 보여준다", () => {
   );
 });
 
+// 배송지 설정에서 고른 곳은 이번 주문에만 쓴다. 주소가 들고 다니고 기본 배송지는 그대로다 (QA No.40, #595)
+test("배송지 설정에서 고른 곳이 있으면 기본 배송지 대신 그곳으로 주문한다", async () => {
+  searchParams = new URLSearchParams({ items: "NORMAL:1", address: String(STUDIO.addressId) });
+  createOrder.mockResolvedValue({ orderId: 77, orderStatus: "PENDING" });
+  preparePayment.mockResolvedValue({ tossOrderId: "ORD-1", orderName: "캣츠벨", amount: 12345 });
+  renderView({ addresses: [HOME, STUDIO] });
+
+  expect(screen.getByText(`${STUDIO.address} ${STUDIO.addressDetail}`)).toBeDefined();
+  // 배송지를 다시 바꾸러 갈 때 고른 상품과 고른 곳을 들고 간다
+  expect(screen.getByRole("link", { name: "배송지 변경" }).getAttribute("href")).toBe(
+    "/payment/address?items=NORMAL%3A1&address=9",
+  );
+
+  agreeRequired();
+  fireEvent.click(screen.getByRole("button", { name: "결제하기" }));
+  await waitFor(() => expect(createOrder).toHaveBeenCalled());
+  expect(createOrder.mock.calls[0][0].addressId).toBe(STUDIO.addressId);
+});
+
+// 고른 곳을 그사이 지웠거나 주소창으로 고친 값이면 기본 배송지로 돌아간다
+test("고른 배송지가 목록에 없으면 기본 배송지를 쓴다", () => {
+  searchParams = new URLSearchParams({ address: "404" });
+  renderView({ addresses: [STUDIO, HOME] });
+
+  expect(screen.getByText(`${HOME.address} ${HOME.addressDetail}`)).toBeDefined();
+});
+
 // 시안 `empty_dilivery 2`. 고를 목록이 없으므로 설정이 아니라 등록으로 보낸다
 test("등록된 배송지가 없으면 등록하러 보낸다", () => {
   renderView({ addresses: [] });
