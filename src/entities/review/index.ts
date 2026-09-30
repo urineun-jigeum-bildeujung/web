@@ -19,6 +19,7 @@ export {
   type WritableReview,
 } from "./api/reviews";
 export { useMutateCreateReview } from "./api/use-mutate-create-review";
+export { useMutateReviewRecommend } from "./api/use-mutate-review-recommend";
 export {
   getPendingFeedbacks,
   submitFeedback,

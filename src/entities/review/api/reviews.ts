@@ -1,4 +1,4 @@
-// 리뷰 등록·리뷰 사진 발급·내 후기 목록·작성 가능 목록·리뷰 상세 조회·상품 후기 목록·후기 사진.
+// 리뷰 등록·리뷰 사진 발급·내 후기 목록·작성 가능 목록·리뷰 상세 조회·도움돼요·상품 후기 목록·후기 사진.
 // 작성 화면과 내 후기 화면들, 상품 상세의 리뷰 탭과 사진 모음 화면이 쓴다.
 //
 // 값 형식은 백엔드 열거형 그대로다(#281). 문항 키는 `ReviewQuestionType`, 답은 `ReviewAnswer`.
@@ -227,6 +227,18 @@ export function getReviewDetail(reviewId: string): Promise<ReviewDetail> {
     liked: response.liked,
     createdAt: response.createdAt,
   }));
+}
+
+/**
+ * 도움돼요를 켜고 끈다. 같은 요청이 켜진 것은 끄고 꺼진 것은 켠다. 로그인해야 한다(비로그인이면 401).
+ *
+ * **응답 본문을 읽지 않는다.** 누른 뒤 상태는 화면이 먼저 그리고, 서버가 가진 값은 끝난 뒤 다시 받아
+ * 맞춘다(`use-mutate-review-recommend.ts`)
+ */
+export function toggleReviewRecommend(reviewId: string): Promise<void> {
+  return apiRequest<void>(`/reviews/${encodeURIComponent(reviewId)}/recommend`, {
+    method: "PATCH",
+  });
 }
 
 /** 백엔드 `ReviewFilterListResponse`와 같은 모양이다 */
