@@ -4,7 +4,7 @@
 // 화면이라 사용자 흐름상 뒤로 갈 방법이 있어야 해서 우선 이렇게 두었고, 시안대로
 // 바꿀지는 프디팀 확인 후 정한다. 오른쪽 검색·알림·장바구니는 시안대로 둔다 — 빠져 있었다(QA 1차 2번, #470).
 //
-// 아이는 마이페이지와 같은 실제 목록이다. 상품과 적합도는 아직 예시 데이터다(#384).
+// 아이는 마이페이지와 같은 실제 목록이고, 상품·적합도·추천 이유는 AI 추천 API 결과다(#600).
 
 "use client";
 
@@ -16,9 +16,20 @@ import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
 import { useQueryPets } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
+import {
+  formatUnitPriceLine,
+  RECOMMENDATION_SORTS,
+  RecommendationReason,
+  SaleStatusBadge,
+  sortRecommendations,
+  useQueryHomeRecommendations,
+  type RecommendationSort,
+} from "@/entities/recommendation";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
+import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
@@ -36,53 +47,173 @@ const CATEGORY_LABEL: Record<(typeof CATEGORIES)[number], string> = {
   supplement: "영양제",
 };
 
-// home-view의 정렬 드롭다운(1758-69122)과 같은 목록·순서다
-const SORTS = [
-  { value: "recommend", label: "추천순" },
-  { value: "latest", label: "최신순" },
-  { value: "rating-high", label: "별점 높은순" },
-  { value: "rating-low", label: "별점 낮은순" },
-] as const;
-const SORT_VALUES = ["recommend", "latest", "rating-high", "rating-low"] as const;
+// home-view의 정렬 드롭다운(1758-69122)과 같은 목록·순서다. 값 목록은 entities/recommendation이 갖는다
+const SORT_LABEL: Record<RecommendationSort, string> = {
+  recommend: "추천순",
+  latest: "최신순",
+  "rating-high": "별점 높은순",
+  "rating-low": "별점 낮은순",
+};
 
-// 정렬을 바꿔도 목록이 그대로면 안 되는 것처럼 보인다. matchScore·등록일·별점이
-// 전부 index와 같은 방향으로만 움직이면 네 정렬 기준이 우연히 같은 순서를 낸다 —
-// 등록일·별점을 index 순서와 일부러 다르게 섞어 서로 다른 순서가 나오게 한다
-const MOCK_RATINGS = [4.9, 4.5, 4.8, 4.6, 5.0, 4.4, 4.7, 4.9, 4.5];
-const MOCK_DAYS_AGO = [2, 6, 0, 4, 8, 1, 5, 3, 7];
+/**
+ * 한 번에 받을 수 있는 최대 개수. 추천 API의 정렬이 추천순 하나뿐이라 최신순·별점순은 받은 목록
+ * 안에서 FE가 늘어놓는다 — 그래서 받을 수 있는 만큼 받는다(entities/recommendation README, #600)
+ */
+const RECOMMENDATION_PAGE_SIZE = 50;
 
-const MOCK_PRODUCTS = Array.from({ length: 9 }, (_, index) => ({
-  id: String(index + 1),
-  name: "그레인프리 연어 사료 2kg",
-  price: 31200,
-  // 시안에 31,200원·20%·37,440원으로 적혀 있으나 그 둘로는 16%가 나온다.
-  // 할인율은 화면에서 계산하므로 20%가 되는 값으로 둔다.
-  originalPrice: 39000,
-  dailyCost: 1050,
-  rating: MOCK_RATINGS[index],
-  reviewCount: 108,
-  // 적합도는 AI가 주는 값이다. 단위가 정해지지 않아 0~100으로 둔다.
-  matchScore: 92 - index * 7,
-  // 어느 분류의 상품인지. 실제로는 AI가 골라 준다
-  category: CATEGORIES[1 + (index % (CATEGORIES.length - 1))],
-  // API 연동 전까지 최신순 정렬 확인용. 실제로는 서버가 등록일을 준다
-  createdAt: new Date(Date.now() - MOCK_DAYS_AGO[index] * 86_400_000),
-}));
+/** 추천을 받는 동안 격자 자리를 잡는다. 2열 두 줄 */
+function RecommendationGridSkeleton() {
+  return (
+    <ul
+      className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5"
+      role="status"
+      aria-label="맞춤 상품을 불러오는 중"
+    >
+      {Array.from({ length: 4 }, (_, index) => (
+        <li key={index} className="flex flex-col gap-2">
+          <Skeleton className="aspect-square w-full rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-/** 정렬 드롭다운 값에 맞춰 상품을 다시 늘어놓는다. home-view의 같은 함수와 기준이 같다 */
-function sortProducts(products: typeof MOCK_PRODUCTS, sort: (typeof SORT_VALUES)[number]) {
-  const sorted = [...products];
-  switch (sort) {
-    case "latest":
-      return sorted.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-    case "rating-high":
-      return sorted.sort((a, b) => b.rating - a.rating);
-    case "rating-low":
-      return sorted.sort((a, b) => a.rating - b.rating);
-    case "recommend":
-    default:
-      return sorted.sort((a, b) => b.matchScore - a.matchScore);
+type RecommendationGridProps = {
+  petId: number;
+  petName: string;
+  category: (typeof CATEGORIES)[number];
+  sort: RecommendationSort;
+};
+
+/**
+ * 고른 아이·분류의 추천 격자. 분류는 서버가 거르고(요청 `category`), 정렬은 받은 목록 안에서 한다.
+ * 조회 훅이 받아 둔 것 없이 실패하면 오류를 던지고, 부모의 `ErrorBoundary`가 이 격자만 대체한다(#600)
+ */
+function RecommendationGrid({ petId, petName, category, sort }: RecommendationGridProps) {
+  const { items, isLoading } = useQueryHomeRecommendations({
+    petId,
+    category: category === "all" ? undefined : category,
+    size: RECOMMENDATION_PAGE_SIZE,
+  });
+  // 찜은 아직 서버에 남지 않는다(README "아직 없는 것")
+  const [liked, setLiked] = useState<number[]>([]);
+
+  if (isLoading || !items) return <RecommendationGridSkeleton />;
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        title={`${petName}에게 맞는 상품을 아직 찾지 못했어요`}
+        description="아이 정보를 채우면 더 잘 골라드릴 수 있어요."
+        className="flex-1"
+      />
+    );
   }
+
+  const toggleLike = (id: number) =>
+    setLiked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
+
+  return (
+    <ul className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5">
+      {sortRecommendations(items, sort).map((product) => {
+        const rated = product.reviewCount > 0;
+        return (
+          <li key={product.productId} className="flex">
+            <ProductGridCard
+              // 품절 카드는 타임딜 목록(1905-32428)처럼 통째로 흐린다. 글자 배지가 함께 있어 색만으로 알리지 않는다
+              className={cn("flex-1", product.status === "soldOut" && "opacity-45")}
+              href={`/products/${product.productId}`}
+              name={product.name}
+              price={product.price}
+              originalPrice={product.originalPrice}
+              imageUrl={product.thumbnailUrl}
+              // 적합도 배지는 이 화면 시안(1584-16064 등)이 홈과 다른 위치·색·문구를
+              // 쓰는데, Figma에 이 배지를 다른 화면과 통일할 예정이라는 코멘트가 있다.
+              // MatchScoreBadge는 home-view와 같이 쓰는 공용 컴포넌트라 지금 표기를
+              // 그대로 두고 통일 방향을 프디팀에 확인한다(README 참고)
+              imageBadge={
+                <div className="flex flex-col items-start gap-1">
+                  <MatchScoreBadge score={product.score} petName={petName} />
+                  <SaleStatusBadge status={product.status} />
+                </div>
+              }
+              // 찜 버튼은 32px 흰 원판(rounded-full) 위에 24px 아이콘, 사진 오른쪽
+              // 아래 4px 인셋이다(product-detail과 같은 위치). 원판은 시안이 불투명
+              // 흰색인데 이 프로젝트에 그 토큰이 없어 반투명 surface-overlay-static으로
+              // 근사했다(README 참고)
+              imageActionClassName="top-auto right-1 bottom-1"
+              imageAction={
+                // 비활성 #565D6D=text-body-secondary, 활성 #FF611D=brand — SVG fill을
+                // 토큰과 대조해 확인했다
+                <button
+                  type="button"
+                  onClick={() => toggleLike(product.productId)}
+                  aria-pressed={liked.includes(product.productId)}
+                  aria-label={`${product.name} 찜하기`}
+                  className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static after:absolute after:-inset-1.5"
+                >
+                  {liked.includes(product.productId) ? (
+                    <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
+                  ) : (
+                    <Icon
+                      name="heart_stroke"
+                      aria-hidden
+                      className="size-6 text-text-body-secondary"
+                    />
+                  )}
+                </button>
+              }
+              meta={
+                <>
+                  {/* 시안(1585-16763)의 "하루 예상 급여비 약 N원"은 하루 급여량이 필요한데 추천
+                      응답에 없다. 메인 시안(1758-68917)의 단가 줄 "1g당 19원"을 쓰고, 해석하지
+                      못하면 줄을 비운다(#600) */}
+                  {product.unitPrice && (
+                    <p className="text-xs text-muted-foreground">
+                      {formatUnitPriceLine(product.unitPrice)}
+                    </p>
+                  )}
+                  {/* 시안(1585-18006)은 5개 별점 줄이 아니라 별 1개(20px)+숫자, 구분선,
+                      후기 수다. product-detail의 RatingSummary와 같은 모양이라 공용
+                      Rating(5개 별, 리뷰 자체의 별점 표시용)과는 다른 이 마크업을 쓴다.
+                      별점은 값이 아니라 후기 수로 가른다 — 후기가 없으면 회색 별에 "-"다(#534) */}
+                  <span className="flex items-center gap-2">
+                    {rated && (
+                      <span className="sr-only">{`5점 만점에 ${product.rating.toFixed(1)}점`}</span>
+                    )}
+                    <span aria-hidden className="flex items-center gap-0.5">
+                      <Icon
+                        name="star"
+                        className={cn(
+                          "size-5",
+                          rated ? "text-icon-fill-accent" : "text-icon-fill-disable",
+                        )}
+                      />
+                      <span className="text-body-medium-14 text-text-body-secondary">
+                        {rated ? product.rating.toFixed(1) : "-"}
+                      </span>
+                    </span>
+                    <span aria-hidden className="h-4 w-px bg-border" />
+                    <span className="text-body-medium-14 text-text-body-secondary">
+                      후기 {product.reviewCount}개
+                    </span>
+                  </span>
+                  {/* 왜 이 아이에게 추천하는지. 이 화면이 별점·인기순 나열과 갈라지는 근거다(#600) */}
+                  <RecommendationReason
+                    reason={product.reason}
+                    allergyPenalized={product.allergyPenalized}
+                    className="mt-1"
+                  />
+                </>
+              }
+            />
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 export function RecommendationsView() {
@@ -97,9 +228,8 @@ export function RecommendationsView() {
   // 필터·정렬은 URL 상태로 둔다(AGENTS.md) — 상품 상세로 갔다 돌아와도 유지돼야 한다
   const [sort, setSort] = useQueryState(
     "sort",
-    parseAsStringLiteral(SORT_VALUES).withDefault("recommend"),
+    parseAsStringLiteral(RECOMMENDATION_SORTS).withDefault("recommend"),
   );
-  const [liked, setLiked] = useState<string[]>([]);
 
   // **아이는 마이페이지와 같은 실제 목록에서 온다.** 예시 이름(코코·봄이)을 쓰던 동안 화면마다
   // 이름이 달랐다(QA 1차 6번, #470). 로그인하지 않았으면 부르지 않아 아이가 없고 "우리 아이"로 읽는다.
@@ -110,16 +240,6 @@ export function RecommendationsView() {
   const isWaitingPets = session === null || isLoading;
   const pet =
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
-  const petName = pet?.name ?? "우리 아이";
-
-  const filtered =
-    category === "all"
-      ? MOCK_PRODUCTS
-      : MOCK_PRODUCTS.filter((product) => product.category === category);
-  const products = sortProducts(filtered, sort);
-
-  const toggleLike = (id: string) =>
-    setLiked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -232,10 +352,7 @@ export function RecommendationsView() {
             그만큼 위아래 여백이 늘어나 탭·격자 사이가 시안보다 벌어진다 — 보이는 높이는
             그대로 두고 after:로 누르는 자리만 44px 채운다(home-view 정렬과 같은 기법) */}
         <div className="mt-1 flex items-center justify-end px-5">
-          <Select
-            value={sort}
-            onValueChange={(next) => void setSort(next as (typeof SORT_VALUES)[number])}
-          >
+          <Select value={sort} onValueChange={(next) => void setSort(next as RecommendationSort)}>
             <SelectTrigger
               aria-label="정렬"
               className="relative w-auto shrink-0 border-0 bg-transparent p-0 text-body-medium-14 text-text-body-secondary shadow-none after:absolute after:-inset-x-2.5 after:-inset-y-3 data-[size=default]:h-auto"
@@ -246,93 +363,58 @@ export function RecommendationsView() {
                 일반 드롭다운이라 position="popper"·오른쪽 정렬을 쓰고, 고른 항목은 체크
                 아이콘 대신 배경색으로만 구분한다 */}
             <SelectContent position="popper" align="end" className="w-42.5 min-w-42.5 p-1">
-              {SORTS.map((item) => (
+              {RECOMMENDATION_SORTS.map((value) => (
                 <SelectItem
-                  key={item.value}
-                  value={item.value}
+                  key={value}
+                  value={value}
                   className="h-10 rounded-md px-1.5 text-label-medium-14 data-[state=checked]:bg-surface-weak data-[state=checked]:font-bold [&>span:first-child]:hidden"
                 >
-                  {item.label}
+                  {SORT_LABEL[value]}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
 
-        {products.length === 0 ? (
-          <EmptyState
-            title={`${petName}에게 맞는 상품을 아직 찾지 못했어요`}
-            description="아이 정보를 채우면 더 잘 골라드릴 수 있어요."
-            className="flex-1"
-          />
+        {/* 추천은 고른 아이 기준이라 아이가 있어야 부른다. 알약과 같이 로그인 여부를 모르거나 아이
+            목록을 받는 동안은 뼈대로 자리를 잡는다 */}
+        {isWaitingPets ? (
+          <RecommendationGridSkeleton />
+        ) : pet ? (
+          // 추천만 실패하면 격자만 대체한다. 머리말·분류·정렬은 남는다. 아이를 바꾸면 경계를 비운다
+          <ErrorBoundary
+            resetKeys={[pet.id]}
+            fallback={(retry) => (
+              <div role="alert" className="flex flex-col items-center gap-3 px-5 py-12 text-center">
+                <p className="text-body-regular-14 text-text-body-secondary">
+                  맞춤 상품을 불러오지 못했어요. 다시 시도해 주세요.
+                </p>
+                {/* 대기 표시 없음 — 누르면 경계가 비워지고 곧바로 격자 뼈대로 바뀐다 */}
+                <Button variant="outline" className="min-h-11 px-4" onClick={retry}>
+                  다시 시도
+                </Button>
+              </div>
+            )}
+          >
+            <RecommendationGrid
+              petId={Number(pet.id)}
+              petName={pet.name}
+              category={category}
+              sort={sort}
+            />
+          </ErrorBoundary>
         ) : (
-          <ul className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5">
-            {products.map((product) => (
-              <li key={product.id} className="flex">
-                <ProductGridCard
-                  className="flex-1"
-                  href={`/products/${product.id}`}
-                  name={product.name}
-                  price={product.price}
-                  originalPrice={product.originalPrice}
-                  // 적합도 배지는 이 화면 시안(1584-16064 등)이 홈과 다른 위치·색·문구를
-                  // 쓰는데, Figma에 이 배지를 다른 화면과 통일할 예정이라는 코멘트가 있다.
-                  // MatchScoreBadge는 home-view와 같이 쓰는 공용 컴포넌트라 지금 표기를
-                  // 그대로 두고 통일 방향을 프디팀에 확인한다(README 참고)
-                  imageBadge={<MatchScoreBadge score={product.matchScore} petName={pet?.name} />}
-                  // 찜 버튼은 32px 흰 원판(rounded-full) 위에 24px 아이콘, 사진 오른쪽
-                  // 아래 4px 인셋이다(product-detail과 같은 위치). 원판은 시안이 불투명
-                  // 흰색인데 이 프로젝트에 그 토큰이 없어 반투명 surface-overlay-static으로
-                  // 근사했다(README 참고)
-                  imageActionClassName="top-auto right-1 bottom-1"
-                  imageAction={
-                    // 비활성 #565D6D=text-body-secondary, 활성 #FF611D=brand — SVG fill을
-                    // 토큰과 대조해 확인했다
-                    <button
-                      type="button"
-                      onClick={() => toggleLike(product.id)}
-                      aria-pressed={liked.includes(product.id)}
-                      aria-label={`${product.name} 찜하기`}
-                      className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static after:absolute after:-inset-1.5"
-                    >
-                      {liked.includes(product.id) ? (
-                        <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
-                      ) : (
-                        <Icon
-                          name="heart_stroke"
-                          aria-hidden
-                          className="size-6 text-text-body-secondary"
-                        />
-                      )}
-                    </button>
-                  }
-                  meta={
-                    <>
-                      <p className="text-xs text-muted-foreground">
-                        하루 예상 급여비 약 {product.dailyCost.toLocaleString("ko-KR")}원
-                      </p>
-                      {/* 시안(1585-18006)은 5개 별점 줄이 아니라 별 1개(20px)+숫자, 구분선,
-                          후기 수다. product-detail의 RatingSummary와 같은 모양이라 공용
-                          Rating(5개 별, 리뷰 자체의 별점 표시용)과는 다른 이 마크업을 쓴다 */}
-                      <span className="flex items-center gap-2">
-                        <span className="sr-only">{`5점 만점에 ${product.rating}점`}</span>
-                        <span aria-hidden className="flex items-center gap-0.5">
-                          <Icon name="star" className="size-5 text-icon-fill-accent" />
-                          <span className="text-body-medium-14 text-text-body-secondary">
-                            {product.rating}
-                          </span>
-                        </span>
-                        <span aria-hidden className="h-4 w-px bg-border" />
-                        <span className="text-body-medium-14 text-text-body-secondary">
-                          후기 {product.reviewCount}개
-                        </span>
-                      </span>
-                    </>
-                  }
-                />
-              </li>
-            ))}
-          </ul>
+          // 로그인하지 않았거나 아이가 없다. 아이 목록을 받지 못했으면(실패) 비워 둔다
+          (session === false || pets?.length === 0) && (
+            <EmptyState
+              title={
+                session === false
+                  ? "로그인하면 우리 아이에게 맞는 상품을 골라드려요"
+                  : "아이를 등록하면 맞는 상품을 골라드려요"
+              }
+              className="flex-1"
+            />
+          )
         )}
       </main>
 
