@@ -107,7 +107,7 @@ const PRODUCT: ProductDetail = {
     targetSpecies: ["강아지"],
     feedingMethod: "1일 1정, 사료와 함께 급여",
     allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
-    cautions: ["나트륨 과다"],
+    cautions: ["고염분"],
     consumptionPeriodDisplay: "제조일로부터 18개월",
     shelfLifeAfterOpeningDays: 60,
     storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
@@ -386,14 +386,14 @@ describe("ProductDetailView", () => {
   it("응답의 주의성분을 적합도 칸에 함께 그린다", async () => {
     await renderWith();
 
-    expect(screen.getByText("나트륨 과다")).toBeDefined();
+    expect(screen.getByText("고염분")).toBeDefined();
     expect(screen.getByText("주의성분.")).toBeDefined();
   });
 
   it("주의성분이 없는 상품은 그 줄을 만들지 않는다", async () => {
     await renderWith("", { detail: { ...PRODUCT.detail, cautions: [] } });
 
-    expect(screen.queryByText("나트륨 과다")).toBeNull();
+    expect(screen.queryByText("고염분")).toBeNull();
     expect(screen.queryByText("주의성분.")).toBeNull();
   });
 

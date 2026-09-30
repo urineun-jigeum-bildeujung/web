@@ -20,7 +20,7 @@ const DETAIL: ProductDetailInfo = {
   targetSpecies: ["강아지"],
   feedingMethod: "1일 1정, 사료와 함께 급여",
   allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
-  cautions: ["나트륨 과다"],
+  cautions: ["고염분"],
   consumptionPeriodDisplay: "제조일로부터 18개월",
   shelfLifeAfterOpeningDays: 60,
   storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
