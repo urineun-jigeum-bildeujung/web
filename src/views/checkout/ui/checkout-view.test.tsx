@@ -187,6 +187,26 @@ test("결제 내역을 항목별로 읽을 수 있다", () => {
   expect(screen.getByText("1개")).toBeDefined();
 });
 
+// 합계만 있으면 여러 상품 중 무엇이 얼마인지 알 수 없다 (QA No.46, #595)
+test("상품 줄마다 주문 수량과 판매 금액을 보이고 이름은 두 줄까지 보인다", () => {
+  const second: CartItem = {
+    ...ITEM,
+    itemId: 2,
+    quantity: 2,
+    productName: "로얄캐닌 인도어",
+    price: 20000,
+    subtotal: 40000,
+  };
+  renderView({ items: [ITEM, second] });
+
+  const rows = screen.getAllByRole("listitem");
+  expect(rows).toHaveLength(2);
+  expect(rows[0].textContent).toContain("판매 금액9,345원");
+  expect(rows[1].textContent).toContain("주문 수량2개");
+  expect(rows[1].textContent).toContain("판매 금액40,000원");
+  expect(screen.getByText("로얄캐닌 인도어").className).toContain("line-clamp-2");
+});
+
 // 서버가 배송 예정일을 주지 않아 화면이 한국 날짜로 모레를 센다 (QA No.45, #595)
 test("살 상품이 있으면 결제 정보 맨 위에 도착 예정일을 알린다", () => {
   vi.useFakeTimers({ toFake: ["Date"] });
