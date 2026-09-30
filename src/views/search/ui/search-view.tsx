@@ -90,7 +90,12 @@ export function SearchView() {
     // BottomNav는 sticky라 콘텐츠를 밀어내며 자리 잡는다. fixed 오버레이가 아니라서
     // 가릴 콘텐츠가 없고, 그래서 하단에 별도 여백(pb)이 필요 없다 — 넣으면 네브 아래
     // 빈 공간만 생긴다
-    <div className="flex min-h-dvh flex-col">
+    //
+    // 이 화면은 `(constrained)` 그룹 밖이라 폭을 스스로 진다(#573). 1200은
+    // 브레이크포인트가 아니라 최대 폭이다 — 768~1199는 뷰포트를 다 쓰고 1200부터 멈춰
+    // 가운데 선다. 거터 20px은 컨테이너가 아니라 섹션이 갖는다. 시안(2656-32932·2675-33685)의
+    // 768 프레임도 제목 줄이 fill이라 화면 폭을 그대로 쓴다
+    <div className="mx-auto flex min-h-dvh w-full max-w-300 flex-col">
       {/* 제목 자리를 입력창이 차지한다. PageHeader는 가운데 제목을 전제로 해서 쓰지 않는다.
           뒤로가기는 모든 헤더와 같은 조각이고, 높이 48·좌우 20에 입력창이 뒤로가기 누르는 자리
           바로 옆에서 시작하는 것은 시안(1117-9724) 그대로다(#513) */}
@@ -153,7 +158,10 @@ export function SearchView() {
             ))}
           </ul>
         ) : (
-          <section className="flex flex-col gap-3 px-4 pt-2">
+          // 거터 20px과 제목 줄↔칩 줄 8px은 시안(393 2396-80487, 768 2675-33685) 값이고
+          // 두 폭이 같다. 헤더 아래 간격(pt-2)은 시안이 16px이지만 그중 12px이 헤더
+          // 아래쪽 패딩이고, #513이 헤더를 48px로 고정하며 그 12px을 버려서 그대로 둔다
+          <section className="flex flex-col gap-2 px-5 pt-2">
             <div className="flex items-center justify-between">
               <h2 className="text-title-bold-16 text-foreground">최근 검색어</h2>
               {recent && recent.length > 0 && (
@@ -162,8 +170,20 @@ export function SearchView() {
                   onClick={() => setRecent([])}
                   // 고르러 온 화면(picking, 1117-9724)만 옅은 회색(#b1b3bb,
                   // text-body-unselect)이고, 일반 검색(2396-80487)은 #565d6d다
+                  //
+                  // 보이는 크기는 시안대로 두고 누르는 자리만 after:로 44px 확보한다
+                  // (product-detail-view의 같은 텍스트 버튼과 같은 기법).
+                  //
+                  // min-h-11로 실제 상자를 키우던 동안 이 버튼이 제목 줄 높이를 44px로
+                  // 밀어 올려, items-center가 24px 제목을 그 안에 가운데 두었다 — 시안이
+                  // 8px인 제목 글자↔칩 줄 간격이 18px이 됐다.
+                  //
+                  // 세로 11px씩은 22px 줄을 44px로 만들고, 가로 4px씩은 걷어낸 px-1
+                  // 자리를 그대로 대신해 탭 영역 폭(64px)이 전과 같다. 글자는 시안대로
+                  // 거터 20px에 붙는다. 정렬 드롭다운처럼 가로도 11px씩 넓히지는 않는다 —
+                  // 옆 요소와 탭 영역이 겹칠 수 있다(#265)
                   className={cn(
-                    "flex min-h-11 min-w-11 items-center justify-center px-1 text-label-medium-14 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    "relative flex items-center text-label-medium-14 after:absolute after:-inset-x-1 after:-inset-y-2.75 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                     picking ? "text-text-body-unselect" : "text-text-body-secondary",
                   )}
                 >
@@ -176,7 +196,11 @@ export function SearchView() {
                 있는 사람에게 "내역이 없어요"가 잠깐 떴다 사라진다 (#479) */}
             {recent !== null &&
               (recent.length > 0 ? (
-                <ul className="flex flex-wrap gap-2">
+                // 시안의 칩 줄은 gap "12px 8px"이고 높이 92px = 40+12+40이 두 줄과 세로
+                // 12px을 함께 확인해 준다. 768 프레임(2675:33697)만 폭이 fixed 393px인데,
+                // 바로 위 제목 줄과 393 프레임의 같은 줄이 모두 fill이라 복사 자국으로 보고
+                // 넓은 폭에서도 흐르게 둔다
+                <ul className="flex flex-wrap gap-x-2 gap-y-3">
                   {recent.map((item) => (
                     <li key={item}>
                       <RecentKeywordChip
