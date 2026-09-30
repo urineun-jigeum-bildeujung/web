@@ -684,6 +684,41 @@ describe("ProductDetailView", () => {
     expect(add).not.toHaveBeenCalled();
   });
 
+  // 결제에서 뒤로 오면 시트가 열린 채로 돌아와야 한다. 주소가 시트를 들고, 떠날 때 지우지 않는다
+  // (QA No.35, #595)
+  it("바로 구매 시트는 주소에 남아 결제에서 뒤로 오면 열린 채로 돌아온다", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    await renderWith("", { soldOut: false }, relatedOf(), onUrlUpdate);
+
+    fireEvent.click(screen.getByRole("button", { name: "바로 구매" }));
+    await waitFor(() =>
+      expect(onUrlUpdate.mock.lastCall?.[0].searchParams.get("sheet")).toBe("buy"),
+    );
+    // 쌓지 않는다. 쌓으면 닫은 뒤 뒤로가기가 시트를 다시 연다
+    expect(onUrlUpdate.mock.lastCall?.[0].options.history).toBe("replace");
+
+    onUrlUpdate.mockClear();
+    fireEvent.click(screen.getByRole("button", { name: "21,000원 바로 구매" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/payment?buy=NORMAL%3A1%3A1"));
+    // 떠나면서 주소의 시트를 지우면 돌아왔을 때 닫혀 있다
+    expect(onUrlUpdate).not.toHaveBeenCalled();
+  });
+
+  it("주소에 바로 구매 시트가 있으면 열린 채로 그린다", async () => {
+    await renderWith("?sheet=buy", { soldOut: false });
+
+    expect(screen.getByRole("dialog", { name: "면역 지원 영양제 90정 수량 고르기" })).toBeDefined();
+    expect(screen.getByRole("button", { name: "21,000원 바로 구매" })).toBeDefined();
+  });
+
+  // 버튼으로 열 때와 같다. 로그인 전이면 담기·구매를 못 한다 (#542)
+  it("로그인 전이면 주소에 시트가 있어도 열지 않는다", async () => {
+    useSessionState.mockReturnValue(false);
+    await renderWith("?sheet=buy", { soldOut: false });
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   // 타임딜 구매도 딜 아이템으로 가야 딜가로 주문된다
   it("타임딜 상품의 바로 구매는 딜 아이템 번호로 결제 화면에 간다", async () => {
     await renderWith("", { soldOut: false, timeDealItemId: 7 });

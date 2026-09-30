@@ -76,6 +76,11 @@ const REACHABLE_TABS = ["info", "review"] as const;
 // 화면을 씌우려면 목 종료 시각이 있어야 했다. 타임딜 화면은 응답(`timeDeal.purchasable`)으로만 켠다(#539)
 const STATUS_OVERRIDES = ["normal", "soldout"] as const;
 
+// 수량 시트를 장바구니로 열었는지 바로 구매로 열었는지 (#520). **주소(`?sheet=`)가 든다** — 바로 구매로
+// 결제 화면에 갔다가 뒤로 오면 시트가 열린 채로 돌아와야 한다(QA No.35, #595). 화면 안 상태로 두면
+// 상세가 새로 그려지며 닫힌다
+const SHEET_ACTIONS = ["cart", "buy"] as const;
+
 const TAB_LABEL = [
   ["info", "상품 정보"],
   ["review", "리뷰"],
@@ -393,14 +398,14 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
       showSnackbar("해당 상품을 찜 목록에 담았어요!");
     }
   };
-  const [optionSheetOpen, setOptionSheetOpen] = useState(false);
-  // 수량 시트를 장바구니로 열었는지 바로 구매로 열었는지 (#520)
-  const [sheetAction, setSheetAction] = useState<"cart" | "buy">("cart");
+  // 여닫기는 기록을 쌓지 않는다(nuqs 기본 `replace`). 쌓으면 닫은 뒤 뒤로가기가 시트를 다시 연다
+  const [sheet, setSheet] = useQueryState("sheet", parseAsStringLiteral(SHEET_ACTIONS));
+  const sheetAction = sheet ?? "cart";
+  const closeSheet = () => void setSheet(null);
   const openSheet = (action: "cart" | "buy") => {
     // 시트를 열기 전에 막는다. 열고 나서 담기에서 막히면 401 토스트만 뜨고 시트가 남는다
     if (!requireSession()) return;
-    setSheetAction(action);
-    setOptionSheetOpen(true);
+    void setSheet(action);
   };
   // 시안(타임딜 1702-18698, 품절 1702-19204·19653)을 보여주는 자리
   const [dealOver, setDealOver] = useState(false);
@@ -813,8 +818,11 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
       </BottomActionBar>
 
       <DetailOptionSheet
-        open={optionSheetOpen}
-        onOpenChange={setOptionSheetOpen}
+        // 주소로 들어와도 로그인 전이면 열지 않는다. 버튼으로 열 때와 같은 조건이다 (#542)
+        open={sheet !== null && session === true}
+        onOpenChange={(open) => {
+          if (!open) closeSheet();
+        }}
         action={sheetAction}
         adding={sheetAction === "cart" && isAdding}
         onConfirm={async (quantity) => {
@@ -822,13 +830,14 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           // 적용된다 — 그냥 상품으로 담으면 정가로 들어간다 (views/deals와 같은 방식).
           // 바로 구매도 같은 식별자로 주문한다
           if (sheetAction === "buy") {
-            setOptionSheetOpen(false);
+            // **시트를 닫지 않고 떠난다.** 이 기록에 `?sheet=buy`가 남아 결제에서 뒤로 오면 시트가 열린
+            // 채로 돌아온다(QA No.35, #595). 닫고 가면 주소에서 지워져 수량을 다시 고를 자리를 잃는다
             router.push(toBuyNowPath({ ...cartItemRef, quantity }));
             return;
           }
           // 되돌리는 함수는 담기 전 수량을 알 때만 온다. 그때만 스낵바에 담기 취소가 붙는다(#562)
           const undo = await add(cartItemRef, quantity);
-          setOptionSheetOpen(false);
+          closeSheet();
           showCartAddedSnackbar(undo);
         }}
         inCartQuantity={inCartQuantity}
