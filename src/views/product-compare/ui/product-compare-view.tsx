@@ -22,6 +22,15 @@ import {
   type CompareProduct,
   type ProductDetail,
 } from "@/entities/product";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogTitle,
+} from "@/shared/ui/alert-dialog";
 import { Button } from "@/shared/ui/button";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -223,6 +232,10 @@ export function ProductCompareView() {
     router.replace(toCompareHref(next), { scroll: false });
   };
 
+  // X는 빼기를 묻기만 한다. 예전엔 누르는 즉시 빠져 잘못 눌러도 되돌릴 수 없었다(QA 상품비교 29·30).
+  // 확인을 눌렀을 때만 위 `removeAt`이 자리와 주소를 바꾼다
+  const [removeIndex, setRemoveIndex] = useState<number | null>(null);
+
   // "장바구니 추가"는 수량을 고르는 바텀시트를 연다(QA CP-006·007). 예전엔 담지 않고
   // 담겼다는 토스트만 띄워 장바구니 수도 그대로였다(QA CP-010)
   const { add, isAdding } = useMutateCartItem();
@@ -274,7 +287,7 @@ export function ProductCompareView() {
                 }
                 onAdd={() => goSelect(index)}
                 onAddToCart={() => setCartTarget(entry?.product ?? null)}
-                onRemove={() => removeAt(index)}
+                onRemove={() => setRemoveIndex(index)}
               />
             );
           })}
@@ -320,6 +333,28 @@ export function ProductCompareView() {
       </main>
 
       <BottomNav />
+
+      {/* 장바구니 빼기(cart-view)와 같은 모양·문구다. 시안에 이 확인창 프레임이 없다 */}
+      <AlertDialog
+        open={removeIndex !== null}
+        onOpenChange={(open) => !open && setRemoveIndex(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogTitle>비교에서 이 상품을 뺄까요?</AlertDialogTitle>
+          <AlertDialogDescription>
+            상품 추가하기로 언제든지 다시 담을 수 있어요
+          </AlertDialogDescription>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
+            <AlertDialogAction
+              className="min-h-11"
+              onClick={() => removeIndex !== null && removeAt(removeIndex)}
+            >
+              상품 빼기
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <ProductOptionSheet
         product={

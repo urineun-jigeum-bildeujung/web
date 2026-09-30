@@ -122,6 +122,12 @@ function renderView(search = "") {
   );
 }
 
+/** X를 누르고 확인창에서 빼기까지 누른다. 확인 없이는 빠지지 않는다(QA 상품비교 29·30) */
+async function removeFromCompare(name: string) {
+  fireEvent.click(await screen.findByRole("button", { name: `${name} 비교에서 빼기` }));
+  fireEvent.click(await screen.findByRole("button", { name: "상품 빼기" }));
+}
+
 // 담지 않았는데 예시 상품 둘이 담겨 있고, 빼고 다시 와도 되살아났다(QA HM-000)
 test("고른 상품이 없으면 두 자리 모두 빈 칸으로 시작한다", () => {
   renderView();
@@ -255,15 +261,39 @@ test("product와 other가 같은 id면 반대쪽 자리를 비운다", async () 
 test("두 자리를 다 비우고 검색에 가면 other가 none으로 담긴다", async () => {
   renderView("?slot=0&product=1&other=2");
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
-  );
-  fireEvent.click(
-    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 4kg 비교에서 빼기" }),
-  );
+  await removeFromCompare("한끼 그레인프리 곤충 시니어 1kg");
+  await removeFromCompare("한끼 그레인프리 곤충 시니어 4kg");
   fireEvent.click(screen.getAllByRole("button", { name: "상품 추가하기" })[0]);
 
   expect(push).toHaveBeenCalledWith("/search?slot=0&other=none");
+});
+
+// 예전엔 X를 누르는 즉시 빠져 잘못 눌러도 되돌릴 수 없었다(QA 상품비교 29)
+test("X를 누르면 바로 빼지 않고 확인창을 먼저 띄운다", async () => {
+  renderView("?slot=0&product=1&other=2");
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
+  );
+
+  expect(screen.getByRole("alertdialog", { name: "비교에서 이 상품을 뺄까요?" })).toBeDefined();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+// QA 상품비교 30. 닫으면 창만 닫히고 자리도 주소도 그대로다
+test("확인창을 닫으면 두 상품과 주소가 그대로 남는다", async () => {
+  renderView("?slot=0&product=1&other=2");
+
+  fireEvent.click(
+    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "닫기" }));
+
+  await waitFor(() => expect(screen.queryByRole("alertdialog")).toBeNull());
+  expect(screen.getByText("한끼 그레인프리 곤충 시니어 1kg")).toBeDefined();
+  expect(screen.getByText("한끼 그레인프리 곤충 시니어 4kg")).toBeDefined();
+  expect(screen.getByText("맞춤 분석")).toBeDefined();
+  expect(replace).not.toHaveBeenCalled();
 });
 
 /** 빼기가 바꾼 주소의 쿼리. 이 쿼리로 다시 여는 것이 검색에서 뒤로 오거나 새로고침한 것과 같다 */
@@ -276,9 +306,7 @@ function searchOf(href: string) {
 test("하나 남은 상품을 빼면 주소도 비워, 그 주소로 다시 열면 빈 칸이다", async () => {
   const { unmount } = renderView("?slot=0&product=33&other=none");
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: "한끼 웰니스 사슴 어덜트 4kg 비교에서 빼기" }),
-  );
+  await removeFromCompare("한끼 웰니스 사슴 어덜트 4kg");
 
   expect(replace).toHaveBeenCalledWith("/compare", { scroll: false });
 
@@ -293,9 +321,7 @@ test("하나 남은 상품을 빼면 주소도 비워, 그 주소로 다시 열�
 test("두 자리 중 하나를 빼면 남은 자리만 주소에 남는다", async () => {
   const { unmount } = renderView("?slot=0&product=1&other=2");
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
-  );
+  await removeFromCompare("한끼 그레인프리 곤충 시니어 1kg");
 
   expect(replace).toHaveBeenCalledWith("/compare?slot=1&product=2&other=none", { scroll: false });
 
@@ -312,9 +338,7 @@ test("두 자리 중 하나를 빼면 남은 자리만 주소에 남는다", asy
 test("상세에서 온 흐름에서 두 번째 상품을 빼면 상세 상품만 주소에 남는다", async () => {
   const { unmount } = renderView("?slot=1&product=4&from=detail&first=123");
 
-  fireEvent.click(
-    await screen.findByRole("button", { name: "한끼 웰니스 닭고기 시니어 2kg 비교에서 빼기" }),
-  );
+  await removeFromCompare("한끼 웰니스 닭고기 시니어 2kg");
 
   expect(replace).toHaveBeenCalledWith("/compare?slot=0&product=123&other=none", {
     scroll: false,
@@ -353,9 +377,7 @@ test("한 자리를 비우면 견줄 것이 없어 비교 영역이 사라진다
   renderView("?slot=0&product=1&other=2");
 
   await screen.findByText("두 상품 모두 아직 적합도를 재지 못했어요.");
-  fireEvent.click(
-    screen.getByRole("button", { name: "한끼 그레인프리 곤충 시니어 1kg 비교에서 빼기" }),
-  );
+  await removeFromCompare("한끼 그레인프리 곤충 시니어 1kg");
 
   expect(screen.queryByText("맞춤 분석")).toBeNull();
   expect(screen.getByText(/담아주세요/)).toBeDefined();
