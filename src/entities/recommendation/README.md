@@ -11,7 +11,7 @@
 | `model/recommendation.ts` | 응답 타입(snake_case)과 화면 타입(camelCase), 분류·점수·상태·단가 변환과 단가 줄 문장(`formatUnitPriceLine`) |
 | `model/recommendation.test.ts` | 변환 규칙 |
 | `model/sort.ts` | 정렬 값(추천순·최신순·별점 높은순·낮은순)과 받은 목록 안에서의 정렬 |
-| `model/sort.test.ts` | 네 정렬이 서로 다른 순서를 내는지, 같은 값은 추천 순서를 지키는지 |
+| `model/sort.test.ts` | 네 정렬이 서로 다른 순서를 내는지, 같은 값은 추천 순서를 지키는지, 후기 없는 상품이 별점 정렬 뒤에 오는지 |
 | `ui/recommendation-reason.tsx` | 카드의 추천 이유와 알레르기 감점 주의 한 줄 |
 | `ui/recommendation-reason.test.tsx` | 이유가 읽히는지, 감점 상품에만 주의가 붙는지 |
 | `ui/sale-status-badge.tsx` | 사진 위 품절·타임딜 배지. 판매 중이면 그리지 않는다 |
@@ -35,7 +35,8 @@ PM QA 기록에 이 카드의 표기를 정한 것이 없어, 시안(메인 1758
 
 ## API 계약
 
-- **경로** `POST /api/v1/recommend/home`. 인프라 공용 라우터를 거친다고 보고 기존 `apiRequest`로 부른다(인증 헤더 자동). **배포 게이트웨이에서 실제로 열려 있는지는 아직 확인하지 못했다.**
+- **경로** `POST /api/v1/recommend/home`. 인프라 공용 라우터를 거치므로 기존 `apiRequest`로 부른다(인증 헤더 자동). 게이트웨이(백엔드 `sever`의 `api-gateway` `application-infra.yml`, 백엔드 PR #194)가 `/api/v1/recommend/**`를 `/recommend/**`로 바꿔 추천 서버(FastAPI, `RECOMMENDATION_SERVICE_URL`)에 넘긴다.
+- **사진 주소** `thumbnail_url`은 추천 서버가 상품 DB(`products.thumbnail_url`)에서 그대로 읽는다. dev 배포는 `USE_DUMMY_DATA=false`라 상품 서비스와 같은 주소다. 더미 모드(`cdn.example.com`)로 뜨면 `next.config.ts`의 허용 호스트 밖이라 사진이 빈 칸이 된다.
 - **명세** AI팀 v3.0.0(2026-09-30). 요청 `{ pet_id, category?, sort?, size? }`, 응답 `{ pet_id, pet_name, generated_at, items[] }`.
 - `/recommend/substitute`는 지금 항상 빈 배열이고 화면도 없어 부르지 않는다. `/recommend/exclusions`는 폐기됐다.
 - 오류는 400(분류 값 틀림)·404(아이 없음). 화면은 둘 다 추천 칸의 오류 경계로 받는다.
@@ -48,7 +49,7 @@ AI팀 답을 더 기다리지 않고 FE가 맞춘다(FE 팀장 결정). 규칙�
 | --- | --- | --- |
 | 분류(요청) | 생략·`food`·`treat`·`supplement` | 전체·`food`·`snack`·`supplement` |
 | 분류(응답) | `FOOD`·`TREAT`·`SUPPLEMENT` | `food`·`snack`·`supplement`. 모르는 값은 받은 그대로 |
-| 점수 | 0~100 | 0~100 정수. 0 초과 1 미만 소수는 예전 0~1 방식으로 보고 ×100 반올림, 범위 밖은 0·100에 가둔다. `null`·누락은 null("정보 확인 중") |
+| 점수 | 0~100 | 0~100 정수. 0 초과 1 미만 소수는 예전 0~1 방식으로 보고 ×100 반올림, 범위 밖은 0·100에 가둔다. `null`·누락은 null("정보 확인 중"). AI팀이 배포 버전의 척도를 0~100으로 확정하면 소수 처리는 걷어 낸다 |
 | 상태 | `ON_SALE` 등(목록 없음) | 대소문자·구분자 무시. `SOLD_OUT`·`OUT_OF_STOCK` → 품절, `TIME_DEAL`·`DEAL` → 타임딜, 그 밖은 판매 중 |
 | 단가 | `unit_price` + `unit_label`(`"1000G"`) | 양을 떼고 단위만 소문자(`g`), 가격은 원 단위 반올림 → "1g당 19원"(`formatUnitPriceLine`). 단위를 못 읽거나 반올림한 가격이 1원 미만이면 줄을 숨긴다 |
 | 알레르기 | `PENALIZED` + `matched_allergen` 코드 | 목록에 남기고 "등록한 알레르기 성분이 들어 있어요" 한 줄. 코드는 넘기지 않는다 |
@@ -64,6 +65,7 @@ AI팀 답을 더 기다리지 않고 FE가 맞춘다(FE 팀장 결정). 규칙�
 
 - 추천순은 서버 순서(`rank`) 그대로다
 - 최신순은 `created_at`, 별점순은 `rating`이다. 같은 값끼리는 추천 순서를 지킨다
+- 후기가 없는 상품(`review_count` 0)은 두 별점 정렬 모두 뒤로 보낸다. 별점이 0으로 와 낮은순 맨 앞에 서는데, 카드는 후기가 없으면 별점을 "-"로 그려 가장 낮은 상품처럼 보이지 않는다
 
 **분류는 서버가 거른다.** 요청에 `category`가 있어 받은 목록을 다시 `filter`하지 않는다.
 
