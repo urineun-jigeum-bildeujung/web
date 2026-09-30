@@ -6,7 +6,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { stubCart } from "./fixtures/cart";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
-import { stubRecommendations } from "./fixtures/recommendations";
+import { RECOMMENDED_ITEMS, stubRecommendations } from "./fixtures/recommendations";
 import { signIn } from "./fixtures/session";
 
 test.beforeEach(async ({ page }) => {
@@ -119,6 +119,32 @@ test("정렬을 바꾸면 받은 목록을 그 기준으로 다시 늘어놓는�
 
   // 정렬은 서버에 다시 묻지 않는다
   expect(recommendations.sent).toHaveLength(1);
+});
+
+// 목데이터의 짧은 이름에서는 드러나지 않았다. 실제 추천 상품명은 칸보다 길 수 있다
+test("긴 상품명은 칸 안에서 말줄임되고 카드가 칸 폭을 넘지 않는다", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await stubRecommendations(page, {
+    items: [
+      {
+        ...RECOMMENDED_ITEMS[0],
+        product_name: "저알러지 가수분해 양고기 사료 1.2kg 대용량 두 봉 묶음",
+      },
+      RECOMMENDED_ITEMS[1],
+    ],
+  });
+  await page.goto("/recommendations");
+
+  const cell = page.getByRole("listitem").filter({ hasText: "저알러지 가수분해 양고기" });
+  await expect(cell).toBeVisible();
+  const cellBox = await cell.boundingBox();
+  const cardBox = await cell.getByRole("link").boundingBox();
+  expect(cardBox!.width, "카드가 칸보다 넓다").toBeLessThanOrEqual(cellBox!.width + 0.5);
+
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
 });
 
 test("알레르기 감점 상품은 목록에 남고 주의 한 줄이 붙는다", async ({ page }) => {
