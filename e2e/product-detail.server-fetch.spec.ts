@@ -330,6 +330,8 @@ test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 
 // 상품명·수량·가격·버튼뿐인 시트가 높이(272px)의 세 배로 스크롤됐다. vaul의 꼬리가 스크롤
 // 영역에 들어간 탓이다(#561). 시안 크기 화면에서는 시트 안에 더 내릴 것이 없어야 한다
 test("수량 시트는 내용만큼만 뜨고 안에 빈 스크롤이 없다", async ({ page }) => {
+  // 담기는 로그인해야 시트가 열린다(#542)
+  await signInWithPets(page);
   await page.setViewportSize({ width: 393, height: 852 });
   await page.goto(PATH);
 
@@ -355,6 +357,8 @@ test("수량 시트는 내용만큼만 뜨고 안에 빈 스크롤이 없다", a
 test("낮은 화면에서는 수량 시트 안에서 밀어 담기 버튼까지 닿고 그 아래 빈 자리가 없다", async ({
   page,
 }) => {
+  // 담기는 로그인해야 시트가 열린다(#542)
+  await signInWithPets(page);
   await stubAddToCart(page);
   await page.setViewportSize({ width: 393, height: 360 });
   await page.goto(PATH);
