@@ -6,7 +6,8 @@
 // 목 API 서버(`mock-api-server.mjs`)와 전용 포트의 Next 서버를 따로 띄운다.
 //
 // 적합도의 아이는 로그인한 보호자의 실제 아이다(#481). 아이 조회는 브라우저가 부르므로
-// page.route로 세운다. 점수·영양 분석·문의는 아직 목이고(#123, #339), 상단 요약의 배송·판매자
+// page.route로 세운다. Safety 분석은 브라우저가 전용 mock API의 Nutrition endpoint를 실제 호출한다(#572).
+// 영양 점수·수치 계약은 아직 없어 화면에서 지어내지 않는다. 문의는 아직 목이고(#339), 상단 요약의 배송·판매자
 // 줄도 응답에 자리가 없어 고정 목데이터다. 아래 세 안내는 목이 아니라 PD가 확정한 고정 문구다(#555).
 import { expect, test, type Page } from "@playwright/test";
 import { stubAddToCart, stubCart } from "./fixtures/cart";
@@ -139,32 +140,35 @@ test("적합도는 내 아이 기준이고 아이를 바꾸면 함께 바뀐다"
   await signInWithPets(page);
   await page.goto(PATH);
 
-  // 스텁의 기본 아이는 코코(말티즈)다. 등록한 알레르기(닭고기)가 이 상품(계란)과 겹치지 않는다
-  await expect(page.getByRole("heading", { name: "코코와 잘 맞는 상품이에요" })).toBeVisible();
+  // 스텁의 기본 아이 코코는 Nutrition mock에서 NO_CONFLICT_DETECTED를 받는다.
+  await expect(
+    page.getByRole("heading", { name: "코코 기준으로 확인한 안전 정보예요" }),
+  ).toBeVisible();
   await expect(page.getByText("(말티즈 · 4세 · 4kg 기준)")).toBeVisible();
-  await expect(page.getByText("코코에게 등록된 알레르기 유발 성분이 없어요")).toBeVisible();
+  await expect(
+    page.getByText(
+      "현재 등록 정보와 확인 가능한 상품 정보 기준으로 충돌이 확인되지 않았습니다.",
+    ),
+  ).toBeVisible();
 
   await page.getByRole("combobox", { name: "적합도 기준이 되는 아이" }).click();
   await page.getByRole("option", { name: "보리 기준으로 보기" }).click();
 
-  // 보리는 고양이다. 강아지 영양제에 점수를 매기지 않는다
+  // 보리는 Nutrition mock에서 species mismatch Safety Block을 받는다.
   await expect(
-    page.getByRole("heading", { name: "보리 기준으로는 아직 재지 못했어요" }),
+    page.getByRole("heading", { name: "보리 기준으로 확인한 안전 정보예요" }),
   ).toBeVisible();
-  await expect(page.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeVisible();
+  await expect(page.getByText("반려동물 종과 상품 대상 종이 일치하지 않습니다.")).toBeVisible();
 });
 
-// 재 봤더니 안 맞는 것과 아직 재지 않은 것은 다른 이야기다(#119).
-// 0점으로 채워 두면 궁합이 나쁜 상품처럼 읽힌다.
-test("재지 못한 아이에게는 점수를 채우지 않는다", async ({ page }) => {
+// Safety 결과와 영양 적합도 점수는 별개다. 점수 계약이 없으므로 0점이나 예시값을 채우지 않는다.
+test("Safety 결과가 있어도 영양 점수는 지어내지 않는다", async ({ page }) => {
   await signInWithPets(page);
   await page.goto(PATH);
 
-  await page.getByRole("combobox", { name: "적합도 기준이 되는 아이" }).click();
-  await page.getByRole("option", { name: "보리 기준으로 보기" }).click();
-
-  await expect(page.getByText("보리 기준으로는 아직 분석하지 못했어요.")).toBeVisible();
+  await expect(page.getByText("코코 기준으로는 아직 분석하지 못했어요.")).toBeVisible();
   await expect(page.getByText("0점")).toHaveCount(0);
+  await expect(page.getByText("92점")).toHaveCount(0);
 });
 
 // 예시 상품 셋은 없는 상품이라 누를 수 없었다(#481). 라우트가 기다리지 않고 넘긴 목록을
@@ -196,40 +200,16 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
 });
 
-// 시안은 부족/적정/과다를 색으로만 구분한다(굵기는 셋 다 같다). 그 줄은
-// aria-hidden이라 화면 낭독기는 값 배지의 접근성 이름("12%, 과다")으로 듣는다.
-test("영양 성분 구간을 색 말고 글자로도 알린다", async ({ page }) => {
+// 실제 영양 수치 계약이 붙기 전에는 예시 막대를 노출하지 않는다.
+test("영양 성분 분석은 mock 수치 대신 미분석 상태를 보여준다", async ({ page }) => {
+  await signInWithPets(page);
   await page.goto(PATH);
 
   const nutrients = page.getByRole("region", { name: "영양 성분 분석" });
-
-  // 값 배지는 눈에는 숫자만 보이지만, 접근성 이름엔 구간이 함께 실린다
-  await expect(nutrients.getByText("28%", { exact: true })).toHaveAttribute(
-    "aria-label",
-    "28%, 적정",
-  );
-  await expect(nutrients.getByText("12%", { exact: true })).toHaveAttribute(
-    "aria-label",
-    "12%, 과다",
-  );
-  // 절대 기준치가 없는 성분은 구간이 없어 접근성 이름도 값 그대로다
-  const omegaBadge = nutrients.getByText("3%", { exact: true });
-  await expect(omegaBadge).toBeVisible();
-  await expect(omegaBadge).not.toHaveAttribute("aria-label");
-
-  // 단백질(28%)은 적정 구간이라 "적정"만 진한 색, 나머지 둘은 옅은 색으로 표시된다
-  const protein = nutrients.getByRole("listitem").filter({ hasText: "단백질" });
-  await expect(protein.getByText("적정", { exact: true })).toHaveClass(/text-text-body-default/);
-  await expect(protein.getByText("부족", { exact: true })).toHaveClass(/text-text-body-tertiary/);
-  await expect(protein.getByText("과다", { exact: true })).toHaveClass(/text-text-body-tertiary/);
-
-  // 지방(12%)은 과다 구간이다
-  const fat = nutrients.getByRole("listitem").filter({ hasText: "지방" });
-  await expect(fat.getByText("과다", { exact: true })).toHaveClass(/text-text-body-default/);
-
-  // 오메가3(3%)는 절대 기준치가 없어 부족/적정/과다 줄 자체가 없다
-  const omega = nutrients.getByRole("listitem").filter({ hasText: "오메가3" });
-  await expect(omega.getByText("부족", { exact: true })).toHaveCount(0);
+  await expect(nutrients.getByText("코코 기준으로는 아직 분석하지 못했어요.")).toBeVisible();
+  await expect(nutrients.getByText("28%", { exact: true })).toHaveCount(0);
+  await expect(nutrients.getByText("12%", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("종합 92점")).toHaveCount(0);
 });
 
 // 로그인하지 않았으면 찜 대신 로그인 필요 토스트만 띄운다 (#483, #542)
@@ -261,7 +241,7 @@ test("로그인하고 찜을 누르면 서버에 걸려 새로고침해도 남�
   const wishlist = await stubWishlist(page);
   await page.goto(PATH);
   // 하이드레이션 뒤에만 뜬다. 그전에 누르면 아무 일도 없다
-  await expect(page.getByRole("heading", { name: "코코와 잘 맞는 상품이에요" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "코코 기준으로 확인한 안전 정보예요" })).toBeVisible();
 
   const like = page.getByRole("button", { name: "찜 목록에 담기" });
   await expect(like).toHaveAttribute("aria-pressed", "false");

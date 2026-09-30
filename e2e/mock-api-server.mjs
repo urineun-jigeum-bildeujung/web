@@ -496,6 +496,43 @@ function productDetail(productId) {
   return null;
 }
 
+function nutritionAnalysis(petId, productId) {
+  if (!Number.isInteger(productId) || productId <= 0) {
+    return { status: 404, body: { detail: "PRODUCT_NOT_FOUND" } };
+  }
+  if (petId === 7) {
+    return {
+      status: 200,
+      body: {
+        analysis_status: "INSUFFICIENT_DATA",
+        safety_status: "SAFETY_BLOCKED",
+        allergy_check_status: "NOT_APPLICABLE",
+        excluded: true,
+        exclude_reasons: ["SPECIES_MISMATCH"],
+        warnings: [],
+        safety_reason_codes: ["SPECIES_MISMATCH"],
+        conflicting_allergens: [],
+        safety_message: "반려동물 종과 상품 대상 종이 일치하지 않습니다.",
+      },
+    };
+  }
+  return {
+    status: 200,
+    body: {
+      analysis_status: "INSUFFICIENT_DATA",
+      safety_status: "NO_CONFLICT_DETECTED",
+      allergy_check_status: "NO_CONFLICT_DETECTED",
+      excluded: false,
+      exclude_reasons: [],
+      warnings: [],
+      safety_reason_codes: [],
+      conflicting_allergens: [],
+      safety_message:
+        "현재 등록 정보와 확인 가능한 상품 정보 기준으로 충돌이 확인되지 않았습니다.",
+    },
+  };
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   // "더 보기"(#289)는 브라우저(Next 앱과 다른 포트)에서 직접 이 서버를 부른다 —
@@ -504,6 +541,31 @@ const server = createServer((req, res) => {
 
   if (url.pathname === "/health") {
     res.writeHead(200).end("ok");
+    return;
+  }
+
+  if (
+    req.method === "POST" &&
+    url.pathname === "/api/v1/nutrition/analyze/by-service-id"
+  ) {
+    let raw = "";
+    req.setEncoding("utf8");
+    req.on("data", (chunk) => {
+      raw += chunk;
+    });
+    req.on("end", () => {
+      try {
+        const request = JSON.parse(raw);
+        const result = nutritionAnalysis(Number(request.pet_id), Number(request.product_id));
+        res
+          .writeHead(result.status, { "content-type": "application/json" })
+          .end(JSON.stringify(result.body));
+      } catch {
+        res
+          .writeHead(400, { "content-type": "application/json" })
+          .end(JSON.stringify({ detail: "INVALID_REQUEST" }));
+      }
+    });
     return;
   }
 
