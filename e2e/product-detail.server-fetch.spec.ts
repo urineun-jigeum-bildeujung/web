@@ -366,6 +366,124 @@ test("딜 번호 없이 열면 정가로 보이고 일반 상품으로 담는다
   expect(JSON.parse(sent[0])).toMatchObject({ itemType: "NORMAL", itemId: 101 });
 });
 
+/**
+ * 담기·수량 변경·빼기를 실제로 반영하는 장바구니 (#562).
+ *
+ * `stubCart`는 늘 같은 줄을 돌려줘 되돌린 뒤 다시 받으면 원래대로 보인다. 되돌리기는 **무엇을 보냈는지와
+ * 그 뒤 다시 받은 수량**을 함께 봐야 해서 서버처럼 상태를 든다. 담기는 99에서 자르고 증감은 1~99로
+ * 자르는 것까지 백엔드(increase-quantity.lua·change-quantity.lua)와 같다.
+ * `signInWithPets`의 `stubCart`보다 뒤에 걸어야 이쪽이 산다.
+ */
+async function stubLiveCart(page: Page, initial: Record<string, number>) {
+  const lines = new Map(Object.entries(initial));
+  const calls: string[] = [];
+
+  await page.route("**/api/v1/carts**", (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname.replace(/^.*\/api\/v1/, "");
+
+    if (request.method() === "GET") {
+      const items = [...lines].map(([key, quantity]) => {
+        const [itemType, itemId] = key.split(":");
+        return {
+          itemType,
+          itemId: Number(itemId),
+          quantity,
+          available: true,
+          unavailableReason: null,
+          productName: `상품 ${itemId}`,
+          thumbnailUrl: null,
+          price: 1000,
+          originalPrice: 1000,
+          discountRate: 0,
+          subtotal: 1000 * quantity,
+          dealEndAt: null,
+          addedAt: "2026-09-30T00:00:00Z",
+        };
+      });
+      return route.fulfill({ json: { memberId: 1, items, totalAmount: 0 } });
+    }
+
+    const body = request.postData() ?? "";
+    calls.push(`${request.method()} ${path} ${body}`.trim());
+
+    if (request.method() === "POST") {
+      const { itemType, itemId, quantity } = JSON.parse(body);
+      const key = `${itemType}:${itemId}`;
+      lines.set(key, Math.min((lines.get(key) ?? 0) + quantity, 99));
+      return route.fulfill({ status: 201, body: "" });
+    }
+    const [, , , itemType, itemId] = path.split("/");
+    const key = `${itemType}:${itemId}`;
+    if (request.method() === "PATCH") {
+      const { delta } = JSON.parse(body);
+      lines.set(key, Math.min(Math.max((lines.get(key) ?? 0) + delta, 1), 99));
+      return route.fulfill({ status: 200, body: "" });
+    }
+    lines.delete(key);
+    return route.fulfill({ status: 204, body: "" });
+  });
+
+  return { calls, quantityOf: (key: string) => lines.get(key) };
+}
+
+test.describe("장바구니 담기 취소와 이미 담긴 표시 (#562)", () => {
+  test("처음 담은 상품은 담기 취소로 그 줄을 뺀다", async ({ page }) => {
+    await signInWithPets(page);
+    const cart = await stubLiveCart(page, {});
+    await page.goto("/products/101");
+
+    await page.getByRole("button", { name: "장바구니", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: /수량 고르기/ });
+    await expect(sheet.getByText(/담겨 있어요/)).toHaveCount(0);
+    await sheet.getByRole("button", { name: "32,000원 장바구니 담기" }).click();
+
+    await page.getByRole("button", { name: "담기 취소" }).click();
+
+    await expect(page.getByText("장바구니 담기를 취소했어요")).toBeVisible();
+    await expect.poll(() => cart.calls).toContain("DELETE /carts/items/NORMAL/101");
+    expect(cart.quantityOf("NORMAL:101")).toBeUndefined();
+  });
+
+  test("이미 담긴 상품은 시트에 담긴 수가 보이고, 담기 취소는 담기 전 수량으로 돌려놓는다", async ({
+    page,
+  }) => {
+    await signInWithPets(page);
+    const cart = await stubLiveCart(page, { "NORMAL:1": 2 });
+    await page.goto(PATH);
+
+    await page.getByRole("button", { name: "장바구니", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: `${NAME} 수량 고르기` });
+    await expect(sheet.getByText("장바구니에 2개 담겨 있어요")).toBeVisible();
+
+    await sheet.getByRole("button", { name: `${NAME} 수량 하나 늘리기` }).click();
+    await sheet.getByRole("button", { name: "36,000원 장바구니 담기" }).click();
+    await expect(sheet).toBeHidden();
+    await page.getByRole("button", { name: "담기 취소" }).click();
+
+    // 줄을 통째로 빼지 않고 늘어난 둘만 뺀다
+    await expect.poll(() => cart.calls).toContain('PATCH /carts/items/NORMAL/1 {"delta":-2}');
+    expect(cart.calls).not.toContain("DELETE /carts/items/NORMAL/1");
+    expect(cart.quantityOf("NORMAL:1")).toBe(2);
+
+    await page.getByRole("button", { name: "장바구니", exact: true }).click();
+    await expect(sheet.getByText("장바구니에 2개 담겨 있어요")).toBeVisible();
+  });
+
+  test("시트의 빼기를 누르면 그 줄을 빼고 담긴 수 표시가 사라진다", async ({ page }) => {
+    await signInWithPets(page);
+    const cart = await stubLiveCart(page, { "NORMAL:1": 2 });
+    await page.goto(PATH);
+
+    await page.getByRole("button", { name: "장바구니", exact: true }).click();
+    const sheet = page.getByRole("dialog", { name: `${NAME} 수량 고르기` });
+    await sheet.getByRole("button", { name: "장바구니에서 빼기" }).click();
+
+    await expect(sheet.getByText(/담겨 있어요/)).toHaveCount(0);
+    await expect.poll(() => cart.calls).toContain("DELETE /carts/items/NORMAL/1");
+  });
+});
+
 // 복사한 척만 하면 사용자는 붙여넣을 것이 없는 채로 나간다.
 test("공유를 누르면 현재 주소가 클립보드에 담긴다", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
