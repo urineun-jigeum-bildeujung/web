@@ -1,6 +1,6 @@
 # search-result
 
-검색어에 걸린 상품을 격자로 보여준다. 카드가 170px 고정이라 화면이 넓어지면 카드가 커지는 것이 아니라 한 줄에 더 들어간다 — 393에서 2열, 768에서 4열, 1200부터 6열이다(#573). 정렬을 고를 수 있고, 그냥 검색하러 왔으면 카드마다 할인율·별점·찜하기를 담아 보여주지만, 비교 자리를 채우러 왔으면 체크만 하면 되니 이름·가격만 남긴다.
+검색어에 걸린 상품을 격자로 보여준다. 카드가 170px 고정이라 화면이 넓어지면 카드가 커지는 것이 아니라 한 줄에 더 들어간다 — 대표 시안 폭으로 393에서 2열, 768에서 4열, 1200에서 6열이고 실제 전환은 576·759·942·1125px이다(#573). 정렬을 고를 수 있고, 그냥 검색하러 왔으면 카드마다 할인율·별점·찜하기를 담아 보여주지만, 비교 자리를 채우러 왔으면 체크만 하면 되니 이름·가격만 남긴다.
 
 - **라우트**: `/search/result?q=...` — `src/app/search/result/page.tsx`
 - **조립**: `widgets/bottom-nav` · `features/toggle-wishlist` · `shared/ui`의 `product-grid-card` · `select` · `bottom-action-bar` · `button` · `skeleton` · `loading-swap` · `shared/lib/list`(`useLoadMore`) · `entities/product`(`searchProducts`·`useProductSearch`)
