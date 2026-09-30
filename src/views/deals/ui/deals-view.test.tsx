@@ -3,18 +3,20 @@
 // (entities/product/api/time-deals.test.ts가 요청 파라미터·매핑을 본다).
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
+import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DealItem, TimeDealGroup, TimeDealList } from "@/entities/product";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
-
-const { showSnackbar, add, removeAsync } = vi.hoisted(() => ({
+const { showSnackbar, add, removeAsync, router } = vi.hoisted(() => ({
   showSnackbar: vi.fn(),
   add: vi.fn(),
   removeAsync: vi.fn(),
+  // 실제 라우터처럼 렌더마다 같은 객체를 준다. 다시 받기(refresh) 횟수를 센다(QA #84)
+  router: { push: vi.fn(), back: vi.fn(), refresh: vi.fn() },
 }));
+
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 // 담기·빼기가 서버를 부른다. 이 화면 테스트의 관심은 그 뒤의 표시라 호출만 세운다 (#316)
 vi.mock("@/entities/cart", () => ({
@@ -124,19 +126,28 @@ async function renderWith(
   search = "",
   liveGroups: TimeDealGroup[] = buildLiveGroups(),
   upcomingGroups: TimeDealGroup[] = buildUpcomingGroups(),
+  onUrlUpdate?: (event: UrlUpdateEvent) => void,
 ) {
+  const view = (upcoming: TimeDealGroup[]) => (
+    <NuqsTestingAdapter searchParams={search} onUrlUpdate={onUrlUpdate}>
+      <DealsView
+        liveDealsPromise={Promise.resolve(toList(liveGroups))}
+        upcomingDealsPromise={Promise.resolve(toList(upcoming))}
+      />
+    </NuqsTestingAdapter>
+  );
+  let result!: ReturnType<typeof render>;
   await act(async () => {
-    render(
-      <NuqsTestingAdapter searchParams={search}>
-        <DealsView
-          liveDealsPromise={Promise.resolve(toList(liveGroups))}
-          upcomingDealsPromise={Promise.resolve(toList(upcomingGroups))}
-        />
-      </NuqsTestingAdapter>,
-      // 담기가 서버를 부르게 되면서 이 화면도 Query 컨텍스트를 탄다 (#316)
-      { wrapper: createQueryWrapper() },
-    );
+    // 담기가 서버를 부르게 되면서 이 화면도 Query 컨텍스트를 탄다 (#316)
+    result = render(view(upcomingGroups), { wrapper: createQueryWrapper() });
   });
+  /** 서버가 다시 준 오픈 예정 목록으로 바꿔 그린다. router.refresh 뒤 새 props가 오는 것을 흉내 낸다 */
+  const refetchUpcoming = async (upcoming: TimeDealGroup[]) => {
+    await act(async () => {
+      result.rerender(view(upcoming));
+    });
+  };
+  return { refetchUpcoming };
 }
 
 describe("DealsView", () => {
@@ -232,6 +243,29 @@ describe("DealsView", () => {
     expect(screen.getByRole("button", { name: "28,800원 장바구니 담기" })).toBeDefined();
   });
 
+  // 장바구니에 갔다 뒤로가면 보던 탭 그대로 오고, 한 번 더 뒤로가면 타임딜을 떠나야 한다 (QA #1)
+  it("탭을 바꿔도 이력을 쌓지 않는다", async () => {
+    const onUrlUpdate = vi.fn<(event: UrlUpdateEvent) => void>();
+    await renderWith("", undefined, undefined, onUrlUpdate);
+
+    const upcomingTab = screen.getByRole("tab", { name: "오픈 예정" });
+    fireEvent.mouseDown(upcomingTab);
+    fireEvent.click(upcomingTab);
+
+    await vi.waitFor(() => expect(onUrlUpdate).toHaveBeenCalled());
+    const [event] = onUrlUpdate.mock.calls[0];
+    expect(event.queryString).toBe("?tab=upcoming");
+    expect(event.options.history).toBe("replace");
+  });
+
+  // 오픈 예정 카드에 링크가 없어 눌러도 아무 일이 없었다 (QA #94)
+  it("오픈 예정 상품을 누르면 딜 번호 없이 상품 상세로 간다", async () => {
+    await renderWith("?tab=upcoming");
+
+    const link = screen.getByText("사슴고기&현미 소형견 사료 1.2kg").closest("a");
+    expect(link?.getAttribute("href")).toBe("/products/104");
+  });
+
   it("오픈 예정 탭은 정각 시각을 '시'로 읽고 분은 적지 않는다", async () => {
     await renderWith("?tab=upcoming");
 
@@ -281,6 +315,63 @@ describe("DealsView", () => {
     await renderWith("?tab=upcoming", undefined, []);
 
     expect(screen.getByText("오픈 예정인 타임딜이 없어요")).toBeDefined();
+  });
+
+  // 시작 시각이 지나도 오픈 예정에 머물렀다 (QA #84)
+  describe("오픈 예정 딜이 열릴 시각이 되면", () => {
+    beforeEach(() => {
+      router.refresh.mockClear();
+      // 렌더가 기다리는 Promise가 멈추지 않게 실제 시간도 흐르게 둔다 (#571)
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function openingIn(ms: number): TimeDealGroup[] {
+      const [group] = buildUpcomingGroups();
+      return [{ ...group, startAt: new Date(Date.now() + ms).toISOString() }];
+    }
+
+    it("진행중 탭을 보고 있어도 목록을 다시 받는다", async () => {
+      await renderWith("", undefined, openingIn(60_000));
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(59_000);
+      });
+      expect(router.refresh).not.toHaveBeenCalled();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(1);
+    });
+
+    it("서버가 아직 오픈 예정으로 주면 간격을 두고 다시 받고, 빠지면 멈춘다", async () => {
+      const upcoming = openingIn(1_000);
+      const { refetchUpcoming } = await renderWith("?tab=upcoming", undefined, upcoming);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(2_000);
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(1);
+
+      // 서버 전환 작업 전이라 같은 딜이 그대로 온다. 곧바로 또 부르지 않는다
+      await refetchUpcoming(upcoming.map((group) => ({ ...group })));
+      expect(router.refresh).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(2);
+
+      // 진행중으로 옮겨 가 오픈 예정에서 빠졌다
+      await refetchUpcoming([]);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30_000);
+      });
+      expect(router.refresh).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe("남은 시간이 다 되면", () => {

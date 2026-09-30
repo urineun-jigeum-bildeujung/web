@@ -17,7 +17,12 @@ test.beforeEach(async ({ page }) => {
   await stubNotifications(page);
 });
 
-test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ page }) => {
+// 탭 전환은 이력에 쌓지 않는다. 장바구니에서 뒤로가면 보던 탭 그대로, 한 번 더 뒤로가면
+// 타임딜에 오기 전 화면이다 (QA #1)
+test("탭을 옮긴 뒤 장바구니에 갔다 뒤로가면 보던 탭으로, 한 번 더 뒤로가면 전 화면으로 간다", async ({
+  page,
+}) => {
+  await page.goto("/search");
   await page.goto("/deals");
   await expect(page.getByText("종료까지 남은 시간")).toBeVisible();
 
@@ -25,8 +30,25 @@ test("탭을 옮기면 주소에 남고 뒤로가기로 돌아온다", async ({ 
   await expect(page).toHaveURL(/tab=upcoming/);
   await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
 
+  await page.getByRole("link", { name: "장바구니" }).click();
+  await expect(page).toHaveURL(/\/cart$/);
+
   await page.goBack();
-  await expect(page.getByText("종료까지 남은 시간")).toBeVisible();
+  await expect(page).toHaveURL(/\/deals\?tab=upcoming$/);
+  await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/search$/);
+});
+
+// 오픈 예정 카드에 링크가 없어 눌러도 아무 일이 없었다 (QA #94)
+test("오픈 예정 딜 상품을 누르면 상품 상세로 간다", async ({ page }) => {
+  await page.goto("/deals?tab=upcoming");
+
+  await page.getByRole("link", { name: /사슴고기&현미 소형견 사료 1.2kg/ }).click();
+
+  // 상세 라우트를 처음 여는 순간이라 dev 서버가 그 자리에서 컴파일한다
+  await expect(page).toHaveURL(/\/products\/201$/, { timeout: 30_000 });
 });
 
 test("목록에서 옵션을 골라 바로 담는다", async ({ page }) => {

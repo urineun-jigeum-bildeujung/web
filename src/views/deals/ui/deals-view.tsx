@@ -11,8 +11,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useEffect, useState } from "react";
 
 import { CartLink } from "@/widgets/cart-link";
 import {
@@ -58,6 +59,15 @@ const STOCK_BADGE = {
 const DAY_MS = 86_400_000;
 
 /**
+ * 시작 시각이 지난 뒤 다시 받는 간격. 백엔드는 딜 상태를 시각이 아니라 30초마다 도는
+ * 전환 작업(`TimeDealTransitionJob`)으로 바꿔, 시작 직후엔 아직 오픈 예정으로 온다
+ */
+const OPEN_RETRY_MS = 5_000;
+
+/** setTimeout이 받는 가장 긴 대기(약 24.8일). 넘기면 바로 불려 다시 받기를 되풀이한다 */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
+/**
  * "내일 오전 10시"처럼. 오늘·내일이면 날짜 대신 그 말을 쓴다.
  *
  * **date-fns의 `isToday`·`isTomorrow`를 쓰지 않는다.** 그 둘은 브라우저 시간대로 판정해서,
@@ -78,6 +88,40 @@ function formatOpenAt(startAt: string) {
         : null;
 
   return nearby ? `${nearby} ${formatDisplayHour(startAt)}` : formatDisplayDayHour(startAt);
+}
+
+/**
+ * 오픈 예정 딜이 열릴 시각이 되면 서버에서 목록을 다시 받는다(QA #84). 그리는 것은 없다.
+ *
+ * 탭 안이 아니라 화면에 늘 붙여 둔다 — 탭 내용은 고른 탭만 그려져, 진행중 탭을 보는 동안에도
+ * 오픈 예정 딜이 진행중으로 옮겨 와야 한다. 다시 받으면 새 목록이 와 이 효과가 다시 돈다.
+ * 여전히 오픈 예정이면(서버 전환 전) `OPEN_RETRY_MS` 뒤에 또 받고, 빠졌으면 멈춘다.
+ */
+function RefreshOnDealOpen({ dealsPromise }: { dealsPromise: Promise<TimeDealList> }) {
+  const { groups, serverTime } = use(dealsPromise);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (groups.length === 0) return;
+
+    // 기기 시계가 서버와 어긋나도 서버 기준으로 잰다. 응답을 받은 뒤 흐른 시간만큼 늦게
+    // 재는 쪽으로만 틀려, 서버가 열기 전에 부르지는 않는다
+    const clockOffset = Date.now() - Date.parse(serverTime);
+    const openAt = Math.min(...groups.map((group) => Date.parse(group.startAt))) + clockOffset;
+
+    let timer: ReturnType<typeof setTimeout>;
+    const refresh = () => {
+      router.refresh();
+      // 다시 받기가 실패해 새 목록이 오지 않아도 멈추지 않게 다음 번을 걸어 둔다
+      timer = setTimeout(refresh, OPEN_RETRY_MS);
+    };
+    // 이미 시각이 지났으면 서버 전환을 기다리는 중이다. 바로 부르면 응답마다 또 부른다
+    const wait = openAt > Date.now() ? openAt - Date.now() : OPEN_RETRY_MS;
+    timer = setTimeout(refresh, Math.min(wait, MAX_TIMEOUT_MS));
+    return () => clearTimeout(timer);
+  }, [groups, serverTime, router]);
+
+  return null;
 }
 
 /** 결과 영역이 대기 중일 때 자리를 잡는다. 카운트다운 자리 하나 + 카드 3장 자리 */
@@ -333,28 +377,35 @@ function UpcomingDealsSection({
             <ul className="flex flex-col">
               {group.items.map((item) => (
                 <li key={item.timeDealItemId} className="border-b border-border last:border-b-0">
-                  <ProductSummary
-                    name={item.name}
-                    imageUrl={item.thumbnailUrl ?? undefined}
-                    imageSize={24}
-                    className="gap-4 p-5"
-                    meta={
-                      <span className="flex flex-col gap-0.5">
-                        <span className="text-title-bold-18 text-brand">
-                          예정 {item.discountRate}%
-                        </span>
-                        {/* 값이 없으면 줄째로 비운다. `오픈`만 남으면 언제 여는지 아는
-                            것처럼 보인다 (#300 리뷰) */}
-                        {openLabel && (
-                          <span className="text-label-medium-11 text-text-body-unselect">
-                            {openLabel} 오픈
+                  {/* 누르면 상품 상세로 간다(QA #94). 딜 번호는 붙이지 않는다 — 아직 열리지
+                      않은 딜가로 상세를 그리면 그 값에 담을 수 있는 것처럼 보인다 */}
+                  <Link
+                    href={`/products/${item.productId}`}
+                    className="block focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  >
+                    <ProductSummary
+                      name={item.name}
+                      imageUrl={item.thumbnailUrl ?? undefined}
+                      imageSize={24}
+                      className="gap-4 p-5"
+                      meta={
+                        <span className="flex flex-col gap-0.5">
+                          <span className="text-title-bold-18 text-brand">
+                            예정 {item.discountRate}%
                           </span>
-                        )}
-                      </span>
-                    }
-                    // 시안(1905-32448)은 이 자리(action_button)가 아예 없다 — 장식용
-                    // 가방 아이콘을 지운다
-                  />
+                          {/* 값이 없으면 줄째로 비운다. `오픈`만 남으면 언제 여는지 아는
+                              것처럼 보인다 (#300 리뷰) */}
+                          {openLabel && (
+                            <span className="text-label-medium-11 text-text-body-unselect">
+                              {openLabel} 오픈
+                            </span>
+                          )}
+                        </span>
+                      }
+                      // 시안(1905-32448)은 이 자리(action_button)가 아예 없다 — 장식용
+                      // 가방 아이콘을 지운다
+                    />
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -398,12 +449,11 @@ type DealsViewProps = {
 };
 
 export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewProps) {
-  // nuqs 기본은 replace라 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다.
-  // 고른 탭에 따라 보이는 것이 통째로 달라지므로 되돌아올 수 있어야 한다
-  const [tab, setTab] = useQueryState(
-    "tab",
-    parseAsStringLiteral(TABS).withDefault("live").withOptions({ history: "push" }),
-  );
+  // 탭 전환은 이력에 쌓지 않는다(replace, QA #1). AGENTS 5.1은 탭을 push로 두라지만, PM QA는
+  // 장바구니 등에서 뒤로가면 "보던 탭 그대로의 타임딜"로, 한 번 더 뒤로가면 타임딜에 오기 전
+  // 화면으로 가길 기대한다. push면 거기서 지나온 탭을 하나씩 되짚는다. 보던 탭은 주소에 남아
+  // 뒤로 돌아와도 유지된다
+  const [tab, setTab] = useQueryState("tab", parseAsStringLiteral(TABS).withDefault("live"));
 
   // 서버가 다시 알려준 게 아니라 카운트다운이 다 돼 로컬에서만 숨긴 딜들이다.
   // 실제로 그 딜이 끝났는지는 다음에 이 화면을 다시 열 때 서버 조회로 확인된다
@@ -528,6 +578,10 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
           </Suspense>
         </TabsContent>
       </Tabs>
+
+      <Suspense fallback={null}>
+        <RefreshOnDealOpen dealsPromise={upcomingDealsPromise} />
+      </Suspense>
 
       {/* 실제 진행 딜이 몇 시간씩 남아 빈 상태를 보려면 오래 기다려야 할 수 있다.
           QA가 두 상태를 바로 오가며 볼 수 있게 둔 개발용 버튼이다 — 시안엔 없고
