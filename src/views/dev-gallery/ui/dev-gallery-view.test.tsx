@@ -26,6 +26,7 @@ test("모든 구역이 렌더링된다", () => {
     "Rating",
     "QuantityStepper",
     "MatchScoreBadge",
+    "RecommendationReason · SaleStatusBadge",
     "OrderStatusBadge",
     "OrderProductRow · OrderProductThumbnail",
     "DetailSection · DetailRow",
