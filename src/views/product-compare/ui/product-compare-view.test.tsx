@@ -59,6 +59,7 @@ function detail(productId: number, name: string, price: number): ProductDetail {
   return {
     productId,
     timeDealItemId: null,
+    timeDeal: null,
     images: [`https://image.leechs.shop/products/${productId}.png`],
     name,
     price,
