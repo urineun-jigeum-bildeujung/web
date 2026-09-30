@@ -256,7 +256,7 @@ describe("getProductDetail", () => {
     expect(product.timeDealItemId).toBeNull();
   });
 
-  // 지금 화면엔 그릴 자리가 없지만 경고로 쓸 값이다 (#414).
+  // 상품 상세의 적합도 칸이 주의 줄로 그리는 값이다 (#414).
   // 위험 등급(CautionLevel)은 이 응답에 없어 독성과 섭취 주의를 가를 수 없다
   it("cautions를 표시명 그대로 담아 둔다", async () => {
     stubFetch(Response.json(response));

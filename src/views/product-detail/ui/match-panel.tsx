@@ -22,6 +22,11 @@ type MatchPanelProps = {
   pets: { id: string; name: string }[];
   onPetChange: (petId: string) => void;
   match: PetMatch;
+  /**
+   * 상품이 들고 있는 주의성분 표시명. 상품 상세 응답의 실값이라 `match`(아이별 목 적합도)와
+   * 출처가 달라 따로 받는다 — 한 타입에 합치면 AI 계약이 붙어 목이 걷힐 때 실값이 함께 지워진다 (#414)
+   */
+  cautions: string[];
 };
 
 /**
@@ -32,11 +37,28 @@ function headlineOf(level: ReturnType<typeof getMatchLevel>) {
   return level.tone === "high" ? "잘 맞는 상품이에요" : level.label;
 }
 
-export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
+export function MatchPanel({ pets, onPetChange, match, cautions }: MatchPanelProps) {
   const level = getMatchLevel(match.score);
   // 이름은 적합도에서 가져온다. 목록에서 따로 찾으면 둘이 어긋났을 때
   // 이 아이 이름 아래 다른 아이의 근거가 붙는다
   const { petId, petName } = match;
+  // 적합도 근거와 주의성분을 한 목록에 함께 편다. 눈으로는 위아래 자리로 갈리지만
+  // 낭독기에는 자리가 없어 문구가 유일한 단서다. 같은 문장이 양쪽에서 와도
+  // key가 부딪히지 않게 출처를 접두사로 붙인다
+  const rows = [
+    ...match.reasons.map((reason) => ({
+      key: `reason-${reason.text}`,
+      isGood: reason.tone === "good",
+      label: reason.tone === "good" ? "도움되는 점." : "지켜볼 점.",
+      text: reason.text,
+    })),
+    ...cautions.map((caution) => ({
+      key: `caution-${caution}`,
+      isGood: false,
+      label: "주의성분.",
+      text: caution,
+    })),
+  ];
 
   return (
     <section aria-labelledby="match-heading" className="flex flex-col gap-3 p-5">
@@ -96,29 +118,25 @@ export function MatchPanel({ pets, onPetChange, match }: MatchPanelProps) {
           **그 구간이 두 열인 것은 PD 확인을 받았다**(2026-09-30) — 시안에 없는 폭이라 되물었고
           <그 구간은 2열로 둬도 괜찮다>는 답이다. 세 열로 만들려면 353이나 22 중 하나를 줄여야 한다 */}
       <ul className="flex flex-wrap gap-x-5.5 gap-y-2">
-        {match.reasons.map((reason) => (
+        {rows.map((row) => (
           <li
-            key={reason.text}
+            key={row.key}
             className={cn(
               "flex w-full max-w-88.25 items-center gap-1 text-body-medium-14",
-              reason.tone === "good"
-                ? "text-text-body-info-strong"
-                : "text-text-body-danger-strong",
+              row.isGood ? "text-text-body-info-strong" : "text-text-body-danger-strong",
             )}
           >
             <Icon
-              name={reason.tone === "good" ? "check" : "danger"}
+              name={row.isGood ? "check" : "danger"}
               aria-hidden
               className={cn(
                 "size-5 shrink-0",
-                reason.tone === "good" ? "text-surface-info" : "text-icon-fill-red",
+                row.isGood ? "text-surface-info" : "text-icon-fill-red",
               )}
             />
             {/* 아이콘 모양만으로는 도움인지 주의인지 알 수 없다 */}
-            <span className="sr-only">
-              {reason.tone === "good" ? "도움되는 점." : "지켜볼 점."}
-            </span>
-            <span className="min-w-0">{reason.text}</span>
+            <span className="sr-only">{row.label}</span>
+            <span className="min-w-0">{row.text}</span>
           </li>
         ))}
       </ul>

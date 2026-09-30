@@ -633,7 +633,12 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
 
         {match && pets ? (
           <>
-            <MatchPanel pets={pets} onPetChange={setPetId} match={match} />
+            <MatchPanel
+              pets={pets}
+              onPetChange={setPetId}
+              match={match}
+              cautions={product.detail.cautions}
+            />
             <div className="h-2 bg-muted" />
           </>
         ) : isWaitingMatch ? (

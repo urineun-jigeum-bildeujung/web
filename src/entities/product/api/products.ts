@@ -209,8 +209,8 @@ type ProductDetailApiResponse = {
     allergens: AllergenInfo[];
     /**
      * **코드가 아니라 표시명 배열이다.** 서버가 `CautionIngredientCode.getDisplayName()`을
-     * 거쳐 내보낸다. 위험 등급(`CautionLevel`)은 이 응답에 없다 — 독성과 섭취 주의를
-     * 가르려면 백엔드가 응답을 넓혀야 한다 (#414).
+     * 거쳐 내보낸다. 위험 등급(`CautionLevel`)은 이 응답에 없는데 **넓혀 달라고 요청하지 않는다** —
+     * PD가 독성과 섭취 주의를 구분하지 않고 둘 다 경고로 두기로 정해 등급이 필요 없다 (#414).
      */
     cautions: string[];
     consumptionPeriodDisplay: string | null;
@@ -225,8 +225,8 @@ export type ProductDetailInfo = ProductDetailApiResponse["detailInfo"];
 /**
  * 상품 상세 화면이 그대로 쓰는 모델.
  *
- * **`cautions`를 버리지 않고 담아 둔다.** 지금 화면에 그릴 자리가 없지만 경고·추천 제외로
- * 쓰기로 되어 있는 값이다 (#414). 여기서 떨어뜨리면 그 작업이 이 레이어부터 다시 열어야 한다.
+ * **`cautions`를 버리지 않고 담아 둔다.** 상품 상세의 적합도 칸이 주의 줄로 그린다 (#414).
+ * 추천 제외로도 쓰기로 되어 있다. 여기서 떨어뜨리면 그 화면부터 값이 끊긴다.
  */
 export type ProductDetail = {
   productId: number;

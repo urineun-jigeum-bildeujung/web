@@ -42,7 +42,7 @@ const SPECIES_SUFFIX = [
  * 응답을 상세 설명 표의 아홉 줄로 옮긴다. 항목명은 시안의 말이라 화면이 쥔다.
  *
  * **빈 값은 줄째로 뺀다.** "제조국 —"처럼 항목명만 남은 줄은 알려주는 것이 없다.
- * `cautions`는 이 표에 자리가 없다 — 경고로 쓸 값이라 따로 다룬다(#414).
+ * `cautions`는 이 표에 자리가 없다 — 경고로 읽혀야 해서 적합도 칸이 맡는다(`match-panel.tsx` · #414).
  */
 function toSpecRows(detail: ProductDetailInfo): [string, string][] {
   // 급여 대상은 시안(1702-18844)처럼 "8세 이상 소형견" 한 문구로 적는다. 종은 늘 맨 뒤에 오고,

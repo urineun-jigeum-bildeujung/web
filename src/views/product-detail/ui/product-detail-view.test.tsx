@@ -381,6 +381,22 @@ describe("ProductDetailView", () => {
     expect(screen.getByText("나트륨 함량이 또래 평균보다 다소 높은 편이에요")).toBeDefined();
   });
 
+  // 적합도 근거는 아직 목이고 주의성분은 상품 응답의 실값이다. 화면까지 오는 길이 끊기면
+  // 자일리톨 같은 경고가 조용히 사라진다 (#414)
+  it("응답의 주의성분을 적합도 칸에 함께 그린다", async () => {
+    await renderWith();
+
+    expect(screen.getByText("나트륨 과다")).toBeDefined();
+    expect(screen.getByText("주의성분.")).toBeDefined();
+  });
+
+  it("주의성분이 없는 상품은 그 줄을 만들지 않는다", async () => {
+    await renderWith("", { detail: { ...PRODUCT.detail, cautions: [] } });
+
+    expect(screen.queryByText("나트륨 과다")).toBeNull();
+    expect(screen.queryByText("주의성분.")).toBeNull();
+  });
+
   // 리뷰 탭 전환은 여기서 보지 않는다 — ReviewPanel이 QueryClient를 요구해 이 harness로는
   // 열 수 없고, 그 탭 안의 동작은 review-panel.test.tsx가 맡는다.
   //
