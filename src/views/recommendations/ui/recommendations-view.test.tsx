@@ -286,6 +286,29 @@ describe("RecommendationsView", () => {
     consoleError.mockRestore();
   });
 
+  // 분류 탭은 오류 경계 밖이다. 경계를 분류로 비우지 않으면 탭은 눌려도 오류 문구가 남았다(#600)
+  it("추천이 실패한 뒤 분류를 바꾸면 그 분류로 다시 부른다", () => {
+    recommendationFails = true;
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(
+      <NuqsTestingAdapter hasMemory>
+        <RecommendationsView />
+      </NuqsTestingAdapter>,
+    );
+    expect(screen.getByRole("alert")).toBeDefined();
+
+    recommendationFails = false;
+    fireEvent.click(
+      within(screen.getByRole("navigation", { name: "상품 분류" })).getByRole("button", {
+        name: "간식",
+      }),
+    );
+
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(recommendationCalls.at(-1)).toEqual({ petId: 3, category: "snack", size: 50 });
+    consoleError.mockRestore();
+  });
+
   // 메인 "맞춤 추천" 더보기로 들어오는 서브 화면이라 뒤로가기가 있어야 한다.
   // 시안 헤더(로고형)와 다르게 유지하기로 한 것을 여기서 고정해 둔다(#273)
   it("머리말에 뒤로가기와 제목이 있다", () => {
