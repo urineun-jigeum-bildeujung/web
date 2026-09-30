@@ -121,6 +121,19 @@ test("이름에 이모티콘은 들어가지 않고 숫자는 들어간다", () 
   expect(getDraft().name).toBe("초코2");
 });
 
+// QA 온보딩(#602). 10자를 넘겨도 계속 입력됐다. 한글은 조합 중인 글자가 `maxLength`를 거치지
+// 않아 값으로도 자른다
+test("이름은 10자에서 더 들어가지 않는다", () => {
+  renderAt("?step=basic");
+  const name = screen.getByLabelText("아이의 이름을 알려주세요") as HTMLInputElement;
+
+  fireEvent.change(name, { target: { value: "가나다라마바사아자차카" } });
+
+  expect(name.maxLength).toBe(10);
+  expect(name.value).toBe("가나다라마바사아자차");
+  expect(getDraft().name).toBe("가나다라마바사아자차");
+});
+
 // QA 온보딩(#602). 두 번째 단계에서 "이전"을 누르면 첫 단계가 새로 그려져 사진 자리가 빈 원이
 // 됐다. 파일은 초안에 남아 실제로는 등록되는데 화면만 사진이 빠진 것처럼 보였다
 test("두 번째 단계에서 이전으로 돌아와도 골라 둔 사진이 남는다", () => {

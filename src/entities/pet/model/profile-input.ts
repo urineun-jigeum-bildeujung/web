@@ -14,9 +14,31 @@
 const EMOJI =
   /[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍︎️⃣\u{E0020}-\u{E007F}]/gu;
 
-/** 이름에서 이모티콘을 걷어 낸다. 한글·영문·숫자는 그대로 둔다 (QA No.187·230) */
+/**
+ * 이름 길이 상한 (QA 온보딩, #602). 입력칸의 `maxLength`도 이 값이다.
+ *
+ * **서버에는 상한이 없다.** `PetRegisterRequest.name`이 `@NotBlank`뿐이다. PM QA 기대 결과를 따랐다.
+ */
+export const PET_NAME_MAX = 10;
+
+/**
+ * 이름에서 이모티콘을 걷어 내고 10자로 자른다. 한글·영문·숫자는 그대로 둔다 (QA No.187·230, #602).
+ *
+ * **이모티콘을 먼저 걷고 센다.** 거꾸로 하면 이모티콘이 자리를 차지했다가 빠져 10자가 못 된다.
+ *
+ * **`maxLength`만으로는 한글이 한 자 넘친다.** 조합 중인 글자는 길이 제한을 거치지 않는다 — 배송
+ * 요청사항(#526)과 같다. 길이는 `maxLength`와 같이 UTF-16 단위로 세고, 두 단위로 된 글자가 경계에
+ * 걸리면 반만 남기지 않고 통째로 뺀다.
+ */
 export function toPetNameInput(text: string): string {
-  return text.replace(EMOJI, "");
+  const name = text.replace(EMOJI, "");
+  if (name.length <= PET_NAME_MAX) {
+    return name;
+  }
+  const cut = name.slice(0, PET_NAME_MAX);
+  const last = cut.charCodeAt(cut.length - 1);
+  // 앞 단위(high surrogate)로 끝났으면 뒤 단위가 잘려 나간 것이다
+  return last >= 0xd800 && last <= 0xdbff ? cut.slice(0, -1) : cut;
 }
 
 /**

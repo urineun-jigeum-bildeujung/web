@@ -1,7 +1,7 @@
 // 아이 정보 입력칸이 받는 글자. QA 시트에 적힌 값을 그대로 넣어 본다 (#524).
 import { describe, expect, test } from "vitest";
 
-import { toAgeInput, toPetNameInput, toWeightInput } from "./profile-input";
+import { PET_NAME_MAX, toAgeInput, toPetNameInput, toWeightInput } from "./profile-input";
 
 describe("toPetNameInput", () => {
   // QA No.187·230
@@ -20,6 +20,24 @@ describe("toPetNameInput", () => {
 
   test("한글·영문·숫자·띄어쓰기는 그대로 둔다", () => {
     expect(toPetNameInput("Coco 2세 보리")).toBe("Coco 2세 보리");
+  });
+
+  // QA 온보딩(#602). 한글은 조합 중인 글자가 `maxLength`를 거치지 않아 11자째가 들어온다
+  test("10자까지는 그대로 두고 넘치면 10자로 자른다", () => {
+    expect(PET_NAME_MAX).toBe(10);
+    expect(toPetNameInput("가나다라마바사아자차")).toBe("가나다라마바사아자차");
+    expect(toPetNameInput("가나다라마바사아자차카")).toBe("가나다라마바사아자차");
+    expect(toPetNameInput("abcdefghijKLM")).toBe("abcdefghij");
+  });
+
+  // 거꾸로 하면 이모티콘이 자리를 차지했다가 빠져 10자가 못 된다
+  test("이모티콘을 걷어 낸 뒤에 센다", () => {
+    expect(toPetNameInput("가나다라마🐶바사아자차카")).toBe("가나다라마바사아자차");
+  });
+
+  // 두 단위로 된 글자(𠀀, U+20000)가 10자 경계에 걸리면 반만 남아 깨진 글자가 이름이 된다
+  test("경계에 걸린 두 단위 글자는 반만 남기지 않고 통째로 뺀다", () => {
+    expect(toPetNameInput(`${"가".repeat(9)}𠀀`)).toBe("가".repeat(9));
   });
 });
 
