@@ -12,6 +12,8 @@
 | `avatar/avatar-initials.test.ts` | 공백·한 글자 이름과 여러 코드 포인트로 된 이모지를 본다 |
 | `birth-date.ts` | 생년월일을 치는 대로 다듬고 서버가 받는 `YYYY-MM-DD`로 옮긴다 |
 | `birth-date.test.ts` | 달력에 없는 날과 앞날을 거르는지 본다 |
+| `phone/phone-number.ts` | 전화번호를 치는 대로 숫자만 남기고 하이픈을 넣는다(`formatPhoneInput`). 010은 3-4-4, 서울은 2-3-4·2-4-4, 050 평생·안심번호는 4-3-4·4-4-4(열두 자리까지). 배송지 연락처가 쓰던 것을 휴대폰 인증과 함께 쓰려고 옮겼다 (#526, #594) |
+| `phone/phone-number.test.ts` | 치는 도중의 모양, 숫자가 아닌 글자, 자리 수를 넘는 값, 050 번호 |
 | `list/use-load-more.ts` | 목록 끝이 화면에 들어오면 다음 쪽을 부른다. 주문 목록과 상품 후기 사진이 쓴다 |
 | `josa/josa.ts` | 이름 뒤 조사를 받침에 맞춰 고른다 |
 | `josa/josa.test.ts` | 받침 유무와 ㄹ 예외, 한글이 아닌 이름을 본다 |
