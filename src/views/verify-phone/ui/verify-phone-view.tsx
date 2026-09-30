@@ -6,6 +6,8 @@
 //
 // **서버도 같은 방침이라 인증번호가 `584937`로 고정돼 있다.** 그래서 받은 것처럼 채워
 // 주되, 발송·확인은 실제 API를 탄다(#247) — 만료 180초와 재시도 제한이 그쪽에 있다.
+//
+// **번호는 치는 대로 3-4-4로 끊고, 휴대폰 번호 모양일 때만 "인증" 칩을 보인다**(QA No.150·151, #594).
 
 "use client";
 
@@ -14,6 +16,7 @@ import { useState } from "react";
 
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { toastAppError, toastAppSuccess } from "@/shared/lib/app-toast";
+import { formatPhoneInput, isMobilePhoneNumber } from "@/shared/lib/phone/phone-number";
 import { Button } from "@/shared/ui/button";
 import { FormField } from "@/shared/ui/form-field/form-field";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
@@ -31,6 +34,9 @@ import { useMutatePhoneVerification } from "../api/use-mutate-phone-verification
  * 같은 상수를 쓰는 것이다. 실제 발송이 붙으면 이 자동 채움만 걷어낸다.
  */
 const FIXED_CODE = "584937";
+
+/** 휴대폰 번호의 가장 긴 숫자 수. `010-1234-5678` */
+const MAX_PHONE_DIGITS = 11;
 
 /** 입력칸 안 오른쪽의 32px 검정 칩. 시안의 action_button */
 const CHIP_CLASS = "h-8 rounded-md px-2 text-label-medium-14";
@@ -56,7 +62,12 @@ export function VerifyPhoneView() {
 
   const verified =
     verifiedWith !== null && verifiedWith.phone === digitsOf(phone) && verifiedWith.code === code;
-  const canRequestCode = Boolean(carrier) && digitsOf(phone).length >= 10;
+  /**
+   * **모양이 틀린 번호에는 "인증" 칩을 보이지 않는다**(QA No.151). 자리 수만 세면
+   * `0212345678`처럼 휴대폰이 아닌 번호로도 인증을 요청할 수 있었다. 통신사는 칩을 보인 채
+   * 잠가 둔다 — 고를 것이 남았다는 것을 칩이 알린다.
+   */
+  const phoneReady = isMobilePhoneNumber(phone);
 
   const sendCode = () => {
     requestCode(phone)
@@ -136,18 +147,23 @@ export function VerifyPhoneView() {
         placeholder="010-1234-5678"
         inputMode="numeric"
         value={phone}
-        onChange={(event) => setPhone(event.target.value)}
+        // 숫자만 열한 자리까지 받아 3-4-4로 끊는다(QA No.150). 서버에는 숫자만 간다(`digitsOf`)
+        onChange={(event) =>
+          setPhone(formatPhoneInput(digitsOf(event.target.value).slice(0, MAX_PHONE_DIGITS)))
+        }
         trailing={
-          <Button
-            aria-label="인증 번호 받기"
-            className={CHIP_CLASS}
-            disabled={!canRequestCode || isRequesting}
-            onClick={sendCode}
-          >
-            <LoadingSwap loading={isRequesting} label="인증 번호를 보내는 중">
-              인증
-            </LoadingSwap>
-          </Button>
+          phoneReady && (
+            <Button
+              aria-label="인증 번호 받기"
+              className={CHIP_CLASS}
+              disabled={!carrier || isRequesting}
+              onClick={sendCode}
+            >
+              <LoadingSwap loading={isRequesting} label="인증 번호를 보내는 중">
+                인증
+              </LoadingSwap>
+            </Button>
+          )
         }
       />
 

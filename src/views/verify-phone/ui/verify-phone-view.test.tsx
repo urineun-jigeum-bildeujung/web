@@ -37,15 +37,48 @@ test("처음에는 인증번호 입력란이 없다", () => {
   expect(screen.queryByText("인증 번호를 입력해주세요")).toBeNull();
 });
 
-test("통신사와 번호가 있어야 인증 요청을 할 수 있다", () => {
+// 자리 수만 세면 휴대폰이 아닌 번호로도 인증을 요청할 수 있었다 (QA No.151)
+test("번호가 휴대폰 번호 모양일 때만 인증 칩을 보인다", () => {
   renderView();
+  const phone = screen.getByLabelText("휴대폰 번호");
+  const request = () => screen.queryByRole("button", { name: "인증 번호 받기" });
 
-  const request = screen.getByRole("button", { name: "인증 번호 받기" });
-  expect((request as HTMLButtonElement).disabled).toBe(true);
+  expect(request()).toBeNull();
+
+  fireEvent.change(phone, { target: { value: "010123" } });
+  expect(request()).toBeNull();
+
+  // 열 자리지만 서울 지역번호다
+  fireEvent.change(phone, { target: { value: "0212345678" } });
+  expect(request()).toBeNull();
+
+  fireEvent.change(phone, { target: { value: "01012345678" } });
+  expect(request()).not.toBeNull();
+});
+
+test("통신사를 고르기 전에는 인증 칩을 눌러도 요청하지 않는다", () => {
+  renderView();
 
   // 번호만 채우면 아직 통신사가 없어 눌리지 않는다
   fireEvent.change(screen.getByLabelText("휴대폰 번호"), { target: { value: "01012345678" } });
-  expect((request as HTMLButtonElement).disabled).toBe(true);
+  expect(
+    (screen.getByRole("button", { name: "인증 번호 받기" }) as HTMLButtonElement).disabled,
+  ).toBe(true);
+});
+
+// 4번째·9번째 자리에 하이픈이 들어간다. 숫자만 열한 자리까지 받는다 (QA No.150)
+test.each([
+  ["01012345678", "010-1234-5678"],
+  ["0101234", "010-1234"],
+  ["010123456789", "010-1234-5678"],
+  ["010-abcd-1234", "010-1234"],
+])("번호 %s를 치면 %s로 보인다", (typed, shown) => {
+  renderView();
+  const phone = screen.getByLabelText<HTMLInputElement>("휴대폰 번호");
+
+  fireEvent.change(phone, { target: { value: typed } });
+
+  expect(phone.value).toBe(shown);
 });
 
 test("인증을 마쳐야 입력 완료가 켜진다", () => {
