@@ -21,8 +21,8 @@
 | `model/unit-price.test.ts` | 단가 줄 문장과 천 단위 쉼표 |
 | `ui/match-score-badge.tsx` | 적합도 점수 배지. 점수와 함께 구간 문구를 읽히고, 재지 못했으면 "정보 확인 중" |
 | `ui/compare-table.tsx` | 두 상품의 스펙을 항목별로 견주는 표 (`comp_001`) |
-| `ui/compare-slot.tsx` | 비교할 자리 하나. 비어 있으면 담으라고 안내하고, 채워지면 적합도 우열과 장바구니 추가를 보여준다 (`comp_001`, `comp_001_empty`) |
-| `ui/compare-slot.test.tsx` | 빈 자리 안내, 적합도 유무·우열, 장바구니·빼기 콜백 |
+| `ui/compare-slot.tsx` | 비교할 자리 하나. 비어 있으면 담으라고 안내하고, 채워지면 적합도 우열과 장바구니 추가를 보여준다. 품절이면 장바구니 추가를 막는다(#535) (`comp_001`, `comp_001_empty`) |
+| `ui/compare-slot.test.tsx` | 빈 자리 안내, 적합도 유무·우열, 장바구니·빼기 콜백, 품절이면 담기 막기 |
 | `ui/product-option-sheet.tsx` | 목록에서 바로 구성과 수량을 골라 담는 바텀시트 (타임딜_옵션 선택 바텀시트). 타임딜과 상품 비교의 "장바구니 추가"가 쓴다(#535) |
 | `index.ts` | 공개 API |
 

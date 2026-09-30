@@ -43,6 +43,18 @@ test("장바구니 추가를 누르면 onAddToCart가 불린다", () => {
   expect(onAddToCart).toHaveBeenCalled();
 });
 
+// 품절 상품도 장바구니 추가가 눌려 시트가 열리고, 서버가 거절해야 알 수 있었다(#535)
+test("품절이면 장바구니 추가를 막고 품절이라고 알린다", () => {
+  const onAddToCart = vi.fn();
+  render(<CompareSlot product={{ ...PRODUCT, soldOut: true }} onAddToCart={onAddToCart} />);
+
+  const button = screen.getByRole("button", { name: "품절" });
+  expect(button.hasAttribute("disabled")).toBe(true);
+  fireEvent.click(button);
+  expect(onAddToCart).not.toHaveBeenCalled();
+  expect(screen.queryByRole("button", { name: "장바구니 추가" })).toBeNull();
+});
+
 test("빼기를 누르면 onRemove가 불린다", () => {
   const onRemove = vi.fn();
   render(<CompareSlot product={PRODUCT} onRemove={onRemove} />);

@@ -52,7 +52,8 @@ function toCompareHref([first, second]: SlotIds) {
 }
 
 /**
- * 상품 상세를 비교 자리 모양으로 옮긴다. **이름·가격·이미지만 API에서 온다.**
+ * 상품 상세를 비교 자리 모양으로 옮긴다. **이름·가격·이미지·품절만 API에서 온다.** 품절이면
+ * 자리가 장바구니 추가를 막는다 — 담을 수 없는 상품으로 시트를 열어 서버 거절을 기다리지 않는다.
  *
  * 종류(`kind`)와 적합도(`matchScore`)는 상세 응답에 없어 null(모름)이다. 종류를 모르면 종류로
  * 막지 않고, 적합도를 모르면 우열을 가리지 않는다. 예전 목업 맵(`PICKABLE`)의 값을 실제 상품
@@ -66,6 +67,7 @@ function toCompareProduct(product: ProductDetail): CompareProduct {
     imageUrl: product.images[0],
     kind: null,
     matchScore: null,
+    soldOut: product.soldOut,
   };
 }
 
