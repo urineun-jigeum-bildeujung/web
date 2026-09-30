@@ -3,14 +3,14 @@
 기간 한정 할인 상품 목록. 진행 중인 딜과 오픈 예정인 딜을 탭으로 나눈다.
 
 - **라우트**: `/deals` — `src/app/deals/page.tsx`
-- **조립**: `entities/product`(`ProductOptionSheet`, `getTimeDeals`) · `shared/ui`의 `page-header` · `countdown` · `price`(유틸만) · `product-summary` · `empty-state` · `tabs` · `skeleton`
+- **조립**: `widgets`의 `cart-link` · `notification-bell`(헤더 알림, QA No.25) · `entities/product`(`ProductOptionSheet`, `getTimeDeals`) · `shared/ui`의 `page-header` · `countdown` · `price`(유틸만) · `product-summary` · `empty-state` · `tabs` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`live` · `upcoming`). 탭 전환은 이력에 쌓지 않는다(replace, QA #1). 담긴 상품·딜 종료(로컬 판단)·알림 신청 여부는 화면 안 상태
 - **참고**: UI 시안 기준(#275, 진행중 1905-32375 · 담긴 상태 1905-32403 · 오픈예정 1905-32432 · 빈 화면 1905-32457 · 옵션 시트 2544-56035). 목록은 `page.tsx`가 서버에서 조회한다(#282) — 장바구니 담기·알림 신청 mutation은 아직 로컬 상태만 바꾸는 목업이다(백엔드 미착수·별도 이슈)
 
 | 파일 | 설명 |
 | --- | --- |
 | `ui/deals-view.tsx` | 화면 조립. 진행중·오픈예정 각각 `resultsPromise`를 받아 자체 `Suspense`+`use()`로 대기 |
-| `ui/deals-view.test.tsx` | 남은 시간·품절·담기·알림 신청·다중 딜 묶음·빈 배열 |
+| `ui/deals-view.test.tsx` | 헤더 검색·알림·장바구니 순서·남은 시간·품절·담기·알림 신청·다중 딜 묶음·빈 배열 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것

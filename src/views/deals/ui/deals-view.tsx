@@ -16,6 +16,7 @@ import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useEffect, useState } from "react";
 
 import { CartLink } from "@/widgets/cart-link";
+import { NotificationBell } from "@/widgets/notification-bell";
 import {
   ProductOptionSheet,
   formatUnitPrice,
@@ -503,9 +504,11 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
         title="타임딜"
         right={
           // 시안(1905-32416)의 공용 header 아이콘 슬롯이다. 모든 헤더와 같은 HeaderIconLink를 쓴다(#513).
-          // 장바구니 개수 뱃지는 실제 담은 수다(#470)
+          // 장바구니 개수 뱃지는 실제 담은 수다(#470). 알림은 다른 헤더와 같은 순서로 검색과
+          // 장바구니 사이에 둔다(QA No.25, #588)
           <>
             <HeaderIconLink href="/search" label="검색" icon="search" />
+            <NotificationBell />
             <CartLink />
           </>
         }

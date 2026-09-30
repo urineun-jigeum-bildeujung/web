@@ -26,6 +26,10 @@ vi.mock("@/entities/cart", () => ({
 vi.mock("@/widgets/cart-link", () => ({
   CartLink: () => <a href="/cart" aria-label="장바구니" />,
 }));
+// 헤더 종은 읽지 않은 알림 수를 서버에서 읽는 위젯이다. 여기서는 링크만 대신 그린다(#588)
+vi.mock("@/widgets/notification-bell", () => ({
+  NotificationBell: () => <a href="/mypage/notifications" aria-label="알림" />,
+}));
 vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
 import { DealsView } from "./deals-view";
@@ -151,6 +155,20 @@ async function renderWith(
 }
 
 describe("DealsView", () => {
+  // 다른 화면 헤더에는 있는 알림이 타임딜에만 빠져 있었다 (QA No.25, #588)
+  it("머리말 오른쪽에 검색·알림·장바구니가 이 순서로 있다", async () => {
+    await renderWith();
+
+    const header = screen.getByRole("heading", { name: "타임딜" }).closest("header");
+    const links = Array.from(header?.querySelectorAll("a") ?? []).map((link) =>
+      link.getAttribute("aria-label"),
+    );
+    expect(links).toEqual(["검색", "알림", "장바구니"]);
+    expect(screen.getByRole("link", { name: "알림" }).getAttribute("href")).toBe(
+      "/mypage/notifications",
+    );
+  });
+
   it("진행중 탭에 남은 시간과 딜 목록이 있다", async () => {
     await renderWith();
 

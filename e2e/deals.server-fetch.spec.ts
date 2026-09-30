@@ -41,6 +41,20 @@ test("탭을 옮긴 뒤 장바구니에 갔다 뒤로가면 보던 탭으로, �
   await expect(page).toHaveURL(/\/search$/);
 });
 
+// 타임딜 헤더에만 알림이 없었다. 알림에 갔다 뒤로가면 보던 탭 그대로의 타임딜이다 (QA No.25, #588)
+test("헤더 알림에 갔다 뒤로가면 보던 탭의 타임딜로 돌아온다", async ({ page }) => {
+  await page.goto("/deals?tab=upcoming");
+  await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
+
+  await page.getByRole("link", { name: "알림", exact: true }).click();
+  // 알림 라우트를 처음 여는 순간이라 dev 서버가 그 자리에서 컴파일한다
+  await expect(page).toHaveURL(/\/mypage\/notifications$/, { timeout: 30_000 });
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/deals\?tab=upcoming$/);
+  await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
+});
+
 // 오픈 예정 카드에 링크가 없어 눌러도 아무 일이 없었다 (QA #94)
 test("오픈 예정 딜 상품을 누르면 상품 상세로 간다", async ({ page }) => {
   await page.goto("/deals?tab=upcoming");
