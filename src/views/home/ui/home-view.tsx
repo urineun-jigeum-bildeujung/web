@@ -27,6 +27,12 @@ import {
   type TimeDealList,
 } from "@/entities/product";
 import {
+  RecommendationReason,
+  SaleStatusBadge,
+  useQueryHomeRecommendations,
+  type Recommendation,
+} from "@/entities/recommendation";
+import {
   useMutateSubmitFeedback,
   useQueryPendingFeedbacks,
   type PendingFeedback,
@@ -59,42 +65,118 @@ import { NotificationBell } from "@/widgets/notification-bell";
 import { CATEGORIES, CATEGORY_LABEL, type HomeCategory } from "../model/category";
 import { SORT_LABEL, SORT_TO_API, SORTS, type HomeSort } from "../model/sort";
 
-// "AI가 골라주는 맞춤 상품" 캐러셀 전용 목업. petId가 실제 조회에 반영되지 않고
-// 적합도(matchScore) 필드도 응답에 없어(#289, product-service 코드로 확인) 이번
-// 라운드에서는 연동하지 않는다 — /recommendations와 같은 이유로 제외한다.
-const MOCK_PRODUCTS = Array.from({ length: 4 }, (_, index) => ({
-  id: String(index + 1),
-  name: index % 2 === 0 ? "그레인프리 연어 사료 2kg" : "저자극 덴탈껌 14개입",
-  price: index % 2 === 0 ? 31200 : 10800,
-  originalPrice: index % 2 === 0 ? 38000 : 13100,
-  dailyCost: index % 2 === 0 ? 1050 : 771,
-  dailyLabel: index % 2 === 0 ? "하루 예상 급여비" : "1개당",
-  rating: index % 2 === 0 ? 4.8 : 4.9,
-  reviewCount: index % 2 === 0 ? 108 : 203,
-  matchScore: 92 - index * 6,
-}));
+/** 메인 맞춤 상품은 추천 API의 기본 개수(9)만큼 받는다. 추천 화면(50개)과 캐시를 나눈다(#600) */
+const HOME_RECOMMENDATION_SIZE = 9;
 
-/** 시안 ProductCard/Grid의 price 슬롯 — 하루 급여비 캡션 + 별점 + 후기 수를 한 자리에.
- * Rating Container는 5개 별을 늘어놓는 Rating(mypa_041_작성한 기준)과 달리 별 1개 + 숫자다 */
-function ProductMeta({ product }: { product: (typeof MOCK_PRODUCTS)[number] }) {
+/**
+ * 시안 ProductCard/Grid의 price 슬롯 — 단가 + 별점 + 후기 수, 그 아래 추천 이유.
+ * Rating Container는 5개 별을 늘어놓는 Rating(mypa_041_작성한 기준)과 달리 별 1개 + 숫자다.
+ *
+ * 시안의 "하루 예상 급여비"는 추천 응답에 없어 카테고리 그리드와 같은 단가 줄을 쓴다. 단가를 해석하지
+ * 못하면 그 줄을 비운다. 별점은 카테고리 그리드와 같이 후기 수로 가른다(#534). **추천 이유는 시안에
+ * 없지만 이 서비스의 핵심 근거라 카드마다 보인다**(#600)
+ */
+function RecommendedProductMeta({ item }: { item: Recommendation }) {
+  const rated = item.reviewCount > 0;
   return (
     <>
-      <p className="text-label-medium-11 text-text-body-tertiary">
-        {product.dailyLabel} 약 {product.dailyCost.toLocaleString("ko-KR")}원
-      </p>
+      {item.unitPrice && (
+        <p className="text-label-medium-11 text-text-body-tertiary">
+          {formatUnitPrice(item.unitPrice.label, item.unitPrice.price)}
+        </p>
+      )}
       <div className="flex items-center gap-2">
         <span className="flex items-center gap-0.5">
-          <span className="sr-only">5점 만점에 {product.rating}점</span>
-          <Icon name="star" className="size-4 text-icon-fill-accent" />
+          {rated && <span className="sr-only">5점 만점에 {item.rating.toFixed(1)}점</span>}
+          <Icon
+            name="star"
+            className={cn("size-4", rated ? "text-icon-fill-accent" : "text-icon-fill-disable")}
+          />
           <span aria-hidden className="text-label-medium-14 text-text-body-tertiary">
-            {product.rating.toFixed(1)}
+            {rated ? item.rating.toFixed(1) : "-"}
           </span>
         </span>
         <span className="text-label-medium-14 text-text-body-tertiary">
-          후기 {product.reviewCount}개
+          후기 {item.reviewCount}개
         </span>
       </div>
+      <RecommendationReason
+        reason={item.reason}
+        allergyPenalized={item.allergyPenalized}
+        className="mt-1"
+      />
     </>
+  );
+}
+
+/** 맞춤 상품을 받는 동안 가로 목록 자리를 잡는다. 카드 폭은 본체와 같은 208px */
+function RecommendedProductsSkeleton() {
+  return (
+    <div className="flex gap-3 overflow-hidden" role="status" aria-label="맞춤 상품을 불러오는 중">
+      {Array.from({ length: 2 }, (_, index) => (
+        <div key={index} className="flex w-52 shrink-0 flex-col gap-2">
+          <Skeleton className="aspect-square w-full rounded-lg" />
+          <Skeleton className="h-4 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * 고른 아이의 맞춤 상품 가로 목록. 조회 훅이 받아 둔 것 없이 실패하면 오류를 던지고, 부모의
+ * `ErrorBoundary`가 이 칸만 대체한다 — 아이 줄·최근 구매·타임딜은 그대로 남는다(#600)
+ */
+function RecommendedProducts({ petId, petName }: { petId: number; petName: string }) {
+  const { items, isLoading } = useQueryHomeRecommendations({
+    petId,
+    size: HOME_RECOMMENDATION_SIZE,
+  });
+
+  if (isLoading || !items) return <RecommendedProductsSkeleton />;
+
+  if (items.length === 0) {
+    return (
+      <p className="py-8 pr-5 text-center text-body-medium-14 text-text-body-tertiary">
+        {petName}에게 맞는 상품을 아직 찾지 못했어요
+      </p>
+    );
+  }
+
+  return (
+    <ScrollRow label={`${petName} 맞춤 상품`} itemWidth="208px" edgeInset={5} bleedRight={false}>
+      {items.map((item) => (
+        <ScrollRowItem key={item.productId}>
+          <ProductGridCard
+            // 품절 카드는 타임딜 목록(1905-32428)처럼 통째로 흐린다. 글자 배지가 함께 있어 색만으로 알리지 않는다
+            className={cn(item.status === "soldOut" && "opacity-45")}
+            imageSizes="208px"
+            href={`/products/${item.productId}`}
+            name={item.name}
+            price={item.price}
+            originalPrice={item.originalPrice}
+            imageUrl={item.thumbnailUrl}
+            imageBadge={
+              <div className="flex flex-col items-start gap-1">
+                <MatchScoreBadge score={item.score} petName={petName} />
+                <SaleStatusBadge status={item.status} />
+              </div>
+            }
+            imageAction={
+              // 시안(Reaction Button)은 24px 흰색이다 — 사진 위에 얹히므로 흰색이어야 보인다
+              <span
+                aria-hidden
+                className="flex size-6 items-center justify-center text-icon-fill-static-white"
+              >
+                <Icon name="heart_stroke" className="size-6" />
+              </span>
+            }
+            meta={<RecommendedProductMeta item={item} />}
+          />
+        </ScrollRowItem>
+      ))}
+    </ScrollRow>
   );
 }
 
@@ -687,36 +769,42 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                   {" 맞춤 상품"}
                 </span>
               </SectionTitle>
-              <ScrollRow
-                label={`${petName} 맞춤 상품`}
-                itemWidth="208px"
-                edgeInset={5}
-                bleedRight={false}
-              >
-                {MOCK_PRODUCTS.slice(0, 4).map((product) => (
-                  <ScrollRowItem key={product.id}>
-                    <ProductGridCard
-                      href={`/products/${product.id}`}
-                      name={product.name}
-                      price={product.price}
-                      originalPrice={product.originalPrice}
-                      imageBadge={
-                        <MatchScoreBadge score={product.matchScore} petName={pet?.name} />
-                      }
-                      imageAction={
-                        // 시안(Reaction Button)은 24px 흰색이다 — 사진 위에 얹히므로 흰색이어야 보인다
-                        <span
-                          aria-hidden
-                          className="flex size-6 items-center justify-center text-icon-fill-static-white"
-                        >
-                          <Icon name="heart_stroke" className="size-6" />
-                        </span>
-                      }
-                      meta={<ProductMeta product={product} />}
-                    />
-                  </ScrollRowItem>
-                ))}
-              </ScrollRow>
+              {/* 추천은 고른 아이 기준이라 아이가 있어야 부른다. 아이 줄과 같이 로그인 여부를 모르거나
+                  아이 목록을 받는 동안은 뼈대로 자리를 잡는다 */}
+              {isWaitingPets ? (
+                <RecommendedProductsSkeleton />
+              ) : pet ? (
+                // 추천만 실패하면 이 칸만 대체한다. 아이를 바꾸면 경계를 비워 새 아이로 다시 부른다
+                <ErrorBoundary
+                  resetKeys={[pet.id]}
+                  fallback={(retry) => (
+                    <div
+                      role="alert"
+                      className="flex flex-col items-center gap-3 py-4 pr-5 text-center"
+                    >
+                      <p className="text-body-regular-14 text-text-body-secondary">
+                        맞춤 상품을 불러오지 못했어요. 다시 시도해 주세요.
+                      </p>
+                      {/* 누르면 경계가 비워지고 칸이 곧바로 뼈대로 바뀌어 대기 표시를 따로 두지 않는다 */}
+                      <Button variant="outline" className="min-h-11 px-4" onClick={retry}>
+                        다시 시도
+                      </Button>
+                    </div>
+                  )}
+                >
+                  <RecommendedProducts petId={Number(pet.id)} petName={pet.name} />
+                </ErrorBoundary>
+              ) : (
+                // 로그인하지 않았거나 아이가 없다. 추천은 아이 기준이라 부르지 않고 무엇을 하면 되는지 알린다.
+                // 아이 목록을 받지 못했으면(실패) 아이 줄처럼 비워 둔다
+                (session === false || pets?.length === 0) && (
+                  <p className="py-8 pr-5 text-center text-body-medium-14 text-text-body-tertiary">
+                    {session === false
+                      ? "로그인하면 우리 아이에게 맞는 상품을 골라드려요"
+                      : "아이를 등록하면 맞는 상품을 골라드려요"}
+                  </p>
+                )
+              )}
             </section>
 
             {/* 이 서비스가 근거를 모으는 자리. 남길 반응이 없으면 칸째 없다 — 빈 상태 시안이 없다(#494) */}
