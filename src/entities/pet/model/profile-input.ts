@@ -51,13 +51,23 @@ export function toAgeInput(text: string): string {
 }
 
 /**
- * 몸무게는 숫자와 소수점 하나, 소수 첫째 자리까지 받는다 (QA No.206·242).
+ * 몸무게 정수부 자릿수 상한 (QA 온보딩, #602). 999.9kg까지 적을 수 있다.
+ *
+ * **근거 값이 없어 둔 값이다.** 서버(`PetRegisterRequest.weight`)는 `@Positive double`뿐이고 기획에도
+ * 상한이 없다. 기록된 가장 무거운 개도 150kg대라 세 자리면 실제 몸무게는 다 받고 잘못 친 값만 막는다.
+ * 기획이 정하면 이 숫자만 바꾼다.
+ */
+const WEIGHT_WHOLE_DIGITS = 3;
+
+/**
+ * 몸무게는 숫자와 소수점 하나, 정수부 세 자리·소수 첫째 자리까지 받는다 (QA No.206·242, #602).
  *
  * **소수점이 둘 이상이면 첫 소수부까지만 남긴다.** "4.2.3"을 "4.23"으로 이어 붙이면
- * 사용자가 적지 않은 몸무게가 된다. 잘못 친 뒤는 버리고 앞은 살린다.
+ * 사용자가 적지 않은 몸무게가 된다. 잘못 친 뒤는 버리고 앞은 살린다. 넘친 자리도 같다.
  */
 export function toWeightInput(text: string): string {
   const cleaned = text.replace(/[^\d.]/g, "");
   const [whole, fraction] = cleaned.split(".");
-  return fraction === undefined ? cleaned : `${whole}.${fraction.slice(0, 1)}`;
+  const limited = whole.slice(0, WEIGHT_WHOLE_DIGITS);
+  return fraction === undefined ? limited : `${limited}.${fraction.slice(0, 1)}`;
 }

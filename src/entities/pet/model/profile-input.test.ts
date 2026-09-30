@@ -72,6 +72,14 @@ describe("toWeightInput", () => {
     expect(toWeightInput("4.2.3")).toBe("4.2");
   });
 
+  // QA 온보딩(#602). 정수부가 몇 자리든 들어갔다. 근거 값이 없어 999.9kg까지로 뒀다
+  test("정수부는 세 자리까지만 받는다", () => {
+    expect(toWeightInput("999")).toBe("999");
+    expect(toWeightInput("1234")).toBe("123");
+    expect(toWeightInput("99999.9")).toBe("999.9");
+    expect(toWeightInput("1234.56")).toBe("123.5");
+  });
+
   test("치는 중인 모양은 그대로 둔다", () => {
     expect(toWeightInput("4.")).toBe("4.");
     expect(toWeightInput(".5")).toBe(".5");
