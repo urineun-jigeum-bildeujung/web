@@ -120,11 +120,17 @@ test("세 안내는 응답과 무관한 고정 문구를 쓴다", async ({ page 
   // 셋 다 펼쳐 본다. 아코디언이 하나만 열리므로 앞의 것은 닫힌다
   await page.getByRole("button", { name: "배송 안내" }).click();
   const shipping = page.getByRole("region", { name: "배송 안내" });
-  await expect(shipping.getByText("기본 배송비: 3,000원")).toBeVisible();
+  await expect(shipping.getByText("도서·산간 추가 배송비", { exact: false })).toBeVisible();
+  // 조건부 무료배송 줄을 지우면서 기본 배송비 줄도 시안에서 함께 빠졌다 (#575)
+  await expect(shipping.getByText("기본 배송비", { exact: false })).toHaveCount(0);
 
   await page.getByRole("button", { name: "교환/반품/환불 안내" }).click();
   const returns = page.getByRole("region", { name: "교환/반품/환불 안내" });
   await expect(returns.getByText("지정 택배사: CJ대한통운")).toBeVisible();
+  // 문장이 깨져 빼 두었던 줄을 PD가 고쳐 주어 되살렸다 (#575)
+  await expect(returns.getByText("반품 보내실 곳", { exact: false })).toBeVisible();
+  // 무료배송이 없으므로 그것을 전제한 문구도 없다
+  await expect(returns.getByText("무료로 결제하신 경우", { exact: false })).toHaveCount(0);
 });
 
 test("없는 상품은 404 화면으로 간다", async ({ page }) => {
