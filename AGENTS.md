@@ -172,6 +172,7 @@
 | URL 상태 | nuqs | 2.10.1 | 필터·정렬을 쿼리 스트링으로. `NuqsAdapter`는 `shared/providers` |
 | 오류 경계 | react-error-boundary | 6.1.3 | 섹션 단위 오류 격리. TanStack Query 리셋과 연결 |
 | 토스트 | sonner | 2.0.8 | shadcn Sonner가 함께 설치. `Toaster`는 `shared/providers` |
+| 테마 | next-themes | 0.4.6 | 다크 모드. `ThemeProvider`는 `shared/providers`, 기본 라이트·시스템 연동 끔. 선택은 기기에 저장 (#565) |
 | 폼 | react-hook-form | 7.85.0 | 다단계 온보딩·구독 설정 폼 |
 | 폼 연결 | @hookform/resolvers | 5.7.1 | react-hook-form과 zod 연결 |
 | 스키마 검증 | zod | 4.4.3 | 폼·서버 응답 유효성 검증 |
@@ -330,7 +331,6 @@ React Compiler가 활성화되어 있습니다(`next.config.ts`의 `reactCompile
 
 | 항목 | 현재 상태 | 해제 조건 |
 | --- | --- | --- |
-| 테마 토글 | 메인 페이지에 데모 버튼(`features/toggle-theme`)만 있습니다. 선택이 저장되지 않아 새로고침하면 라이트로 돌아갑니다. | 디자인 확정 후 정식 테마 도구(next-themes 등) 결정 |
 | API 계약 | 미확정. | 백엔드 팀 Swagger 명세 공유 후 |
 
 ---

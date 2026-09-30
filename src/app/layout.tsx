@@ -35,8 +35,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // next-themes가 하이드레이션 전에 html에 `dark` 클래스를 붙인다. 서버가 그린 값과 달라지는 것이 정상이라 이 한 층만 경고를 끈다(#565)
     <html
       lang="ko"
+      suppressHydrationWarning
       className={cn("h-full", "antialiased", geistMono.variable, "font-sans", pretendard.variable)}
     >
       <body className="min-h-full">
