@@ -4,7 +4,7 @@
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
 - **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` — **`qna`는 받지 않는다**, 아래), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙고, 딜이 끝나면 화면이 그 쿼리만 뗀다(#484, #539). 상품 상태 중 정상·품절은 QA용으로 `status` 쿼리가 덮어쓴다(개발 빌드만, 타임딜은 덮어쓰지 않는다 — 아래). 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` — **`qna`는 받지 않는다**, 아래), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙고, 딜이 끝나면 화면이 그 쿼리만 뗀다(#484, #539). 수량 시트는 `sheet`(`cart` · `buy`)가 들어 결제에서 뒤로 오면 열린 채로 돌아온다(QA No.35, #595 — 아래). 상품 상태 중 정상·품절은 QA용으로 `status` 쿼리가 덮어쓴다(개발 빌드만, 타임딜은 덮어쓰지 않는다 — 아래). 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
 - **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
@@ -24,7 +24,7 @@
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
-| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환·후기 수를 누르면 리뷰 탭 자리로 내려가는지·타임딜(응답으로 켜기·기기 시계 차이·끝나면 딜 번호 떼기·장바구니 아이콘으로 담기·`?status=deal`을 듣지 않는지)·딜 품절·품절 사진·담기 취소와 담긴 수(딜 줄·로그인 전) |
+| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환·후기 수를 누르면 리뷰 탭 자리로 내려가는지·타임딜(응답으로 켜기·기기 시계 차이·끝나면 딜 번호 떼기·장바구니 아이콘으로 담기·`?status=deal`을 듣지 않는지)·딜 품절·품절 사진·담기 취소와 담긴 수(딜 줄·로그인 전)·수량 시트를 주소가 들어 결제에서 돌아오면 열리는지(로그인 전은 열지 않음) |
 | `ui/detail-option-sheet.tsx` | 수량 시트. 상품 사진(없으면 회색 자리)·용량 표기·수량과 장바구니 담기 또는 바로 구매 버튼. 고를 옵션은 없다. 장바구니로 열었고 이미 담긴 상품이면 담긴 수와 "빼기"를 둔다(#562, 시안에 없는 모양) |
 | `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기·바로 구매 동작, 상품 사진, 담긴 수 표시(없을 때·바로 구매일 때는 없음)와 빼기 |
 | `ui/cart-added-snackbar.tsx` | 담김 스낵바. 담기 전 수량을 알면 "담기 취소"를 달아 이번 담기만 되돌린다(#562). 디자인 시스템 snackbar의 `action` 자리를 쓰고, 문구는 시안에 없다 |
@@ -170,3 +170,10 @@ PD 확인 결과 **상품 문의는 이번 MVP 범위 밖이다.** 다른 MVP �
 "바로 구매"와 타임딜 중의 "타임딜 구매하기"는 장바구니와 같은 수량 시트를 연다. 시트 버튼이 "○원 바로 구매"로 바뀌고, 누르면 **장바구니에 담지 않고** `/payment?buy=종류:번호:수량`으로 간다. 타임딜 상품은 딜 아이템 번호로 싣는다 — 장바구니 담기와 같은 식별자(`cartItemRef`)다. 전에는 두 버튼이 `/payment` 링크일 뿐이라 결제 화면에 고른 상품이 없었다(QA PD-056).
 
 시안에는 바로 구매가 어디로 가는지 연결이 없고 전용 시트도 없다. 결제 화면에 수량을 고를 자리가 없어 이 시트를 함께 쓴다 — **PD 확인 거리**다.
+
+**시트가 열려 있는지는 주소(`?sheet=cart|buy`)가 든다(QA No.35, #595).** 바로 구매로 결제 화면에 갔다가 머리말 뒤로가기로 오면 시트가 열린 채로 돌아와야 한다. 화면 안 상태로 두면 상세가 새로 그려지며 닫혀 있었다.
+
+- **바로 구매를 누르면 시트를 닫지 않고 떠난다.** 닫으면 이 기록의 주소에서 `sheet`가 지워져 돌아왔을 때 닫혀 있다
+- **여닫기는 기록을 쌓지 않는다**(nuqs 기본 `replace`). 쌓으면 시트를 닫은 뒤 뒤로가기가 시트를 다시 연다
+- **로그인 전이면 주소에 있어도 열지 않는다.** 버튼으로 열 때와 같은 조건이다(#542)
+- 돌아왔을 때 수량은 1로 다시 시작한다. 고른 수량은 주소에 싣지 않았다
