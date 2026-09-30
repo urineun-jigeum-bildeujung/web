@@ -50,7 +50,7 @@ function dealItem(overrides: Partial<DealItem> & Pick<DealItem, "timeDealItemId"
 }
 
 /** 화면에 붙는 순간부터 11시간 28분 43초. 옛 목데이터의 카운트다운 길이를 그대로 옮겼다 —
- *  fake timer로 12시간을 넘기면 끝나는 것까지 같은 시나리오로 확인한다 */
+ *  fake timer로 끝난 시각을 넘기면 끝나는 것까지 같은 시나리오로 확인한다 */
 function buildLiveGroups(): TimeDealGroup[] {
   return [
     {
@@ -402,12 +402,15 @@ describe("DealsView", () => {
     });
 
     it("목록 대신 비었다고 알린다", async () => {
-      await renderWith();
+      const groups = buildLiveGroups();
+      await renderWith("", groups);
 
-      // 화면에 붙는 순간부터 11시간 28분 43초라 그만큼 넘긴다.
+      // 카운트다운은 1초 간격이라 딜 길이만큼 감으면 틱이 4만 번 넘게 발화해 느리다(#571).
+      // 시계를 끝난 시각 뒤로 옮기고 한 틱만 감는다. 딜 길이가 바뀌어도 그대로 돈다.
       // 타이머가 부르는 상태 갱신이라 act로 감싸야 화면에 반영된다
+      vi.setSystemTime(new Date(groups[0].endAt).getTime() + 1);
       await act(async () => {
-        await vi.advanceTimersByTimeAsync(12 * 3_600_000);
+        await vi.advanceTimersByTimeAsync(1_000);
       });
 
       expect(screen.getByText("지금 진행 중인 타임딜이 없어요")).toBeDefined();
