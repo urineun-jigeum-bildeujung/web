@@ -38,6 +38,10 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
   useQueryPets,
   useQueryPetDetail,
 }));
+const { useQueryNutritionAnalysis } = vi.hoisted(() => ({
+  useQueryNutritionAnalysis: vi.fn(),
+}));
+vi.mock("../api/use-query-nutrition-analysis", () => ({ useQueryNutritionAnalysis }));
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부·찜 목록은 서버 상태라 값만 세운다. 하트 버튼은 진짜를 그린다
 const { toggleWish, wish } = vi.hoisted(() => ({
   toggleWish: vi.fn(),
@@ -175,6 +179,17 @@ function signedIn() {
     pet: petId ? PET_DETAILS[petId] : undefined,
     isLoading: false,
   }));
+  useQueryNutritionAnalysis.mockReturnValue({
+    analysis: {
+      safety_status: "NO_CONFLICT_DETECTED",
+      excluded: false,
+      safety_reason_codes: [],
+    },
+    isLoading: false,
+    isRetrying: false,
+    error: null,
+    refetch: vi.fn(),
+  });
 }
 
 describe("ProductDetailView", () => {
@@ -222,11 +237,18 @@ describe("ProductDetailView", () => {
     });
   });
 
-  it("가격 아래에 적합도와 근거가 함께 있다", async () => {
+  it("가격 아래에 중앙 Nutrition Safety 근거가 함께 있다", async () => {
     await renderWith();
 
-    expect(screen.getByRole("heading", { name: "초코와 잘 맞는 상품이에요" })).toBeDefined();
-    expect(screen.getByText("관절 건강에 도움되는 글루코사민이 들어있어요")).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "초코 기준으로 확인한 안전 정보예요" }),
+    ).toBeDefined();
+    expect(
+      screen.getByText(
+        "현재 등록 정보와 확인 가능한 상품 정보 기준으로 충돌이 확인되지 않았습니다.",
+      ),
+    ).toBeDefined();
+    expect(screen.queryByText("92점")).toBeNull();
   });
 
   // 예시 아이("소리")를 그리던 동안 내 아이가 누구든 남의 이름이 근거에까지 박혀 떴다 (#481)
@@ -238,14 +260,27 @@ describe("ProductDetailView", () => {
     expect(screen.queryByText(/소리/)).toBeNull();
   });
 
-  // 고양이에게 강아지 영양제 점수를 보이면 근거가 거짓이 된다
-  it("급여 대상이 아닌 종의 아이는 점수 없이 재지 못했다고 알린다", async () => {
+  it("Safety Block 아이는 점수 없이 runtime 차단 사유를 보여준다", async () => {
     useQueryPets.mockReturnValue({ pets: [PETS[1], PETS[0]], isLoading: false });
+    useQueryNutritionAnalysis.mockReturnValue({
+      analysis: {
+        safety_status: "SAFETY_BLOCKED",
+        excluded: true,
+        safety_message: "반려동물 종과 상품 대상 종이 일치하지 않습니다.",
+        safety_reason_codes: ["SPECIES_MISMATCH"],
+      },
+      isLoading: false,
+      isRetrying: false,
+      error: null,
+      refetch: vi.fn(),
+    });
     await renderWith();
 
     expect(screen.getByText("나비 기준으로 보고 있어요")).toBeDefined();
-    expect(screen.getByText("고양이 급여 대상이 아닌 상품이라 아직 재지 못했어요")).toBeDefined();
-    // 정보 탭도 이유를 지어내지 않는다. 예전 문구는 "급여량이 등록되지 않아"였다
+    expect(
+      screen.getByRole("heading", { name: "나비 기준으로 확인한 안전 정보예요" }),
+    ).toBeDefined();
+    expect(screen.getByText("반려동물 종과 상품 대상 종이 일치하지 않습니다.")).toBeDefined();
     expect(screen.getByText("나비 기준으로는 아직 분석하지 못했어요.")).toBeDefined();
   });
 
@@ -261,7 +296,9 @@ describe("ProductDetailView", () => {
     });
     await renderWith();
 
-    expect(screen.getByRole("heading", { name: "콩과 잘 맞는 상품이에요" })).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "콩 기준으로 확인한 안전 정보예요" }),
+    ).toBeDefined();
   });
 
   it("로그인하지 않았으면 적합도 칸을 그리지 않는다", async () => {
@@ -321,6 +358,36 @@ describe("ProductDetailView", () => {
     expect(refetch).toHaveBeenCalledOnce();
   });
 
+  it("Nutrition Safety를 받지 못해도 알리고 그 요청만 다시 보낸다", async () => {
+    const refetch = vi.fn();
+    useQueryNutritionAnalysis.mockReturnValue({
+      analysis: undefined,
+      isLoading: false,
+      isRetrying: false,
+      error: new Error("503"),
+      refetch,
+    });
+    await renderWith();
+
+    const alert = screen.getByRole("alert");
+    expect(alert.textContent).toContain("적합도를 불러오지 못했어요");
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
+    expect(refetch).toHaveBeenCalledOnce();
+  });
+
+  it("Nutrition Safety를 받는 동안 적합도 자리를 유지한다", async () => {
+    useQueryNutritionAnalysis.mockReturnValue({
+      analysis: undefined,
+      isLoading: true,
+      isRetrying: false,
+      error: null,
+      refetch: vi.fn(),
+    });
+    await renderWith();
+
+    expect(screen.getByRole("status", { name: "적합도를 불러오는 중" })).toBeDefined();
+  });
+
   // 예시 상품 셋은 없는 상품이라 누를 수 없게 막아 두었다. AI 추천 전까지 인기순이다 (#481)
   it("함께 보면 좋은 상품은 실제 상품이고 누르면 그 상품으로 간다", async () => {
     await renderWith();
@@ -351,16 +418,28 @@ describe("ProductDetailView", () => {
 
     expect(screen.queryByRole("heading", { name: "함께 보면 좋은 상품" })).toBeNull();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(screen.getByRole("heading", { name: "초코와 잘 맞는 상품이에요" })).toBeDefined();
+    expect(screen.getByRole("heading", { name: "초코 기준으로 확인한 안전 정보예요" })).toBeDefined();
 
     consoleError.mockRestore();
   });
 
-  // 좋은 말만 있으면 광고와 구별되지 않는다. 지켜볼 것이 같은 자리에 있어야 근거로 읽힌다
-  it("지켜볼 점도 같은 자리에 있다", async () => {
+  it("Safety 근거가 부족하면 위험으로 단정하지 않고 판단 보류를 알린다", async () => {
+    useQueryNutritionAnalysis.mockReturnValue({
+      analysis: {
+        safety_status: "SAFETY_DATA_INSUFFICIENT",
+        excluded: true,
+        safety_reason_codes: ["INGREDIENT_LIST_MISSING"],
+      },
+      isLoading: false,
+      isRetrying: false,
+      error: null,
+      refetch: vi.fn(),
+    });
     await renderWith();
 
-    expect(screen.getByText("나트륨 함량이 또래 평균보다 다소 높은 편이에요")).toBeDefined();
+    expect(
+      screen.getByText("상품 정보를 충분히 확인할 수 없어 안전 여부를 판단하기 어렵습니다."),
+    ).toBeDefined();
   });
 
   // 리뷰 탭 전환은 여기서 보지 않는다 — ReviewPanel이 QueryClient를 요구해 이 harness로는
@@ -392,12 +471,13 @@ describe("ProductDetailView", () => {
     expect(screen.queryByText("하루에 몇 알씩 급여하면 되나요?")).toBeNull();
   });
 
-  it("상품 정보 탭에 영양 성분 분석이 있다", async () => {
+  it("실제 영양 점수 계약 전에는 mock 92점과 종합 문구를 노출하지 않는다", async () => {
     await renderWith();
 
     expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
-    expect(screen.getByText("종합 92점")).toBeDefined();
-    expect(screen.getByText("초코에게 꾸준히 급여하기 좋은 상품이에요")).toBeDefined();
+    expect(screen.getByText("초코 기준으로는 아직 분석하지 못했어요.")).toBeDefined();
+    expect(screen.queryByText("종합 92점")).toBeNull();
+    expect(screen.queryByText("초코에게 꾸준히 급여하기 좋은 상품이에요")).toBeNull();
   });
 
   it("비교하기를 누르면 한 상품을 담은 안내를 띄우고 확인 시 비교 화면으로 이동한다", async () => {
