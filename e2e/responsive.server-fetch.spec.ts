@@ -17,7 +17,11 @@ const CONTENT_MAX = 1200;
 const CARD_WIDTH = 170;
 
 async function measure(page: Page, route: string) {
-  await page.goto(route, { waitUntil: "networkidle" });
+  // `networkidle`은 Playwright가 테스트에 쓰지 말라고 표시한 옵션이다. 재는 것이 `main`의
+  // 가로 폭과 좌표라 이미지 로딩과 무관한데, 1920에서는 첫 화면에 드는 이미지가 많아
+  // 요청이 끊이지 않고 진입 자체가 시간을 넘겼다. 준비 상태는 단정문으로 기다린다
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("main")).toBeVisible();
   return page.evaluate(() => {
     const main = document.querySelector("main")!.getBoundingClientRect();
     return {
@@ -67,8 +71,9 @@ for (const { name, route } of GRIDS) {
   for (const width of [768, 1920]) {
     test(`${name} — ${width}px에서도 카드가 ${CARD_WIDTH}px이다`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1024 });
-      await page.goto(route, { waitUntil: "networkidle" });
+      await page.goto(route, { waitUntil: "domcontentloaded" });
 
+      // 카드가 보일 때까지는 아래 단정문이 기다린다(위 measure와 같은 이유)
       const card = page.getByRole("main").getByRole("link").first();
       await expect(card).toBeVisible();
       const box = await card.boundingBox();
