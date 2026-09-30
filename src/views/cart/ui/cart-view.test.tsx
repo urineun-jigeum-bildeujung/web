@@ -6,13 +6,17 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getCart, changeCartItemQuantity, removeCartItem } = vi.hoisted(() => ({
+const { getCart, changeCartItemQuantity, removeCartItem, getTimeDealDetail } = vi.hoisted(() => ({
   getCart: vi.fn(),
   changeCartItemQuantity: vi.fn(),
   removeCartItem: vi.fn(),
+  getTimeDealDetail: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+
+// 타임딜 줄의 상품 번호는 딜 상세에서 받는다(장바구니 응답에 없다, #563)
+vi.mock("@/entities/product", () => ({ getTimeDealDetail }));
 
 // `cartItemKey`는 화면과 훅이 같은 규칙을 써야 하므로 진짜를 그대로 둔다
 vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({
@@ -25,6 +29,7 @@ vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 import type { Cart, CartItem, CartItemRef } from "@/entities/cart";
+import { useCartSelectionStore } from "../model/cart-selection-store";
 import { CartView } from "./cart-view";
 
 // 살 수 없는 줄은 이름과 금액이 `null`로 오므로 그 타입을 그대로 받는다
@@ -67,6 +72,11 @@ function isSame(row: CartItem, ref: CartItemRef) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // 고른 줄은 브라우저에 남는다. 앞 테스트가 고른 것이 다음 테스트에 새지 않게 비운다
+  useCartSelectionStore.setState({ keys: [] });
+  localStorage.clear();
+
+  getTimeDealDetail.mockResolvedValue({ productId: 42, name: "딜 상품" });
 
   getCart.mockImplementation(async (): Promise<Cart> => ({
     memberId: 1,
@@ -252,5 +262,180 @@ describe("CartView", () => {
     for (const [, text] of REASONS) {
       expect(await screen.findByText(text)).toBeDefined();
     }
+  });
+});
+
+/** 줄 체크박스가 골라져 있는가. Radix 체크박스는 상태를 `aria-checked`로 낸다 */
+function isChecked(label: string) {
+  return screen.getByRole("checkbox", { name: label }).getAttribute("aria-checked") === "true";
+}
+
+// PM QA 시트 "이슈&블로커"의 장바구니 항목 (#563)
+describe("CartView QA", () => {
+  it("빈 장바구니의 상품 둘러보기는 메인으로 간다 (No.7)", async () => {
+    renderCart([]);
+
+    const browse = await screen.findByRole("link", { name: "상품 둘러보기" });
+    expect(browse.getAttribute("href")).toBe("/");
+  });
+
+  // 결제 화면에 갔다 뒤로 오면 화면이 다시 마운트된다. 그때 `0/9`로 풀렸다
+  it("다시 들어와도 고른 줄이 그대로다 (No.23·24)", async () => {
+    const first = renderCart();
+    fireEvent.click(await screen.findByLabelText("유산균 고르기"));
+    fireEvent.click(screen.getByLabelText("우피껌 고르기"));
+    first.unmount();
+
+    renderCart();
+
+    expect(await screen.findByText("전체선택 (2/3)")).toBeDefined();
+    expect(isChecked("유산균 고르기")).toBe(true);
+    expect(isChecked("우피껌 고르기")).toBe(true);
+    expect(isChecked("한우스틱 고르기")).toBe(false);
+  });
+
+  /**
+   * **남겨 둔 키는 지금 살 수 있는 줄과 겹치는 것만 쓴다.** 그사이 품절된 줄이 골라진 채로 남으면
+   * 결제로 넘어가고, 빠진 줄의 키가 개수에 섞이면 `3/2`처럼 셈이 어긋난다.
+   */
+  it("그사이 못 사게 된 줄과 빠진 줄은 고른 것으로 보지 않고, 다음에 고를 때 걷는다", async () => {
+    useCartSelectionStore.setState({ keys: ["NORMAL:1", "NORMAL:3", "NORMAL:99"] });
+    renderCart([
+      makeItem(1, "유산균", 19900),
+      makeItem(2, "우피껌", 8000),
+      makeItem(3, "한우스틱", 3900, {
+        available: false,
+        unavailableReason: "OUT_OF_STOCK",
+        subtotal: null,
+      }),
+    ]);
+
+    expect(await screen.findByText("전체선택 (1/2)")).toBeDefined();
+    expect(isChecked("유산균 고르기")).toBe(true);
+    expect(isChecked("한우스틱 고르기")).toBe(false);
+    expect(screen.getByRole("link", { name: "결제하기" }).getAttribute("href")).toBe(
+      "/payment?items=NORMAL:1",
+    );
+
+    fireEvent.click(screen.getByLabelText("우피껌 고르기"));
+
+    expect(useCartSelectionStore.getState().keys).toEqual(["NORMAL:1", "NORMAL:2"]);
+  });
+
+  // 남겨 두면 같은 상품을 다시 담았을 때 골라진 채로 보인다
+  it("뺀 줄은 고른 목록에서도 뺀다", async () => {
+    renderCart();
+
+    fireEvent.click(await screen.findByLabelText("유산균 고르기"));
+    fireEvent.click(screen.getByLabelText("우피껌 고르기"));
+    fireEvent.click(screen.getByLabelText("유산균 빼기"));
+    fireEvent.click(screen.getByRole("button", { name: "상품 빼기" }));
+
+    expect(useCartSelectionStore.getState().keys).toEqual(["NORMAL:2"]);
+  });
+
+  it("전체선택을 누르면 살 수 있는 줄이 모두 골라진다 (No.2)", async () => {
+    renderCart();
+
+    fireEvent.click(await screen.findByLabelText("전체선택 (0/3)"));
+
+    expect(screen.getByText("전체선택 (3/3)")).toBeDefined();
+    for (const name of ["유산균", "우피껌", "한우스틱"]) {
+      expect(isChecked(`${name} 고르기`)).toBe(true);
+    }
+  });
+
+  // 일반 줄은 줄 번호가 곧 상품 번호다. 이름뿐 아니라 줄 어디를 눌러도 가도록 링크가 줄을 덮는다
+  it("일반 줄은 그 상품의 상세로 간다 (No.9)", async () => {
+    renderCart();
+
+    const link = await screen.findByRole("link", { name: "유산균" });
+    expect(link.getAttribute("href")).toBe("/products/1");
+    expect(getTimeDealDetail).not.toHaveBeenCalled();
+  });
+
+  // 장바구니 응답에는 딜 아이템 번호만 온다. 딜가로 보이려면 `?dealItem=`이 붙어야 한다(#484)
+  it("타임딜 줄은 딜 상세에서 받은 상품 번호로 딜가 상세에 간다 (No.9)", async () => {
+    renderCart([makeItem(5, "딜 사료", 12000, { itemType: "TIME_DEAL" })]);
+
+    const link = await screen.findByRole("link", { name: "딜 사료" });
+    expect(link.getAttribute("href")).toBe("/products/42?dealItem=5");
+    expect(getTimeDealDetail).toHaveBeenCalledWith("5");
+  });
+
+  // 끝난 딜은 딜 상세가 404다. 엉뚱한 상품으로 보내느니 링크를 걸지 않는다
+  it("상품 번호를 모르는 줄은 링크를 걸지 않는다", async () => {
+    getTimeDealDetail.mockRejectedValue(new Error("404"));
+    renderCart([
+      makeItem(5, "끝난 딜", 12000, {
+        itemType: "TIME_DEAL",
+        available: false,
+        unavailableReason: "DEAL_ENDED",
+        subtotal: null,
+      }),
+      makeItem(9, null, null, {
+        available: false,
+        unavailableReason: "NOT_FOUND",
+        subtotal: null,
+      }),
+    ]);
+
+    expect(await screen.findByText("끝난 딜")).toBeDefined();
+    await waitFor(() => expect(getTimeDealDetail).toHaveBeenCalledWith("5"));
+    expect(screen.queryByRole("link", { name: "끝난 딜" })).toBeNull();
+    // 이름이 안 오는 줄은 갈 상세가 없어 부르지도 않는다
+    expect(screen.queryByRole("link", { name: "더 이상 없는 상품이에요" })).toBeNull();
+    expect(getTimeDealDetail).toHaveBeenCalledTimes(1);
+  });
+
+  it("할인 상품이면 할인율과 정가 취소선을 함께 보인다 (No.10)", async () => {
+    renderCart([
+      makeItem(1, "유산균", 17500, { originalPrice: 25000, discountRate: 30 }),
+      // 할인이 없는 줄도 정가가 판매가와 같은 값으로 온다
+      makeItem(2, "우피껌", 8000, { originalPrice: 8000, discountRate: 0 }),
+    ]);
+
+    expect(await screen.findByText("30%")).toBeDefined();
+    expect(screen.getByText("25,000원").className).toContain("line-through");
+    // 할인 없는 줄에는 할인율도 취소선도 없다 — 취소선은 할인 줄의 정가 하나뿐이다
+    expect(screen.queryByText("0%")).toBeNull();
+    expect(document.querySelectorAll(".line-through")).toHaveLength(1);
+  });
+
+  it("품절 줄은 사진에 품절 표시를 얹고 흐린다 (No.21)", async () => {
+    renderCart([
+      makeItem(1, "유산균", 19900, { thumbnailUrl: "https://cdn.test/a.png" }),
+      makeItem(3, "한우스틱", 3900, {
+        thumbnailUrl: "https://cdn.test/b.png",
+        available: false,
+        unavailableReason: "OUT_OF_STOCK",
+        subtotal: null,
+      }),
+    ]);
+
+    await screen.findByText("한우스틱");
+    const [sellableImage, soldOutImage] = document.querySelectorAll("li img");
+    expect(soldOutImage.className).toContain("opacity-50");
+    expect(sellableImage.className).not.toContain("opacity-50");
+    // 표시는 품절 줄 하나에만 붙는다. 까닭 글("품절됐어요")과는 다른 요소다
+    expect(screen.getAllByText("품절")).toHaveLength(1);
+  });
+
+  // 살 수 있는 줄이 없으면 고를 것도 결제할 것도 없다
+  it("모두 품절이면 전체선택과 결제하기가 잠긴다 (No.21)", async () => {
+    renderCart([
+      makeItem(3, "한우스틱", 3900, {
+        available: false,
+        unavailableReason: "OUT_OF_STOCK",
+        subtotal: null,
+      }),
+    ]);
+
+    expect(await screen.findByText("전체선택 (0/0)")).toBeDefined();
+    expect(screen.getByText("품절")).toBeDefined();
+    expect(screen.getByRole("checkbox", { name: "전체선택 (0/0)" }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(screen.getByRole("button", { name: "결제하기" }).hasAttribute("disabled")).toBe(true);
   });
 });
