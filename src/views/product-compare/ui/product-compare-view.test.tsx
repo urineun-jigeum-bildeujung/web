@@ -410,6 +410,23 @@ test("담기가 거부되면 시트가 열린 채 남고 담겼다고 알리지 
   expect(showSnackbar).not.toHaveBeenCalledWith("장바구니에 담겼어요");
 });
 
+// 품절 상품도 시트를 열어 담기를 보냈다. 서버가 거절해야 알 수 있었다(#535)
+test("품절 상품은 장바구니 추가가 막혀 시트를 열지 않는다", async () => {
+  getProductDetail.mockImplementation((id: string) =>
+    id === "33"
+      ? Promise.resolve({ ...PRODUCTS["33"], soldOut: true })
+      : Promise.reject(new ApiError(404, "없음")),
+  );
+  renderView("?slot=0&product=33&other=none");
+
+  const button = await screen.findByRole("button", { name: "품절" });
+  expect(button.hasAttribute("disabled")).toBe(true);
+  fireEvent.click(button);
+
+  expect(screen.queryByRole("button", { name: /장바구니 담기$/ })).toBeNull();
+  expect(addCartItem).not.toHaveBeenCalled();
+});
+
 // 헤더에 title·leading을 안 줘서 뒤로가기와 "상품비교" 제목이 통째로 빠져 있었다(1568-70276)
 test("머리말에 뒤로가기와 제목이 있다", async () => {
   renderView();

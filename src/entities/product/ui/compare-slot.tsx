@@ -21,6 +21,8 @@ export type CompareProduct = {
   imageUrl?: string;
   /** 우리 아이 기준 적합도. 영양 정보가 없어 재지 못했으면 null(#119) */
   matchScore: number | null;
+  /** 품절이면 장바구니 추가를 막는다. 안 주면 담을 수 있다(#535) */
+  soldOut?: boolean;
 };
 
 type CompareSlotProps = {
@@ -136,13 +138,16 @@ export function CompareSlot({
             {product.matchScore}점
           </p>
         )}
+        {/* 품절이면 누르지 못하게 하고 글자로 까닭을 알린다. 시안에 비교 자리의 품절 모양이 없어
+            줄을 늘리지 않는 가장 단순한 모양이다 — 안내 줄을 따로 두면 두 자리의 버튼 줄이 어긋난다(#535) */}
         <Button
           variant="secondary"
           // 보이는 높이는 시안대로 40px, 누르는 자리만 위아래로 2px씩 넓혀 44px을 채운다
           className="relative ml-auto h-10 w-26.75 text-label-bold-14 after:absolute after:-inset-y-0.5"
+          disabled={product.soldOut}
           onClick={onAddToCart}
         >
-          장바구니 추가
+          {product.soldOut ? "품절" : "장바구니 추가"}
         </Button>
       </div>
     </div>
