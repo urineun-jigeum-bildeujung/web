@@ -96,6 +96,9 @@ test("로그인하지 않았으면 최근에 구매한 상품을 부르지 않�
 });
 
 test("만들어 둔 화면 목록은 개발용 경로로 갔다", async ({ page }) => {
+  // 마이페이지는 세션이 없으면 로그인으로 보낸다(#447). 로그인하지 않으면 잠깐 스치는 `/mypage`를
+  // 잡느냐의 경합이 되어 느린 서버에서 `/login`을 받고 흔들렸다(#560)
+  await signIn(page);
   await page.goto("/dev/screens");
 
   for (const group of ["온보딩", "마이페이지"]) {
