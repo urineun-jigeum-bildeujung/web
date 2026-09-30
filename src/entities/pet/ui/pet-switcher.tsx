@@ -138,9 +138,14 @@ export function PetSwitcher({
             {withNames && (
               <span
                 aria-hidden
-                // 시안의 이름은 12px semibold다. 안 고른 아이는 흐린 글자색이다
+                // 잘려도 마우스로 전체를 본다. 화면 낭독기는 버튼의 aria-label로 전체를 읽는다
+                title={pet.name}
+                // 시안의 이름은 12px semibold다. 안 고른 아이는 흐린 글자색이다.
+                // 이름은 한 줄로 두고 원 지름을 넘으면 말줄임표로 자른다(QA 신규-줄바꿈, #599).
+                // 막지 않으면 메인은 칸이 이름만큼 넓어지고, 리뷰 작성은 칸이 줄며 이름이 여러 줄로 꺾인다
                 className={cn(
-                  "text-label-bold-12",
+                  "truncate text-label-bold-12",
+                  hero && selected ? "max-w-22.5" : main ? "max-w-15" : "max-w-12",
                   selected ? "text-foreground" : "text-text-body-unselect",
                 )}
               >
