@@ -1,7 +1,10 @@
 // 후기를 쓴 아이를 카드 한 줄로 옮긴다.
 //
-// 품종명은 인증 정책이 정해지기 전까지 연결하지 않아, 체구로 적는다.
-// 고양이는 체구(`breedSize`)가 없어 종으로 적는다.
+// 품종명(`breedName`)으로 적는다. 같은 사료를 먹인 아이가 우리 아이와 같은 품종인지가
+// 후기를 읽을 때의 판단 근거라, 체구까지만 적으면 소형견 전부가 한 덩어리가 된다.
+//
+// 품종명 스냅샷은 뒤늦게 생겨 그 전에 쓴 후기는 비어 있다. 그때는 예전처럼 체구로 적고,
+// 체구(`breedSize`)도 없는 고양이는 종으로 적는다.
 
 import type { ReviewPet } from "../model/review";
 
@@ -21,9 +24,13 @@ function formatWeight(kg: number): string {
   return `${Number(kg.toFixed(1))}kg`;
 }
 
-/** 아이 한 마리를 `소형견 · 8세 · 4kg`로 적는다. 체구가 없는 고양이는 종으로 적는다 */
+/** 아이 한 마리를 `말티즈 · 8세 · 4kg`로 적는다. 품종명이 없으면 체구로, 그것도 없으면 종으로 */
 export function formatPetProfile(pet: ReviewPet): string {
-  const kind = pet.breedSize ? BREED_SIZE_LABEL[pet.breedSize] : SPECIES_LABEL[pet.species];
+  // 빈 문자열·공백도 이름이 없는 것으로 친다. 그대로 쓰면 앞이 빈 " · 8세 · 4kg"가 된다 —
+  // 같은 응답의 `nickname`이 조회가 비면 빈 문자열로 오고, 컬럼의 NOT NULL은 빈 값을 막지 않는다
+  const breedName = pet.breedName?.trim();
+  const kind =
+    breedName || (pet.breedSize ? BREED_SIZE_LABEL[pet.breedSize] : SPECIES_LABEL[pet.species]);
 
   return `${kind} · ${pet.age}세 · ${formatWeight(pet.weight)}`;
 }

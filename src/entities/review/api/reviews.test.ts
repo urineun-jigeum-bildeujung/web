@@ -127,10 +127,15 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리
     Response.json({
       reviewId: 1,
       isMine: true,
+      nickname: "보리엄마",
+      liked: false,
+      likeCount: 3,
       product: { productId: 1, name: "오메가3 피쉬오일 60캡슐", image: null },
       pets: [
-        { petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG" },
-        { petId: 5, name: "나비", sex: "MALE", age: 2, breedSize: null, species: "CAT" },
+        // prettier-ignore
+        { petId: 3, name: "코코", sex: "FEMALE", age: 4, breedSize: "SMALL", species: "DOG", breedId: 12, breedName: "시츄", weight: 4 },
+        // prettier-ignore
+        { petId: 5, name: "나비", sex: "MALE", age: 2, breedSize: null, species: "CAT", breedId: 45, breedName: null, weight: 4.2 },
       ],
       rating: 4.5,
       usagePeriod: 16,
@@ -148,13 +153,18 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리
   const review = await getReviewDetail("1");
 
   expect(String(fetchMock.mock.calls[0]?.[0])).toContain("/reviews/1");
-  expect(review).toEqual({
+  expect(review).toStrictEqual({
     id: "1",
     isMine: true,
+    nickname: "보리엄마",
+    liked: false,
+    likeCount: 3,
     product: { id: "1", name: "오메가3 피쉬오일 60캡슐" },
     pets: [
-      { id: "3", name: "코코", age: 4, species: "DOG", breedSize: "SMALL" },
-      { id: "5", name: "나비", age: 2, species: "CAT", breedSize: null },
+      // prettier-ignore
+      { id: "3", name: "코코", age: 4, species: "DOG", breedSize: "SMALL", breedId: 12, breedName: "시츄", weight: 4 },
+      // prettier-ignore
+      { id: "5", name: "나비", age: 2, species: "CAT", breedSize: null, breedId: 45, breedName: null, weight: 4.2 },
     ],
     rating: 4.5,
     usageDays: 16,
@@ -191,11 +201,11 @@ const PRODUCT_REVIEWS = {
       reviewId: 1,
       nickname: "테스트회원1",
       pets: [
-        // 고양이는 breedSize가 null이고 breedId는 있다
+        // 고양이는 breedSize가 null이다. 품종명은 스냅샷이라 옛 후기는 null로 온다
         // prettier-ignore
-        { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG", breedId: 12, weight: 4.0 },
+        { petId: 101, name: "보리", sex: "FEMALE", age: 8, breedSize: "SMALL", species: "DOG", breedId: 12, breedName: "시츄", weight: 4.0 },
         // prettier-ignore
-        { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT", breedId: 45, weight: 4.2 },
+        { petId: 102, name: "나비", sex: "MALE", age: 3, breedSize: null, species: "CAT", breedId: 45, breedName: null, weight: 4.2 },
       ],
       rating: 4.5,
       usagePeriod: 21,
@@ -211,7 +221,7 @@ const PRODUCT_REVIEWS = {
       nickname: "",
       pets: [
         // prettier-ignore
-        { petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG", breedId: 7, weight: 12.5 },
+        { petId: 113, name: "해피", sex: "MALE", age: 4, breedSize: "MEDIUM", species: "DOG", breedId: 7, breedName: "포메라니안", weight: 12.5 },
       ],
       rating: 4.5,
       usagePeriod: 22,
@@ -246,7 +256,7 @@ test("상품 후기 목록을 카드 모양으로 옮긴다", async () => {
 
   expect(page.averageRating).toBe(3.8333333333333335);
   expect(page.totalCount).toBe(12);
-  expect(page.reviews[0]).toEqual({
+  expect(page.reviews[0]).toStrictEqual({
     id: "1",
     nickname: "테스트회원1",
     pets: [
@@ -257,6 +267,7 @@ test("상품 후기 목록을 카드 모양으로 옮긴다", async () => {
         species: "DOG",
         breedSize: "SMALL",
         breedId: 12,
+        breedName: "시츄",
         weight: 4,
       },
       {
@@ -266,6 +277,7 @@ test("상품 후기 목록을 카드 모양으로 옮긴다", async () => {
         species: "CAT",
         breedSize: null,
         breedId: 45,
+        breedName: null,
         weight: 4.2,
       },
     ],
