@@ -136,7 +136,14 @@ export function toSaleStatus(status: string): SaleStatus {
 }
 
 /**
- * 단가 줄의 값. `"1000G"`에서 양을 떼고 단위만 소문자로 쓴다(`g`). 가격은 원 단위로 반올림한다.
+ * 상품 DB의 정규화 단위(백엔드 `QuantityUnit`의 표준 단위 G·ML·EA)를 화면 기호로 바꾼다. 기호는 상품
+ * 서버가 주는 단가 줄과 같다. 추천 서버는 이 값을 그대로 붙여 `"30EA"`로 주는데, 소문자로만 바꾸면
+ * "1ea당"이 된다
+ */
+const UNIT_SYMBOL: Record<string, string> = { G: "g", ML: "ml", EA: "개" };
+
+/**
+ * 단가 줄의 값. `"1000G"`에서 양을 떼고 단위를 화면 기호로 쓴다(`g`·`ml`·`개`). 가격은 원 단위로 반올림한다.
  * 단위를 읽을 수 없거나 반올림한 가격이 1원 미만이면 null이다 — "1g당 0원"은 틀린 말이다
  */
 export function toUnitPrice(unitLabel: string, unitPrice: number): UnitPrice | null {
@@ -144,7 +151,8 @@ export function toUnitPrice(unitLabel: string, unitPrice: number): UnitPrice | n
   if (!match || !Number.isFinite(unitPrice)) return null;
   const price = Math.round(unitPrice);
   if (price < 1) return null;
-  return { label: match[1].toLowerCase(), price };
+  const unit = match[1];
+  return { label: UNIT_SYMBOL[unit.toUpperCase()] ?? unit.toLowerCase(), price };
 }
 
 /**
