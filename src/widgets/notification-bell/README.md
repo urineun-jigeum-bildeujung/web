@@ -20,4 +20,4 @@
 
 ## 어디에 있나
 
-`NotificationBell`은 헤더 다섯 곳(홈·상품 상세·찜·비교·마이페이지)이 쓴다. `NewNotificationToaster`는 `app/layout.tsx`가 `AppProviders` 안에 한 번 둔다 — `shared/providers`는 `entities`를 import할 수 없어 거기 두지 못한다.
+`NotificationBell`은 헤더 일곱 곳(홈·맞춤 추천·타임딜·상품 상세·찜·비교·마이페이지)이 쓴다. `NewNotificationToaster`는 `app/layout.tsx`가 `AppProviders` 안에 한 번 둔다 — `shared/providers`는 `entities`를 import할 수 없어 거기 두지 못한다.
