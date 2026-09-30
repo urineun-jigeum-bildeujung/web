@@ -775,7 +775,8 @@ describe("AI가 골라주는 맞춤 상품", () => {
       .closest("li")!;
     expect(within(card).getByText("초코와 적합도 57점")).toBeDefined();
     expect(within(card).getByText(/기호성 평가가 좋아 추천합니다/)).toBeDefined();
-    expect(within(card).getByText("1g당 약 19원")).toBeDefined();
+    // 시안(1758-68917)의 "1개당 800원" 꼴이다 — 카테고리 그리드의 "약"이 붙지 않는다
+    expect(within(card).getByText("1g당 19원")).toBeDefined();
     expect(within(card).queryByText(/알레르기/)).toBeNull();
   });
 
@@ -797,7 +798,7 @@ describe("AI가 골라주는 맞춤 상품", () => {
     expect(within(card).getByText("등록한 알레르기 성분이 들어 있어요")).toBeDefined();
     expect(within(card).getByText("품절")).toBeDefined();
     // 단가를 해석하지 못했으면 단가 줄이 없다
-    expect(within(card).queryByText(/당 약/)).toBeNull();
+    expect(within(card).queryByText(/^1\S+당 /)).toBeNull();
   });
 
   it("받는 동안 가로 목록 자리를 뼈대로 잡는다", async () => {

@@ -3,6 +3,8 @@
 // 명세와 화면이 다른 값은 AI팀 답을 기다리지 않고 여기서 바꿔 쓴다(#600). 규칙이 한곳에 있어야
 // 명세가 바뀌었을 때 이 파일만 고치면 된다.
 
+import { formatWon } from "@/shared/ui/price/price";
+
 /** 화면이 거르는 분류. 전체는 분류를 보내지 않는다 */
 export type RecommendationCategory = "food" | "snack" | "supplement";
 
@@ -134,13 +136,23 @@ export function toSaleStatus(status: string): SaleStatus {
 }
 
 /**
- * 단가 줄의 값. `"1000G"`에서 양을 떼고 단위만 소문자로 쓴다(`g`).
- * 단위를 읽을 수 없거나 가격이 양수가 아니면 null이다
+ * 단가 줄의 값. `"1000G"`에서 양을 떼고 단위만 소문자로 쓴다(`g`). 가격은 원 단위로 반올림한다.
+ * 단위를 읽을 수 없거나 반올림한 가격이 1원 미만이면 null이다 — "1g당 0원"은 틀린 말이다
  */
 export function toUnitPrice(unitLabel: string, unitPrice: number): UnitPrice | null {
   const match = /^\s*\d*(?:[.,]\d+)?\s*([a-zA-Z가-힣]+)\s*$/.exec(unitLabel);
-  if (!match || !Number.isFinite(unitPrice) || unitPrice <= 0) return null;
-  return { label: match[1].toLowerCase(), price: Math.round(unitPrice) };
+  if (!match || !Number.isFinite(unitPrice)) return null;
+  const price = Math.round(unitPrice);
+  if (price < 1) return null;
+  return { label: match[1].toLowerCase(), price };
+}
+
+/**
+ * 단가 줄 문장. 메인 맞춤 상품 시안(1758-68917)의 "1개당 800원" 꼴이다 — `entities/product`의
+ * `formatUnitPrice`(타임딜 시안의 "1개당 약 680원")와 달리 "약"이 없다
+ */
+export function formatUnitPriceLine({ label, price }: UnitPrice): string {
+  return `1${label}당 ${formatWon(price)}`;
 }
 
 export function toRecommendation(item: RecommendationItemResponse): Recommendation {

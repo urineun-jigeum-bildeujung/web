@@ -27,6 +27,7 @@ import {
   type TimeDealList,
 } from "@/entities/product";
 import {
+  formatUnitPriceLine,
   RecommendationReason,
   SaleStatusBadge,
   useQueryHomeRecommendations,
@@ -72,9 +73,9 @@ const HOME_RECOMMENDATION_SIZE = 9;
  * 시안 ProductCard/Grid의 price 슬롯 — 단가 + 별점 + 후기 수, 그 아래 추천 이유.
  * Rating Container는 5개 별을 늘어놓는 Rating(mypa_041_작성한 기준)과 달리 별 1개 + 숫자다.
  *
- * 시안의 "하루 예상 급여비"는 추천 응답에 없어 카테고리 그리드와 같은 단가 줄을 쓴다. 단가를 해석하지
- * 못하면 그 줄을 비운다. 별점은 카테고리 그리드와 같이 후기 수로 가른다(#534). **추천 이유는 시안에
- * 없지만 이 서비스의 핵심 근거라 카드마다 보인다**(#600)
+ * 단가 줄은 시안(1758-68917)의 "1개당 800원" 꼴이다. 시안의 다른 카드에 있는 "하루 예상 급여비"는
+ * 추천 응답에 없어 쓰지 못하고, 단가를 해석하지 못하면 그 줄을 비운다. 별점은 카테고리 그리드와 같이
+ * 후기 수로 가른다(#534). **추천 이유는 시안에 없지만 이 서비스의 핵심 근거라 카드마다 보인다**(#600)
  */
 function RecommendedProductMeta({ item }: { item: Recommendation }) {
   const rated = item.reviewCount > 0;
@@ -82,7 +83,7 @@ function RecommendedProductMeta({ item }: { item: Recommendation }) {
     <>
       {item.unitPrice && (
         <p className="text-label-medium-11 text-text-body-tertiary">
-          {formatUnitPrice(item.unitPrice.label, item.unitPrice.price)}
+          {formatUnitPriceLine(item.unitPrice)}
         </p>
       )}
       <div className="flex items-center gap-2">
