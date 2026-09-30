@@ -1,15 +1,15 @@
-// 설정. 알림·테마와 계정 관련 항목을 모은다.
+// 설정. 푸시·테마와 계정 관련 항목을 모은다.
 // UI 시안 기준(mypa_081, 1117-7999)이다. 줄 높이 40, 아이콘 24, 제목 label/bold_14, 줄 사이 12px.
 //
-// 시안은 네 줄 다 화살표인데 갈 곳이 있는 줄이 없다. 갈 곳이 없는 줄은 화살표 없는 정적 줄로 둔다(#194의 선례).
-// 알림설정은 하위 화면 시안이 없어 줄 오른쪽에 스위치를 둔다. 스위치의 뜻은 "이 기기의 푸시 허용"이다(#354).
-//
-// 로그아웃과 회원탈퇴가 그 자리에서 동작하는 줄이다(#247, #266). 테마설정만 정적 줄로 남는다.
+// 푸시알림·테마설정은 줄 오른쪽 스위치, 로그아웃·회원탈퇴는 화살표 줄이다(시안 개정, #565).
+// 푸시 스위치의 뜻은 "이 기기의 푸시 허용"이다(#354). 테마 스위치는 켜면 다크 모드다.
+// 로그아웃과 회원탈퇴는 다른 화면으로 가지 않고 그 자리에서 동작한다(#247, #266).
 
 "use client";
 
 import { useId, useState } from "react";
 
+import { ThemeSwitch } from "@/features/toggle-theme";
 import { useMutateWithdraw } from "@/entities/member";
 
 import { Icon } from "@/shared/ui/icon/icon";
@@ -22,7 +22,7 @@ import {
   AlertDialogFooter,
   AlertDialogTitle,
 } from "@/shared/ui/alert-dialog";
-import { ListRowButton, ListRowStatic } from "@/shared/ui/list-row/list-row";
+import { ListRowButton } from "@/shared/ui/list-row/list-row";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { Switch } from "@/shared/ui/switch";
@@ -32,6 +32,7 @@ import { useMutatePushSetting } from "../api/use-mutate-push-setting";
 
 export function SettingsView() {
   const pushId = useId();
+  const themeId = useId();
   const {
     enabled: pushEnabled,
     supported: pushSupported,
@@ -70,7 +71,7 @@ export function SettingsView() {
             <Icon name="bell_fill" className="size-6 shrink-0 text-icon-fill-accent" />
           </LoadingSwap>
           <span className="flex flex-1 flex-col text-label-bold-14 text-foreground">
-            알림설정
+            푸시알림
             {/* 서비스 워커·알림 API가 없거나 Firebase 설정이 빈 환경. 켤 수 없는 까닭을 보인다 */}
             {!pushSupported && (
               <span className="text-caption-regular-13 font-normal text-text-body-tertiary">
@@ -85,10 +86,16 @@ export function SettingsView() {
             onCheckedChange={setPushEnabled}
           />
         </label>
-        <ListRowStatic size="sm" title="테마설정" icon={<Icon name="mode" />} />
+        <label
+          htmlFor={themeId}
+          className="flex min-h-10 cursor-pointer items-center gap-2 px-5 transition-colors hover:bg-muted"
+        >
+          <Icon name="mode" className="size-6 shrink-0" />
+          <span className="flex-1 text-label-bold-14 text-foreground">테마설정</span>
+          <ThemeSwitch id={themeId} />
+        </label>
         <ListRowButton
           size="sm"
-          hideChevron
           disabled={isLoggingOut}
           onClick={signOut}
           title={<LoadingSwap loading={isLoggingOut}>로그아웃</LoadingSwap>}
@@ -96,7 +103,6 @@ export function SettingsView() {
         />
         <ListRowButton
           size="sm"
-          hideChevron
           disabled={isWithdrawing}
           onClick={() => setConfirmingWithdraw(true)}
           title={<LoadingSwap loading={isWithdrawing}>회원탈퇴</LoadingSwap>}
