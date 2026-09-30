@@ -1,5 +1,5 @@
-// 상품 비교: 빈 칸으로 시작하는지, 뺀 상품이 되살아나지 않는지, 자리를 상품 상세로 채우는지,
-// 장바구니에 실제로 담는지 본다.
+// 상품 비교: 빈 칸으로 시작하는지, 빼기 전에 확인창을 거치는지, 뺀 상품이 되살아나지 않는지,
+// 자리를 상품 상세로 채우는지, 장바구니에 실제로 담는지 본다.
 //
 // "빈 자리를 검색에서 골라 채운다"는 /search/result를 거쳐 서버 검색 API를 타서
 // `e2e/compare.server-fetch.spec.ts`로 옮겼다(#282) — 이 파일의 나머지 테스트는
@@ -79,6 +79,7 @@ test("뺀 상품은 검색에서 뒤로 오거나 새로고침해도 되살아�
   await page.goto("/compare?slot=0&product=1&other=none");
 
   await page.getByRole("button", { name: "비교 테스트 사료 1kg 비교에서 빼기" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "상품 빼기" }).click();
   await expect(page).toHaveURL(/\/compare$/);
 
   await page.getByRole("button", { name: "상품 추가하기" }).first().click();
@@ -93,6 +94,26 @@ test("뺀 상품은 검색에서 뒤로 오거나 새로고침해도 되살아�
   await page.reload();
   await expect(page.getByRole("button", { name: "상품 추가하기" })).toHaveCount(2);
   await expect(page.getByRole("button", { name: /비교에서 빼기/ })).toHaveCount(0);
+});
+
+// 예전엔 X를 누르는 즉시 빠져 되돌릴 수 없었다(QA 상품비교 29·30)
+test("X는 확인창을 먼저 띄우고, 닫으면 두 상품과 주소가 그대로 남는다", async ({ page }) => {
+  await stubProductDetails(page);
+  await page.goto("/compare?slot=1&product=2&other=1");
+
+  await page.getByRole("button", { name: "비교 테스트 사료 1kg 비교에서 빼기" }).click();
+  const dialog = page.getByRole("alertdialog", { name: "비교에서 이 상품을 뺄까요?" });
+  await expect(dialog).toBeVisible();
+
+  await dialog.getByRole("button", { name: "닫기" }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page).toHaveURL(/\/compare\?slot=1&product=2&other=1$/);
+  await expect(
+    page.getByRole("button", { name: "비교 테스트 사료 1kg 비교에서 빼기" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "비교 테스트 사료 4kg 비교에서 빼기" }),
+  ).toBeVisible();
 });
 
 // 항목별 값을 주는 API가 없다. 목업 상품의 표를 실제 상품 이름 아래 붙이지 않고 준비 중이라고 알린다
