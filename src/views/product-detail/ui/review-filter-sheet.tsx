@@ -59,13 +59,18 @@ const REVIEW_CHIP_CLASS =
     개수와 무관하게 테두리가 잘리지 않는 유일한 방법이다 — 마지막 배지만 줄이면 네 개째부터
     앞 배지가 칸 밖으로 밀려 테두리가 그대로 잘린다(실측). **자르는 것은 안쪽 span이다.**
     Badge가 inline-flex라 배지 자체에는 text-overflow가 듣지 않아 말줄임표 없이 잘리고,
-    가운데 정렬 탓에 앞글자까지 깎인다. */
+    가운데 정렬 탓에 앞글자까지 깎인다.
+
+    **이름이 아니라 출처를 붙인 `id`로 센다.** 품종 이름은 종을 넘어 유일하지 않다 —
+    피커 안에서 종을 바꿔 가며 고를 수 있어 강아지 "기타"와 고양이 "기타"가 함께 들어온다.
+    이름을 key로 쓰면 그때 같은 key가 둘 생긴다. */
 function PickerRow({
-  labels,
+  items,
   placeholder,
   onClick,
 }: {
-  labels: string[];
+  /** `id`는 `breed:35`·`health:관절염`처럼 출처를 앞에 붙인 값이다 */
+  items: { id: string; label: string }[];
   placeholder: string;
   onClick: () => void;
 }) {
@@ -75,14 +80,18 @@ function PickerRow({
       onClick={onClick}
       // 값이 있으면 이름을 직접 적는다. 배지 사이에 공백 텍스트가 없어 그냥 두면
       // "말티즈포메라니안"처럼 한 단어로 읽히고, 이 버튼이 무엇을 여는 것인지도 소리에 없다
-      aria-label={labels.length > 0 ? `${placeholder}, 고른 값 ${labels.join(", ")}` : undefined}
+      aria-label={
+        items.length > 0
+          ? `${placeholder}, 고른 값 ${items.map((item) => item.label).join(", ")}`
+          : undefined
+      }
       className="flex h-11 w-full items-center justify-between gap-2 rounded-lg border border-border px-3 text-left"
     >
-      {labels.length > 0 ? (
+      {items.length > 0 ? (
         <span className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden">
-          {labels.map((label) => (
-            <Badge key={label} className="min-w-0 text-label-bold-12">
-              <span className="truncate">{label}</span>
+          {items.map((item) => (
+            <Badge key={item.id} className="min-w-0 text-label-bold-12">
+              <span className="truncate">{item.label}</span>
             </Badge>
           ))}
         </span>
@@ -202,9 +211,13 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
     label: group.label,
     items: group.breeds.map((breed) => ({ value: String(breed.id), label: breed.breedName })),
   }));
-  const breedLabels = draft.breedIds
-    .map((id) => breeds.find((breed) => breed.id === id)?.breedName)
-    .filter((name): name is string => Boolean(name));
+  // 이름이 아니라 `breedId`로 센다 — 같은 이름이 종마다 따로 있다("기타")
+  const breedItems = draft.breedIds
+    .map((id) => {
+      const breed = breeds.find((candidate) => candidate.id === id);
+      return breed ? { id: `breed:${breed.id}`, label: breed.breedName } : null;
+    })
+    .filter((item): item is { id: string; label: string } => item !== null);
 
   const [healthOpen, setHealthOpen] = useState(false);
   const [healthSpecies, setHealthSpecies] = useState<PetSpecies>(draft.species ?? "dog");
@@ -214,7 +227,13 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
     error: healthError,
   } = useQueryHealthOptions(healthSpecies);
   const healthGroups: PickerGroup[] = healthOptions?.concerns ?? [];
-  const healthLabels = healthOptions ? toLabels(draft.healthConcerns, healthOptions.concerns) : [];
+  // 저장 값이 곧 식별자다. 같은 규칙으로 출처를 앞에 붙여 두 줄의 구현을 맞춘다
+  const healthItems = healthOptions
+    ? toLabels(draft.healthConcerns, healthOptions.concerns).map((label, index) => ({
+        id: `health:${draft.healthConcerns[index]}`,
+        label,
+      }))
+    : [];
 
   return (
     <>
@@ -300,7 +319,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
 
               <Field title="품종">
                 <PickerRow
-                  labels={breedLabels}
+                  items={breedItems}
                   placeholder="품종 선택하기"
                   onClick={() => setBreedOpen(true)}
                 />
@@ -367,7 +386,7 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
 
               <Field title="건강 관심사">
                 <PickerRow
-                  labels={healthLabels}
+                  items={healthItems}
                   placeholder="건강 관심사 선택하기"
                   onClick={() => setHealthOpen(true)}
                 />

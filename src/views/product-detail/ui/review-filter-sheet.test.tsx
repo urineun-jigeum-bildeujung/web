@@ -13,11 +13,17 @@ import { DEFAULT_FILTER, type ReviewFilter } from "../model/review-filter";
 import { ReviewFilterSheet } from "./review-filter-sheet";
 
 const { BREEDS, HEALTH_OPTIONS } = vi.hoisted(() => ({
-  /** 마지막 하나는 13자다 — 줄을 넘치는 조합을 DOM에서도 같은 값으로 쓴다 */
+  /**
+   * 마지막 하나는 13자다 — 줄을 넘치는 조합을 DOM에서도 같은 값으로 쓴다.
+   * `기타` 둘은 실제 응답에서 옮긴 값이다(`e2e/fixtures/pet-catalog.ts`) —
+   * 이름이 종을 넘어 유일하지 않다는 것을 보이려고 함께 둔다.
+   */
   BREEDS: [
     { id: 1, breedName: "말티즈", species: "dog" as const },
     { id: 2, breedName: "포메라니안", species: "dog" as const },
     { id: 3, breedName: "웨스트하이랜드화이트테리어", species: "dog" as const },
+    { id: 35, breedName: "기타", species: "dog" as const },
+    { id: 58, breedName: "기타", species: "cat" as const },
   ],
   HEALTH_OPTIONS: {
     concerns: [
@@ -76,6 +82,26 @@ describe("ReviewFilterSheet의 고른 값 줄", () => {
 
     // 값 셋에 Badge 셋이다. 줄 안쪽 칸의 자식 수로 센다
     expect(row.firstElementChild?.children).toHaveLength(BREED_LABELS.length);
+  });
+
+  it("이름이 같은 다른 품종을 둘 골라도 배지가 둘 다 남고 key가 겹치지 않는다", () => {
+    // 이름을 key로 쓰면 여기서 같은 key가 둘 생긴다. 개수만 세면 그 되돌림을 못 잡아
+    // React가 내는 중복 key 경고 자체를 본다
+    const consoleError = vi.spyOn(console, "error");
+
+    // 강아지 "기타"(35)와 고양이 "기타"(58). 피커 안에서 종을 바꿔 가며 고를 수 있다
+    openPetTab({ ...DEFAULT_FILTER, breedIds: [35, 58] });
+
+    const row = rowOf("품종");
+    expect(within(row).getAllByText("기타")).toHaveLength(2);
+    expect(row.firstElementChild?.children).toHaveLength(2);
+
+    const duplicateKeyWarning = consoleError.mock.calls.find((args) =>
+      args.some((arg) => typeof arg === "string" && arg.includes("same key")),
+    );
+    expect(duplicateKeyWarning).toBeUndefined();
+
+    consoleError.mockRestore();
   });
 
   it("건강 관심사 줄도 같은 방식으로 그린다", () => {
