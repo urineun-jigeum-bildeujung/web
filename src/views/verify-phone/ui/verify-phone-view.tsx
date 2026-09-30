@@ -8,6 +8,7 @@
 // 주되, 발송·확인은 실제 API를 탄다(#247) — 만료 180초와 재시도 제한이 그쪽에 있다.
 //
 // **번호는 치는 대로 3-4-4로 끊고, 휴대폰 번호 모양일 때만 "인증" 칩을 보인다**(QA No.150·151, #594).
+// 보내고 나면 칩이 "재인증"이 되어 누르면 다시 보낸다(QA No.156, #594).
 
 "use client";
 
@@ -154,13 +155,14 @@ export function VerifyPhoneView() {
         trailing={
           phoneReady && (
             <Button
-              aria-label="인증 번호 받기"
+              // 보낸 뒤에는 같은 칩이 다시 보내기다. 화면 낭독기 이름도 따라 바꾼다(QA No.156)
+              aria-label={codeSent ? "인증 번호 다시 받기" : "인증 번호 받기"}
               className={CHIP_CLASS}
               disabled={!carrier || isRequesting}
               onClick={sendCode}
             >
               <LoadingSwap loading={isRequesting} label="인증 번호를 보내는 중">
-                인증
+                {codeSent ? "재인증" : "인증"}
               </LoadingSwap>
             </Button>
           )
