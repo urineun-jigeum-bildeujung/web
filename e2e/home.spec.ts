@@ -73,6 +73,62 @@ for (const width of [393, 360]) {
   });
 }
 
+// 이름이 10자쯤 되면 아이 줄은 칸이 이름만큼 넓어지고, 추천 제목은 두 줄로 늘며 더보기가
+// "더보/기"로 꺾였다(QA 신규-줄바꿈, #599). jsdom은 줄 높이를 재지 못해 실제 브라우저에서 본다
+test("393px에서 긴 이름은 아이 줄과 추천 제목에서 한 줄 높이로 말줄임된다", async ({ page }) => {
+  const name = "초코바나나딸기우유맛쿠키";
+  await page.setViewportSize({ width: 393, height: 852 });
+  await signIn(page);
+  await stubPetCatalog(page);
+  await stubNotifications(page);
+  await stubCart(page);
+  // 나중에 세운 route가 먼저 잡는다. 기본 아이만 긴 이름으로 바꾼다
+  await page.route("**/members/me/pets", (route) =>
+    route.fulfill({
+      json: [
+        { petId: 3, name, image: null, isDefault: true },
+        { petId: 7, name: "보리", image: null, isDefault: false },
+      ],
+    }),
+  );
+
+  await page.goto("/");
+
+  // 잘려도 화면 낭독기는 버튼 이름·제목 전체로, 마우스는 title로 이름 전체를 안다
+  const switcher = page.getByRole("radiogroup", { name: "아이 고르기" });
+  const longPet = switcher.getByRole("radio", { name });
+  const heading = page.getByRole("heading", { name: `AI가 골라주는 ${name} 맞춤 상품` });
+  await expect(longPet).toBeVisible();
+  await expect(heading).toBeVisible();
+
+  const measure = (element: HTMLElement | SVGElement) => ({
+    height: element.getBoundingClientRect().height,
+    lineHeight: parseFloat(getComputedStyle(element).lineHeight),
+    truncated: element.scrollWidth > element.clientWidth,
+  });
+
+  // 제목은 한 줄 그대로고 더보기도 꺾이지 않는다
+  for (const target of [heading, page.getByRole("link", { name: "더보기" })]) {
+    const box = await target.evaluate(measure);
+    expect(box.height).toBeLessThanOrEqual(box.lineHeight);
+  }
+
+  // 긴 이름의 칸도 짧은 이름의 칸과 폭이 같다. 원 간격이 들쭉날쭉하지 않다
+  const [longWidth, shortWidth] = await Promise.all(
+    [longPet, switcher.getByRole("radio", { name: "보리" })].map(
+      async (radio) => (await radio.boundingBox())?.width,
+    ),
+  );
+  expect(longWidth).toBe(shortWidth);
+
+  // 두 자리의 이름은 한 줄에서 말줄임표로 잘린다
+  for (const label of [switcher.getByTitle(name), heading.getByTitle(name)]) {
+    const box = await label.evaluate(measure);
+    expect(box.truncated).toBe(true);
+    expect(box.height).toBeLessThanOrEqual(box.lineHeight);
+  }
+});
+
 // "종류를 고르면 상품 목록으로 바뀐다"는 카테고리 탭이 서버 조회를 타면서(#289)
 // `home.server-fetch.spec.ts`로 옮겼다 — 이 파일이 쓰는 일반 E2E 잡은 백엔드가
 // 없어 실제 조회가 실패하고, 그 결과를 이 스펙으로는 더 이상 확인할 수 없다
