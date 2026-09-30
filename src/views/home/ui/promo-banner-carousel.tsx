@@ -49,7 +49,11 @@ export function PromoBannerCarousel() {
   // 화면에 그리는 값은 state가, 타이머가 읽는 값은 이 ref가 맡는다
   const shownRef = useRef(0);
   const [shown, setShown] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  // 마우스와 키보드 초점은 따로 센다. 한 값을 나눠 쓰면 초점이 배너 안에 남아 있는데도
+  // 마우스가 떠나는 순간 자동 전환이 되살아난다
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
+  const isPaused = isHovered || isFocusWithin;
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   // 손으로 옮긴 직후에 자동 전환이 곧바로 이어지면 방금 고른 배너를 뺏긴다.
   // 이 값이 바뀌면 아래 타이머가 처음부터 다시 간다. 값 자체는 쓰지 않아 시각이 아니라
@@ -88,16 +92,22 @@ export function PromoBannerCarousel() {
   }, [isPaused, prefersReducedMotion, restartToken]);
 
   return (
-    // 읽는 중에 넘어가면 방해가 된다. 마우스가 올라오거나 키보드 초점이 들어오면 멈춘다.
+    // 읽는 중에 넘어가면 방해가 된다. 마우스가 올라와 있거나 키보드 초점이 안에 있는 동안 멈춘다 —
+    // 둘을 따로 세어, 하나가 풀려도 나머지가 남아 있으면 계속 멈춰 있는다.
     // 시안에 일시정지 버튼이 없어 화면에 보이는 것은 늘리지 않았다. 터치 기기에는 호버가 없어
     // 영구히 멈출 수단이 필요하고, 그 모양과 자리는 배포 뒤 PD와 정한다(#616)
     <section
       aria-label="진행 중인 행사"
       className="relative p-5"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocusCapture={() => setIsPaused(true)}
-      onBlurCapture={() => setIsPaused(false)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocusCapture={() => setIsFocusWithin(true)}
+      // 점에서 옆 점으로 옮길 때도 blur가 난다. 초점이 배너 밖으로 나갔을 때만 푼다
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setIsFocusWithin(false);
+        }
+      }}
     >
       <div
         ref={trackRef}

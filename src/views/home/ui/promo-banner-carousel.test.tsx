@@ -115,7 +115,7 @@ describe("자동 전환", () => {
     const section = screen.getByRole("region", { name: "진행 중인 행사" });
 
     fireEvent.mouseEnter(section);
-    advance(15000);
+    advance(12000);
     expect(shownIndex()).toBe(0);
 
     // 떠나면 다시 흐른다
@@ -142,7 +142,32 @@ describe("자동 전환", () => {
     render(<PromoBannerCarousel />);
 
     fireEvent.focus(dots()[0]);
-    advance(15000);
+    advance(12000);
+
+    expect(shownIndex()).toBe(0);
+  });
+
+  // 마우스와 초점이 한 값을 나눠 쓰면 마우스가 떠나는 순간 초점이 남아 있어도 되살아났다
+  it("초점이 배너 안에 남아 있으면 마우스가 떠나도 넘어가지 않는다", () => {
+    render(<PromoBannerCarousel />);
+    const section = screen.getByRole("region", { name: "진행 중인 행사" });
+
+    fireEvent.mouseEnter(section);
+    fireEvent.focus(dots()[0]);
+    fireEvent.mouseLeave(section);
+    advance(12000);
+
+    expect(shownIndex()).toBe(0);
+  });
+
+  // 점에서 옆 점으로 옮길 때도 blur가 난다. 그때 정지가 풀리면 안 된다
+  it("점 사이로 초점을 옮겨도 멈춘 채로 있는다", () => {
+    render(<PromoBannerCarousel />);
+
+    fireEvent.focus(dots()[0]);
+    fireEvent.blur(dots()[0], { relatedTarget: dots()[1] });
+    fireEvent.focus(dots()[1]);
+    advance(12000);
 
     expect(shownIndex()).toBe(0);
   });
@@ -160,7 +185,7 @@ describe("자동 전환", () => {
     } as MediaQueryList);
 
     render(<PromoBannerCarousel />);
-    advance(15000);
+    advance(12000);
 
     expect(shownIndex()).toBe(0);
     expect(scrollTo).not.toHaveBeenCalled();
