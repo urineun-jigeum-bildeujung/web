@@ -103,6 +103,31 @@ test("번호에서 하이픈을 빼고 보낸다", async () => {
   expect(JSON.parse(String(init.body))).toEqual({ phone: "01012345678" });
 });
 
+// 보냈는지 모른 채 "인증"을 또 누르면 같은 일을 되풀이하는 줄 안다. 다시 받기임을 말로 알린다 (QA No.156)
+test("인증 번호를 보낸 뒤에는 칩이 재인증이 되고 누르면 다시 보낸다", async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(Response.json({ expiresInSeconds: 180 })));
+  vi.stubGlobal("fetch", fetchMock);
+  renderView();
+  fillPhone();
+
+  expect(screen.getByRole("button", { name: "인증 번호 받기" }).textContent).toBe("인증");
+  fireEvent.click(screen.getByRole("button", { name: "인증 번호 받기" }));
+
+  const resend = await screen.findByRole("button", { name: "인증 번호 다시 받기" });
+  expect(resend.textContent).toBe("재인증");
+  expect(screen.queryByRole("button", { name: "인증 번호 받기" })).toBeNull();
+
+  fireEvent.click(resend);
+
+  await waitFor(() =>
+    expect(
+      fetchMock.mock.calls.filter(([url]) => String(url).includes("verify-request")),
+    ).toHaveLength(2),
+  );
+});
+
 // 백엔드가 `code`를 int로 받는다. 문자열을 주면 본문을 통째로 거절한다
 test("인증번호를 숫자로 보낸다", async () => {
   const fetchMock = vi
