@@ -304,6 +304,16 @@ test("고른 아이의 품종·나이·성별을 한 줄로 보인다", () => {
   expect(screen.getByText("보통")).toBeDefined();
 });
 
+// 긴 이름은 카드 폭에서 말줄임표로 잘린다. 잘려도 전체 이름을 알 수 있어야 한다(QA 신규-줄바꿈, #599)
+test("긴 이름은 한 줄 말줄임으로 자르고 전체 이름은 title과 카드 이름으로 남긴다", () => {
+  const name = "초코바나나딸기우유맛쿠키";
+  query.pet = { ...DETAIL, name };
+  renderView();
+
+  expect(screen.getByRole("region", { name: `${name}의 프로필` })).toBeDefined();
+  expect(screen.getByTitle(name).className).toContain("truncate");
+});
+
 // 등록한 아이가 없는데 빈 카드만 보이면 고장으로 읽힌다
 test("아이가 없으면 등록하러 가는 자리를 보인다", () => {
   query.pets = [];
