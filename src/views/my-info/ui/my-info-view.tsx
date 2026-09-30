@@ -1,11 +1,12 @@
 // 내 정보. 회원 정보와 배송지를 모아 보여주고 각 항목을 수정 화면으로 잇는다.
 // UI 시안 기준(mypa_011, 1482-27384)이다.
 //
-// 시안대로 다섯 줄 모두 화살표가 있다. 이름·생년월일 수정 화면은 시안이 따로 없어
-// 닉네임 변경과 같은 골격으로 맞췄다(#278).
-// "내 아이들" 값 자리는 시안이 닉네임 더미라 아이 이름을 이어 보인다.
+// 줄마다 화살표가 있다. 생년월일 수정 화면은 시안이 따로 없어 닉네임 변경과 같은 골격으로 맞췄다(#278).
+// **이름 줄은 없다.** PM이 항목에서 뺐다(QA No.141, #594).
+// "내 아이들" 값 자리는 아이마다 사진 원과 이름을 함께 보인다 — 이름만으로는 어느 아이인지 한눈에
+// 들어오지 않는다(QA No.141, #594).
 //
-// 값이 전부 서버에서 온다(#266). 아직 받는 자리가 없는 이름·생년월일은 비어 온다.
+// 값이 전부 서버에서 온다(#266). 아직 받는 자리가 없는 생년월일은 비어 온다.
 
 "use client";
 
@@ -14,7 +15,7 @@ import type { ReactNode } from "react";
 
 import { useQueryAddresses } from "@/entities/address";
 import { useQueryMyProfile } from "@/entities/member";
-import { useQueryPets } from "@/entities/pet";
+import { PetPhoto, useQueryPets } from "@/entities/pet";
 import { cn } from "@/shared/lib/utils";
 import { Badge } from "@/shared/ui/badge/badge";
 import { Icon } from "@/shared/ui/icon/icon";
@@ -58,7 +59,8 @@ function InfoRow({ label, value, href }: { label: string; value: ReactNode; href
       </span>
     </>
   );
-  const className = "flex h-10 w-full items-center justify-between gap-2 py-1";
+  // 아이가 많으면 값이 두 줄로 넘어간다. 높이를 못 박으면 다음 줄과 겹친다
+  const className = "flex min-h-10 w-full items-center justify-between gap-2 py-1";
 
   return href ? (
     <Link
@@ -100,7 +102,6 @@ export function MyInfoView() {
       <main className="flex flex-1 flex-col gap-3 px-5 pt-3 pb-8">
         <section className="flex flex-col gap-1">
           <InfoRow label="닉네임" value={value(profile?.nickname)} href="/mypage/info/nickname" />
-          <InfoRow label="이름" value={value(profile?.name)} href="/mypage/info/name" />
           <InfoRow
             label="생년월일"
             value={value(profile?.birth ? formatBirth(profile.birth) : null)}
@@ -110,13 +111,34 @@ export function MyInfoView() {
           <InfoRow
             label="내 아이들"
             value={
-              petsError
-                ? LOAD_FAILED
-                : petsLoading
-                  ? pending
-                  : pets?.length
-                    ? pets.map((pet) => pet.name).join(", ")
-                    : NOT_SET
+              petsError ? (
+                LOAD_FAILED
+              ) : petsLoading ? (
+                pending
+              ) : pets?.length ? (
+                // 줄 안의 값은 한 줄로 자르지만 아이 목록은 잘리면 누가 빠졌는지 모른다. 넘치면 줄을 바꾼다
+                <span className="flex flex-wrap justify-end gap-x-3 gap-y-1">
+                  {pets.map((pet) => (
+                    <span key={pet.id} className="inline-flex items-center gap-1">
+                      <span
+                        aria-hidden
+                        className="relative size-7 shrink-0 overflow-hidden rounded-full bg-surface-disable"
+                      >
+                        <PetPhoto
+                          petId={pet.id}
+                          name={pet.name}
+                          photoUrl={pet.photoUrl}
+                          sizes="28px"
+                          textClassName="text-label-bold-11"
+                        />
+                      </span>
+                      {pet.name}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                NOT_SET
+              )
             }
             href="/mypage/pets"
           />

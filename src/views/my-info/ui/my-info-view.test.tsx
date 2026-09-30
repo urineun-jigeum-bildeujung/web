@@ -1,5 +1,5 @@
 // 내 정보 테스트. 서버에서 온 값을 어떻게 보이는지와 아직 없는 값 처리를 검증한다.
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
@@ -39,11 +39,18 @@ vi.mock("@/entities/member", () => ({
     error: query.error,
   }),
 }));
-vi.mock("@/entities/pet", () => ({
+// 아이 원(`PetPhoto`)은 진짜를 쓴다. 사진과 이름 앞 글자가 실제로 그려지는지 봐야 한다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets: () => ({
     pets: [
-      { id: "1", name: "코코", isDefault: true },
-      { id: "2", name: "보리", isDefault: false },
+      {
+        id: "1",
+        name: "코코",
+        photoUrl: "https://image.leechs.shop/pets/1.jpg",
+        isDefault: true,
+      },
+      { id: "2", name: "구름이", isDefault: false },
     ],
     isLoading: false,
     error: others.petsError,
@@ -97,7 +104,7 @@ test("머리말과 닉네임이 서버 값이다", () => {
   expect(screen.getByRole("link", { name: /닉네임/ })).toBeDefined();
 });
 
-// 이름·생년월일·휴대폰은 아직 받는 자리가 없어 비어 온다. 빈 칸으로 두면 고장으로 읽힌다
+// 생년월일·휴대폰은 아직 받는 자리가 없어 비어 온다. 빈 칸으로 두면 고장으로 읽힌다
 test("아직 없는 값은 등록 전이라고 알린다", () => {
   renderView();
 
@@ -111,10 +118,27 @@ test("받은 생년월일은 한국어로 풀어 보인다", () => {
   expect(screen.getByText("2000년 12월 13일")).toBeDefined();
 });
 
-test("내 아이들에 등록한 아이 이름이 이어 붙는다", () => {
+// 이름 항목은 PM이 뺐다. 줄이 남아 있으면 고칠 수도 없는 값을 묻는다 (QA No.141)
+test("이름 줄이 없다", () => {
   renderView();
 
-  expect(screen.getByText("코코, 보리")).toBeDefined();
+  expect(screen.queryByText("이름")).toBeNull();
+  expect(
+    screen.getAllByRole("link").some((link) => link.getAttribute("href") === "/mypage/info/name"),
+  ).toBe(false);
+});
+
+// 이름만 이어 붙이면 어느 아이인지 한눈에 들어오지 않는다. 사진이 없는 아이는
+// 이름 앞 두 글자를 원에 넣는다 (QA No.141)
+test("내 아이들은 아이마다 사진 원과 이름을 함께 보인다", () => {
+  renderView();
+
+  const row = screen.getByRole("link", { name: /내 아이들/ });
+  expect(row.textContent).toContain("코코");
+  expect(row.textContent).toContain("구름이");
+  // 코코는 사진, 구름이는 사진이 없어 앞 두 글자다
+  expect(row.querySelectorAll("img")).toHaveLength(1);
+  expect(within(row).getByText("구름")).toBeDefined();
 });
 
 test("배송지는 도로명과 상세를 이어 보이고 기본에 표시를 단다", () => {
