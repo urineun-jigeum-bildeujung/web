@@ -134,7 +134,9 @@ test("탭을 닫고 새 탭에서 열어도 고른 줄이 그대로다", async (
   await expect(page.getByText("전체선택 (1/2)")).toBeVisible();
   await page.close();
 
+  // 로그인 스텁(`beforeEach`)은 탭마다 건다. 새 탭에도 다시 건다
   const next = await context.newPage();
+  await signIn(next);
   await stubCart(next);
   await stubEndedDeal(next);
   await next.goto("/cart");
