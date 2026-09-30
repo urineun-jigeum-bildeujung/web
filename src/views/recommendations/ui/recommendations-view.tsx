@@ -122,8 +122,9 @@ function RecommendationGrid({ petId, petName, category, sort }: RecommendationGr
         return (
           <li key={product.productId} className="flex">
             <ProductGridCard
-              // 품절 카드는 타임딜 목록(1905-32428)처럼 통째로 흐린다. 글자 배지가 함께 있어 색만으로 알리지 않는다
-              className={cn("flex-1", product.status === "soldOut" && "opacity-45")}
+              // 품절 카드는 타임딜 목록(1905-32428)처럼 통째로 흐린다. 글자 배지가 함께 있어 색만으로 알리지 않는다.
+              // min-w-0이 없으면 칸보다 긴 상품명의 글자 폭 아래로 줄지 못해 카드가 옆 칸까지 넘친다
+              className={cn("min-w-0 flex-1", product.status === "soldOut" && "opacity-45")}
               href={`/products/${product.productId}`}
               name={product.name}
               price={product.price}
