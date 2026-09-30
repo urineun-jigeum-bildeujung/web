@@ -1,10 +1,11 @@
 // 메인 화면 E2E. 탭에 따라 화면이 통째로 바뀌는지, 상태 체크가 이어지는지 실제 브라우저에서 본다.
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { stubCart } from "./fixtures/cart";
 import { stubFeedbacks } from "./fixtures/feedback";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
+import { stubRecommendations } from "./fixtures/recommendations";
 import { signIn } from "./fixtures/session";
 import { expectNoBlankScroll } from "./fixtures/sheet";
 
@@ -20,6 +21,7 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   await stubPetCatalog(page);
   await stubNotifications(page);
   await stubCart(page);
+  const recommendations = await stubRecommendations(page);
 
   await page.goto("/");
 
@@ -27,8 +29,78 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   await expect(page.getByRole("radio", { name: "코코" })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByText("AI가 골라주는 코코 맞춤 상품")).toBeVisible();
 
+  // 추천도 고른 아이를 따라간다(#600)
   await page.getByRole("radio", { name: "보리" }).click();
   await expect(page.getByText("AI가 골라주는 보리 맞춤 상품")).toBeVisible();
+  await expect.poll(() => recommendations.sent.at(-1)).toEqual({ pet_id: 7, size: 9 });
+});
+
+// 목데이터 네 장이 누구에게나 같은 점수로 뜨던 자리다(#600)
+test.describe("AI가 골라주는 맞춤 상품", () => {
+  test.beforeEach(async ({ page }) => {
+    await signIn(page);
+    await stubPetCatalog(page);
+    await stubNotifications(page);
+    await stubCart(page);
+  });
+
+  const recommended = (page: Page) => page.getByRole("list", { name: /맞춤 상품$/ });
+
+  test("고른 아이의 추천을 받아 적합도·이유·단가를 그리고, 감점·품절 상품을 알린다", async ({
+    page,
+  }) => {
+    const recommendations = await stubRecommendations(page);
+
+    await page.goto("/");
+
+    await expect.poll(() => recommendations.sent[0]).toEqual({ pet_id: 3, size: 9 });
+    const first = recommended(page).getByRole("listitem").first();
+    await expect(first).toContainText("한입 크림 파우치 연어살 20포");
+    await expect(first).toContainText("코코와 적합도 57점");
+    await expect(first).toContainText("1g당 19원");
+    await expect(first).toContainText("기호성 평가가 좋아 추천합니다");
+
+    // 0~1 소수로 온 점수는 100점 기준으로 바꾼다. 성분 코드는 보이지 않는다
+    const penalized = recommended(page).getByRole("listitem").nth(1);
+    await expect(penalized).toContainText("적합도 88점");
+    await expect(penalized).toContainText("등록한 알레르기 성분이 들어 있어요");
+    await expect(penalized).not.toContainText("CHICKEN");
+
+    await expect(recommended(page).getByRole("listitem").nth(2)).toContainText("품절");
+    // 점수가 없으면 0점이 아니라 정보 확인 중이다
+    await expect(recommended(page).getByRole("listitem").nth(3)).toContainText("정보 확인 중");
+  });
+
+  test("추천만 실패하면 그 칸만 알리고 최근 구매는 그대로 남는다", async ({ page }) => {
+    await stubRecommendations(page, { failWith: 500 });
+    await stubFeedbacks(page);
+
+    await page.goto("/");
+
+    await expect(
+      page.getByText("맞춤 상품을 불러오지 못했어요. 다시 시도해 주세요."),
+    ).toBeVisible();
+    await expect(page.getByText("최근에 구매한 상품, 아이는 어때요?")).toBeVisible();
+    await expect(page.getByText("치석 케어 덴탈껌 7개입")).toBeVisible();
+  });
+
+  test("추천이 비었으면 아직 찾지 못했다고 알린다", async ({ page }) => {
+    await stubRecommendations(page, { items: [] });
+
+    await page.goto("/");
+
+    await expect(page.getByText("코코에게 맞는 상품을 아직 찾지 못했어요")).toBeVisible();
+  });
+});
+
+test("로그인하지 않았으면 추천을 부르지 않는다", async ({ page }) => {
+  const recommendations = await stubRecommendations(page);
+
+  await page.goto("/");
+  await expect(page.getByText(/로그인하면 우리 아이에게 맞는 상품을 골라드려요/)).toBeVisible();
+  await page.waitForLoadState("networkidle");
+
+  expect(recommendations.sent).toHaveLength(0);
 });
 
 // 60px 원 다섯 칸이면 시안 모바일 폭(393px)도, 360px(갤럭시)도 넘는다. 줄에 스크롤이 없어
