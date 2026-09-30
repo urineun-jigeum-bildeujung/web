@@ -3,7 +3,6 @@
 // 건 서버 책임이라 여기서 다시 보지 않는다(entities/product/api/products.test.ts가
 // 요청 파라미터 조립을 본다).
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
@@ -105,6 +104,8 @@ vi.mock("@/entities/wishlist", async (importOriginal) => ({
   useMutateWishlist: () => ({ toggle: toggleWish }),
 }));
 
+import type { HomeCategory } from "../model/category";
+import type { HomeSort } from "../model/sort";
 import { HomeView } from "./home-view";
 
 afterEach(() => {
@@ -156,20 +157,20 @@ const EMPTY_DEALS: TimeDealList = { groups: [], serverTime: "2026-09-21T00:00:00
 // `use()`가 첫 렌더에서 항상 한 번 suspend했다가 promise가 풀리면 다시 그린다 — 이미
 // resolve된 promise를 넘겨도 마찬가지라, act()로 감싸 그 재렌더까지 기다리고 반환한다
 async function renderWith(
-  search = "",
+  category: HomeCategory = "all",
   products: ProductListResult = EMPTY_PRODUCTS,
   deals: TimeDealList = EMPTY_DEALS,
+  sort: HomeSort = "recommend",
 ) {
   let result: ReturnType<typeof render>;
   await act(async () => {
     result = render(
-      <NuqsTestingAdapter searchParams={search}>
-        <HomeView
-          productsPromise={Promise.resolve(products)}
-          productsKey={search}
-          dealsPromise={Promise.resolve(deals)}
-        />
-      </NuqsTestingAdapter>,
+      <HomeView
+        productsPromise={Promise.resolve(products)}
+        category={category}
+        sort={sort}
+        dealsPromise={Promise.resolve(deals)}
+      />,
     );
   });
   return result!;
@@ -206,7 +207,7 @@ describe("HomeView", () => {
   });
 
   it("종류를 고르면 서버가 준 상품 목록을 그대로 그린다", async () => {
-    await renderWith("?category=food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
+    await renderWith("food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
 
     // 큐레이션 자리가 사라지고 정렬이 나온다
     expect(screen.queryByText(/AI가 골라주는/)).toBeNull();
@@ -223,10 +224,36 @@ describe("HomeView", () => {
     expect(screen.getByRole("button", { name: "사료" })).toHaveProperty("ariaCurrent", "page");
   });
 
+  // 탭 표시·화면 구성은 서버가 그린 값을 따르고, 누르면 Next 라우터로 주소를 바꿔 서버가 다시 그리게 한다.
+  // nuqs(shallow: false)로 주소를 먼저 바꾸던 동안 전환 중에 뒤로가면 화면이 사료 탭 모양에 멈췄다(#560)
+  it("종류를 누르면 정렬을 지닌 채 그 종류 주소로 이동하고, 기본값은 주소에서 뺀다", async () => {
+    await renderWith("food", toProducts([SENIOR_FOOD]), EMPTY_DEALS, "price-low");
+
+    fireEvent.click(screen.getByRole("button", { name: "간식" }));
+    expect(pushMock).toHaveBeenLastCalledWith("/?category=snack&sort=price-low", { scroll: false });
+
+    fireEvent.click(screen.getByRole("button", { name: "전체" }));
+    expect(pushMock).toHaveBeenLastCalledWith("/?sort=price-low", { scroll: false });
+  });
+
+  it("전체에서 종류를 누르면 기본 정렬은 주소에 싣지 않는다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("button", { name: "사료" }));
+    expect(pushMock).toHaveBeenCalledWith("/?category=food", { scroll: false });
+  });
+
+  it("보고 있는 탭을 다시 누르면 이동하지 않는다", async () => {
+    await renderWith("food", toProducts([SENIOR_FOOD]));
+
+    fireEvent.click(screen.getByRole("button", { name: "사료" }));
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
   // SENIOR_FOOD는 27,200 / 31,900이다. 서버가 준 15%와 버림 계산 14%가 갈려, 화면이
   // 어느 쪽을 쓰는지 드러난다. PUPPY_FOOD는 정가가 없어 취소선이 붙지 않는다
   it("할인 중인 상품만 취소선 정가와 서버 할인율을 보여준다", async () => {
-    const { container } = await renderWith("?category=food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
+    const { container } = await renderWith("food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
 
     expect(screen.getByText("31,900원")).toBeDefined();
     expect(screen.getByText("15%")).toBeDefined();
@@ -239,7 +266,7 @@ describe("HomeView", () => {
   // 시안(1758-69075 등)의 카드마다 있는 하트가 없었다. QA HM-009 "각 상품 카드 내 좋아요 버튼 부재" (#534)
   it("종류 탭 카드에도 찜 하트가 있고, 찜한 상품은 눌린 하트다", async () => {
     wishlistQuery = { items: [{ productId: 2 }], isLoading: false };
-    await renderWith("?category=food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
+    await renderWith("food", toProducts([SENIOR_FOOD, PUPPY_FOOD]));
 
     expect(
       screen
@@ -254,7 +281,7 @@ describe("HomeView", () => {
   });
 
   it("하트를 누르면 그 상품의 찜을 서버에서 뒤집는다", async () => {
-    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+    await renderWith("food", toProducts([PUPPY_FOOD]));
 
     fireEvent.click(screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" }));
 
@@ -275,7 +302,7 @@ describe("HomeView", () => {
   // 다른 목록(#483)과 같다. 로그아웃 상태에서 찜을 보내면 401과 재발급 시도만 헛돈다
   it("로그인하지 않았으면 하트를 눌렀을 때 찜 대신 로그인 필요 토스트를 띄우고 이동하지 않는다", async () => {
     session.value = false;
-    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+    await renderWith("food", toProducts([PUPPY_FOOD]));
 
     fireEvent.click(screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" }));
 
@@ -287,7 +314,7 @@ describe("HomeView", () => {
   // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
   it("찜 목록을 받는 동안은 하트를 누를 수 없다", async () => {
     wishlistQuery = { items: undefined, isLoading: true };
-    await renderWith("?category=food", toProducts([PUPPY_FOOD]));
+    await renderWith("food", toProducts([PUPPY_FOOD]));
 
     const heart = screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" });
     expect(heart).toHaveProperty("disabled", true);
@@ -298,7 +325,7 @@ describe("HomeView", () => {
   // 시안의 Rating Container다. 후기가 없는 상품은 회색 별에 "-" — 0.0이면 평이 나쁜 상품처럼 읽힌다 (#534)
   it("단가 아래에 별점과 후기 수를 보이고, 후기가 없으면 별점 대신 -를 보인다", async () => {
     const NEW_FOOD: ProductCard = { ...PUPPY_FOOD, productId: 9, rating: 0, reviewCount: 0 };
-    await renderWith("?category=food", toProducts([SENIOR_FOOD, NEW_FOOD]));
+    await renderWith("food", toProducts([SENIOR_FOOD, NEW_FOOD]));
 
     const card = (name: RegExp) => screen.getByRole("link", { name }).closest("li")!;
     const senior = card(/노령견 저지방/);
@@ -313,7 +340,7 @@ describe("HomeView", () => {
   });
 
   it("카테고리에 상품이 없으면 없다고 알린다", async () => {
-    await renderWith("?category=snack", EMPTY_PRODUCTS);
+    await renderWith("snack", EMPTY_PRODUCTS);
 
     expect(await screen.findByText(/아직 등록된 상품이 없어요/)).toBeDefined();
   });
@@ -418,7 +445,7 @@ describe("HomeView", () => {
   });
 
   it("진행 중인 타임딜이 없으면 없다고 알린다", async () => {
-    await renderWith("", EMPTY_PRODUCTS, EMPTY_DEALS);
+    await renderWith("all", EMPTY_PRODUCTS, EMPTY_DEALS);
 
     expect(await screen.findByText(/지금은 진행 중인 타임딜이 없어요/)).toBeDefined();
   });
@@ -602,13 +629,12 @@ describe("HomeView", () => {
     let result: ReturnType<typeof render>;
     await act(async () => {
       result = render(
-        <NuqsTestingAdapter searchParams="?category=food">
-          <HomeView
-            productsPromise={rejected}
-            productsKey="food:recommend"
-            dealsPromise={Promise.resolve(EMPTY_DEALS)}
-          />
-        </NuqsTestingAdapter>,
+        <HomeView
+          productsPromise={rejected}
+          category="food"
+          sort="recommend"
+          dealsPromise={Promise.resolve(EMPTY_DEALS)}
+        />,
       );
     });
 
@@ -619,16 +645,15 @@ describe("HomeView", () => {
     expect(screen.getByText("잠시 문제가 생겼어요. 다시 시도해 주세요.")).toBeDefined();
 
     // router.refresh()가 실제로 서버에서 새 결과를 받아온 상황을 흉내낸다 —
-    // productsKey는 그대로(같은 category/sort)이고 productsPromise만 새 값으로 바뀐다
+    // 종류·정렬은 그대로이고 productsPromise만 새 값으로 바뀐다
     await act(async () => {
       result.rerender(
-        <NuqsTestingAdapter searchParams="?category=food">
-          <HomeView
-            productsPromise={Promise.resolve(toProducts([PUPPY_FOOD]))}
-            productsKey="food:recommend"
-            dealsPromise={Promise.resolve(EMPTY_DEALS)}
-          />
-        </NuqsTestingAdapter>,
+        <HomeView
+          productsPromise={Promise.resolve(toProducts([PUPPY_FOOD]))}
+          category="food"
+          sort="recommend"
+          dealsPromise={Promise.resolve(EMPTY_DEALS)}
+        />,
       );
     });
 
@@ -692,7 +717,7 @@ describe("타임딜 여러 묶음", () => {
     };
 
     // 응답 순서를 일부러 later 먼저로 둔다 — 순서를 믿지 않는지 확인하기 위해서다
-    await renderWith("", EMPTY_PRODUCTS, {
+    await renderWith("all", EMPTY_PRODUCTS, {
       groups: [later, soon],
       serverTime: new Date(now).toISOString(),
     });
@@ -732,7 +757,7 @@ describe("타임딜 여러 묶음", () => {
       ],
     };
 
-    await renderWith("", EMPTY_PRODUCTS, {
+    await renderWith("all", EMPTY_PRODUCTS, {
       groups: [group],
       serverTime: new Date(now).toISOString(),
     });
