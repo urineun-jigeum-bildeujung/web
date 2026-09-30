@@ -540,11 +540,13 @@ describe("HomeView", () => {
     expect(screen.getByRole("button", { name: "새 아이 추가" })).toBeDefined();
   });
 
-  // 배너 API가 없어 비워 둔 회색 상자가 첫 화면 가장 큰 자리를 차지했다 (#504)
-  it("배너 자리에 예시 배너 이미지가 문구를 대체 텍스트로 들고 있다", async () => {
+  // 배너 API가 없어 비워 둔 회색 상자가 첫 화면 가장 큰 자리를 차지했다 (#504).
+  // 넘어가고 멈추는 동작은 promo-banner-carousel.test.tsx가 본다 (#615)
+  it("배너 자리에 받은 배너 셋이 문구를 대체 텍스트로 들고 있다", async () => {
     await renderWith();
 
     const banner = screen.getByRole("region", { name: "진행 중인 행사" });
+    expect(within(banner).getAllByRole("img")).toHaveLength(3);
     expect(within(banner).getByRole("img", { name: /타임딜 특가/ })).toBeDefined();
   });
 

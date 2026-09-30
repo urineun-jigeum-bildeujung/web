@@ -67,6 +67,7 @@ import { NotificationBell } from "@/widgets/notification-bell";
 
 import { CATEGORIES, CATEGORY_LABEL, type HomeCategory } from "../model/category";
 import { SORT_LABEL, SORT_TO_API, SORTS, type HomeSort } from "../model/sort";
+import { PromoBannerCarousel } from "./promo-banner-carousel";
 
 /** 메인 맞춤 상품은 추천 API의 기본 개수(9)만큼 받는다. 추천 화면(50개)과 캐시를 나눈다(#600) */
 const HOME_RECOMMENDATION_SIZE = 9;
@@ -721,38 +722,7 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
           <ProductGridSkeleton />
         ) : category === "all" ? (
           <>
-            {/* 프로모션 배너. 시안은 문구 없이 사진 배너 하나다 — 홍보 문구는 이미지 안에 들어간다.
-                배너 API가 없어 시안 배너(1708:22742)를 예시로 둔다. 빈 회색 상자로 두면 첫 화면 가장 큰
-                자리가 비어 보인다(#504). 시안 프로토타입에도 누르면 가는 곳이 없어 링크는 달지 않는다 */}
-            <section aria-label="진행 중인 행사" className="relative p-5">
-              <div className="relative aspect-4/3 overflow-hidden rounded-lg bg-muted">
-                {/* 이미지 안 문구가 곧 내용이라 대체 텍스트로 옮긴다. 첫 화면 가장 큰 이미지라 먼저 받는다(AGENTS 5.6) —
-                    Next 16에서 `priority`가 `preload`로 이름이 바뀌었다(next/dist/docs의 image.md).
-                    폭은 이 화면이 직접 정한다(#496). 섹션이 p-5로 좌우 20씩 먹으므로
-                    1200에서 멈춘 뒤에는 1160px이고, 그 아래로는 뷰포트를 따라간다 */}
-                <Image
-                  src="/images/home/promo-banner.webp"
-                  alt="매주 목요일 밤 12시 타임딜 특가. 놓치면 아쉬운 한정 특가"
-                  fill
-                  preload
-                  sizes="(min-width: 1200px) 1160px, calc(100vw - 40px)"
-                  className="object-cover"
-                />
-              </div>
-              {/* 배너가 여럿임을 알리는 자리. 넘기는 것은 서버 데이터가 붙은 뒤에 잇는다.
-                  시안(Frame 31)은 사진 박스가 아니라 padding을 포함한 이 섹션 기준
-                  bottom-[29.75px]다 — 테두리 없이 짙은 원 1개 + 옅은 원 2개.
-                  비선택 원은 라이트/다크 각각 surface/default(흰색/#141414)라 고정
-                  흰색이 아니라 모드에 따라 바뀌는 토큰(bg-background)을 쓴다 */}
-              <span
-                aria-hidden
-                className="absolute bottom-[29.75px] left-1/2 flex -translate-x-1/2 gap-1"
-              >
-                <span className="size-1.5 rounded-full bg-primary" />
-                <span className="size-1.5 rounded-full bg-background" />
-                <span className="size-1.5 rounded-full bg-background" />
-              </span>
-            </section>
+            <PromoBannerCarousel />
 
             {isWaitingPets ? (
               <PetSwitcherSkeleton />

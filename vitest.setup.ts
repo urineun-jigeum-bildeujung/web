@@ -22,6 +22,29 @@ if (!Element.prototype.releasePointerCapture) {
   Element.prototype.releasePointerCapture = () => {};
 }
 
+// 움직임 줄이기 설정을 읽는 컴포넌트가 쓰는 matchMedia도 jsdom에 없다. 어느 질의든 맞지 않는
+// 것으로 답하고 바뀜은 알리지 않는 빈 구현으로 채운다. 설정이 켜진 상황을 봐야 하는 테스트는
+// 직접 목으로 덮는다.
+if (!window.matchMedia) {
+  window.matchMedia = (query: string) =>
+    ({
+      media: query,
+      matches: false,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    }) as MediaQueryList;
+}
+
+// 가로로 미는 목록이 특정 자리로 옮길 때 쓰는 scrollTo도 jsdom에 없다. 실제로 옮기지 않아도
+// 렌더는 되므로 빈 구현으로 채운다. 어디로 옮겼는지 봐야 하는 테스트는 직접 spy로 덮는다.
+if (!Element.prototype.scrollTo) {
+  Element.prototype.scrollTo = () => {};
+}
+
 // 목록 끝을 지켜보는 IntersectionObserver도 jsdom에 없다. 실제로 교차를 재지 않아도
 // 렌더는 되므로 빈 구현으로 채운다. 교차 시점을 흉내 내야 하는 테스트는 직접 목으로 덮는다.
 if (!globalThis.IntersectionObserver) {
