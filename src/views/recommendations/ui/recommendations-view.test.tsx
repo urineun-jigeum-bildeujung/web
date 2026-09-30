@@ -116,6 +116,23 @@ describe("RecommendationsView", () => {
     expect(screen.getByRole("heading", { name: "우리 아이의 건강 고민을 덜어줄" })).toBeDefined();
   });
 
+  // 알약이 이름만큼 넓어져 뒤 문장 "의 건강 고민을 덜어줄"이 두 줄로 밀렸다(QA 신규-줄바꿈, #599).
+  // 줄 높이는 jsdom이 재지 못해 알약이 이름을 자르고 문장은 줄지 않는지만 본다
+  it("긴 이름은 알약 안에서 한 줄 말줄임으로 자르고 전체 이름은 title로 남긴다", () => {
+    const name = "초코바나나딸기우유맛쿠키";
+    petsQuery = { pets: [{ id: "3", name, isDefault: true }], isLoading: false };
+    renderWith();
+
+    const picker = screen.getByRole("combobox", { name: "어느 아이의 추천을 볼지" });
+    expect(picker.getAttribute("title")).toBe(name);
+    const label = screen.getByText(name);
+    expect(picker.contains(label)).toBe(true);
+    expect(label.className).toContain("truncate");
+    expect(screen.getByRole("heading", { name: "의 건강 고민을 덜어줄" }).className).toContain(
+      "shrink-0",
+    );
+  });
+
   it("무엇을 근거로 골랐는지 알린다", () => {
     renderWith();
     expect(screen.getByText(/건강 고민을 바탕으로 추천해요/)).toBeDefined();

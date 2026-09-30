@@ -17,6 +17,7 @@ import { NotificationBell } from "@/widgets/notification-bell";
 import { useQueryPets } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
 import { useSessionState } from "@/shared/api/use-session-state";
+import { cn } from "@/shared/lib/utils";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -150,10 +151,17 @@ export function RecommendationsView() {
                       20px 흰 아이콘으로 바꾸고, 시안에 없는 기본 테두리도 지운다 */}
                   <SelectTrigger
                     aria-label="어느 아이의 추천을 볼지"
+                    // 알약이 이름을 한 줄로 두고 남는 폭을 넘으면 말줄임표로 자른다. 뒤 문장은 줄지 않는다
+                    // (QA 신규-줄바꿈, #599). 잘려도 마우스로 전체 이름을 본다
+                    title={pet.name}
                     // 마지막 svg(공용 트리거의 기본 화살표)만 지운다 — 앞의 Icon은 남겨야 한다
-                    className="relative h-8 w-auto gap-1 rounded-lg border-0 bg-primary px-3 py-2 text-label-medium-12 text-primary-foreground after:absolute after:-inset-y-1.5 [&>svg:last-child]:hidden"
+                    className="relative h-8 w-auto min-w-0 gap-1 rounded-lg border-0 bg-primary px-3 py-2 text-label-medium-12 text-primary-foreground after:absolute after:-inset-y-1.5 [&>svg:last-child]:hidden"
                   >
-                    <SelectValue />
+                    {/* 공용 트리거가 값 자리를 flex로 그려 글자에 말줄임표가 붙지 않는다. 이름을 한 겹
+                        감싸 그 겹이 자른다. 값은 위 value와 같은 아이다 */}
+                    <SelectValue>
+                      <span className="truncate">{pet.name}</span>
+                    </SelectValue>
                     <Icon name="down" aria-hidden className="size-5" />
                   </SelectTrigger>
                   {/* 시안(1585-18052)은 흰 배경에 4px 안쪽 여백, 항목은 40px에 6px 모서리고
@@ -181,7 +189,10 @@ export function RecommendationsView() {
                   />
                 )
               )}
-              <h2 className="text-title-bold-20 break-keep text-foreground">
+              {/* 알약이 있으면 문장은 한 줄을 지키고 알약이 준다. 알약이 없으면 "우리 아이의…"가 길어 줄바꿈을 남긴다 */}
+              <h2
+                className={cn("text-title-bold-20 break-keep text-foreground", pet && "shrink-0")}
+              >
                 {pet || isWaitingPets ? "의 건강 고민을 덜어줄" : "우리 아이의 건강 고민을 덜어줄"}
               </h2>
             </div>
