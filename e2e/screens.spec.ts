@@ -15,6 +15,7 @@ import { stubReviewApi } from "./fixtures/review";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubCart } from "./fixtures/cart";
 import { stubOrders } from "./fixtures/orders";
+import { stubRecommendations } from "./fixtures/recommendations";
 import { signIn } from "./fixtures/session";
 
 /**
@@ -116,6 +117,8 @@ test.beforeEach(async ({ page }) => {
   await stubReviewApi(page);
   // 알림함이 목록을 받는다(#354)
   await stubNotifications(page);
+  // 맞춤 추천이 추천 API를 부른다(#600). 세우지 않으면 404를 오류 경계가 받으며 콘솔에 남는다
+  await stubRecommendations(page);
 });
 
 // 시안이 모바일 393×852라 그 폭에서 확인한다
