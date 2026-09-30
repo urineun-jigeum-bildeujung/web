@@ -6,6 +6,7 @@ import { stubFeedbacks } from "./fixtures/feedback";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { signIn } from "./fixtures/session";
+import { expectNoBlankScroll } from "./fixtures/sheet";
 
 test("메인이 렌더링된다", async ({ page }) => {
   await page.goto("/");
@@ -81,6 +82,24 @@ test("항목에 아이가 있으면 그 아이에게 묻고 그 아이의 반응
   expect(feedbacks.sent).toEqual([
     { orderProductId: 12, petId: 7, postpone: false, answer: "BAD" },
   ]);
+});
+
+// 메인 반응 시트는 화면 폭을 채우는 `full` 모양이다. 끌어올릴 때 아래 틈을 메우는 vaul의 꼬리를
+// 남겨 두는 모양이라, 그 꼬리가 스크롤 영역에 들어가지 않는지 따로 본다(#561)
+test("메인 반응 시트는 내용만큼만 뜨고 안에 빈 스크롤이 없다", async ({ page }) => {
+  await signIn(page);
+  await stubPetCatalog(page);
+  await stubNotifications(page);
+  await stubCart(page);
+  await stubFeedbacks(page);
+  await page.setViewportSize({ width: 393, height: 852 });
+
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: /반응 남기기/ })
+    .first()
+    .click();
+  await expectNoBlankScroll(page.getByRole("dialog", { name: "코코에게 잘 맞았나요?" }));
 });
 
 test("로그인하지 않았으면 최근에 구매한 상품을 부르지 않고 칸도 없다", async ({ page }) => {

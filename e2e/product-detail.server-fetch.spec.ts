@@ -13,6 +13,7 @@ import { stubAddToCart, stubCart } from "./fixtures/cart";
 import { stubNotifications } from "./fixtures/notifications";
 import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { signIn } from "./fixtures/session";
+import { blankBelowAfterScrollEnd, expectNoBlankScroll } from "./fixtures/sheet";
 import { stubWishlist } from "./fixtures/wishlist";
 
 const PATH = "/products/1";
@@ -324,6 +325,53 @@ test("장바구니를 누르면 수량 시트에서 수량을 고른 뒤 담을 
 
   await expect(sheet).toBeHidden();
   await expect(page.getByText("상품이 장바구니에 담겼어요")).toBeVisible();
+});
+
+// 상품명·수량·가격·버튼뿐인 시트가 높이(272px)의 세 배로 스크롤됐다. vaul의 꼬리가 스크롤
+// 영역에 들어간 탓이다(#561). 시안 크기 화면에서는 시트 안에 더 내릴 것이 없어야 한다
+test("수량 시트는 내용만큼만 뜨고 안에 빈 스크롤이 없다", async ({ page }) => {
+  await page.setViewportSize({ width: 393, height: 852 });
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  await expectNoBlankScroll(page.getByRole("dialog", { name: `${NAME} 수량 고르기` }));
+
+  // 뜨는 카드 아래 32px 틈은 덮개 자리다. 꼬리가 드러나면 틈이 시트 색으로 칠해지고 그 자리를
+  // 눌러도 시트가 눌려 닫히지 않는다. 올라오는 동안에는 카드가 지나가므로 멈출 때까지 기다린다
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const gap = document.elementFromPoint(window.innerWidth / 2, window.innerHeight - 16);
+          return gap?.closest("[role=dialog]") !== null;
+        }),
+      { message: "카드 아래 틈이 시트로 덮였다" },
+    )
+    .toBe(false);
+});
+
+// 화면이 낮으면 시트 안에서 밀어야 한다. 밀리는 길이는 넘친 만큼뿐이어야 하고, 끝까지 밀면
+// 마지막 버튼 아래에는 시트 아래 여백(16px)만 남는다 — 꼬리가 들어가면 그 아래로 빈 자리가 이어진다
+test("낮은 화면에서는 수량 시트 안에서 밀어 담기 버튼까지 닿고 그 아래 빈 자리가 없다", async ({
+  page,
+}) => {
+  await stubAddToCart(page);
+  await page.setViewportSize({ width: 393, height: 360 });
+  await page.goto(PATH);
+
+  await page.getByRole("button", { name: "장바구니", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: `${NAME} 수량 고르기` });
+  await expect(sheet).toBeVisible();
+  expect((await sheet.boundingBox())!.y, "시트가 화면 위로 잘렸다").toBeGreaterThanOrEqual(0);
+
+  const add = sheet.getByRole("button", { name: "18,000원 장바구니 담기" });
+  const blankBelow = await blankBelowAfterScrollEnd(add);
+  expect(blankBelow, "낮은 화면인데 시트 안에서 밀리지 않는다").not.toBeNull();
+  expect(blankBelow!, "끝까지 밀면 버튼 아래로 빈 자리가 남는다").toBeLessThanOrEqual(17);
+
+  await expect(add).toBeInViewport();
+  await add.click();
+  await expect(sheet).toBeHidden();
 });
 
 // 타임딜 상품을 그냥 상품으로 담으면 딜가가 아니라 정가로 들어간다(#413).
