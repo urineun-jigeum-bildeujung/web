@@ -193,7 +193,7 @@ const response = {
     feedingMethod: "1일 1정, 사료와 함께 급여",
     allergens: [{ code: "EGG", displayName: "계란", severity: "CRITICAL" }],
     // 서버가 CautionIngredientCode.getDisplayName()을 거쳐 내보낸다. 코드가 아니다
-    cautions: ["나트륨 과다"],
+    cautions: ["고염분"],
     consumptionPeriodDisplay: "제조일로부터 18개월",
     shelfLifeAfterOpeningDays: 60,
     storageMethod: "직사광선을 피해 서늘하고 건조한 곳에 보관",
@@ -263,7 +263,7 @@ describe("getProductDetail", () => {
 
     const product = await getProductDetail("7");
 
-    expect(product.detail.cautions).toEqual(["나트륨 과다"]);
+    expect(product.detail.cautions).toEqual(["고염분"]);
   });
 
   it("정가·별점이 비어 오는 상품을 견딘다", async () => {
