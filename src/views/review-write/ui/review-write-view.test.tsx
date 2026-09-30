@@ -293,6 +293,20 @@ describe("ReviewWriteView 1단계", () => {
     expect(one.getAttribute("aria-checked")).toBe("true");
   });
 
+  // QA RV-020. 0.5점 칸을 뺀 자리를 1점 칸이 넓혀 덮어야 왼쪽 반을 눌러도 1점이 된다.
+  // jsdom은 칸 크기를 계산하지 못해 폭을 클래스로 본다. 실제 좌표 클릭은 e2e/review-write.spec.ts가 본다
+  it("첫 별은 1점 칸이 별 전체를 덮어 왼쪽 반을 눌러도 1점이 된다", () => {
+    renderAt();
+
+    const one = screen.getByRole("radio", { name: "5점 만점에 1점" });
+    // 오른쪽 반만 덮으면 왼쪽 반에는 누를 것이 없어 눌러도 아무 일이 없다
+    expect(one.className).toContain("inset-x-0");
+    expect(one.className).not.toContain("w-1/2");
+
+    fireEvent.click(one);
+    expect(one.getAttribute("aria-checked")).toBe("true");
+  });
+
   it("새로고침해도 별점과 사용 기간이 남는다", async () => {
     const first = renderAt();
     fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 4점" }));
