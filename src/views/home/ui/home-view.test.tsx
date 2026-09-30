@@ -11,6 +11,7 @@ import type {
   TimeDealGroup,
   TimeDealList,
 } from "@/entities/product";
+import type { Recommendation } from "@/entities/recommendation";
 import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 const pushMock = vi.fn();
@@ -104,6 +105,59 @@ vi.mock("@/entities/wishlist", async (importOriginal) => ({
   useMutateWishlist: () => ({ toggle: toggleWish }),
 }));
 
+// 맞춤 상품은 추천 API에서 온다(#600). 서버 상태라 값만 세우고, 받은 인자를 모아 아이·개수를 본다.
+// `fail`을 켜면 훅이 실제처럼 오류를 던져 칸의 오류 경계가 받는지 본다
+const RECOMMENDED: Recommendation[] = [
+  {
+    productId: 219,
+    rank: 1,
+    score: 57,
+    reason: "비슷한 아이를 키우는 분들의 기호성 평가가 좋아 추천합니다.",
+    allergyPenalized: false,
+    name: "한입 크림 파우치 연어살 20포",
+    thumbnailUrl: "/images/e2e/product-photo-1.png",
+    category: "snack",
+    price: 19000,
+    originalPrice: 20000,
+    unitPrice: { label: "g", price: 19 },
+    rating: 3.96,
+    reviewCount: 665,
+    status: "onSale",
+    createdAt: "2026-09-14T01:58:19+00:00",
+  },
+  {
+    productId: 301,
+    rank: 2,
+    score: 88,
+    reason: "소화·배변 평가가 좋아 추천합니다.",
+    allergyPenalized: true,
+    name: "닭고기 동결건조 트릿",
+    thumbnailUrl: "/images/e2e/product-photo-2.png",
+    category: "snack",
+    price: 9000,
+    originalPrice: 9000,
+    unitPrice: null,
+    rating: 0,
+    reviewCount: 0,
+    status: "soldOut",
+    createdAt: "2026-09-20T01:58:19+00:00",
+  },
+];
+let recommendationQuery: { items: Recommendation[] | undefined; isLoading: boolean } = {
+  items: RECOMMENDED,
+  isLoading: false,
+};
+let recommendationFails = false;
+let recommendationCalls: unknown[] = [];
+vi.mock("@/entities/recommendation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/recommendation")>()),
+  useQueryHomeRecommendations: (options: unknown) => {
+    recommendationCalls.push(options);
+    if (recommendationFails) throw new Error("503");
+    return recommendationQuery;
+  },
+}));
+
 import type { HomeCategory } from "../model/category";
 import type { HomeSort } from "../model/sort";
 import { HomeView } from "./home-view";
@@ -119,6 +173,9 @@ afterEach(() => {
   toggleWish.mockReset();
   pushMock.mockReset();
   toastAppError.mockReset();
+  recommendationQuery = { items: RECOMMENDED, isLoading: false };
+  recommendationFails = false;
+  recommendationCalls = [];
 });
 
 const PUPPY_FOOD: ProductCard = {
@@ -701,6 +758,96 @@ describe("HomeView", () => {
     });
 
     expect(await screen.findByText("퍼피 성장기 사료 1kg")).toBeDefined();
+  });
+});
+
+describe("AI가 골라주는 맞춤 상품", () => {
+  const section = () =>
+    screen.getByRole("heading", { name: /AI가 골라주는/ }).closest("section") as HTMLElement;
+
+  // 목데이터 네 장이 누구에게나 같은 점수로 뜨던 자리다(#600)
+  it("고른 아이의 추천을 받아 적합도·이유·단가를 카드에 보인다", async () => {
+    await renderWith();
+
+    expect(recommendationCalls.at(-1)).toEqual({ petId: 3, size: 9 });
+    const card = within(section())
+      .getByRole("link", { name: /한입 크림 파우치/ })
+      .closest("li")!;
+    expect(within(card).getByText("초코와 적합도 57점")).toBeDefined();
+    expect(within(card).getByText(/기호성 평가가 좋아 추천합니다/)).toBeDefined();
+    expect(within(card).getByText("1g당 약 19원")).toBeDefined();
+    expect(within(card).queryByText(/알레르기/)).toBeNull();
+  });
+
+  it("아이를 바꾸면 그 아이의 추천을 부른다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    expect(recommendationCalls.at(-1)).toEqual({ petId: 7, size: 9 });
+  });
+
+  // 감점 상품은 목록에서 빠지지 않는다. 성분 코드 대신 주의 한 줄이다
+  it("알레르기 감점 상품은 주의 한 줄을, 품절 상품은 품절 배지를 붙인다", async () => {
+    await renderWith();
+
+    const card = within(section())
+      .getByRole("link", { name: /닭고기 동결건조/ })
+      .closest("li")!;
+    expect(within(card).getByText("등록한 알레르기 성분이 들어 있어요")).toBeDefined();
+    expect(within(card).getByText("품절")).toBeDefined();
+    // 단가를 해석하지 못했으면 단가 줄이 없다
+    expect(within(card).queryByText(/당 약/)).toBeNull();
+  });
+
+  it("받는 동안 가로 목록 자리를 뼈대로 잡는다", async () => {
+    recommendationQuery = { items: undefined, isLoading: true };
+    await renderWith();
+
+    expect(screen.getByRole("status", { name: "맞춤 상품을 불러오는 중" })).toBeDefined();
+  });
+
+  it("추천이 비었으면 아직 찾지 못했다고 알린다", async () => {
+    recommendationQuery = { items: [], isLoading: false };
+    await renderWith();
+
+    expect(within(section()).getByText("초코에게 맞는 상품을 아직 찾지 못했어요")).toBeDefined();
+  });
+
+  // 추천이 실패해도 메인의 다른 칸은 그대로 남아야 한다
+  it("추천만 실패하면 그 칸만 알리고 최근 구매·타임딜은 남는다", async () => {
+    recommendationFails = true;
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    await renderWith();
+
+    const alert = within(section()).getByRole("alert");
+    expect(alert.textContent).toContain("맞춤 상품을 불러오지 못했어요");
+    expect(screen.getByText("치석 케어 덴탈껌 7개입")).toBeDefined();
+    expect(await screen.findByText(/지금은 진행 중인 타임딜이 없어요/)).toBeDefined();
+
+    // 다시 시도하면 경계를 비우고 다시 부른다
+    recommendationFails = false;
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
+    expect(within(section()).getByRole("link", { name: /한입 크림 파우치/ })).toBeDefined();
+    consoleError.mockRestore();
+  });
+
+  // 추천은 아이 기준이다. 로그아웃에서 부르면 401과 재발급 시도만 헛돈다
+  it("로그인하지 않았으면 추천을 부르지 않고 로그인하면 골라준다고 알린다", async () => {
+    session.value = false;
+    petsQuery = { pets: undefined, isLoading: false };
+    await renderWith();
+
+    expect(recommendationCalls).toHaveLength(0);
+    expect(within(section()).getByText(/로그인하면 우리 아이에게 맞는 상품/)).toBeDefined();
+  });
+
+  it("아이가 없으면 추천을 부르지 않고 아이를 등록하라고 알린다", async () => {
+    petsQuery = { pets: [], isLoading: false };
+    await renderWith();
+
+    expect(recommendationCalls).toHaveLength(0);
+    expect(within(section()).getByText("아이를 등록하면 맞는 상품을 골라드려요")).toBeDefined();
   });
 });
 
