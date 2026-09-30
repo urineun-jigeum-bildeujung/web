@@ -46,6 +46,7 @@ import {
 } from "@/features/toggle-wishlist";
 import { useRequireSession } from "@/shared/api/use-require-session";
 import { useSessionState } from "@/shared/api/use-session-state";
+import { withJosa } from "@/shared/lib/josa/josa";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
@@ -59,6 +60,7 @@ import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card
 import { ScrollRow, ScrollRowItem } from "@/shared/ui/scroll-row/scroll-row";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { BottomNav } from "@/widgets/bottom-nav";
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
@@ -614,6 +616,17 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
   const petName = pet?.name ?? "우리 아이";
 
+  /**
+   * 아이를 고른다. 맞춤 상품·적합도가 모두 그 아이 기준으로 바뀌므로 누구로 바뀌었는지 알린다(QA r18, #611).
+   * 이미 고른 아이를 다시 누르면 바뀐 것이 없어 알리지 않는다
+   */
+  const selectPet = (id: string) => {
+    const next = pets?.find((item) => item.id === id);
+    if (!next || next.id === pet?.id) return;
+    setPetId(id);
+    showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
+  };
+
   // **최근에 구매한 상품은 반응을 남길 수 있는 실제 구매다(#494).** 누구에게나 같은 목데이터
   // 두 개가 뜨고 남긴 반응이 서버에 가지 않던 자리다. 마이페이지 아이 관리의 제품 탭과 같은 목록이다.
   //
@@ -749,7 +762,7 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                 <PetSwitcher
                   pets={pets}
                   selectedId={pet?.id}
-                  onSelect={setPetId}
+                  onSelect={selectPet}
                   // #189가 정한 대로 새 아이는 온보딩 기본 정보 단계로 잇는다. 5마리를 채웠으면
                   // 추가 칸을 그리지 않는다(QA No.130, #527)
                   onAdd={canAddPet(pets) ? () => router.push(toAddPetHref("/")) : undefined}
