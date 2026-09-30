@@ -203,9 +203,12 @@ function ProductGridSkeleton() {
       <div className="flex justify-end">
         <Skeleton className="h-5 w-14" />
       </div>
-      {/* 본체와 같은 규칙으로 눕는다(#569) — 카드 170px 고정, 사이 13px */}
+      {/* 본체와 같은 규칙으로 눕는다(#569) — 카드 170px 고정, 사이 13px.
+          개수는 가장 넓을 때의 한 줄(6)에 맞춘다. 전에 4였던 것도 그때의 최대 열 수
+          (`lg:grid-cols-4`)를 채우는 수였는데, 열이 여섯까지 늘어 그 의도가 깨졌다 —
+          첫 쪽이 10건이라 1200에서 본체는 여섯으로 서는데 뼈대만 넷이면 줄이 어긋난다 */}
       <ul className="flex flex-wrap gap-x-3.25 gap-y-6">
-        {Array.from({ length: 4 }, (_, index) => (
+        {Array.from({ length: 6 }, (_, index) => (
           <li key={index} className="flex w-42.5 flex-col gap-2">
             <Skeleton className="aspect-square w-full rounded-lg" />
             <Skeleton className="h-4 w-3/4" />
