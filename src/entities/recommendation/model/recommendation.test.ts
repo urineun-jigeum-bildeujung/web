@@ -108,6 +108,12 @@ describe("단가", () => {
     expect(toUnitPrice("G", 11)).toEqual({ label: "g", price: 11 });
   });
 
+  // 추천 서버는 상품 DB의 표준 단위(G·ML·EA)를 그대로 붙인다. 소문자로만 바꾸면 "1ea당"이 됐다
+  it("개수 단위 EA는 '개'로 쓴다", () => {
+    expect(toUnitPrice("30EA", 800)).toEqual({ label: "개", price: 800 });
+    expect(toUnitPrice("1ea", 800)).toEqual({ label: "개", price: 800 });
+  });
+
   it("단위를 읽을 수 없거나 반올림한 가격이 1원 미만이면 없다", () => {
     expect(toUnitPrice("", 19)).toBeNull();
     expect(toUnitPrice("1000", 19)).toBeNull();
