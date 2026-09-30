@@ -1,9 +1,10 @@
 // 사진 모음 테스트. 격자에서 상세로 가는 길과, 주소가 후기 번호로 자리를 가리키는지 본다.
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ReviewDetail, ReviewPhoto } from "@/entities/review";
+import { clearTokens, saveTokens } from "@/shared/api/token-store";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
@@ -12,11 +13,19 @@ vi.mock("next/navigation", () => ({
 
 const useQueryReviewPhotos = vi.fn();
 const useQueryReviewDetail = vi.fn();
+const toggleRecommend = vi.fn();
 vi.mock("@/entities/review", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/review")>()),
   useQueryReviewPhotos: () => useQueryReviewPhotos(),
   useQueryReviewDetail: (reviewId: string) => useQueryReviewDetail(reviewId),
+  useMutateReviewRecommend: () => ({ toggle: toggleRecommend }),
 }));
+
+afterEach(() => {
+  clearTokens();
+  window.localStorage.clear();
+  toggleRecommend.mockClear();
+});
 
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
 const { toggleWish, wish } = vi.hoisted(() => ({
@@ -252,6 +261,18 @@ describe("뷰어 아래 후기 카드", () => {
 
     expect(screen.getByText("댕댕이짱")).toBeDefined();
     expect(screen.getByText(/도움이 됐다고 했어요/)).toBeDefined();
+  });
+
+  // 리뷰 상세의 도움돼요(QA 상품상세 17). 리뷰 탭 카드와 같은 훅이라 두 화면의 캐시가 함께 바뀐다(#606)
+  it("도움돼요를 누르면 그 후기를 누른 뒤의 상태로 넘긴다", () => {
+    saveTokens({ accessToken: "a", refreshToken: "r" });
+    useQueryReviewPhotos.mockReturnValue(photosState());
+    useQueryReviewDetail.mockReturnValue({ review: DETAIL, isLoading: false });
+
+    renderView("?photo=7&n=0");
+    fireEvent.click(screen.getByRole("button", { name: /도움이 됐다고 했어요/ }));
+
+    expect(toggleRecommend).toHaveBeenCalledWith("7", true);
   });
 
   // 화면 안 상태로 두던 동안 새로고침하면 사라지고 좋아요 탭에도 뜨지 않았다 (#483)

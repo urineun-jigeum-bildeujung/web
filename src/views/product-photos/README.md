@@ -3,7 +3,7 @@
 후기에 달린 사진만 모아 보는 화면. 격자에서 고르면 그 사진을 남긴 후기가 함께 열린다.
 
 - **라우트**: `/products/[productId]/photos` — `src/app/(constrained)/(member)/products/[productId]/photos/page.tsx`. 로그인해야 열린다(#542)
-- **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/review`(`ReviewCard` · 사진·상세 조회 훅) · `shared/ui`의 `page-header` · `empty-state` · `bottom-action-bar` · `button` · `skeleton`
+- **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/review`(`ReviewCard` · 사진·상세 조회 훅 · 도움돼요 훅) · `shared/ui`의 `page-header` · `empty-state` · `bottom-action-bar` · `button` · `skeleton`
 - **입력**: `productId`만 받는다. 사진은 `GET /reviews/products/{id}/photos`로 쪽 단위로 잇는다
 - **상태**: 뷰어 하단의 찜 하트는 서버의 찜 여부다(#483). 보고 있는 사진은 URL 쿼리 `photo`(**후기 번호**) · `n`(그 후기의 몇 번째). 전에는 배열 순번이었는데 쪽을 이어 받으면 같은 번호가 다른 사진을 가리켜 바꿨다 (#339)
 - **참고**: 와이어프레임 기준(`상품 상세_사진 리뷰 모음 화면`·`_리뷰 탭`)
@@ -11,7 +11,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/product-photos-view.tsx` | 3열 격자와 상세 열기 |
-| `ui/product-photos-view.test.tsx` | 격자에서 상세로 가는 길, 주소로 들어왔을 때, 범위를 벗어난 값, 카드가 없는 값을 지어내지 않는지 |
+| `ui/product-photos-view.test.tsx` | 격자에서 상세로 가는 길, 주소로 들어왔을 때, 범위를 벗어난 값, 카드가 없는 값을 지어내지 않는지, 카드의 도움돼요를 누르면 그 후기를 넘기는지 |
 | `ui/photo-viewer.tsx` | 사진 상세. 크게 보이고 그 후기와 하단 CTA를 붙인다. 카드는 공개 리뷰 상세로 채운다 |
 | `index.ts` | 공개 API |
 
@@ -23,6 +23,4 @@
 
 ## 아직 없는 것
 
-- **뷰어 카드의 도움돼요를 누를 수 없다.** 공개 상세에 `likeCount`·`liked`가 실려 수는
-  보이지만, 토글이 로그인을 요구해 비로그인 UX를 정할 때까지 읽기 전용이다 (#471)
 - 좌우로 미는 제스처. 지금은 화살표 버튼으로만 넘긴다

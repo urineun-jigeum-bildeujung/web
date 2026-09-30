@@ -10,6 +10,7 @@ import {
   getReviewPhotos,
   getWritableReviews,
   issueReviewImageUpload,
+  toggleReviewRecommend,
 } from "./reviews";
 
 afterEach(() => {
@@ -169,6 +170,19 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리
 
 // 실제 백엔드 응답 모양 그대로다(로컬 실응답으로 확인). 사진 없는 후기의 `images`는 `null`,
 // 닉네임을 못 찾은 회원은 빈 문자열, 고양이는 `breedSize`가 `null`로 온다
+// 토글이라 켜기·끄기가 같은 요청이다. 누른 뒤 상태는 화면이 알고 있어 본문에 기대지 않는다
+test("도움돼요는 그 후기의 추천 주소로 PATCH를 보내고 본문 없이 끝나도 성공이다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 200 }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  await expect(toggleReviewRecommend("7")).resolves.toBeUndefined();
+
+  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(new URL(url, "http://x").pathname).toMatch(/\/reviews\/7\/recommend$/);
+  expect(init.method).toBe("PATCH");
+  expect(init.body).toBeUndefined();
+});
+
 const PRODUCT_REVIEWS = {
   averageRating: 3.8333333333333335,
   totalCount: 12,

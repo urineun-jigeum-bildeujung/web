@@ -7,7 +7,8 @@
 // 아이가 여럿이면 글로만 적지 않고 원도 그만큼 포갠다. 원 하나에 아이 여럿을 담으면
 // 몇 마리인지가 원에서 사라진다 (#488).
 //
-// 신고는 로그인해야 한다. 비로그인이 누르면 확인창을 열지 않고 로그인 필요 토스트만 띄운다 (#542).
+// 신고와 도움돼요는 로그인해야 한다. 비로그인이 누르면 확인창을 열거나 요청을 보내지 않고 로그인 필요
+// 토스트만 띄운다 (#542, #606).
 
 "use client";
 
@@ -40,10 +41,18 @@ type ReviewCardProps = {
       아바타 원·사진 줄까지 다시 그리면 중복이라 뺀다(시안 1758-54280) */
   hideAvatar?: boolean;
   hidePhotos?: boolean;
+  /** 도움돼요를 눌렀다. `liked`는 누른 뒤의 상태다. 로그인 확인은 카드가 먼저 한다 */
+  onToggleLike: (liked: boolean) => void;
   className?: string;
 };
 
-export function ReviewCard({ review, hideAvatar, hidePhotos, className }: ReviewCardProps) {
+export function ReviewCard({
+  review,
+  hideAvatar,
+  hidePhotos,
+  onToggleLike,
+  className,
+}: ReviewCardProps) {
   const [reporting, setReporting] = useState(false);
   const requireSession = useRequireSession();
 
@@ -141,12 +150,21 @@ export function ReviewCard({ review, hideAvatar, hidePhotos, className }: Review
           신고하기
         </button>
 
-        {/* 인증 UX가 확정될 때까지 도움돼요 수만 읽기 전용으로 표시한다 */}
-        <p className="flex h-8 items-center gap-1 rounded-lg border border-border px-3 text-label-medium-12 text-icon-fill-secondary">
+        {/* 눌림은 응답의 `liked`로 시작한다. 누르면 화면이 먼저 바뀌는 낙관적 갱신이라 대기 표시가 없다.
+            모양은 리뷰 상세의 도움돼요 줄(`views/review-detail`)과 같다 — 보이는 높이 32px, 누르는 자리 44px */}
+        <button
+          type="button"
+          aria-pressed={review.liked}
+          onClick={() => requireSession() && onToggleLike(!review.liked)}
+          className={cn(
+            "relative flex h-8 items-center gap-1 rounded-lg border px-3 text-label-medium-12 transition-colors after:absolute after:inset-x-0 after:-inset-y-1.5 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+            review.liked ? "border-brand text-brand" : "border-border text-icon-fill-secondary",
+          )}
+        >
           <Icon name="thumbs_up" aria-hidden className="size-5" />
           <span>{review.likeCount}</span>
           <span className="sr-only">명이 이 후기가 도움이 됐다고 했어요</span>
-        </p>
+        </button>
       </div>
 
       <AlertDialog open={reporting} onOpenChange={setReporting}>

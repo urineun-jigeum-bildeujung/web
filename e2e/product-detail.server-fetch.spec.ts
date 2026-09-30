@@ -271,6 +271,27 @@ test("로그인하지 않고 찜을 누르면 이동하지 않고 로그인 필�
   await expect(page).toHaveURL(new RegExp(`${PATH}$`));
 });
 
+// 공개 화면의 로그인 필요 버튼은 비로그인이면 요청 없이 안내만 한다 (#542, #606)
+test("로그인하지 않고 리뷰 도움돼요를 누르면 수가 그대로이고 로그인 필요를 알린다", async ({
+  page,
+}) => {
+  const toggled: string[] = [];
+  await page.route("**/api/v1/reviews/*/recommend", (route) => {
+    toggled.push(route.request().url());
+    return route.fulfill({ status: 401, json: {} });
+  });
+  await page.goto(`${PATH}?tab=review`);
+
+  const helpful = page.getByRole("button", { name: /도움이 됐다고 했어요/ }).first();
+  await expect(helpful).toContainText("32");
+  await helpful.click();
+
+  await expect(page.getByText("로그인 필요")).toBeVisible();
+  await expect(helpful).toHaveAttribute("aria-pressed", "false");
+  await expect(helpful).toContainText("32");
+  expect(toggled).toEqual([]);
+});
+
 // 비로그인은 이 화면을 볼 수 있지만 담지는 못한다. 수량 시트를 열기 전에 막는다 (#542)
 test("로그인하지 않고 장바구니를 누르면 수량 시트 대신 로그인 필요를 알린다", async ({ page }) => {
   await page.goto(PATH);

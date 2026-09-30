@@ -17,7 +17,12 @@ import { useEffect, useRef } from "react";
 import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 import { useToggleWishlist } from "@/features/toggle-wishlist";
-import { ReviewCard, toUsageLabel, useQueryReviewDetail } from "@/entities/review";
+import {
+  ReviewCard,
+  toUsageLabel,
+  useMutateReviewRecommend,
+  useQueryReviewDetail,
+} from "@/entities/review";
 import { useQueryWishlistStatus } from "@/entities/wishlist";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
@@ -57,6 +62,8 @@ export function PhotoViewer({
   onBuy,
 }: PhotoViewerProps) {
   const { review, isLoading } = useQueryReviewDetail(reviewId);
+  // 도움돼요는 리뷰 탭의 카드와 같은 캐시를 함께 바꾼다 (#606)
+  const recommend = useMutateReviewRecommend();
 
   // 찜은 서버에 저장한다(#483). 가격을 몰라 좋아요 탭 목록에 먼저 넣을 줄은 넘기지 않고
   // 재동기화에 맡긴다. 장바구니·바로구매는 옵션 시트와 가격이 상품 상세 슬라이스에 있어
@@ -230,6 +237,7 @@ export function PhotoViewer({
                 liked: review.liked,
               }}
               hidePhotos
+              onToggleLike={(liked) => recommend.toggle(review.id, liked)}
             />
           )}
         </div>

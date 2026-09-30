@@ -21,17 +21,38 @@ test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
   await expect(page.getByText("총 리뷰 3개")).toBeVisible();
 });
 
-// 필터·맞춤보기는 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#472).
-// 도움돼요는 인증 UX가 확정될 때까지 읽기 전용이다
-test("계약이 없는 필터·맞춤보기·도움돼요 버튼은 리뷰 탭에 없다", async ({ page }) => {
+// 필터·맞춤보기는 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#472)
+test("계약이 없는 필터·맞춤보기는 리뷰 탭에 없다", async ({ page }) => {
   await page.goto("/products/1?tab=review");
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("switch")).toBeHidden();
   await expect(page.getByText("내 반려동물 맞춤보기")).toBeHidden();
-  await expect(page.getByRole("button", { name: /도움이 됐어요/ })).toBeHidden();
-  // 도움돼요 수 자체는 목록 응답에 있어 읽기 전용으로 보인다
-  await expect(page.getByText("32", { exact: true })).toBeVisible();
+});
+
+// 비로그인 정책이 정해져(#542) 누를 수 있게 됐다(#606, QA 상품상세 7·8).
+// 목 서버는 상태를 들지 않아 토글 요청은 여기서 받는다. 목록은 누른 뒤 다시 받지 않는다
+test("리뷰 탭의 도움돼요를 누르면 수가 오르고, 다시 누르면 풀린다", async ({ page }) => {
+  const toggled: string[] = [];
+  await page.route("**/api/v1/reviews/*/recommend", (route) => {
+    toggled.push(route.request().method());
+    return route.fulfill({ status: 200 });
+  });
+  await page.goto("/products/1?tab=review");
+
+  // 첫 후기(7번)는 아직 누르지 않은 32다
+  const helpful = page.getByRole("button", { name: /도움이 됐다고 했어요/ }).first();
+  await expect(helpful).toHaveAttribute("aria-pressed", "false");
+  await expect(helpful).toContainText("32");
+
+  await helpful.click();
+  await expect(helpful).toHaveAttribute("aria-pressed", "true");
+  await expect(helpful).toContainText("33");
+
+  await helpful.click();
+  await expect(helpful).toHaveAttribute("aria-pressed", "false");
+  await expect(helpful).toContainText("32");
+  expect(toggled).toEqual(["PATCH", "PATCH"]);
 });
 
 // 사진을 열면 주소가 바뀌어야 공유되고, 뒤로가기가 격자로 돌아와야 한다.
@@ -100,6 +121,37 @@ test("뷰어 카드가 목록 카드와 같은 내용을 보여준다", async ({
 
   await expect(card.getByText("댕댕이맘", { exact: true })).toBeVisible();
   await expect(card.getByText("도움이 됐다고 했어요")).toBeVisible();
+});
+
+// 리뷰 상세의 도움돼요(QA 상품상세 17). 뷰어는 끝난 뒤 상세를 다시 받으므로, 토글을 받아 상세
+// 응답에 되비춰 서버가 기억하는 것처럼 세운다
+test("뷰어 카드의 도움돼요도 누르고 풀 수 있다", async ({ page }) => {
+  let liked = false;
+  await page.route("**/api/v1/reviews/7/recommend", (route) => {
+    liked = !liked;
+    return route.fulfill({ status: 200 });
+  });
+  await page.route("**/api/v1/reviews/7", async (route) => {
+    const response = await route.fetch();
+    const body = await response.json();
+    return route.fulfill({
+      response,
+      json: { ...body, liked, likeCount: body.likeCount + (liked ? 1 : 0) },
+    });
+  });
+  await page.goto("/products/1/photos?photo=7&n=0");
+
+  const helpful = page.getByRole("dialog").getByRole("button", { name: /도움이 됐다고 했어요/ });
+  await expect(helpful).toHaveAttribute("aria-pressed", "false");
+  await expect(helpful).toContainText("32");
+
+  await helpful.click();
+  await expect(helpful).toHaveAttribute("aria-pressed", "true");
+  await expect(helpful).toContainText("33");
+
+  await helpful.click();
+  await expect(helpful).toHaveAttribute("aria-pressed", "false");
+  await expect(helpful).toContainText("32");
 });
 
 // 주소로 바로 들어오면 되감을 기록이 없다. 쿼리만 지워야 격자에 남는다

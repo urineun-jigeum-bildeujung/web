@@ -1,9 +1,10 @@
 // 리뷰 탭 테스트. 서버 응답의 네 상태와, 계약이 없어 닫아 둔 것이 정말 닫혀 있는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Review } from "@/entities/review";
+import { clearTokens, saveTokens } from "@/shared/api/token-store";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
@@ -14,11 +15,19 @@ vi.mock("next/navigation", () => ({
 // `ReviewCard`와 정렬 목록은 진짜를 써야 화면이 실제로 그려진다
 const useQueryProductReviews = vi.fn();
 const useQueryFeaturedReviewPhotos = vi.fn();
+const toggleRecommend = vi.fn();
 vi.mock("@/entities/review", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/review")>()),
   useQueryProductReviews: (args: unknown) => useQueryProductReviews(args),
   useQueryFeaturedReviewPhotos: () => useQueryFeaturedReviewPhotos(),
+  useMutateReviewRecommend: () => ({ toggle: toggleRecommend }),
 }));
+
+afterEach(() => {
+  clearTokens();
+  window.localStorage.clear();
+  vi.clearAllMocks();
+});
 
 import { ReviewPanel } from "./review-panel";
 
@@ -220,15 +229,20 @@ describe("계약이 없어 닫아 둔 것", () => {
     expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
   });
-  // 토글이 로그인을 요구해 비로그인에서 401이 난다. 정책이 정해질 때까지 읽기 전용이다
-  it("도움돼요는 수만 보이고 누를 수 없다", () => {
+});
+
+// 비로그인 정책이 정해져(#542) 누를 수 있게 됐다(#606, QA 상품상세 7·8)
+describe("도움돼요", () => {
+  it("누르면 그 후기를 누른 뒤의 상태로 넘긴다", () => {
+    saveTokens({ accessToken: "a", refreshToken: "r" });
     useQueryProductReviews.mockReturnValue(listState());
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
     renderPanel();
+    const [first] = screen.getAllByRole("button", { name: /도움이 됐다고 했어요/ });
+    fireEvent.click(first);
 
-    expect(screen.getByText("32")).toBeDefined();
-    expect(screen.queryByRole("button", { name: /도움이 됐어요/ })).toBeNull();
+    expect(toggleRecommend).toHaveBeenCalledWith("1", true);
   });
 });
 

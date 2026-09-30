@@ -21,6 +21,7 @@ import {
   REVIEW_SORTS,
   REVIEW_SORT_LABEL,
   ReviewCard,
+  useMutateReviewRecommend,
   useQueryFeaturedReviewPhotos,
   useQueryProductReviews,
   type ReviewSort,
@@ -87,6 +88,8 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
     nextError,
   } = useQueryProductReviews({ productId, sort });
   const { photos: featuredPhotos } = useQueryFeaturedReviewPhotos(productId);
+  // 도움돼요는 누르는 즉시 수와 눌림이 바뀐다. 비로그인이면 카드가 먼저 막는다 (#542, #606)
+  const recommend = useMutateReviewRecommend();
 
   // 목록 끝이 보이면 다음 쪽을 가져온다. 가져오는 중이거나 방금 실패했으면 멈춘다 —
   // 실패한 채로 계속 보고 있으면 같은 요청이 끝없이 다시 나간다
@@ -200,7 +203,10 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
           <ul className="flex flex-col divide-y divide-border">
             {list.map((review) => (
               <li key={review.id} className="px-5 py-4">
-                <ReviewCard review={review} />
+                <ReviewCard
+                  review={review}
+                  onToggleLike={(liked) => recommend.toggle(review.id, liked)}
+                />
               </li>
             ))}
           </ul>
