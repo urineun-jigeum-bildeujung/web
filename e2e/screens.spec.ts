@@ -399,3 +399,35 @@ test("낮은 화면에서도 체형 안내를 끝까지 읽을 수 있다", asyn
   await last.scrollIntoViewIfNeeded();
   await expect(last).toBeInViewport();
 });
+
+/*
+ * 시안이 없는 화면은 넓은 폭에서도 420px 기둥 안에 있어야 한다(#491).
+ *
+ * 기둥이 빠지면 시안 없는 화면이 데스크톱에서 혼자 퍼진다. 넘침 검사로는 안 잡힌다 —
+ * 퍼져도 가로로 넘치지는 않기 때문이다. 전수로 돌 값은 아니라 일반 화면과 로그인이
+ * 필요한 화면 하나씩만 본다. `/cart`는 위 beforeEach의 세션·장바구니 스텁을 쓴다.
+ */
+test.describe("태블릿 폭에서도 좁은 기둥을 지킨다", () => {
+  test.use({ viewport: { width: 768, height: 1024 } });
+
+  for (const route of ["/login", "/cart"]) {
+    test(`${route} — 420px 기둥 안에 가운데로 있다`, async ({ page }) => {
+      await page.goto(route, { waitUntil: "networkidle" });
+
+      // `(constrained)/layout.tsx`가 세우는 기둥 자체를 잰다
+      const column = await page.evaluate(() => {
+        const box = document.querySelector("div.max-w-105")!.getBoundingClientRect();
+        return {
+          width: Math.round(box.width),
+          left: Math.round(box.left),
+          viewport: document.documentElement.clientWidth,
+        };
+      });
+
+      expect(column.width, "기둥이 풀려 화면이 퍼졌다").toBeLessThanOrEqual(420);
+      expect(column.left, "가운데 정렬이 아니다").toBe(
+        Math.round((column.viewport - column.width) / 2),
+      );
+    });
+  }
+});
