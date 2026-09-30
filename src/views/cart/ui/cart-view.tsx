@@ -8,6 +8,7 @@
 // 시안은 이름 한 줄만 두고 말줄임한다 (#172).
 //
 // 내용은 `GET /carts`가 준다. 수량과 빼기는 서버에 남으므로 새로고침해도 유지된다 (#214).
+// 고른 줄은 이 브라우저에 남는다. 결제 화면에 갔다 오거나 탭을 닫았다 열어도 그대로다 (#563).
 
 "use client";
 
@@ -38,6 +39,8 @@ import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { QuantityStepper } from "@/shared/ui/quantity-stepper/quantity-stepper";
 
+import { useCartSelectionStore } from "../model/cart-selection-store";
+import { CartItemLink } from "./cart-item-link";
 import { CartSkeleton } from "./cart-skeleton";
 
 // 응답에 `deliveryFee`가 없어 고정값을 쓴다. 백엔드가 MVP에서는 배송비를 고정한다고 답했다(2026-09-21) (#214)
@@ -69,14 +72,20 @@ export function CartView() {
   const { cart, error, isLoading } = useQueryCart();
   const { changeQuantity, remove } = useMutateCartItem();
 
-  // 시안은 아무것도 고르지 않은 상태(0/3)로 시작한다
-  const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
+  // **고른 줄은 화면 상태가 아니라 브라우저에 남긴다.** `useState`로 들던 동안 결제 화면에 갔다
+  // 뒤로 오거나 탭을 닫았다 열면 다시 마운트되며 `0/9`로 풀렸다 (#563). 처음 담은 줄은 고르지 않은
+  // 상태다 — 시안이 아무것도 고르지 않은 상태(0/3)로 시작한다
+  const savedKeys = useCartSelectionStore((state) => state.keys);
+  const setCheckedKeys = useCartSelectionStore((state) => state.setKeys);
   const [removeTarget, setRemoveTarget] = useState<CartItem | null>(null);
 
   const items = cart?.items ?? [];
   // 살 수 없는 줄은 고를 수 없다. 개수를 셀 때도 빼야 "전체선택"이 끝까지 차오른다
   const sellable = items.filter((item) => item.available);
-  const checkedItems = sellable.filter((item) => checkedKeys.includes(cartItemKey(item)));
+  // **남겨 둔 키는 지금 살 수 있는 줄과 겹치는 것만 쓴다.** 그사이 빠진 줄이나 품절된 줄의 키가 남아
+  // 있을 수 있다. 고칠 때는 이 목록에서 만들어 저장하므로 남은 키가 걷힌다
+  const checkedItems = sellable.filter((item) => savedKeys.includes(cartItemKey(item)));
+  const checkedKeys = checkedItems.map(cartItemKey);
   const allChecked = sellable.length > 0 && checkedItems.length === sellable.length;
 
   // 줄 합계는 `price × quantity`로 센다. 수량을 먼저 그리는 낙관적 갱신도 같은 식으로 맞춘다 (#427)
@@ -85,7 +94,9 @@ export function CartView() {
   const total = itemTotal === 0 ? 0 : itemTotal + SHIPPING_FEE;
 
   const toggle = (key: string) =>
-    setCheckedKeys((prev) => (prev.includes(key) ? prev.filter((v) => v !== key) : [...prev, key]));
+    setCheckedKeys(
+      checkedKeys.includes(key) ? checkedKeys.filter((v) => v !== key) : [...checkedKeys, key],
+    );
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -128,7 +139,9 @@ export function CartView() {
               </Label>
             </div>
 
-            {/* 버튼은 시안이 92×40이다. shadcn `sm`은 h-7(28px)이라 시안보다 작아 높이를 맞춘다 */}
+            {/* 버튼은 시안이 92×40이다. shadcn `sm`은 h-7(28px)이라 시안보다 작아 높이를 맞춘다.
+                **메인으로 보낸다.** 검색 화면으로 보내던 것을 PM QA가 실패로 봤다. 기대 동작이 메인
+                이동이다 (No.7, #563) */}
             {items.length === 0 ? (
               <EmptyState
                 icon={<Icon name="bag" />}
@@ -136,7 +149,7 @@ export function CartView() {
                 description="건강한 사료와 간식을 천천히 골라볼까요?"
                 action={
                   <Button variant="outline" size="sm" className="min-h-10 px-3" asChild>
-                    <Link href="/search">상품 둘러보기</Link>
+                    <Link href="/">상품 둘러보기</Link>
                   </Button>
                 }
                 className="flex-1"
@@ -156,9 +169,15 @@ export function CartView() {
                   // 이름이 안 오는 경우(`NOT_FOUND`·`TEMPORARILY_UNAVAILABLE`)에만 까닭이 이름
                   // 자리에 선다. 없는 이름을 지어내면 사용자는 그것을 상품명으로 읽는다
                   const name = item.productName ?? reason ?? UNAVAILABLE_DEFAULT;
+                  // 할인 줄일 때만 정가를 든다. 할인율은 서버가 계산해 준 값을 쓰고(`discountRate`) 화면에서
+                  // 두 금액으로 다시 만들지 않는다 — 할인이 없는 줄도 정가가 판매가와 같은 값으로 온다
+                  const originalPrice =
+                    item.discountRate !== null && item.discountRate > 0 ? item.originalPrice : null;
 
                   return (
-                    <li key={key} className="flex items-center gap-2 px-5 py-3">
+                    // `relative`는 이름 링크가 줄 전체를 덮는 기준이다(`CartItemLink`). 줄 안의 다른
+                    // 버튼은 그 덮개 위로 올린다(`z-10`)
+                    <li key={key} className="relative flex items-center gap-2 px-5 py-3">
                       {/* 시안은 체크박스를 목록 왼쪽이 아니라 사진 위에 얹는다.
                         사진과 이름이 붙어 있어야 무엇을 고르는지가 바로 읽힌다 */}
                       <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-surface-disable">
@@ -169,33 +188,50 @@ export function CartView() {
                           onCheckedChange={() => toggle(key)}
                           aria-label={`${name} 고르기`}
                         />
+                        {/* **살 수 없는 줄은 사진을 흐린다.** 품절 상품 상세의 대표 사진(1702:19206)과
+                            같은 50%다. 흐림은 사진에만 건다 — 감싼 칸에 걸면 쌓임 맥락이 생겨 체크박스가
+                            줄을 덮는 링크 아래로 깔린다 (No.21, #563) */}
                         {item.thumbnailUrl && (
                           <Image
                             src={item.thumbnailUrl}
                             alt=""
                             width={80}
                             height={80}
-                            className="size-full object-cover"
+                            className={cn(
+                              "size-full object-cover",
+                              !item.available && "opacity-50",
+                            )}
                           />
+                        )}
+                        {/* 품절이면 사진에 표시를 얹는다. 타임딜 목록의 품절 배지(1905-32428)와 같은 색이다.
+                            까닭은 이름 아래 글로 이미 읽히므로 스크린 리더에는 한 번만 들리게 감춘다 */}
+                        {item.unavailableReason === "OUT_OF_STOCK" && (
+                          <span
+                            aria-hidden
+                            className="absolute bottom-1 left-1 rounded bg-primary px-1 py-0.5 text-label-medium-12 text-primary-foreground"
+                          >
+                            품절
+                          </span>
                         )}
                       </div>
 
                       <div className="flex min-w-0 flex-1 flex-col justify-between gap-2 self-stretch">
                         <div className="flex items-start justify-between gap-1">
-                          {/* 시안이 한 줄로 자른다. 목록에서는 무엇인지 알아볼 만큼만 보이면 된다 */}
-                          <p
+                          {/* 시안이 한 줄로 자른다. 목록에서는 무엇인지 알아볼 만큼만 보이면 된다.
+                           **누르면 상세로 간다** — 이름뿐 아니라 줄 어디를 눌러도 간다 (No.9, #563) */}
+                          <CartItemLink
+                            item={item}
+                            name={name}
                             className={cn(
                               "truncate text-title-bold-16",
                               item.available ? "text-foreground" : "text-text-body-unselect",
                             )}
-                          >
-                            {name}
-                          </p>
+                          />
                           <button
                             type="button"
                             aria-label={`${name} 빼기`}
                             onClick={() => setRemoveTarget(item)}
-                            className="shrink-0 text-icon-stroke-tertiary"
+                            className="relative z-10 shrink-0 text-icon-stroke-tertiary"
                           >
                             <Icon name="cancel" />
                           </button>
@@ -210,18 +246,36 @@ export function CartView() {
 
                         {item.available && (
                           <div className="flex items-end justify-between gap-2">
-                            {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
-                            <p className="text-foreground">
-                              <span className="text-title-bold-16">
-                                {(item.price ?? 0).toLocaleString("ko-KR")}
-                              </span>
-                              <span className="text-body-medium-16">원</span>
-                            </p>
+                            {/* **할인 상품이면 정가 취소선과 할인율을 함께 둔다** (No.10, #563). 시안
+                                (cart_001)은 할인 없는 상품만 그려, 상품 카드(`product-grid-card`)의 모양
+                                — 정가를 위에, 할인율을 판매가 왼쪽에 — 을 따른다 */}
+                            <div className="flex flex-col">
+                              {originalPrice !== null && (
+                                <p className="text-label-regular-13 text-text-body-tertiary line-through">
+                                  {formatWon(originalPrice)}
+                                </p>
+                              )}
+                              <p className="flex items-center gap-1 text-foreground">
+                                {originalPrice !== null && (
+                                  <span className="text-label-regular-13 font-bold text-text-body-danger-default">
+                                    {item.discountRate}%
+                                  </span>
+                                )}
+                                {/* 시안이 숫자와 단위의 굵기를 달리한다. 금액이 먼저 읽히게 하려는 것이다 */}
+                                <span>
+                                  <span className="text-title-bold-16">
+                                    {(item.price ?? 0).toLocaleString("ko-KR")}
+                                  </span>
+                                  <span className="text-body-medium-16">원</span>
+                                </span>
+                              </p>
+                            </div>
                             <QuantityStepper
                               label={`${name} 수량`}
                               value={item.quantity}
                               // 서버는 바뀐 값이 아니라 증감을 받는다
                               onChange={(next) => changeQuantity(item, next - item.quantity)}
+                              className="relative z-10"
                             />
                           </div>
                         )}
@@ -291,9 +345,14 @@ export function CartView() {
           <AlertDialogDescription>나중에 언제든지 다시 담을 수 있어요</AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel className="min-h-11">닫기</AlertDialogCancel>
+            {/* 뺀 줄은 고른 목록에서도 뺀다. 남겨 두면 같은 상품을 다시 담았을 때 골라진 채로 보인다 */}
             <AlertDialogAction
               className="min-h-11"
-              onClick={() => removeTarget && remove(removeTarget)}
+              onClick={() => {
+                if (!removeTarget) return;
+                remove(removeTarget);
+                setCheckedKeys(checkedKeys.filter((v) => v !== cartItemKey(removeTarget)));
+              }}
             >
               상품 빼기
             </AlertDialogAction>
