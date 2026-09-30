@@ -818,8 +818,9 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
       </BottomActionBar>
 
       <DetailOptionSheet
-        // 주소로 들어와도 로그인 전이면 열지 않는다. 버튼으로 열 때와 같은 조건이다 (#542)
-        open={sheet !== null && session === true}
+        // 주소로 들어와도 로그인 전이면 열지 않는다. 버튼으로 열 때와 같은 조건이다 (#542).
+        // 품절이면 여는 버튼이 없다 — 주소로 열면 담기·바로 구매가 그대로 눌린다 (#595 리뷰)
+        open={sheet !== null && session === true && !isSoldOut}
         onOpenChange={(open) => {
           if (!open) closeSheet();
         }}
