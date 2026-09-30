@@ -719,6 +719,14 @@ describe("ProductDetailView", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  // 품절이면 여는 버튼이 없다. 주소로 열리면 담기·바로 구매가 그대로 눌린다 (#595 리뷰)
+  it.each(["buy", "cart"])("품절 상품은 주소에 시트(%s)가 있어도 열지 않는다", async (action) => {
+    await renderWith(`?sheet=${action}`, { soldOut: true });
+
+    expect(screen.getByRole("button", { name: "재입고 알림 신청" })).toBeDefined();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   // 타임딜 구매도 딜 아이템으로 가야 딜가로 주문된다
   it("타임딜 상품의 바로 구매는 딜 아이템 번호로 결제 화면에 간다", async () => {
     await renderWith("", { soldOut: false, timeDealItemId: 7 });
