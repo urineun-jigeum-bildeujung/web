@@ -19,12 +19,25 @@ vi.mock("@/widgets/cart-link", () => ({
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 
-const { add } = vi.hoisted(() => ({ add: vi.fn() }));
+const { add, remove, cartQuantity, useQueryCartItemQuantity } = vi.hoisted(() => {
+  const cartQuantity = { value: 0 };
+  return {
+    add: vi.fn(),
+    remove: vi.fn(),
+    cartQuantity,
+    // 꺼 두면 0인 것은 진짜 훅과 같다(use-query-cart-item-quantity.test). 여기서는 무엇을 넘기는지만 본다
+    useQueryCartItemQuantity: vi.fn((_item: unknown, options?: { enabled?: boolean }) =>
+      options?.enabled === false ? 0 : cartQuantity.value,
+    ),
+  };
+});
 // 담기는 서버를 부른다. 이 화면 테스트의 관심은 담은 뒤의 표시라 호출만 세운다 (#316)
-// 바로 구매 주소(`toBuyNowPath`)는 결제 화면과 같은 규칙이어야 해 진짜를 그대로 둔다
+// 바로 구매 주소(`toBuyNowPath`)는 결제 화면과 같은 규칙이어야 해 진짜를 그대로 둔다.
+// 담긴 수는 장바구니 조회라 값만 세운다 (#562)
 vi.mock("@/entities/cart", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/cart")>()),
-  useMutateCartItem: () => ({ add, isAdding: false }),
+  useMutateCartItem: () => ({ add, remove, isAdding: false }),
+  useQueryCartItemQuantity,
 }));
 // 적합도는 내 아이 기준이다(#481). 로그인·아이 목록·아이 상세는 서버 상태라 값만 세운다
 const { useSessionState, useQueryPets, useQueryPetDetail } = vi.hoisted(() => ({
@@ -189,6 +202,7 @@ describe("ProductDetailView", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    cartQuantity.value = 0;
     signedIn();
   });
 
@@ -457,6 +471,60 @@ describe("ProductDetailView", () => {
       await waitFor(() =>
         expect(add).toHaveBeenCalledWith({ itemType: "TIME_DEAL", itemId: 77 }, 1),
       );
+    });
+
+    // 전에는 담은 뒤 되돌릴 방법이 없어 장바구니 화면까지 가야 했다 (#562)
+    it("담기가 되돌리는 함수를 주면 담김 안내의 담기 취소가 그것을 부른다", async () => {
+      const undo = vi.fn();
+      add.mockResolvedValueOnce(undo);
+      await renderWith("", { soldOut: false });
+
+      fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
+      fireEvent.click(screen.getByRole("button", { name: "21,000원 장바구니 담기" }));
+      await waitFor(() => expect(toast.custom).toHaveBeenCalledOnce());
+
+      const renderToast = vi.mocked(toast.custom).mock.calls[0][0];
+      render(renderToast("cart-toast"));
+      fireEvent.click(screen.getByRole("button", { name: "담기 취소" }));
+
+      expect(undo).toHaveBeenCalledOnce();
+    });
+
+    // 다시 담으면 서버가 수량을 더하는데, 전에는 이미 담겨 있다는 사실이 어디에도 없었다 (#562)
+    it("이미 담긴 상품이면 시트가 담긴 수를 알리고 빼기로 이 상품 줄을 뺀다", async () => {
+      cartQuantity.value = 2;
+      await renderWith("", { soldOut: false });
+
+      fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
+      const sheet = screen.getByRole("dialog", { name: "면역 지원 영양제 90정 수량 고르기" });
+      expect(within(sheet).getByText("장바구니에 2개 담겨 있어요")).toBeDefined();
+
+      fireEvent.click(within(sheet).getByRole("button", { name: "장바구니에서 빼기" }));
+      expect(remove).toHaveBeenCalledWith({ itemType: "NORMAL", itemId: 1 });
+    });
+
+    // 딜 아이템과 일반 상품은 다른 줄이다. 일반 줄의 수를 보면 딜로 담은 것을 모른다
+    it("타임딜 상품은 딜 아이템 줄의 담긴 수를 본다", async () => {
+      await renderWith("", { soldOut: false, timeDealItemId: 77 });
+
+      expect(useQueryCartItemQuantity).toHaveBeenLastCalledWith(
+        { itemType: "TIME_DEAL", itemId: 77 },
+        { enabled: true },
+      );
+    });
+
+    it("로그인하지 않았으면 장바구니를 부르지 않고 담긴 수도 알리지 않는다", async () => {
+      useSessionState.mockReturnValue(false);
+      cartQuantity.value = 2;
+      await renderWith("", { soldOut: false });
+
+      fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
+
+      expect(useQueryCartItemQuantity).toHaveBeenLastCalledWith(
+        { itemType: "NORMAL", itemId: 1 },
+        { enabled: false },
+      );
+      expect(screen.queryByText(/담겨 있어요/)).toBeNull();
     });
   });
 

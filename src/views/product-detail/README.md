@@ -22,9 +22,11 @@
 | `model/review-filter.ts` | 거르는 조건·구간 문구·주소 왕복 |
 | `model/review-filter.test.ts` | 구간 해석, 주소 왕복, 망가진 주소를 견디는지 |
 | `ui/product-detail-view.tsx` | 화면 조립. 상단 요약과 하단 고정 버튼 줄 |
-| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환 |
-| `ui/detail-option-sheet.tsx` | 수량 시트. 용량 표기·수량과 장바구니 담기 또는 바로 구매 버튼. 고를 옵션은 없다 |
-| `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기·바로 구매 동작 |
+| `ui/product-detail-view.test.tsx` | 적합도 자리(내 아이·종 다른 아이·로그인 전)·함께 보면 좋은 상품(누르면 가는 곳·없을 때·못 받았을 때)·지켜볼 점·탭 전환·담기 취소와 담긴 수(딜 줄·로그인 전) |
+| `ui/detail-option-sheet.tsx` | 수량 시트. 상품 사진(없으면 회색 자리)·용량 표기·수량과 장바구니 담기 또는 바로 구매 버튼. 고를 옵션은 없다. 장바구니로 열었고 이미 담긴 상품이면 담긴 수와 "빼기"를 둔다(#562, 시안에 없는 모양) |
+| `ui/detail-option-sheet.test.tsx` | 수량 시트의 수량 변경과 담기·바로 구매 동작, 상품 사진, 담긴 수 표시(없을 때·바로 구매일 때는 없음)와 빼기 |
+| `ui/cart-added-snackbar.tsx` | 담김 스낵바. 담기 전 수량을 알면 "담기 취소"를 달아 이번 담기만 되돌린다(#562). 디자인 시스템 snackbar의 `action` 자리를 쓰고, 문구는 시안에 없다 |
+| `ui/cart-added-snackbar.test.tsx` | 되돌릴 수 있을 때만 버튼이 붙는지, 누르면 되돌리고 취소를 알리는지 |
 | `ui/match-panel.tsx` | 적합도 블록. 아이 고르기, 점수, 근거 세 줄 |
 | `ui/product-info-panel.tsx` | 상품 정보 탭. 상세 설명 표(응답의 `detailInfo`)·영양 분석·상품 설명 자리·안내 아코디언 셋 |
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지, 안내 셋이 실제 문구를 그리고 자리표시 번호가 없는지 |
