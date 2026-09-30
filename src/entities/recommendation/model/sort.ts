@@ -9,6 +9,19 @@ import type { Recommendation } from "./recommendation";
 export const RECOMMENDATION_SORTS = ["recommend", "latest", "rating-high", "rating-low"] as const;
 export type RecommendationSort = (typeof RECOMMENDATION_SORTS)[number];
 
+/**
+ * 후기가 없는 상품은 두 별점 정렬 모두 뒤로 보낸다. 별점이 0으로 와 낮은순 맨 앞에 서는데 카드는
+ * 별점을 "-"로 그려, 별점이 가장 낮은 상품처럼 보이지 않는다
+ */
+function byRating(direction: 1 | -1) {
+  return (a: Recommendation, b: Recommendation) => {
+    const unratedA = a.reviewCount === 0;
+    const unratedB = b.reviewCount === 0;
+    if (unratedA !== unratedB) return unratedA ? 1 : -1;
+    return direction * (a.rating - b.rating);
+  };
+}
+
 /** 새 배열로 돌려준다. 같은 값끼리는 추천 순서(`rank`)를 지킨다 */
 export function sortRecommendations(
   items: readonly Recommendation[],
@@ -19,9 +32,9 @@ export function sortRecommendations(
     case "latest":
       return byRank.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
     case "rating-high":
-      return byRank.sort((a, b) => b.rating - a.rating);
+      return byRank.sort(byRating(-1));
     case "rating-low":
-      return byRank.sort((a, b) => a.rating - b.rating);
+      return byRank.sort(byRating(1));
     case "recommend":
       return byRank;
   }
