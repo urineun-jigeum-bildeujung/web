@@ -111,8 +111,10 @@ function SectionTitle({
   const requireSession = useRequireSession();
 
   return (
-    <div className={cn("flex items-center justify-between", className)}>
-      <h2 className="text-title-bold-20 text-foreground">{children}</h2>
+    // 제목이 길면 제목 쪽이 준다. 더보기가 함께 줄면 "더보/기"로 꺾였다(QA 신규-줄바꿈, #599).
+    // 둘이 맞닿지 않게 사이를 띄운다
+    <div className={cn("flex items-center justify-between gap-2", className)}>
+      <h2 className="min-w-0 text-title-bold-20 text-foreground">{children}</h2>
       {href && (
         // 보이는 크기는 시안대로 두고, 누르는 자리만 after:로 44px 확보한다.
         // min-h-11을 쓰면 이 줄 전체가 44px로 늘어나 제목과 격자 사이 간격이 밀린다
@@ -121,7 +123,7 @@ function SectionTitle({
           onClick={(event) => {
             if (!requireSession()) event.preventDefault();
           }}
-          className="relative text-label-medium-14 text-text-body-tertiary after:absolute after:-inset-2.75"
+          className="relative shrink-0 text-label-medium-14 text-text-body-tertiary after:absolute after:-inset-2.75"
         >
           더보기
         </Link>
@@ -673,7 +675,17 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                 href={pet ? `/recommendations?pet=${pet.id}` : "/recommendations"}
                 className="pr-5"
               >
-                AI가 골라주는 {petName} 맞춤 상품
+                {/* 제목은 시안대로 한 줄을 지키고 넘치는 만큼 이름만 말줄임표로 자른다(QA 신규-줄바꿈,
+                    #599). 이름 앞뒤 띄어쓰기는 문구에 붙여 둔다 — flex 안에서 띄어쓰기만 있는 글자는
+                    그려지지 않고, 문구 끝 띄어쓰기는 whitespace-pre가 아니면 지워진다.
+                    화면 낭독기는 잘린 글자도 전부 읽고, 마우스는 title로 본다 */}
+                <span className="flex whitespace-pre">
+                  {"AI가 골라주는 "}
+                  <span title={petName} className="truncate">
+                    {petName}
+                  </span>
+                  {" 맞춤 상품"}
+                </span>
               </SectionTitle>
               <ScrollRow
                 label={`${petName} 맞춤 상품`}
