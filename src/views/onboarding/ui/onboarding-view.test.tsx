@@ -470,6 +470,19 @@ test("몸무게는 소수 첫째 자리까지만 들어가고 값 뒤에 kg이 �
   expect(getDraft().weight).toBe("4.5");
 });
 
+// QA 온보딩(#602). 정수부가 몇 자리든 들어갔다
+test("몸무게는 정수부 세 자리에서 더 들어가지 않는다", () => {
+  setDraft({ ...EMPTY_PROFILE_DRAFT, breedId: 1, breedName: "말티즈", size: "small" });
+  resetDraftCache();
+  renderAt("?step=detail");
+
+  const weight = screen.getByLabelText("대략적인 몸무게") as HTMLInputElement;
+  fireEvent.change(weight, { target: { value: "1234" } });
+
+  expect(weight.value).toBe("123");
+  expect(getDraft().weight).toBe("123");
+});
+
 // QA No.196. 999999세가 들어가 다음 단계가 켜졌다
 test("나이는 두 자리까지 들어가고 상한을 넘으면 알리고 다음으로 못 간다", () => {
   setDraft({
