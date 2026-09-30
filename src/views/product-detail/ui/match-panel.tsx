@@ -42,9 +42,9 @@ export function MatchPanel({ pets, onPetChange, match, cautions }: MatchPanelPro
   // 이름은 적합도에서 가져온다. 목록에서 따로 찾으면 둘이 어긋났을 때
   // 이 아이 이름 아래 다른 아이의 근거가 붙는다
   const { petId, petName } = match;
-  // 적합도 근거와 주의성분을 한 목록에 함께 편다. 눈으로는 위아래 자리로 갈리지만
-  // 낭독기에는 자리가 없어 문구가 유일한 단서다. 같은 문장이 양쪽에서 와도
-  // key가 부딪히지 않게 출처를 접두사로 붙인다
+  // 적합도 근거와 주의성분을 한 목록에 함께 편다. 근거 다음 순서로 놓일 뿐 자리로 갈리지는
+  // 않는다 — 2열이 되는 폭에서는 마지막 근거와 나란히 선다. 출처는 낭독기에 문구로 알린다.
+  // 같은 문장이 양쪽에서 와도 key가 부딪히지 않게 출처를 접두사로 붙인다
   const rows = [
     ...match.reasons.map((reason) => ({
       key: `reason-${reason.text}`,
