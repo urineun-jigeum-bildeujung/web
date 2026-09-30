@@ -176,13 +176,14 @@ describe("상품정보 하단 안내", () => {
     expect(screen.queryByText("소비자상담 관련 전화번호")).toBeNull();
   });
 
-  // 시안은 "3만원 이상 무료배송"인데 확정 정책은 3,000원 고정이다(백엔드 2026-09-21 · #214).
-  // 시안을 그대로 옮기면 안내와 실제 결제 금액이 어긋난다
-  it("배송비를 확정 정책인 3,000원 고정으로 적는다", () => {
+  // PD가 조건부 무료배송 줄을 통째로 지워 기본 배송비 줄도 시안에서 사라졌다(#575).
+  // 금액은 장바구니·결제가 이미 보인다(3,000원 고정 · #214)
+  it("배송비 안내에 무료배송도 기본 배송비 줄도 적지 않는다", () => {
     render(<ProductInfoPanel detail={DETAIL} match={BASE} />);
     openGuide("배송 안내");
 
-    expect(screen.getByText("기본 배송비: 3,000원")).toBeDefined();
     expect(screen.queryByText(/무료배송/)).toBeNull();
+    expect(screen.queryByText(/기본 배송비/)).toBeNull();
+    expect(screen.getByText(/도서·산간 추가 배송비/)).toBeDefined();
   });
 });
