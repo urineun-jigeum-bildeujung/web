@@ -121,6 +121,30 @@ test("이름에 이모티콘은 들어가지 않고 숫자는 들어간다", () 
   expect(getDraft().name).toBe("초코2");
 });
 
+// QA 온보딩(#602). 두 번째 단계에서 "이전"을 누르면 첫 단계가 새로 그려져 사진 자리가 빈 원이
+// 됐다. 파일은 초안에 남아 실제로는 등록되는데 화면만 사진이 빠진 것처럼 보였다
+test("두 번째 단계에서 이전으로 돌아와도 골라 둔 사진이 남는다", () => {
+  renderAt("?step=basic");
+  const photo = new File(["bytes"], "coco.jpg", { type: "image/jpeg" });
+
+  fireEvent.change(screen.getByLabelText("반려동물 사진 등록", { selector: "input" }), {
+    target: { files: [photo] },
+  });
+  fireEvent.change(screen.getByLabelText("아이의 이름을 알려주세요"), {
+    target: { value: "코코" },
+  });
+  fireEvent.click(screen.getByText("남자아이"));
+  fireEvent.click(screen.getByText("했어요"));
+  fireEvent.click(screen.getByRole("button", { name: "다음 단계 작성하기" }));
+
+  expect(screen.queryByRole("presentation")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "이전" }));
+
+  expect(screen.getByRole("heading", { name: "아이를 소개해 주세요" })).toBeDefined();
+  expect(screen.getByRole("presentation").getAttribute("src")).toBe("blob:preview");
+  expect(getDraft().photo).toBe(photo);
+});
+
 // 시안 onbo_002가 첫 단계의 "이전"을 비활성으로 그린다. 도입부로 돌아가는 길은 없다
 test("첫 입력 단계의 이전은 잠겨 있다", () => {
   renderAt("?step=basic");

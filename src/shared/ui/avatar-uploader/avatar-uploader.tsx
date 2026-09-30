@@ -4,17 +4,27 @@
 //
 // 고른 파일을 바로 올리지 않고 상위에 넘긴다. 폼을 제출할 때 함께 보내야
 // 작성을 중간에 그만뒀을 때 서버에 파일만 남는 일이 없다.
+//
+// 상위가 파일을 들고 있으면 `file`로 돌려받아 미리보기를 그 파일에서 만든다. 단계를 오가며 이
+// 컴포넌트가 다시 그려져도 사진이 남는다(QA 온보딩, #602).
 
 "use client";
 
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { cn } from "@/shared/lib/utils";
 import { Icon } from "@/shared/ui/icon/icon";
 
+import { useObjectUrl } from "./use-object-url";
+
 type AvatarUploaderProps = {
   /** 파일을 고르거나 지웠을 때. 상위가 폼 상태로 들고 있다가 제출 때 함께 보낸다 */
   onFileChange: (file: File | null) => void;
+  /**
+   * 상위가 들고 있는 파일. 주면 미리보기를 이것으로 그린다 — 온보딩처럼 단계를 오가며 이
+   * 컴포넌트가 다시 그려지는 화면이 넘긴다. 주지 않으면 고른 파일을 안에서 든다
+   */
+  file?: File | null;
   /** 이미 저장된 사진이 있을 때의 주소. 프로필 수정에서 쓴다 */
   defaultImageUrl?: string;
   /** 버튼을 설명하는 이름. 스크린 리더가 읽는다 */
@@ -28,6 +38,7 @@ type AvatarUploaderProps = {
 
 export function AvatarUploader({
   onFileChange,
+  file,
   defaultImageUrl,
   label = "반려동물 사진 등록",
   placeholder = <Icon name="camera" className="size-8 text-icon-fill-tertiary" />,
@@ -35,20 +46,16 @@ export function AvatarUploader({
   className,
 }: AvatarUploaderProps) {
   const inputId = useId();
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [picked, setPicked] = useState<File | null>(null);
+  // **미리보기 주소를 안에만 들면 다시 그려질 때 사라진다.** 온보딩 두 번째 단계에서 "이전"을
+  // 누르면 첫 단계가 새로 그려져 빈 원이 됐다 — 파일은 초안에 남아 실제로는 등록되는데도(#602).
+  // 주소는 파일에서 만들고, 파일이 바뀌거나 화면에서 빠지면 거둔다
+  const previewUrl = useObjectUrl(file === undefined ? picked : file);
 
-  // 만들어 둔 주소는 직접 해제해야 메모리에 남지 않는다.
-  // cleanup이 사진 교체와 언마운트를 모두 처리하므로 핸들러에서 따로 해제하지 않는다.
-  useEffect(() => {
-    if (!previewUrl) return;
-    return () => URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
-
-  // createObjectURL은 전역 테이블에 주소를 등록하는 부수효과라 렌더 중에 부르지 않는다.
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const nextFile = event.target.files?.[0] ?? null;
 
-    setPreviewUrl(nextFile ? URL.createObjectURL(nextFile) : null);
+    setPicked(nextFile);
     onFileChange(nextFile);
   }
 

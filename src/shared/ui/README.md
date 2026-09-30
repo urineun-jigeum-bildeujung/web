@@ -48,7 +48,7 @@ shadcn 파일을 검사에서 빼는 이유는 세미콜론 없는 자체 스타
 | `error-boundary/` | 섹션 단위 오류 격리와 재시도. TanStack Query 리셋과 연결 |
 | `form-field/` | 레이블 + 입력 + 예시 문구. 접근성 연결과 클리어 버튼. 테두리 상자가 기본이고 `variant="underline"`은 밑줄 하나. `trailing`으로 입력칸 안 오른쪽에 동작 칩을, `suffix`로 값 바로 뒤에 단위(몸무게 kg)를 둔다 |
 | `chip-select/` | 보기 중 하나만 고르는 칩. 겉모습은 버튼이고 시맨틱은 라디오 |
-| `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기 |
+| `avatar-uploader/` | 사진 한 장 선택과 원형 미리보기. 상위가 파일을 `file`로 넘기면 그 파일로 미리보기를 그려, 다시 그려져도 사진이 남는다(#602). 미리보기 주소(`blob:`)는 `use-object-url.ts`가 만들고 파일이 바뀌거나 화면에서 빠지면 거둔다 |
 | `badge/` | 짧은 상태·속성 표시. `tone`(default / positive / danger / info / brand / strong)으로 뜻에 따라 색을 고른다 |
 | `checkbox-row/` | 원형 체크박스 + 레이블 한 줄. 크기(m 24 / s 16)·골랐을 때 색(primary / brand)·설명·오른쪽 슬롯을 받는다 |
 | `step-progress/` | 여러 단계 입력의 진행 표시 |
