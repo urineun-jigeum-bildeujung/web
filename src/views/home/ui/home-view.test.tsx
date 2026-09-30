@@ -801,6 +801,62 @@ describe("AI가 골라주는 맞춤 상품", () => {
     expect(within(card).queryByText(/^1\S+당 /)).toBeNull();
   });
 
+  // 하트가 누를 수 없는 그림이라 찜이 저장되지 않았다(QA r22·r27, #611)
+  it("카드 하트는 찜 목록으로 눌림을 보이고, 누르면 그 상품의 찜을 서버에서 켠다", async () => {
+    wishlistQuery = { items: [{ productId: 301 }], isLoading: false };
+    await renderWith();
+
+    const heart = within(section()).getByRole("button", {
+      name: "한입 크림 파우치 연어살 20포 찜하기",
+    });
+    expect(heart.getAttribute("aria-pressed")).toBe("false");
+    expect(
+      within(section())
+        .getByRole("button", { name: "닭고기 동결건조 트릿 찜하기" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+
+    fireEvent.click(heart);
+
+    // 좋아요 탭 목록에 먼저 넣을 줄을 함께 넘겨 하트가 곧바로 켜진다(QA r23·r28)
+    expect(toggleWish).toHaveBeenCalledWith({
+      productId: 219,
+      wished: true,
+      item: {
+        productId: 219,
+        name: "한입 크림 파우치 연어살 20포",
+        thumbnailUrl: "/images/e2e/product-photo-1.png",
+        price: 19000,
+        originalPrice: 20000,
+      },
+    });
+  });
+
+  it("찜한 상품의 하트를 다시 누르면 서버에서 찜을 푼다", async () => {
+    wishlistQuery = { items: [{ productId: 301 }], isLoading: false };
+    await renderWith();
+
+    fireEvent.click(within(section()).getByRole("button", { name: "닭고기 동결건조 트릿 찜하기" }));
+
+    // QA r25·r30. 푸는 쪽은 목록에서 빼기만 해 넣을 줄이 필요 없지만 같은 모양으로 넘긴다
+    expect(toggleWish).toHaveBeenCalledWith(
+      expect.objectContaining({ productId: 301, wished: false }),
+    );
+  });
+
+  // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)
+  it("찜 목록을 받는 동안은 카드 하트를 누를 수 없다", async () => {
+    wishlistQuery = { items: undefined, isLoading: true };
+    await renderWith();
+
+    const heart = within(section()).getByRole("button", {
+      name: "한입 크림 파우치 연어살 20포 찜하기",
+    });
+    expect(heart).toHaveProperty("disabled", true);
+    fireEvent.click(heart);
+    expect(toggleWish).not.toHaveBeenCalled();
+  });
+
   it("받는 동안 가로 목록 자리를 뼈대로 잡는다", async () => {
     recommendationQuery = { items: undefined, isLoading: true };
     await renderWith();

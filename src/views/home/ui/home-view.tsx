@@ -134,6 +134,10 @@ function RecommendedProducts({ petId, petName }: { petId: number; petName: strin
     petId,
     size: HOME_RECOMMENDATION_SIZE,
   });
+  // 찜은 서버에 저장한다. 종류 탭 격자(#534)와 같이 전체 찜 목록으로 하트를 채우고 누르면 서버에서
+  // 뒤집는다 — 토글이 찜 목록 캐시를 먼저 바꿔 하트가 곧바로 바뀐다(QA r22~r30, #611)
+  const heart = useToggleWishlist();
+  const { wishedIds, isLoading: wishLoading } = useWishedProductIds();
 
   if (isLoading || !items) return <RecommendedProductsSkeleton />;
 
@@ -164,14 +168,18 @@ function RecommendedProducts({ petId, petName }: { petId: number; petName: strin
                 <SaleStatusBadge status={item.status} />
               </div>
             }
+            // 시안(Reaction Button)은 사진 모서리에서 12px 안쪽의 24px 흰 하트다. 종류 탭 격자와 같은
+            // 원판(32px) 하트를 쓰므로 원판을 8px 안쪽에 두어 하트 자리를 시안과 맞춘다(#534)
+            imageActionClassName="top-2 right-2"
             imageAction={
-              // 시안(Reaction Button)은 24px 흰색이다 — 사진 위에 얹히므로 흰색이어야 보인다
-              <span
-                aria-hidden
-                className="flex size-6 items-center justify-center text-icon-fill-static-white"
-              >
-                <Icon name="heart_stroke" className="size-6" />
-              </span>
+              <CardHeartButton
+                name={item.name}
+                wished={wishedIds.has(item.productId)}
+                loading={wishLoading}
+                onToggle={() =>
+                  heart.toggle(item.productId, !wishedIds.has(item.productId), toWishlistItem(item))
+                }
+              />
             }
             meta={<RecommendedProductMeta item={item} />}
           />
