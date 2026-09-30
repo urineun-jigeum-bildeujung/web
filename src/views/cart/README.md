@@ -12,8 +12,6 @@
 | `ui/cart-view.test.tsx` | 무엇이 합계에 들어가는지, 고른 것이 없을 때 금액 줄이 감춰지는지, QA 항목(빈 장바구니 이동·고른 줄 유지·상세 링크·할인·품절 표시)을 본다 |
 | `model/cart-selection-store.ts` | 고른 줄의 키를 이 브라우저에 남기는 스토어(`persist`). 다시 들어오거나 탭을 새로 열어도 고른 것이 그대로다 (#563) |
 | `model/cart-selection-store.test.ts` | 키만 남기는지, 새로 열면 읽어 오는지, 깨진 값·막힌 저장소 |
-| `api/use-query-deal-product-id.ts` | 타임딜 줄의 상품 번호를 딜 상세에서 받는다. 장바구니 응답에 없다 (#563) |
-| `api/use-query-deal-product-id.test.tsx` | 딜 아이템 번호로 부르는지, 번호가 없으면 부르지 않는지 |
 | `index.ts` | 공개 API |
 
 ## 라우트

@@ -8,8 +8,7 @@
 import Link from "next/link";
 
 import type { CartItem } from "@/entities/cart";
-
-import { useQueryDealProductId } from "../api/use-query-deal-product-id";
+import { useQueryDealProductId } from "@/entities/product";
 
 /**
  * 상세 주소. 일반 줄은 줄 번호가 곧 상품 번호다. **타임딜 줄은 딜가로 보이게 딜 아이템 번호를 붙인다**

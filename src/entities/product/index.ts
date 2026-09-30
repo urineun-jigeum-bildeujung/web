@@ -15,6 +15,7 @@ export {
   type ProductSort,
 } from "./api/products";
 export { useQueryProductSummary } from "./api/use-query-product-summary";
+export { useQueryDealProductId } from "./api/use-query-deal-product-id";
 export { useQueryProductDetails, type ProductDetailEntry } from "./api/use-query-product-details";
 export { useProductList } from "./api/use-product-list";
 export { useProductSearch } from "./api/use-product-search";

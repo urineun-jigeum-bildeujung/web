@@ -1,5 +1,8 @@
 // 타임딜 줄이 가리키는 상품 번호를 딜 상세에서 받는 훅. 줄을 눌러 상세로 갈 주소를 만드는 데 쓴다 (#563).
 //
+// **장바구니와 결제하기가 함께 쓴다.** 결제하기의 상품 줄도 누르면 상세로 가야 해서(QA No.47, #595)
+// `views/cart`에서 여기로 내려왔다 — `views`끼리는 가져다 쓸 수 없다.
+//
 // **장바구니 응답에는 딜 아이템 번호만 있고 상품 번호가 없다**(백엔드 `CartItemResponse`). 딜가로 보이는
 // 상세 주소는 상품 번호가 있어야 만든다(`/products/{상품}?dealItem={딜 아이템}`, #484). 그래서 공개
 // API인 딜 상세를 부른다 — 딜 줄마다 한 번 나가고, 바로 구매(`use-query-buy-now-product`)와 같은 키라
@@ -7,8 +10,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { getTimeDealDetail } from "@/entities/product";
 import { QUERY_KEYS } from "@/shared/config/query-keys";
+
+import { getTimeDealDetail } from "./products";
 
 /**
  * 딜 아이템의 상품 번호. `null`을 주면 부르지 않는다(일반 줄은 줄 번호가 곧 상품 번호다).
