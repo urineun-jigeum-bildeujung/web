@@ -39,12 +39,14 @@ import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { formatWon } from "@/shared/ui/price/price";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
 import { createOrder, releaseOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { useQueryBuyNowProduct } from "../api/use-query-buy-now-product";
 import {
   ITEMS_PARAM,
+  hasUnavailablePick,
   pickOrderItems,
   toBuyNowLine,
   toOrderItem,
@@ -269,6 +271,16 @@ export function CheckoutView() {
       ? [buyNowItem]
       : []
     : pickOrderItems(cart?.items, searchParams.get(ITEMS_PARAM));
+  // **고른 상품이 그사이 품절돼 빠졌으면 알린다(QA No.20, #591).** 조용히 빼면 금액이 왜 줄었는지
+  // 모른다. 값이 거짓에서 참으로 바뀔 때만 뜬다 — 장바구니를 다시 받아도(창 포커스 등) 참이 이어지면
+  // 다시 뜨지 않는다
+  const droppedUnavailable =
+    !isBuyNow && hasUnavailablePick(cart?.items, searchParams.get(ITEMS_PARAM));
+  useEffect(() => {
+    if (droppedUnavailable) {
+      showSnackbar("품절된 상품은 제외했어요");
+    }
+  }, [droppedUnavailable]);
   const itemPrice = items.reduce((sum, item) => sum + (item.subtotal ?? 0), 0);
   const total = itemPrice + SHIPPING_FEE;
   const deliveryNote = request.trim();
