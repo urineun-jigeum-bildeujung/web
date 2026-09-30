@@ -53,7 +53,8 @@ export function ConfirmOrderAction({ orderId, items }: ConfirmOrderActionProps) 
         }}
         // 거절만 하면 끌어내린 시트가 반쯤 내려간 채 멈춘다. 보내는 동안은 끌어내리기 자체를 막는다(#474)
         dismissible={!confirming}
-        className="gap-2 px-5 pb-4"
+        // 손잡이는 스크롤 상자 밖이라 gap이 닿지 않는다. 손잡이와 제목 사이 8px은 pt-2가 맡는다 (#561)
+        className="gap-2 px-5 pt-2 pb-4"
       >
         <DrawerHeader className="gap-2 p-0">
           <DrawerTitle className="text-left text-title-bold-18 text-foreground">
