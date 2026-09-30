@@ -64,6 +64,13 @@ export function useMutateCartItem() {
     }
   }
 
+  /** 받아 둔 장바구니에서 그 줄의 수량. 줄이 없으면 0, 장바구니를 아직 받지 못했으면 모른다 */
+  function quantityInCache(item: CartItemRef): number | undefined {
+    const cart = queryClient.getQueryData<Cart>(queryKey);
+    if (!cart) return undefined;
+    return cart.items.find((row) => cartItemKey(row) === cartItemKey(item))?.quantity ?? 0;
+  }
+
   /**
    * 성공이든 실패든 서버가 가진 것으로 맞춘다. 재고 제한처럼 서버가 다르게 정할 수 있다.
    *
@@ -131,8 +138,29 @@ export function useMutateCartItem() {
      * 돌아가는데 장바구니에는 줄이 남고, 다시 담으면 서버가 수량을 더한다 (#316 리뷰).
      */
     removeAsync: (item: CartItemRef) => removal.mutateAsync(item),
-    /** 담고 나서 기다린다. 실패는 던져서 부르는 쪽이 시트를 열어 둘 수 있게 한다 */
-    add: (item: CartItemRef, count: number) => addition.mutateAsync({ item, quantity: count }),
+    /**
+     * 담고 나서 기다린다. 실패는 던져서 부르는 쪽이 시트를 열어 둘 수 있게 한다.
+     *
+     * 성공하면 **이번에 담은 것만 되돌리는 함수**를 돌려준다 (#562). 담기 직전 수량을 받아 둔
+     * 장바구니에서 읽어 두었다가, 없던 줄이면 줄을 빼고 있던 줄이면 그 수량으로 돌려놓는다.
+     * 장바구니를 아직 받지 못해 담기 전 수량을 모르면 되돌릴 기준이 없어 돌려주지 않는다.
+     */
+    add: async (item: CartItemRef, count: number): Promise<(() => void) | undefined> => {
+      const before = quantityInCache(item);
+      await addition.mutateAsync({ item, quantity: count });
+      if (before === undefined) return undefined;
+
+      return () => {
+        if (before === 0) {
+          removal.mutate(item);
+          return;
+        }
+        // 담은 수가 아니라 늘어난 만큼 뺀다. 서버가 99개에서 잘라 98개에 5개를 담으면 1개만 는다.
+        // 담기가 끝나며 다시 받은 수량이 기준이고, 다시 받지 못해 담기 전 그대로면 담은 수를 뺀다
+        const now = quantityInCache(item) ?? before;
+        quantity.mutate({ item, delta: now > before ? before - now : -count });
+      };
+    },
     isAdding: addition.isPending,
   };
 }
