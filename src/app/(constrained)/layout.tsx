@@ -5,5 +5,14 @@
 // 여기서 또 백분율 min-height를 쓰면 min-height만 가진 부모를 연속으로 참조하게 된다.
 // 뷰포트를 직접 기준으로 잡아야 안에서 flex-1을 쓰는 화면이 확실히 늘어난다.
 export default function ConstrainedLayout({ children }: LayoutProps<"/">) {
-  return <div className="mx-auto flex min-h-dvh w-full max-w-105 flex-col">{children}</div>;
+  return (
+    // `data-testid`는 E2E가 이 기둥을 집기 위한 것이다(#589). 뜻 없는 레이아웃 래퍼라
+    // role·label을 붙이면 빈 랜드마크가 늘어 접근성에 손해다.
+    <div
+      data-testid="constrained-layout"
+      className="mx-auto flex min-h-dvh w-full max-w-105 flex-col"
+    >
+      {children}
+    </div>
+  );
 }
