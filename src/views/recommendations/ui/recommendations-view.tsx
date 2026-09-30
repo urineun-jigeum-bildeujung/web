@@ -63,20 +63,19 @@ const RECOMMENDATION_PAGE_SIZE = 50;
 
 /** 추천을 받는 동안 격자 자리를 잡는다. 2열 두 줄 */
 function RecommendationGridSkeleton() {
+  // status 역할은 감싸는 div에 준다. 목록에 주면 목록 역할이 덮여 li가 부모 없는 항목이 된다
   return (
-    <ul
-      className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5"
-      role="status"
-      aria-label="맞춤 상품을 불러오는 중"
-    >
-      {Array.from({ length: 4 }, (_, index) => (
-        <li key={index} className="flex flex-col gap-2">
-          <Skeleton className="aspect-square w-full rounded-lg" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
-        </li>
-      ))}
-    </ul>
+    <div role="status" aria-label="맞춤 상품을 불러오는 중">
+      <ul className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5">
+        {Array.from({ length: 4 }, (_, index) => (
+          <li key={index} className="flex flex-col gap-2">
+            <Skeleton className="aspect-square w-full rounded-lg" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -382,9 +381,10 @@ export function RecommendationsView() {
         {isWaitingPets ? (
           <RecommendationGridSkeleton />
         ) : pet ? (
-          // 추천만 실패하면 격자만 대체한다. 머리말·분류·정렬은 남는다. 아이를 바꾸면 경계를 비운다
+          // 추천만 실패하면 격자만 대체한다. 머리말·분류·정렬은 남는다. 아이나 분류를 바꾸면 경계를
+          // 비운다 — 분류 탭은 경계 밖이라, 빼면 눌려도 오류 문구가 남고 새로 부르지 않는다
           <ErrorBoundary
-            resetKeys={[pet.id]}
+            resetKeys={[pet.id, category]}
             fallback={(retry) => (
               <div role="alert" className="flex flex-col items-center gap-3 px-5 py-12 text-center">
                 <p className="text-body-regular-14 text-text-body-secondary">
