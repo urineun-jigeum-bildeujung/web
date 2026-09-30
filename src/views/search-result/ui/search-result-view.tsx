@@ -112,12 +112,19 @@ function GeneralResultList({
         </Select>
       </div>
 
-      <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+      {/* **전환점을 잡지 않는다**(#573). PD 확정이 카드 170px 고정·사이 13px이고, 폭이
+          넓어지면 카드가 커지는 것이 아니라 한 줄에 더 들어간다. 거터 20px(px-5)을 빼면
+          393에서 둘(170×2+13=353), 768에서 넷(170×4+13×3=719), 1200부터 여섯(170×6+13×5=1085)이
+          저절로 나와 `md:`·`lg:`가 필요 없다 — 홈 격자(#569)와 같은 계산이다.
+          세로 24px인 홈과 달리 여기는 시안(2396-80432) 값인 20px(gap-y-5)을 유지한다 */}
+      <ul className="flex flex-wrap gap-x-3.25 gap-y-5">
         {results.map((product) => {
           const id = String(product.productId);
           return (
-            <li key={id}>
+            <li key={id} className="w-42.5">
               <ProductGridCard
+                // 카드가 폭과 무관하게 170px이라 이미지 후보도 하나면 된다(#573)
+                imageSizes="170px"
                 href={`/products/${id}`}
                 name={product.name}
                 price={product.price}
@@ -179,15 +186,21 @@ type PickingResultListProps = {
  *  상품 응답(`ProductCard`)에 없어 함께 그리지 못한다 */
 function PickingResultList({ results, picked, onPick }: PickingResultListProps) {
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+    // 일반 검색 결과와 같은 규칙으로 눕는다(#573). 비교 고르기 시안의 1199 프레임
+    // (3741:71939)만 콘텐츠가 768로 고정돼 보이지만, 768~1199를 전체 폭으로 흘리는
+    // 홈·상세 규칙을 그대로 따른다
+    <ul className="flex flex-wrap gap-x-3.25 gap-y-5">
       {results.map((product) => {
         const id = String(product.productId);
         return (
-          <li key={id}>
+          <li key={id} className="w-42.5">
             <ProductGridCard
               selectable
               selected={picked === id}
               onSelect={() => onPick(id)}
+              // 일반 검색 결과와 같은 고정 폭이다(#573). 넘기지 않으면 공용 기본값
+              // `(min-width: 768px) 240px, 50vw`가 실제 170px보다 큰 후보를 고른다
+              imageSizes="170px"
               imageUrl={product.thumbnailUrl ?? undefined}
               name={product.name}
               price={product.price}
@@ -313,9 +326,10 @@ function ResultsRegion({
 /** 카드 자리. 처음 그릴 때와 다음 쪽을 받을 때 함께 쓴다 */
 function SkeletonCards({ count }: { count: number }) {
   return (
-    <ul className="grid grid-cols-2 gap-x-3 gap-y-5">
+    // 본체와 같은 규칙으로 눕는다(#573) — 카드 170px 고정, 사이 13px
+    <ul className="flex flex-wrap gap-x-3.25 gap-y-5">
       {Array.from({ length: count }, (_, index) => (
-        <li key={index} className="flex flex-col gap-2">
+        <li key={index} className="flex w-42.5 flex-col gap-2">
           <Skeleton className="aspect-square w-full rounded-lg" />
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
@@ -396,7 +410,11 @@ export function SearchResultView({ resultsPromise, resultsQuery }: SearchResultV
     // BottomNav는 sticky라 콘텐츠를 밀어내며 자리 잡는다. fixed 오버레이가 아니라서
     // 가릴 콘텐츠가 없고, 그래서 하단에 별도 여백(pb)이 필요 없다 — 넣으면 네브 아래
     // 빈 공간만 생긴다
-    <div className="flex min-h-dvh flex-col">
+    //
+    // 이 화면은 `(constrained)` 그룹 밖이라 폭을 스스로 진다(#573). 1200은
+    // 브레이크포인트가 아니라 최대 폭이다 — 768~1199는 뷰포트를 다 쓰고 1200부터 멈춰
+    // 가운데 선다. 거터 20px은 컨테이너가 아니라 섹션이 갖는다
+    <div className="mx-auto flex min-h-dvh w-full max-w-300 flex-col">
       {/* 제목 자리를 검색바가 차지한다. PageHeader는 가운데 제목을 전제로 해서 쓰지 않는다 */}
       {/* 검색 화면과 같은 머리말이다. 뒤로가기는 모든 헤더와 같은 조각이고 높이 48·좌우 20이다(#513) */}
       <header className="flex h-12 items-center px-5">
@@ -424,7 +442,9 @@ export function SearchResultView({ resultsPromise, resultsQuery }: SearchResultV
         </button>
       </header>
 
-      <main className="flex flex-1 flex-col px-4 pt-2 pb-4">
+      {/* 거터 20px은 헤더(px-5)와 같고, 격자 전환점이 성립하는 조건이다(#573) —
+          3열 576 = 170×3+13×2+40처럼 좌우 40px을 전제로 열 수가 갈린다 */}
+      <main className="flex flex-1 flex-col px-5 pt-2 pb-4">
         {/* 결과 영역이 서버 조회를 기다리는 동안엔 개수를 몰라 6px/12px 간격을 못 가른다.
             픽킹 모드가 아니면 우선 좁은 간격(6px)으로 둔다 — 결과 없음일 때만 약간 더
             벌어져 보일 수 있는 정도라 이번 단계에서는 감수한다 */}
