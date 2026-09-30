@@ -513,18 +513,15 @@ describe("ProductDetailView", () => {
       );
     });
 
-    it("로그인하지 않았으면 장바구니를 부르지 않고 담긴 수도 알리지 않는다", async () => {
+    // 비로그인은 수량 시트를 열 수 없다(#542). 그래도 담긴 수를 알려고 장바구니를 부르면 401만 쌓인다
+    it("로그인하지 않았으면 담긴 수를 알려고 장바구니를 부르지 않는다", async () => {
       useSessionState.mockReturnValue(false);
-      cartQuantity.value = 2;
       await renderWith("", { soldOut: false });
-
-      fireEvent.click(screen.getByRole("button", { name: /^장바구니$/ }));
 
       expect(useQueryCartItemQuantity).toHaveBeenLastCalledWith(
         { itemType: "NORMAL", itemId: 1 },
         { enabled: false },
       );
-      expect(screen.queryByText(/담겨 있어요/)).toBeNull();
     });
   });
 
