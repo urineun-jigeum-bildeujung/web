@@ -4,7 +4,13 @@ import { describe, expect, it } from "vitest";
 import type { Recommendation } from "./recommendation";
 import { sortRecommendations } from "./sort";
 
-function item(productId: number, rank: number, rating: number, createdAt: string): Recommendation {
+function item(
+  productId: number,
+  rank: number,
+  rating: number,
+  createdAt: string,
+  reviewCount = 1,
+): Recommendation {
   return {
     productId,
     rank,
@@ -18,7 +24,7 @@ function item(productId: number, rank: number, rating: number, createdAt: string
     originalPrice: 10000,
     unitPrice: null,
     rating,
-    reviewCount: 1,
+    reviewCount,
     status: "onSale",
     createdAt,
   };
@@ -50,6 +56,13 @@ describe("sortRecommendations", () => {
   it("별점이 같으면 추천 순서를 지킨다", () => {
     const tied = [item(2, 2, 4.5, "2026-09-01"), item(1, 1, 4.5, "2026-09-01")];
     expect(ids(sortRecommendations(tied, "rating-high"))).toEqual([1, 2]);
+  });
+
+  // 후기가 없으면 별점이 0으로 온다. 카드는 "-"로 그리는데 낮은순 맨 앞에 섰다
+  it("후기가 없는 상품은 두 별점 정렬 모두 뒤에 온다", () => {
+    const withUnrated = [...ITEMS, item(40, 4, 0, "2026-09-05T00:00:00+00:00", 0)];
+    expect(ids(sortRecommendations(withUnrated, "rating-high"))).toEqual([30, 20, 10, 40]);
+    expect(ids(sortRecommendations(withUnrated, "rating-low"))).toEqual([10, 20, 30, 40]);
   });
 
   it("받은 배열을 바꾸지 않는다", () => {
