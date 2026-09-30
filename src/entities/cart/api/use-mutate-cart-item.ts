@@ -150,15 +150,21 @@ export function useMutateCartItem() {
       await addition.mutateAsync({ item, quantity: count });
       if (before === undefined) return undefined;
 
+      // 늘어난 만큼은 **담기가 끝난 지금** 정해 둔다. `mutateAsync`는 `settle`의 재조회까지 기다리므로
+      // 이 시점의 캐시가 서버 수량이다. 담은 수가 아니라 늘어난 만큼인 이유는 서버가 99개에서 잘라
+      // 98개에 5개를 담으면 1개만 늘기 때문이다. 다시 받지 못해 담기 전 그대로면 담은 수로 둔다.
+      // 되돌릴 때 캐시를 다시 읽으면 그사이 빼기·수량 변경이 섞여 엉뚱한 수를 뺀다 (#566 리뷰)
+      const after = quantityInCache(item) ?? before;
+      const added = after > before ? after - before : count;
+
       return () => {
         if (before === 0) {
           removal.mutate(item);
           return;
         }
-        // 담은 수가 아니라 늘어난 만큼 뺀다. 서버가 99개에서 잘라 98개에 5개를 담으면 1개만 는다.
-        // 담기가 끝나며 다시 받은 수량이 기준이고, 다시 받지 못해 담기 전 그대로면 담은 수를 뺀다
-        const now = quantityInCache(item) ?? before;
-        quantity.mutate({ item, delta: now > before ? before - now : -count });
+        // 그사이 줄이 빠졌으면 되돌릴 것이 없다. 없는 줄에 증감을 보내면 서버가 404를 준다
+        if (!quantityInCache(item)) return;
+        quantity.mutate({ item, delta: -added });
       };
     },
     isAdding: addition.isPending,
