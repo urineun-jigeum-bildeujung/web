@@ -120,7 +120,13 @@ function OrderItemSkeleton() {
   );
 }
 
-/** 주문할 상품 한 줄. 사진·이름·옵션·수량 (`paym_001`) */
+/**
+ * 주문할 상품 한 줄. 사진·이름·수량·판매 금액 (`paym_001`, QA No.46 #595)
+ *
+ * **줄마다 응답에 있는 값만 그린다.** 판매 금액은 그 줄의 `subtotal`(판매가 × 수량)이다. 줄별
+ * 배송비와 줄별 결제금액은 응답에 없어 그리지 않는다 — 배송비는 주문 하나에 3,000원 고정이라
+ * (`SHIPPING_FEE`) 아래 합계에만 있다.
+ */
 function OrderItemRow({ item }: { item: OrderLine }) {
   return (
     <div className="flex items-start gap-2">
@@ -128,12 +134,17 @@ function OrderItemRow({ item }: { item: OrderLine }) {
       <OrderProductThumbnail imageUrl={item.thumbnailUrl} />
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 self-stretch">
         <div className="flex flex-col gap-1">
-          {/* 살 수 있는 줄만 여기까지 오므로 이름이 `null`이 아니다 */}
-          <p className="truncate text-title-bold-16 text-foreground">{item.productName}</p>
+          {/* 살 수 있는 줄만 여기까지 오므로 이름이 `null`이 아니다.
+              시안이 두 줄까지 보이고 넘치면 말줄임한다 (QA No.46) */}
+          <p className="line-clamp-2 text-title-bold-16 text-foreground">{item.productName}</p>
         </div>
-        <dl>
+        <dl className="flex flex-col gap-1">
           {/* 시안이 이 줄만 이름과 값을 16px 띄운다 */}
           <FieldRow term="주문 수량" description={`${item.quantity}개`} className="gap-4" />
+          {/* 금액을 모르는 줄은 0원으로 그리지 않고 비운다. 공짜로 산 것처럼 보인다 */}
+          {item.subtotal !== null && (
+            <FieldRow term="판매 금액" description={formatWon(item.subtotal)} className="gap-4" />
+          )}
         </dl>
       </div>
     </div>
