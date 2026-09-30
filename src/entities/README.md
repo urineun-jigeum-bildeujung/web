@@ -44,6 +44,7 @@ entities/
 | [pet](pet/README.md) | 반려동물. 품종 목록과 프로필 선택지 |
 | [order](order/README.md) | 주문. 상태 뱃지 |
 | [product](product/README.md) | 상품 표현. 지금은 적합도 배지만 있다 |
+| [recommendation](recommendation/README.md) | AI 맞춤 추천. 추천 API 응답을 화면 값으로 옮기고 이유·감점 주의를 보인다. 메인과 맞춤 추천 화면이 함께 쓴다 |
 | [review](review/README.md) | 상품 후기. 작성자의 아이 프로필과 사용 기간을 함께 보인다 |
 | [notification](notification/README.md) | 알림. 알림함 목록·읽음 처리와 이 기기의 푸시 토큰 등록 |
 | [wishlist](wishlist/README.md) | 찜한 상품. 카테고리별 조회·토글. 좋아요 화면이 쓴다 |

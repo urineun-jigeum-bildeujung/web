@@ -24,6 +24,7 @@ import {
 } from "@/entities/order";
 import { PetPhoto, PetSwitcher } from "@/entities/pet";
 import { CompareSlot, CompareTable, MatchScoreBadge } from "@/entities/product";
+import { RecommendationReason, SaleStatusBadge } from "@/entities/recommendation";
 import { AddressResultList } from "@/shared/ui/address-result-list/address-result-list";
 import { AvatarUploader } from "@/shared/ui/avatar-uploader/avatar-uploader";
 import { Badge } from "@/shared/ui/badge/badge";
@@ -362,6 +363,17 @@ export function DevGalleryView() {
             <MatchScoreBadge score={71} petName="코코" />
             <MatchScoreBadge score={45} petName="코코" />
             <MatchScoreBadge score={null} petName="코코" />
+          </div>
+        </Section>
+
+        <Section title="RecommendationReason · SaleStatusBadge">
+          <div className="flex max-w-52 flex-col gap-3">
+            <div className="flex gap-2">
+              <SaleStatusBadge status="soldOut" />
+              <SaleStatusBadge status="timeDeal" />
+            </div>
+            <RecommendationReason reason="나와 비슷한 반려동물을 키우는 분들이 남긴 기호성 평가가 좋아 추천합니다." />
+            <RecommendationReason reason="소화·배변 평가가 좋아 추천합니다." allergyPenalized />
           </div>
         </Section>
 

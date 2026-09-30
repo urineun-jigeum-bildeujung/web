@@ -142,6 +142,20 @@ const userKeys = {
     [...userKeys.all, "status-check-targets", { petId }] as const,
 };
 
+// AI 추천(`POST /recommend/home`). 아이·분류·개수가 모두 응답을 바꾸므로 키에 넣는다 (#600).
+// 상품 목록(`product.list`)과 다른 서비스의 다른 응답이라 도메인을 나눈다.
+interface HomeRecommendationFilters {
+  petId: ResourceId;
+  category?: string;
+  size?: number;
+}
+
+const recommendationKeys = {
+  all: ["recommendation"] as const,
+  homeAll: () => [...recommendationKeys.all, "home"] as const,
+  home: (filters: HomeRecommendationFilters) => [...recommendationKeys.homeAll(), filters] as const,
+};
+
 // 사용자와 무관한 정적 목록. 건강 고민·알레르기·품종은 등록 화면의 선택지다.
 const catalogKeys = {
   all: ["catalog"] as const,
@@ -162,5 +176,6 @@ export const QUERY_KEYS = {
   payment: paymentKeys,
   notification: notificationKeys,
   user: userKeys,
+  recommendation: recommendationKeys,
   catalog: catalogKeys,
 } as const;

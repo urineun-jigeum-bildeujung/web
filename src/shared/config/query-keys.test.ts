@@ -63,6 +63,19 @@ describe("QUERY_KEYS", () => {
     ]);
   });
 
+  // 아이·분류·개수 중 하나만 달라도 다른 추천이다. 메인(9개)과 추천 화면(50개)이 같은 캐시를 쓰면
+  // 메인이 받은 9개가 추천 화면에 그대로 보인다 (#600)
+  it("추천은 아이·분류·개수가 다르면 키가 다르고 homeAll 아래에 있다", () => {
+    const base = QUERY_KEYS.recommendation.home({ petId: 3, size: 9 });
+
+    expect(QUERY_KEYS.recommendation.home({ petId: 7, size: 9 })).not.toEqual(base);
+    expect(QUERY_KEYS.recommendation.home({ petId: 3, size: 50 })).not.toEqual(base);
+    expect(QUERY_KEYS.recommendation.home({ petId: 3, category: "food", size: 9 })).not.toEqual(
+      base,
+    );
+    expect(base.slice(0, 2)).toEqual([...QUERY_KEYS.recommendation.homeAll()]);
+  });
+
   it("모든 factory는 도메인 all 루트에서 시작한다", () => {
     expect(QUERY_KEYS.timedeal.detail(1).slice(0, 1)).toEqual(QUERY_KEYS.timedeal.all);
     expect(QUERY_KEYS.notification.unreadCount().slice(0, 1)).toEqual(QUERY_KEYS.notification.all);
