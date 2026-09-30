@@ -131,15 +131,15 @@ describe("담은 것 되돌리기", () => {
   });
 
   test("담기 전에 있던 줄이면 늘어난 만큼만 빼 담기 전 수량으로 돌려놓는다", async () => {
-    addCartItem.mockResolvedValue(undefined);
     changeCartItemQuantity.mockResolvedValue(undefined);
     const { result, receive, row } = setup();
+    // 담기는 재조회까지 기다린다. 그 재조회가 준 서버 수량을 담기 안에서 세운다
+    addCartItem.mockImplementation(async () => void receive(4));
 
     let undo: (() => void) | undefined;
     await act(async () => {
       undo = await result.current.add(ROW, 3);
     });
-    receive(4);
     act(() => undo?.());
 
     await waitFor(() => expect(changeCartItemQuantity).toHaveBeenCalledWith(ROW, -3));
@@ -150,18 +150,53 @@ describe("담은 것 되돌리기", () => {
 
   // 백엔드가 담기를 99에서 자른다(increase-quantity.lua). 담은 수만큼 빼면 담기 전보다 적게 남는다
   test("서버가 99개에서 잘랐으면 실제로 늘어난 만큼만 뺀다", async () => {
-    addCartItem.mockResolvedValue(undefined);
     changeCartItemQuantity.mockResolvedValue(undefined);
     const { result, receive } = setup();
+    addCartItem.mockImplementation(async () => void receive(99));
 
     let undo: (() => void) | undefined;
     await act(async () => {
       undo = await result.current.add(ROW, 99);
     });
-    receive(99);
     act(() => undo?.());
 
     await waitFor(() => expect(changeCartItemQuantity).toHaveBeenCalledWith(ROW, -98));
+  });
+
+  // 되돌릴 때 캐시를 다시 읽으면 그사이 바뀐 수량이 섞여 엉뚱한 수를 뺐다 (#566 리뷰)
+  test("담은 뒤 수량이 따로 바뀌어도 이번에 늘어난 만큼만 뺀다", async () => {
+    changeCartItemQuantity.mockResolvedValue(undefined);
+    const { result, receive } = setup();
+    addCartItem.mockImplementation(async () => void receive(4));
+
+    let undo: (() => void) | undefined;
+    await act(async () => {
+      undo = await result.current.add(ROW, 3);
+    });
+    receive(10);
+    act(() => undo?.());
+
+    await waitFor(() => expect(changeCartItemQuantity).toHaveBeenCalledWith(ROW, -3));
+  });
+
+  // 없는 줄에 증감을 보내면 서버가 CART_ITEM_NOT_FOUND(404)를 준다
+  test("담은 뒤 그 줄이 빠졌으면 아무것도 보내지 않는다", async () => {
+    const { result, receive } = setup();
+    addCartItem.mockImplementation(async () => void receive(4));
+
+    let undo: (() => void) | undefined;
+    await act(async () => {
+      undo = await result.current.add(ROW, 3);
+    });
+    receive(0);
+    // 증감은 캐시를 세운 뒤에 나가므로 그만큼 기다린 뒤에 본다
+    await act(async () => {
+      undo?.();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+
+    expect(changeCartItemQuantity).not.toHaveBeenCalled();
+    expect(removeCartItem).not.toHaveBeenCalled();
   });
 
   test("담은 뒤 다시 받지 못해 수량이 그대로면 담은 수만큼 뺀다", async () => {
