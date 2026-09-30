@@ -114,6 +114,38 @@ describe("useProductSearch", () => {
     expect(result.current.items).toHaveLength(2);
   });
 
+  // 목록 끝 관찰자가 effect 정리 전에 한 번 더 불리면 두 호출이 같은 렌더의 값을 본다 (#557 리뷰)
+  it("같은 렌더에서 두 번 불러도 같은 커서로 한 번만 요청한다", async () => {
+    let resolvePage: (response: Response) => void = () => {};
+    const fetchMock = vi
+      .fn()
+      .mockImplementation(() => new Promise<Response>((resolve) => (resolvePage = resolve)));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { result } = renderHook(() => useProductSearch(FIRST_PAGE, PARAMS));
+    const { loadMore } = result.current;
+    let first: Promise<void> = Promise.resolve();
+    let second: Promise<void> = Promise.resolve();
+    act(() => {
+      first = loadMore();
+      second = loadMore();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolvePage(
+        Response.json({
+          items: [cardResponse(2, "노령견 사료 1kg")],
+          nextCursor: null,
+          hasNext: false,
+          totalCount: null,
+        }),
+      );
+      await Promise.all([first, second]);
+    });
+  });
+
   it("다음 쪽이 없으면 불러도 요청을 보내지 않는다", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
