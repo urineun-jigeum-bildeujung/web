@@ -21,9 +21,10 @@ async function measure(page: Page, route: string) {
   // 가로 폭과 좌표라 이미지 로딩과 무관한데, 1920에서는 첫 화면에 드는 이미지가 많아
   // 요청이 끊이지 않고 진입 자체가 시간을 넘겼다. 준비 상태는 단정문으로 기다린다
   await page.goto(route, { waitUntil: "domcontentloaded" });
-  await expect(page.locator("main")).toBeVisible();
-  return page.evaluate(() => {
-    const main = document.querySelector("main")!.getBoundingClientRect();
+  const mainLocator = page.getByRole("main");
+  await expect(mainLocator).toBeVisible();
+  return mainLocator.evaluate((element) => {
+    const main = element.getBoundingClientRect();
     return {
       overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
       width: Math.round(main.width),
