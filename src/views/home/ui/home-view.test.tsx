@@ -363,7 +363,7 @@ describe("HomeView", () => {
     };
     await renderWith();
 
-    expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "AI가 골라주는 구름이 맞춤 상품" })).toBeDefined();
     expect(screen.getByRole("radio", { name: "구름이" }).getAttribute("aria-checked")).toBe("true");
   });
 
@@ -372,7 +372,7 @@ describe("HomeView", () => {
 
     fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
 
-    expect(screen.getByText("AI가 골라주는 구름이 맞춤 상품")).toBeDefined();
+    expect(screen.getByRole("heading", { name: "AI가 골라주는 구름이 맞춤 상품" })).toBeDefined();
   });
 
   // 안 들고 가면 추천은 기본 아이로 열려 두 화면의 아이가 달라졌다(#470 리뷰)
@@ -387,6 +387,19 @@ describe("HomeView", () => {
     expect(screen.getByRole("link", { name: "더보기" }).getAttribute("href")).toBe(
       "/recommendations?pet=7",
     );
+  });
+
+  // 이름이 10자쯤 되면 제목이 두 줄로 늘고 더보기가 "더보/기"로 꺾였다(QA 신규-줄바꿈, #599).
+  // 줄 높이는 jsdom이 재지 못해 e2e/home.spec.ts가 393px 브라우저에서 잰다
+  it("긴 이름은 추천 제목에서 이름만 한 줄 말줄임으로 자르고 전체 이름은 남긴다", async () => {
+    const name = "초코바나나딸기우유맛쿠키";
+    petsQuery = { pets: [{ id: "3", name, isDefault: true }], isLoading: false };
+    await renderWith();
+
+    // 화면 낭독기는 잘린 글자까지 제목 전체를 읽고, 마우스는 title로 이름 전체를 본다
+    const heading = screen.getByRole("heading", { name: `AI가 골라주는 ${name} 맞춤 상품` });
+    expect(within(heading).getByTitle(name).className).toContain("truncate");
+    expect(screen.getByRole("link", { name: "더보기" }).className).toContain("shrink-0");
   });
 
   it("로그인했을 때만 아이 목록을 부른다", async () => {
@@ -424,7 +437,9 @@ describe("HomeView", () => {
 
     expect(screen.queryByRole("radiogroup", { name: "아이 고르기" })).toBeNull();
     expect(screen.queryByRole("status", { name: "아이 목록을 불러오는 중" })).toBeNull();
-    expect(screen.getByText("AI가 골라주는 우리 아이 맞춤 상품")).toBeDefined();
+    expect(
+      screen.getByRole("heading", { name: "AI가 골라주는 우리 아이 맞춤 상품" }),
+    ).toBeDefined();
   });
 
   // 아이 등록이 전제라 드물지만, 그때도 새 아이를 들일 자리는 남아야 한다(#470 리뷰)
