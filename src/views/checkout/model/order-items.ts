@@ -37,6 +37,22 @@ export function pickOrderItems(items: CartItem[] | undefined, selected: string |
 }
 
 /**
+ * 고른 줄 중에 지금 살 수 없는 줄이 있는지. `pickOrderItems`가 조용히 뺀 것이 있는지를 가린다.
+ *
+ * 장바구니는 살 수 있는 줄만 `?items=`에 싣는다. 그런데도 여기 걸리는 것은 장바구니를 떠난 뒤
+ * 품절됐거나, 결제창에서 돌아오거나 새로고침했을 때다 — 그때 빠졌다고 알린다(QA No.20, #591).
+ * **쿼리가 없으면 고른 것이 없으므로 알릴 것도 없다.** 전부를 보는 경우라 고르지 않은 품절 줄이다.
+ */
+export function hasUnavailablePick(items: CartItem[] | undefined, selected: string | null) {
+  if (selected === null) {
+    return false;
+  }
+
+  const keys = selected.split(",");
+  return (items ?? []).some((item) => !item.available && keys.includes(cartItemKey(item)));
+}
+
+/**
  * 장바구니 줄을 주문 생성 규격으로 옮긴다.
  *
  * **장바구니와 주문의 규격이 다르다.** 장바구니는 `itemType`+`itemId`로 줄을 가리키는데

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { CartItem } from "@/entities/cart";
 
-import { pickOrderItems, toOrderItem } from "./order-items";
+import { hasUnavailablePick, pickOrderItems, toOrderItem } from "./order-items";
 
 /** 살 수 있는 줄. 내용 필드가 전부 채워져 온다 */
 function sellable(itemId: number, itemType: CartItem["itemType"] = "NORMAL"): CartItem {
@@ -37,6 +37,29 @@ function unavailable(itemId: number): CartItem {
     subtotal: null,
   };
 }
+
+// 고른 상품이 결제 화면에 오기 전에 품절되면 빠졌다고 알려야 한다 (QA No.20, #591)
+describe("hasUnavailablePick", () => {
+  it("고른 줄 중 살 수 없는 줄이 있으면 참이다", () => {
+    expect(hasUnavailablePick([sellable(1), unavailable(2)], "NORMAL:1,NORMAL:2")).toBe(true);
+  });
+
+  it("고른 줄이 모두 살 수 있으면 거짓이다", () => {
+    expect(hasUnavailablePick([sellable(1), sellable(2)], "NORMAL:1,NORMAL:2")).toBe(false);
+  });
+
+  it("고르지 않은 줄만 살 수 없으면 거짓이다", () => {
+    expect(hasUnavailablePick([sellable(1), unavailable(2)], "NORMAL:1")).toBe(false);
+  });
+
+  it("고른 값이 없으면 품절 줄이 있어도 거짓이다", () => {
+    expect(hasUnavailablePick([sellable(1), unavailable(2)], null)).toBe(false);
+  });
+
+  it("장바구니를 아직 받지 못했으면 거짓이다", () => {
+    expect(hasUnavailablePick(undefined, "NORMAL:1")).toBe(false);
+  });
+});
 
 describe("pickOrderItems", () => {
   it("고른 값이 없으면 살 수 있는 줄 전부를 본다", () => {

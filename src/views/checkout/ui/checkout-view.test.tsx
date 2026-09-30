@@ -12,15 +12,23 @@ import type { CartItem } from "@/entities/cart";
 
 import type { TossPaymentOrder } from "./toss-payment-widget";
 
-const { requestPayment, toastAppError, createOrder, releaseOrder, preparePayment, replace } =
-  vi.hoisted(() => ({
-    requestPayment: vi.fn(),
-    toastAppError: vi.fn(),
-    createOrder: vi.fn(),
-    releaseOrder: vi.fn(),
-    preparePayment: vi.fn(),
-    replace: vi.fn(),
-  }));
+const {
+  requestPayment,
+  toastAppError,
+  showSnackbar,
+  createOrder,
+  releaseOrder,
+  preparePayment,
+  replace,
+} = vi.hoisted(() => ({
+  requestPayment: vi.fn(),
+  toastAppError: vi.fn(),
+  showSnackbar: vi.fn(),
+  createOrder: vi.fn(),
+  releaseOrder: vi.fn(),
+  preparePayment: vi.fn(),
+  replace: vi.fn(),
+}));
 
 const useQueryCart = vi.fn();
 const useQueryAddresses = vi.fn();
@@ -28,6 +36,7 @@ const useQueryPets = vi.fn();
 const useQueryBuyNowProduct = vi.fn();
 
 vi.mock("@/shared/lib/app-toast", () => ({ toastAppError }));
+vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
 
 /** 테스트마다 쿼리를 바꾼다. 결제창 복귀(`?code=`)와 고른 줄(`?items=`)이 여기로 들어온다 */
 let searchParams = new URLSearchParams();
@@ -1021,6 +1030,40 @@ test("고른 줄만 결제 대상으로 센다", () => {
   expect(screen.queryByText("다른 상품")).toBeNull();
   // 고른 줄 9,345 + 배송비 3,000
   expect(screen.getByText("12,345원")).toBeDefined();
+});
+
+/** 장바구니를 떠난 뒤 품절된 줄. 상품은 있어 이름·금액이 그대로 온다(`unavailableWithInfo`) */
+const SOLD_OUT: CartItem = {
+  ...ITEM,
+  itemId: 2,
+  productName: "품절된 상품",
+  available: false,
+  unavailableReason: "OUT_OF_STOCK",
+};
+
+// 고른 상품이 결제 화면에 오기 전에 품절되면 조용히 빠져 금액만 줄었다 (QA No.20, #591)
+test("고른 줄이 품절돼 빠졌으면 한 번 알린다", () => {
+  searchParams = new URLSearchParams("items=NORMAL:1,NORMAL:2");
+  const { rerender } = renderView({ items: [ITEM, SOLD_OUT] });
+
+  expect(screen.queryByText("품절된 상품")).toBeNull();
+  expect(showSnackbar).toHaveBeenCalledExactlyOnceWith("품절된 상품은 제외했어요");
+
+  // 창 포커스 등으로 장바구니를 다시 받아도 같은 화면에서 또 뜨지 않는다
+  useQueryCart.mockReturnValue({
+    cart: { memberId: 1, items: [{ ...ITEM }, { ...SOLD_OUT }], totalAmount: 9345 },
+    isLoading: false,
+    error: null,
+  });
+  rerender(<CheckoutView />);
+  expect(showSnackbar).toHaveBeenCalledTimes(1);
+});
+
+test("고른 줄이 모두 살 수 있거나 고르지 않은 줄만 품절이면 알리지 않는다", () => {
+  searchParams = new URLSearchParams("items=NORMAL:1");
+  renderView({ items: [ITEM, SOLD_OUT] });
+
+  expect(showSnackbar).not.toHaveBeenCalled();
 });
 
 /** 뒤로·앞으로 캐시에서 되살아난 것처럼 `pageshow`를 쏜다 */
