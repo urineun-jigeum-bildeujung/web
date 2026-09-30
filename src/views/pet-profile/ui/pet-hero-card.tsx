@@ -98,7 +98,10 @@ export function PetHeroCard({ profile }: PetHeroCardProps) {
 
       <div className="absolute inset-x-4 bottom-5 flex flex-col gap-4">
         <InfoRow href={`/mypage/pets/basic?petId=${profile.id}`} label="기본 정보 수정">
-          <span className="truncate text-title-bold-18">{profile.name}</span>
+          {/* 이름이 길면 말줄임표로 잘린다. 마우스로도 전체 이름을 보게 한다(QA 신규-줄바꿈, #599) */}
+          <span title={profile.name} className="truncate text-title-bold-18">
+            {profile.name}
+          </span>
           <span className="truncate text-body-medium-14">{profile.meta}</span>
         </InfoRow>
 
