@@ -24,6 +24,10 @@ vi.mock("@/shared/lib/app-toast", async (importOriginal) => ({
   toastAppError,
 }));
 
+// 아이를 바꾸면 누구로 바뀌었는지 스낵바로 알린다(QA r18, #611)
+const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
+
 // 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 QueryClient가 없어 링크만 대신 그린다(#395)
 vi.mock("@/widgets/notification-bell", () => ({
   NotificationBell: ({ className }: { className?: string }) => (
@@ -173,6 +177,7 @@ afterEach(() => {
   toggleWish.mockReset();
   pushMock.mockReset();
   toastAppError.mockReset();
+  showSnackbar.mockReset();
   recommendationQuery = { items: RECOMMENDED, isLoading: false };
   recommendationFails = false;
   recommendationCalls = [];
@@ -430,6 +435,33 @@ describe("HomeView", () => {
     fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
 
     expect(screen.getByRole("heading", { name: "AI가 골라주는 구름이 맞춤 상품" })).toBeDefined();
+  });
+
+  // 아래 맞춤 상품·적합도가 모두 그 아이 기준으로 바뀐다. 조용히 바뀌면 누구 기준인지 놓친다(QA r18, #611)
+  it("아이를 바꾸면 누구로 바뀌었는지 받침에 맞춰 알린다", async () => {
+    petsQuery = {
+      pets: [
+        { id: "3", name: "초코", isDefault: true },
+        { id: "9", name: "보람", isDefault: false },
+      ],
+      isLoading: false,
+    };
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "보람" }));
+    expect(showSnackbar).toHaveBeenLastCalledWith("보람으로 바꿨어요");
+
+    fireEvent.click(screen.getByRole("radio", { name: "초코" }));
+    expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요");
+  });
+
+  it("이미 고른 아이를 다시 누르면 알리지 않는다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "초코" }));
+
+    expect(showSnackbar).not.toHaveBeenCalled();
+    expect(screen.getByRole("heading", { name: "AI가 골라주는 초코 맞춤 상품" })).toBeDefined();
   });
 
   // 안 들고 가면 추천은 기본 아이로 열려 두 화면의 아이가 달라졌다(#470 리뷰)
