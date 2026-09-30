@@ -1059,6 +1059,33 @@ test("고른 줄이 품절돼 빠졌으면 한 번 알린다", () => {
   expect(showSnackbar).toHaveBeenCalledTimes(1);
 });
 
+test("같은 화면에서 품절이 풀렸다가 다시 품절돼도 한 번만 알린다", () => {
+  searchParams = new URLSearchParams("items=NORMAL:1,NORMAL:2");
+  const { rerender } = renderView({ items: [ITEM, SOLD_OUT] });
+  expect(showSnackbar).toHaveBeenCalledTimes(1);
+
+  // 다시 받았더니 재입고됐다
+  useQueryCart.mockReturnValue({
+    cart: {
+      memberId: 1,
+      items: [{ ...ITEM }, { ...SOLD_OUT, available: true }],
+      totalAmount: 9345,
+    },
+    isLoading: false,
+    error: null,
+  });
+  rerender(<CheckoutView />);
+
+  // 또 받았더니 다시 품절이다
+  useQueryCart.mockReturnValue({
+    cart: { memberId: 1, items: [{ ...ITEM }, { ...SOLD_OUT }], totalAmount: 9345 },
+    isLoading: false,
+    error: null,
+  });
+  rerender(<CheckoutView />);
+  expect(showSnackbar).toHaveBeenCalledTimes(1);
+});
+
 test("고른 줄이 모두 살 수 있거나 고르지 않은 줄만 품절이면 알리지 않는다", () => {
   searchParams = new URLSearchParams("items=NORMAL:1");
   renderView({ items: [ITEM, SOLD_OUT] });
