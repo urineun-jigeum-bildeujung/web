@@ -187,6 +187,24 @@ test("결제 내역을 항목별로 읽을 수 있다", () => {
   expect(screen.getByText("1개")).toBeDefined();
 });
 
+// 서버가 배송 예정일을 주지 않아 화면이 한국 날짜로 모레를 센다 (QA No.45, #595)
+test("살 상품이 있으면 결제 정보 맨 위에 도착 예정일을 알린다", () => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-09-30T01:00:00Z"));
+  try {
+    renderView();
+    expect(screen.getByText("지금 주문하면 모레(10/2) 도착해요")).toBeDefined();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("살 상품이 없으면 도착 예정일을 알리지 않는다", () => {
+  renderView({ items: [] });
+
+  expect(screen.queryByText(/도착해요/)).toBeNull();
+});
+
 // 회원가입·온보딩에 배송지를 받는 자리가 없어 결제 화면이 기본 배송지를 쓴다 (#255)
 test("기본 배송지를 보여준다", () => {
   renderView({ addresses: [STUDIO, HOME] });

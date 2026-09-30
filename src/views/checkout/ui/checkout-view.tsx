@@ -44,6 +44,7 @@ import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 import { createOrder, releaseOrder } from "../api/orders";
 import { preparePayment } from "../api/payment";
 import { useQueryBuyNowProduct } from "../api/use-query-buy-now-product";
+import { arrivalNotice } from "../model/arrival-notice";
 import {
   ITEMS_PARAM,
   hasUnavailablePick,
@@ -64,6 +65,7 @@ import {
   toAddressPickerPath,
   toCheckoutPath,
 } from "../model/return-query";
+import { DeliveryNotice } from "./delivery-notice";
 import { FieldRow } from "./field-row";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
@@ -513,9 +515,12 @@ export function CheckoutView() {
         <hr className="border-border" />
 
         <Section title="결제 정보">
-          {/* **도착 예정일 줄은 그리지 않는다.** 시안(`paym_001`)에는 있지만 서버가 그 값을
-              주지 않는다. 시안 문구를 그대로 두면 오늘이 며칠이든 "모레(9/3)"이라 지난 날짜가
-              모든 주문에 뜬다 (#259 리뷰). 배송일을 받게 되면 `DeliveryNotice`로 되살린다 */}
+          {/* **도착 예정일은 화면이 센다** (QA No.45, #595). 서버가 배송 예정일을 주지 않아 시안
+              문구대로 한국 날짜의 모레를 보인다(`arrivalNotice`). 전에는 시안의 "모레(9/3)"를 그대로
+              둘 수 없어 걷어냈었다 (#259 리뷰). 살 상품이 있을 때만 — "지금 주문하면"이라 말한다 */}
+          {!itemsLoading && !itemsError && items.length > 0 && (
+            <DeliveryNotice>{arrivalNotice(new Date())}</DeliveryNotice>
+          )}
 
           {itemsLoading && <OrderItemSkeleton />}
 
