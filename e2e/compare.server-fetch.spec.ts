@@ -37,4 +37,16 @@ test("빈 자리를 검색에서 골라 채운다", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "퍼피 성장기 사료 1kg 비교에서 빼기" }),
   ).toBeVisible();
+
+  // 자리 사진이 실제로 그려진다(QA CP-001). 깨진 이미지는 폭이 0이다.
+  //
+  // **사진을 다 받은 뒤에 끝내야 한다.** 개발 서버는 같은 `/_next/image` 주소의 요청을 먼저 온
+  // 요청 하나에 묶는데, 최적화가 끝나기 전에 테스트가 끝나 그 요청이 끊기면 뒤에 오는 같은 주소
+  // 요청이 영영 답을 받지 못했다. 이 사진은 상품 상세 첫 장과 같은 주소라, 차가운 서버(CI)에서
+  // 상품 상세 테스트가 `load`를 기다리다 전부 시간 초과로 끝나 E2E 잡이 15분 제한에 걸렸다(#535)
+  const photo = page.locator("main img");
+  await expect(photo).toHaveCount(1);
+  await expect
+    .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth), { timeout: 15_000 })
+    .toBeGreaterThan(0);
 });
