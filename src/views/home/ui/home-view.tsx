@@ -6,7 +6,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Suspense, use, useId, useRef, useState, useTransition } from "react";
 
 import {
@@ -463,36 +462,44 @@ type HomeViewProps = {
    *  category==="all"이면 그리드 자체가 안 그려지므로 이 Promise는 만들어지지만
    *  쓰이지 않는다(검색 결과 없음 화면과 같은 이유로 조회는 이미 생략된 상태다) */
   productsPromise: Promise<ProductListResult>;
-  /** productsPromise와 같은 렌더에서 서버가 만든 `${category}:${sort}` 조합.
-   *  ProductGrid를 다시 마운트시키는 key로 이 값을 쓴다 — 클라이언트의 useQueryState
-   *  값(category·sort)은 서버가 새 Promise를 만들기도 전에 먼저 바뀔 수 있어(#289,
-   *  실측 확인), 그걸 key로 쓰면 아직 이전 Promise로 마운트된 채 새 데이터가 와도
-   *  key가 이미 같아 다시 마운트되지 않고 빈 상태에 멈추는 경합이 있었다 */
-  productsKey: string;
+  /** productsPromise와 같은 렌더에서 서버가 주소로 정한 종류·정렬. 화면 구성·탭 표시·그리드
+   *  조건을 모두 이 값으로 그린다 — 데이터와 같은 렌더에서 오므로 둘이 어긋날 수 없다.
+   *
+   *  **nuqs 값으로 그리지 않는다(#560).** `shallow: false`인 nuqs는 history API로 주소를 먼저
+   *  바꾸고(Next는 이전 화면 그대로 주소만 바뀐 상태를 만든다) 서버 요청을 따로 건다. 그 전환이
+   *  끝나기 전에 뒤로가면, 뒤로가기가 `/`를 그린 앞뒤로 "주소만 사료로 바뀐 상태"가 늦게 커밋되고
+   *  nuqs 값은 `/`로 돌아온 뒤에도 "food"에 남았다. 그래서 화면은 사료 탭 모양인데 목록은 전체용
+   *  빈 목록에 멈췄다(느린 CPU에서 첫 화면 직후 누를 때 실측) */
+  category: HomeCategory;
+  sort: HomeSort;
   /** 서버가 만든 진행 중 타임딜 조회 결과. "전체" 탭에서만 쓰인다 */
   dealsPromise: Promise<TimeDealList>;
 };
 
-export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeViewProps) {
+export function HomeView({ productsPromise, category, sort, dealsPromise }: HomeViewProps) {
   const router = useRouter();
-  // 그리드는 서버가 새 Promise를 줄 때까지 이전 카테고리의 상품을 들고 있다.
-  // isPending인 동안 Skeleton으로 교체해 숨긴다 — 안 그러면 더 보기가 새
-  // category/sort에 이전 cursor를 섞어 보낼 수 있다(#289)
+  // 종류·정렬을 바꾸면 서버가 새 목록을 줄 때까지 이전 화면이 남는다.
+  // isPending인 동안 Skeleton으로 교체해 기다리는 중임을 알린다 — 이전 그리드를 두면
+  // 더 보기가 새 category/sort에 이전 cursor를 섞어 보낼 수도 있다(#289)
   const [isPending, startTransition] = useTransition();
-  const [category, setCategory] = useQueryState(
-    "category",
-    // 전체 탭은 큐레이션, 종류 탭은 상품 목록으로 구성이 통째로 다르다.
-    // 같은 목록의 필터가 아니므로 뒤로가기로 되돌아올 수 있어야 한다.
-    // shallow를 꺼서(false) 서버 컴포넌트가 새 카테고리로 다시 조회하게 한다(#289)
-    parseAsStringLiteral(CATEGORIES)
-      .withDefault("all")
-      .withOptions({ history: "push", shallow: false }),
-  );
-  const [sort, setSort] = useQueryState(
-    "sort",
-    // 정렬도 서버가 다시 조회해야 하므로 shallow를 끈다(#289)
-    parseAsStringLiteral(SORTS).withDefault("recommend").withOptions({ shallow: false }),
-  );
+  /**
+   * 종류·정렬을 주소에 담아 서버가 다시 그리게 한다(#560). Next 라우터 이동 하나라 주소·화면·데이터가
+   * 함께 바뀌고, 뒤로가기도 Next가 기억해 둔 그 화면으로 돌아간다. 기본값은 주소에서 뺀다(nuqs의
+   * clearOnDefault와 같다).
+   *
+   * 종류는 화면 구성이 통째로 바뀌어 `push`다 — 뒤로가기로 이전 종류에 돌아올 수 있어야 한다.
+   * 정렬은 같은 목록의 순서라 `replace`다
+   */
+  const navigate = (
+    next: { category: HomeCategory; sort: HomeSort },
+    history: "push" | "replace",
+  ) => {
+    const params = new URLSearchParams();
+    if (next.category !== "all") params.set("category", next.category);
+    if (next.sort !== "recommend") params.set("sort", next.sort);
+    const query = params.toString();
+    startTransition(() => router[history](query ? `/?${query}` : "/", { scroll: false }));
+  };
   const [petId, setPetId] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<PendingFeedback | null>(null);
   const [recentIndex, setRecentIndex] = useState(0);
@@ -581,14 +588,15 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
 
       {/* 탭처럼 보이지만 탭 역할을 주지 않는다. 고르면 화면 구성이 통째로 바뀌고 주소도 달라져
           연결할 패널이 없다. 지금 어느 것을 보고 있는지는 aria-current로 알린다.
-          시안 tap_item: 활성은 label-bold-14 + 검정 밑줄, 비활성은 label-medium-14 + 회색 */}
+          시안 tap_item: 활성은 label-bold-14 + 검정 밑줄, 비활성은 label-medium-14 + 회색.
+          보고 있는 탭을 다시 누르면 아무것도 하지 않는다 — 서버를 다시 불러 뼈대만 한 번 번쩍인다 */}
       <nav aria-label="상품 종류" className="flex px-5">
         {CATEGORIES.map((value) => (
           <button
             key={value}
             type="button"
             aria-current={category === value ? "page" : undefined}
-            onClick={() => startTransition(() => void setCategory(value))}
+            onClick={() => value !== category && navigate({ category: value, sort }, "push")}
             className={
               category === value
                 ? "min-h-11 border-b border-border-strong px-2 text-label-bold-14 text-text-label-default"
@@ -601,7 +609,11 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
       </nav>
 
       <main className="flex flex-1 flex-col pb-24">
-        {category === "all" ? (
+        {/* 종류·정렬을 바꾸고 서버 응답을 기다리는 동안은 어느 탭이든 뼈대를 그린다. 탭 표시와 구성은
+            응답이 와야 바뀌므로(서버가 준 값으로 그린다) 이것이 눌렸다는 표시다 */}
+        {isPending ? (
+          <ProductGridSkeleton />
+        ) : category === "all" ? (
           <>
             {/* 프로모션 배너. 시안은 문구 없이 사진 배너 하나다 — 홍보 문구는 이미지 안에 들어간다.
                 배너 API가 없어 시안 배너(1708:22742)를 예시로 둔다. 빈 회색 상자로 두면 첫 화면 가장 큰
@@ -816,15 +828,11 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
               </ErrorBoundary>
             </section>
           </>
-        ) : // isPending 중 Skeleton으로 바꾸는 이유는 위 useTransition 자리에 적어 뒀다.
-        // isPending이 아닐 때는 productsKey(서버가 productsPromise와 같은 렌더에서 만든
-        // 값)로 다시 마운트한다 — ProductGrid 안의 누적 목록·커서·오류 상태가 필터
-        // 전환 때 자동으로 비워진다(#289)
-        isPending ? (
-          <ProductGridSkeleton />
         ) : (
+          // 서버가 productsPromise와 같은 렌더에서 준 종류·정렬로 다시 마운트한다 —
+          // ProductGrid 안의 누적 목록·커서·오류 상태가 필터 전환 때 자동으로 비워진다(#289)
           <ErrorBoundary
-            key={productsKey}
+            key={`${category}:${sort}`}
             fallback={() => <PromiseErrorFallback router={router} />}
             resetKeys={[productsPromise]}
           >
@@ -838,7 +846,9 @@ export function HomeView({ productsPromise, productsKey, dealsPromise }: HomeVie
                   // 트리거 아래로 열리는 일반 드롭다운이라 position="popper"·오른쪽 정렬을 쓴다
                   <Select
                     value={sort}
-                    onValueChange={(next) => startTransition(() => void setSort(next as HomeSort))}
+                    onValueChange={(next) =>
+                      navigate({ category, sort: next as HomeSort }, "replace")
+                    }
                   >
                     <SelectTrigger
                       aria-label="정렬"

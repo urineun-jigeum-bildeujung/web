@@ -40,6 +40,29 @@ test("종류를 고른 뒤 뒤로가기로 전체 탭에 돌아온다", async ({
   await expect(page.getByText(/AI가 골라주는/)).toBeVisible();
 });
 
+// 느린 기기에서 첫 화면이 뜨자마자 종류를 누르고 곧바로 뒤로가면, 주소는 `/`인데 화면이 사료 탭 모양
+// (정렬 + 전체용 빈 목록)에 멈췄다(#560). 느린 CI 러너에서 위 테스트가 계속 흔들린 원인이다.
+// CPU를 3배 늦춰 그 경합을 매번 만든다 — 탭이 nuqs(shallow: false)로 주소를 먼저 바꾸던 코드에서는 매번 실패했다
+test("느린 기기에서 첫 화면 직후 종류를 누르고 바로 뒤로가도 전체 탭으로 돌아온다", async ({
+  page,
+}) => {
+  test.slow();
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: 3 });
+  await page.goto("/");
+
+  await page.getByRole("button", { name: "사료", exact: true }).click();
+  await expect(page).toHaveURL(/category=food/, { timeout: 15_000 });
+  await page.goBack();
+
+  await expect(page.getByText(/AI가 골라주는/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("button", { name: "전체", exact: true })).toHaveAttribute(
+    "aria-current",
+    "page",
+  );
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test("더 보기를 누르면 다음 페이지를 이어 붙이고, 다 받으면 버튼이 사라진다", async ({ page }) => {
   await page.goto("/?category=food");
 

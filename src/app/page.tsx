@@ -2,8 +2,6 @@
 // 둘 다 await하지 않는다 — 화면 안의 해당 영역이 `use()`+`Suspense`로 그 부분만
 // 대기하고, 헤더·아이 고르기 등은 기다리지 않는다.
 
-import { Suspense } from "react";
-
 import {
   CATEGORY_TO_API,
   getProducts,
@@ -40,15 +38,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       ? getTimeDeals("ACTIVE")
       : Promise.resolve({ groups: [], serverTime: new Date().toISOString() });
 
-  // nuqs의 useQueryState가 내부에서 useSearchParams를 쓴다.
-  // Suspense로 감싸지 않으면 정적 프리렌더가 실패한다.
+  // 화면은 주소를 직접 읽지 않고 이 값을 받아 그린다 — 목록과 같은 렌더에서 나온 값이라 어긋나지 않는다(#560)
   return (
-    <Suspense fallback={<div className="min-h-dvh" />}>
-      <HomeView
-        productsPromise={productsPromise}
-        productsKey={`${category}:${sort}`}
-        dealsPromise={dealsPromise}
-      />
-    </Suspense>
+    <HomeView
+      productsPromise={productsPromise}
+      category={category}
+      sort={sort}
+      dealsPromise={dealsPromise}
+    />
   );
 }
