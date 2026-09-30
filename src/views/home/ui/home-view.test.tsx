@@ -12,9 +12,17 @@ import type {
   TimeDealGroup,
   TimeDealList,
 } from "@/entities/product";
+import { APP_MESSAGE_CODE } from "@/shared/config/app-message";
 
 const pushMock = vi.fn();
 const refreshMock = vi.fn();
+
+// 공개 화면의 로그인 필요 버튼은 이동 없이 로그인 필요 토스트를 띄운다(#542)
+const { toastAppError } = vi.hoisted(() => ({ toastAppError: vi.fn() }));
+vi.mock("@/shared/lib/app-toast", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/shared/lib/app-toast")>()),
+  toastAppError,
+}));
 
 // 헤더 종은 서버 상태를 읽는 위젯이다. 이 화면 테스트에는 QueryClient가 없어 링크만 대신 그린다(#395)
 vi.mock("@/widgets/notification-bell", () => ({
@@ -109,6 +117,7 @@ afterEach(() => {
   wishlistQuery = { items: [], isLoading: false };
   toggleWish.mockReset();
   pushMock.mockReset();
+  toastAppError.mockReset();
 });
 
 const PUPPY_FOOD: ProductCard = {
@@ -264,13 +273,14 @@ describe("HomeView", () => {
   });
 
   // 다른 목록(#483)과 같다. 로그아웃 상태에서 찜을 보내면 401과 재발급 시도만 헛돈다
-  it("로그인하지 않았으면 하트를 눌렀을 때 찜 대신 로그인으로 간다", async () => {
+  it("로그인하지 않았으면 하트를 눌렀을 때 찜 대신 로그인 필요 토스트를 띄우고 이동하지 않는다", async () => {
     session.value = false;
     await renderWith("?category=food", toProducts([PUPPY_FOOD]));
 
     fireEvent.click(screen.getByRole("button", { name: "퍼피 성장기 사료 1kg 찜하기" }));
 
-    expect(pushMock).toHaveBeenCalledWith("/login");
+    expect(toastAppError).toHaveBeenCalledWith(APP_MESSAGE_CODE.auth.loginRequired);
+    expect(pushMock).not.toHaveBeenCalledWith("/login");
     expect(toggleWish).not.toHaveBeenCalled();
   });
 
