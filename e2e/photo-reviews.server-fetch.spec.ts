@@ -15,9 +15,9 @@ test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
 
   // 목록 응답에는 닉네임이 있다
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
-  // 품종명은 아직 붙이지 않는다. 아이가 여럿이면 줄이지 않고 `/`로 나눈다
-  await expect(page.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeVisible();
-  await expect(page.getByText("대형견 · 6세 · 28kg")).toBeVisible();
+  // 아이 줄은 품종명으로 적는다. 아이가 여럿이면 줄이지 않고 `/`로 나눈다
+  await expect(page.getByText("시츄 · 8세 · 4kg / 먼치킨 · 3세 · 4.2kg")).toBeVisible();
+  await expect(page.getByText("허스키 · 6세 · 28kg")).toBeVisible();
   await expect(page.getByText("총 리뷰 3개")).toBeVisible();
 });
 
@@ -115,7 +115,7 @@ test("뷰어 카드가 목록 카드와 같은 내용을 보여준다", async ({
   await page.goto("/products/1/photos?photo=7&n=0");
 
   const card = page.getByRole("dialog").getByRole("article");
-  await expect(card.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeVisible();
+  await expect(card.getByText("시츄 · 8세 · 4kg / 먼치킨 · 3세 · 4.2kg")).toBeVisible();
   await expect(card.getByText("확실히 예전보다 계단 오를 때 덜 힘들어해요.")).toBeVisible();
   await expect(card.getByText("사용 3주째")).toBeVisible();
 

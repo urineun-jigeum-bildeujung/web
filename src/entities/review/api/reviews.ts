@@ -131,6 +131,7 @@ function toReviewPet(pet: {
   species: "DOG" | "CAT";
   breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
   breedId: number;
+  breedName: string | null;
   weight: number;
 }): ReviewPet {
   return {
@@ -140,6 +141,7 @@ function toReviewPet(pet: {
     species: pet.species,
     breedSize: pet.breedSize,
     breedId: pet.breedId,
+    breedName: pet.breedName,
     weight: pet.weight,
   };
 }
@@ -160,6 +162,8 @@ type ReviewDetailResponse = {
     breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
     species: "DOG" | "CAT";
     breedId: number;
+    /** 스냅샷 컬럼이 뒤늦게 생겨 그 전에 쓴 후기는 `null` */
+    breedName: string | null;
     weight: number;
   }[];
   /** 저장값 그대로. 0.5 단위 */
@@ -261,6 +265,8 @@ type ProductReviewListResponse = {
       breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
       species: "DOG" | "CAT";
       breedId: number;
+      /** 스냅샷 컬럼이 뒤늦게 생겨 그 전에 쓴 후기는 `null` */
+      breedName: string | null;
       weight: number;
     }[];
     /** 0.5 단위 */

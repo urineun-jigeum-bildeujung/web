@@ -13,8 +13,8 @@ import { toast } from "sonner";
 
 import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { useQueryMyProfile } from "@/entities/member";
-import { useQueryPetDetail } from "@/entities/pet";
 import {
+  formatPetProfile,
   toUsageLabel,
   useQueryReviewDetail,
   type ReviewDetail,
@@ -42,7 +42,7 @@ import { Rating } from "@/shared/ui/rating/rating";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
-import { toReviewDate, toReviewPetProfile } from "../model/review-labels";
+import { toReviewDate } from "../model/review-labels";
 
 /** 어디서 보느냐에 따라 켜고 끄는 줄. 마이페이지의 내 리뷰는 둘 다 끈다 */
 type ReviewDetailOptions = {
@@ -254,14 +254,15 @@ function PurchaseBar({ productId }: { productId: string }) {
 }
 
 /**
- * 아이 칩 하나. 응답 스냅샷에는 품종명·몸무게가 없어 내 아이면 상세를 받아 "말티즈 · 8세 · 4kg"으로,
- * 못 받으면(남의 아이·지운 아이) 스냅샷의 이름과 나이로 "코코 · 8세"로 보인다
+ * 아이 칩 하나. 후기를 쓸 당시 스냅샷 그대로 "시츄 · 8세 · 4kg"으로 적는다.
+ *
+ * **아이 상세를 다시 받지 않는다.** 응답의 `pets`가 품종명까지 들고 있고, 지금 아이 정보를
+ * 받아 오면 후기를 쓴 뒤 바뀐 몸무게·나이가 그때 값인 것처럼 보인다. 목록 카드와 같은 함수다
  */
 function PetChip({ pet }: { pet: ReviewPet }) {
-  const { pet: detail } = useQueryPetDetail(pet.id);
   return (
     <li className="rounded-sm bg-surface-secondary px-1.5 py-0.5 text-label-medium-12 text-text-body-secondary">
-      {detail ? toReviewPetProfile(detail) : `${pet.name} · ${pet.age}세`}
+      {formatPetProfile(pet)}
     </li>
   );
 }

@@ -6,8 +6,6 @@
 
 /**
  * 리뷰를 쓸 당시의 아이. 목록·상세 응답이 같은 모양으로 준다.
- *
- * 품종명 조회는 인증 정책이 정해지기 전까지 연결하지 않고 `breedId`만 보존한다.
  */
 export type ReviewPet = {
   id: string;
@@ -17,8 +15,10 @@ export type ReviewPet = {
   species: "DOG" | "CAT";
   /** 고양이는 체구가 없다 */
   breedSize: "SMALL" | "MEDIUM" | "LARGE" | null;
-  /** 품종 id. 이름은 `GET /pets/breeds`가 들고 있다 */
+  /** 품종 id */
   breedId: number;
+  /** 품종명. 스냅샷 컬럼이 뒤늦게 생겨 그 전에 쓴 후기는 `null`이다 */
+  breedName: string | null;
   /** kg */
   weight: number;
 };

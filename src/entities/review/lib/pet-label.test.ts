@@ -1,4 +1,4 @@
-// 후기 카드의 아이 줄. 체구·나이·몸무게를 잇고 여러 마리는 줄이지 않는다.
+// 후기 카드의 아이 줄. 품종명·나이·몸무게를 잇고 여러 마리는 줄이지 않는다.
 
 import { describe, expect, it } from "vitest";
 
@@ -12,6 +12,7 @@ const BORI: ReviewPet = {
   species: "DOG",
   breedSize: "SMALL",
   breedId: 12,
+  breedName: "시츄",
   weight: 4,
 };
 
@@ -22,17 +23,32 @@ const NABI: ReviewPet = {
   species: "CAT",
   breedSize: null,
   breedId: 45,
+  breedName: "먼치킨",
   weight: 4.2,
 };
 
 describe("formatPetProfile", () => {
-  it("체구·나이·몸무게를 가운뎃점으로 잇는다", () => {
-    expect(formatPetProfile(BORI)).toBe("소형견 · 8세 · 4kg");
+  it("품종명·나이·몸무게를 가운뎃점으로 잇는다", () => {
+    expect(formatPetProfile(BORI)).toBe("시츄 · 8세 · 4kg");
   });
 
-  // 품종명이 오기 전까지는 체구 자리를 종으로 채운다
-  it("고양이는 체구가 없어 종으로 적는다", () => {
-    expect(formatPetProfile(NABI)).toBe("고양이 · 3세 · 4.2kg");
+  // 체구가 없는 고양이도 품종명으로 적힌다
+  it("고양이도 품종명으로 적는다", () => {
+    expect(formatPetProfile(NABI)).toBe("먼치킨 · 3세 · 4.2kg");
+  });
+
+  // 품종명 스냅샷이 생기기 전에 쓴 후기다. 로그인 여부와 무관하게 누가 봐도 같게 보인다
+  it("품종명이 없으면 체구로 적는다", () => {
+    expect(formatPetProfile({ ...BORI, breedName: null })).toBe("소형견 · 8세 · 4kg");
+  });
+
+  it("품종명도 체구도 없으면 종으로 적는다", () => {
+    expect(formatPetProfile({ ...NABI, breedName: null })).toBe("고양이 · 3세 · 4.2kg");
+  });
+
+  // 빈 값을 그대로 쓰면 앞이 빈 " · 8세 · 4kg"가 된다
+  it.each(["", "   "])("품종명이 비어 있으면 체구로 적는다", (breedName) => {
+    expect(formatPetProfile({ ...BORI, breedName })).toBe("소형견 · 8세 · 4kg");
   });
 
   it("몸무게의 불필요한 0을 떼고 소수 첫째 자리까지 적는다", () => {
@@ -42,13 +58,13 @@ describe("formatPetProfile", () => {
   });
 
   it("0세도 적는다 — 태어난 해의 아이가 빠지면 안 된다", () => {
-    expect(formatPetProfile({ ...BORI, age: 0 })).toBe("소형견 · 0세 · 4kg");
+    expect(formatPetProfile({ ...BORI, age: 0 })).toBe("시츄 · 0세 · 4kg");
   });
 });
 
 describe("formatPetProfiles", () => {
   it("아이끼리는 /로 나눈다", () => {
-    expect(formatPetProfiles([BORI, NABI])).toBe("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg");
+    expect(formatPetProfiles([BORI, NABI])).toBe("시츄 · 8세 · 4kg / 먼치킨 · 3세 · 4.2kg");
   });
 
   it("여러 마리여도 줄이지 않는다", () => {

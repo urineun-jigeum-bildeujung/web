@@ -59,7 +59,16 @@ const DETAIL: ReviewDetail = {
   liked: false,
   product: { id: "1", name: "관절 영양제" },
   pets: [
-    { id: "10", name: "보리", age: 8, species: "DOG", breedSize: "SMALL", breedId: 12, weight: 4 },
+    {
+      id: "10",
+      name: "보리",
+      age: 8,
+      species: "DOG",
+      breedSize: "SMALL",
+      breedId: 12,
+      breedName: "시츄",
+      weight: 4,
+    },
   ],
   rating: 4.5,
   usageDays: 21,
@@ -247,7 +256,7 @@ describe("뷰어 아래 후기 카드", () => {
 
     renderView("?photo=7&n=0");
 
-    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
     expect(screen.getByText("계단 오를 때 덜 힘들어해요.")).toBeDefined();
     expect(screen.getByText("사용 3주째")).toBeDefined();
   });

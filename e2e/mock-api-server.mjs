@@ -336,7 +336,7 @@ const PRODUCT_NOT_FOUND = {
  *
  * **실제 백엔드 응답 모양 그대로다.** 목록에는 `hasNext`가 없고 `totalCount`만 오며,
  * 사진 없는 후기의 `images`는 빈 배열이 아니라 `null`, 닉네임을 못 찾은 회원은 빈 문자열,
- * 고양이는 `breedSize`가 `null`이다. `usagePeriod`는 목록도 상세도 일 단위 숫자이고,
+ * 고양이는 `breedSize`가 `null`이다. 품종명(`breedName`)은 쓸 당시 스냅샷이다. `usagePeriod`는 목록도 상세도 일 단위 숫자이고,
  * 공개 상세에도 `nickname`·`likeCount`·`liked`가 실린다.
  *
  * 사진 주소는 로컬 파일이라 next/image의 remotePatterns를 타지 않는다.
@@ -357,6 +357,7 @@ const REVIEWS = [
         breedSize: "SMALL",
         species: "DOG",
         breedId: 12,
+        breedName: "시츄",
         weight: 4,
       },
       {
@@ -367,6 +368,7 @@ const REVIEWS = [
         breedSize: null,
         species: "CAT",
         breedId: 45,
+        breedName: "먼치킨",
         weight: 4.2,
       },
     ],
@@ -391,6 +393,7 @@ const REVIEWS = [
         breedSize: "LARGE",
         species: "DOG",
         breedId: 30,
+        breedName: "허스키",
         weight: 28,
       },
     ],
@@ -415,6 +418,7 @@ const REVIEWS = [
         breedSize: "MEDIUM",
         species: "DOG",
         breedId: 7,
+        breedName: "포메라니안",
         weight: 12.5,
       },
     ],

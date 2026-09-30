@@ -28,6 +28,7 @@ const BORI: ReviewPet = {
   species: "DOG",
   breedSize: "SMALL",
   breedId: 12,
+  breedName: "시츄",
   weight: 4,
 };
 
@@ -38,6 +39,7 @@ const NABI: ReviewPet = {
   species: "CAT",
   breedSize: null,
   breedId: 45,
+  breedName: "먼치킨",
   weight: 4.2,
 };
 
@@ -59,14 +61,14 @@ describe("ReviewCard", () => {
     render(<ReviewCard onToggleLike={onToggleLike} review={REVIEW} />);
 
     expect(screen.getByText("댕댕이짱")).toBeDefined();
-    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
   });
 
   // 아이를 여럿 고를 수 있게 바뀌었다. 첫 마리만 적으면 나머지를 숨기는 것이라 사실과 다르다
   it("아이가 여러 마리면 줄이지 않고 전부 적는다", () => {
     render(<ReviewCard onToggleLike={onToggleLike} review={{ ...REVIEW, pets: [BORI, NABI] }} />);
 
-    expect(screen.getByText("소형견 · 8세 · 4kg / 고양이 · 3세 · 4.2kg")).toBeDefined();
+    expect(screen.getByText("시츄 · 8세 · 4kg / 먼치킨 · 3세 · 4.2kg")).toBeDefined();
   });
 
   // 원은 작성자가 아니라 함께 먹인 아이들이다 (#488)
@@ -170,7 +172,7 @@ describe("ReviewCard", () => {
     render(<ReviewCard onToggleLike={onToggleLike} review={{ ...REVIEW, nickname: "" }} />);
 
     expect(screen.queryByText("댕댕이짱")).toBeNull();
-    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
     expect(screen.getByText(REVIEW.content)).toBeDefined();
   });
 

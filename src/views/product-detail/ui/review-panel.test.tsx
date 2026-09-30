@@ -43,6 +43,7 @@ const REVIEWS: Review[] = [
         species: "DOG",
         breedSize: "SMALL",
         breedId: 12,
+        breedName: "시츄",
         weight: 4,
       },
     ],
@@ -64,7 +65,8 @@ const REVIEWS: Review[] = [
         age: 6,
         species: "DOG",
         breedSize: "LARGE",
-        breedId: 12,
+        breedId: 30,
+        breedName: "허스키",
         weight: 4,
       },
     ],
@@ -137,9 +139,9 @@ describe("목록", () => {
 
     renderPanel();
 
-    // 별점만 나열하면 소형견과 대형견의 후기가 같아 보인다
-    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
-    expect(screen.getByText("대형견 · 6세 · 4kg")).toBeDefined();
+    // 별점만 나열하면 시츄와 허스키의 후기가 같아 보인다
+    expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("허스키 · 6세 · 4kg")).toBeDefined();
   });
 
   it("처음 받는 동안에는 자리를 잡아 둔다", () => {
@@ -148,7 +150,7 @@ describe("목록", () => {
 
     renderPanel();
 
-    expect(screen.queryByText("소형견 · 8세")).toBeNull();
+    expect(screen.queryByText("시츄 · 8세")).toBeNull();
     expect(screen.queryByText("아직 후기가 없어요")).toBeNull();
   });
 
@@ -254,7 +256,7 @@ describe("더보기", () => {
 
     renderPanel();
 
-    expect(screen.getByText("소형견 · 8세 · 4kg")).toBeDefined();
+    expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: /다시 시도/ }));
     expect(loadNext).toHaveBeenCalled();
   });

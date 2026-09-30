@@ -18,11 +18,11 @@ vi.mock("@/entities/review", async (importOriginal) => ({
 vi.mock("@/entities/member", () => ({
   useQueryMyProfile: () => ({ profile: { nickname: "보리엄마" } }),
 }));
-vi.mock("@/entities/pet", () => ({
-  useQueryPetDetail: (petId: string | undefined) => ({
-    pet: petId === "3" ? { breedName: "말티즈", age: 8, weight: 4 } : undefined,
-  }),
+// 아이 칩은 후기 스냅샷만 쓴다. 이 조회가 되살아나면 그때 값 대신 현재 아이 정보가 보인다
+const { useQueryPetDetail } = vi.hoisted(() => ({
+  useQueryPetDetail: vi.fn(() => ({ pet: undefined })),
 }));
+vi.mock("@/entities/pet", () => ({ useQueryPetDetail }));
 
 // 찜은 서버에 저장한다(#483). 로그인·찜 여부는 서버 상태라 값만 세운다
 const { toggleWish, wish } = vi.hoisted(() => ({
@@ -49,8 +49,26 @@ const REVIEW: ReviewDetail = {
   liked: false,
   product: { id: "7", name: "오메가3 피쉬오일 60캡슐" },
   pets: [
-    { id: "3", name: "코코", age: 8, species: "DOG", breedSize: "SMALL", breedId: 12, weight: 4 },
-    { id: "9", name: "나비", age: 2, species: "CAT", breedSize: null, breedId: 45, weight: 4.2 },
+    {
+      id: "3",
+      name: "코코",
+      age: 8,
+      species: "DOG",
+      breedSize: "SMALL",
+      breedId: 12,
+      breedName: "시츄",
+      weight: 4,
+    },
+    {
+      id: "9",
+      name: "나비",
+      age: 2,
+      species: "CAT",
+      breedSize: null,
+      breedId: 45,
+      breedName: null,
+      weight: 4.2,
+    },
   ],
   rating: 4.5,
   usageDays: 16,
@@ -72,6 +90,7 @@ const loaded = (review: ReviewDetail | undefined, error: unknown = null) => ({
 beforeEach(() => {
   push.mockClear();
   back.mockClear();
+  useQueryPetDetail.mockClear();
   useQueryReviewDetail.mockReturnValue(loaded(REVIEW));
 });
 
@@ -83,8 +102,12 @@ test("사진·닉네임·0.5 별점·날짜·칩(아이마다·사용 기간·�
   expect(screen.getByText("5점 만점에 4.5점")).toBeDefined();
   expect(screen.getByText("2026. 09. 21")).toBeDefined();
   const chips = screen.getByRole("list", { name: "아이와 사용 기간, 반응" });
-  // 내 아이(3)는 상세로 품종·몸무게까지, 상세를 못 받는 아이(9)는 스냅샷의 이름·나이로
-  expect(chips.textContent).toBe("말티즈 · 8세 · 4kg나비 · 2세사용 2주째기호성 좋음소화·배변 나쁨");
+  // 품종명이 있는 아이(3)는 그대로, 없는 아이(9)는 체구도 없어 종으로 떨어진다
+  expect(chips.textContent).toBe(
+    "시츄 · 8세 · 4kg고양이 · 2세 · 4.2kg사용 2주째기호성 좋음소화·배변 나쁨",
+  );
+  // 후기를 쓴 뒤 바뀐 값이 그때 값인 것처럼 보이면 안 된다
+  expect(useQueryPetDetail).not.toHaveBeenCalled();
   expect(screen.getByText("확실히 잘 먹어요")).toBeDefined();
 });
 
