@@ -1,4 +1,4 @@
-// 적합도가 점수만이 아니라 문장으로도 읽히는지, 아이를 바꿀 수 있는지, 추천 API 결과(성공·빈 목록·실패·감점)를 어떻게 그리는지 본다.
+// 적합도가 점수만이 아니라 문장으로도 읽히는지, 아이를 바꿀 수 있는지, 추천 API 결과(성공·빈 목록·실패·감점)를 어떻게 그리는지, 카드 하트가 서버 찜을 따르는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -90,6 +90,19 @@ vi.mock("@/entities/recommendation", async (importOriginal) => ({
   },
 }));
 
+// 카드 하트는 서버 찜이다(#611). 찜 목록·토글은 서버 상태라 값만 세우고, 로그인 확인과 찜 훅은
+// 진짜(`features/toggle-wishlist`)를 쓴다
+let wishlistQuery: { items: { productId: number }[] | undefined; isLoading: boolean } = {
+  items: [],
+  isLoading: false,
+};
+const toggleWish = vi.fn();
+vi.mock("@/entities/wishlist", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/wishlist")>()),
+  useQueryWishlist: () => wishlistQuery,
+  useMutateWishlist: () => ({ toggle: toggleWish }),
+}));
+
 import { RecommendationsView } from "./recommendations-view";
 
 afterEach(() => {
@@ -99,6 +112,8 @@ afterEach(() => {
   recommendationQuery = { items: RECOMMENDED, isLoading: false };
   recommendationFails = false;
   recommendationCalls = [];
+  wishlistQuery = { items: [], isLoading: false };
+  toggleWish.mockReset();
 });
 
 function renderWith(search = "") {
@@ -254,6 +269,53 @@ describe("RecommendationsView", () => {
     const penalized = card(20);
     expect(within(penalized).getByText("등록한 알레르기 성분이 들어 있어요")).toBeDefined();
     expect(within(penalized).getByText("품절")).toBeDefined();
+  });
+
+  // 화면 상태(useState)라 서버에 가지 않고 새로고침하면 사라졌다(QA r36, #611)
+  it("카드 하트는 서버 찜 목록으로 눌림을 보인다", () => {
+    wishlistQuery = { items: [{ productId: 20 }], isLoading: false };
+    renderWith();
+
+    const pressed = (id: number) =>
+      screen.getByRole("button", { name: `추천 상품 ${id} 찜하기` }).getAttribute("aria-pressed");
+    expect(pressed(10)).toBe("false");
+    expect(pressed(20)).toBe("true");
+  });
+
+  it("하트를 누르면 그 상품의 찜을 서버에서 뒤집는다", () => {
+    wishlistQuery = { items: [{ productId: 20 }], isLoading: false };
+    renderWith();
+
+    fireEvent.click(screen.getByRole("button", { name: "추천 상품 10 찜하기" }));
+    // 좋아요 탭 목록에 먼저 넣을 줄을 함께 넘겨 하트가 곧바로 켜진다
+    expect(toggleWish).toHaveBeenLastCalledWith({
+      productId: 10,
+      wished: true,
+      item: {
+        productId: 10,
+        name: "추천 상품 10",
+        thumbnailUrl: "/images/e2e/product-photo-1.png",
+        price: 19000,
+        originalPrice: 20000,
+      },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "추천 상품 20 찜하기" }));
+    expect(toggleWish).toHaveBeenLastCalledWith(
+      expect.objectContaining({ productId: 20, wished: false }),
+    );
+  });
+
+  // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)
+  it("찜 목록을 받는 동안은 하트를 누를 수 없고 대기를 알린다", () => {
+    wishlistQuery = { items: undefined, isLoading: true };
+    renderWith();
+
+    const heart = screen.getByRole("button", { name: "추천 상품 10 찜하기" });
+    expect(heart).toHaveProperty("disabled", true);
+    fireEvent.click(heart);
+    expect(toggleWish).not.toHaveBeenCalled();
+    expect(within(heart).getByRole("status", { name: "찜 여부를 불러오는 중" })).toBeDefined();
   });
 
   it("추천을 받는 동안 격자 자리를 뼈대로 잡는다", () => {

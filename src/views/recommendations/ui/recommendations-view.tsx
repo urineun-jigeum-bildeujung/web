@@ -9,7 +9,6 @@
 "use client";
 
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
-import { useState } from "react";
 
 import { BottomNav } from "@/widgets/bottom-nav";
 import { CartLink } from "@/widgets/cart-link";
@@ -25,12 +24,14 @@ import {
   useQueryHomeRecommendations,
   type RecommendationSort,
 } from "@/entities/recommendation";
+import { toWishlistItem, useToggleWishlist, useWishedProductIds } from "@/features/toggle-wishlist";
 import { useSessionState } from "@/shared/api/use-session-state";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
@@ -96,8 +97,10 @@ function RecommendationGrid({ petId, petName, category, sort }: RecommendationGr
     category: category === "all" ? undefined : category,
     size: RECOMMENDATION_PAGE_SIZE,
   });
-  // 찜은 아직 서버에 남지 않는다(README "아직 없는 것")
-  const [liked, setLiked] = useState<number[]>([]);
+  // 찜은 서버에 저장한다. 메인과 같이 전체 찜 목록으로 하트를 채우고 누르면 서버에서 뒤집는다 —
+  // 토글이 찜 목록 캐시를 먼저 바꿔 하트가 곧바로 바뀐다(QA r36, #611)
+  const heart = useToggleWishlist();
+  const { wishedIds, isLoading: wishLoading } = useWishedProductIds();
 
   if (isLoading || !items) return <RecommendationGridSkeleton />;
 
@@ -111,13 +114,11 @@ function RecommendationGrid({ petId, petName, category, sort }: RecommendationGr
     );
   }
 
-  const toggleLike = (id: number) =>
-    setLiked((prev) => (prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]));
-
   return (
     <ul className="mt-4 grid grid-cols-2 gap-x-3.25 gap-y-3 px-5">
       {sortRecommendations(items, sort).map((product) => {
         const rated = product.reviewCount > 0;
+        const wished = wishedIds.has(product.productId);
         return (
           <li key={product.productId} className="flex">
             <ProductGridCard
@@ -146,23 +147,28 @@ function RecommendationGrid({ petId, petName, category, sort }: RecommendationGr
               imageActionClassName="top-auto right-1 bottom-1"
               imageAction={
                 // 비활성 #565D6D=text-body-secondary, 활성 #FF611D=brand — SVG fill을
-                // 토큰과 대조해 확인했다
+                // 토큰과 대조해 확인했다. 모양이 이 화면 시안이라 CardHeartButton(어두운 원판)을
+                // 쓰지 않고 동작만 같게 한다 — 찜 여부를 받는 동안은 막고 하트 자리에 대기를 보인다.
+                // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)
                 <button
                   type="button"
-                  onClick={() => toggleLike(product.productId)}
-                  aria-pressed={liked.includes(product.productId)}
+                  onClick={() => heart.toggle(product.productId, !wished, toWishlistItem(product))}
+                  aria-pressed={wished}
                   aria-label={`${product.name} 찜하기`}
-                  className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static after:absolute after:-inset-1.5"
+                  disabled={wishLoading}
+                  className="relative flex size-8 items-center justify-center rounded-full bg-surface-overlay-static text-text-body-secondary after:absolute after:-inset-1.5"
                 >
-                  {liked.includes(product.productId) ? (
-                    <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
-                  ) : (
-                    <Icon
-                      name="heart_stroke"
-                      aria-hidden
-                      className="size-6 text-text-body-secondary"
-                    />
-                  )}
+                  <LoadingSwap
+                    loading={wishLoading}
+                    label="찜 여부를 불러오는 중"
+                    spinnerClassName="size-5"
+                  >
+                    {wished ? (
+                      <Icon name="heart_fill" aria-hidden className="size-6 text-brand" />
+                    ) : (
+                      <Icon name="heart_stroke" aria-hidden className="size-6" />
+                    )}
+                  </LoadingSwap>
                 </button>
               }
               meta={
