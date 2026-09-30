@@ -29,7 +29,7 @@ import {
   useToggleWishlist,
   useWishedProductIds,
 } from "@/features/toggle-wishlist";
-import { toBuyNowPath, useMutateCartItem } from "@/entities/cart";
+import { toBuyNowPath, useMutateCartItem, useQueryCartItemQuantity } from "@/entities/cart";
 import { useQueryPetDetail, useQueryPets } from "@/entities/pet";
 import { formatUnitPrice, type ProductCard, type ProductDetail } from "@/entities/product";
 import { useQueryWishlistStatus } from "@/entities/wishlist";
@@ -54,6 +54,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
 import { DEAL_ENDS_AT, MOCK_PRODUCT } from "../model/mock-product";
 import { EXAMPLE_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
+import { showCartAddedSnackbar } from "./cart-added-snackbar";
 import { DetailOptionSheet } from "./detail-option-sheet";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
@@ -330,7 +331,7 @@ function RelatedProductsSkeleton() {
 
 export function ProductDetailView({ productId, product, relatedPromise }: ProductDetailViewProps) {
   const router = useRouter();
-  const { add, isAdding } = useMutateCartItem();
+  const { add, remove, isAdding } = useMutateCartItem();
   // 고른 탭에 따라 보이는 것이 통째로 달라진다. nuqs 기본은 replace라
   // 그대로 두면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
   const [tab, setTab] = useQueryState(
@@ -414,6 +415,8 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   const cartItemRef = product.timeDealItemId
     ? ({ itemType: "TIME_DEAL", itemId: product.timeDealItemId } as const)
     : ({ itemType: "NORMAL", itemId: product.productId } as const);
+  // 이미 담긴 상품이면 수량 시트가 몇 개 담겨 있는지 알린다(#562). 로그인하지 않았으면 부르지 않는다
+  const inCartQuantity = useQueryCartItemQuantity(cartItemRef, { enabled: session === true });
 
   // 옵션은 없는 개념이다(#137). 고르는 값이 아니라 지금 담는 것이 무엇인지 알리는 표기다
   const netQuantityLabel = product.detail.netQuantityValue
@@ -767,11 +770,15 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
             router.push(toBuyNowPath({ ...cartItemRef, quantity }));
             return;
           }
-          await add(cartItemRef, quantity);
+          // 되돌리는 함수는 담기 전 수량을 알 때만 온다. 그때만 스낵바에 담기 취소가 붙는다(#562)
+          const undo = await add(cartItemRef, quantity);
           setOptionSheetOpen(false);
-          showSnackbar("상품이 장바구니에 담겼어요");
+          showCartAddedSnackbar(undo);
         }}
+        inCartQuantity={inCartQuantity}
+        onRemoveFromCart={() => remove(cartItemRef)}
         productName={product.name}
+        imageUrl={product.images[0]}
         quantityLabel={netQuantityLabel}
         price={product.price}
       />

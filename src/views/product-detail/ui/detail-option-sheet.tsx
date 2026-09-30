@@ -8,9 +8,13 @@
 // **고를 옵션은 없다.** 상품 옵션은 없는 것으로 합의했고(2026-09-14) 시안에서도
 // 옵션변경 화면이 지워졌다(#137). 시트가 하는 일은 수량 고르기 하나다 — 그 자리에
 // 남는 용량 표기는 지금 담는 것이 무엇인지 알리는 글일 뿐 고르는 값이 아니다.
+//
+// **이미 담긴 상품이면 몇 개 담겨 있는지 알리고 뺄 수 있게 한다** (#562). 다시 담으면 서버가 수량을
+// 더하는데 그 사실이 어디에도 없었다. 시안(1702-16392)에 없는 모양이라 가장 단순하게 두었다(PD 확인 거리).
 
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
@@ -35,7 +39,13 @@ type DetailOptionSheetProps = {
   onConfirm: (quantity: number) => Promise<void>;
   /** 처리 중. 버튼 라벨을 대기 표시로 바꾼다 (AGENTS.md 5.8) */
   adding?: boolean;
+  /** 이 상품이 장바구니에 담겨 있는 수. 0이면(로그인하지 않았을 때도) 아무것도 그리지 않는다 */
+  inCartQuantity: number;
+  /** 장바구니에서 이 줄을 뺀다. 먼저 그리는 빼기라 기다리지 않는다 (AGENTS.md 5.8) */
+  onRemoveFromCart: () => void;
   productName: string;
+  /** 상품 대표 사진. 없으면 회색 자리를 그대로 둔다 */
+  imageUrl?: string;
   /** "90정"처럼 이 상품의 용량. 응답에 없으면 그 줄을 그리지 않는다 */
   quantityLabel?: string;
   price: number;
@@ -47,7 +57,10 @@ export function DetailOptionSheet({
   action = "cart",
   onConfirm,
   adding = false,
+  inCartQuantity,
+  onRemoveFromCart,
   productName,
+  imageUrl,
   quantityLabel,
   price,
 }: DetailOptionSheetProps) {
@@ -65,7 +78,18 @@ export function DetailOptionSheet({
         <DrawerTitle className="sr-only">{productName} 수량 고르기</DrawerTitle>
 
         <div className="flex h-20 items-center gap-3 border-b border-border-default">
-          <div aria-hidden className="size-12 shrink-0 rounded-lg bg-surface-secondary" />
+          {/* 시안(1702-16392)은 상품 사진이다. 바로 옆에 상품명이 있어 사진은 장식으로 둔다(alt 빈 값) */}
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt=""
+              width={48}
+              height={48}
+              className="size-12 shrink-0 rounded-lg object-cover"
+            />
+          ) : (
+            <div aria-hidden className="size-12 shrink-0 rounded-lg bg-surface-secondary" />
+          )}
           {/* 일일 섭취 비용은 서버가 계산해 내려줄 값이라(#123) 근거 없이 숫자를 만들어
               보여주지 않는다. 이름만 보여준다 */}
           <p className="min-w-0 truncate text-title-bold-16 text-text-body-default">
@@ -79,6 +103,24 @@ export function DetailOptionSheet({
           )}
           <QuantityStepper value={quantity} onChange={setQuantity} label={`${productName} 수량`} />
         </div>
+
+        {/* 장바구니에 담을 때만 알린다. 바로 구매는 장바구니를 거치지 않는다 */}
+        {action === "cart" && inCartQuantity > 0 && (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-body-regular-14 text-text-body-secondary">
+              장바구니에 {inCartQuantity}개 담겨 있어요
+            </p>
+            <Button
+              variant="ghost"
+              aria-label="장바구니에서 빼기"
+              disabled={adding}
+              onClick={onRemoveFromCart}
+              className="min-h-11 shrink-0 px-2 text-label-bold-14 text-text-body-default"
+            >
+              빼기
+            </Button>
+          </div>
+        )}
 
         <Button
           className="min-h-11 w-full text-label-bold-14"
