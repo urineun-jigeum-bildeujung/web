@@ -6,7 +6,7 @@
 // 판단하게 하지 않고, 살지 말지를 정하는 자리에서 근거를 먼저 보인다.
 //
 // 상품 자체(이름·가격·별점·품절·스펙)는 `GET /products/{id}`의 실데이터다(#413).
-// 적합도·영양 분석은 서버가 계산해 내려줄 값이라 지금도 `model/mock-product`의 목이다(#123).
+// Safety 근거는 Nutrition API 실데이터를 사용한다. 점수·영양 수치 계약 전에는 값을 지어내지 않는다(#572).
 //
 // Q&A 탭은 PD 확인 결과 이번 MVP 범위 밖이다 — 좋아요 화면의 두 탭과 같은 방식으로
 // 탭은 시안대로 남기고 disabled로 막으며, tab 쿼리도 닿는 값만 받게 좁힌다(#549).
@@ -51,9 +51,10 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { showSnackbar, SNACKBAR_CLASS, SNACKBAR_OPTIONS } from "@/shared/ui/snackbar/snackbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
+import { useQueryNutritionAnalysis } from "../api/use-query-nutrition-analysis";
 import { MOCK_INQUIRIES } from "../model/mock-inquiries";
 import { DEAL_ENDS_AT, MOCK_PRODUCT } from "../model/mock-product";
-import { EXAMPLE_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
+import { EMPTY_MATCH_WITHOUT_PET, toPetMatch } from "../model/pet-match";
 import { DetailOptionSheet } from "./detail-option-sheet";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
@@ -391,18 +392,28 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   // 근거에까지 박혀 떴다 (#481). 고르기 전에는 기본 아이다(목록이 기본 아이를 앞에 둔다).
   // 로그인하지 않았으면 아이를 모르니 부르지 않고 적합도 칸도 그리지 않는다.
   //
-  // 이름·프로필·알레르기 근거는 아이 상세에서, 점수·성분은 AI가 붙기 전까지 예시다(`toPetMatch`)
+  // 이름·프로필은 아이 상세에서, Safety 근거는 Nutrition runtime에서 받는다.
   const session = useSessionState();
   const petList = useQueryPets({ enabled: session === true });
   const { pets } = petList;
   const selectedPetId = session === true ? (petId ?? pets?.[0]?.id) : undefined;
   const petDetail = useQueryPetDetail(selectedPetId);
-  const match = petDetail.pet ? toPetMatch(petDetail.pet, product.detail) : null;
-  // 로그인 여부를 아직 모르거나 아이를 받는 중이면 자리를 잡는다. 늦게 끼어들면 아래가 통째로 밀린다
-  const isWaitingMatch = session === null || petList.isLoading || petDetail.isLoading;
-  // 로그인했는데 아이를 받지 못했으면 그 자리에서 알린다. 조용히 비우면 로그아웃과 구별되지 않는다
-  const matchFailed = session === true && Boolean(petList.error ?? petDetail.error);
-  const retryMatch = () => void (petList.error ? petList.refetch() : petDetail.refetch());
+  const nutrition = useQueryNutritionAnalysis(selectedPetId, product.productId);
+  const match =
+    petDetail.pet && nutrition.analysis ? toPetMatch(petDetail.pet, nutrition.analysis) : null;
+  // 아이 상세와 중앙 Safety 결과가 모두 준비되어야 근거를 그린다.
+  const isWaitingMatch =
+    session === null || petList.isLoading || petDetail.isLoading || nutrition.isLoading;
+  const matchFailed =
+    session === true && Boolean(petList.error ?? petDetail.error ?? nutrition.error);
+  const retryMatch = () =>
+    void (
+      petList.error
+        ? petList.refetch()
+        : petDetail.error
+          ? petDetail.refetch()
+          : nutrition.refetch()
+    );
 
   // 타임딜 진행 중인 상품은 장바구니가 딜 아이템으로 받아야 딜가가 붙는다.
   // 상세에서 담을 때만 정가로 들어가던 자리다
@@ -596,11 +607,11 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
                 <Button
                   variant="outline"
                   className="min-h-11 px-4"
-                  disabled={petList.isRetrying || petDetail.isRetrying}
+                  disabled={petList.isRetrying || petDetail.isRetrying || nutrition.isRetrying}
                   onClick={retryMatch}
                 >
                   <LoadingSwap
-                    loading={petList.isRetrying || petDetail.isRetrying}
+                    loading={petList.isRetrying || petDetail.isRetrying || nutrition.isRetrying}
                     label="적합도를 다시 불러오는 중"
                   >
                     다시 시도
@@ -646,7 +657,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <TabsContent value="info">
             <ProductInfoPanel
               detail={product.detail}
-              match={match ?? EXAMPLE_MATCH_WITHOUT_PET}
+              match={match ?? EMPTY_MATCH_WITHOUT_PET}
               petName={match?.petName}
             />
           </TabsContent>
