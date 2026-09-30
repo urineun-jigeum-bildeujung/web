@@ -2,6 +2,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatUnitPriceLine,
   toApiCategory,
   toCategory,
   toMatchScore,
@@ -107,12 +108,19 @@ describe("단가", () => {
     expect(toUnitPrice("G", 11)).toEqual({ label: "g", price: 11 });
   });
 
-  it("단위를 읽을 수 없거나 가격이 양수가 아니면 없다", () => {
+  it("단위를 읽을 수 없거나 반올림한 가격이 1원 미만이면 없다", () => {
     expect(toUnitPrice("", 19)).toBeNull();
     expect(toUnitPrice("1000", 19)).toBeNull();
     expect(toUnitPrice("1000G/개", 19)).toBeNull();
     expect(toUnitPrice("1000G", 0)).toBeNull();
+    expect(toUnitPrice("1000G", 0.4)).toBeNull();
     expect(toUnitPrice("1000G", Number.NaN)).toBeNull();
+  });
+
+  // 메인 맞춤 상품 시안(1758-68917)의 "1개당 800원" 꼴이다. 타임딜 카드의 "약"은 붙지 않는다
+  it("단가 줄은 시안처럼 '1g당 19원'이고 천 단위에 쉼표를 둔다", () => {
+    expect(formatUnitPriceLine({ label: "g", price: 19 })).toBe("1g당 19원");
+    expect(formatUnitPriceLine({ label: "개", price: 1050 })).toBe("1개당 1,050원");
   });
 });
 

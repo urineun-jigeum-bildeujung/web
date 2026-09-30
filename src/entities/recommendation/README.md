@@ -8,7 +8,7 @@
 | `api/recommendations.test.ts` | 요청 경로·본문(간식은 `treat`, 전체·기본 개수는 안 보냄)과 응답 옮기기 |
 | `api/use-query-home-recommendations.ts` | 맞춤 추천 조회 훅. 아이가 없으면 부르지 않고, 받아 둔 것 없이 실패하면 오류 경계로 던진다 |
 | `api/use-query-home-recommendations.test.tsx` | 부르지 않는 조건, 받은 인자, 실패를 경계가 받는지 |
-| `model/recommendation.ts` | 응답 타입(snake_case)과 화면 타입(camelCase), 분류·점수·상태·단가 변환 |
+| `model/recommendation.ts` | 응답 타입(snake_case)과 화면 타입(camelCase), 분류·점수·상태·단가 변환과 단가 줄 문장(`formatUnitPriceLine`) |
 | `model/recommendation.test.ts` | 변환 규칙 |
 | `model/sort.ts` | 정렬 값(추천순·최신순·별점 높은순·낮은순)과 받은 목록 안에서의 정렬 |
 | `model/sort.test.ts` | 네 정렬이 서로 다른 순서를 내는지, 같은 값은 추천 순서를 지키는지 |
@@ -22,7 +22,16 @@
 
 추천은 상품 서비스가 아니라 생성형 AI팀의 별도 서비스(`/recommend`)이고, 응답 규약(snake_case)과 개념(추천 순위·이유·알레르기 감점)이 상품 목록과 다르다. 엔티티는 백엔드 도메인과 대체로 1:1이라 슬라이스를 나눴다.
 
-같은 레이어끼리는 import하지 않으므로 적합도 배지(`MatchScoreBadge`)와 단가 문장(`formatUnitPrice`)은 이 슬라이스가 쓰지 않고, 카드를 조립하는 화면(`views/home`·`views/recommendations`)이 두 슬라이스를 함께 부른다.
+같은 레이어끼리는 import하지 않으므로 적합도 배지(`MatchScoreBadge`)는 이 슬라이스가 쓰지 않고, 카드를 조립하는 화면(`views/home`·`views/recommendations`)이 두 슬라이스를 함께 부른다.
+
+## 카드 표기는 시안을 따른다
+
+PM QA 기록에 이 카드의 표기를 정한 것이 없어, 시안(메인 1758-68917, 추천 1585-16763)의 텍스트 표기에 맞췄다. API 값이 시안과 다르면 이 슬라이스의 변환에서 시안 표기로 바꾼다.
+
+- 적합도 "적합도 N점", 가격·할인율·정가 취소선, 별점 "★ 4.8 후기 N개"는 시안 그대로다
+- **단가 줄은 메인 시안의 "1개당 800원" 꼴**("1g당 19원", `formatUnitPriceLine`)이다. 상품 목록·타임딜의 `formatUnitPrice`("1g당 약 19원", 타임딜 시안 1905-32428)와 달리 "약"이 없다
+- **추천 화면 시안의 "하루 예상 급여비 약 N원"은 그리지 못한다.** 하루 급여량이 응답에 없다. 대신 메인과 같은 단가 줄을 쓴다
+- 시안에 없는 것(추천 이유, 알레르기 주의 한 줄, 품절·타임딜 배지)은 기존 토큰으로 가장 단순하게 두었다. PD 확인거리다
 
 ## API 계약
 
@@ -41,7 +50,7 @@ AI팀 답을 더 기다리지 않고 FE가 맞춘다(FE 팀장 결정). 규칙�
 | 분류(응답) | `FOOD`·`TREAT`·`SUPPLEMENT` | `food`·`snack`·`supplement`. 모르는 값은 받은 그대로 |
 | 점수 | 0~100 | 0~100 정수. 0 초과 1 미만 소수는 예전 0~1 방식으로 보고 ×100 반올림, 범위 밖은 0·100에 가둔다. `null`·누락은 null("정보 확인 중") |
 | 상태 | `ON_SALE` 등(목록 없음) | 대소문자·구분자 무시. `SOLD_OUT`·`OUT_OF_STOCK` → 품절, `TIME_DEAL`·`DEAL` → 타임딜, 그 밖은 판매 중 |
-| 단가 | `unit_price` + `unit_label`(`"1000G"`) | 양을 떼고 단위만 소문자(`g`), 가격은 원 단위 반올림 → "1g당 약 19원". 단위를 못 읽거나 가격이 양수가 아니면 줄을 숨긴다 |
+| 단가 | `unit_price` + `unit_label`(`"1000G"`) | 양을 떼고 단위만 소문자(`g`), 가격은 원 단위 반올림 → "1g당 19원"(`formatUnitPriceLine`). 단위를 못 읽거나 반올림한 가격이 1원 미만이면 줄을 숨긴다 |
 | 알레르기 | `PENALIZED` + `matched_allergen` 코드 | 목록에 남기고 "등록한 알레르기 성분이 들어 있어요" 한 줄. 코드는 넘기지 않는다 |
 | 아이 이름 | `pet_name` | 쓰지 않는다. 아이 목록(`/members/me/pets`)의 이름을 쓴다 |
 
