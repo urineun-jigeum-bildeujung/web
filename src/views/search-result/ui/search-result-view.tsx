@@ -114,8 +114,9 @@ function GeneralResultList({
 
       {/* **전환점을 잡지 않는다**(#573). PD 확정이 카드 170px 고정·사이 13px이고, 폭이
           넓어지면 카드가 커지는 것이 아니라 한 줄에 더 들어간다. 거터 20px(px-5)을 빼면
-          393에서 둘(170×2+13=353), 768에서 넷(170×4+13×3=719), 1200부터 여섯(170×6+13×5=1085)이
-          저절로 나와 `md:`·`lg:`가 필요 없다 — 홈 격자(#569)와 같은 계산이다.
+          열 수가 저절로 갈려 `md:`·`lg:`가 필요 없다 — 대표 시안 폭으로는 393에서 둘,
+          768에서 넷, 1200에서 여섯이고, **한 칸 더 들어가는 실제 폭은 576·759·942·1125**다
+          (170×n+13×(n−1)+40). 홈 격자(#569)와 같은 계산이다.
           세로 24px인 홈과 달리 여기는 시안(2396-80432) 값인 20px(gap-y-5)을 유지한다 */}
       <ul className="flex flex-wrap gap-x-3.25 gap-y-5">
         {results.map((product) => {
@@ -231,9 +232,12 @@ function NextPageFooter({ hasNext, loading, failed, onLoadMore }: NextPageFooter
     <>
       {/* 이 줄이 화면에 들어오면 다음 쪽을 부른다. 보이는 것은 없어 높이만 1px이다 */}
       {hasNext && !failed && <div ref={loadMoreRef} aria-hidden className="h-px" />}
+      {/* 이어 받는 동안 한 줄을 채운다. 개수는 첫 로드 뼈대와 같은 기준인
+          가장 넓을 때의 한 줄(6)이다(#573) — 전에 2였던 것은 `grid-cols-2` 시절
+          한 줄이던 수라, 열이 여섯까지 늘자 6칸 줄에 두 장만 남았다 */}
       {loading && (
         <div role="status" aria-label="상품을 더 불러오는 중" className="pt-5">
-          <SkeletonCards count={2} />
+          <SkeletonCards count={6} />
         </div>
       )}
 
@@ -339,7 +343,12 @@ function SkeletonCards({ count }: { count: number }) {
   );
 }
 
-/** 결과 영역이 대기 중일 때 자리를 잡는다. 개수+정렬 줄 하나, 카드 자리 8장 */
+/** 결과 영역이 대기 중일 때 자리를 잡는다. 개수+정렬 줄 하나, 카드 자리 여섯 장.
+ *
+ *  개수는 **가장 넓을 때의 한 줄(6)**에 맞춘다(#573, 홈 #569의 리뷰 반영과 같은 기준).
+ *  전에 8이었던 것은 `grid-cols-2` 시절 네 줄을 채우는 수였는데, 열이 여섯까지 늘어
+ *  1200에서 6+2로 둘째 줄이 고르지 않게 남았다. 첫 쪽이 20건이라 뼈대를 그만큼
+ *  그리지는 않는다 — 393에서 여섯 장이 세 줄로 한 화면에 가깝다 */
 function ResultsSkeleton() {
   return (
     <div className="flex flex-col gap-3" role="status" aria-label="검색 결과를 불러오는 중">
@@ -347,7 +356,7 @@ function ResultsSkeleton() {
         <Skeleton className="h-5 w-16" />
         <Skeleton className="h-5 w-14" />
       </div>
-      <SkeletonCards count={8} />
+      <SkeletonCards count={6} />
     </div>
   );
 }
