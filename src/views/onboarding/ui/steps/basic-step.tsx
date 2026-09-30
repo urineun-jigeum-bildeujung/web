@@ -37,8 +37,11 @@ export function BasicStep({ draft, onChange, onNext, onPrev }: BasicStepProps) {
         <h1 className="px-5 text-title-bold-20 text-foreground">아이를 소개해 주세요</h1>
 
         <div className="flex flex-col items-center gap-3">
+          {/* 두 번째 단계에서 "이전"으로 돌아오면 이 단계가 새로 그려진다. 초안의 사진을 넘겨야
+              미리보기가 남는다(#602) */}
           <AvatarUploader
             placeholder={<Icon name="dog" className="size-12 text-icon-fill-tertiary" />}
+            file={draft.photo}
             onFileChange={(photo) => onChange({ photo })}
           />
           <p className="flex items-center gap-1 text-caption-regular-13 text-text-body-secondary">
