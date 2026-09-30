@@ -5,7 +5,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { createQueryWrapper } from "@/shared/lib/query-test-wrapper";
 
 const { getTimeDealDetail } = vi.hoisted(() => ({ getTimeDealDetail: vi.fn() }));
-vi.mock("@/entities/product", () => ({ getTimeDealDetail }));
+vi.mock("./products", () => ({ getTimeDealDetail }));
 
 import { useQueryDealProductId } from "./use-query-deal-product-id";
 

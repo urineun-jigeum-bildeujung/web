@@ -15,8 +15,12 @@ const { getCart, changeCartItemQuantity, removeCartItem, getTimeDealDetail } = v
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
 
-// 타임딜 줄의 상품 번호는 딜 상세에서 받는다(장바구니 응답에 없다, #563)
-vi.mock("@/entities/product", () => ({ getTimeDealDetail }));
+// 타임딜 줄의 상품 번호는 딜 상세에서 받는다(장바구니 응답에 없다, #563). 그 훅이 결제하기와 함께
+// 쓰려고 `entities/product`로 내려가(#595) 요청 함수만 바꾼다
+vi.mock("@/entities/product/api/products", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/product/api/products")>()),
+  getTimeDealDetail,
+}));
 
 // `cartItemKey`는 화면과 훅이 같은 규칙을 써야 하므로 진짜를 그대로 둔다
 vi.mock("@/entities/cart/api/cart", async (importOriginal) => ({

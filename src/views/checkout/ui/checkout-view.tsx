@@ -67,6 +67,7 @@ import {
 } from "../model/return-query";
 import { DeliveryNotice } from "./delivery-notice";
 import { FieldRow } from "./field-row";
+import { OrderItemLink } from "./order-item-link";
 import { TossPaymentWidget, type TossPaymentOrder } from "./toss-payment-widget";
 
 /** 장바구니 응답에 `deliveryFee`가 없어 고정값을 쓴다. 장바구니 화면과 같은 값이다 (#214) */
@@ -135,8 +136,9 @@ function OrderItemRow({ item }: { item: OrderLine }) {
       <div className="flex min-w-0 flex-1 flex-col justify-between gap-3 self-stretch">
         <div className="flex flex-col gap-1">
           {/* 살 수 있는 줄만 여기까지 오므로 이름이 `null`이 아니다.
-              시안이 두 줄까지 보이고 넘치면 말줄임한다 (QA No.46) */}
-          <p className="line-clamp-2 text-title-bold-16 text-foreground">{item.productName}</p>
+              시안이 두 줄까지 보이고 넘치면 말줄임한다 (QA No.46).
+              **누르면 상세로 간다** — 이름뿐 아니라 줄 어디를 눌러도 간다 (QA No.47) */}
+          <OrderItemLink item={item} className="line-clamp-2 text-title-bold-16 text-foreground" />
         </div>
         <dl className="flex flex-col gap-1">
           {/* 시안이 이 줄만 이름과 값을 16px 띄운다 */}
@@ -555,7 +557,8 @@ export function CheckoutView() {
               // 시안(`paym_001`)은 한 줄만 그렸지만 장바구니에서 여러 줄을 고를 수 있다
               <ul className="flex flex-col gap-4">
                 {items.map((item) => (
-                  <li key={cartItemKey(item)}>
+                  // `relative`는 이름 링크가 줄 전체를 덮는 기준이다(`OrderItemLink`, QA No.47)
+                  <li key={cartItemKey(item)} className="relative">
                     <OrderItemRow item={item} />
                   </li>
                 ))}

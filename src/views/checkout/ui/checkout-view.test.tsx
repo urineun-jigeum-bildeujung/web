@@ -57,6 +57,12 @@ vi.mock("@/entities/address", async (importOriginal) => ({
   useQueryAddresses: () => useQueryAddresses(),
 }));
 vi.mock("@/entities/pet", () => ({ useQueryPets: () => useQueryPets() }));
+// 타임딜 줄의 상품 번호 조회. 링크 주소를 만드는 규칙은 `order-item-link.test.tsx`가 본다
+const useQueryDealProductId = vi.fn();
+vi.mock("@/entities/product", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/product")>()),
+  useQueryDealProductId: (id: number | null) => useQueryDealProductId(id),
+}));
 
 vi.mock("../api/orders", () => ({ createOrder, releaseOrder }));
 vi.mock("../api/use-query-buy-now-product", () => ({
@@ -204,7 +210,18 @@ test("상품 줄마다 주문 수량과 판매 금액을 보이고 이름은 두
   expect(rows[0].textContent).toContain("판매 금액9,345원");
   expect(rows[1].textContent).toContain("주문 수량2개");
   expect(rows[1].textContent).toContain("판매 금액40,000원");
-  expect(screen.getByText("로얄캐닌 인도어").className).toContain("line-clamp-2");
+  expect(screen.getByText("로얄캐닌 인도어").closest("p")?.className).toContain("line-clamp-2");
+});
+
+// 결제 화면에서 무엇을 사는지 다시 보려면 상세로 가야 한다 (QA No.47, #595)
+test("상품 줄을 누르면 그 상품 상세로 간다", () => {
+  renderView();
+
+  const link = screen.getByRole("link", { name: "종근당 캣츠벨" });
+  expect(link.getAttribute("href")).toBe("/products/1");
+  // 이름만이 아니라 줄 전체를 덮는다
+  expect(link.className).toContain("after:inset-0");
+  expect(link.closest("li")?.className).toContain("relative");
 });
 
 // 서버가 배송 예정일을 주지 않아 화면이 한국 날짜로 모레를 센다 (QA No.45, #595)
