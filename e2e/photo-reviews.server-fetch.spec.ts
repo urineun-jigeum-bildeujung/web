@@ -46,11 +46,11 @@ test("거르기 시트에서 종을 고르고 적용하면 그 조건으로 다�
 
   await page.getByRole("button", { name: "기본 맞춤 필터" }).click();
   await page.getByRole("tab", { name: "반려동물 필터" }).click();
-  // 칩의 원은 레이블이 덮고 있다. 사용자가 누르는 자리인 레이블을 누른다
-  await page
-    .getByRole("dialog")
-    .locator("label", { hasText: /^고양이$/ })
-    .click();
+  // 칩의 라디오는 1px로 숨기고 레이블이 탭 영역(::after)까지 덮는다. 라디오나 글자를 누르면
+  // 레이블이 가로채므로 사용자가 실제로 누르는 레이블을 누르고, 고른 결과는 역할로 확인한다
+  const sheet = page.getByRole("dialog");
+  await sheet.locator("label", { hasText: /^고양이$/ }).click();
+  await expect(sheet.getByRole("radio", { name: "고양이" })).toBeChecked();
   await page.getByRole("button", { name: /^리뷰 .*보기$/ }).click();
 
   await expect(page).toHaveURL(/reviewFilter=species%3Acat|reviewFilter=species:cat/);

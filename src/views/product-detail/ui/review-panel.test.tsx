@@ -269,6 +269,16 @@ describe("거르기", () => {
     expect(screen.getByRole("button", { name: "필터 지우기" })).toBeDefined();
   });
 
+  // 평균은 상품 전체 값이라 거른 결과가 0개여도 보인다 (#472 리뷰)
+  it("조건에 걸린 후기가 0개여도 상품 평균 별점은 그대로 보인다", () => {
+    useQueryProductReviews.mockReturnValue({ ...listState(), reviews: [], totalCount: 0 });
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewFilter=species:cat");
+
+    expect(screen.getByText("4.8")).toBeDefined();
+  });
+
   it("조건에 맞는 후기가 없으면 지울 길과 함께 알린다", () => {
     useQueryProductReviews.mockReturnValue({ ...listState(), reviews: [], totalCount: 0 });
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });

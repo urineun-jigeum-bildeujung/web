@@ -113,8 +113,9 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
   const loadMoreRef = useLoadMore(loadNext, hasNext && !isLoadingNext && !nextError);
 
   const list = reviews ?? [];
-  // 상단 요약과 같은 기준이다. 값이 0으로 오는지 null로 오는지에 흔들리지 않게 후기 수를 본다
-  const hasRating = totalCount !== null && totalCount > 0 && averageRating !== null;
+  // 평균은 거르기와 상관없는 상품 전체 값이다. 조건에 걸린 후기가 0개여도 평균은 보인다(#472 리뷰).
+  // 후기가 없는 상품은 평균이 0으로 오고 아직 받지 못했으면 null이라 둘 다 숫자를 적지 않는다
+  const hasRating = averageRating !== null && averageRating > 0;
 
   return (
     <div className="flex flex-col">
