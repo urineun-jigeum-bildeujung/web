@@ -638,28 +638,31 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
   const petName = pet?.name ?? "우리 아이";
 
   const { changeDefaultPet } = useMutateChangeDefaultPet();
+  // 마지막으로 고른 아이. 앞서 고른 아이의 요청이 늦게 끝나도 그 아이로 바꿨다고 알리지 않는다
+  const latestPick = useRef<string | null>(null);
 
   /**
    * 아이를 고른다. 맞춤 상품·적합도가 모두 그 아이 기준으로 바뀌므로 누구로 바뀌었는지 알린다(QA r18, #611).
-   * 이미 고른 아이를 다시 누르면 바뀐 것이 없어 알리지 않는다.
+   * 지금 보이는 아이를 다시 누르면 바뀐 것이 없어 요청도 알림도 없다.
    *
    * **고른 아이가 기본 아이가 된다(QA HM-020, #531).** 상품 상세 적합도·결제·맞춤 추천이 모두 기본
    * 아이로 시작하므로, 화면 안에만 두면 이 화면을 떠나는 순간 처음 아이로 돌아갔다. 표시는 바로 옮기고
    * 알림은 서버가 받은 뒤에 띄운다 — 먼저 띄우면 실패했을 때 "바꿨어요"가 거짓이 된다. 실패하면
-   * 알림은 전역이 띄우고 여기서는 기본 아이로 되돌린다. 그사이 다른 아이를 골랐으면 그 선택은 둔다
+   * 알림은 전역이 띄우고 여기서는 기본 아이로 되돌린다. 그사이 다른 아이를 골랐으면 그 선택은 둔다.
+   *
+   * **목록의 `isDefault`로 요청을 건너뛰지 않는다.** 앞 요청이 도는 동안 목록은 옛 기본 아이를
+   * 가리킨다. 그 아이를 요청 없이 고르면 화면은 그 아이인데 서버에는 앞 요청의 아이가 남는다.
+   * 요청은 훅이 누른 순서대로 하나씩 보낸다
    */
   const selectPet = (id: string) => {
     const next = pets?.find((item) => item.id === id);
     if (!next || next.id === pet?.id) return;
     setPetId(id);
-    const notice = `${withJosa(next.name, "으로/로")} 바꿨어요`;
-    // 이미 기본인 아이면 서버에 바꿀 것이 없다
-    if (next.isDefault) {
-      showSnackbar(notice);
-      return;
-    }
+    latestPick.current = id;
     changeDefaultPet(id).then(
-      () => showSnackbar(notice),
+      () => {
+        if (latestPick.current === id) showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
+      },
       () => setPetId((current) => (current === id ? null : current)),
     );
   };
