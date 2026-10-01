@@ -129,8 +129,12 @@ export function PromoBannerCarousel() {
           "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
         )}
       >
+        {/* snap-always가 없으면 빠르게 밀었을 때 관성이 옆 배너를 지나쳐 한 장을 건너뛴다 */}
         {BANNERS.map((banner, index) => (
-          <div key={banner.src} className="relative aspect-3/2 w-full shrink-0 snap-center">
+          <div
+            key={banner.src}
+            className="relative aspect-3/2 w-full shrink-0 snap-center snap-always"
+          >
             {/* 첫 화면 가장 큰 이미지라 첫 장만 먼저 받고 나머지는 볼 때 받는다(AGENTS 5.6) —
                 Next 16에서 `priority`가 `preload`로 이름이 바뀌었다(next/dist/docs의 image.md).
                 폭은 이 화면이 직접 정한다(#496). 섹션이 p-5로 좌우 20씩 먹으므로
