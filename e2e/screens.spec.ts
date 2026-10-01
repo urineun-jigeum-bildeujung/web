@@ -470,8 +470,11 @@ function brightness(color: string) {
 }
 
 async function readTheme(page: import("@playwright/test").Page, route: string, theme: string) {
-  await page.addInitScript((value) => window.localStorage.setItem("theme", value), theme);
+  // 테마마다 init script를 걸면 같은 page에 쌓이고 실행 순서는 보장되지 않는다(PR #635 리뷰).
+  // 세션·스텁이 page에 걸려 있어 새 page로 옮기지 않고, 저장값만 바꿔 다시 불러온다
   await page.goto(route, { waitUntil: "domcontentloaded" });
+  await page.evaluate((value) => window.localStorage.setItem("theme", value), theme);
+  await page.reload({ waitUntil: "domcontentloaded" });
   // next-themes가 하이드레이션 뒤 클래스를 붙인다. 그 전에 재면 라이트 값이 잡힌다
   await expect
     .poll(() => page.evaluate(() => document.documentElement.classList.contains("dark")))
