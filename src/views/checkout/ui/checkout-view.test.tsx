@@ -659,6 +659,25 @@ test("바로 구매 상품이 품절이면 결제할 줄을 만들지 않는다"
   expect(screen.getByRole("button", { name: /결제하기/ }).hasAttribute("disabled")).toBe(true);
 });
 
+// QA No.263(#623). 결제하려는 사이 품절되면 "결제할 상품이 없어요"만 보여 재입고를 기다릴 길이 없었다
+test("바로 구매 상품이 품절이면 재입고 알림 신청 버튼을 보이고 누르면 알린다", () => {
+  searchParams = new URLSearchParams("buy=NORMAL:252:1");
+  renderView({ buyNowState: { data: { ...BUY_NOW_PRODUCT, soldOut: true } } });
+
+  expect(screen.getByText("품절된 상품이에요")).toBeDefined();
+  fireEvent.click(screen.getByRole("button", { name: "재입고 알림 신청" }));
+  expect(showSnackbar).toHaveBeenCalledWith("재입고되면 바로 알려드릴게요!");
+});
+
+// 딜 한정 수량이 바닥난 것이라 상품 상세와 같이 재입고 알림을 두지 않는다(QA PD-067)
+test("바로 구매한 타임딜이 품절이면 재입고 알림 버튼을 두지 않는다", () => {
+  searchParams = new URLSearchParams("buy=TIME_DEAL:252:1");
+  renderView({ buyNowState: { data: { ...BUY_NOW_PRODUCT, soldOut: true } } });
+
+  expect(screen.getByText("결제할 상품이 없어요")).toBeDefined();
+  expect(screen.queryByRole("button", { name: "재입고 알림 신청" })).toBeNull();
+});
+
 test("주문 생성 응답을 잃고 다시 누르면 같은 키로 묻는다", async () => {
   createOrder
     .mockRejectedValueOnce(new TypeError("Failed to fetch"))
