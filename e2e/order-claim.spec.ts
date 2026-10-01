@@ -18,7 +18,9 @@ test.beforeEach(async ({ page }) => {
   await signIn(page);
 });
 
-test("주문 상세에서 반품을 세 단계로 접수하고 돌아온다", async ({ page }) => {
+test("주문 상세에서 반품을 세 단계로 접수하면 취소·반품·교환 탭으로 가고, 뒤로가면 주문 상세다", async ({
+  page,
+}) => {
   const claims: unknown[] = [];
   await stubOrders(page, { claims });
 
@@ -65,9 +67,12 @@ test("주문 상세에서 반품을 세 단계로 접수하고 돌아온다", as
   await expect(firstDate).toBeChecked();
   await submit.click();
 
-  // 접수하면 주문 상세로 돌아간다
-  await expect(page).toHaveURL(/\/mypage\/orders\/1$/);
+  // 접수하면 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337)
+  await expect(page).toHaveURL(/\/mypage\/orders\?tab=claims$/);
   expect(claims).toHaveLength(1);
+  // 뒤로가기는 방금 접수한 작성 화면이 아니라 신청에 들어오기 전 주문 상세다
+  await page.goBack();
+  await expect(page).toHaveURL(/\/mypage\/orders\/1$/);
   const [claim] = claims as {
     claimType: string;
     reasonCode: string;
