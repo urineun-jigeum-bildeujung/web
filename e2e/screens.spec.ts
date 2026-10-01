@@ -446,3 +446,58 @@ test.describe("태블릿 폭에서도 좁은 기둥을 지킨다", () => {
     });
   }
 });
+
+/*
+ * 다크 모드가 실제로 어두운 값을 쓰는지 본다(#136, #565, #634).
+ *
+ * **색 값을 그대로 단정하지 않는다.** 토큰을 손볼 때마다 테스트가 깨지면 아무도 고치지 않는다.
+ * 대신 라이트와 다크를 같은 화면에서 재고 **밝기가 뒤집히는 것**을 본다 — 배경은 어두워지고
+ * 글자는 밝아져야 한다. 다크 값이 라이트에 멈추면 두 값이 같아져 여기서 잡힌다.
+ *
+ * 테마는 `html`의 `dark` 클래스로 켜고 기기에 남는다(next-themes, `attribute="class"`).
+ * 시스템 설정은 따르지 않으므로(`enableSystem={false}`) `emulateMedia`로는 켤 수 없다 —
+ * 저장된 값을 미리 넣어 둔다.
+ */
+/** 0(검정)~255(흰색). 토큰이 `lab()`으로도 와서 계산된 rgb를 캔버스 없이 재려고 직접 푼다 */
+function brightness(color: string) {
+  const nums = color.match(/[\d.]+/g)?.map(Number) ?? [];
+  if (color.startsWith("rgb")) {
+    const [r, g, b] = nums;
+    return 0.299 * r + 0.587 * g + 0.114 * b;
+  }
+  // `lab(L% a b)`의 L이 0~100 밝기다. 255 기준으로 맞춘다
+  return (nums[0] ?? 0) * 2.55;
+}
+
+async function readTheme(page: import("@playwright/test").Page, route: string, theme: string) {
+  await page.addInitScript((value) => window.localStorage.setItem("theme", value), theme);
+  await page.goto(route, { waitUntil: "domcontentloaded" });
+  // next-themes가 하이드레이션 뒤 클래스를 붙인다. 그 전에 재면 라이트 값이 잡힌다
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.classList.contains("dark")))
+    .toBe(theme === "dark");
+
+  return page.evaluate(() => {
+    const style = getComputedStyle(document.body);
+    return { background: style.backgroundColor, color: style.color };
+  });
+}
+
+// 상품 영역에서 서버 조회 없이 그려지는 화면들. `/`·`/products/:id`는 서버 조회라 이 스위트에 없다
+for (const route of ["/search", "/likes", "/products/1/photos"]) {
+  test(`${route} — 다크 모드가 라이트보다 어둡게 그려진다`, async ({ page }) => {
+    const light = await readTheme(page, route, "light");
+    const dark = await readTheme(page, route, "dark");
+
+    // 이것이 이 검사가 막는 회귀다 — 다크 값이 라이트에 멈추면 두 값이 같아진다
+    expect(dark.background, "다크 배경이 라이트와 같다").not.toBe(light.background);
+    expect(dark.color, "다크 글자색이 라이트와 같다").not.toBe(light.color);
+
+    expect(brightness(dark.background), "다크 배경이 더 밝다").toBeLessThan(
+      brightness(light.background),
+    );
+    expect(brightness(dark.color), "다크 글자색이 더 어둡다").toBeGreaterThan(
+      brightness(light.color),
+    );
+  });
+}
