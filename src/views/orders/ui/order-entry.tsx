@@ -62,13 +62,19 @@ export function OrderEntry({ order, onTrack, onReorder, reorderingId }: OrderEnt
                 엉뚱한 단계가 확정처럼 보인다 (entities/order/model/order-status.ts) */}
             {status && <OrderStatusBadge status={status} className="self-start" />}
 
-            {/* 금액은 그 줄에 낸 값이다 — 할인을 뺀 단가 × 수량 (#418) */}
-            <OrderProductRow
-              name={item.productName}
-              quantity={item.quantity}
-              amount={item.amount}
-              imageUrl={item.thumbnailUrl}
-            />
+            {/* 상품 줄을 누르면 그 상품 상세로 간다(QA No.274). 타임딜로 산 줄도 원본 상품 번호라
+                일반 상세로 열린다. 금액은 그 줄에 낸 값이다 — 할인을 뺀 단가 × 수량 (#418) */}
+            <Link
+              href={`/products/${item.productId}`}
+              className="rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <OrderProductRow
+                name={item.productName}
+                quantity={item.quantity}
+                amount={item.amount}
+                imageUrl={item.thumbnailUrl}
+              />
+            </Link>
 
             <div className="flex gap-2">
               {/* 시안은 활성이지만 택배사 연동 전이라 갈 곳이 없다. 준비중임을 알린다 */}

@@ -8,14 +8,15 @@ import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const { getOrders, getOrderDetail, addCartItem, showSnackbar } = vi.hoisted(() => ({
+const { getOrders, getOrderDetail, addCartItem, showSnackbar, push } = vi.hoisted(() => ({
+  push: vi.fn(),
   getOrders: vi.fn(),
   getOrderDetail: vi.fn(),
   addCartItem: vi.fn(),
   showSnackbar: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, back: vi.fn() }) }));
 
 vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
@@ -274,6 +275,27 @@ test("주문 상세는 그 주문의 상세로 간다", async () => {
   const link = (await screen.findAllByRole("link", { name: /주문 상세$/ }))[0];
   expect(link.getAttribute("href")).toBe("/mypage/orders/1");
   expect(screen.queryByRole("link", { name: /자세히 보기$/ })).toBeNull();
+});
+
+// 카드 안 상품을 눌러도 아무 일이 없었다(QA No.274)
+test("주문 카드의 상품 줄을 누르면 그 상품 상세로 간다", async () => {
+  renderView();
+
+  await screen.findAllByText("테스트 상품 1");
+  // 상품 링크는 이름·수량·금액을 그대로 읽는다. 같은 이름이 든 "주문 상세" 링크와 주소로 가른다
+  const product = screen
+    .getAllByRole("link")
+    .find((link) => link.getAttribute("href") === "/products/100");
+  expect(product?.textContent).toContain("테스트 상품 1");
+});
+
+// 탭 전환을 이력에 쌓아 헤더 뒤로가기가 직전 탭으로 갔다(QA No.272)
+test("헤더 뒤로가기는 탭을 되짚지 않고 마이페이지로 간다", async () => {
+  renderView("?tab=claims");
+
+  fireEvent.click(await screen.findByRole("button", { name: "이전 화면으로" }));
+
+  expect(push).toHaveBeenCalledWith("/mypage");
 });
 
 // 건마다 "주문 상세"만 있으면 화면 낭독기로 링크만 훑을 때 어느 주문인지 가를 수 없다(#474)

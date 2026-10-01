@@ -37,3 +37,29 @@ test("취소·반품·교환 탭은 취소와 반품 신청을 건으로 세우�
   await expect(page.getByText("테스트 영양제")).toHaveCount(0);
   await expect(page.getByText("취소·반품·교환 내역이 없어요")).toHaveCount(0);
 });
+
+// 탭 전환을 이력에 쌓아 헤더 뒤로가기가 직전 탭으로 갔다(QA No.272). 기기 뒤로가기는 탭을 되짚는다
+test("탭을 옮긴 뒤 헤더 뒤로가기는 마이페이지로 가고, 기기 뒤로가기는 직전 탭으로 간다", async ({
+  page,
+}) => {
+  await page.goto("/mypage/orders");
+  await page.getByRole("tab", { name: "취소·반품·교환" }).click();
+  await expect(page).toHaveURL(/tab=claims/);
+
+  await page.goBack();
+  await expect(page).toHaveURL(/\/mypage\/orders$/);
+
+  await page.getByRole("tab", { name: "취소·반품·교환" }).click();
+  await page.getByRole("button", { name: "이전 화면으로" }).click();
+  await expect(page).toHaveURL(/\/mypage$/);
+});
+
+// 카드 안 상품을 눌러도 아무 일이 없었다(QA No.274)
+test("주문 카드의 상품을 누르면 그 상품 상세로 간다", async ({ page }) => {
+  await page.goto("/mypage/orders");
+
+  const product = page
+    .getByRole("link", { name: /테스트 사료/ })
+    .filter({ hasNotText: "주문 상세" });
+  await expect(product).toHaveAttribute("href", /^\/products\/\d+$/);
+});

@@ -6,6 +6,7 @@
 
 "use client";
 
+import { useRouter } from "next/navigation";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { Fragment, useState } from "react";
 
@@ -133,6 +134,7 @@ function OrderHistory() {
 }
 
 export function OrdersView() {
+  const router = useRouter();
   const [tab, setTab] = useQueryState(
     "tab",
     // 두 탭이 서로 다른 목록이라 뒤로가기로 되돌아와야 한다
@@ -141,7 +143,9 @@ export function OrdersView() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <PageHeader title="주문·배송 확인" />
+      {/* 탭은 이력에 쌓아 기기 뒤로가기로 오간다. 헤더 뒤로가기는 그 탭들을 되짚지 않고 들어온 곳인
+          마이페이지로 간다(QA No.272) */}
+      <PageHeader title="주문·배송 확인" onLeadingClick={() => router.push("/mypage")} />
 
       <main className="flex flex-1 flex-col px-5 pt-3 pb-8">
         <Tabs
