@@ -311,6 +311,12 @@ export type ProductReviewConditions = {
   healthConcerns?: string[];
   usagePeriodMinDays?: number;
   usagePeriodMaxDays?: number;
+  /**
+   * 내 반려동물 맞춤보기(#641). `petId`의 프로필로 비슷한 아이의 후기만 고른다. 무엇을 견줄지는
+   * 서버가 정한다. 로그인해야 하고, 둘 중 하나만 보내면 걸리지 않는다
+   */
+  personalized?: true;
+  petId?: string;
 };
 
 export type ProductReviewsParams = {
