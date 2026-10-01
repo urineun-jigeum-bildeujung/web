@@ -304,6 +304,10 @@ export function CheckoutView() {
     buyNow && buyNowProduct.data && !buyNowProduct.data.soldOut
       ? toBuyNowLine(buyNow, buyNowProduct.data)
       : null;
+  // **바로 구매하려던 일반 상품이 그사이 품절됐으면 재입고 알림을 걸 수 있게 한다(QA No.263, #623).**
+  // 상품 상세의 재입고 알림 버튼과 같은 자리다. 타임딜 품절은 딜 한정 수량이 바닥난 것이라 상세처럼
+  // 재입고 알림을 두지 않는다(QA PD-067)
+  const buyNowSoldOut = buyNow?.itemType === "NORMAL" && buyNowProduct.data?.soldOut === true;
   const items: OrderLine[] = isBuyNow
     ? buyNowItem
       ? [buyNowItem]
@@ -560,11 +564,28 @@ export function CheckoutView() {
           {!itemsLoading &&
             !itemsError &&
             (items.length === 0 ? (
-              <EmptyState
-                className="py-6"
-                title="결제할 상품이 없어요"
-                description="장바구니에서 살 수 있는 상품을 골라 주세요"
-              />
+              buyNowSoldOut ? (
+                <EmptyState
+                  className="py-6"
+                  title="품절된 상품이에요"
+                  description="재입고 알림을 신청하면 다시 들어왔을 때 알려드릴게요"
+                  action={
+                    // 재입고 알림을 저장하는 API가 아직 없다. 상품 상세와 같이 스낵바로만 알린다
+                    <Button
+                      className="min-h-11"
+                      onClick={() => showSnackbar("재입고되면 바로 알려드릴게요!")}
+                    >
+                      재입고 알림 신청
+                    </Button>
+                  }
+                />
+              ) : (
+                <EmptyState
+                  className="py-6"
+                  title="결제할 상품이 없어요"
+                  description="장바구니에서 살 수 있는 상품을 골라 주세요"
+                />
+              )
             ) : (
               // 시안(`paym_001`)은 한 줄만 그렸지만 장바구니에서 여러 줄을 고를 수 있다
               <ul className="flex flex-col gap-4">
