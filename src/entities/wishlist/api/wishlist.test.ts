@@ -82,6 +82,29 @@ describe("getWishlist", () => {
 
     expect(items[0].originalPrice).toBe(24000);
   });
+
+  // `Product.originalPrice` 열이 NULL을 허용하고 `WishlistService`가 그 값을 그대로 통과시킨다.
+  // 전에는 타입이 `number`라 이 경우가 가려져 있었다 (#630)
+  it("정가가 비어 오면 그대로 null로 옮긴다", async () => {
+    stubFetch(
+      Response.json([
+        {
+          productId: 1,
+          thumbnailUrl: null,
+          wished: true,
+          productName: "정가 없는 사료",
+          price: 24000,
+          originalPrice: null,
+          reviewScore: null,
+          reviewCount: 0,
+        },
+      ]),
+    );
+
+    const items = await getWishlist();
+
+    expect(items[0].originalPrice).toBeNull();
+  });
 });
 
 describe("getWishlistStatus", () => {
