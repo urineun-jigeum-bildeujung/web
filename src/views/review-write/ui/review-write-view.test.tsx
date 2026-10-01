@@ -307,47 +307,67 @@ describe("ReviewWriteView 1단계", () => {
     expect(one.getAttribute("aria-checked")).toBe("true");
   });
 
-  // QA 리뷰작성 2번. 누른 채 밀면 지나는 반쪽으로 값이 따라가야 한다 (#651)
-  it("별을 누른 채 밀면 손가락이 놓인 반쪽의 점수로 바뀌고 1점 아래로는 내려가지 않는다", () => {
-    renderAt();
-
-    // jsdom은 크기를 계산하지 못해 별 다섯(44px씩)이 x 0~220에 놓인 것으로 둔다
+  /** 별 묶음을 x 0~220(별 다섯, 44px씩)에 놓는다. jsdom은 크기를 계산하지 못한다 */
+  function starGroup() {
     const group = screen.getByRole("radiogroup", { name: "상품 만족도" });
     group.getBoundingClientRect = () => ({ left: 0, width: 220 }) as DOMRect;
-    let captured = false;
-    group.setPointerCapture = () => {
-      captured = true;
-    };
-    group.hasPointerCapture = () => captured;
+    group.setPointerCapture = () => {};
     const checked = () =>
       within(group)
         .getAllByRole("radio")
         .find((radio) => radio.getAttribute("aria-checked") === "true")
         ?.getAttribute("aria-label");
+    return { group, checked };
+  }
+
+  const finger = { pointerId: 1, isPrimary: true, button: 0 };
+
+  // QA 리뷰작성 2번. 누른 채 밀면 지나는 반쪽으로 값이 따라가야 한다 (#651)
+  it("별을 누른 채 밀면 손가락이 놓인 반쪽의 점수로 바뀌고 1점 아래로는 내려가지 않는다", () => {
+    renderAt();
+    const { group, checked } = starGroup();
 
     // 둘째 별 왼쪽 반에서 눌러 넷째 별 오른쪽 반까지 민다
-    fireEvent.pointerDown(group, { button: 0, pointerId: 1, clientX: 50 });
+    fireEvent.pointerDown(group, { ...finger, clientX: 50 });
     expect(checked()).toBe("5점 만점에 1.5점");
-    fireEvent.pointerMove(group, { pointerId: 1, clientX: 170 });
+    fireEvent.pointerMove(group, { ...finger, clientX: 170 });
     expect(checked()).toBe("5점 만점에 4점");
 
     // 첫 별 왼쪽 끝으로 돌아와도 0.5점이 아니라 1점이다
-    fireEvent.pointerMove(group, { pointerId: 1, clientX: 3 });
+    fireEvent.pointerMove(group, { ...finger, clientX: 3 });
     expect(checked()).toBe("5점 만점에 1점");
   });
 
-  it("누르지 않은 채 지나가기만 하면 점수가 바뀌지 않는다", () => {
+  it("마지막 이동과 손을 뗀 자리가 다르면 뗀 자리의 점수가 된다", () => {
     renderAt();
+    const { group, checked } = starGroup();
 
-    const group = screen.getByRole("radiogroup", { name: "상품 만족도" });
-    group.getBoundingClientRect = () => ({ left: 0, width: 220 }) as DOMRect;
-    fireEvent.pointerMove(group, { pointerId: 1, clientX: 170 });
+    fireEvent.pointerDown(group, { ...finger, clientX: 50 });
+    fireEvent.pointerUp(group, { ...finger, clientX: 190 });
 
-    expect(
-      within(group)
-        .getAllByRole("radio")
-        .some((radio) => radio.getAttribute("aria-checked") === "true"),
-    ).toBe(false);
+    expect(checked()).toBe("5점 만점에 4.5점");
+  });
+
+  it("별 위에서 시작한 세로 스크롤은 점수를 바꾸지 않는다", () => {
+    renderAt();
+    const { group, checked } = starGroup();
+    fireEvent.click(screen.getByRole("radio", { name: "5점 만점에 3점" }));
+
+    // 브라우저가 스크롤로 가져가면 pointercancel이 온다
+    fireEvent.pointerDown(group, { ...finger, clientX: 170 });
+    fireEvent.pointerCancel(group, finger);
+
+    expect(checked()).toBe("5점 만점에 3점");
+  });
+
+  it("누르지 않은 채 지나가거나 둘째 손가락이 닿으면 점수가 바뀌지 않는다", () => {
+    renderAt();
+    const { group, checked } = starGroup();
+
+    fireEvent.pointerMove(group, { ...finger, clientX: 170 });
+    fireEvent.pointerDown(group, { ...finger, pointerId: 2, isPrimary: false, clientX: 170 });
+
+    expect(checked()).toBeUndefined();
   });
 
   it("새로고침해도 별점과 사용 기간이 남는다", async () => {
