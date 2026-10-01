@@ -11,7 +11,7 @@
 
 "use client";
 
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
 
@@ -68,13 +68,28 @@ function NoResults() {
  * `use()`로 읽으므로, 경계만 리셋하면 이미 거절된 같은 Promise를 다시 읽어 그 자리에서 또
  * 실패한다. 서버가 새로 그려 준 Promise는 `resetKeys`가 알아보고 경계를 스스로 푼다 —
  * 메인이 같은 까닭으로 같은 처리를 한다(#289).
+ *
+ * **다시 받는 동안 버튼이 대기를 알린다.** 서버가 다시 그려 줄 때까지 이 칸은 그대로 서 있어,
+ * 표시가 없으면 눌렸는지 알 수 없어 같은 버튼을 거듭 누르고 그만큼 요청이 더 나간다
+ * (AGENTS 5.8 — 이미 그려진 UI의 대기는 `LoadingSwap`이고 `disabled`만으로는 모자라다).
  */
 function ResultsErrorFallback({ onRetry }: { onRetry: () => void }) {
+  // `router.refresh()`는 대기 상태를 내놓지 않는다. 트랜지션으로 감싸면 서버가 새 화면을
+  // 줄 때까지를 `isRetrying`으로 읽을 수 있다 — 메인이 종류·정렬 전환에서 쓰는 방식과 같다
+  const [isRetrying, startRetry] = useTransition();
+
   return (
     <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
       <p className="text-sm text-muted-foreground">잠시 문제가 생겼어요. 다시 시도해 주세요.</p>
-      <Button variant="outline" className="min-h-11 px-4" onClick={onRetry}>
-        다시 시도
+      <Button
+        variant="outline"
+        className="min-h-11 px-4"
+        disabled={isRetrying}
+        onClick={() => startRetry(onRetry)}
+      >
+        <LoadingSwap loading={isRetrying} label="검색 결과를 다시 불러오는 중">
+          다시 시도
+        </LoadingSwap>
       </Button>
     </div>
   );
