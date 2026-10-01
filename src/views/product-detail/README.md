@@ -5,7 +5,7 @@
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`. 라우트가 상품을 `await`하므로(없는 상품을 404로 보내는 `notFound()`를 렌더 중에 불러야 한다) **404가 아닌 실패는 뷰가 그려지기 전에 터진다.** 그 자리는 같은 세그먼트의 `error.tsx`가 받아 머리말을 다시 그린다 — 전역 오류 화면은 머리말이 없어 눌러 갈 링크가 하나도 남지 않았다(#620, `src/app/README.md`의 "라우트 오류 화면")
 - **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryProductReviewCount`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
 - **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` — **`qna`는 받지 않는다**, 아래), 리뷰 정렬은 `reviewSort`, 리뷰 거르기 조건은 `reviewFilter`(#472). 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙고, 딜이 끝나면 화면이 그 쿼리만 뗀다(#484, #539). 수량 시트는 `sheet`(`cart` · `buy`)가 들어 결제에서 뒤로 오면 열린 채로 돌아온다(QA No.35, #595 — 아래). 상품 상태 중 정상·품절은 QA용으로 `status` 쿼리가 덮어쓴다(개발 빌드만, 타임딜은 덮어쓰지 않는다 — 아래). 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
-- **닫아 둔 쿼리**: `reviewMatch`(맞춤보기)는 **지금 읽지 않는다**(#472). 서버가 종과 체구만 견주어 안내 문구가 약속하는 범위와 달라 PD 확인을 기다린다. `reviewFilter`(필터 시트)는 백엔드가 구간·복수 조건을 받게 되어(cb2f134, 2026-10-01) 다시 연결했다
+- **리뷰 거르기 쿼리**: `reviewFilter`(필터 시트)는 백엔드가 구간·복수 조건을 받게 되어(cb2f134, 2026-10-01) 다시 연결했다(#472). `reviewMatch`(맞춤보기)는 서버가 거르는 조건을 그대로 따른다 — 화면은 켜짐과 기준 아이(적합도와 같은 아이)만 넘기고, 기준 아이가 없으면(비로그인·아이 없음) 스위치를 두지 않는다(#641)
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
@@ -35,8 +35,8 @@
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지, 안내 셋이 실제 문구를 그리고 자리표시 번호가 없는지 |
 | `ui/description-collapse.tsx` | 상품 설명 이미지 자리. 402px를 미리 보여주고 눌러서 전체를 펼치는 더보기/접기 |
 | `ui/description-collapse.test.tsx` | 눌렀을 때 접힘·펼침 상태와 라벨이 바뀌는지 |
-| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·거르기 시트·정렬·대표 사진 줄·후기 목록(서버 조회)·도움돼요 누르기(#606). 거르는 중이면 수를 "조건에 맞는 리뷰 N개"로, 빈 결과는 지울 길과 함께 알린다(#472) |
-| `ui/review-panel.test.tsx` | 서버 응답의 네 상태·정렬·대표 사진, 주소의 거르기 조건을 서버 조건으로 넘기는지·빈 결과와 필터 지우기, 맞춤보기가 아직 없는지, 도움돼요를 누르면 그 후기를 넘기는지 |
+| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·거르기 시트·정렬·대표 사진 줄·후기 목록(서버 조회)·도움돼요 누르기(#606). 거르는 중이면 수를 "조건에 맞는 리뷰 N개"로, 빈 결과는 지울 길과 함께 알린다(#472). 내 반려동물 맞춤보기 스위치(#641) |
+| `ui/review-panel.test.tsx` | 서버 응답의 네 상태·정렬·대표 사진, 주소의 거르기 조건을 서버 조건으로 넘기는지·빈 결과와 필터 지우기, 맞춤보기를 기준 아이로 거는지·기준 아이가 없으면 숨는지, 도움돼요를 누르면 그 후기를 넘기는지 |
 | `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭. "리뷰 N개 보기"의 N은 고르는 조건으로 서버가 센다(손을 뗀 뒤 300ms, #472) |
 | `ui/review-filter-sheet.test.tsx` | 고른 품종·건강 관심사가 값마다 Badge 하나로 그려지는지, 빈 값의 안내 문구, 낭독기에 읽히는 이름(#598). **말줄임은 여기서 못 본다** — jsdom이 레이아웃을 계산하지 않아 Chromium 실측으로 확인했다 |
 | `ui/review-filter-picker.tsx` | 품종·건강 관심사를 고르는 전체화면(#264). 갈래-항목 좌우 분할, 데이터만 갈아끼워 재사용 |
@@ -59,7 +59,7 @@
 | 리뷰 요약·목록·정렬·대표 사진 | — | `useQueryProductReviews` · `useQueryFeaturedReviewPhotos` (#339) |
 | 리뷰 도움돼요 누르기·해제 | — | `useMutateReviewRecommend`. 비로그인이면 로그인 필요 토스트만 띄운다 (#542, #606) |
 | 리뷰 거르기(사용 기간·종·품종·나이·중성화·체중·건강 관심사) | — | `useQueryProductReviews`의 `conditions`, 시트의 수는 `useQueryProductReviewCount` (#472) |
-| — | 리뷰 맞춤보기 | 서버가 견주는 조건이 안내 문구와 달라 닫아 뒀다 (아래 후속 항목) |
+| 리뷰 맞춤보기 | — | `useQueryProductReviews`의 `conditions`에 `personalized`·`petId`를 싣는다. 견주는 조건은 서버가 정한다 (#641) |
 | — | 문의 목록 | API가 없다 |
 | 함께 보면 좋은 상품(인기순, 지금 상품 제외) | — | 라우트가 `getRelatedProducts`를 기다리지 않고 넘긴다 (#481) |
 | — | 상단 요약의 배송·판매자 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
@@ -123,7 +123,6 @@
 | 항목 | 지금 |
 | --- | --- |
 | 상세 로딩 표시 | 라우트의 `Suspense` 폴백이 빈 `div`다. 처음 그릴 때는 스켈레톤이 맞다(AGENTS 5.8) |
-| 리뷰 맞춤보기 | 닫아 뒀다 (#472). 서버가 종과 체구만 견주는데 안내 줄은 품종까지 본다고 읽혀 PD 확인을 기다린다 |
 | 비로그인의 품종 고르기 | 거르기 시트의 품종 목록(`GET /pets/breeds`)이 인증을 요구해 비로그인이면 품종 피커가 불러오지 못했다고 보인다. 다른 조건은 고를 수 있다 (#471과 같은 원인) |
 | 리뷰 카드의 아이 줄 | `소형견 · 8세 · 4kg`다. 품종명은 `GET /pets/breeds`에만 있는데 그 조회가 인증을 요구해 비로그인 상품 상세에서 401이 난다 (#471) |
 | 리뷰 재구매 N회 배지 | 응답에 `repurchaseCount`가 없다. PD가 MVP로 확정해 백엔드에 요청해 뒀다 (#471) |

@@ -117,7 +117,7 @@ PRD v0.3, IA v0.6, UCS v0.1과 현재 App Router 구현을 대조해 정리한 �
 | 리뷰 작성 | `productId` | 리뷰를 작성할 상품. 백엔드가 회원+상품당 한 건만 받는다 |
 | 상품 상세 | `tab` | `info`, `review`, `qna` |
 | 상품 상세 | `reviewSort` | `recommend`, `recent`, `rating-high`, `rating-low` |
-| 상품 상세 | ~~`reviewMatch`~~ | **지금은 읽지 않는다(#339).** 맞춤보기 토글을 닫아 두었다 — 서버 `personalized`가 종과 체구만 견주어 문구가 약속하는 범위와 다르다 |
+| 상품 상세 | `reviewMatch` | 내 반려동물 맞춤보기 켜짐(`true`). 꺼지면 주소에서 뗀다. 기준 아이(적합도와 같은 아이)와 함께 `personalized=true&petId=`로 보내고 무엇을 견줄지는 서버가 정한다(#641). 비로그인·아이 없음이면 읽지 않는다 |
 | 사진 리뷰 | `photo`, `n` | 보고 있는 **후기 번호**(`reviewId`)와 그 후기의 몇 번째 사진. 전에는 배열 순번이었는데 쪽을 이어 받으면 같은 번호가 다른 사진을 가리켜 바꿨다(#339). 둘은 한 번에 갱신해 히스토리가 한 칸만 쌓인다 |
 | 상품 상세 | `reviewFilter` | 리뷰 거르기 조건. 기본값과 다른 것만 `period:3-6\|species:cat\|breed:1,3` 꼴로 모은다. 서버 파라미터(`usagePeriodMin/MaxDays`·`species`·`breedIds`·`ageMin/Max`·`neutered`·`weightMin/Max`·`healthConcerns`)로 옮겨 보낸다(#472). 모르는 키는 무시한다 |
 | 타임딜 | `tab` | `live`, `upcoming` |
