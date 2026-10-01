@@ -343,7 +343,7 @@ function UpcomingDealsSection({
             style={{ width: 44, height: 44 }}
           />
         }
-        title="오픈 예정인 타임딜이 없어요"
+        title="현재 예정된 타임딜이 없어요"
         titleClassName="text-body-medium-18"
         description={
           <>

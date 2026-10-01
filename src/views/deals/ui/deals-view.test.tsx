@@ -332,7 +332,7 @@ describe("DealsView", () => {
   it("오픈 예정 딜이 없으면(빈 배열) 없다고 알린다", async () => {
     await renderWith("?tab=upcoming", undefined, []);
 
-    expect(screen.getByText("오픈 예정인 타임딜이 없어요")).toBeDefined();
+    expect(screen.getByText("현재 예정된 타임딜이 없어요")).toBeDefined();
   });
 
   // 시작 시각이 지나도 오픈 예정에 머물렀다 (QA #84)
