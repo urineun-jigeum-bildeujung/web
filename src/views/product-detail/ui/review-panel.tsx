@@ -7,15 +7,17 @@
 // **필터 시트로 후기를 거른다(#472).** 서버가 품종 여럿·나이·체중·사용 기간 구간을 받게 되어
 // (백엔드 cb2f134, 2026-10-01) 닫아 두었던 시트를 다시 붙였다. 고른 조건은 주소(`reviewFilter`)에
 // 남아 새로고침·뒤로가기에도 유지되고, 거르는 것은 서버다(AGENTS.md 2.5).
-// **맞춤보기 토글은 아직 닫혀 있다.** 서버가 종과 체구만 견주어 안내 문구가 약속하는 범위와
-// 달라 PD 확인을 기다린다(#472).
+// **맞춤보기는 서버가 거르는 조건을 그대로 따른다(#641).** 화면은 켜짐과 기준 아이만 넘기고,
+// 무엇을 견줄지는 서버가 정한다. 기준 아이가 없으면(비로그인·아이 없음) 스위치를 두지 않는다.
 
 "use client";
+
+import { useId } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
 
-import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { parseAsBoolean, parseAsStringLiteral, useQueryState } from "nuqs";
 
 import {
   REVIEW_SORTS,
@@ -32,10 +34,12 @@ import { APP_MESSAGE } from "@/shared/config/app-message";
 import { useLoadMore } from "@/shared/lib/list/use-load-more";
 import { Button } from "@/shared/ui/button";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
+import { Label } from "@/shared/ui/label";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { Rating } from "@/shared/ui/rating/rating";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { Switch } from "@/shared/ui/switch";
 
 import {
   DEFAULT_FILTER,
@@ -49,6 +53,8 @@ import { ReviewFilterSheet } from "./review-filter-sheet";
 
 type ReviewPanelProps = {
   productId: string;
+  /** 맞춤보기의 기준 아이. 적합도 영역이 고른 아이와 같다. 비로그인이거나 아이가 없으면 비운다 */
+  petId?: string;
 };
 
 /** 처음 그릴 때 자리를 잡는다. 카드 두 장이면 탭 높이가 무너지지 않는다 */
@@ -73,7 +79,8 @@ function ReviewSkeleton({ count = 2 }: { count?: number }) {
   );
 }
 
-export function ReviewPanel({ productId }: ReviewPanelProps) {
+export function ReviewPanel({ productId, petId }: ReviewPanelProps) {
+  const matchId = useId();
   // 사진 모아보기는 로그인해야 열린다. 비로그인이 사진을 누르면 가지 않고 토스트만 띄운다 (#542)
   const requireSession = useRequireSession();
   const guardLink = (event: React.MouseEvent) => {
@@ -92,6 +99,10 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
   const filtering = !isDefault(filter);
   const applyReviewFilter = (next: ReviewFilter) =>
     void setFilterParam(isDefault(next) ? "" : serializeFilter(next));
+  // 맞춤보기도 거르기라 주소에 둔다. 켜진 주소를 비로그인이 열면 기준 아이가 없어 걸지 않는다
+  const [matchOn, setMatchOn] = useQueryState("reviewMatch", parseAsBoolean.withDefault(false));
+  const matchConditions = matchOn && petId ? { personalized: true as const, petId } : undefined;
+  const matching = matchConditions !== undefined;
 
   const {
     reviews,
@@ -103,7 +114,11 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
     loadNext,
     isLoadingNext,
     nextError,
-  } = useQueryProductReviews({ productId, sort, conditions: toReviewConditions(filter) });
+  } = useQueryProductReviews({
+    productId,
+    sort,
+    conditions: { ...toReviewConditions(filter), ...matchConditions },
+  });
   const { photos: featuredPhotos } = useQueryFeaturedReviewPhotos(productId);
   // 도움돼요는 누르는 즉시 수와 눌림이 바뀐다. 비로그인이면 카드가 먼저 막는다 (#542, #606)
   const recommend = useMutateReviewRecommend();
@@ -135,7 +150,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
         ) : (
           // 거르는 중이면 이 수는 조건에 걸린 후기 수다. 상품 전체 수로 읽히지 않게 말을 바꾼다
           <p className="text-body-medium-14 text-text-body-secondary">
-            {filtering ? `조건에 맞는 리뷰 ${totalCount}개` : `총 리뷰 ${totalCount}개`}
+            {filtering || matching ? `조건에 맞는 리뷰 ${totalCount}개` : `총 리뷰 ${totalCount}개`}
           </p>
         )}
       </section>
@@ -189,7 +204,12 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
 
       <div className="flex flex-col gap-1 border-b border-border p-4">
         <div className="flex items-center justify-between gap-2">
-          <ReviewFilterSheet productId={productId} filter={filter} onApply={applyReviewFilter} />
+          <ReviewFilterSheet
+            productId={productId}
+            filter={filter}
+            onApply={applyReviewFilter}
+            baseConditions={matchConditions}
+          />
           <Select value={sort} onValueChange={(next) => void setSort(next as ReviewSort)}>
             <SelectTrigger aria-label="리뷰 정렬" className="min-h-11 w-auto border-0 shadow-none">
               <SelectValue />
@@ -212,6 +232,20 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
             필터 지우기
           </button>
         )}
+        {/* 시안(1716:34330)은 칩 줄 아래 16px에 스위치와 이름을 8px 띄워 둔다. 켜진 상태의
+            안내 줄은 시안에 없다 */}
+        {petId && (
+          <div className="mt-3 flex min-h-11 items-center gap-2">
+            <Switch
+              id={matchId}
+              checked={matchOn}
+              onCheckedChange={(next) => void setMatchOn(next || null)}
+            />
+            <Label htmlFor={matchId} className="text-label-regular-14 text-text-body-default">
+              내 반려동물 맞춤보기
+            </Label>
+          </div>
+        )}
       </div>
 
       {isLoading && <ReviewSkeleton />}
@@ -223,21 +257,24 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
         <EmptyState role="alert" className="py-10" {...APP_MESSAGE[toAppMessageCode(error)]} />
       )}
 
-      {!isLoading && !error && list.length === 0 && filtering && (
-        // 후기가 없는 것과 조건에 걸린 후기가 없는 것은 다르다. 지울 길을 바로 둔다
+      {!isLoading && !error && list.length === 0 && (filtering || matching) && (
+        // 후기가 없는 것과 조건에 걸린 후기가 없는 것은 다르다. 지울 길을 바로 둔다.
+        // 맞춤보기만 켠 경우는 바로 위 스위치가 그 길이라 버튼을 따로 두지 않는다
         <EmptyState
           title="조건에 맞는 후기가 없어요"
           description="조건을 바꾸거나 지워 보세요."
           className="py-10"
           action={
-            <Button variant="outline" onClick={() => applyReviewFilter(DEFAULT_FILTER)}>
-              필터 지우기
-            </Button>
+            filtering && (
+              <Button variant="outline" onClick={() => applyReviewFilter(DEFAULT_FILTER)}>
+                필터 지우기
+              </Button>
+            )
           }
         />
       )}
 
-      {!isLoading && !error && list.length === 0 && !filtering && (
+      {!isLoading && !error && list.length === 0 && !filtering && !matching && (
         <EmptyState
           title="아직 후기가 없어요"
           description="먹여 보고 첫 후기를 남겨 주세요."

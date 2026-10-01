@@ -21,7 +21,7 @@ import {
   useQueryHealthOptions,
   type PetSpecies,
 } from "@/entities/pet";
-import { useQueryProductReviewCount } from "@/entities/review";
+import { useQueryProductReviewCount, type ProductReviewConditions } from "@/entities/review";
 import { Badge } from "@/shared/ui/badge/badge";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
@@ -116,6 +116,8 @@ type ReviewFilterSheetProps = {
   productId: string;
   filter: ReviewFilter;
   onApply: (filter: ReviewFilter) => void;
+  /** 시트 밖에서 이미 걸린 조건(맞춤보기, #641). 셀 때 함께 실어야 적용 뒤 목록 수와 맞는다 */
+  baseConditions?: ProductReviewConditions;
 };
 
 /** 손을 뗀 뒤 이만큼 기다렸다가 수를 묻는다 */
@@ -202,14 +204,19 @@ function Summary({ text }: { text: string | null }) {
   return <p className="text-body-medium-14 text-text-body-brand-default">{text}</p>;
 }
 
-export function ReviewFilterSheet({ productId, filter, onApply }: ReviewFilterSheetProps) {
+export function ReviewFilterSheet({
+  productId,
+  filter,
+  onApply,
+  baseConditions,
+}: ReviewFilterSheetProps) {
   const [open, setOpen] = useState(false);
   // 시트를 열 때마다 바깥 값에서 다시 시작한다. 닫고 다시 열면 적용된 조건이 보여야 한다
   const [draft, setDraft] = useState(filter);
   const settledDraft = useSettledValue(draft, COUNT_DELAY_MS);
   const { count, isCounting } = useQueryProductReviewCount({
     productId,
-    conditions: toReviewConditions(settledDraft),
+    conditions: { ...toReviewConditions(settledDraft), ...baseConditions },
     enabled: open,
   });
 

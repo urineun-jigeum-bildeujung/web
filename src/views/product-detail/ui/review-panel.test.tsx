@@ -1,4 +1,4 @@
-// 리뷰 탭 테스트. 서버 응답의 네 상태, 거르기 조건을 서버로 넘기는지(#472), 맞춤보기가 아직 닫혀 있는지 본다.
+// 리뷰 탭 테스트. 서버 응답의 네 상태, 거르기 조건을 서버로 넘기는지(#472), 맞춤보기를 기준 아이로 거는지(#641) 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -109,10 +109,10 @@ function baseList() {
   };
 }
 
-function renderPanel(search = "") {
+function renderPanel(search = "", petId?: string) {
   render(
     <NuqsTestingAdapter searchParams={search}>
-      <ReviewPanel productId="1" />
+      <ReviewPanel productId="1" petId={petId} />
     </NuqsTestingAdapter>,
   );
 }
@@ -223,18 +223,63 @@ describe("리뷰 사진 줄", () => {
   });
 });
 
-// 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#339).
-// 되는 조건만 보내면 고른 것이 조용히 무시되고, 그냥 두면 눌러도 목록이 안 바뀐다
-describe("계약이 없어 닫아 둔 것", () => {
-  // 서버가 종과 체구만 견주어 안내 문구와 달라 PD 확인을 기다린다(#472)
-  it("맞춤보기 토글은 아직 없다", () => {
+// 무엇을 견줄지는 서버가 정한다. 화면은 켜짐과 기준 아이만 넘긴다 (#641)
+describe("맞춤보기", () => {
+  it("기준 아이가 없으면(비로그인·아이 없음) 스위치도 맞춤 조건도 없다", () => {
     useQueryProductReviews.mockReturnValue(listState());
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
-    renderPanel("?reviewMatch=on");
+    // 켜진 주소를 비로그인이 열어도 걸지 않는다
+    renderPanel("?reviewMatch=true");
 
     expect(screen.queryByRole("switch")).toBeNull();
     expect(screen.queryByText("내 반려동물 맞춤보기")).toBeNull();
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ conditions: {} }),
+    );
+  });
+
+  it("켜면 기준 아이로 서버에서 거르고, 조건에 맞는 수라고 알린다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("", "7");
+
+    const toggle = screen.getByRole("switch", { name: "내 반려동물 맞춤보기" });
+    expect(toggle.getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByText("총 리뷰 108개")).toBeDefined();
+
+    fireEvent.click(toggle);
+
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ conditions: { personalized: true, petId: "7" } }),
+    );
+    expect(screen.getByText("조건에 맞는 리뷰 108개")).toBeDefined();
+  });
+
+  it("시트 조건과 함께 걸린다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewMatch=true&reviewFilter=species:cat", "7");
+
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        conditions: { species: "CAT", personalized: true, petId: "7" },
+      }),
+    );
+  });
+
+  // 지울 길은 바로 위의 스위치다. 맞춤보기를 끄지 못하는 "필터 지우기"를 두지 않는다
+  it("맞춤보기만 켜고 0개면 필터 지우기 없이 알린다", () => {
+    useQueryProductReviews.mockReturnValue({ ...listState(), reviews: [], totalCount: 0 });
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewMatch=true", "7");
+
+    expect(screen.getByText("조건에 맞는 후기가 없어요")).toBeDefined();
+    expect(screen.queryByText("아직 후기가 없어요")).toBeNull();
+    expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
   });
 });
 

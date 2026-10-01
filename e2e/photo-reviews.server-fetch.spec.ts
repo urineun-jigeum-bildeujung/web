@@ -3,6 +3,7 @@
 // 출발점이 상품 상세라 서버 조회 전용 스위트에 있다(#413). 리뷰 목록·사진·대표 사진은
 // 브라우저에서 부르는데, 이 설정은 `NEXT_PUBLIC_API_BASE_URL`도 목 서버를 가리켜 함께 닿는다.
 import { expect, test } from "@playwright/test";
+import { stubPetCatalog } from "./fixtures/pet-catalog";
 import { signIn } from "./fixtures/session";
 
 // 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542)
@@ -21,13 +22,39 @@ test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
   await expect(page.getByText("총 리뷰 3개")).toBeVisible();
 });
 
-// 맞춤보기는 서버가 종과 체구만 견주어 안내 문구와 달라 PD 확인을 기다린다(#472)
-test("맞춤보기 토글은 리뷰 탭에 아직 없다", async ({ page }) => {
+// 맞춤보기는 기준 아이가 있어야 건다. 이 스위트의 목 서버는 아이 목록을 주지 않는다(#641)
+test("기준 아이가 없으면 맞춤보기 스위치가 없다", async ({ page }) => {
   await page.goto("/products/1?tab=review");
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("switch")).toBeHidden();
   await expect(page.getByText("내 반려동물 맞춤보기")).toBeHidden();
+});
+
+// 무엇을 견줄지는 서버가 정한다. 화면은 켜짐과 기준 아이만 보낸다(#641)
+test("맞춤보기를 켜면 기준 아이로 다시 받고 주소에 남는다", async ({ page }) => {
+  await stubPetCatalog(page);
+  const searches: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith("/reviews/products/1")) searches.push(url.search);
+  });
+
+  await page.goto("/products/1?tab=review");
+  const toggle = page.getByRole("switch", { name: "내 반려동물 맞춤보기" });
+  await expect(toggle).toBeVisible();
+
+  await toggle.click();
+
+  await expect(toggle).toBeChecked();
+  await expect(page).toHaveURL(/reviewMatch=true/);
+  // 기준 아이는 적합도 영역과 같은 첫 아이("코코", 3)다
+  await expect
+    .poll(() => searches.some((s) => s.includes("personalized=true") && s.includes("petId=3")))
+    .toBe(true);
+
+  await page.reload();
+  await expect(page.getByRole("switch", { name: "내 반려동물 맞춤보기" })).toBeChecked();
 });
 
 // 백엔드가 구간·복수 조건을 받게 되어 거르기 시트를 다시 붙였다(#472).
