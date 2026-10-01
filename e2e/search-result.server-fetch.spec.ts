@@ -167,12 +167,26 @@ test("할인 중인 카드만 서버 할인율과 정가 취소선을 보인다"
 
   await expect(senior.getByText("20%")).toBeVisible();
   await expect(senior.getByText("27,200원")).toBeVisible();
-  await expect(senior.getByText("33,900원")).toBeVisible();
   // 버림으로 다시 계산했으면 19%가 보인다
   await expect(senior.getByText("19%")).toBeHidden();
 
-  // 나머지 셋은 정가가 판매가와 같아 할인이 아니다 — 취소선이 하나뿐이어야 한다
-  const struck = page.getByRole("main").locator(".line-through");
-  await expect(struck).toHaveCount(1);
-  await expect(struck).toHaveText("33,900원");
+  /**
+   * 정가에 실제로 취소선이 그려졌는가.
+   *
+   * **클래스 이름이 아니라 계산된 스타일을 본다.** `.line-through`로 집으면 클래스를 바꾸기만
+   * 해도 테스트가 깨지고, 반대로 클래스가 남은 채 스타일이 덮어써지면 취소선이 사라졌는데도
+   * 통과한다. 카드는 상품명으로 집는다 (PR #633 리뷰 지적, `.coderabbit.yaml`의 경로 지침)
+   */
+  const struckThrough = (card: ReturnType<typeof page.getByRole>, text: string) =>
+    card
+      .getByText(text)
+      .evaluate((element) => getComputedStyle(element).textDecorationLine.includes("line-through"));
+
+  await expect.poll(() => struckThrough(senior, "33,900원")).toBe(true);
+
+  // 할인하지 않는 상품은 정가가 판매가와 같이 와, 카드가 정가 줄을 아예 그리지 않는다
+  const puppy = page.getByRole("listitem").filter({ hasText: "퍼피 성장기 사료 1kg" });
+  await expect(puppy.getByText("21,000원")).toBeVisible();
+  await expect(puppy.getByText("%", { exact: false })).toBeHidden();
+  await expect.poll(() => struckThrough(puppy, "21,000원")).toBe(false);
 });
