@@ -164,7 +164,8 @@ function ProductImages({
       <div
         className={cn(
           "flex aspect-square items-center justify-center bg-muted",
-          soldOut && "blur-sm",
+          // 사진이 없으면 흐릴 사진이 없다. 대체 문구는 읽히게 투명도로만 낮춘다
+          soldOut && "opacity-50",
         )}
       >
         <span className="text-sm text-muted-foreground">상품 이미지</span>
