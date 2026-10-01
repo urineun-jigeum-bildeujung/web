@@ -3,6 +3,7 @@
 //
 // 별 하나를 좌우 22px로 갈라 왼쪽이 반 개, 오른쪽이 한 개다. 시안 값(44px)을 그대로 쓴다.
 // 반쪽마다 라디오 하나가 되고 화살표 키는 0.5씩 움직인다.
+// 누른 채 밀면 손가락이 지나는 반쪽으로 값이 따라간다. 세로로 밀면 그대로 페이지가 스크롤된다.
 //
 // `min`보다 낮은 반쪽은 두지 않는다. 리뷰는 1점부터라(QA RV-020) 첫 별은 가르지 않고 한 칸이 1점이다.
 // 0.5점 칸을 남겨 두고 1점으로 올려 주면 "0.5점"이라 읽힌 칸이 한 번도 선택되지 않는다.
@@ -46,8 +47,29 @@ export function RatingInput({
 
   const halves = Math.round(value * 2);
 
+  /** 포인터가 놓인 반쪽으로 값을 옮긴다. 별 묶음 폭을 반쪽 수로 나눠 몇 번째 반쪽인지 센다 */
+  const moveToPointer = (event: React.PointerEvent<HTMLDivElement>) => {
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    if (width === 0) return;
+    const next = Math.ceil(((event.clientX - left) / width) * steps);
+    if (next !== halves) move(next);
+  };
+
   return (
-    <div role="radiogroup" aria-label={label} className={cn("flex justify-center", className)}>
+    <div
+      role="radiogroup"
+      aria-label={label}
+      // 누른 뒤 손가락이 별 밖으로 나가도 끝까지 따라가게 포인터를 붙잡는다
+      onPointerDown={(event) => {
+        if (event.button !== 0) return;
+        event.currentTarget.setPointerCapture(event.pointerId);
+        moveToPointer(event);
+      }}
+      onPointerMove={(event) => {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) moveToPointer(event);
+      }}
+      className={cn("flex touch-pan-y justify-center select-none", className)}
+    >
       {Array.from({ length: max }, (_, index) => {
         const filled = Math.max(0, Math.min(2, halves - index * 2));
 

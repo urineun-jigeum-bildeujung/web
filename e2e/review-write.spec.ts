@@ -93,6 +93,28 @@ test("첫 별은 왼쪽 반을 눌러도 1점이 된다", async ({ page }) => {
   await expect(one).toHaveAttribute("aria-checked", "true");
 });
 
+// QA 리뷰작성 2번. 누른 채 밀면 지나는 반쪽으로 값이 따라간다 (#651)
+test("별을 누른 채 밀면 놓은 자리의 점수가 된다", async ({ page }) => {
+  await page.goto(PATH);
+
+  const group = page.getByRole("radiogroup", { name: "상품 만족도" });
+  await group.scrollIntoViewIfNeeded();
+  const box = await group.boundingBox();
+  if (!box) throw new Error("별 묶음을 찾지 못했다");
+  const y = box.y + box.height / 2;
+
+  // 첫 별에서 눌러 넷째 별 오른쪽 반(220px 중 170px)까지 끈다
+  await page.mouse.move(box.x + 10, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 170, y, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByRole("radio", { name: "5점 만점에 4점" })).toHaveAttribute(
+    "aria-checked",
+    "true",
+  );
+});
+
 test("사진은 세 장까지 붙이고 뺄 수 있다", async ({ page }) => {
   await page.goto(`${PATH}&step=detail`);
 
