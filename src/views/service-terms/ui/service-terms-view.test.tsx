@@ -16,6 +16,18 @@ test("시행일과 조항마다의 목차가 보이고, 자리 표시 문구는 
   expect(screen.queryByText(/자리 표시/)).toBeNull();
 });
 
+// QA No.138(#621). 가입의 선택 동의 "맞춤 혜택 및 이벤트 알림 수신 동의"를 설명하는 조항이 없었다
+test("마케팅 수신 동의 조항이 목차와 본문에 있고 선택 동의라고 밝힌다", () => {
+  render(<ServiceTermsView />);
+
+  const toc = screen.getByRole("navigation", { name: "목차" });
+  const name = "제9조 (맞춤 혜택 및 이벤트 알림 수신 동의)";
+  expect(within(toc).getByRole("link", { name })).toBeDefined();
+  expect(screen.getByRole("region", { name }).textContent).toContain(
+    "동의하지 않아도 서비스를 이용할 수 있습니다",
+  );
+});
+
 test("시연용 예시라는 것을 부칙에 밝힌다", () => {
   render(<ServiceTermsView />);
 
