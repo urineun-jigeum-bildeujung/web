@@ -21,13 +21,37 @@ test("리뷰 탭이 서버가 준 후기를 그린다", async ({ page }) => {
   await expect(page.getByText("총 리뷰 3개")).toBeVisible();
 });
 
-// 필터·맞춤보기는 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#472)
-test("계약이 없는 필터·맞춤보기는 리뷰 탭에 없다", async ({ page }) => {
+// 맞춤보기는 서버가 종과 체구만 견주어 안내 문구와 달라 PD 확인을 기다린다(#472)
+test("맞춤보기 토글은 리뷰 탭에 아직 없다", async ({ page }) => {
   await page.goto("/products/1?tab=review");
   await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
 
   await expect(page.getByRole("switch")).toBeHidden();
   await expect(page.getByText("내 반려동물 맞춤보기")).toBeHidden();
+});
+
+// 백엔드가 구간·복수 조건을 받게 되어 거르기 시트를 다시 붙였다(#472).
+// 거르는 것은 서버다 — 고른 조건이 요청 파라미터로 나가고 주소에 남는지 본다
+test("거르기 시트에서 종을 고르고 적용하면 그 조건으로 다시 받고 주소에 남는다", async ({
+  page,
+}) => {
+  const searches: string[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.pathname.endsWith("/reviews/products/1")) searches.push(url.search);
+  });
+
+  await page.goto("/products/1?tab=review");
+  await expect(page.getByText("댕댕이맘", { exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "기본 맞춤 필터" }).click();
+  await page.getByRole("tab", { name: "반려동물 필터" }).click();
+  await page.getByRole("radio", { name: "고양이" }).click();
+  await page.getByRole("button", { name: /^리뷰 .*보기$/ }).click();
+
+  await expect(page).toHaveURL(/reviewFilter=species%3Acat|reviewFilter=species:cat/);
+  await expect.poll(() => searches.some((search) => search.includes("species=CAT"))).toBe(true);
+  await expect(page.getByRole("button", { name: "필터 지우기" }).first()).toBeVisible();
 });
 
 // 비로그인 정책이 정해져(#542) 누를 수 있게 됐다(#606, QA 상품상세 7·8).

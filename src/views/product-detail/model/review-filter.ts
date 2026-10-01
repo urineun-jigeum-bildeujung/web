@@ -12,6 +12,8 @@
 // **"재구매 여부만 보기"는 MVP 범위에서 빠졌다(PD).** 조건을 지웠고, 옛 주소에 남은
 // `repeat:1`은 `parseFilter`가 아는 키만 꺼내 쓰므로 조용히 무시된다.
 
+import type { ProductReviewConditions } from "@/entities/review";
+
 /** 슬라이더 오른쪽 끝은 1년+/15세+/30kg+로 열린 상한을 뜻한다 */
 export const PERIOD_RANGE = [1, 12] as const;
 export const AGE_RANGE = [0, 15] as const;
@@ -146,4 +148,34 @@ export function parseFilter(param: string): ReviewFilter {
     weight: parseRange(entries.get("weight"), WEIGHT_RANGE),
     healthConcerns: concern ? concern.split(",").filter(Boolean).map(decodeURIComponent) : [],
   };
+}
+
+/** 사용 기간 한 달을 며칠로 볼지. 서버는 일 수로 받는다 */
+const DAYS_PER_MONTH = 30;
+
+/**
+ * 고른 조건을 서버가 받는 모양으로 옮긴다 (#472).
+ *
+ * **건드리지 않은 칸은 보내지 않는다.** 슬라이더의 왼쪽 끝은 "아래 제한 없음", 오른쪽 끝은
+ * 열린 상한(1년+·15세+·30kg+)이라 그 손잡이는 보내지 않는다. 그래야 끝에 붙은 값(15세를
+ * 넘는 아이, 1년을 넘게 쓴 후기)이 빠지지 않는다. 사용 기간은 개월을 30일로 세어 보낸다.
+ */
+export function toReviewConditions(filter: ReviewFilter): ProductReviewConditions {
+  const conditions: ProductReviewConditions = {};
+  const [periodMin, periodMax] = filter.period;
+  const [ageMin, ageMax] = filter.age;
+  const [weightMin, weightMax] = filter.weight;
+
+  if (periodMin > PERIOD_RANGE[0]) conditions.usagePeriodMinDays = periodMin * DAYS_PER_MONTH;
+  if (periodMax < PERIOD_RANGE[1]) conditions.usagePeriodMaxDays = periodMax * DAYS_PER_MONTH;
+  if (filter.species) conditions.species = filter.species === "dog" ? "DOG" : "CAT";
+  if (filter.breedIds.length > 0) conditions.breedIds = filter.breedIds;
+  if (ageMin > AGE_RANGE[0]) conditions.ageMin = ageMin;
+  if (ageMax < AGE_RANGE[1]) conditions.ageMax = ageMax;
+  if (filter.neutered) conditions.neutered = filter.neutered === "yes";
+  if (weightMin > WEIGHT_RANGE[0]) conditions.weightMin = weightMin;
+  if (weightMax < WEIGHT_RANGE[1]) conditions.weightMax = weightMax;
+  if (filter.healthConcerns.length > 0) conditions.healthConcerns = filter.healthConcerns;
+
+  return conditions;
 }

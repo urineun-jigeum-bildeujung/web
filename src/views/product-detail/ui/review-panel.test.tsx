@@ -1,4 +1,4 @@
-// 리뷰 탭 테스트. 서버 응답의 네 상태와, 계약이 없어 닫아 둔 것이 정말 닫혀 있는지 본다.
+// 리뷰 탭 테스트. 서버 응답의 네 상태, 거르기 조건을 서버로 넘기는지(#472), 맞춤보기가 아직 닫혀 있는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -21,6 +21,17 @@ vi.mock("@/entities/review", async (importOriginal) => ({
   useQueryProductReviews: (args: unknown) => useQueryProductReviews(args),
   useQueryFeaturedReviewPhotos: () => useQueryFeaturedReviewPhotos(),
   useMutateReviewRecommend: () => ({ toggle: toggleRecommend }),
+  useQueryProductReviewCount: () => ({ count: 3, isCounting: false }),
+}));
+// 거르기 시트가 품종·건강 관심사 목록을 받는다. 시트 자체는 review-filter-sheet.test가 본다
+vi.mock("@/entities/pet", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/pet")>()),
+  useQueryBreeds: () => ({ breeds: [], isLoading: false, error: null }),
+  useQueryHealthOptions: () => ({
+    options: { concerns: [], allergies: [] },
+    isLoading: false,
+    error: null,
+  }),
 }));
 
 afterEach(() => {
@@ -173,7 +184,11 @@ describe("정렬", () => {
 
     renderPanel("?reviewSort=rating-low");
 
-    expect(useQueryProductReviews).toHaveBeenCalledWith({ productId: "1", sort: "rating-low" });
+    expect(useQueryProductReviews).toHaveBeenCalledWith({
+      productId: "1",
+      sort: "rating-low",
+      conditions: {},
+    });
   });
 });
 
@@ -211,25 +226,63 @@ describe("리뷰 사진 줄", () => {
 // 서버가 받는 모양과 화면이 고르는 모양이 달라 닫아 뒀다(#339).
 // 되는 조건만 보내면 고른 것이 조용히 무시되고, 그냥 두면 눌러도 목록이 안 바뀐다
 describe("계약이 없어 닫아 둔 것", () => {
-  it("필터와 맞춤보기가 화면에 없다", () => {
+  // 서버가 종과 체구만 견주어 안내 문구와 달라 PD 확인을 기다린다(#472)
+  it("맞춤보기 토글은 아직 없다", () => {
+    useQueryProductReviews.mockReturnValue(listState());
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewMatch=on");
+
+    expect(screen.queryByRole("switch")).toBeNull();
+    expect(screen.queryByText("내 반려동물 맞춤보기")).toBeNull();
+  });
+});
+
+// 백엔드가 구간·복수 조건을 받게 되어 시트를 다시 붙였다 (#472)
+describe("거르기", () => {
+  it("고른 조건이 없으면 조건 없이 부르고 필터 지우기가 없다", () => {
     useQueryProductReviews.mockReturnValue(listState());
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
     renderPanel();
 
-    expect(screen.queryByRole("switch")).toBeNull();
-    expect(screen.queryByText("내 반려동물 맞춤보기")).toBeNull();
-    expect(screen.queryByText("상품 옵션")).toBeNull();
+    expect(screen.getByRole("button", { name: "기본 맞춤 필터" })).toBeDefined();
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ conditions: {} }),
+    );
+    expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
+    expect(screen.getByText("총 리뷰 108개")).toBeDefined();
   });
 
-  it("주소에 옛 조건이 남아 있어도 필터가 열리지 않는다", () => {
+  it("주소의 조건을 서버 조건으로 바꿔 넘기고, 조건에 맞는 수라고 알린다", () => {
     useQueryProductReviews.mockReturnValue(listState());
     useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
 
-    renderPanel("?reviewFilter=species:cat&reviewMatch=on");
+    renderPanel("?reviewFilter=species:cat|age:2-8|breed:1,3");
 
-    expect(screen.queryByRole("switch")).toBeNull();
-    expect(screen.queryByRole("button", { name: "필터 지우기" })).toBeNull();
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        conditions: { species: "CAT", ageMin: 2, ageMax: 8, breedIds: [1, 3] },
+      }),
+    );
+    expect(screen.getByText("조건에 맞는 리뷰 108개")).toBeDefined();
+    expect(screen.getByRole("button", { name: "필터 지우기" })).toBeDefined();
+  });
+
+  it("조건에 맞는 후기가 없으면 지울 길과 함께 알린다", () => {
+    useQueryProductReviews.mockReturnValue({ ...listState(), reviews: [], totalCount: 0 });
+    useQueryFeaturedReviewPhotos.mockReturnValue({ photos: [] });
+
+    renderPanel("?reviewFilter=species:cat");
+
+    expect(screen.getByText("조건에 맞는 후기가 없어요")).toBeDefined();
+    expect(screen.queryByText("아직 후기가 없어요")).toBeNull();
+
+    fireEvent.click(screen.getAllByRole("button", { name: "필터 지우기" })[0]);
+
+    expect(useQueryProductReviews).toHaveBeenLastCalledWith(
+      expect.objectContaining({ conditions: {} }),
+    );
   });
 });
 
