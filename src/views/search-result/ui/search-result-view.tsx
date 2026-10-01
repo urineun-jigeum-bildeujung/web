@@ -33,6 +33,7 @@ import { useLoadMore } from "@/shared/lib/list/use-load-more";
 import { cn } from "@/shared/lib/utils";
 import { BottomActionBar } from "@/shared/ui/bottom-action-bar/bottom-action-bar";
 import { Button } from "@/shared/ui/button";
+import { ErrorBoundary } from "@/shared/ui/error-boundary/error-boundary";
 import { Icon } from "@/shared/ui/icon/icon";
 import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { HeaderBackButton } from "@/shared/ui/page-header/header-back-button";
@@ -56,6 +57,25 @@ function NoResults() {
         <br />
         다른 검색어로 다시 찾아보세요
       </p>
+    </div>
+  );
+}
+
+/**
+ * 결과 조회가 실패했을 때 결과 칸에 뜬다 (#620).
+ *
+ * **다시 시도는 `router.refresh()`다.** 결과는 Query가 아니라 `page.tsx`가 만든 일반 Promise를
+ * `use()`로 읽으므로, 경계만 리셋하면 이미 거절된 같은 Promise를 다시 읽어 그 자리에서 또
+ * 실패한다. 서버가 새로 그려 준 Promise는 `resetKeys`가 알아보고 경계를 스스로 푼다 —
+ * 메인이 같은 까닭으로 같은 처리를 한다(#289).
+ */
+function ResultsErrorFallback({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+      <p className="text-sm text-muted-foreground">잠시 문제가 생겼어요. 다시 시도해 주세요.</p>
+      <Button variant="outline" className="min-h-11 px-4" onClick={onRetry}>
+        다시 시도
+      </Button>
     </div>
   );
 }
@@ -461,24 +481,32 @@ export function SearchResultView({ resultsPromise, resultsQuery }: SearchResultV
           검색 결과
         </h1>
 
-        <Suspense fallback={<ResultsSkeleton />}>
-          {/* 검색어·정렬이 바뀌면 이어 받던 목록·커서를 버리고 새 첫 쪽부터 다시 세운다. key가 없으면
-              새 첫 쪽이 와도 이전 정렬로 이어 붙인 목록이 그대로 남는다 */}
-          <ResultsRegion
-            key={`${resultsQuery.keyword}:${resultsQuery.sort}`}
-            resultsPromise={resultsPromise}
-            resultsQuery={resultsQuery}
-            alreadyPicked={alreadyPicked}
-            picking={picking}
-            picked={picked}
-            onPick={(id) => setPicked((prev) => (prev === id ? null : id))}
-            sort={sort}
-            onSortChange={(next) => void setSort(next)}
-            wishedIds={wishedIds}
-            wishLoading={wishLoading}
-            onToggleLike={toggleLike}
-          />
-        </Suspense>
+        {/* 결과 조회가 실패해도 머리말(뒤로가기·검색바)과 하단 이동 줄은 남는다 — 이 칸만 바뀐다(#620).
+            경계가 없던 동안 전역 `app/error.tsx`가 화면을 통째로 덮어, 검색어와 검색바까지 잃고
+            눌러 갈 링크가 하나도 없었다. 메인과 같은 자리·같은 방식이다(#289) */}
+        <ErrorBoundary
+          fallback={() => <ResultsErrorFallback onRetry={() => router.refresh()} />}
+          resetKeys={[resultsPromise]}
+        >
+          <Suspense fallback={<ResultsSkeleton />}>
+            {/* 검색어·정렬이 바뀌면 이어 받던 목록·커서를 버리고 새 첫 쪽부터 다시 세운다. key가 없으면
+                새 첫 쪽이 와도 이전 정렬로 이어 붙인 목록이 그대로 남는다 */}
+            <ResultsRegion
+              key={`${resultsQuery.keyword}:${resultsQuery.sort}`}
+              resultsPromise={resultsPromise}
+              resultsQuery={resultsQuery}
+              alreadyPicked={alreadyPicked}
+              picking={picking}
+              picked={picked}
+              onPick={(id) => setPicked((prev) => (prev === id ? null : id))}
+              sort={sort}
+              onSortChange={(next) => void setSort(next)}
+              wishedIds={wishedIds}
+              wishLoading={wishLoading}
+              onToggleLike={toggleLike}
+            />
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       {picking ? (

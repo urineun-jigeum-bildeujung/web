@@ -3,14 +3,14 @@
 // 서버 책임이라 여기서 다시 보지 않는다(entities/product/api/products.test.ts가 요청 파라미터 조립을 본다).
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
-import { ErrorBoundary } from "react-error-boundary";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProductCard, ProductSearchResult, ProductSort } from "@/entities/product";
 
 const push = vi.fn();
+const refresh = vi.fn();
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push, back: vi.fn() }),
+  useRouter: () => ({ push, refresh, back: vi.fn() }),
   usePathname: () => "/search/result",
 }));
 
@@ -247,25 +247,49 @@ describe("SearchResultView", () => {
     expect(container.querySelector(".line-through")).toBeNull();
   });
 
-  it("서버 조회가 실패하면 렌더 중 오류로 던져 바깥 경계가 잡는다", async () => {
-    const onError = vi.fn();
-    // 던지는 이유(rejection reason)를 아무도 안 잡으면 Node가 unhandledRejection으로
-    // 시끄러워진다 — ErrorBoundary가 결국 잡아줄 것이므로 여기서는 무시해도 되는 잡음이다
-    const rejected = Promise.reject(new Error("네트워크 오류"));
-    rejected.catch(() => {});
+  /**
+   * **바깥에 경계를 씌워 보지 않는다.** 전에는 이 테스트가 스스로 `ErrorBoundary`를 세우고
+   * 친절한 대체 화면을 단정해, 실제 트리에 없는 경계를 전제하고 통과했다 — 그동안 배포된
+   * 화면은 전역 `app/error.tsx`가 머리말째 덮어 눌러 갈 링크가 하나도 없었다 (#620).
+   * 이제 화면이 제 경계를 들고 있으므로 그대로 그려서 본다.
+   */
+  describe("서버 조회가 실패하면", () => {
+    /** 거절된 promise를 넘겨 그대로 그린다. 이유를 아무도 안 잡으면 Node가 시끄러워져 미리 삼킨다 */
+    async function renderFailed() {
+      const rejected = Promise.reject(new Error("네트워크 오류"));
+      rejected.catch(() => {});
 
-    await act(async () => {
-      render(
-        <NuqsTestingAdapter searchParams="?q=사료">
-          <ErrorBoundary onError={onError} fallbackRender={() => <p>문제가 생겼어요</p>}>
+      await act(async () => {
+        render(
+          <NuqsTestingAdapter searchParams="?q=사료">
             <SearchResultView resultsPromise={rejected} resultsQuery={QUERY} />
-          </ErrorBoundary>
-        </NuqsTestingAdapter>,
-      );
+          </NuqsTestingAdapter>,
+        );
+      });
+    }
+
+    it("결과 칸만 실패 안내로 바뀌고 머리말과 하단 이동 줄은 남는다", async () => {
+      await renderFailed();
+
+      expect(await screen.findByRole("alert")).toBeDefined();
+      expect(screen.getByText("잠시 문제가 생겼어요. 다시 시도해 주세요.")).toBeDefined();
+
+      // 이것이 이 테스트가 막는 회귀다 — 검색어를 고치러 갈 검색바와 이동 줄이 남아야 한다
+      expect(screen.getByRole("button", { name: /검색어 고치기/ })).toBeDefined();
+      expect(screen.getByRole("heading", { name: "검색 결과" })).toBeDefined();
+      expect(screen.getByRole("navigation")).toBeDefined();
     });
 
-    expect(await screen.findByText("문제가 생겼어요")).toBeDefined();
-    expect(onError).toHaveBeenCalled();
+    // 일반 Promise를 `use()`로 읽으므로 경계만 리셋하면 같은 거절을 다시 읽어 그 자리에서 또 실패한다.
+    // 서버가 새로 그려 준 Promise는 `resetKeys`가 알아보고 경계를 스스로 푼다 (#289와 같은 처리)
+    it("다시 시도는 경계 리셋이 아니라 서버 재조회를 부른다", async () => {
+      refresh.mockClear();
+      await renderFailed();
+
+      fireEvent.click(await screen.findByRole("button", { name: "다시 시도" }));
+
+      expect(refresh).toHaveBeenCalledOnce();
+    });
   });
 
   // 모르는 채로 누르면 토글이라 이미 찜한 상품의 찜이 서버에서 지워진다 (#493 리뷰)
