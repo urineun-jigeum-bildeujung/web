@@ -1,10 +1,15 @@
-// 반응형 대응이 끝난 화면 넷이 태블릿·웹 폭에서 제 폭을 지키는지 본다(#132).
+// 반응형 대응이 끝난 화면 넷이 시안 세 폭에서 제 폭을 지키는지 본다(#132).
 //
 // **가로 넘침만 보면 부족하다.** 화면이 실수로 420px 기둥에 다시 들어가도 넘침은 0이라
 // 통과한다. 그래서 최상위 폭과 가운데 정렬까지 함께 잰다.
 //
 // **1200이 아니라 1920에서 잰다.** 1200에서는 `max-w-300`이 없어도 폭이 뷰포트와 같아
 // 최대 폭 제한과 가운데 정렬을 구분하지 못한다.
+//
+// **393을 빼 두었던 것을 채웠다(#632).** 이 프로젝트는 모바일 우선이고 시안 기준 폭이 393인데
+// 바로 그 폭이 없었다 — 거기서 격자가 깨지거나 가로로 넘쳐도 CI가 잡지 못했다. 393은 격자가
+// 딱 맞아떨어지는 폭이라 특히 중요하다. 거터 20px을 빼면 `170×2+13=353`으로 카드 둘이 정확히
+// 들어차고(#569 확정값), 이 폭이 어긋나면 카드가 한 장으로 떨어지거나 옆으로 넘친다.
 import { expect, test, type Page } from "@playwright/test";
 
 /** `(constrained)` 밖으로 나온 화면들. 각자 `mx-auto w-full max-w-300` 기둥을 갖는다 */
@@ -33,6 +38,21 @@ async function measure(page: Page, route: string) {
     };
   });
 }
+
+/* 시안 기준 폭이고 이 프로젝트의 기본이다(#632). 태블릿과 같은 단정문을 쓴다 — 둘 다
+   뷰포트 폭을 그대로 써야 하고, 420px 기둥으로 되돌아가면 여기서도 잡힌다 */
+test.describe("모바일 393", () => {
+  test.use({ viewport: { width: 393, height: 852 } });
+
+  for (const route of ROUTES) {
+    test(`${route} — 뷰포트 폭을 그대로 쓴다`, async ({ page }) => {
+      const layout = await measure(page, route);
+
+      expect(layout.overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
+      expect(layout.width, "화면이 뷰포트 폭을 쓰지 않는다").toBe(layout.viewport);
+    });
+  }
+});
 
 test.describe("태블릿 768", () => {
   test.use({ viewport: { width: 768, height: 1024 } });
@@ -69,7 +89,9 @@ const GRIDS = [
 ];
 
 for (const { name, route } of GRIDS) {
-  for (const width of [768, 1920]) {
+  // 393이 특히 중요하다 — 거터 20px을 빼면 `170×2+13=353`으로 카드 둘이 정확히 들어차는
+  // 폭이라, 카드 크기가 어긋나면 한 장으로 떨어지거나 옆으로 넘친다(#632)
+  for (const width of [393, 768, 1920]) {
     test(`${name} — ${width}px에서도 카드가 ${CARD_WIDTH}px이다`, async ({ page }) => {
       await page.setViewportSize({ width, height: 1024 });
       await page.goto(route, { waitUntil: "domcontentloaded" });
