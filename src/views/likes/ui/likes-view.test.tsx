@@ -203,6 +203,25 @@ describe("LikesView", () => {
     expect(screen.getByText("20%")).toBeDefined();
   });
 
+  // 서버가 정가를 비워 보낼 수 있다 — `Product.originalPrice` 열이 NULL을 허용하고
+  // `WishlistService`가 그 값을 그대로 통과시킨다. 전에는 타입이 `number`라 이 경우가
+  // 가려져 있었다 (#630)
+  it("정가가 비어 와도 취소선과 할인율을 그리지 않는다", async () => {
+    getWishlist.mockResolvedValue([
+      { productId: 9, name: "정가없는사료", thumbnailUrl: null, price: 25600, originalPrice: null },
+    ]);
+
+    const { container } = renderWith("?tab=liked");
+    await screen.findAllByRole("listitem");
+
+    expect(screen.getByText("정가없는사료")).toBeDefined();
+    expect(screen.getByText("25,600원")).toBeDefined();
+    expect(container.querySelectorAll(".line-through")).toHaveLength(0);
+    // 0원 취소선이나 "NaN%"가 새지 않는지 함께 본다
+    expect(screen.queryByText(/%$/)).toBeNull();
+    expect(screen.queryByText(/NaN/)).toBeNull();
+  });
+
   // 빈 상태 시안(2022-158710)엔 칩 줄이 없다. 거른 결과가 빈 것과는 다르다
   it("찜한 상품이 하나도 없으면 카테고리 칩도 감춘다", async () => {
     renderWith("?tab=liked");

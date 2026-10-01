@@ -5,7 +5,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `api/wishlist.ts` | 카테고리별 목록 조회(`getWishlist`)·상품 하나의 찜 여부(`getWishlistStatus`)·토글(`toggleWishlist`) 요청 함수와 `WishlistItem` 타입 |
-| `api/wishlist.test.ts` | 요청 파라미터 조립·응답 필드 매핑 단위 테스트 |
+| `api/wishlist.test.ts` | 요청 파라미터 조립·응답 필드 매핑(정가가 비어 올 때 포함) 단위 테스트 |
 | `api/use-query-wishlist.ts` | 찜 목록을 가져오는 훅. `enabled`로 조건부 조회한다 |
 | `api/use-query-wishlist-status.ts` | 상품 하나의 찜 여부를 가져오는 훅. 로그인했을 때만 `enabled`로 켜고, 꺼 두면 남은 캐시를 내주지 않는다. 받는 동안(`isLoading`)은 화면이 하트를 막는다 — 토글이라 모르는 채로 누르면 서버의 찜이 지워진다 (#483) |
 | `api/use-query-wishlist-status.test.tsx` | 받은 여부를 돌려주는지, 꺼져 있으면 묻지 않는지, 받는 중을 알리는지 |
@@ -27,8 +27,10 @@
 
 **변경 실패 토스트는 여기서 띄우지 않는다.** `AppProviders`의 `MutationCache.onError`가 모든 변경 실패를 알린다 — `entities/cart`와 같다.
 
-**정가는 늘 온다.** 할인하지 않는 상품도 할인율 계산 때문에 `originalPrice`를 저장해 둬, 그때는 `price`와 같은 값이 온다(백엔드 확인, #390). 두 값이 같으면 `calcDiscountRate`가 0을 돌려줘 카드가 취소선·할인율을 그리지 않는다 — 찜 응답엔 `discountRate` 필드가 없어 상품 목록과 달리 두 값을 비교해 판단한다.
+**정가는 비어 올 수 있다(#630).** `Product.originalPrice` 열이 NULL을 허용하고 `WishlistService`가 그 값을 그대로 통과시킨다 — 그래서 `originalPrice`는 `number | null`이고, 같은 열을 보는 `entities/product`의 `ProductCard.originalPrice`와 같다. 할인하지 않는 상품은 정가가 `price`와 같은 값으로 온다. 두 값이 같으면 `calcDiscountRate`가 0을 돌려줘 카드가 취소선·할인율을 그리지 않고, 비어 있으면 `Price`가 falsy로 걸러 역시 그리지 않는다 — 찜 응답엔 `discountRate` 필드가 없어 상품 목록과 달리 두 값을 비교해 판단한다.
+
+**전에는 "정가는 늘 온다"고 적혀 있었다.** #390에서 그렇게 보고 타입도 `number`로 뒀는데 근거가 없었다. 화면은 `Price` 덕에 멀쩡했지만 타입이 거짓이라 `likes-view`의 `toLikedProduct`가 `null`을 `number`로 넘기고 있었다.
 
 ## 아직 없는 것
 
-**리뷰 점수·후기 수는 항상 비어 있다.** 응답 필드(`reviewScore`·`reviewCount`)는 있지만 백엔드가 "리뷰 벌크조회 API 연동 전까지 임시로 비워둠"이라 늘 `null`/`0`이다 — 그래서 `WishlistItem`에 아예 옮기지 않는다. 좋아요 화면의 찜 탭 카드는 애초에 이 값을 보여주지 않아 지금은 문제되지 않는다.
+**리뷰 점수·후기 수를 옮기지 않는다.** 응답 필드(`reviewScore`·`reviewCount`)는 **지금 실제 값이 온다** — 백엔드가 리뷰 벌크조회를 붙였다(sever `0f1cae3`). 옮기지 않는 이유는 서버가 비워 두기 때문이 아니라 **찜 탭 카드 시안에 별점 자리가 없어서**다(`views/likes/README.md`의 탭별 표). 자리가 생기면 그때 옮긴다. #390 당시의 "백엔드가 임시로 비워둠" 서술은 더 이상 사실이 아니다 (#630).

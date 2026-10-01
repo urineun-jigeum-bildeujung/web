@@ -62,13 +62,19 @@ type Product = {
   lastBought?: string;
 };
 
-/** 찜 목록 항목을 카드가 쓰는 모양으로 옮긴다. 할인이 없으면 정가가 판매가와 같아 카드가 취소선을 그리지 않는다 */
+/**
+ * 찜 목록 항목을 카드가 쓰는 모양으로 옮긴다.
+ *
+ * 정가가 비어 올 수 있어(`WishlistItem.originalPrice`) `undefined`로 떨어뜨린다 — 카드는 정가가
+ * 없으면 취소선과 할인율을 그리지 않는다. 할인하지 않는 상품은 정가가 판매가와 같이 와서
+ * 역시 취소선이 없다 (#630)
+ */
 function toLikedProduct(item: WishlistItem): Product {
   return {
     id: String(item.productId),
     name: item.name,
     price: item.price,
-    originalPrice: item.originalPrice,
+    originalPrice: item.originalPrice ?? undefined,
   };
 }
 

@@ -11,20 +11,35 @@ type WishlistItemApiResponse = {
   wished: boolean;
   productName: string;
   price: number;
-  originalPrice: number;
+  /** 할인 전 가격. `Product.originalPrice` 열이 NULL을 허용해 비어 올 수 있다 */
+  originalPrice: number | null;
   reviewScore: number | null;
   reviewCount: number;
 };
 
-/** 화면이 실제로 쓰는 필드만 이름을 옮겼다. reviewScore·reviewCount는 백엔드가
- *  리뷰 벌크조회 연동 전까지 항상 null/0으로 고정해 둬(#390) 옮기지 않는다 */
+/**
+ * 화면이 실제로 쓰는 필드만 이름을 옮겼다.
+ *
+ * **`reviewScore`·`reviewCount`는 옮기지 않는다.** 백엔드가 리뷰 벌크조회를 붙여(sever 0f1cae3)
+ * 지금은 실제 평점이 오는데, 찜 카드 시안에 별점 자리가 없다(`views/likes/README.md`의 탭별 표).
+ * 자리가 생기면 그때 옮긴다 — 전에는 "서버가 항상 null/0으로 고정해 둬서"라고 적혀 있었고
+ * 그 근거는 더 이상 사실이 아니다 (#630).
+ */
 export type WishlistItem = {
   productId: number;
   name: string;
   thumbnailUrl: string | null;
   price: number;
-  /** 할인 전 가격. 할인하지 않는 상품도 저장돼 있어 늘 오고, 그때는 `price`와 같다 */
-  originalPrice: number;
+  /**
+   * 할인 전 가격. **비어 올 수 있다** — `Product.originalPrice`가 nullable이고
+   * `WishlistService`가 그 값을 그대로 통과시킨다. 같은 열을 보는 `entities/product`의
+   * `ProductCard.originalPrice`도 `number | null`이다.
+   *
+   * 전에는 `number`로 두고 "할인하지 않는 상품도 저장돼 있어 늘 온다"고 적었는데 근거가 없었다.
+   * 화면은 `Price`가 falsy를 걸러 지금도 멀쩡하지만, 타입이 거짓이면 다음 사람이 그 위에서
+   * 바로 셈을 한다 (#630).
+   */
+  originalPrice: number | null;
 };
 
 function toWishlistItem(response: WishlistItemApiResponse): WishlistItem {
