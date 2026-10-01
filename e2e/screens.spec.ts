@@ -404,13 +404,27 @@ test("낮은 화면에서도 체형 안내를 끝까지 읽을 수 있다", asyn
  * 시안이 없는 화면은 넓은 폭에서도 420px 기둥 안에 있어야 한다(#491).
  *
  * 기둥이 빠지면 시안 없는 화면이 데스크톱에서 혼자 퍼진다. 넘침 검사로는 안 잡힌다 —
- * 퍼져도 가로로 넘치지는 않기 때문이다. 전수로 돌 값은 아니라 일반 화면과 로그인이
- * 필요한 화면 하나씩만 본다. `/cart`는 위 beforeEach의 세션·장바구니 스텁을 쓴다.
+ * 퍼져도 가로로 넘치지는 않기 때문이다. `/cart`는 위 beforeEach의 세션·장바구니 스텁을 쓴다.
+ *
+ * **전수로 돌지는 않되 상품 영역의 제약 화면은 모두 본다(#634).** 시안이 오는 화면을 하나씩
+ * 그룹 밖으로 꺼내는 중이라(홈·상품 상세·검색이 이미 나갔다), 꺼낼 때 폭 처리를 빠뜨리면 그
+ * 화면이 넓은 뷰포트에서 혼자 퍼진다. 반대 방향(그룹 밖 화면이 뷰포트 폭을 쓰는지)은
+ * `responsive.server-fetch.spec.ts`가 본다.
+ *
+ * **`/deals`는 여기 없다.** 서버 컴포넌트가 직접 목록을 조회해 이 스위트의 dev 서버로는 못
+ * 그린다(파일 맨 위 주석) — 같은 검사를 `deals.server-fetch.spec.ts`가 맡는다.
  */
 test.describe("태블릿 폭에서도 좁은 기둥을 지킨다", () => {
   test.use({ viewport: { width: 768, height: 1024 } });
 
-  for (const route of ["/login", "/cart"]) {
+  for (const route of [
+    "/login",
+    "/cart",
+    "/likes",
+    "/compare",
+    "/recommendations",
+    "/products/1/photos",
+  ]) {
     test(`${route} — 420px 기둥 안에 가운데로 있다`, async ({ page }) => {
       await page.goto(route, { waitUntil: "networkidle" });
 
