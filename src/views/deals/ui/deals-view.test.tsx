@@ -178,6 +178,18 @@ describe("DealsView", () => {
     );
   });
 
+  // 상품 영역 아홉 화면 중 이 하나만 본문 랜드마크가 없어, 낭독기가 머리말을 지나
+  // 본문으로 건너뛸 수 없었다 (#630)
+  it("본문이 랜드마크 안에 있고 머리말은 그 밖에 있다", async () => {
+    await renderWith();
+
+    const main = screen.getByRole("main");
+    expect(main).toBeDefined();
+    // 탭 줄은 본문 안, 머리말은 본문 밖이다
+    expect(main.contains(screen.getByRole("tab", { name: "진행중" }))).toBe(true);
+    expect(main.contains(screen.getByRole("heading", { name: "타임딜" }))).toBe(false);
+  });
+
   it("진행중 탭에 남은 시간과 딜 목록이 있다", async () => {
     await renderWith();
 

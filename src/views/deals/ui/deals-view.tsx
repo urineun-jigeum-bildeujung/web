@@ -533,70 +533,74 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
         }
       />
 
-      <Tabs
-        value={tab}
-        onValueChange={(next) => void setTab(next as (typeof TABS)[number])}
-        className="flex-1 gap-0"
-      >
-        {/* 시안(1905-32413)은 탭 줄 전체를 가르는 회색 선이 없다 — 고른 탭 글자 바로
-            아래에만 1px 밑줄이 붙는다. 나머지는 배경과 같은 흰 바탕이다 */}
-        <TabsList variant="line" className="h-10 w-full justify-start gap-0 px-5">
-          {TAB_LABEL.map(([value, label]) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="relative h-8 flex-none px-2 text-label-medium-14 text-text-body-tertiary before:absolute before:inset-x-0 before:-inset-y-1.5 after:bg-border-strong group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-px data-active:text-label-bold-14 data-active:text-foreground"
-            >
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* 본문 랜드마크. 낭독기가 머리말을 지나 본문으로 건너뛸 자리다 — 이 화면만 빠져 있었다(#630).
+          좋아요 화면과 같은 모양이고, 머리말과 아래 개발용 줄·시트는 이 밖에 둔다 */}
+      <main className="flex flex-1 flex-col">
+        <Tabs
+          value={tab}
+          onValueChange={(next) => void setTab(next as (typeof TABS)[number])}
+          className="flex-1 gap-0"
+        >
+          {/* 시안(1905-32413)은 탭 줄 전체를 가르는 회색 선이 없다 — 고른 탭 글자 바로
+              아래에만 1px 밑줄이 붙는다. 나머지는 배경과 같은 흰 바탕이다 */}
+          <TabsList variant="line" className="h-10 w-full justify-start gap-0 px-5">
+            {TAB_LABEL.map(([value, label]) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="relative h-8 flex-none px-2 text-label-medium-14 text-text-body-tertiary before:absolute before:inset-x-0 before:-inset-y-1.5 after:bg-border-strong group-data-horizontal/tabs:after:bottom-0 group-data-horizontal/tabs:after:h-px data-active:text-label-bold-14 data-active:text-foreground"
+              >
+                {label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
 
-        <TabsContent value="live" className="flex flex-col">
-          {devForceEmpty ? (
-            <EmptyState
-              icon={
-                <Icon
-                  name="clock"
-                  className="text-icon-fill-secondary"
-                  style={{ width: 44, height: 44 }}
+          <TabsContent value="live" className="flex flex-col">
+            {devForceEmpty ? (
+              <EmptyState
+                icon={
+                  <Icon
+                    name="clock"
+                    className="text-icon-fill-secondary"
+                    style={{ width: 44, height: 44 }}
+                  />
+                }
+                title="지금 진행 중인 타임딜이 없어요"
+                titleClassName="text-body-medium-18"
+                description={
+                  <>
+                    새로운 타임딜이 열리면 알려드릴게요
+                    <br />
+                    다른 상품도 둘러보시겠어요?
+                  </>
+                }
+                className="flex-1"
+              />
+            ) : (
+              <Suspense fallback={<DealsSkeleton />}>
+                <LiveDealsSection
+                  dealsPromise={liveDealsPromise}
+                  endedDealIds={endedDealIds}
+                  onGroupEnd={(dealId) => setEndedDealIds((prev) => [...prev, dealId])}
+                  addedIds={addedIds}
+                  onItemAction={handleItemAction}
                 />
-              }
-              title="지금 진행 중인 타임딜이 없어요"
-              titleClassName="text-body-medium-18"
-              description={
-                <>
-                  새로운 타임딜이 열리면 알려드릴게요
-                  <br />
-                  다른 상품도 둘러보시겠어요?
-                </>
-              }
-              className="flex-1"
-            />
-          ) : (
+              </Suspense>
+            )}
+          </TabsContent>
+
+          <TabsContent value="upcoming" className="flex flex-col">
             <Suspense fallback={<DealsSkeleton />}>
-              <LiveDealsSection
-                dealsPromise={liveDealsPromise}
-                endedDealIds={endedDealIds}
-                onGroupEnd={(dealId) => setEndedDealIds((prev) => [...prev, dealId])}
-                addedIds={addedIds}
-                onItemAction={handleItemAction}
+              <UpcomingDealsSection
+                dealsPromise={upcomingDealsPromise}
+                notified={notified}
+                notifyPending={notifyPending}
+                onToggleNotify={() => setSubscribed(!notified)}
               />
             </Suspense>
-          )}
-        </TabsContent>
-
-        <TabsContent value="upcoming" className="flex flex-col">
-          <Suspense fallback={<DealsSkeleton />}>
-            <UpcomingDealsSection
-              dealsPromise={upcomingDealsPromise}
-              notified={notified}
-              notifyPending={notifyPending}
-              onToggleNotify={() => setSubscribed(!notified)}
-            />
-          </Suspense>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      </main>
 
       <Suspense fallback={null}>
         <RefreshOnDealOpen dealsPromise={upcomingDealsPromise} />
