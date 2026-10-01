@@ -153,3 +153,11 @@ describe("toReviewConditions", () => {
     );
   });
 });
+
+// 주소는 누구나 고칠 수 있다. 깨진 값 하나에 리뷰 탭 전체가 깨지면 안 된다 (#472 리뷰)
+it("건강 관심사 중 풀 수 없는 값만 버리고 나머지 조건은 지킨다", () => {
+  const filter = parseFilter(`species:cat|concern:%,${encodeURIComponent("관절염")}`);
+
+  expect(filter.species).toBe("cat");
+  expect(filter.healthConcerns).toEqual(["관절염"]);
+});

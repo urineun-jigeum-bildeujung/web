@@ -123,6 +123,17 @@ function parseRange(raw: string | undefined, range: readonly [number, number]): 
   return [clamp(Math.min(first, second)), clamp(Math.max(first, second))];
 }
 
+/** 하나씩 풀고, 풀 수 없는 값(`%` 하나 등)만 버린다. 하나가 깨졌다고 화면 전체가 깨지면 안 된다 */
+function decodeEach(values: string[]) {
+  return values.flatMap((value) => {
+    try {
+      return [decodeURIComponent(value)];
+    } catch {
+      return [];
+    }
+  });
+}
+
 export function parseFilter(param: string): ReviewFilter {
   const entries = new Map(
     param
@@ -146,7 +157,7 @@ export function parseFilter(param: string): ReviewFilter {
     age: parseRange(entries.get("age"), AGE_RANGE),
     neutered: neutered === "yes" || neutered === "no" ? neutered : null,
     weight: parseRange(entries.get("weight"), WEIGHT_RANGE),
-    healthConcerns: concern ? concern.split(",").filter(Boolean).map(decodeURIComponent) : [],
+    healthConcerns: concern ? decodeEach(concern.split(",").filter(Boolean)) : [],
   };
 }
 
