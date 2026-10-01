@@ -150,3 +150,29 @@ test("띄어쓰기 없는 긴 검색어도 검색바 안에서 잘리고 화면�
   );
   expect(clipped).toBe(true);
 });
+
+/*
+ * 서버가 준 정가와 할인율을 카드가 그리는지 본다(#458). 그동안 목 서버 픽스처에
+ * `originalPrice` 키가 없고 `discountRate`가 모두 0이라 이 경로를 한 번도 지나지 않았다(#632).
+ *
+ * **할인율은 서버 값을 써야 한다.** 노령견 사료는 `6,700 / 33,900 = 19.76%`라 서버는 `HALF_UP`으로
+ * 20, 화면의 `calcDiscountRate`는 버림으로 19다. 20이 보이면 서버 값을 쓰는 것이고, 19가 보이면
+ * 화면이 두 금액으로 다시 계산한 것이다 — 단위 테스트가 보는 그 구분을 실제 응답 경로에서 본다.
+ */
+test("할인 중인 카드만 서버 할인율과 정가 취소선을 보인다", async ({ page }) => {
+  await page.goto("/search/result?q=사료");
+
+  const senior = page.getByRole("listitem").filter({ hasText: "노령견 저지방 소화케어 사료 1kg" });
+  await expect(senior).toBeVisible();
+
+  await expect(senior.getByText("20%")).toBeVisible();
+  await expect(senior.getByText("27,200원")).toBeVisible();
+  await expect(senior.getByText("33,900원")).toBeVisible();
+  // 버림으로 다시 계산했으면 19%가 보인다
+  await expect(senior.getByText("19%")).toBeHidden();
+
+  // 나머지 셋은 정가가 판매가와 같아 할인이 아니다 — 취소선이 하나뿐이어야 한다
+  const struck = page.getByRole("main").locator(".line-through");
+  await expect(struck).toHaveCount(1);
+  await expect(struck).toHaveText("33,900원");
+});

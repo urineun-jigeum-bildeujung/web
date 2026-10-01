@@ -10,11 +10,21 @@ import { createServer } from "node:http";
 
 const PORT = Number(process.env.MOCK_API_PORT ?? 4010);
 
-/** e2e 테스트가 이름·id로 확인하는 상품들. 옛 목데이터 이름·가격을 그대로 옮겼다 */
+/**
+ * e2e 테스트가 이름·id로 확인하는 상품들. 옛 목데이터 이름·가격을 그대로 옮겼다.
+ *
+ * **`originalPrice`를 늘 담는다(#632).** 백엔드 `ProductCardResponse`는 값이 null이어도 키를
+ * 내려주는데 여기서 키째 빼 두고 있어, 매퍼가 받는 모양이 실제와 달랐다. 할인하지 않는 상품은
+ * 정가가 판매가와 같은 값으로 온다.
+ *
+ * **노령견 사료만 실제로 할인 중이다.** #458의 정가·할인율 표기가 E2E를 한 번도 지나지 않아
+ * 한 상품을 할인 중으로 둔다. 상세 픽스처가 없는 id(2)라 상품 상세 쪽과 얽히지 않는다.
+ */
 const PUPPY_FOOD = {
   productId: 4,
   productName: "퍼피 성장기 사료 1kg",
   price: 21000,
+  originalPrice: 21000,
   discountRate: 0,
   unitPrice: 21,
   unitLabel: "g",
@@ -23,11 +33,19 @@ const PUPPY_FOOD = {
   reviewCount: 109,
 };
 
+/**
+ * 유일하게 할인 중인 상품.
+ *
+ * **할인율을 서버 값과 버림이 갈리는 숫자로 고른다.** `6,700 / 33,900 = 19.76%`라 서버는
+ * `HALF_UP`으로 **20**, 화면의 `calcDiscountRate`는 버림으로 **19**다. 카드가 20%를 그리면
+ * 서버가 준 값을 쓴다는 뜻이고, 그 구분을 단위 테스트가 아니라 실제 응답 경로에서 본다 (#632).
+ */
 const SENIOR_FOOD = {
   productId: 2,
   productName: "노령견 저지방 소화케어 사료 1kg",
   price: 27200,
-  discountRate: 0,
+  originalPrice: 33900,
+  discountRate: 20,
   unitPrice: 27,
   unitLabel: "g",
   thumbnailUrl: null,
@@ -39,6 +57,7 @@ const ALLERGY_FOOD = {
   productId: 3,
   productName: "알레르기 케어 무곡물 사료 1kg",
   price: 26100,
+  originalPrice: 26100,
   discountRate: 0,
   unitPrice: 26,
   unitLabel: "g",
@@ -51,6 +70,7 @@ const SMALL_BREED_FOOD = {
   productId: 1,
   productName: "중소형견 소포장 사료 1kg",
   price: 31500,
+  originalPrice: 31500,
   discountRate: 0,
   unitPrice: 32,
   unitLabel: "g",
@@ -94,24 +114,19 @@ function searchProducts(url) {
 }
 
 // 홈 카테고리 그리드(#289) 전용 목데이터. FOOD 카테고리만 두 페이지로 나눠 두어
-// "더 보기" 커서 이어받기를 확인한다. 그 밖의 조합은 빈 목록을 준다
+// "더 보기" 커서 이어받기를 확인한다. 그 밖의 조합은 빈 목록을 준다.
+//
+// 1·2번은 위 상수와 같은 상품이라 그대로 가리킨다 — 값을 따로 적어 두던 동안 정가를 넣을 때
+// 두 벌을 다 고쳐야 했다(#632). 덕분에 둘째 쪽이 할인 중인 상품이라 "더 보기"로 이어 받은
+// 카드에서도 정가·할인율 표기를 볼 수 있다
 const FOOD_PAGE_1 = [
-  {
-    productId: 1,
-    productName: "중소형견 소포장 사료 1kg",
-    price: 31500,
-    discountRate: 0,
-    unitPrice: 32,
-    unitLabel: "g",
-    thumbnailUrl: null,
-    avgRating: 4.8,
-    reviewCount: 108,
-  },
+  SMALL_BREED_FOOD,
   // 이름이 칸보다 긴 상품. 카드가 이름 길이만큼 넓어져 옆 칸을 덮던 것을 본다(#534)
   {
     productId: 5,
     productName: "담았냥 그레인프리 가다랑어 시니어 전연령 고양이 사료 1kg",
     price: 24700,
+    originalPrice: 24700,
     discountRate: 0,
     unitPrice: 25,
     unitLabel: "g",
@@ -120,19 +135,7 @@ const FOOD_PAGE_1 = [
     reviewCount: 0,
   },
 ];
-const FOOD_PAGE_2 = [
-  {
-    productId: 2,
-    productName: "노령견 저지방 소화케어 사료 1kg",
-    price: 27200,
-    discountRate: 0,
-    unitPrice: 27,
-    unitLabel: "g",
-    thumbnailUrl: null,
-    avgRating: 4.5,
-    reviewCount: 108,
-  },
-];
+const FOOD_PAGE_2 = [SENIOR_FOOD];
 
 // 상품 상세의 "함께 보면 좋은 상품"(#481)은 카테고리 없이 인기순으로 부른다. 지금 보는 상품(1)이
 // 섞여 와야 화면이 빼는지 볼 수 있어 일부러 넣는다. 서버처럼 size만큼 자른다
@@ -505,8 +508,8 @@ const PUPPY_FOOD_DETAIL = {
     ...PRODUCT_DETAIL.summary,
     productName: PUPPY_FOOD.productName,
     price: PUPPY_FOOD.price,
-    originalPrice: PUPPY_FOOD.price,
-    discountRate: 0,
+    originalPrice: PUPPY_FOOD.originalPrice,
+    discountRate: PUPPY_FOOD.discountRate,
   },
 };
 

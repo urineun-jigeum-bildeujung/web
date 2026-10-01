@@ -76,6 +76,13 @@ test("더 보기를 누르면 다음 페이지를 이어 붙이고, 다 받으�
   await expect(page.getByText("노령견 저지방 소화케어 사료 1kg")).toBeVisible();
   // 두 번째 페이지가 hasNext:false라 버튼이 사라진다
   await expect(page.getByRole("button", { name: "더 보기" })).not.toBeVisible();
+
+  // **이어 받은 카드도 서버가 준 정가·할인율을 그린다(#458, #632).** 둘째 쪽 상품만 할인 중이고,
+  // 서버는 `6,700 / 33,900`을 `HALF_UP`으로 20%라 한다 — 화면이 버림으로 다시 계산하면 19%다
+  const senior = page.getByRole("listitem").filter({ hasText: "노령견 저지방 소화케어 사료 1kg" });
+  await expect(senior.getByText("20%")).toBeVisible();
+  await expect(senior.getByText("33,900원")).toBeVisible();
+  await expect(senior.getByText("19%")).toBeHidden();
 });
 
 // 칸(li)을 flex로 두고 카드에 flex-1을 주던 동안 카드의 최소 폭이 이름 전체 길이가 되어, 긴 이름의
