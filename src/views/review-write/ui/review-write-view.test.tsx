@@ -358,6 +358,19 @@ describe("ReviewWriteView 1단계", () => {
     fireEvent.pointerCancel(group, finger);
 
     expect(checked()).toBe("5점 만점에 3점");
+    // 초점이 고르지 않은 4점 칸에 남으면 Tab을 받지 않는 칸에 머문다
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 3점" }));
+  });
+
+  it("아무것도 고르지 않았을 때 스크롤로 취소되면 초점은 가장 낮은 칸으로 돌아간다", () => {
+    renderAt();
+    const { group, checked } = starGroup();
+
+    fireEvent.pointerDown(group, { ...finger, clientX: 170 });
+    fireEvent.pointerCancel(group, finger);
+
+    expect(checked()).toBeUndefined();
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 1점" }));
   });
 
   it("누르지 않은 채 지나가거나 둘째 손가락이 닿으면 점수가 바뀌지 않는다", () => {

@@ -89,11 +89,15 @@ export function RatingInput({
         moveToPointer(event.clientX);
         drag.current = null;
       }}
-      // 세로로 밀어 브라우저가 스크롤로 가져가면 눌렀을 때 바뀐 값을 되돌린다
+      // 세로로 밀어 브라우저가 스크롤로 가져가면 눌렀을 때 바뀐 값을 되돌린다.
+      // 초점도 Tab을 받는 칸(고른 칸, 없으면 가장 낮은 칸)으로 돌려야 고르지 않은 칸에 남지 않는다
       onPointerCancel={(event) => {
         const current = drag.current;
         if (current?.pointerId !== event.pointerId) return;
-        if (current.last !== current.from) onChange(current.from / 2);
+        if (current.last !== current.from) {
+          onChange(current.from / 2);
+          buttons.current[(current.from || minSteps) - 1]?.focus({ preventScroll: true });
+        }
         drag.current = null;
       }}
       className={cn("flex w-fit touch-pan-y justify-center select-none", className)}
