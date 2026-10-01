@@ -638,8 +638,9 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
   const petName = pet?.name ?? "우리 아이";
 
   const { changeDefaultPet } = useMutateChangeDefaultPet();
-  // 마지막으로 고른 아이. 앞서 고른 아이의 요청이 늦게 끝나도 그 아이로 바꿨다고 알리지 않는다
-  const latestPick = useRef<string | null>(null);
+  // 마지막 선택의 순번. 앞선 선택의 요청이 늦게 끝나도 알리거나 되돌리지 않는다. 같은 아이를 다시
+  // 고르는 것도 다른 선택이라 아이 번호로는 가릴 수 없다(#531 리뷰)
+  const latestPick = useRef(0);
 
   /**
    * 아이를 고른다. 맞춤 상품·적합도가 모두 그 아이 기준으로 바뀌므로 누구로 바뀌었는지 알린다(QA r18, #611).
@@ -658,12 +659,14 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
     const next = pets?.find((item) => item.id === id);
     if (!next || next.id === pet?.id) return;
     setPetId(id);
-    latestPick.current = id;
+    const pick = ++latestPick.current;
     changeDefaultPet(id).then(
       () => {
-        if (latestPick.current === id) showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
+        if (latestPick.current === pick) showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
       },
-      () => setPetId((current) => (current === id ? null : current)),
+      () => {
+        if (latestPick.current === pick) setPetId(null);
+      },
     );
   };
 
