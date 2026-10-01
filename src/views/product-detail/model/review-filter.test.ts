@@ -1,4 +1,4 @@
-// 필터 규칙 테스트. 구간 해석과 주소 왕복, 잘못된 주소를 견디는지 본다.
+// 필터 규칙 테스트. 구간 해석과 주소 왕복, 잘못된 주소를 견디는지, 서버 조건으로 옮기는 규칙을 본다.
 import { describe, expect, it } from "vitest";
 
 import {
@@ -8,6 +8,7 @@ import {
   parseFilter,
   periodLabel,
   serializeFilter,
+  toReviewConditions,
   weightLabel,
   type ReviewFilter,
 } from "./review-filter";
@@ -104,5 +105,51 @@ describe("주소에 싣고 되읽기", () => {
 
   it("걷어낸 조건만 남은 옛 주소는 아무것도 고르지 않은 것과 같다", () => {
     expect(isDefault(parseFilter("repeat:1"))).toBe(true);
+  });
+});
+
+// 서버는 구간 양 끝을 포함하고 일 수로 받는다. 건드리지 않은 손잡이를 보내면 끝에 붙은 값이 빠진다 (#472)
+describe("toReviewConditions", () => {
+  it("아무것도 고르지 않았으면 조건을 하나도 보내지 않는다", () => {
+    expect(toReviewConditions(DEFAULT_FILTER)).toEqual({});
+  });
+
+  it("고른 조건을 서버 이름과 값으로 옮긴다", () => {
+    expect(
+      toReviewConditions(
+        filterWith({
+          period: [3, 6],
+          species: "dog",
+          breedIds: [1, 3],
+          age: [2, 8],
+          neutered: "no",
+          weight: [3, 9],
+          healthConcerns: ["슬개골 탈구", "관절염"],
+        }),
+      ),
+    ).toEqual({
+      usagePeriodMinDays: 90,
+      usagePeriodMaxDays: 180,
+      species: "DOG",
+      breedIds: [1, 3],
+      ageMin: 2,
+      ageMax: 8,
+      neutered: false,
+      weightMin: 3,
+      weightMax: 9,
+      healthConcerns: ["슬개골 탈구", "관절염"],
+    });
+  });
+
+  it("오른쪽 끝(1년+·15세+·30kg+)은 열린 상한이라 위쪽을 보내지 않는다", () => {
+    expect(
+      toReviewConditions(filterWith({ period: [6, 12], age: [8, 15], weight: [10, 30] })),
+    ).toEqual({ usagePeriodMinDays: 180, ageMin: 8, weightMin: 10 });
+  });
+
+  it("왼쪽 끝은 아래 제한이 없는 것이라 아래쪽을 보내지 않는다", () => {
+    expect(toReviewConditions(filterWith({ period: [1, 3], age: [0, 3], weight: [1, 5] }))).toEqual(
+      { usagePeriodMaxDays: 90, ageMax: 3, weightMax: 5 },
+    );
   });
 });

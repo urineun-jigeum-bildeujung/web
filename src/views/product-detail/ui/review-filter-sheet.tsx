@@ -6,10 +6,13 @@
 //
 // 고르는 동안에는 화면 안 상태로 들고, 적용을 눌러야 바깥으로 넘긴다. 슬라이더를
 // 움직일 때마다 목록이 바뀌면 무엇을 고르는 중인지 알 수 없다.
+//
+// "리뷰 N개 보기"의 N은 서버가 센다(#472). 슬라이더를 끄는 동안 요청이 쏟아지지 않게
+// 손을 뗀 뒤 잠깐 기다렸다가 묻고, 다시 세는 동안에는 앞서 센 수를 그대로 둔다.
 
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import {
   groupBreedsByBodySize,
@@ -18,12 +21,14 @@ import {
   useQueryHealthOptions,
   type PetSpecies,
 } from "@/entities/pet";
+import { useQueryProductReviewCount } from "@/entities/review";
 import { Badge } from "@/shared/ui/badge/badge";
 import { BottomSheet } from "@/shared/ui/bottom-sheet/bottom-sheet";
 import { Button } from "@/shared/ui/button";
 import { ChipSelect } from "@/shared/ui/chip-select/chip-select";
 import { DrawerDescription, DrawerTitle } from "@/shared/ui/drawer";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { Slider } from "@/shared/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/shared/ui/tabs";
 
@@ -38,6 +43,7 @@ import {
   type Neutered,
   type ReviewFilter,
   type Species,
+  toReviewConditions,
 } from "../model/review-filter";
 import { ReviewFilterPicker, type PickerGroup } from "./review-filter-picker";
 
@@ -106,11 +112,24 @@ function PickerRow({
 }
 
 type ReviewFilterSheetProps = {
+  /** 고르는 조건에 걸리는 후기 수를 이 상품 기준으로 센다 */
+  productId: string;
   filter: ReviewFilter;
   onApply: (filter: ReviewFilter) => void;
-  /** 지금 조건으로 걸러지는 후기 수를 미리 세어 버튼에 적는다 */
-  countOf: (filter: ReviewFilter) => number;
 };
+
+/** 손을 뗀 뒤 이만큼 기다렸다가 수를 묻는다 */
+const COUNT_DELAY_MS = 300;
+
+/** 값이 잠시 멈춘 뒤에야 따라온다. 슬라이더를 끄는 동안 매 칸마다 묻지 않게 한다 */
+function useSettledValue<T>(value: T, delay: number) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+  return settled;
+}
 
 /**
  * 슬라이더 아래 눈금.
@@ -183,10 +202,16 @@ function Summary({ text }: { text: string | null }) {
   return <p className="text-body-medium-14 text-text-body-brand-default">{text}</p>;
 }
 
-export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterSheetProps) {
+export function ReviewFilterSheet({ productId, filter, onApply }: ReviewFilterSheetProps) {
   const [open, setOpen] = useState(false);
   // 시트를 열 때마다 바깥 값에서 다시 시작한다. 닫고 다시 열면 적용된 조건이 보여야 한다
   const [draft, setDraft] = useState(filter);
+  const settledDraft = useSettledValue(draft, COUNT_DELAY_MS);
+  const { count, isCounting } = useQueryProductReviewCount({
+    productId,
+    conditions: toReviewConditions(settledDraft),
+    enabled: open,
+  });
 
   const openSheet = (next: boolean) => {
     if (next) setDraft(filter);
@@ -412,7 +437,10 @@ export function ReviewFilterSheet({ filter, onApply, countOf }: ReviewFilterShee
               setOpen(false);
             }}
           >
-            리뷰 {countOf(draft)}개 보기
+            {/* 처음 세는 동안에는 수 없이 적고, 다시 세는 동안에는 앞서 센 수를 둔다 */}
+            <LoadingSwap loading={count === undefined && isCounting} label="리뷰 수를 세는 중">
+              {count === undefined ? "리뷰 보기" : `리뷰 ${count}개 보기`}
+            </LoadingSwap>
           </Button>
         </div>
       </BottomSheet>

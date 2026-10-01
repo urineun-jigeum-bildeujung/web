@@ -4,11 +4,11 @@
 // AI 리뷰 요약 카드(#152)는 진행하지 않기로 결정했다(2026-09-17).
 // 이 화면의 시안에 그 카드가 보여도 만들지 않는다.
 //
-// **필터 시트와 맞춤보기 토글을 아직 걸지 않는다(#339).** 서버가 받는 모양과 화면이 고르는
-// 모양이 달라서다 — 나이·사용 기간은 서버가 단계 열거형으로 받는데 화면은 구간으로 고르고,
-// 품종은 서버가 하나만 받는데 화면은 여럿 고른다. 되는 조건만 보내면 고른 것이 조용히
-// 무시되고, 그냥 두면 눌러도 목록이 안 바뀌는 버튼이 된다. 맞춤보기는 서버가 종과 체구만
-// 견주어 문구가 약속하는 범위와 달라 함께 닫아 둔다. 코드는 지우지 않고 남겨 뒀다.
+// **필터 시트로 후기를 거른다(#472).** 서버가 품종 여럿·나이·체중·사용 기간 구간을 받게 되어
+// (백엔드 cb2f134, 2026-10-01) 닫아 두었던 시트를 다시 붙였다. 고른 조건은 주소(`reviewFilter`)에
+// 남아 새로고침·뒤로가기에도 유지되고, 거르는 것은 서버다(AGENTS.md 2.5).
+// **맞춤보기 토글은 아직 닫혀 있다.** 서버가 종과 체구만 견주어 안내 문구가 약속하는 범위와
+// 달라 PD 확인을 기다린다(#472).
 
 "use client";
 
@@ -36,6 +36,16 @@ import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { Rating } from "@/shared/ui/rating/rating";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
+
+import {
+  DEFAULT_FILTER,
+  isDefault,
+  parseFilter,
+  serializeFilter,
+  toReviewConditions,
+  type ReviewFilter,
+} from "../model/review-filter";
+import { ReviewFilterSheet } from "./review-filter-sheet";
 
 type ReviewPanelProps = {
   productId: string;
@@ -75,6 +85,13 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
     "reviewSort",
     parseAsStringLiteral(REVIEW_SORTS).withDefault("recommend"),
   );
+  // 거르기 조건도 정렬처럼 주소에 둔다. 형식이 자유로워 literal로 막을 수 없는 대신
+  // parseFilter가 아는 키만 꺼내 검증한다
+  const [filterParam, setFilterParam] = useQueryState("reviewFilter", { defaultValue: "" });
+  const filter = parseFilter(filterParam);
+  const filtering = !isDefault(filter);
+  const applyReviewFilter = (next: ReviewFilter) =>
+    void setFilterParam(isDefault(next) ? "" : serializeFilter(next));
 
   const {
     reviews,
@@ -86,7 +103,7 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
     loadNext,
     isLoadingNext,
     nextError,
-  } = useQueryProductReviews({ productId, sort });
+  } = useQueryProductReviews({ productId, sort, conditions: toReviewConditions(filter) });
   const { photos: featuredPhotos } = useQueryFeaturedReviewPhotos(productId);
   // 도움돼요는 누르는 즉시 수와 눌림이 바뀐다. 비로그인이면 카드가 먼저 막는다 (#542, #606)
   const recommend = useMutateReviewRecommend();
@@ -115,7 +132,10 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
         {totalCount === null ? (
           <Skeleton className="h-5 w-24" />
         ) : (
-          <p className="text-body-medium-14 text-text-body-secondary">총 리뷰 {totalCount}개</p>
+          // 거르는 중이면 이 수는 조건에 걸린 후기 수다. 상품 전체 수로 읽히지 않게 말을 바꾼다
+          <p className="text-body-medium-14 text-text-body-secondary">
+            {filtering ? `조건에 맞는 리뷰 ${totalCount}개` : `총 리뷰 ${totalCount}개`}
+          </p>
         )}
       </section>
 
@@ -166,19 +186,31 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
 
       <div className="h-2 bg-muted" />
 
-      <div className="flex items-center justify-end border-b border-border p-4">
-        <Select value={sort} onValueChange={(next) => void setSort(next as ReviewSort)}>
-          <SelectTrigger aria-label="리뷰 정렬" className="min-h-11 w-auto border-0 shadow-none">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent align="end">
-            {REVIEW_SORTS.map((value) => (
-              <SelectItem key={value} value={value}>
-                {REVIEW_SORT_LABEL[value]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col gap-1 border-b border-border p-4">
+        <div className="flex items-center justify-between gap-2">
+          <ReviewFilterSheet productId={productId} filter={filter} onApply={applyReviewFilter} />
+          <Select value={sort} onValueChange={(next) => void setSort(next as ReviewSort)}>
+            <SelectTrigger aria-label="리뷰 정렬" className="min-h-11 w-auto border-0 shadow-none">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              {REVIEW_SORTS.map((value) => (
+                <SelectItem key={value} value={value}>
+                  {REVIEW_SORT_LABEL[value]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {filtering && (
+          <button
+            type="button"
+            onClick={() => applyReviewFilter(DEFAULT_FILTER)}
+            className="flex min-h-11 items-center self-start text-caption-regular-13 text-text-body-secondary underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            필터 지우기
+          </button>
+        )}
       </div>
 
       {isLoading && <ReviewSkeleton />}
@@ -190,7 +222,21 @@ export function ReviewPanel({ productId }: ReviewPanelProps) {
         <EmptyState role="alert" className="py-10" {...APP_MESSAGE[toAppMessageCode(error)]} />
       )}
 
-      {!isLoading && !error && list.length === 0 && (
+      {!isLoading && !error && list.length === 0 && filtering && (
+        // 후기가 없는 것과 조건에 걸린 후기가 없는 것은 다르다. 지울 길을 바로 둔다
+        <EmptyState
+          title="조건에 맞는 후기가 없어요"
+          description="조건을 바꾸거나 지워 보세요."
+          className="py-10"
+          action={
+            <Button variant="outline" onClick={() => applyReviewFilter(DEFAULT_FILTER)}>
+              필터 지우기
+            </Button>
+          }
+        />
+      )}
+
+      {!isLoading && !error && list.length === 0 && !filtering && (
         <EmptyState
           title="아직 후기가 없어요"
           description="먹여 보고 첫 후기를 남겨 주세요."

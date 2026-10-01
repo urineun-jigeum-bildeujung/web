@@ -4,8 +4,7 @@
 // `text-overflow`가 걸렸는지 알 수 없다 — 실제 말줄임과 넘침은 Chromium 실측으로 확인했고,
 // 여기서는 DOM 계약만 고정한다.
 //
-// **이 시트는 아직 어느 화면에도 붙어 있지 않아 E2E가 이 자리를 잡지 못한다**(#472).
-// 그래서 회귀를 잡는 자동 검증이 이 파일뿐이다.
+// 시트는 리뷰 탭에 붙어 있다(#472). 버튼의 "리뷰 N개 보기"는 서버가 센 수다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -39,6 +38,17 @@ const { BREEDS, HEALTH_OPTIONS } = vi.hoisted(() => ({
   },
 }));
 
+const { countHook } = vi.hoisted(() => ({
+  countHook: vi.fn<(args: { enabled: boolean }) => { count: number; isCounting: boolean }>(() => ({
+    count: 12,
+    isCounting: false,
+  })),
+}));
+vi.mock("@/entities/review", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/review")>()),
+  useQueryProductReviewCount: countHook,
+}));
+
 vi.mock("@/entities/pet", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/pet")>();
   return {
@@ -53,7 +63,7 @@ const HEALTH_LABELS = ["슬개골 탈구", "관절염"];
 
 /** 시트를 열고 품종·건강 관심사가 있는 "반려동물 필터" 탭으로 옮긴다 */
 function openPetTab(filter: ReviewFilter) {
-  render(<ReviewFilterSheet filter={filter} onApply={vi.fn()} countOf={() => 12} />);
+  render(<ReviewFilterSheet productId="1" filter={filter} onApply={vi.fn()} />);
 
   fireEvent.click(screen.getByRole("button", { name: "기본 맞춤 필터" }));
   // Radix 탭은 click이 아니라 mouseDown에서 값을 바꾼다
@@ -140,5 +150,20 @@ describe("ReviewFilterSheet의 고른 값 줄", () => {
     openPetTab(DEFAULT_FILTER);
 
     expect(screen.getByRole("button", { name: "품종 선택하기" })).toBeDefined();
+  });
+});
+
+// "리뷰 N개 보기"의 N은 서버가 센다. 닫혀 있는 동안에는 묻지 않는다 (#472)
+describe("ReviewFilterSheet의 적용 버튼", () => {
+  it("시트가 닫혀 있으면 수를 묻지 않고, 열면 서버가 센 수를 버튼에 적는다", () => {
+    countHook.mockClear();
+    render(<ReviewFilterSheet productId="1" filter={DEFAULT_FILTER} onApply={vi.fn()} />);
+
+    expect(countHook.mock.calls.every(([args]) => args.enabled === false)).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "기본 맞춤 필터" }));
+
+    expect(countHook.mock.calls.at(-1)?.[0].enabled).toBe(true);
+    expect(screen.getByRole("button", { name: "리뷰 12개 보기" })).toBeDefined();
   });
 });
