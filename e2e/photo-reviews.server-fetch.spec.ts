@@ -159,11 +159,20 @@ test("뷰어 카드의 도움돼요도 누르고 풀 수 있다", async ({ page 
     liked = !liked;
     return route.fulfill({ status: 200 });
   });
+  // **중단된 조회를 치명적 오류로 다루지 않는다.** 도움돼요를 누르면 앱이 진행 중인 상세 조회를
+  // 일부러 세운다(`use-mutate-review-recommend`의 `cancelQueries`) — 그대로 두면 나중에 끝나면서
+  // 방금 바꾼 눌림을 덮어쓰기 때문이다. 중단된 요청의 응답은 Playwright가 폐기하므로, 흘려보낸
+  // 응답을 읽다 실패하면 그 요청은 버린다. 화면은 낙관적 갱신으로 이미 그려져 있고, 토글이 끝난
+  // 뒤의 재조회가 서버 값으로 맞춘다. 이 처리가 없던 동안 네 번에 한 번
+  // `apiResponse.json: Response has been disposed`로 터졌다 (#628)
   await page.route("**/api/v1/reviews/7", async (route) => {
-    const response = await route.fetch();
-    const body = await response.json();
+    let body;
+    try {
+      body = await (await route.fetch()).json();
+    } catch {
+      return route.abort("aborted");
+    }
     return route.fulfill({
-      response,
       json: { ...body, liked, likeCount: body.likeCount + (liked ? 1 : 0) },
     });
   });
