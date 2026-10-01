@@ -152,6 +152,13 @@ describe("toReviewConditions", () => {
       { usagePeriodMaxDays: 90, ageMax: 3, weightMax: 5 },
     );
   });
+
+  // 확정한 변환표는 1개월 30일 · 3개월 90일 · 6개월 180일 · 1년 365일이다 (#641)
+  it("1년+만 고르면 365일 이상을 보낸다", () => {
+    expect(toReviewConditions(filterWith({ period: [12, 12] }))).toEqual({
+      usagePeriodMinDays: 365,
+    });
+  });
 });
 
 // 주소는 누구나 고칠 수 있다. 깨진 값 하나에 리뷰 탭 전체가 깨지면 안 된다 (#472 리뷰)

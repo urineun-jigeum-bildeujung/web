@@ -163,13 +163,20 @@ export function parseFilter(param: string): ReviewFilter {
 
 /** 사용 기간 한 달을 며칠로 볼지. 서버는 일 수로 받는다 */
 const DAYS_PER_MONTH = 30;
+/** 1년만 따로 센다(#641). 12 × 30 = 360이면 361~364일 쓴 후기가 "1년+"에 섞인다 */
+const DAYS_PER_YEAR = 365;
+
+function monthsToDays(months: number) {
+  return months === 12 ? DAYS_PER_YEAR : months * DAYS_PER_MONTH;
+}
 
 /**
  * 고른 조건을 서버가 받는 모양으로 옮긴다 (#472).
  *
  * **건드리지 않은 칸은 보내지 않는다.** 슬라이더의 왼쪽 끝은 "아래 제한 없음", 오른쪽 끝은
  * 열린 상한(1년+·15세+·30kg+)이라 그 손잡이는 보내지 않는다. 그래야 끝에 붙은 값(15세를
- * 넘는 아이, 1년을 넘게 쓴 후기)이 빠지지 않는다. 사용 기간은 개월을 30일로 세어 보낸다.
+ * 넘는 아이, 1년을 넘게 쓴 후기)이 빠지지 않는다. 사용 기간은 개월을 30일로, 1년은 365일로
+ * 세어 보낸다.
  */
 export function toReviewConditions(filter: ReviewFilter): ProductReviewConditions {
   const conditions: ProductReviewConditions = {};
@@ -177,8 +184,8 @@ export function toReviewConditions(filter: ReviewFilter): ProductReviewCondition
   const [ageMin, ageMax] = filter.age;
   const [weightMin, weightMax] = filter.weight;
 
-  if (periodMin > PERIOD_RANGE[0]) conditions.usagePeriodMinDays = periodMin * DAYS_PER_MONTH;
-  if (periodMax < PERIOD_RANGE[1]) conditions.usagePeriodMaxDays = periodMax * DAYS_PER_MONTH;
+  if (periodMin > PERIOD_RANGE[0]) conditions.usagePeriodMinDays = monthsToDays(periodMin);
+  if (periodMax < PERIOD_RANGE[1]) conditions.usagePeriodMaxDays = monthsToDays(periodMax);
   if (filter.species) conditions.species = filter.species === "dog" ? "DOG" : "CAT";
   if (filter.breedIds.length > 0) conditions.breedIds = filter.breedIds;
   if (ageMin > AGE_RANGE[0]) conditions.ageMin = ageMin;
