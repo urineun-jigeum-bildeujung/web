@@ -240,9 +240,18 @@ export async function apiRequest<TResponse>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<TResponse> {
+  const needsAuth = options.auth !== false && path !== REFRESH_PATH;
+
+  // 새로고침하면 메모리의 accessToken만 사라지고 refreshToken은 남는다. 그대로 보내면 첫 화면 요청이
+  // 전부 401을 받은 뒤에야 재발급하므로, 재발급을 먼저 받고 보낸다 (#642). 동시 요청은 같은 재발급을
+  // 기다린다. 재발급이 실패하면 토큰 없이 보내 지금처럼 401로 끝난다.
+  if (needsAuth && !getAccessToken() && getRefreshToken()) {
+    await refreshTokens();
+  }
+
   const response = await requestOnce(path, options);
 
-  const shouldRefresh = response.status === 401 && options.auth !== false && path !== REFRESH_PATH;
+  const shouldRefresh = response.status === 401 && needsAuth;
   if (shouldRefresh && (await refreshTokens())) {
     return parseResponse<TResponse>(await requestOnce(path, options), path);
   }
