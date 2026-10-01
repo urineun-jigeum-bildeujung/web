@@ -10,7 +10,7 @@
 | 파일 | 설명 |
 | --- | --- |
 | `ui/deals-view.tsx` | 화면 조립. 진행중·오픈예정 각각 `resultsPromise`를 받아 자체 `Suspense`+`use()`로 대기 |
-| `ui/deals-view.test.tsx` | 헤더 검색·알림·장바구니 순서·남은 시간·품절·담기·알림 신청·다중 딜 묶음·빈 배열 |
+| `ui/deals-view.test.tsx` | 헤더 검색·알림·장바구니 순서·본문 랜드마크·남은 시간·품절·담기·알림 신청·다중 딜 묶음·빈 배열 |
 | `index.ts` | 공개 API |
 
 ## 짚어둘 것
