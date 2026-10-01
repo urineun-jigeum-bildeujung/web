@@ -370,6 +370,8 @@ describe("HomeView", () => {
         originalPrice: 21000,
       },
     });
+    // 맞춤 상품과 같은 담김 안내를 띄운다(QA r24·r29, #625)
+    expect(showSnackbar).toHaveBeenCalledWith("해당 상품을 찜 목록에 담았어요!");
   });
 
   // 다른 목록(#483)과 같다. 로그아웃 상태에서 찜을 보내면 401과 재발급 시도만 헛돈다
