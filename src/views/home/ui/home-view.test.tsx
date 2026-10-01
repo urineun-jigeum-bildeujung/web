@@ -52,12 +52,15 @@ const PETS = [
 ];
 let petsQuery: { pets: unknown; isLoading: boolean } = { pets: PETS, isLoading: false };
 let petsCalls: unknown[] = [];
+// 고른 아이가 기본 아이가 된다(#531). 요청이 끝나는 시점을 테스트가 정한다
+const changeDefaultPet = vi.fn<(petId: string) => Promise<void>>(() => Promise.resolve());
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets: (options: unknown) => {
     petsCalls.push(options);
     return petsQuery;
   },
+  useMutateChangeDefaultPet: () => ({ changeDefaultPet, isChanging: false }),
 }));
 
 // 타임딜 알림 구독은 서버 상태라 값만 세운다. 타임딜 화면과 같은 전체 구독 하나다(#644)
@@ -189,6 +192,8 @@ afterEach(() => {
   pushMock.mockReset();
   toastAppError.mockReset();
   showSnackbar.mockReset();
+  changeDefaultPet.mockReset();
+  changeDefaultPet.mockImplementation(() => Promise.resolve());
   recommendationQuery = { items: RECOMMENDED, isLoading: false };
   recommendationFails = false;
   recommendationCalls = [];
@@ -462,10 +467,55 @@ describe("HomeView", () => {
     await renderWith();
 
     fireEvent.click(screen.getByRole("radio", { name: "보람" }));
-    expect(showSnackbar).toHaveBeenLastCalledWith("보람으로 바꿨어요");
+    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("보람으로 바꿨어요"));
 
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
     expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요");
+  });
+
+  // 상품 상세 적합도·결제가 기본 아이로 시작한다. 화면 안에만 두면 떠나는 순간 처음 아이로 돌아갔다(QA HM-020)
+  it("고른 아이를 기본 아이로 바꾸고, 서버가 받은 뒤에 알린다", async () => {
+    let finish = () => {};
+    changeDefaultPet.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (finish = resolve)),
+    );
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    expect(changeDefaultPet).toHaveBeenCalledWith("7");
+    // 표시는 바로 옮기지만 알림은 아직이다 — 실패하면 거짓 안내가 된다
+    expect(screen.getByRole("radio", { name: "구름이" }).getAttribute("aria-checked")).toBe("true");
+    expect(showSnackbar).not.toHaveBeenCalled();
+
+    await act(async () => finish());
+
+    expect(showSnackbar).toHaveBeenLastCalledWith("구름이로 바꿨어요");
+  });
+
+  it("이미 기본인 아이를 고르면 요청하지 않는다", async () => {
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+    await waitFor(() => expect(showSnackbar).toHaveBeenCalled());
+    changeDefaultPet.mockClear();
+
+    fireEvent.click(screen.getByRole("radio", { name: "초코" }));
+
+    expect(changeDefaultPet).not.toHaveBeenCalled();
+  });
+
+  // 실패 알림은 전역(MutationCache)이 띄운다. 화면은 서버가 그대로 둔 기본 아이로 돌아간다
+  it("바꾸지 못하면 기본 아이로 되돌리고 바꿨다고 알리지 않는다", async () => {
+    changeDefaultPet.mockRejectedValueOnce(new Error("boom"));
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("radio", { name: "초코" }).getAttribute("aria-checked")).toBe("true"),
+    );
+    expect(showSnackbar).not.toHaveBeenCalled();
   });
 
   it("이미 고른 아이를 다시 누르면 알리지 않는다", async () => {

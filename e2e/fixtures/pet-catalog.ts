@@ -129,4 +129,9 @@ export async function stubPetCatalog(page: Page) {
     }
     route.fulfill({ json: detail });
   });
+  // 메인에서 아이를 고르면 기본 아이를 바꾼다(#531). 받은 것처럼 답하고, 목록은 위 스텁 그대로다
+  await page.route("**/members/me/pets/*/default", (route) => {
+    const petId = Number(new URL(route.request().url()).pathname.split("/").at(-2));
+    route.fulfill({ json: { petId, isDefault: true } });
+  });
 }

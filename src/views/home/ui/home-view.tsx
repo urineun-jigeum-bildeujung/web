@@ -13,6 +13,7 @@ import {
   PetSwitcher,
   ProductFeedbackSheet,
   toAddPetHref,
+  useMutateChangeDefaultPet,
   useQueryPets,
   type FeedbackChoice,
 } from "@/entities/pet";
@@ -636,15 +637,31 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
   const petName = pet?.name ?? "우리 아이";
 
+  const { changeDefaultPet } = useMutateChangeDefaultPet();
+
   /**
    * 아이를 고른다. 맞춤 상품·적합도가 모두 그 아이 기준으로 바뀌므로 누구로 바뀌었는지 알린다(QA r18, #611).
-   * 이미 고른 아이를 다시 누르면 바뀐 것이 없어 알리지 않는다
+   * 이미 고른 아이를 다시 누르면 바뀐 것이 없어 알리지 않는다.
+   *
+   * **고른 아이가 기본 아이가 된다(QA HM-020, #531).** 상품 상세 적합도·결제·맞춤 추천이 모두 기본
+   * 아이로 시작하므로, 화면 안에만 두면 이 화면을 떠나는 순간 처음 아이로 돌아갔다. 표시는 바로 옮기고
+   * 알림은 서버가 받은 뒤에 띄운다 — 먼저 띄우면 실패했을 때 "바꿨어요"가 거짓이 된다. 실패하면
+   * 알림은 전역이 띄우고 여기서는 기본 아이로 되돌린다. 그사이 다른 아이를 골랐으면 그 선택은 둔다
    */
   const selectPet = (id: string) => {
     const next = pets?.find((item) => item.id === id);
     if (!next || next.id === pet?.id) return;
     setPetId(id);
-    showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
+    const notice = `${withJosa(next.name, "으로/로")} 바꿨어요`;
+    // 이미 기본인 아이면 서버에 바꿀 것이 없다
+    if (next.isDefault) {
+      showSnackbar(notice);
+      return;
+    }
+    changeDefaultPet(id).then(
+      () => showSnackbar(notice),
+      () => setPetId((current) => (current === id ? null : current)),
+    );
   };
 
   // **최근에 구매한 상품은 반응을 남길 수 있는 실제 구매다(#494).** 누구에게나 같은 목데이터

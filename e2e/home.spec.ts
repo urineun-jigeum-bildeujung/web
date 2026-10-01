@@ -30,8 +30,14 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   await expect(page.getByRole("radio", { name: "코코" })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByText("AI가 골라주는 코코 맞춤 상품")).toBeVisible();
 
+  // 고른 아이가 기본 아이가 된다 — 상품 상세·결제가 그 아이로 시작한다(QA HM-020, #531)
+  const defaultChange = page.waitForRequest(
+    (request) =>
+      request.method() === "PATCH" && request.url().endsWith("/members/me/pets/7/default"),
+  );
   // 추천도 고른 아이를 따라간다(#600)
   await page.getByRole("radio", { name: "보리" }).click();
+  await defaultChange;
   await expect(page.getByText("AI가 골라주는 보리 맞춤 상품")).toBeVisible();
   // 누구 기준으로 바뀌었는지 알린다(QA r18, #611)
   await expect(page.getByRole("status").filter({ hasText: "보리로 바꿨어요" })).toBeVisible();
