@@ -216,8 +216,12 @@ async function performRefresh(): Promise<boolean> {
     });
     saveTokens(await parseResponse<TokenPair>(response, REFRESH_PATH));
     return true;
-  } catch {
-    clearTokens();
+  } catch (error) {
+    // 서버가 refreshToken을 거절했을 때(무효·교체됨은 400, 게이트웨이는 401)만 세션을 끝낸다.
+    // 네트워크 오류·시간 초과·5xx까지 지우면 새로고침 순간 서버가 잠깐 멈췄을 뿐인데 로그아웃된다 (#642)
+    if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
+      clearTokens();
+    }
     return false;
   }
 }
@@ -246,6 +250,8 @@ export async function apiRequest<TResponse>(
   // 전부 401을 받은 뒤에야 재발급하므로, 재발급을 먼저 받고 보낸다 (#642). 동시 요청은 같은 재발급을
   // 기다린다. 재발급이 실패하면 토큰 없이 보내 지금처럼 401로 끝난다.
   if (needsAuth && !getAccessToken() && getRefreshToken()) {
+    // 이미 취소된 요청이 재발급을 새로 일으키거나 그 끝을 기다리지 않게 한다
+    options.signal?.throwIfAborted();
     await refreshTokens();
   }
 

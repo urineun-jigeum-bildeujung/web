@@ -441,5 +441,34 @@ describe("apiRequest 인증", () => {
       // 재발급 1회 + 원 요청 1회. 토큰이 지워져 401 뒤 재발급을 또 하지 않는다.
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
+
+    it("서버가 refreshToken을 400으로 거절해도 토큰을 지운다", async () => {
+      // 백엔드는 무효·교체된 refreshToken에 AUTH_400_INVALID_TOKEN을 준다
+      stubFetch(Response.json({ errorCode: "AUTH_400_INVALID_TOKEN" }, { status: 400 }));
+
+      await expect(apiRequest("/users/me")).rejects.toBeInstanceOf(ApiError);
+
+      expect(getRefreshToken()).toBeNull();
+    });
+
+    it("재발급이 네트워크 오류로 끊기면 로그아웃하지 않고 토큰을 지킨다", async () => {
+      // 새로고침 순간 서버가 잠깐 멈췄을 뿐인데 세션이 끝나면 안 된다
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+
+      await expect(apiRequest("/users/me")).rejects.toBeInstanceOf(TypeError);
+
+      expect(getRefreshToken()).toBe("refresh-1");
+    });
+
+    it("이미 취소된 요청은 재발급을 시작하지 않고 취소 사유를 그대로 던진다", async () => {
+      const fetchMock = stubAuthFetch();
+      const controller = new AbortController();
+      const reason = new DOMException("취소", "AbortError");
+      controller.abort(reason);
+
+      await expect(apiRequest("/users/me", { signal: controller.signal })).rejects.toBe(reason);
+
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
   });
 });

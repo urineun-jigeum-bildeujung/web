@@ -22,7 +22,7 @@
 - base URL은 요청 시점에 해석한다(`getApiBaseUrl`). 브라우저는 `NEXT_PUBLIC_API_BASE_URL`을 읽고 없으면 same-origin `/api/v1`을 쓴다. **서버(RSC 등)는 이 same-origin fallback을 쓰지 않는다** — 서버의 `fetch`는 현재 페이지 origin이 없어 상대 경로를 못 풀기 때문이다. 서버는 `API_BASE_URL_INTERNAL`(GitOps가 실행 중인 컨테이너에 주입)을 읽는데, 값이 없거나 `http(s)://`로 시작하는 절대 URL이 아니면(`/api/v1`을 실수로 넣는 경우 포함) 바로 오류를 던진다(#282).
 - 성공 응답은 리소스를 그대로 반환하고, 실패 응답은 Spring 표준 ProblemDetail(RFC 9457)을 파싱해 `ApiError.problem`에 담는다. timestamp·traceId는 응답에 없다(traceId는 백엔드 로깅 전용).
 - accessToken이 있으면 요청에 `Authorization: Bearer`를 붙인다. 권한 매트릭스상 PUBLIC 엔드포인트(상품·타임딜·리뷰 조회)는 `auth: false`로 부르면 토큰을 붙이지 않고 401에도 재발급하지 않는다. PUBLIC 여부 판단은 슬라이스 api 세그먼트가 한다.
-- 401이면 재발급(`/auths/token/refresh`) 후 원 요청을 1회 재시도한다. 재발급은 rotation 정책(중복 호출 시 탈취 간주) 때문에 동시 401에서도 한 번만 호출된다(single-flight). 게이트웨이가 JWT를 먼저 검증하므로 재발급 요청에는 만료된 accessToken을 붙이지 않는다. 재발급까지 실패하면 토큰을 지우고 401을 그대로 던진다 — 로그인 이동·캐시 비우기 같은 앱 정책은 `subscribeTokensCleared`로 구독한 쪽이 처리한다.
+- 401이면 재발급(`/auths/token/refresh`) 후 원 요청을 1회 재시도한다. 재발급은 rotation 정책(중복 호출 시 탈취 간주) 때문에 동시 401에서도 한 번만 호출된다(single-flight). 게이트웨이가 JWT를 먼저 검증하므로 재발급 요청에는 만료된 accessToken을 붙이지 않는다. 재발급을 서버가 거절하면(무효·교체된 refreshToken은 400, 게이트웨이는 401) 토큰을 지우고 401을 그대로 던진다. 네트워크 오류·시간 초과·5xx로 재발급이 끊긴 것은 거절이 아니라 토큰을 지킨다 — 로그인 이동·캐시 비우기 같은 앱 정책은 `subscribeTokensCleared`로 구독한 쪽이 처리한다.
 - **accessToken이 없고 refreshToken만 있으면 요청 전에 재발급부터 받는다.** accessToken은 메모리에만 있어 새로고침하면 사라진다. 이 처리가 없던 동안 새로고침마다 첫 화면 요청이 전부 401을 받은 뒤에야 재발급했다. 같은 single-flight 재발급을 기다리므로 동시 요청에도 재발급은 한 번이다 (#642).
 - **성공 응답에 본문이 없으면 그대로 끝낸다.** 204만이 아니라 **본문 없는 200도** 그렇다 — 명세가 `200 OK`만 약속하는 엔드포인트가 있다(장바구니 수량 변경). 곧장 `json()`을 부르면 빈 본문에서 던져 성공한 요청이 실패로 읽힌다 (#217).
 - `query` 옵션은 undefined·null을 빼고 배열은 같은 키를 반복해 쿼리 스트링을 만든다. `FormData` 본문은 직렬화하지 않고 Content-Type도 붙이지 않는다(이미지 업로드용).
