@@ -126,6 +126,8 @@ const notificationKeys = {
   list: () => [...notificationKeys.all, "list"] as const,
   unreadCount: () => [...notificationKeys.all, "unread-count"] as const,
   settings: () => [...notificationKeys.all, "settings"] as const,
+  subscription: (category: "TIME_DEAL") =>
+    [...notificationKeys.all, "subscription", category] as const,
 };
 
 const userKeys = {

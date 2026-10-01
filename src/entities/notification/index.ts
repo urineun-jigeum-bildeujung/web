@@ -10,3 +10,5 @@ export {
 export { useQueryNotifications } from "./api/use-query-notifications";
 export { useQueryUnreadNotificationCount } from "./api/use-query-unread-notification-count";
 export { useMutateReadNotification } from "./api/use-mutate-read-notification";
+export { useQueryTimeDealSubscription } from "./api/use-query-time-deal-subscription";
+export { useMutateTimeDealSubscription } from "./api/use-mutate-time-deal-subscription";
