@@ -1,0 +1,4 @@
+vulnerabilities:
+  - id: GHSA-vcvr-r3jv-pc5j
+    expired_at: 2026-10-08
+    statement: "Next.js 업데이트 검증 전까지 임시 예외. 현재 소스에서 next/og ImageResponse 사용 미확인."
