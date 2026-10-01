@@ -6,7 +6,7 @@
 import { expect, test } from "@playwright/test";
 
 import { stubAddToCart, stubCart } from "./fixtures/cart";
-import { stubNotifications } from "./fixtures/notifications";
+import { stubNotifications, stubTimeDealSubscription } from "./fixtures/notifications";
 import { signIn } from "./fixtures/session";
 
 // 이 화면은 로그인해야 열린다. 세션이 없으면 로그인으로 보낸다(#542).
@@ -15,6 +15,7 @@ test.beforeEach(async ({ page }) => {
   await signIn(page);
   await stubCart(page);
   await stubNotifications(page);
+  await stubTimeDealSubscription(page);
 });
 
 // 탭 전환은 이력에 쌓지 않는다. 장바구니에서 뒤로가면 보던 탭 그대로, 한 번 더 뒤로가면
@@ -53,6 +54,26 @@ test("헤더 알림에 갔다 뒤로가면 보던 탭의 타임딜로 돌아온�
   await page.goBack();
   await expect(page).toHaveURL(/\/deals\?tab=upcoming$/);
   await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
+});
+
+// 화면 상태로만 "신청됨"을 그려 새로고침하면 사라졌다. 타임딜 알림 구독에 저장한다(#644)
+test("오픈 알림을 신청하면 서버에 저장돼 새로고침해도 신청됨으로 남고, 다시 누르면 취소된다", async ({
+  page,
+}) => {
+  // beforeEach의 스텁보다 나중에 건 route가 먼저 받는다
+  const alarm = await stubTimeDealSubscription(page);
+  await page.goto("/deals?tab=upcoming");
+
+  await page.getByRole("button", { name: "오픈 알림 신청하기" }).click();
+  await expect(page.getByRole("button", { name: "오픈 알림 신청 취소하기" })).toBeVisible();
+  expect(alarm.puts).toEqual([{ subscribed: true }]);
+
+  await page.reload();
+  await expect(page.getByRole("button", { name: "오픈 알림 신청 취소하기" })).toBeVisible();
+
+  await page.getByRole("button", { name: "오픈 알림 신청 취소하기" }).click();
+  await expect(page.getByRole("button", { name: "오픈 알림 신청하기" })).toBeVisible();
+  expect(alarm.puts).toEqual([{ subscribed: true }, { subscribed: false }]);
 });
 
 // 오픈 예정 카드에 링크가 없어 눌러도 아무 일이 없었다 (QA #94)
