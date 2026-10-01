@@ -26,6 +26,10 @@ import {
 } from "@/entities/product";
 import { useMutateCartItem } from "@/entities/cart";
 import {
+  useMutateTimeDealSubscription,
+  useQueryTimeDealSubscription,
+} from "@/entities/notification";
+import {
   formatDisplayDayHour,
   formatDisplayHour,
   toDisplayDayKey,
@@ -35,6 +39,7 @@ import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
+import { LoadingSwap } from "@/shared/ui/loading-swap/loading-swap";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
 import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { formatWon } from "@/shared/ui/price/price";
@@ -318,14 +323,18 @@ function LiveDealsSection({
 
 type UpcomingDealsSectionProps = {
   dealsPromise: Promise<TimeDealList>;
-  notifiedDealIds: number[];
-  onToggleNotify: (dealId: number) => void;
+  /** 타임딜 알림 구독 여부. 타임딜은 한 번에 열려 딜마다가 아니라 전체 하나다(#644) */
+  notified: boolean;
+  /** 구독을 바꾸는 응답을 기다리는 중 */
+  notifyPending: boolean;
+  onToggleNotify: () => void;
 };
 
 /** 오픈예정 탭 내용. 딜 묶음마다 오픈 카운트다운+목록+알림 버튼을 반복해 그린다 */
 function UpcomingDealsSection({
   dealsPromise,
-  notifiedDealIds,
+  notified,
+  notifyPending,
   onToggleNotify,
 }: UpcomingDealsSectionProps) {
   const { groups } = use(dealsPromise);
@@ -360,7 +369,6 @@ function UpcomingDealsSection({
   return (
     <>
       {groups.map((group) => {
-        const notified = notifiedDealIds.includes(group.dealId);
         const openAt = new Date(group.startAt);
         const openLabel = formatOpenAt(group.startAt);
 
@@ -419,21 +427,31 @@ function UpcomingDealsSection({
                 // 직접 만든 button 대신 같은 공용 Button을 쓴다(variant만 바꾼다)
                 <Button
                   variant="default"
-                  onClick={() => onToggleNotify(group.dealId)}
+                  onClick={onToggleNotify}
+                  disabled={notifyPending}
                   aria-label="오픈 알림 신청 취소하기"
                   className="min-h-11 text-label-bold-14"
                 >
-                  <Icon name="bell" aria-hidden className="size-6" />
-                  오픈 알림 신청됨
+                  <LoadingSwap loading={notifyPending} label="오픈 알림 신청을 취소하는 중">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="bell" aria-hidden className="size-6" />
+                      오픈 알림 신청됨
+                    </span>
+                  </LoadingSwap>
                 </Button>
               ) : (
                 <Button
                   variant="secondary"
-                  onClick={() => onToggleNotify(group.dealId)}
+                  onClick={onToggleNotify}
+                  disabled={notifyPending}
                   className="min-h-11 text-label-bold-14"
                 >
-                  <Icon name="bell" aria-hidden className="size-6 text-icon-stroke-tertiary" />
-                  오픈 알림 신청하기
+                  <LoadingSwap loading={notifyPending} label="오픈 알림을 신청하는 중">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Icon name="bell" aria-hidden className="size-6 text-icon-stroke-tertiary" />
+                      오픈 알림 신청하기
+                    </span>
+                  </LoadingSwap>
                 </Button>
               )}
             </div>
@@ -459,7 +477,8 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
   // 서버가 다시 알려준 게 아니라 카운트다운이 다 돼 로컬에서만 숨긴 딜들이다.
   // 실제로 그 딜이 끝났는지는 다음에 이 화면을 다시 열 때 서버 조회로 확인된다
   const [endedDealIds, setEndedDealIds] = useState<number[]>([]);
-  const [notifiedDealIds, setNotifiedDealIds] = useState<number[]>([]);
+  const { subscribed: notified } = useQueryTimeDealSubscription();
+  const { setSubscribed, isPending: notifyPending } = useMutateTimeDealSubscription();
   const [picked, setPicked] = useState<OptionSheetProduct | null>(null);
   const [addedIds, setAddedIds] = useState<string[]>([]);
   // QA가 빈 상태를 바로 보고 싶을 때 쓰는 개발용 스위치. 실제 딜 종료와는 별개다
@@ -571,12 +590,9 @@ export function DealsView({ liveDealsPromise, upcomingDealsPromise }: DealsViewP
           <Suspense fallback={<DealsSkeleton />}>
             <UpcomingDealsSection
               dealsPromise={upcomingDealsPromise}
-              notifiedDealIds={notifiedDealIds}
-              onToggleNotify={(dealId) =>
-                setNotifiedDealIds((prev) =>
-                  prev.includes(dealId) ? prev.filter((v) => v !== dealId) : [...prev, dealId],
-                )
-              }
+              notified={notified}
+              notifyPending={notifyPending}
+              onToggleNotify={() => setSubscribed(!notified)}
             />
           </Suspense>
         </TabsContent>

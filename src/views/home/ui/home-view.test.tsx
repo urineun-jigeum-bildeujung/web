@@ -60,6 +60,17 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
   },
 }));
 
+// 타임딜 알림 구독은 서버 상태라 값만 세운다. 타임딜 화면과 같은 전체 구독 하나다(#644)
+const timeDealAlarm = { subscribed: false, isPending: false, setSubscribed: vi.fn() };
+vi.mock("@/entities/notification", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/entities/notification")>()),
+  useQueryTimeDealSubscription: () => ({ subscribed: timeDealAlarm.subscribed }),
+  useMutateTimeDealSubscription: () => ({
+    setSubscribed: timeDealAlarm.setSubscribed,
+    isPending: timeDealAlarm.isPending,
+  }),
+}));
+
 // 로그인 여부. 서버 렌더·하이드레이션 중에는 모른다(null)
 const session: { value: boolean | null } = { value: true };
 vi.mock("@/shared/api/use-session-state", () => ({ useSessionState: () => session.value }));
@@ -554,6 +565,41 @@ describe("HomeView", () => {
     await renderWith("all", EMPTY_PRODUCTS, EMPTY_DEALS);
 
     expect(await screen.findByText(/지금은 진행 중인 타임딜이 없어요/)).toBeDefined();
+  });
+
+  describe("타임딜 오픈 알림", () => {
+    beforeEach(() => {
+      timeDealAlarm.subscribed = false;
+      timeDealAlarm.isPending = false;
+      timeDealAlarm.setSubscribed.mockClear();
+      session.value = true;
+    });
+
+    // 화면 상태로만 "신청됨"을 그리던 자리다. 서버의 타임딜 알림 구독을 켠다(#644)
+    it("오픈 알림 받기를 누르면 타임딜 알림 구독을 켠다", async () => {
+      await renderWith("all", EMPTY_PRODUCTS, EMPTY_DEALS);
+
+      fireEvent.click(await screen.findByRole("button", { name: /오픈 알림 받기/ }));
+
+      expect(timeDealAlarm.setSubscribed).toHaveBeenCalledWith(true);
+    });
+
+    it("이미 구독 중이면 신청됨으로 보인다", async () => {
+      timeDealAlarm.subscribed = true;
+      await renderWith("all", EMPTY_PRODUCTS, EMPTY_DEALS);
+
+      expect(await screen.findByText("오픈 알림 신청됨")).toBeDefined();
+      expect(screen.queryByRole("button", { name: /오픈 알림 받기/ })).toBeNull();
+    });
+
+    it("비로그인이면 구독을 부르지 않는다", async () => {
+      session.value = false;
+      await renderWith("all", EMPTY_PRODUCTS, EMPTY_DEALS);
+
+      fireEvent.click(await screen.findByRole("button", { name: /오픈 알림 받기/ }));
+
+      expect(timeDealAlarm.setSubscribed).not.toHaveBeenCalled();
+    });
   });
 
   // 목데이터 두 개가 누구에게나 뜨던 자리다 (#494)

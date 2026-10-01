@@ -17,6 +17,10 @@ import {
   type FeedbackChoice,
 } from "@/entities/pet";
 import {
+  useMutateTimeDealSubscription,
+  useQueryTimeDealSubscription,
+} from "@/entities/notification";
+import {
   CATEGORY_TO_API,
   MatchScoreBadge,
   formatUnitPrice,
@@ -449,7 +453,9 @@ type TimeDealPreviewProps = {
  *  전부 끝나야만 빈 상태를 보인다(#289) */
 function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
   const { groups } = use(dealsPromise);
-  const [notified, setNotified] = useState(false);
+  // 타임딜 화면의 오픈 알림과 같은 구독이다. 타임딜은 한 번에 열려 전체 구독 하나다(#644)
+  const { subscribed: notified } = useQueryTimeDealSubscription();
+  const { setSubscribed, isPending: notifyPending } = useMutateTimeDealSubscription();
   // 알림 신청과 특가 더보기(타임딜 화면)는 로그인해야 쓴다. 비로그인이면 토스트만 띄운다 (#542)
   const requireSession = useRequireSession();
   // 서버가 다시 알려준 게 아니라, 이 화면에서 카운트다운이 다 돼 로컬로만 숨긴 딜 id들
@@ -471,7 +477,6 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
             description="매주 목요일 밤 12시에 새로운 특가가 열려요"
             className="rounded-xl border border-dashed border-border px-0 py-4"
             action={
-              // 알림 신청 API가 아직 없어 타임딜 화면(DealsView)처럼 로컬 상태로만 완료를 알린다
               notified ? (
                 <p
                   role="status"
@@ -483,13 +488,18 @@ function TimeDealPreview({ dealsPromise }: TimeDealPreviewProps) {
               ) : (
                 <button
                   type="button"
+                  disabled={notifyPending}
                   onClick={() => {
-                    if (requireSession()) setNotified(true);
+                    if (requireSession()) setSubscribed(true);
                   }}
-                  className="flex min-h-11 items-center gap-1 px-2.5 text-body-medium-14 text-brand"
+                  className="flex min-h-11 items-center px-2.5 text-body-medium-14 text-brand"
                 >
-                  <Icon name="bell" className="size-5" />
-                  오픈 알림 받기
+                  <LoadingSwap loading={notifyPending} label="오픈 알림을 신청하는 중">
+                    <span className="inline-flex items-center gap-1">
+                      <Icon name="bell" className="size-5" />
+                      오픈 알림 받기
+                    </span>
+                  </LoadingSwap>
                 </button>
               )
             }

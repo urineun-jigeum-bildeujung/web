@@ -31,6 +31,15 @@ vi.mock("@/widgets/notification-bell", () => ({
   NotificationBell: () => <a href="/mypage/notifications" aria-label="알림" />,
 }));
 vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
+// 오픈 알림은 서버의 타임딜 알림 구독 하나다(#644). 서버 상태라 값만 세우고 부른 값을 본다
+const timeDealAlarm = { subscribed: false, isPending: false, setSubscribed: vi.fn() };
+vi.mock("@/entities/notification", () => ({
+  useQueryTimeDealSubscription: () => ({ subscribed: timeDealAlarm.subscribed }),
+  useMutateTimeDealSubscription: () => ({
+    setSubscribed: timeDealAlarm.setSubscribed,
+    isPending: timeDealAlarm.isPending,
+  }),
+}));
 
 import { DealsView } from "./deals-view";
 
@@ -291,20 +300,43 @@ describe("DealsView", () => {
     expect(screen.queryByText(/:00/)).toBeNull();
   });
 
-  it("오픈 예정 탭에서 알림을 신청하면 신청된 상태로 남고, 다시 누르면 취소된다", async () => {
-    await renderWith("?tab=upcoming");
+  describe("오픈 알림", () => {
+    beforeEach(() => {
+      timeDealAlarm.subscribed = false;
+      timeDealAlarm.isPending = false;
+      timeDealAlarm.setSubscribed.mockClear();
+    });
 
-    fireEvent.click(screen.getByRole("button", { name: "오픈 알림 신청하기" }));
+    // 화면 상태로만 바꾸던 자리다. 서버의 타임딜 알림 구독을 켠다(#644)
+    it("오픈 알림 신청하기를 누르면 타임딜 알림 구독을 켠다", async () => {
+      await renderWith("?tab=upcoming");
 
-    expect(screen.getByText("오픈 알림 신청됨")).toBeDefined();
-    expect(screen.queryByRole("button", { name: "오픈 알림 신청하기" })).toBeNull();
-    // 취소할 수도 있으니 신청 후에도 남은 시간은 계속 보여준다
-    expect(screen.getByText(/\d{2} : \d{2} : \d{2}/)).toBeDefined();
+      fireEvent.click(screen.getByRole("button", { name: "오픈 알림 신청하기" }));
 
-    fireEvent.click(screen.getByRole("button", { name: "오픈 알림 신청 취소하기" }));
+      expect(timeDealAlarm.setSubscribed).toHaveBeenCalledWith(true);
+    });
 
-    expect(screen.getByRole("button", { name: "오픈 알림 신청하기" })).toBeDefined();
-    expect(screen.queryByText("오픈 알림 신청됨")).toBeNull();
+    it("구독 중이면 신청됨으로 보이고, 누르면 구독을 끈다", async () => {
+      timeDealAlarm.subscribed = true;
+      await renderWith("?tab=upcoming");
+
+      expect(screen.queryByRole("button", { name: "오픈 알림 신청하기" })).toBeNull();
+      // 취소할 수도 있으니 신청 후에도 남은 시간은 계속 보여준다
+      expect(screen.getByText(/\d{2} : \d{2} : \d{2}/)).toBeDefined();
+
+      fireEvent.click(screen.getByRole("button", { name: "오픈 알림 신청 취소하기" }));
+
+      expect(timeDealAlarm.setSubscribed).toHaveBeenCalledWith(false);
+    });
+
+    it("응답을 기다리는 동안은 다시 누를 수 없다", async () => {
+      timeDealAlarm.isPending = true;
+      await renderWith("?tab=upcoming");
+
+      const button = screen.getByRole("button", { name: /오픈 알림/ }) as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+      expect(screen.getByRole("status", { name: "오픈 알림을 신청하는 중" })).toBeDefined();
+    });
   });
 
   it("딜 묶음이 여러 개면 전부 그린다", async () => {
