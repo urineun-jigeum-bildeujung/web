@@ -3,9 +3,9 @@
 상품 하나를 자세히 보는 화면. 상품 자체 → 우리 아이에게 맞는지 → 함께 볼 것 → 자세한 정보 순으로 놓인다.
 
 - **라우트**: `/products/[productId]` — `src/app/products/[productId]/page.tsx`
-- **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
-- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` — **`qna`는 받지 않는다**, 아래), 리뷰 정렬은 `reviewSort`. 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙고, 딜이 끝나면 화면이 그 쿼리만 뗀다(#484, #539). 수량 시트는 `sheet`(`cart` · `buy`)가 들어 결제에서 뒤로 오면 열린 채로 돌아온다(QA No.35, #595 — 아래). 상품 상태 중 정상·품절은 QA용으로 `status` 쿼리가 덮어쓴다(개발 빌드만, 타임딜은 덮어쓰지 않는다 — 아래). 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
-- **닫아 둔 쿼리**: `reviewMatch`(맞춤보기) · `reviewFilter`(필터 시트)는 **지금 읽지 않는다**(#339). 서버가 받는 모양과 화면이 고르는 모양이 달라 UI를 닫아 뒀고, 파서와 시트 코드는 계약이 갖춰질 때 다시 쓰려고 남겨 두었다
+- **조립**: `features/toggle-wishlist` · `entities/wishlist`(`useQueryWishlistStatus`) · `entities/product`(`getMatchLevel`·`getProducts`·`formatUnitPrice`) · `entities/review`(`ReviewCard`·`useQueryProductReviews`·`useQueryProductReviewCount`·`useQueryFeaturedReviewPhotos`) · `entities/pet`(`useQueryPets`·`useQueryPetDetail`·`useQueryBreeds`·`useQueryHealthOptions`) · `shared/ui`의 `error-boundary` · `page-header` · `price` · `rating` · `scroll-row` · `product-grid-card` · `definition-row` · `bottom-action-bar` · `tabs` · `accordion` · `select` · `switch` · `slider` · `bottom-sheet` · `drawer` · `dialog` · `button` · `checkbox-row` · `chip-select` · `countdown` · `empty-state` · `icon` · `label` · `quantity-stepper` · `skeleton`
+- **상태**: 보고 있는 탭은 URL 쿼리 `tab`(`info` · `review` — **`qna`는 받지 않는다**, 아래), 리뷰 정렬은 `reviewSort`, 리뷰 거르기 조건은 `reviewFilter`(#472). 타임딜에서 들어오면 딜 아이템 번호가 `dealItem` 쿼리로 붙고, 딜이 끝나면 화면이 그 쿼리만 뗀다(#484, #539). 수량 시트는 `sheet`(`cart` · `buy`)가 들어 결제에서 뒤로 오면 열린 채로 돌아온다(QA No.35, #595 — 아래). 상품 상태 중 정상·품절은 QA용으로 `status` 쿼리가 덮어쓴다(개발 빌드만, 타임딜은 덮어쓰지 않는다 — 아래). 적합도 기준이 되는 아이는 화면 안 상태. 찜 여부는 서버다 — 하단 하트는 `useQueryWishlistStatus`, 함께 보면 좋은 상품 카드는 전체 찜 목록(`useWishedProductIds`)으로 채우고 `features/toggle-wishlist`로 뒤집는다(#483)
+- **닫아 둔 쿼리**: `reviewMatch`(맞춤보기)는 **지금 읽지 않는다**(#472). 서버가 종과 체구만 견주어 안내 문구가 약속하는 범위와 달라 PD 확인을 기다린다. `reviewFilter`(필터 시트)는 백엔드가 구간·복수 조건을 받게 되어(cb2f134, 2026-10-01) 다시 연결했다
 - **참고**: 확정 UI 시안 기준(#229). 상품 자체는 `GET /products/{id}`로(#413), 함께 보면 좋은 상품은 인기순 `GET /products`로 연동했고(#481) 적합도·영양 분석은 여전히 목이다
 
 | 파일 | 설명 |
@@ -35,9 +35,9 @@
 | `ui/product-info-panel.test.tsx` | 종합 점수 카드가 값이 빌 때 그려지지 않는지, 안내 셋이 실제 문구를 그리고 자리표시 번호가 없는지 |
 | `ui/description-collapse.tsx` | 상품 설명 이미지 자리. 402px를 미리 보여주고 눌러서 전체를 펼치는 더보기/접기 |
 | `ui/description-collapse.test.tsx` | 눌렀을 때 접힘·펼침 상태와 라벨이 바뀌는지 |
-| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·정렬·대표 사진 줄·후기 목록(서버 조회)·도움돼요 누르기(#606) |
-| `ui/review-panel.test.tsx` | 서버 응답의 네 상태·정렬·대표 사진, 닫아 둔 필터·맞춤보기가 정말 없는지, 도움돼요를 누르면 그 후기를 넘기는지 |
-| `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭 |
+| `ui/review-panel.tsx` | 리뷰 탭. 별점 요약·거르기 시트·정렬·대표 사진 줄·후기 목록(서버 조회)·도움돼요 누르기(#606). 거르는 중이면 수를 "조건에 맞는 리뷰 N개"로, 빈 결과는 지울 길과 함께 알린다(#472) |
+| `ui/review-panel.test.tsx` | 서버 응답의 네 상태·정렬·대표 사진, 주소의 거르기 조건을 서버 조건으로 넘기는지·빈 결과와 필터 지우기, 맞춤보기가 아직 없는지, 도움돼요를 누르면 그 후기를 넘기는지 |
+| `ui/review-filter-sheet.tsx` | 리뷰 거르기 바텀시트. 리뷰 유형·반려동물 필터 두 탭. "리뷰 N개 보기"의 N은 고르는 조건으로 서버가 센다(손을 뗀 뒤 300ms, #472) |
 | `ui/review-filter-sheet.test.tsx` | 고른 품종·건강 관심사가 값마다 Badge 하나로 그려지는지, 빈 값의 안내 문구, 낭독기에 읽히는 이름(#598). **말줄임은 여기서 못 본다** — jsdom이 레이아웃을 계산하지 않아 Chromium 실측으로 확인했다 |
 | `ui/review-filter-picker.tsx` | 품종·건강 관심사를 고르는 전체화면(#264). 갈래-항목 좌우 분할, 데이터만 갈아끼워 재사용 |
 | `ui/review-filter-picker.test.tsx` | 갈래를 바꾸면 오른쪽 목록이 바뀌는지, 여러 개 고르고 적용·초기화가 되는지 |
@@ -58,7 +58,8 @@
 | 적합도의 아이(이름·프로필·알레르기 근거) | 점수·근거 두 줄·영양 성분 분석 | 아이는 `useQueryPets`·`useQueryPetDetail`(#481), 나머지는 서버가 계산해 내려줄 값이다 (#123) |
 | 리뷰 요약·목록·정렬·대표 사진 | — | `useQueryProductReviews` · `useQueryFeaturedReviewPhotos` (#339) |
 | 리뷰 도움돼요 누르기·해제 | — | `useMutateReviewRecommend`. 비로그인이면 로그인 필요 토스트만 띄운다 (#542, #606) |
-| — | 리뷰 필터·맞춤보기 | 서버가 받는 모양이 달라 닫아 뒀다 (아래 후속 항목) |
+| 리뷰 거르기(사용 기간·종·품종·나이·중성화·체중·건강 관심사) | — | `useQueryProductReviews`의 `conditions`, 시트의 수는 `useQueryProductReviewCount` (#472) |
+| — | 리뷰 맞춤보기 | 서버가 견주는 조건이 안내 문구와 달라 닫아 뒀다 (아래 후속 항목) |
 | — | 문의 목록 | API가 없다 |
 | 함께 보면 좋은 상품(인기순, 지금 상품 제외) | — | 라우트가 `getRelatedProducts`를 기다리지 않고 넘긴다 (#481) |
 | — | 상단 요약의 배송·판매자 줄 | 응답에 자리가 없다. 계약이 생기면 지운다 |
@@ -122,7 +123,8 @@
 | 항목 | 지금 |
 | --- | --- |
 | 상세 로딩 표시 | 라우트의 `Suspense` 폴백이 빈 `div`다. 처음 그릴 때는 스켈레톤이 맞다(AGENTS 5.8) |
-| 리뷰 필터·맞춤보기 | 닫아 뒀다 (#472). 나이·사용 기간은 구간으로 풀렸지만 품종은 여전히 복수 ↔ 단수이고, 맞춤보기는 서버가 견주는 조건이 PD 확정과 다르다 |
+| 리뷰 맞춤보기 | 닫아 뒀다 (#472). 서버가 종과 체구만 견주는데 안내 줄은 품종까지 본다고 읽혀 PD 확인을 기다린다 |
+| 비로그인의 품종 고르기 | 거르기 시트의 품종 목록(`GET /pets/breeds`)이 인증을 요구해 비로그인이면 품종 피커가 불러오지 못했다고 보인다. 다른 조건은 고를 수 있다 (#471과 같은 원인) |
 | 리뷰 카드의 아이 줄 | `소형견 · 8세 · 4kg`다. 품종명은 `GET /pets/breeds`에만 있는데 그 조회가 인증을 요구해 비로그인 상품 상세에서 401이 난다 (#471) |
 | 리뷰 재구매 N회 배지 | 응답에 `repurchaseCount`가 없다. PD가 MVP로 확정해 백엔드에 요청해 뒀다 (#471) |
 | 문의 탭 | **이번 MVP 범위 밖이라 탭을 막아 뒀다**(#549). API도 없다 |
