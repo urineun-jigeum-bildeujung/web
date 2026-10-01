@@ -236,7 +236,9 @@ export function ReviewPanel({ productId, petId }: ReviewPanelProps) {
             안내 줄은 시안에 없다 */}
         {petId && (
           <div className="mt-3 flex min-h-11 items-center gap-2">
+            {/* 트랙이 24px이라 공용 after:-inset-y-2로는 40px이다. 여기서만 48px로 넓혀 44px을 넘긴다 */}
             <Switch
+              className="after:-inset-y-3"
               id={matchId}
               checked={matchOn}
               onCheckedChange={(next) => void setMatchOn(next || null)}
