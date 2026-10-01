@@ -3,7 +3,7 @@
 //
 // 별 하나를 좌우 22px로 갈라 왼쪽이 반 개, 오른쪽이 한 개다. 시안 값(44px)을 그대로 쓴다.
 // 반쪽마다 라디오 하나가 되고 화살표 키는 0.5씩 움직인다.
-// 누른 채 밀면 손가락이 지나는 반쪽으로 값이 따라간다. 세로로 밀면 그대로 페이지가 스크롤된다.
+// 누른 채 밀면 손가락이 지나는 반쪽으로 값이 따라간다. 세로로 밀면 페이지가 스크롤되고 값은 그대로다.
 //
 // `min`보다 낮은 반쪽은 두지 않는다. 리뷰는 1점부터라(QA RV-020) 첫 별은 가르지 않고 한 칸이 1점이다.
 // 0.5점 칸을 남겨 두고 1점으로 올려 주면 "0.5점"이라 읽힌 칸이 한 번도 선택되지 않는다.
@@ -38,37 +38,65 @@ export function RatingInput({
   const steps = max * 2;
   const minSteps = min * 2;
 
+  // 끌고 있는 포인터. 별 묶음 자리는 누를 때 한 번만 잰다. 스크롤로 넘어가면 처음 값으로 돌린다
+  const drag = useRef<{
+    pointerId: number;
+    left: number;
+    width: number;
+    from: number;
+    last: number;
+  } | null>(null);
+
   /** 값을 바꾸고 그 반쪽으로 초점도 옮긴다. 초점이 뒤처지면 다음 화살표가 엉뚱한 데서 출발한다 */
   const move = (nextHalves: number) => {
     const clamped = Math.min(steps, Math.max(minSteps, nextHalves));
     onChange(clamped / 2);
-    buttons.current[clamped - 1]?.focus();
+    buttons.current[clamped - 1]?.focus({ preventScroll: true });
+    return clamped;
   };
 
   const halves = Math.round(value * 2);
 
   /** 포인터가 놓인 반쪽으로 값을 옮긴다. 별 묶음 폭을 반쪽 수로 나눠 몇 번째 반쪽인지 센다 */
-  const moveToPointer = (event: React.PointerEvent<HTMLDivElement>) => {
-    const { left, width } = event.currentTarget.getBoundingClientRect();
-    if (width === 0) return;
-    const next = Math.ceil(((event.clientX - left) / width) * steps);
-    if (next !== halves) move(next);
+  const moveToPointer = (clientX: number) => {
+    const current = drag.current;
+    if (!current || current.width === 0) return;
+    const next = Math.min(
+      steps,
+      Math.max(minSteps, Math.ceil(((clientX - current.left) / current.width) * steps)),
+    );
+    if (next !== current.last) current.last = move(next);
   };
 
   return (
     <div
       role="radiogroup"
       aria-label={label}
-      // 누른 뒤 손가락이 별 밖으로 나가도 끝까지 따라가게 포인터를 붙잡는다
       onPointerDown={(event) => {
-        if (event.button !== 0) return;
+        if (!event.isPrimary || event.button !== 0) return;
+        // 누른 뒤 손가락이 별 밖으로 나가도 끝까지 따라가게 포인터를 붙잡는다
         event.currentTarget.setPointerCapture(event.pointerId);
-        moveToPointer(event);
+        const { left, width } = event.currentTarget.getBoundingClientRect();
+        drag.current = { pointerId: event.pointerId, left, width, from: halves, last: halves };
+        moveToPointer(event.clientX);
       }}
       onPointerMove={(event) => {
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) moveToPointer(event);
+        if (drag.current?.pointerId === event.pointerId) moveToPointer(event.clientX);
       }}
-      className={cn("flex touch-pan-y justify-center select-none", className)}
+      // 마지막 이동과 손을 뗀 자리가 다를 수 있어 뗀 자리로 한 번 더 맞춘다
+      onPointerUp={(event) => {
+        if (drag.current?.pointerId !== event.pointerId) return;
+        moveToPointer(event.clientX);
+        drag.current = null;
+      }}
+      // 세로로 밀어 브라우저가 스크롤로 가져가면 눌렀을 때 바뀐 값을 되돌린다
+      onPointerCancel={(event) => {
+        const current = drag.current;
+        if (current?.pointerId !== event.pointerId) return;
+        if (current.last !== current.from) onChange(current.from / 2);
+        drag.current = null;
+      }}
+      className={cn("flex w-fit touch-pan-y justify-center select-none", className)}
     >
       {Array.from({ length: max }, (_, index) => {
         const filled = Math.max(0, Math.min(2, halves - index * 2));
