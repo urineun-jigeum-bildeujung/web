@@ -155,6 +155,10 @@ beforeEach(() => {
   // jsdom에는 createObjectURL이 없다. 사진 미리보기가 쓴다
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
+  // jsdom에는 되감을 이력이 없다. 되감으면 브라우저처럼 popstate를 낸다
+  vi.spyOn(window.history, "go").mockImplementation(() => {
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
   getOrderDetail.mockResolvedValue(makeDetail());
   createClaim.mockResolvedValue({
     claimId: 5,
@@ -167,6 +171,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 test("첫 단계는 머리말이 주문 내역이고 버튼에 유형이 선다", async () => {
@@ -367,7 +372,7 @@ test("이미 반품한 몫은 상한에서 빠진다", async () => {
  * 서버가 받지 않는 사유 보기·수거 희망일·요청사항은 사유 글 하나에 묶여 나간다.
  * 백엔드가 필드를 늘리기 어려워(2026-09-23) 읽을 수 있는 줄로 싣는다 (#408).
  */
-test("고른 상품·수량과 적은 것이 사유 글로 묶여 나가고 주문 상세로 돌아간다", async () => {
+test("고른 상품·수량과 적은 것이 사유 글로 묶여 나가고 취소·반품·교환 내역으로 간다", async () => {
   renderView("return");
 
   await pickAndNext();
@@ -395,8 +400,13 @@ test("고른 상품·수량과 적은 것이 사유 글로 묶여 나가고 주�
     items: [{ orderItemId: 11, quantity: 2 }],
   });
   expect(toastAppSuccess).toHaveBeenCalled();
-  // 뒤로가기로 방금 접수한 화면에 돌아오면 두 번 보내게 된다
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+  // 접수한 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337). 쌓인 ②·③ 단계 칸을 ①까지
+  // 되감은 뒤 갈아 끼워, 내역에서 뒤로가기를 눌러도 방금 접수한 작성 화면이 열리지 않는다
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
+  expect(window.history.go).toHaveBeenCalledWith(-2);
+  expect(vi.mocked(window.history.go).mock.invocationCallOrder[0]).toBeLessThan(
+    replace.mock.invocationCallOrder[0],
+  );
 });
 
 // 사진은 접수할 때 주문용 주소로 올리고, 돌려받은 주소를 싣는다 (#408)
@@ -544,7 +554,7 @@ test.each(["constructor", "toString"])(
  * **접수 뒤 다시 받은 주문에는 방금 신청한 상품이 진행 중인 신청으로 걸려 있다.** 막기 판정을
  * 그대로 두면 주문 상세로 넘어가기 전 한순간 "신청 진행 중"이 떴다 (#426)
  */
-test("접수한 뒤 주문 상세로 넘어가기 전에 신청 진행 중 안내가 뜨지 않는다", async () => {
+test("접수한 뒤 내역으로 넘어가기 전에 신청 진행 중 안내가 뜨지 않는다", async () => {
   createClaim.mockImplementation(async () => {
     getOrderDetail.mockResolvedValue(
       makeDetail({ items: [makeItem({ claims: [makeClaim("REQUESTED")] })] }),
@@ -563,7 +573,7 @@ test("접수한 뒤 주문 상세로 넘어가기 전에 신청 진행 중 안�
   pickDate();
   fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
 
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
   // 다시 받기까지 끝난 뒤에도 안내로 바뀌지 않는다
   await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
   expect(screen.queryByText("신청 진행 중")).toBeNull();
@@ -573,7 +583,7 @@ test("접수한 뒤 주문 상세로 넘어가기 전에 신청 진행 중 안�
  * **접수가 끝나면 요청 대기가 풀리는데, 주문 상세로 넘어가기 전 한 번 더 그려진다.** 그 사이
  * 버튼이 다시 켜져 누르면 같은 신청이 또 나가 409 "신청 진행 중"이 떴다 (#476)
  */
-test("접수가 끝나고 주문 상세로 넘어가기 전에는 다시 보낼 수 없다", async () => {
+test("접수가 끝나고 내역으로 넘어가기 전에는 다시 보낼 수 없다", async () => {
   renderView("return");
 
   await pickAndNext();
@@ -581,7 +591,7 @@ test("접수가 끝나고 주문 상세로 넘어가기 전에는 다시 보낼 
   pickDate();
   fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
 
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders/1"));
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
   // 접수 훅이 주문을 다시 받는 것까지 끝나 요청 대기가 풀린 뒤다
   await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
   // 대기 표시가 남고 버튼이 잠긴다
