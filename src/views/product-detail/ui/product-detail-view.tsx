@@ -144,8 +144,9 @@ function RatingSummary({
 /**
  * 상품 사진. 좌우로 넘기고 아래 점이 지금 몇 번째인지 알린다.
  *
- * 품절이면 사진 자리 전체를 50% 흐리게 둔다. 시안(품절 1702-19204·19653)의 대표 이미지 인스턴스가
- * 통째로 opacity 0.5라 점 표시까지 함께 흐려진다(QA PD-059). 블러 필터가 아니라 투명도다
+ * 품절이면 사진을 블러로 흐린다. PM QA 기대가 "대표 이미지 블러 처리"다(QA 상품 상세 37, #625).
+ * 시안(품절 1702-19204·19653)은 opacity 0.5였지만 PM QA를 따른다(QA PD-059에서 바뀜). 점 표시는
+ * 흐리지 않아 몇 번째 사진인지는 그대로 읽힌다
  */
 function ProductImages({
   images,
@@ -163,7 +164,7 @@ function ProductImages({
       <div
         className={cn(
           "flex aspect-square items-center justify-center bg-muted",
-          soldOut && "opacity-50",
+          soldOut && "blur-sm",
         )}
       >
         <span className="text-sm text-muted-foreground">상품 이미지</span>
@@ -172,7 +173,8 @@ function ProductImages({
   }
 
   return (
-    <div className={cn("relative", soldOut && "opacity-50")}>
+    // 블러가 사진 칸 밖(헤더 쪽)으로 번지지 않게 자른다
+    <div className="relative overflow-hidden">
       <div
         // 스냅으로 한 장씩 멈춘다. 지금 몇 번째인지는 스크롤 위치에서 되읽는다 —
         // 따로 상태를 굴리면 손가락으로 넘긴 것과 점이 어긋난다
@@ -180,7 +182,10 @@ function ProductImages({
           const el = event.currentTarget;
           setIndex(Math.round(el.scrollLeft / el.clientWidth));
         }}
-        className="flex aspect-square snap-x snap-mandatory overflow-x-auto"
+        className={cn(
+          "flex aspect-square snap-x snap-mandatory overflow-x-auto",
+          soldOut && "blur-sm",
+        )}
       >
         {images.map((src, imageIndex) => (
           <div key={src} className="relative aspect-square w-full shrink-0 snap-center">
