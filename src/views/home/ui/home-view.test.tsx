@@ -514,6 +514,46 @@ describe("HomeView", () => {
     expect(screen.getByRole("radio", { name: "초코" }).getAttribute("aria-checked")).toBe("true");
   });
 
+  // 같은 아이를 다시 골라도 서로 다른 선택이다. 아이 번호로 가리면 첫 요청을 마지막 선택으로 오인한다(#531 리뷰)
+  it("같은 아이를 다시 고르면 앞선 같은 아이 요청이 끝나도 알리지 않는다", async () => {
+    let finishFirst = () => {};
+    let finishLast = () => {};
+    changeDefaultPet
+      .mockImplementationOnce(() => new Promise<void>((resolve) => (finishFirst = resolve)))
+      .mockImplementationOnce(() => new Promise<void>(() => {}))
+      .mockImplementationOnce(() => new Promise<void>((resolve) => (finishLast = resolve)));
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+    fireEvent.click(screen.getByRole("radio", { name: "초코" }));
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    await act(async () => finishFirst());
+    expect(showSnackbar).not.toHaveBeenCalled();
+
+    await act(async () => finishLast());
+    expect(showSnackbar).toHaveBeenLastCalledWith("구름이로 바꿨어요");
+  });
+
+  it("같은 아이를 다시 고르면 앞선 같은 아이 요청이 실패해도 마지막 선택을 되돌리지 않는다", async () => {
+    let failFirst = () => {};
+    changeDefaultPet
+      .mockImplementationOnce(
+        () => new Promise<void>((_, reject) => (failFirst = () => reject(new Error("boom")))),
+      )
+      .mockImplementationOnce(() => new Promise<void>(() => {}))
+      .mockImplementationOnce(() => new Promise<void>(() => {}));
+    await renderWith();
+
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+    fireEvent.click(screen.getByRole("radio", { name: "초코" }));
+    fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
+
+    await act(async () => failFirst());
+
+    expect(screen.getByRole("radio", { name: "구름이" }).getAttribute("aria-checked")).toBe("true");
+  });
+
   // 실패 알림은 전역(MutationCache)이 띄운다. 화면은 서버가 그대로 둔 기본 아이로 돌아간다
   it("바꾸지 못하면 기본 아이로 되돌리고 바꿨다고 알리지 않는다", async () => {
     changeDefaultPet.mockRejectedValueOnce(new Error("boom"));
