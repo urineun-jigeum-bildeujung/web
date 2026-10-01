@@ -37,6 +37,7 @@ import { HeaderIconLink } from "@/shared/ui/page-header/header-icon-link";
 import { ProductGridCard } from "@/shared/ui/product-grid-card/product-grid-card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/ui/select";
 import { Skeleton } from "@/shared/ui/skeleton";
+import { showSnackbar } from "@/shared/ui/snackbar/snackbar";
 
 // 건강 고민 칩(관절·알러지·구강관리)은 이 시안에 없다. home-view와 같은 상품 분류
 // 탭(전체·사료·간식·영양제)으로 거른다
@@ -152,7 +153,15 @@ function RecommendationGrid({ petId, petName, category, sort }: RecommendationGr
                 // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)
                 <button
                   type="button"
-                  onClick={() => heart.toggle(product.productId, !wished, toWishlistItem(product))}
+                  onClick={() => {
+                    // 담기면 상품 상세와 같은 안내를 띄운다(QA r35, #625)
+                    if (
+                      heart.toggle(product.productId, !wished, toWishlistItem(product)) &&
+                      !wished
+                    ) {
+                      showSnackbar("해당 상품을 찜 목록에 담았어요!");
+                    }
+                  }}
                   aria-pressed={wished}
                   aria-label={`${product.name} 찜하기`}
                   disabled={wishLoading}

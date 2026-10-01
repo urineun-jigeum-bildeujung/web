@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Recommendation } from "@/entities/recommendation";
 
+const { showSnackbar } = vi.hoisted(() => ({ showSnackbar: vi.fn() }));
+vi.mock("@/shared/ui/snackbar/snackbar", () => ({ showSnackbar }));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), back: vi.fn() }),
   usePathname: () => "/recommendations",
@@ -283,6 +286,7 @@ describe("RecommendationsView", () => {
   });
 
   it("하트를 누르면 그 상품의 찜을 서버에서 뒤집는다", () => {
+    showSnackbar.mockClear();
     wishlistQuery = { items: [{ productId: 20 }], isLoading: false };
     renderWith();
 
@@ -300,10 +304,14 @@ describe("RecommendationsView", () => {
       },
     });
 
+    // QA r35(#625). 담을 때만 상품 상세와 같은 안내를 띄운다
+    expect(showSnackbar).toHaveBeenCalledExactlyOnceWith("해당 상품을 찜 목록에 담았어요!");
+
     fireEvent.click(screen.getByRole("button", { name: "추천 상품 20 찜하기" }));
     expect(toggleWish).toHaveBeenLastCalledWith(
       expect.objectContaining({ productId: 20, wished: false }),
     );
+    expect(showSnackbar).toHaveBeenCalledTimes(1);
   });
 
   // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)

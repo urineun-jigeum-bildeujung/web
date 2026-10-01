@@ -613,11 +613,14 @@ describe("HomeView", () => {
     expect(pendingCalls).toContainEqual({ enabled: true });
   });
 
-  it("남길 반응이 없으면 칸을 그리지 않는다", async () => {
+  // QA r26·r31(#625). 칸째 사라져 최근 구매가 없는 것인지 알 수 없었다
+  it("남길 반응이 없으면 칸 제목과 빈 상태 안내를 보인다", async () => {
     pendingQuery = { ...pendingIdle(), items: [] };
     await renderWith();
 
-    expect(screen.queryByText("최근에 구매한 상품, 아이는 어때요?")).toBeNull();
+    expect(screen.getByText("최근에 구매한 상품, 아이는 어때요?")).toBeDefined();
+    expect(screen.getByText("아직 반응을 남길 상품이 없어요")).toBeDefined();
+    expect(screen.queryByRole("list", { name: "최근에 구매한 상품" })).toBeNull();
   });
 
   // 로그아웃 상태에서 부르면 방문할 때마다 401과 재발급 시도가 헛돈다
@@ -910,6 +913,8 @@ describe("AI가 골라주는 맞춤 상품", () => {
         originalPrice: 20000,
       },
     });
+    // QA r24·r29(#625). 상품 상세와 같은 담김 안내를 띄운다
+    expect(showSnackbar).toHaveBeenCalledWith("해당 상품을 찜 목록에 담았어요!");
   });
 
   it("찜한 상품의 하트를 다시 누르면 서버에서 찜을 푼다", async () => {
@@ -922,6 +927,8 @@ describe("AI가 골라주는 맞춤 상품", () => {
     expect(toggleWish).toHaveBeenCalledWith(
       expect.objectContaining({ productId: 301, wished: false }),
     );
+    // 빼는 것은 하트 모양으로 충분하다. 담김 안내를 띄우지 않는다
+    expect(showSnackbar).not.toHaveBeenCalledWith("해당 상품을 찜 목록에 담았어요!");
   });
 
   // PATCH가 토글이라 모르는 채로 누르면 이미 찜한 상품의 찜이 지워진다(#493 리뷰)

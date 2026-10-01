@@ -76,6 +76,9 @@ import { PromoBannerCarousel } from "./promo-banner-carousel";
 /** 메인 맞춤 상품은 추천 API의 기본 개수(9)만큼 받는다. 추천 화면(50개)과 캐시를 나눈다(#600) */
 const HOME_RECOMMENDATION_SIZE = 9;
 
+/** 찜하면 띄우는 안내. 상품 상세·리뷰 상세·사진 뷰어와 같은 문구다 */
+const WISHED_MESSAGE = "해당 상품을 찜 목록에 담았어요!";
+
 /**
  * 시안 ProductCard/Grid의 price 슬롯 — 단가 + 별점 + 후기 수, 그 아래 추천 이유.
  * Rating Container는 5개 별을 늘어놓는 Rating(mypa_041_작성한 기준)과 달리 별 1개 + 숫자다.
@@ -183,9 +186,13 @@ function RecommendedProducts({ petId, petName }: { petId: number; petName: strin
                 name={item.name}
                 wished={wishedIds.has(item.productId)}
                 loading={wishLoading}
-                onToggle={() =>
-                  heart.toggle(item.productId, !wishedIds.has(item.productId), toWishlistItem(item))
-                }
+                onToggle={() => {
+                  // 담기면 상품 상세와 같은 안내를 띄운다. 빼는 것은 하트 모양으로 충분하다(QA r24·r29, #625)
+                  const next = !wishedIds.has(item.productId);
+                  if (heart.toggle(item.productId, next, toWishlistItem(item)) && next) {
+                    showSnackbar(WISHED_MESSAGE);
+                  }
+                }}
               />
             }
             meta={<RecommendedProductMeta item={item} />}
@@ -382,13 +389,15 @@ function ProductGrid({ productsPromise, category, sort, sortSelect }: ProductGri
                       name={product.name}
                       wished={wishedIds.has(product.productId)}
                       loading={wishLoading}
-                      onToggle={() =>
-                        heart.toggle(
-                          product.productId,
-                          !wishedIds.has(product.productId),
-                          toWishlistItem(product),
-                        )
-                      }
+                      onToggle={() => {
+                        const next = !wishedIds.has(product.productId);
+                        if (
+                          heart.toggle(product.productId, next, toWishlistItem(product)) &&
+                          next
+                        ) {
+                          showSnackbar(WISHED_MESSAGE);
+                        }
+                      }}
                     />
                   }
                   meta={<CategoryProductMeta product={product} />}
@@ -809,7 +818,8 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
               )}
             </section>
 
-            {/* 이 서비스가 근거를 모으는 자리. 남길 반응이 없으면 칸째 없다 — 빈 상태 시안이 없다(#494) */}
+            {/* 이 서비스가 근거를 모으는 자리. 남길 반응이 없으면 빈 상태를 안내한다(QA r26·r31, #625).
+                시안에 빈 상태가 없어 맞춤 상품의 빈 안내와 같은 모양으로 둔다 */}
             {/* 다시 받는 동안에도 오류 칸을 지킨다 — 받아 둔 것 없이 다시 부르면 조회가 오류를 비운다(#498 점검) */}
             {(pending.error || pending.isRetrying) && !pending.items ? (
               <section className="flex flex-col gap-3 py-6 pl-5">
@@ -835,6 +845,13 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
                     </LoadingSwap>
                   </Button>
                 </div>
+              </section>
+            ) : pending.items && recentItems.length === 0 ? (
+              <section className="flex flex-col gap-3 py-6 pl-5">
+                <SectionTitle className="pr-5">최근에 구매한 상품, 아이는 어때요?</SectionTitle>
+                <p className="py-8 pr-5 text-center text-body-medium-14 text-text-body-tertiary">
+                  아직 반응을 남길 상품이 없어요
+                </p>
               </section>
             ) : (
               recentItems.length > 0 && (
