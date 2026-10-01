@@ -46,7 +46,11 @@ test("거르기 시트에서 종을 고르고 적용하면 그 조건으로 다�
 
   await page.getByRole("button", { name: "기본 맞춤 필터" }).click();
   await page.getByRole("tab", { name: "반려동물 필터" }).click();
-  await page.getByRole("radio", { name: "고양이" }).click();
+  // 칩의 원은 레이블이 덮고 있다. 사용자가 누르는 자리인 레이블을 누른다
+  await page
+    .getByRole("dialog")
+    .locator("label", { hasText: /^고양이$/ })
+    .click();
   await page.getByRole("button", { name: /^리뷰 .*보기$/ }).click();
 
   await expect(page).toHaveURL(/reviewFilter=species%3Acat|reviewFilter=species:cat/);
