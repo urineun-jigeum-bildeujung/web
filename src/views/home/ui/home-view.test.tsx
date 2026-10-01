@@ -470,7 +470,7 @@ describe("HomeView", () => {
     await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("보람으로 바꿨어요"));
 
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
-    expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요");
+    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요"));
   });
 
   // 상품 상세 적합도·결제가 기본 아이로 시작한다. 화면 안에만 두면 떠나는 순간 처음 아이로 돌아갔다(QA HM-020)
@@ -493,16 +493,25 @@ describe("HomeView", () => {
     expect(showSnackbar).toHaveBeenLastCalledWith("구름이로 바꿨어요");
   });
 
-  it("이미 기본인 아이를 고르면 요청하지 않는다", async () => {
+  // 요청은 훅이 누른 순서대로 하나씩 보낸다. 화면은 앞 요청이 늦게 끝나도 마지막 선택만 알린다(#531 리뷰)
+  it("연달아 고르면 앞 아이로 바꿨다고 알리지 않고, 옛 기본 아이로 돌아가도 요청한다", async () => {
+    let finishFirst = () => {};
+    changeDefaultPet.mockImplementationOnce(
+      () => new Promise<void>((resolve) => (finishFirst = resolve)),
+    );
     await renderWith();
 
     fireEvent.click(screen.getByRole("radio", { name: "구름이" }));
-    await waitFor(() => expect(showSnackbar).toHaveBeenCalled());
-    changeDefaultPet.mockClear();
-
+    // 목록은 아직 초코를 기본으로 가리킨다. 그래도 서버에는 구름이 요청이 떠 있어 다시 보내야 한다
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
 
-    expect(changeDefaultPet).not.toHaveBeenCalled();
+    expect(changeDefaultPet.mock.calls).toEqual([["7"], ["3"]]);
+    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요"));
+
+    await act(async () => finishFirst());
+
+    expect(showSnackbar).not.toHaveBeenCalledWith("구름이로 바꿨어요");
+    expect(screen.getByRole("radio", { name: "초코" }).getAttribute("aria-checked")).toBe("true");
   });
 
   // 실패 알림은 전역(MutationCache)이 띄운다. 화면은 서버가 그대로 둔 기본 아이로 돌아간다
@@ -524,6 +533,8 @@ describe("HomeView", () => {
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
 
     expect(showSnackbar).not.toHaveBeenCalled();
+    // 지금 보이는 아이가 곧 기본 아이라 서버에 바꿀 것이 없다(#531)
+    expect(changeDefaultPet).not.toHaveBeenCalled();
     expect(screen.getByRole("heading", { name: "AI가 골라주는 초코 맞춤 상품" })).toBeDefined();
   });
 
