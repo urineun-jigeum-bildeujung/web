@@ -785,7 +785,7 @@ describe("ProductDetailView", () => {
     expect(screen.queryByRole("button", { name: /^장바구니$/ })).toBeNull();
   });
 
-  // 시안(품절 1702-19204·19653)은 대표 이미지를 통째로 50% 흐리게 둔다(QA PD-059)
+  // PM QA 기대(상품 상세 37)대로 대표 이미지를 블러로 흐린다(#625). 시안은 50% 투명이었다(QA PD-059)
   describe("품절 사진", () => {
     const IMAGES = ["/images/e2e/product-photo-1.png", "/images/e2e/product-photo-2.png"];
 
@@ -793,14 +793,14 @@ describe("ProductDetailView", () => {
       await renderWith("", { images: IMAGES });
 
       const photo = screen.getByRole("img", { name: PRODUCT.name });
-      expect(photo.closest(".opacity-50")).not.toBeNull();
+      expect(photo.closest(".blur-sm")).not.toBeNull();
     });
 
     it("살 수 있는 상품의 사진은 흐리지 않는다", async () => {
       await renderWith("", { images: IMAGES, soldOut: false });
 
       const photo = screen.getByRole("img", { name: PRODUCT.name });
-      expect(photo.closest(".opacity-50")).toBeNull();
+      expect(photo.closest(".blur-sm")).toBeNull();
     });
   });
 
