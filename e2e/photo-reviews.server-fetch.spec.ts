@@ -159,18 +159,28 @@ test("뷰어 카드의 도움돼요도 누르고 풀 수 있다", async ({ page 
     liked = !liked;
     return route.fulfill({ status: 200 });
   });
-  // **중단된 조회를 치명적 오류로 다루지 않는다.** 도움돼요를 누르면 앱이 진행 중인 상세 조회를
-  // 일부러 세운다(`use-mutate-review-recommend`의 `cancelQueries`) — 그대로 두면 나중에 끝나면서
-  // 방금 바꾼 눌림을 덮어쓰기 때문이다. 중단된 요청의 응답은 Playwright가 폐기하므로, 흘려보낸
-  // 응답을 읽다 실패하면 그 요청은 버린다. 화면은 낙관적 갱신으로 이미 그려져 있고, 토글이 끝난
-  // 뒤의 재조회가 서버 값으로 맞춘다. 이 처리가 없던 동안 네 번에 한 번
-  // `apiResponse.json: Response has been disposed`로 터졌다 (#628)
+  // **중단된 조회만 버린다.** 도움돼요를 누르면 앱이 진행 중인 상세 조회를 일부러 세운다
+  // (`use-mutate-review-recommend`의 `cancelQueries`) — 그대로 두면 나중에 끝나면서 방금 바꾼
+  // 눌림을 덮어쓰기 때문이다. 중단된 요청의 응답은 Playwright가 폐기하고, 그것을 읽으면
+  // `Response has been disposed`로 터진다. 이 처리가 없던 동안 네 번에 한 번 그 오류로 실패했다(#628).
+  //
+  // **그 오류만 골라 버리고 나머지는 다시 던진다.** 통째로 삼키면 재조회가 진짜로 실패해도
+  // 화면에 남은 낙관적 값만으로 아래 단정문이 통과한다 — 서버가 눌림을 기억하는지 보려고 둔
+  // 테스트인데 그것을 못 보게 된다 (PR #629 리뷰 지적).
+  //
+  // 메시지 문자열로 가리는 것이 Playwright 문구에 묶이는 것은 안다. 중단 여부를 알려 주는 다른
+  // 신호가 없어서다. 문구가 바뀌면 이 오류가 다시 던져져 **테스트가 깨지며 드러난다** — 조용히
+  // 통과하는 쪽으로는 무너지지 않는다.
+  const DISPOSED = "Response has been disposed";
   await page.route("**/api/v1/reviews/7", async (route) => {
     let body;
     try {
       body = await (await route.fetch()).json();
-    } catch {
-      return route.abort("aborted");
+    } catch (error) {
+      if (error instanceof Error && error.message.includes(DISPOSED)) {
+        return route.abort("aborted");
+      }
+      throw error;
     }
     return route.fulfill({
       json: { ...body, liked, likeCount: body.likeCount + (liked ? 1 : 0) },
