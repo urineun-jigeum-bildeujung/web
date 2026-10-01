@@ -1,5 +1,5 @@
 // apiRequest 공통 fetch 래퍼 단위 테스트. 헤더 조립·성공 파싱·실패 throw·401 재발급을 검증한다.
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   ApiError,
@@ -389,5 +389,57 @@ describe("apiRequest 인증", () => {
       (url as string).endsWith("/auths/token/refresh"),
     );
     expect(refreshCalls).toHaveLength(1);
+  });
+
+  describe("새로고침 직후 (refreshToken만 남은 상태)", () => {
+    // accessToken은 메모리에만 있어 새로고침하면 사라지고 localStorage의 refreshToken만 남는다
+    beforeEach(() => {
+      window.localStorage.setItem("gollaju.refreshToken", "refresh-1");
+    });
+
+    it("401을 기다리지 않고 재발급부터 받아 첫 요청에 새 토큰을 싣는다", async () => {
+      const fetchMock = stubAuthFetch();
+
+      await expect(apiRequest("/users/me")).resolves.toEqual({ ok: true });
+
+      const urls = fetchMock.mock.calls.map(([url]) => url as string);
+      expect(urls).toHaveLength(2);
+      expect(urls[0]).toMatch(/\/auths\/token\/refresh$/);
+      expect(urls[1]).toMatch(/\/users\/me$/);
+    });
+
+    it("동시에 들어온 요청도 재발급은 한 번만 하고 401 없이 끝난다", async () => {
+      const fetchMock = stubAuthFetch();
+
+      await Promise.all([apiRequest("/cart"), apiRequest("/orders"), apiRequest("/users/me")]);
+
+      const statuses = await Promise.all(
+        fetchMock.mock.results.map(async ({ value }) => (await value).status),
+      );
+      expect(
+        fetchMock.mock.calls.filter(([url]) => (url as string).endsWith("/refresh")),
+      ).toHaveLength(1);
+      expect(statuses).not.toContain(401);
+    });
+
+    it("auth: false 요청은 재발급하지 않고 바로 보낸다", async () => {
+      const fetchMock = stubFetch(Response.json({}));
+
+      await apiRequest("/products", { auth: false });
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(getRefreshToken()).toBe("refresh-1");
+    });
+
+    it("재발급이 실패하면 토큰을 지우고 원 요청은 한 번만 보내 401로 끝난다", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 401 }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(apiRequest("/users/me")).rejects.toMatchObject({ status: 401 });
+
+      expect(getRefreshToken()).toBeNull();
+      // 재발급 1회 + 원 요청 1회. 토큰이 지워져 401 뒤 재발급을 또 하지 않는다.
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
   });
 });
