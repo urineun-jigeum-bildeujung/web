@@ -122,3 +122,40 @@ test("/ — 오류 없이 그려진다", async ({ page }) => {
   );
   expect(overflow, "가로 스크롤이 생겼다").toBeLessThanOrEqual(0);
 });
+
+/*
+ * 배너 세 장이 실제로 뜨는지 본다(#636).
+ *
+ * **단위 테스트는 `alt`·`loading` 속성만 본다.** 그 둘은 자산이 없어도 그대로 붙어, 파일 이름이
+ * 바뀌거나 지워지면 첫 화면 맨 위에 빈 배너 셋이 뜨는데도 통과했다. 배너는 PD가 갈아끼울
+ * 정적 자산이라(#615) 파일을 바꾸는 손이 들어오는 자리다.
+ *
+ * `next/image`를 거치므로 원본이 없으면 `/_next/image` 요청이 실패해 `naturalWidth`가 0이다 —
+ * 이 검사 하나로 자산 존재와 최적화 경로를 같이 지난다.
+ *
+ * **넉넉히 기다린다.** 차가운 서버에서 최적화가 끝나기 전에 테스트가 끝나면 그 요청이 끊기고,
+ * 뒤에 오는 같은 주소 요청이 답을 받지 못해 E2E 잡이 통째로 시간 초과된 적이 있다(#535).
+ */
+test("프로모션 배너 세 장이 모두 로드된다", async ({ page }) => {
+  await page.goto("/");
+
+  const banners = page.getByRole("region", { name: "진행 중인 행사" }).locator("img");
+  await expect(banners).toHaveCount(3);
+
+  /** 그 자리의 이미지가 실제 픽셀을 가졌는지. 0이면 못 받은 것이다 */
+  const loaded = (index: number) =>
+    expect
+      .poll(() => banners.nth(index).evaluate((img: HTMLImageElement) => img.naturalWidth), {
+        timeout: 15_000,
+      })
+      .toBeGreaterThan(0);
+
+  // 첫 장만 먼저 받고 나머지는 볼 때 받는다(AGENTS 5.6) — 점을 눌러 옮긴 뒤에 재야 한다
+  await loaded(0);
+
+  await page.getByRole("button", { name: "2번 배너 보기" }).click();
+  await loaded(1);
+
+  await page.getByRole("button", { name: "3번 배너 보기" }).click();
+  await loaded(2);
+});
