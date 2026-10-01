@@ -90,6 +90,43 @@ test("주문 상세에서 반품을 세 단계로 접수하면 취소·반품·�
   expect(claim).not.toHaveProperty("imageUrls");
 });
 
+// ③에서 새로고침하면 그 칸만 ①로 바뀌고 앞의 ①·② 칸이 남는다. 단계 순번만큼 되감으면 그 칸이
+// 남아 내역에서 뒤로가기를 누를 때 옛 작성 화면이 열렸다(#650 리뷰)
+test("③에서 새로고침한 뒤 다시 접수해도 뒤로가기가 작성 화면으로 돌아가지 않는다", async ({
+  page,
+}) => {
+  await stubOrders(page, { claims: [] });
+  await page.goto("/mypage/orders/1");
+  await page.getByRole("button", { name: "반품·교환", exact: true }).click();
+  await page.getByRole("link", { name: "반품하기" }).click();
+
+  async function fillUntilPickup() {
+    await page.getByRole("checkbox", { name: /테스트 사료/ }).check();
+    await page.getByRole("button", { name: "반품 신청하기" }).click();
+    await page.getByRole("radio", { name: "상품 파손 · 불량" }).check();
+    await page.getByRole("button", { name: "다음" }).click();
+    await expect(page).toHaveURL(/step=pickup/);
+  }
+
+  await fillUntilPickup();
+  // 적은 값이 사라져 ①로 당겨진다
+  await page.reload();
+  await expect(page).not.toHaveURL(/step=pickup/);
+  await fillUntilPickup();
+
+  const firstDate = page
+    .getByRole("radiogroup", { name: "수거 희망일" })
+    .getByRole("radio")
+    .first();
+  await firstDate.focus();
+  await firstDate.press("Space");
+  await page.getByRole("button", { name: "반품 신청 완료하기" }).click();
+
+  await expect(page).toHaveURL(/\/mypage\/orders\?tab=claims$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/mypage\/orders\/1$/);
+});
+
 // 서버 `Order.isClaimable`이 배송완료 뒤 7일까지만 받는다. 화면이 안 막으면 사유까지 다 적고
 // 나서 거절당한다 (#374)
 test("배송완료 7일이 지나면 반품·교환 버튼이 없다", async ({ page }) => {

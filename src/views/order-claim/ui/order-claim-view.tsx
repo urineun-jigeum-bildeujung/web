@@ -48,15 +48,38 @@ import { ClaimItemsStep } from "./claim-items-step";
 import { ClaimPickupStep } from "./claim-pickup-step";
 import { ClaimReasonStep } from "./claim-reason-step";
 
-/** 이력을 `count`칸 되감고, 되감긴 화면이 자리 잡을 때까지 기다린다. 0이면 바로 끝난다 */
-function rewindHistory(count: number): Promise<void> {
-  if (count <= 0) {
-    return Promise.resolve();
-  }
+/** 되감기 한 칸을 기다리는 시간. 그 안에 popstate가 없으면 더 되돌아갈 이력이 없는 것이다 */
+const BACK_TIMEOUT_MS = 500;
+
+/** 한 칸 뒤로 가고 자리 잡을 때까지 기다린다. 되돌아갈 이력이 없으면 거짓이다 */
+function goBackOnce(): Promise<boolean> {
   return new Promise((resolve) => {
-    window.addEventListener("popstate", () => resolve(), { once: true });
-    window.history.go(-count);
+    const onPop = () => {
+      window.clearTimeout(timer);
+      resolve(true);
+    };
+    const timer = window.setTimeout(() => {
+      window.removeEventListener("popstate", onPop);
+      resolve(false);
+    }, BACK_TIMEOUT_MS);
+    window.addEventListener("popstate", onPop, { once: true });
+    window.history.back();
   });
+}
+
+/**
+ * 신청 화면 이력을 모두 되감는다. 주소가 신청 화면을 벗어나면 참, 더 되돌아갈 곳이 없으면 거짓이다.
+ *
+ * **칸 수를 세지 않고 주소로 가른다.** 단계마다 쌓인 칸 수는 단계 순번과 다를 수 있다 — ③에서
+ * 새로고침하면 그 칸만 ①로 바뀌고 앞의 ①·② 칸은 그대로 남는다(#650 리뷰).
+ */
+async function leaveClaimHistory(claimPath: string): Promise<boolean> {
+  while (window.location.pathname === claimPath) {
+    if (!(await goBackOnce())) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /** 주문 상세가 넘기는 쿼리 값과 서버 `ClaimType`의 대응 */
@@ -152,12 +175,16 @@ export function OrderClaimView({ orderId, type }: OrderClaimViewProps) {
       return;
     }
     toastAppSuccess(APP_MESSAGE_CODE.order.claimRequested);
-    // **접수한 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337).** 단계는 이력에 쌓여 있다 —
-    // ①이 첫 칸이고 단계를 넘길 때마다 한 칸씩 더해진다. 마지막 칸만 갈아 끼우면 그 아래 ①·② 칸이
-    // 남아, 내역에서 뒤로가기를 누르면 방금 접수한 작성 화면이 다시 열린다. 단계 칸을 ①까지 되감은
-    // 뒤 그 칸을 내역으로 갈아 끼워, 내역에서 뒤로가면 신청에 들어오기 전 화면(주문 상세)이 나온다
-    await rewindHistory(CLAIM_STEPS.indexOf(current));
-    router.replace("/mypage/orders?tab=claims");
+    // **접수한 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337).** 단계는 이력에 쌓여 있어
+    // 마지막 칸만 갈아 끼우면 그 아래 칸이 남아, 내역에서 뒤로가기를 누를 때 방금 접수한 작성 화면이
+    // 다시 열린다. 신청 화면 칸을 모두 되감아 들어오기 전 화면(주문 상세) 위에 내역을 얹는다.
+    // 주소로 바로 들어와 되돌아갈 곳이 없으면 그 칸을 내역으로 갈아 끼운다
+    const target = "/mypage/orders?tab=claims";
+    if (await leaveClaimHistory(window.location.pathname)) {
+      router.push(target);
+    } else {
+      router.replace(target);
+    }
   }
 
   /**

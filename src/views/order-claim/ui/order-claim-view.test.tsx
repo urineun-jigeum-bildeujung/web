@@ -4,14 +4,15 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import { NuqsTestingAdapter, type UrlUpdateEvent } from "nuqs/adapters/testing";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
-const { getOrderDetail, createClaim, uploadImage, replace } = vi.hoisted(() => ({
+const { getOrderDetail, createClaim, uploadImage, replace, push } = vi.hoisted(() => ({
+  push: vi.fn(),
   getOrderDetail: vi.fn(),
   createClaim: vi.fn(),
   uploadImage: vi.fn(),
   replace: vi.fn(),
 }));
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, back: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, push, back: vi.fn() }) }));
 
 vi.mock("@/entities/order/api/orders", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/order/api/orders")>()),
@@ -155,10 +156,7 @@ beforeEach(() => {
   // jsdom에는 createObjectURL이 없다. 사진 미리보기가 쓴다
   URL.createObjectURL = vi.fn(() => "blob:preview");
   URL.revokeObjectURL = vi.fn();
-  // jsdom에는 되감을 이력이 없다. 되감으면 브라우저처럼 popstate를 낸다
-  vi.spyOn(window.history, "go").mockImplementation(() => {
-    window.dispatchEvent(new PopStateEvent("popstate"));
-  });
+  stubClaimHistory(3);
   getOrderDetail.mockResolvedValue(makeDetail());
   createClaim.mockResolvedValue({
     claimId: 5,
@@ -168,6 +166,20 @@ beforeEach(() => {
   });
   uploadImage.mockImplementation(async (file: File) => `https://cdn.test/orders/${file.name}`);
 });
+
+/**
+ * jsdom에는 되감을 이력이 없다. 신청 화면 칸이 `claimEntries`개 쌓인 것처럼 세운다 — 그만큼
+ * 뒤로 가면 주소가 주문 상세로 바뀌고, 뒤로 갈 때마다 브라우저처럼 popstate를 낸다
+ */
+function stubClaimHistory(claimEntries: number) {
+  window.history.replaceState(null, "", "/mypage/orders/1/claim?type=return");
+  let left = claimEntries;
+  vi.spyOn(window.history, "back").mockImplementation(() => {
+    left -= 1;
+    if (left <= 0) window.history.replaceState(null, "", "/mypage/orders/1");
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  });
+}
 
 afterEach(() => {
   vi.useRealTimers();
@@ -400,13 +412,42 @@ test("고른 상품·수량과 적은 것이 사유 글로 묶여 나가고 취�
     items: [{ orderItemId: 11, quantity: 2 }],
   });
   expect(toastAppSuccess).toHaveBeenCalled();
-  // 접수한 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337). 쌓인 ②·③ 단계 칸을 ①까지
-  // 되감은 뒤 갈아 끼워, 내역에서 뒤로가기를 눌러도 방금 접수한 작성 화면이 열리지 않는다
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
-  expect(window.history.go).toHaveBeenCalledWith(-2);
-  expect(vi.mocked(window.history.go).mock.invocationCallOrder[0]).toBeLessThan(
-    replace.mock.invocationCallOrder[0],
-  );
+  // 접수한 신청이 보이는 취소·반품·교환 탭으로 간다(QA No.337). 신청 화면 칸(①·②·③)을 모두
+  // 되감고 주문 상세 위에 얹어, 내역에서 뒤로가기를 눌러도 방금 접수한 작성 화면이 열리지 않는다
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
+  expect(window.history.back).toHaveBeenCalledTimes(3);
+  expect(replace).not.toHaveBeenCalled();
+});
+
+// ③에서 새로고침하면 그 칸만 ①로 바뀌고 앞의 ①·② 칸이 남는다. 단계 순번만큼 되감으면 옛 작성
+// 화면이 남았다(#650 리뷰). 칸 수와 상관없이 신청 화면을 벗어날 때까지 되감는다
+test("신청 화면 칸이 단계 수보다 많이 쌓여도 모두 되감고 내역으로 간다", async () => {
+  stubClaimHistory(5);
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
+  expect(window.history.back).toHaveBeenCalledTimes(5);
+});
+
+// 주소로 바로 들어와 되돌아갈 곳이 없으면 뒤로 가도 아무 일이 없다. 그 칸을 내역으로 갈아 끼운다
+test("되돌아갈 이력이 없으면 지금 칸을 내역으로 갈아 끼운다", async () => {
+  vi.spyOn(window.history, "back").mockImplementation(() => {});
+  renderView("return");
+
+  await pickAndNext();
+  await reasonAndNext();
+  pickDate();
+  fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
+
+  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"), {
+    timeout: 2000,
+  });
+  expect(push).not.toHaveBeenCalled();
 });
 
 // 사진은 접수할 때 주문용 주소로 올리고, 돌려받은 주소를 싣는다 (#408)
@@ -573,7 +614,7 @@ test("접수한 뒤 내역으로 넘어가기 전에 신청 진행 중 안내가
   pickDate();
   fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
 
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
   // 다시 받기까지 끝난 뒤에도 안내로 바뀌지 않는다
   await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
   expect(screen.queryByText("신청 진행 중")).toBeNull();
@@ -591,7 +632,7 @@ test("접수가 끝나고 내역으로 넘어가기 전에는 다시 보낼 수 
   pickDate();
   fireEvent.click(screen.getByRole("button", { name: "반품 신청 완료하기" }));
 
-  await waitFor(() => expect(replace).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
+  await waitFor(() => expect(push).toHaveBeenCalledWith("/mypage/orders?tab=claims"));
   // 접수 훅이 주문을 다시 받는 것까지 끝나 요청 대기가 풀린 뒤다
   await waitFor(() => expect(getOrderDetail).toHaveBeenCalledTimes(2));
   // 대기 표시가 남고 버튼이 잠긴다
@@ -644,6 +685,7 @@ test("접수가 실패하면 그 단계에 남아 다시 보낼 수 있다", asy
     ).toBe(false),
   );
   expect(replace).not.toHaveBeenCalled();
+  expect(push).not.toHaveBeenCalled();
 });
 
 // 다른 기기에서 먼저 신청했으면 서버가 거절한다. 되돌리지 않으면 다시 받은 주문이 "진행 중"이어도
@@ -664,4 +706,5 @@ test("접수가 거절되면 다시 받은 주문대로 신청할 수 없다고 
 
   expect(await screen.findByText("신청 진행 중")).toBeDefined();
   expect(replace).not.toHaveBeenCalled();
+  expect(push).not.toHaveBeenCalled();
 });
