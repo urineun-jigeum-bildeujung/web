@@ -517,6 +517,22 @@ function productDetail(productId) {
   return null;
 }
 
+/**
+ * **일부러 실패시키는 자리다**(#620).
+ *
+ * 조회가 실패했을 때 화면에 머리말과 이동 수단이 남는지 보려면 서버가 **500을 줘야 한다.**
+ * 404는 `notFound()`로 가는 다른 길이고, 목 서버를 아예 끄면 Next가 설정 오류로 다루어
+ * 실제 API 실패와 다르게 동작한다(#620에서 실측).
+ *
+ * 상품 번호 `500`과 검색어 `서버오류`를 예약한다 — 목 데이터에 없는 값이라 다른 테스트와 겹치지 않는다.
+ */
+function isForcedFailure(url) {
+  if (url.pathname === "/api/v1/products/500") return true;
+  return (
+    url.pathname === "/api/v1/products/search" && url.searchParams.get("keyword") === "서버오류"
+  );
+}
+
 const server = createServer((req, res) => {
   const url = new URL(req.url, `http://127.0.0.1:${PORT}`);
   // "더 보기"(#289)는 브라우저(Next 앱과 다른 포트)에서 직접 이 서버를 부른다 —
@@ -525,6 +541,15 @@ const server = createServer((req, res) => {
 
   if (url.pathname === "/health") {
     res.writeHead(200).end("ok");
+    return;
+  }
+
+  if (isForcedFailure(url)) {
+    res
+      .writeHead(500, { "content-type": "application/json" })
+      .end(
+        JSON.stringify({ title: "Internal Server Error", status: 500, detail: "forced (#620)" }),
+      );
     return;
   }
 
