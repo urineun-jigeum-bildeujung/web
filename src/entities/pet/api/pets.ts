@@ -154,3 +154,14 @@ export type PetUpdate = Partial<{
 export function updatePet(petId: string, patch: PetUpdate): Promise<void> {
   return apiRequest<void>(`/members/me/pets/${petId}`, { method: "PATCH", body: patch });
 }
+
+/**
+ * 기본 아이를 바꾼다(#531). 서버가 이전 기본 아이를 함께 내린다.
+ *
+ * **응답 본문(`{ petId, isDefault }`)을 읽지 않는다.** 바뀐 순서와 표시는 목록을 다시 받아 맞춘다
+ */
+export function changeDefaultPet(petId: string): Promise<void> {
+  return apiRequest<void>(`/members/me/pets/${encodeURIComponent(petId)}/default`, {
+    method: "PATCH",
+  });
+}

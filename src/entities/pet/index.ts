@@ -51,6 +51,7 @@ export {
   getPets,
   getPetDetail,
   updatePet,
+  changeDefaultPet,
   type PetUpdate,
   type AllergyOption,
   type PetListItem,
@@ -59,3 +60,4 @@ export {
 export { useQueryPets } from "./api/use-query-pets";
 export { useQueryPetDetail } from "./api/use-query-pet-detail";
 export { useMutateUpdatePet } from "./api/use-mutate-update-pet";
+export { useMutateChangeDefaultPet } from "./api/use-mutate-change-default-pet";

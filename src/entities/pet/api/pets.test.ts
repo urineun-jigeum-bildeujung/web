@@ -1,7 +1,7 @@
-// 아이 목록·상세 조회 테스트. 무엇을 부르고 서버 모양을 화면 모양으로 어떻게 옮기는지 본다.
+// 아이 목록·상세 조회와 기본 아이 변경 테스트. 무엇을 부르고 서버 모양을 화면 모양으로 어떻게 옮기는지 본다.
 import { afterEach, expect, test, vi } from "vitest";
 
-import { getPetDetail, getPets } from "./pets";
+import { changeDefaultPet, getPetDetail, getPets } from "./pets";
 
 const SUMMARIES = [
   { petId: 7, name: "보리", image: null, isDefault: false },
@@ -109,4 +109,16 @@ test("고양이 상세의 체구 null은 그대로 null이다", async () => {
 
   expect(pet.species).toBe("cat");
   expect(pet.size).toBeNull();
+});
+
+// 메인에서 고른 아이가 기본 아이가 된다(#531). 본문 없이 경로만으로 바꾼다
+test("기본 아이를 바꿀 때 그 아이의 default 경로에 PATCH를 보낸다", async () => {
+  const fetchMock = vi.fn().mockResolvedValue(Response.json({ petId: 7, isDefault: true }));
+  vi.stubGlobal("fetch", fetchMock);
+
+  await changeDefaultPet("7");
+
+  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(url).toContain("/members/me/pets/7/default");
+  expect(init.method).toBe("PATCH");
 });
