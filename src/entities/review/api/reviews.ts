@@ -293,30 +293,52 @@ export type ProductReviewPage = {
   reviews: Review[];
 };
 
+/**
+ * 서버가 받는 후기 거르기 조건. 비운 값은 보내지 않는다(`GET /reviews/products/{id}`, #472).
+ *
+ * 구간은 양 끝을 **포함**한다(서버 `goe`·`loe`). 위쪽이 열린 구간은 `…Max`를 비운다.
+ * 품종·건강 관심사는 여럿이고 **하나라도 겹치면** 걸린다. 종·품종·나이·중성화·체중은
+ * 리뷰에 딸린 아이들 중 **같은 한 마리**가 모두 맞아야 걸린다.
+ */
+export type ProductReviewConditions = {
+  species?: "DOG" | "CAT";
+  breedIds?: number[];
+  ageMin?: number;
+  ageMax?: number;
+  neutered?: boolean;
+  weightMin?: number;
+  weightMax?: number;
+  healthConcerns?: string[];
+  usagePeriodMinDays?: number;
+  usagePeriodMaxDays?: number;
+};
+
 export type ProductReviewsParams = {
   productId: string;
   sort: ReviewSort;
   page: number;
   size: number;
+  /** 거르기 조건. 없으면 그 상품의 후기 전부다 */
+  conditions?: ProductReviewConditions;
 };
 
 /**
  * 상품 후기 목록.
  *
  * **거르고 정렬하는 것은 서버다.** 조건을 파라미터로 넘기고 화면에서 다시 거르지 않는다
- * (AGENTS.md 2.5). 필터 조건은 아직 백엔드와 모양이 맞지 않아 이번에는 보내지 않는다 —
- * 나이·사용 기간은 서버가 단계 열거형으로 받고 화면은 구간으로 고르며, 품종은 서버가
- * 하나만 받는데 화면은 여럿 고른다.
+ * (AGENTS.md 2.5). 품종·건강 관심사는 같은 키를 반복해 싣는다(`breedIds=1&breedIds=2`,
+ * Spring 기본 바인딩).
  */
 export function getProductReviews({
   productId,
   sort,
   page,
   size,
+  conditions,
 }: ProductReviewsParams): Promise<ProductReviewPage> {
   return apiRequest<ProductReviewListResponse>(
     `/reviews/products/${encodeURIComponent(productId)}`,
-    { query: { sort: toReviewSortParam(sort), page, size } },
+    { query: { sort: toReviewSortParam(sort), page, size, ...conditions } },
   ).then((response) => ({
     averageRating: response.averageRating,
     totalCount: response.totalCount,
