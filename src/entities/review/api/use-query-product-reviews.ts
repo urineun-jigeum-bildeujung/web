@@ -6,7 +6,7 @@ import { QUERY_KEYS } from "@/shared/config/query-keys";
 
 import type { ReviewSort } from "../model/review-sort";
 
-import { getProductReviews } from "./reviews";
+import { getProductReviews, type ProductReviewConditions } from "./reviews";
 
 /** 한 쪽에 받는 후기 수. 백엔드 기본값과 같다 */
 const PAGE_SIZE = 10;
@@ -20,14 +20,17 @@ const PAGE_SIZE = 10;
 export function useQueryProductReviews({
   productId,
   sort,
+  conditions,
 }: {
   productId: string;
   sort: ReviewSort;
+  /** 거르기 조건(#472). 바뀌면 첫 쪽부터 다시 받는다 */
+  conditions?: ProductReviewConditions;
 }) {
   const query = useInfiniteQuery({
-    queryKey: QUERY_KEYS.review.byProduct(productId, { sort }),
+    queryKey: QUERY_KEYS.review.byProduct(productId, { sort, conditions }),
     queryFn: ({ pageParam }) =>
-      getProductReviews({ productId, sort, page: pageParam, size: PAGE_SIZE }),
+      getProductReviews({ productId, sort, page: pageParam, size: PAGE_SIZE, conditions }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       // 빈 쪽이 오면 더 불러도 같은 답이다. `totalCount`만 믿으면 끝없이 부를 수 있다

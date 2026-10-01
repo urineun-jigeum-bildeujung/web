@@ -28,6 +28,10 @@ interface ProductReviewFilters {
   petId?: ResourceId;
   personalized?: boolean;
   sort?: string;
+  /** 후기 거르기 조건(#472). 서버에 싣는 값 그대로다 */
+  conditions?: Readonly<Record<string, unknown>>;
+  /** 거르기 시트의 "리뷰 N개 보기"가 개수만 묻는 조회. 목록 캐시와 섞이지 않게 나눈다 */
+  countOnly?: boolean;
 }
 
 const productKeys = {

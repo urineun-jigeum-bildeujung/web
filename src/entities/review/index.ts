@@ -11,6 +11,7 @@ export {
   getFeaturedReviewPhotos,
   getProductReviews,
   getReviewPhotos,
+  type ProductReviewConditions,
   type ProductReviewPage,
   type ProductReviewsParams,
   type ReviewDetail,
@@ -34,6 +35,7 @@ export { useQueryMyReviews } from "./api/use-query-my-reviews";
 export { useQueryWritableReviews } from "./api/use-query-writable-reviews";
 export { useQueryReviewDetail } from "./api/use-query-review-detail";
 export { useQueryProductReviews } from "./api/use-query-product-reviews";
+export { useQueryProductReviewCount } from "./api/use-query-product-review-count";
 export { useQueryReviewPhotos } from "./api/use-query-review-photos";
 export { useQueryFeaturedReviewPhotos } from "./api/use-query-featured-review-photos";
 export { formatPetProfile, formatPetProfiles } from "./lib/pet-label";

@@ -20,7 +20,8 @@
 | `api/use-query-my-reviews.ts` | 내가 쓴 후기 첫 쪽을 받는 훅 |
 | `api/use-query-writable-reviews.ts` | 구매확정했는데 아직 후기를 안 쓴 상품 목록을 받는 훅 |
 | `api/use-query-review-detail.ts` | 리뷰 한 건의 상세를 받는 훅. 사진 뷰어가 카드를 이걸로 채운다 |
-| `api/use-query-product-reviews.ts` | 상품 후기 목록을 쪽 단위로 잇는 훅. 응답에 `hasNext`가 없어 `totalCount`로 판단한다 |
+| `api/use-query-product-reviews.ts` | 상품 후기 목록을 쪽 단위로 잇는 훅. 응답에 `hasNext`가 없어 `totalCount`로 판단한다. 거르기 조건(`conditions`)이 바뀌면 첫 쪽부터 다시 받는다(#472) |
+| `api/use-query-product-review-count.ts` | 거르기 조건에 걸리는 후기 수만 묻는 훅(`size=1`의 `totalCount`). 다시 세는 동안 앞서 센 수를 둔다(#472) |
 | `api/use-query-review-photos.ts` | 후기 사진을 쪽 단위로 잇는 훅. 이쪽은 응답 `hasNext`를 그대로 쓴다 |
 | `api/use-query-featured-review-photos.ts` | 리뷰 탭에 거는 대표 사진. 현재 구현은 후기당 한 장씩 넉 장을 준다 |
 | `api/use-mutate-create-review.test.tsx` | 등록 뒤 그 상품의 목록·사진·대표 사진이 함께 낡은 것이 되는지, 다른 상품은 건드리지 않는지 |
