@@ -100,10 +100,16 @@ export function claimLabel(claim: OrderItemClaim): string | null {
   return type && status ? `${type} ${status}` : null;
 }
 
-/** 가장 나중에 접수한 신청. 없으면 `null`이다 */
+/**
+ * 가장 나중에 접수한 신청. 없으면 `null`이다.
+ *
+ * **글자가 아니라 시각으로 견준다.** 접수 시각은 오프셋이 붙은 ISO 8601이라, 오프셋이 다르면
+ * 글자 순서와 실제 순서가 어긋난다 — `11:00+09:00`이 `03:00Z`보다 이르다 (#655 리뷰).
+ */
 export function latestClaim(item: OrderDetailItem): OrderItemClaim | null {
   return item.claims.reduce<OrderItemClaim | null>(
-    (latest, claim) => (!latest || claim.requestedAt > latest.requestedAt ? claim : latest),
+    (latest, claim) =>
+      !latest || Date.parse(claim.requestedAt) > Date.parse(latest.requestedAt) ? claim : latest,
     null,
   );
 }
