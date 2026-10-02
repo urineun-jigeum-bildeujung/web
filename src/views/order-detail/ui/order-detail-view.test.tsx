@@ -100,11 +100,36 @@ test("서버가 준 주문번호와 상품을 보여준다", async () => {
 });
 
 // 2026-09-23 시안에서 상세의 상태 뱃지가 빠졌다. 목록에만 붙는다
-test("상태 뱃지를 붙이지 않는다", async () => {
+// 2026-09-23 시안에서 걷었던 뱃지다. QA가 주문 상세에 주문 상태가 보여야 한다고 했다(QA No.287, #655)
+test("주문 상태를 뱃지로 보인다", async () => {
   render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
 
   await screen.findByText("ORD-TEST-DETAIL-01");
-  expect(screen.queryByText("배송준비중")).toBeNull();
+  expect(screen.getByText("배송준비중")).toBeDefined();
+});
+
+test("취소한 주문은 주문취소로 보인다", async () => {
+  getOrderDetail.mockResolvedValue(makeDetail({ orderStatus: "CANCELLED" }));
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  await screen.findByText("ORD-TEST-DETAIL-01");
+  expect(screen.getByText("주문취소")).toBeDefined();
+});
+
+// 요청사항이 비면 줄을 숨겨 빠진 것처럼 보였다(QA No.290, #655)
+test("배송 요청사항이 없으면 줄을 남기고 없음으로 적는다", async () => {
+  getOrderDetail.mockResolvedValue(makeDetail({ deliveryNote: null }));
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  await screen.findByText("ORD-TEST-DETAIL-01");
+  expect(screen.getByText("배송 요청사항")).toBeDefined();
+  expect(screen.getByText("없음")).toBeDefined();
+});
+
+test("배송 요청사항이 있으면 그대로 적는다", async () => {
+  render(<OrderDetailView orderId="1" />, { wrapper: createQueryWrapper() });
+
+  expect(await screen.findByText("문 앞에 놓아주세요.")).toBeDefined();
 });
 
 // 응답에 배송비 필드가 없다. 결제 금액에서 상품 금액을 빼 만드는 값이라 틀리면 바로 돈이 안 맞는다
@@ -302,7 +327,8 @@ test("진행 중인 신청이 걸린 상품뿐이면 반품·교환 버튼을 �
 
   await screen.findByText("ORD-TEST-DETAIL-01");
   expect(screen.queryByRole("button", { name: "반품·교환" })).toBeNull();
-  expect(screen.queryByText("반품 수거 중")).toBeNull();
+  // 신청이 걸린 상품에는 종류와 진행 상태를 단다(QA No.287, #655)
+  expect(screen.getByText("반품 수거 중")).toBeDefined();
   // 확정은 신청과 상관없이 남는다
   expect(screen.getByRole("button", { name: "구매확정" })).toBeDefined();
 });
