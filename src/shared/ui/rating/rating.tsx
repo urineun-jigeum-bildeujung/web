@@ -26,7 +26,8 @@ type RatingProps = {
  */
 export function RatingStar({ fill, className }: { fill: 0 | 0.5 | 1; className: string }) {
   return (
-    <span className={cn("relative shrink-0", className)}>
+    // 인라인으로 두면 Safari가 안쪽 absolute 상자의 w-full을 0으로 잡아 채운 별이 잘려 사라진다(#659)
+    <span className={cn("relative block shrink-0", className)}>
       <Icon name="star" className="size-full text-icon-fill-disable" />
       {fill > 0 && (
         // 자르는 상자만 절반 폭이고 안의 별은 바깥과 같은 크기라야 작아지지 않고 잘린다
