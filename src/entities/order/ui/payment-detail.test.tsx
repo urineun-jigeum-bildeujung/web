@@ -38,15 +38,24 @@ test("dl 아래에 이름·값 짝만 온다", () => {
 });
 
 // 두 화면이 함께 쓰지만 시안이 다르다. 한쪽을 고치다 다른 쪽이 따라 바뀌지 않게 둘 다 본다 (#439)
-test("주문 상세는 상품 옵션과 배송비를 그린다", () => {
+// 주문 상세 시안은 "상품 옵션"이었는데 QA가 판매 금액이어야 한다고 했다(QA No.288, #655)
+test("주문 상세도 판매 금액과 배송비를 그린다", () => {
   const { getByText, queryByText } = render(
     <PaymentDetail total={38000} itemPrice={35000} shippingFee={3000} />,
   );
 
-  expect(getByText("상품 옵션")).toBeDefined();
+  expect(getByText("판매 금액")).toBeDefined();
   expect(getByText("배송비")).toBeDefined();
   expect(getByText("3,000원")).toBeDefined();
-  expect(queryByText("판매 금액")).toBeNull();
+  expect(queryByText("상품 옵션")).toBeNull();
+});
+
+// 로고만 있던 자리다. 이름을 글자로 적고 로고는 꾸밈으로 둬 두 번 읽히지 않는다(QA No.288, #655)
+test("결제수단은 로고 옆에 Toss Pay를 글자로 적는다", () => {
+  const { getByText, queryByRole } = render(<PaymentDetail total={38000} />);
+
+  expect(getByText("Toss Pay")).toBeDefined();
+  expect(queryByRole("img", { name: "토스페이" })).toBeNull();
 });
 
 // 주문 완료 시안에는 배송비 줄이 없지만 PD팀이 넣기로 했다. 없으면 결제금액과 판매 금액이

@@ -7,7 +7,9 @@ import { ORDER_STATUS_LABEL, ORDER_STATUSES, OrderStatusBadge } from "./order-st
 test("모든 상태가 읽을 수 있는 문구를 가진다", () => {
   for (const status of ORDER_STATUSES) {
     const { unmount } = render(<OrderStatusBadge status={status} />);
-    expect(screen.getByText(/결제완료|배송준비중|배송중|배송완료|구매확정/)).toBeDefined();
+    expect(
+      screen.getByText(/배송준비중|배송중|배송완료|구매확정|주문취소|환불완료|부분환불/),
+    ).toBeDefined();
     unmount();
   }
 });
