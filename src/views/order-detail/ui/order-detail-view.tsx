@@ -17,15 +17,20 @@ import type { ReactNode } from "react";
 import {
   DetailRow,
   OrderProductRow,
+  OrderStatusBadge,
   PaymentDetail,
+  claimLabel,
   claimableItems,
   isWithinClaimPeriod,
+  latestClaim,
   toOrderStatus,
   useQueryOrderDetail,
+  type OrderDetailItem,
 } from "@/entities/order";
 import { toAppMessageCode } from "@/shared/api/error-message";
 import { APP_MESSAGE, APP_MESSAGE_CODE } from "@/shared/config/app-message";
 import { formatDisplayDate, formatDisplayDateTime } from "@/shared/lib/date/display-date";
+import { Badge } from "@/shared/ui/badge/badge";
 import { EmptyState } from "@/shared/ui/empty-state/empty-state";
 import { Icon } from "@/shared/ui/icon/icon";
 import { PageHeader } from "@/shared/ui/page-header/page-header";
@@ -60,6 +65,21 @@ function SectionCard({
       </div>
       {children}
     </section>
+  );
+}
+
+/** 상품에 걸린 가장 나중 신청. 없거나 모르는 값이면 그리지 않는다 */
+function ItemClaimBadge({ item }: { item: OrderDetailItem }) {
+  const claim = latestClaim(item);
+  const label = claim && claimLabel(claim);
+  if (!claim || !label) return null;
+  // 색은 취소·반품·교환 탭의 건 뱃지와 같다 — 반품은 빨강, 교환은 파랑, 취소는 회색
+  const tone =
+    claim.claimType === "RETURN" ? "danger" : claim.claimType === "EXCHANGE" ? "info" : "default";
+  return (
+    <Badge tone={tone} className="self-start">
+      {label}
+    </Badge>
   );
 }
 
@@ -103,8 +123,14 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                 className="flex flex-col gap-2 rounded-xl bg-card p-3"
               >
                 {/* 결제 전 주문에는 결제일이 없다. 지어낸 날짜를 보이느니 줄을 비운다 */}
-                {paidDate && (
-                  <p className="text-body-medium-18 text-foreground">결제일 {paidDate}</p>
+                {/* 주문 상태를 결제일 줄 끝에 단다(QA No.287, #655). 모르는 상태 값이면 지어내지 않고 뺀다 */}
+                {(paidDate || status) && (
+                  <div className="flex items-center justify-between gap-2">
+                    {paidDate && (
+                      <p className="text-body-medium-18 text-foreground">결제일 {paidDate}</p>
+                    )}
+                    {status && <OrderStatusBadge status={status} className="ml-auto shrink-0" />}
+                  </div>
                 )}
                 <dl>
                   <DetailRow
@@ -120,12 +146,13 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                 </dl>
               </section>
 
-              {/* **상태 뱃지를 붙이지 않는다.** 2026-09-23 시안에서 빠졌다. 반품·교환 신청 상태
-                  뱃지(#334)도 같이 걷었다 — 신청 건은 목록의 "취소·반품·교환" 탭이 보일 자리다 */}
               <SectionCard title={`주문 상품 ${order.items.length}개`}>
                 <ul className="flex flex-col gap-4">
                   {order.items.map((item) => (
-                    <li key={item.orderItemId}>
+                    <li key={item.orderItemId} className="flex flex-col gap-2">
+                      {/* 반품·교환 신청이 걸린 상품에는 가장 나중 신청의 종류와 진행 상태를 단다
+                          (QA No.287, #655). 2026-09-23 시안에서 걷었던 자리다(#334) */}
+                      <ItemClaimBadge item={item} />
                       <OrderProductRow
                         name={item.productName}
                         quantity={item.quantity}
@@ -179,14 +206,15 @@ export function OrderDetailView({ orderId }: { orderId: string }) {
                       </span>
                     }
                   />
-                  {/* 요청사항 없이 주문할 수 있다. 빈 항목을 세우지 않는다 (#318) */}
-                  {order.deliveryNote && (
-                    <DetailRow
-                      stacked
-                      term={<span className={DELIVERY_TERM}>배송 요청사항</span>}
-                      description={<span className={DELIVERY_VALUE}>{order.deliveryNote}</span>}
-                    />
-                  )}
+                  {/* 요청사항 없이 주문할 수 있다. 그래도 줄은 세워 "없음"으로 적는다 — 줄을 숨기면
+                      요청사항이 빠진 것처럼 보였다(QA No.290, #655). 전에는 숨겼다(#318) */}
+                  <DetailRow
+                    stacked
+                    term={<span className={DELIVERY_TERM}>배송 요청사항</span>}
+                    description={
+                      <span className={DELIVERY_VALUE}>{order.deliveryNote?.trim() || "없음"}</span>
+                    }
+                  />
                 </dl>
               </SectionCard>
             </div>
