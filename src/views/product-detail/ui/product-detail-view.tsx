@@ -365,11 +365,12 @@ function RelatedProductsSkeleton() {
 export function ProductDetailView({ productId, product, relatedPromise }: ProductDetailViewProps) {
   const router = useRouter();
   const { add, remove, isAdding } = useMutateCartItem();
-  // 고른 탭에 따라 보이는 것이 통째로 달라진다. nuqs 기본은 replace라
-  // 그대로 두면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
+  // **탭 전환은 이력에 쌓지 않는다(nuqs 기본 replace, QA PD-004.1, #657).** 한 페이지 안의 탭이라
+  // 뒤로가기 한 번에 상품상세에 오기 전 화면으로 가야 한다. 쌓던 동안(push)은 탭을 오간 만큼 뒤로가기를
+  // 눌러야 상세를 벗어났다. 보던 탭은 주소에 남아 새로고침·공유에는 그대로다
   const [tab, setTab] = useQueryState(
     "tab",
-    parseAsStringLiteral(REACHABLE_TABS).withDefault("info").withOptions({ history: "push" }),
+    parseAsStringLiteral(REACHABLE_TABS).withDefault("info"),
   );
 
   // 들어온 상품을 최근 본 상품으로 남긴다. 백엔드 API가 없어 이 브라우저에 기록한다(#509)
