@@ -268,8 +268,8 @@ test("결제 내역을 남긴다", () => {
 
   expect(screen.getByRole("heading", { name: "결제상세" })).toBeDefined();
   expect(screen.getByRole("heading", { name: "배송지 정보" })).toBeDefined();
-  // 결제수단은 글자가 아니라 로고다. PD팀이 토스페이 로고로 통일하라고 확정했다 (#304)
-  expect(screen.getByRole("img", { name: "토스페이" })).toBeDefined();
+  // 결제수단은 로고 옆에 이름을 글자로 적는다(#304 로고 통일 → QA No.288, #655)
+  expect(screen.getByText("Toss Pay")).toBeDefined();
 });
 
 // 눌렸는지 모른 채 기다리면 같은 자리를 다시 누르거나 떠난다 (AGENTS.md 5.8)

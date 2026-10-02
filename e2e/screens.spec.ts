@@ -170,7 +170,9 @@ test("주문 상세의 결제수단 로고는 이미지 최적화를 거치지 �
 
   await page.goto("/mypage/orders/1", { waitUntil: "networkidle" });
 
-  await expect(page.getByAltText("토스페이")).toBeVisible();
+  // 로고 옆에 이름을 글자로 적어 로고는 꾸밈(빈 alt)이다(#655). 그림 주소로 찾는다
+  await expect(page.getByText("Toss Pay")).toBeVisible();
+  await expect(page.locator('img[src*="toss-pay.png"]')).toBeVisible();
   expect(optimized, `최적화를 거친 이미지 ${optimized.join(" ")}`).toEqual([]);
 });
 

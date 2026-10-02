@@ -19,11 +19,15 @@ test("대소문자가 달라도 같은 값으로 읽는다", () => {
 
 // 백엔드 enum에는 아홉이 있지만 시안에 자리가 있는 것은 다섯뿐이다. 나머지를 억지로
 // 끼워 넣으면 없는 단계가 있는 것처럼 보인다. 어떻게 보여줄지는 PD 확인 대상이다 (#288).
-test("시안에 자리가 없는 상태는 null이다", () => {
+// 주문 상세가 주문 상태를 보여야 해(QA No.287, #655) 취소·환불 셋도 옮긴다
+test("취소·환불 상태도 화면 상태로 옮긴다", () => {
+  expect(toOrderStatus("CANCELLED")).toBe("cancelled");
+  expect(toOrderStatus("REFUNDED")).toBe("refunded");
+  expect(toOrderStatus("PARTIAL_REFUND")).toBe("partialRefund");
+});
+
+test("화면에 설 일이 없는 결제 전 상태와 빈 값은 null이다", () => {
   expect(toOrderStatus("PENDING")).toBeNull();
-  expect(toOrderStatus("CANCELLED")).toBeNull();
-  expect(toOrderStatus("REFUNDED")).toBeNull();
-  expect(toOrderStatus("PARTIAL_REFUND")).toBeNull();
   expect(toOrderStatus("")).toBeNull();
 });
 

@@ -17,14 +17,14 @@
 | `model/claim-status.test.ts` | 서버 `ClaimStatus`의 끝 판정과 7일·남은 수량 규칙을 그대로 옮겼는지 |
 | `model/order-status.ts` | 서버 상태 문자열을 화면 상태로. 아는 값만 통과시킨다 |
 | `model/order-status.test.ts` | 아는 값만 옮기는지, 모르는 값에 `null`을 주는지 |
-| `ui/order-status-badge.tsx` | 주문 상태 뱃지 넷. 배송준비중·배송중·배송완료·구매확정 — **결제완료는 따로 두지 않는다**, 서버 `PAID`·`PREPARING`을 한 단계로 묶었다 (#297). 색은 공용 `Badge`의 톤 셋 (#405) |
+| `ui/order-status-badge.tsx` | 주문 상태 뱃지. 배송준비중·배송중·배송완료·구매확정과, 주문 상세가 쓰는 주문취소·환불완료·부분환불(#655) — **결제완료는 따로 두지 않는다**, 서버 `PAID`·`PREPARING`을 한 단계로 묶었다 (#297). 색은 공용 `Badge`의 톤 셋 (#405) |
 | `ui/order-status-badge.test.tsx` | 상태마다 문구가 있는지, 상태마다 시안의 색을 쓰는지 |
 | `ui/order-product-row.tsx` | 주문 상품 한 줄. 썸네일 80 + 이름 / 수량 / 금액. 금액은 넘겨받을 때만 그린다 — 목록은 백엔드 #141부터 준다 (#418) |
 | `ui/order-product-thumbnail.tsx` | 주문 상품 썸네일 80. 이미지가 없으면 회색 칸에 아이콘. 상품 줄과 반품 신청 수량 카드가 함께 쓴다 (#408) |
 | `ui/detail-section.tsx` | 제목을 안에 둔 내역 구역. 카드 여부는 쓰는 쪽이 정한다. 지금은 주문 완료만 쓴다 |
 | `ui/detail-row.tsx` | 이름·값 한 줄. 값을 오른쪽 끝에 붙이거나 아래로 내린다 |
 | `ui/payment-detail.test.tsx` | `dl` 아래에 이름·값 짝만 오는지(#341), 세부 항목이 없으면 그 줄을 만들지 않는지, 두 화면의 줄 이름 |
-| `ui/payment-detail.tsx` | 결제 내역 줄들. 결제금액·상품 금액·배송비·결제수단. 둘째 줄 이름(주문 상세 "상품 옵션", 주문 완료 "판매 금액")과 결제금액 글자를 `variant`로 가른다 (#439). 주문 완료 시안에 없는 배송비 줄도 PD팀 답으로 그린다 (#448). **결제수단은 글자가 아니라 토스페이 로고다** (#304) |
+| `ui/payment-detail.tsx` | 결제 내역 줄들. 결제금액·상품 금액·배송비·결제수단. 결제금액 글자를 `variant`로 가른다 (#439). 둘째 줄은 두 화면 모두 "판매 금액"이다(주문 상세 시안의 "상품 옵션"은 QA No.288로 바꿨다, #655). 주문 완료 시안에 없는 배송비 줄도 PD팀 답으로 그린다 (#448). **결제수단은 토스페이 로고(#304) 옆에 "Toss Pay" 글자를 적는다**(QA No.288, #655) — 로고는 빈 alt로 꾸밈이다 |
 | `ui/toss-pay-logo.tsx` | 토스페이 로고 83×16. 결제수단 줄과 반품 신청의 환불 수단 줄이 쓴다. `unoptimized`인 까닭이 파일에 있다 (#408) |
 | `ui/delivery-detail.tsx` | 배송지 줄들. 받는 분·연락처·주소·요청사항. 지금은 주문 완료만 쓴다 |
 | `index.ts` | 공개 API |
@@ -37,7 +37,7 @@
 
 `order-product-row`는 주문 목록(`views/orders`)·주문 상세(`views/order-detail`)·반품 신청(`views/order-claim`)이 함께 쓴다. `views` 안에 두면 같은 레이어끼리 참조하게 되어 ESLint가 막으므로 여기 있다 (#205).
 
-## 서버 상태는 아홉, 화면이 그리는 것은 다섯
+## 서버 상태는 아홉, 화면이 그리는 것은 여덟
 
 2026-09-21에 백엔드 저장소의 `order-service/domain/order/OrderStatus.java`에서 값을 확인했다.
 명세 Example에는 `PAID`·`DELIVERED`·`CONFIRMED` 셋만 나와 있어 그때까지 셋만 통과시켰다 (#284).
@@ -50,9 +50,9 @@
 | `SHIPPING` | 배송중 | `shipping` |
 | `DELIVERED` | 배송완료 | `delivered` |
 | `CONFIRMED` | 구매확정 | `confirmed` |
-| `CANCELLED` · `PARTIAL_REFUND` · `REFUNDED` | 취소 · 부분환불 · 환불완료 | — |
+| `CANCELLED` · `PARTIAL_REFUND` · `REFUNDED` | 취소 · 부분환불 · 환불완료 | `cancelled` · `partialRefund` · `refunded` — 주문 상세가 주문 상태를 보여야 해 옮겼다(QA No.287, #655) |
 
-**남은 넷은 옮기지 않는다.** 시안(mypa_061)에 그 뱃지가 없다. 결제 전 주문은 주문내역 탭이 거른다(#462).
+**`PENDING`만 옮기지 않는다.** 결제 전 주문은 화면에 설 일이 없다 — 주문내역 탭이 거른다(#462).
 `toOrderStatus`가 `null`을 돌리면 화면은 뱃지와 행동 버튼을 감추고 "장바구니 담기"와 "주문 상세" 링크만 남긴다.
 
 **취소·환불 뱃지는 주문내역 탭에 없다.** 2026-09-23 시안은 "주문내역"·"취소·반품·교환" 두 탭으로

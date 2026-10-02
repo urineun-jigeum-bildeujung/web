@@ -45,6 +45,11 @@ const SERVER_TO_VIEW: Record<string, OrderStatus> = {
   SHIPPING: "shipping",
   DELIVERED: "delivered",
   CONFIRMED: "confirmed",
+  // 주문 상세가 주문 상태를 보여야 해(QA No.287, #655) 시안이 오던 셋도 옮긴다. 결제 전(`PENDING`)은
+  // 화면에 설 일이 없어 그대로 둔다
+  CANCELLED: "cancelled",
+  REFUNDED: "refunded",
+  PARTIAL_REFUND: "partialRefund",
 };
 
 /**

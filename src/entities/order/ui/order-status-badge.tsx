@@ -7,7 +7,18 @@ import { Badge } from "@/shared/ui/badge/badge";
 // **결제완료는 따로 두지 않는다.** 시안에 그 뱃지가 없고, PD팀도 "결제 직후~상품 준비까지
 // 배송 준비 중으로 묶어도 된다"고 확인해 줬다 (2026-09-21). 서버는 `PAID`와 `PREPARING`을
 // 나누지만 화면은 한 단계로 보여준다 (#297).
-export const ORDER_STATUSES = ["preparing", "shipping", "delivered", "confirmed"] as const;
+//
+// **취소·환불 셋은 주문 상세가 쓴다(QA No.287, #655).** 시안에 그 뱃지가 없었지만 QA가 주문 상세에서
+// 주문 상태가 보여야 한다고 했다. 색은 취소·반품·교환 탭의 건 뱃지와 맞춘다 — 취소는 회색, 환불은 빨강.
+export const ORDER_STATUSES = [
+  "preparing",
+  "shipping",
+  "delivered",
+  "confirmed",
+  "cancelled",
+  "refunded",
+  "partialRefund",
+] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
 export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
@@ -15,6 +26,9 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
   shipping: "배송중",
   delivered: "배송완료",
   confirmed: "구매확정",
+  cancelled: "주문취소",
+  refunded: "환불완료",
+  partialRefund: "부분환불",
 };
 
 /**
@@ -29,6 +43,9 @@ const TONE = {
   shipping: "info",
   delivered: "positive",
   confirmed: "positive",
+  cancelled: "default",
+  refunded: "danger",
+  partialRefund: "danger",
 } as const satisfies Record<OrderStatus, string>;
 
 type OrderStatusBadgeProps = {

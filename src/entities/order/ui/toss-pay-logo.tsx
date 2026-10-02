@@ -12,8 +12,10 @@
 
 import Image from "next/image";
 
-export function TossPayLogo() {
-  return (
-    <Image src="/images/payment/toss-pay.png" alt="토스페이" width={83} height={16} unoptimized />
-  );
+/**
+ * `alt`를 비우면 꾸밈 그림이 된다. 옆에 수단 이름 글자가 있는 자리(결제상세)에서 화면 낭독기가
+ * 같은 이름을 두 번 읽지 않게 한다
+ */
+export function TossPayLogo({ alt = "토스페이" }: { alt?: string }) {
+  return <Image src="/images/payment/toss-pay.png" alt={alt} width={83} height={16} unoptimized />;
 }

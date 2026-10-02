@@ -3,7 +3,14 @@ import { expect, test } from "vitest";
 
 import type { OrderDetailItem, OrderItemClaim } from "../api/orders";
 
-import { claimableItems, isWithinClaimPeriod, hasActiveClaim, isActiveClaim } from "./claim-status";
+import {
+  claimLabel,
+  claimableItems,
+  isWithinClaimPeriod,
+  hasActiveClaim,
+  isActiveClaim,
+  latestClaim,
+} from "./claim-status";
 
 function makeClaim(over: Partial<OrderItemClaim> = {}): OrderItemClaim {
   return {
@@ -102,4 +109,27 @@ test("남은 수량이 없는 상품은 목록에서 빠진다", () => {
   ];
 
   expect(claimableItems(items).map((item) => item.orderItemId)).toEqual([2]);
+});
+
+// 주문 상세가 상품마다 신청 종류와 진행 상태를 단다(QA No.287, #655)
+test("신청을 종류와 진행 상태로 읽는다", () => {
+  expect(claimLabel(makeClaim({ claimType: "RETURN", claimStatus: "REQUESTED" }))).toBe(
+    "반품 접수",
+  );
+  expect(claimLabel(makeClaim({ claimType: "EXCHANGE", claimStatus: "INSPECTING" }))).toBe(
+    "교환 검수 중",
+  );
+  expect(claimLabel(makeClaim({ claimType: "RETURN", claimStatus: "REJECTED" }))).toBe("반품 거절");
+});
+
+test("모르는 종류나 상태가 섞이면 지어내지 않는다", () => {
+  expect(claimLabel(makeClaim({ claimType: "UNKNOWN" }))).toBeNull();
+  expect(claimLabel(makeClaim({ claimStatus: "constructor" }))).toBeNull();
+});
+
+test("가장 나중에 접수한 신청을 고른다", () => {
+  const older = makeClaim({ claimId: 1, requestedAt: "2026-09-20T00:00:00Z" });
+  const newer = makeClaim({ claimId: 2, requestedAt: "2026-09-22T00:00:00Z" });
+  expect(latestClaim(makeItem(1, [newer, older]))?.claimId).toBe(2);
+  expect(latestClaim(makeItem(1))).toBeNull();
 });

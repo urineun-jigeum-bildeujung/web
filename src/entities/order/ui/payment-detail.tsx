@@ -1,9 +1,9 @@
 // 결제 내역 줄들. 결제금액 아래에 상품 금액(과 배송비)이 붙고 결제수단이 따로 온다.
 // UI 페이지 시안 기준 — 주문 상세 3324:37275·3610:59567, 주문 완료 1117:4759.
 //
-// **두 화면이 함께 쓰지만 시안이 다르다.** 주문 상세는 둘째 줄이 "상품 옵션"이고 결제금액 값이
-// 18px 흐린 색이다. 주문 완료는 둘째 줄이 "판매 금액"이고 결제금액 값이 16px 진한 색이다. 그래서
-// 어느 화면인지를 `variant`로 받는다 (#439).
+// **두 화면이 함께 쓰지만 시안이 다르다.** 주문 상세는 결제금액 값이 18px 흐린 색이고, 주문 완료는
+// 16px 진한 색이다. 그래서 어느 화면인지를 `variant`로 받는다 (#439). 둘째 줄은 주문 상세 시안이
+// "상품 옵션"이었는데, QA가 판매 금액이어야 한다고 해 두 화면 모두 "판매 금액"이다(QA No.288, #655).
 //
 // **배송비 줄은 두 화면 모두 그린다.** 주문 완료 시안에는 없지만, 없으면 결제금액과 판매 금액이
 // 배송비만큼 달라 보여 PD팀이 넣기로 했다(2026-09-28, #448).
@@ -17,7 +17,7 @@ type PaymentDetailProps = {
   /** 실제로 낸 금액 */
   total: number;
   /**
-   * 상품 금액. 주문 상세 시안은 이 자리를 "상품 옵션", 주문 완료 시안은 "판매 금액"이라 부른다.
+   * 상품 금액. 두 화면 모두 "판매 금액"이라 부른다(주문 상세 시안의 "상품 옵션"은 QA로 바꿨다, #655).
    *
    * **배송비와 함께 없을 수 있다.** 주문을 못 받아 온 자리에서는 결제 금액만 알고 그 안을
    * 가를 수 없다 — `0원`으로 그리면 실제로 0원인 것처럼 보인다 (#308 리뷰)
@@ -66,10 +66,9 @@ export function PaymentDetail({
       {/* 세부 항목끼리는 4px(기본 gap)로 붙고, 위 결제금액과는 8px 떨어진다 */}
       {hasBreakdown && (
         <>
-          {/* 같은 자리를 화면마다 다르게 부른다 — 주문 상세 "상품 옵션", 주문 완료 "판매 금액" */}
           <DetailRow
             className="mt-1"
-            term={<span className={VALUE}>{complete ? "판매 금액" : "상품 옵션"}</span>}
+            term={<span className={VALUE}>판매 금액</span>}
             description={<span className={VALUE}>{formatWon(itemPrice)}</span>}
           />
           <DetailRow
@@ -79,8 +78,9 @@ export function PaymentDetail({
         </>
       )}
 
-      {/* **수단 이름 대신 로고를 둔다.** PD팀이 두 화면을 `paym_002`의 토스페이 로고로
-          통일하라고 확정했다 (2026-09-21, #304). 서버가 주는 `payment.method`는 그리지 않는다.
+      {/* **로고 옆에 수단 이름을 적는다.** PD팀이 두 화면을 `paym_002`의 토스페이 로고로
+          통일했는데(2026-09-21, #304), QA가 결제수단(Toss Pay)이 글자로 보여야 한다고 해 이름을
+          붙였다(QA No.288, #655). 서버가 주는 `payment.method`는 늘 "토스페이먼츠"라 쓰지 않는다.
 
           위 금액 묶음과 12px 떨어진다(기본 gap 4 + 8). UI 페이지의 `mypa_161`(3324:36737)과
           `paym_002`(1117:4759)가 같다 — 와이어프레임 때는 8px이었다 (#405) */}
@@ -88,7 +88,13 @@ export function PaymentDetail({
         className="mt-2"
         term={<span className={STRONG_TERM}>결제수단</span>}
         // 로고를 그리는 까닭과 `unoptimized`인 까닭은 toss-pay-logo.tsx에 있다
-        description={<TossPayLogo />}
+        description={
+          <span className="inline-flex items-center gap-2">
+            {/* 이름을 글자로 적어 로고는 꾸밈이다 */}
+            <TossPayLogo alt="" />
+            <span className={VALUE}>Toss Pay</span>
+          </span>
+        }
       />
     </dl>
   );

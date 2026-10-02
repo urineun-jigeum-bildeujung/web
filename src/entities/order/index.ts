@@ -28,6 +28,8 @@ export {
   hasActiveClaim,
   isWithinClaimPeriod,
   isActiveClaim,
+  claimLabel,
+  latestClaim,
 } from "./model/claim-status";
 export { useMutateOrder } from "./api/use-mutate-order";
 export { useQueryOrderDetail } from "./api/use-query-order-detail";

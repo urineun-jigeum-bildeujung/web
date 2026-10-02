@@ -12,9 +12,9 @@
 // 개발이 생략되어서 COMPLETED 등으로 넘어갈 일이 없을 것 같습니다". 시연에 필요하면 DB에서
 // 직접 바꾼다고 했다.
 //
-// **"반품 수거 중" 같은 문구 표는 걷어냈다.** 주문 상세에서 신청 상태를 뱃지로 보였는데(#334)
-// 2026-09-23 시안에 그 자리가 없어 뺐다. 신청 건을 보일 곳은 "취소·반품·교환" 탭이고 그 화면
-// 시안이 아직 없다 (#405).
+// **"반품 접수" 같은 문구 표를 다시 둔다.** 주문 상세에서 신청 상태를 뱃지로 보였다가(#334)
+// 2026-09-23 시안에 그 자리가 없어 뺐는데, QA가 주문 상세에 교환·반품 세부 상태가 보여야 한다고
+// 해 되살렸다(QA No.287, #655).
 
 import type { OrderDetailItem, OrderItemClaim } from "../api/orders";
 
@@ -68,4 +68,42 @@ export function isWithinClaimPeriod(deliveredAt: string | null): boolean {
     return false;
   }
   return delivered.getTime() + CLAIM_DAYS * 24 * 60 * 60 * 1000 > Date.now();
+}
+
+const CLAIM_TYPE_LABEL: Record<string, string> = {
+  CANCEL: "취소",
+  RETURN: "반품",
+  EXCHANGE: "교환",
+};
+
+const CLAIM_STATUS_LABEL: Record<string, string> = {
+  REQUESTED: "접수",
+  COLLECTING: "수거 중",
+  INSPECTING: "검수 중",
+  COMPLETED: "완료",
+  REJECTED: "거절",
+};
+
+/**
+ * 신청 한 건을 "반품 접수"처럼 종류와 진행 상태로 읽는다. 모르는 값이 섞이면 `null`이다.
+ *
+ * 주문 상세가 상품마다 붙인다(QA No.287, #655). 걷어 냈던 문구 표(#334)를 다시 둔다 — 대조는 백엔드
+ * enum 그대로다(위 머리 주석).
+ */
+export function claimLabel(claim: OrderItemClaim): string | null {
+  const type = Object.hasOwn(CLAIM_TYPE_LABEL, claim.claimType)
+    ? CLAIM_TYPE_LABEL[claim.claimType]
+    : undefined;
+  const status = Object.hasOwn(CLAIM_STATUS_LABEL, claim.claimStatus)
+    ? CLAIM_STATUS_LABEL[claim.claimStatus]
+    : undefined;
+  return type && status ? `${type} ${status}` : null;
+}
+
+/** 가장 나중에 접수한 신청. 없으면 `null`이다 */
+export function latestClaim(item: OrderDetailItem): OrderItemClaim | null {
+  return item.claims.reduce<OrderItemClaim | null>(
+    (latest, claim) => (!latest || claim.requestedAt > latest.requestedAt ? claim : latest),
+    null,
+  );
 }
