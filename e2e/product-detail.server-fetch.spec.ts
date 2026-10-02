@@ -187,7 +187,11 @@ test("함께 보면 좋은 상품은 지금 상품을 뺀 인기순 실제 상�
   await expect(related.getByText("중소형견 소포장 사료 1kg")).toHaveCount(0);
 });
 
-test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온다", async ({ page }) => {
+// 탭을 오간 만큼 뒤로가기를 눌러야 상세를 벗어났다(QA PD-004.1, #657). 탭은 이력에 쌓지 않는다
+test("탭을 옮기면 그 탭 내용이 나오고, 뒤로가기 한 번에 상세에 오기 전 화면으로 간다", async ({
+  page,
+}) => {
+  await page.goto("/search");
   await page.goto(PATH);
 
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
@@ -198,9 +202,10 @@ test("탭을 옮기면 그 탭 내용이 나오고 뒤로가기로 되돌아온�
   await page.getByRole("tab", { name: "리뷰" }).click();
   await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeHidden();
 
-  // nuqs 기본은 replace라, push로 두지 않으면 뒤로가기가 탭 전환을 건너뛰고 화면을 떠난다
+  await expect(page).toHaveURL(/tab=review/);
+
   await page.goBack();
-  await expect(page.getByRole("heading", { name: "영양 성분 분석" })).toBeVisible();
+  await expect(page).toHaveURL(/\/search$/);
 });
 
 // 탭은 사진·요약·함께 보면 좋은 상품 아래라 모바일 첫 화면 밖이다. 탭 값만 바꾸면 눌러도
