@@ -60,6 +60,9 @@ vi.mock("@/entities/pet", async (importOriginal) => ({
     petsCalls.push(options);
     return petsQuery;
   },
+}));
+// 공용 선택 훅(`useSelectDefaultPet`)이 안에서 부르는 변경 요청까지 같은 가짜를 타도록 훅 파일째 바꾼다(#657)
+vi.mock("@/entities/pet/api/use-mutate-change-default-pet", () => ({
   useMutateChangeDefaultPet: () => ({ changeDefaultPet, isChanging: false }),
 }));
 

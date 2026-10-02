@@ -9,12 +9,11 @@
 "use client";
 
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
-import { useRef } from "react";
 
 import { BottomNav } from "@/widgets/bottom-nav";
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
-import { defaultPetChangedMessage, useMutateChangeDefaultPet, useQueryPets } from "@/entities/pet";
+import { useQueryPets, useSelectDefaultPet } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
 import {
   formatUnitPriceLine,
@@ -257,9 +256,7 @@ export function RecommendationsView() {
   const pet =
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
 
-  const { changeDefaultPet } = useMutateChangeDefaultPet();
-  // 마지막 선택의 순번. 앞선 선택의 요청이 늦게 끝나도 알리거나 되돌리지 않는다(메인과 같다, #531 리뷰)
-  const latestPick = useRef(0);
+  const selectDefaultPet = useSelectDefaultPet();
 
   /**
    * 아이를 고른다. **고른 아이가 기본(대표) 아이가 된다(QA HM-059, #657).** 주소만 바꾸던 동안에는
@@ -271,15 +268,7 @@ export function RecommendationsView() {
     const next = pets?.find((item) => item.id === id);
     if (!next || next.id === pet?.id) return;
     void setPetId(id);
-    const pick = ++latestPick.current;
-    changeDefaultPet(id).then(
-      () => {
-        if (latestPick.current === pick) showSnackbar(defaultPetChangedMessage(next.name));
-      },
-      () => {
-        if (latestPick.current === pick) void setPetId(null);
-      },
-    );
+    selectDefaultPet(next, () => void setPetId(null));
   };
 
   return (
