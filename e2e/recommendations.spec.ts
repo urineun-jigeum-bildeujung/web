@@ -46,12 +46,21 @@ test("아이는 실제 목록에서 기본 아이부터 고르고, 바꾸면 적
   await expect(page.getByText(/코코와 적합도 \d+점/).first()).toBeAttached();
   await expect.poll(() => recommendations.sent[0]).toEqual({ pet_id: 3, size: 50 });
 
+  // 고른 아이가 대표 아이가 된다 — 메인과 같다(QA HM-059, #657)
+  const defaultChange = page.waitForRequest(
+    (request) =>
+      request.method() === "PATCH" && request.url().endsWith("/members/me/pets/7/default"),
+  );
   await picker.click();
   await page.getByRole("option", { name: "보리" }).click();
+  await defaultChange;
 
   await expect(page).toHaveURL(/pet=7/);
   await expect(page.getByText(/보리와 적합도 \d+점/).first()).toBeAttached();
   await expect.poll(() => recommendations.sent.at(-1)).toEqual({ pet_id: 7, size: 50 });
+  await expect(
+    page.getByRole("status").filter({ hasText: "대표 아이가 보리로 바뀌었어요" }),
+  ).toBeVisible();
 });
 
 // 분류는 서버가 거른다. 간식은 요청에서 treat다

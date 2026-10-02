@@ -37,6 +37,8 @@
 | `model/breeds.test.ts` | 몸무게 예시가 종·체구로 갈리는지 |
 | `model/profile-input.ts` | 입력칸이 받는 글자를 거른다. 이름은 이모티콘 빼고 10자까지(`PET_NAME_MAX`, #602), 나이는 숫자 두 자리, 몸무게는 정수부 세 자리(#602)·소수 첫째 자리까지 (#524) |
 | `model/profile-input.test.ts` | QA 시트에 적힌 값(`초코🐶😀`·`221asdf12@@#`·`4.567`)을 그대로 넣어 본다. 이름 10자 경계와 거기 걸린 두 단위 글자 |
+| `model/default-pet-notice.ts` | 대표 아이를 바꾼 뒤 띄우는 "대표 아이가 ○○(으)로 바뀌었어요". 메인과 맞춤 추천이 같이 쓴다 (QA HM-021, #657) |
+| `model/default-pet-notice.test.ts` | 받침에 따라 조사가 바뀌는지 |
 | `model/parse-profile-input.ts` | 자유 입력을 API 값으로 옮긴다. 나이 상한(30살), 몸무게 소수 첫째 자리 반올림, 나이 칸이 알릴 말 |
 | `model/parse-profile-input.test.ts` | 단위·부호·앞자리 0 없는 소수·상한·반올림 |
 | `model/body-groups.ts` | 리뷰 필터 품종 선택 화면(#264)용 체구그룹 상수와 `groupBreedsByBodySize` |

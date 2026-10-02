@@ -9,11 +9,12 @@
 "use client";
 
 import { parseAsString, parseAsStringLiteral, useQueryState } from "nuqs";
+import { useRef } from "react";
 
 import { BottomNav } from "@/widgets/bottom-nav";
 import { CartLink } from "@/widgets/cart-link";
 import { NotificationBell } from "@/widgets/notification-bell";
-import { useQueryPets } from "@/entities/pet";
+import { defaultPetChangedMessage, useMutateChangeDefaultPet, useQueryPets } from "@/entities/pet";
 import { MatchScoreBadge } from "@/entities/product";
 import {
   formatUnitPriceLine,
@@ -256,6 +257,31 @@ export function RecommendationsView() {
   const pet =
     pets?.find((item) => item.id === petId) ?? pets?.find((item) => item.isDefault) ?? pets?.[0];
 
+  const { changeDefaultPet } = useMutateChangeDefaultPet();
+  // 마지막 선택의 순번. 앞선 선택의 요청이 늦게 끝나도 알리거나 되돌리지 않는다(메인과 같다, #531 리뷰)
+  const latestPick = useRef(0);
+
+  /**
+   * 아이를 고른다. **고른 아이가 기본(대표) 아이가 된다(QA HM-059, #657).** 주소만 바꾸던 동안에는
+   * 드롭다운 순서가 그대로이고, 다른 화면에 가면 처음 아이로 돌아갔다. 메인의 아이 고르기(#531)와
+   * 같은 규칙이다 — 표시는 바로 옮기고, 알림은 서버가 받은 뒤에, 실패하면 기본 아이로 되돌린다.
+   * 지금 보이는 아이를 다시 고르면 바뀐 것이 없어 요청도 알림도 없다
+   */
+  const selectPet = (id: string) => {
+    const next = pets?.find((item) => item.id === id);
+    if (!next || next.id === pet?.id) return;
+    void setPetId(id);
+    const pick = ++latestPick.current;
+    changeDefaultPet(id).then(
+      () => {
+        if (latestPick.current === pick) showSnackbar(defaultPetChangedMessage(next.name));
+      },
+      () => {
+        if (latestPick.current === pick) void setPetId(null);
+      },
+    );
+  };
+
   return (
     <div className="flex min-h-dvh flex-col">
       <PageHeader
@@ -280,7 +306,7 @@ export function RecommendationsView() {
                   두고 문장 첫머리에 잇는다. 보이는 높이는 32px, 누르는 자리만 44px로 넓힌다 */}
               {/* 주소에 없는 id가 와도 본문과 같은 아이를 가리키도록 정규화한 값을 쓴다 */}
               {pet ? (
-                <Select value={pet.id} onValueChange={(next) => void setPetId(next)}>
+                <Select value={pet.id} onValueChange={selectPet}>
                   {/* 배경은 시안(1576-87505, button/bg/primary #2a3038)과 같은 surface-primary
                       토큰이다 — shadcn Button 기본 변형의 bg-primary와 같다. 화살표는 시안대로
                       20px 흰 아이콘으로 바꾸고, 시안에 없는 기본 테두리도 지운다 */}

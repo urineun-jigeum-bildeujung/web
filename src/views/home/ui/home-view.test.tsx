@@ -467,10 +467,14 @@ describe("HomeView", () => {
     await renderWith();
 
     fireEvent.click(screen.getByRole("radio", { name: "보람" }));
-    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("보람으로 바꿨어요"));
+    await waitFor(() =>
+      expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 보람으로 바뀌었어요"),
+    );
 
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
-    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요"));
+    await waitFor(() =>
+      expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 초코로 바뀌었어요"),
+    );
   });
 
   // 상품 상세 적합도·결제가 기본 아이로 시작한다. 화면 안에만 두면 떠나는 순간 처음 아이로 돌아갔다(QA HM-020)
@@ -490,7 +494,7 @@ describe("HomeView", () => {
 
     await act(async () => finish());
 
-    expect(showSnackbar).toHaveBeenLastCalledWith("구름이로 바꿨어요");
+    expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 구름이로 바뀌었어요");
   });
 
   // 요청은 훅이 누른 순서대로 하나씩 보낸다. 화면은 앞 요청이 늦게 끝나도 마지막 선택만 알린다(#531 리뷰)
@@ -506,11 +510,13 @@ describe("HomeView", () => {
     fireEvent.click(screen.getByRole("radio", { name: "초코" }));
 
     expect(changeDefaultPet.mock.calls).toEqual([["7"], ["3"]]);
-    await waitFor(() => expect(showSnackbar).toHaveBeenLastCalledWith("초코로 바꿨어요"));
+    await waitFor(() =>
+      expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 초코로 바뀌었어요"),
+    );
 
     await act(async () => finishFirst());
 
-    expect(showSnackbar).not.toHaveBeenCalledWith("구름이로 바꿨어요");
+    expect(showSnackbar).not.toHaveBeenCalledWith("대표 아이가 구름이로 바뀌었어요");
     expect(screen.getByRole("radio", { name: "초코" }).getAttribute("aria-checked")).toBe("true");
   });
 
@@ -532,7 +538,7 @@ describe("HomeView", () => {
     expect(showSnackbar).not.toHaveBeenCalled();
 
     await act(async () => finishLast());
-    expect(showSnackbar).toHaveBeenLastCalledWith("구름이로 바꿨어요");
+    expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 구름이로 바뀌었어요");
   });
 
   it("같은 아이를 다시 고르면 앞선 같은 아이 요청이 실패해도 마지막 선택을 되돌리지 않는다", async () => {
