@@ -133,3 +133,10 @@ test("가장 나중에 접수한 신청을 고른다", () => {
   expect(latestClaim(makeItem(1, [newer, older]))?.claimId).toBe(2);
   expect(latestClaim(makeItem(1))).toBeNull();
 });
+
+// 글자로 견주면 `11:00+09:00`(= 02:00Z)이 `03:00Z`보다 나중으로 잡힌다 (#655 리뷰)
+test("오프셋이 달라도 실제 시각으로 가장 나중 신청을 고른다", () => {
+  const kst = makeClaim({ claimId: 1, requestedAt: "2026-09-21T11:00:00+09:00" });
+  const utc = makeClaim({ claimId: 2, requestedAt: "2026-09-21T03:00:00Z" });
+  expect(latestClaim(makeItem(1, [kst, utc]))?.claimId).toBe(2);
+});
