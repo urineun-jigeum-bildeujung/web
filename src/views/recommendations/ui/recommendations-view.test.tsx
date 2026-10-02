@@ -29,12 +29,15 @@ const PETS = [
 ];
 let petsQuery: { pets: unknown; isLoading: boolean } = { pets: PETS, isLoading: false };
 let petsCalls: unknown[] = [];
+// 고른 아이를 기본 아이로 바꾸는 요청(#657). 서버까지 가지 않고 부른 아이만 본다
+const changeDefaultPet = vi.fn<(petId: string) => Promise<void>>(() => Promise.resolve());
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets: (options: unknown) => {
     petsCalls.push(options);
     return petsQuery;
   },
+  useMutateChangeDefaultPet: () => ({ changeDefaultPet, isChanging: false }),
 }));
 
 // 로그인 여부. 서버 렌더·하이드레이션 중에는 모른다(null)
@@ -109,6 +112,9 @@ vi.mock("@/entities/wishlist", async (importOriginal) => ({
 import { RecommendationsView } from "./recommendations-view";
 
 afterEach(() => {
+  showSnackbar.mockClear();
+  changeDefaultPet.mockReset();
+  changeDefaultPet.mockImplementation(() => Promise.resolve());
   petsQuery = { pets: PETS, isLoading: false };
   petsCalls = [];
   session.value = true;
@@ -138,6 +144,31 @@ describe("RecommendationsView", () => {
   it("어느 아이 기준인지 고를 수 있다", () => {
     renderWith();
     expect(screen.getByLabelText("어느 아이의 추천을 볼지")).toBeDefined();
+  });
+
+  // 주소만 바꾸던 자리다. 메인처럼 고른 아이가 대표 아이가 된다(QA HM-059, #657)
+  it("다른 아이를 고르면 대표 아이로 바꾸고 바뀐 뒤에 알린다", async () => {
+    renderWith();
+
+    fireEvent.click(screen.getByRole("combobox", { name: "어느 아이의 추천을 볼지" }));
+    fireEvent.click(screen.getByRole("option", { name: "구름" }));
+
+    expect(changeDefaultPet).toHaveBeenCalledWith("7");
+    expect(await screen.findAllByText(/구름과 적합도 \d+점/)).not.toHaveLength(0);
+    await vi.waitFor(() =>
+      expect(showSnackbar).toHaveBeenLastCalledWith("대표 아이가 구름으로 바뀌었어요"),
+    );
+  });
+
+  it("대표 아이로 바꾸지 못하면 원래 대표 아이로 되돌리고 바뀌었다고 알리지 않는다", async () => {
+    changeDefaultPet.mockImplementationOnce(() => Promise.reject(new Error("실패")));
+    renderWith();
+
+    fireEvent.click(screen.getByRole("combobox", { name: "어느 아이의 추천을 볼지" }));
+    fireEvent.click(screen.getByRole("option", { name: "구름" }));
+
+    expect(await screen.findAllByText(/초코와 적합도 \d+점/)).not.toHaveLength(0);
+    expect(showSnackbar).not.toHaveBeenCalledWith("대표 아이가 구름으로 바뀌었어요");
   });
 
   it("주소로 받은 아이가 적합도 문장에 들어가고 그 아이의 추천을 부른다", () => {

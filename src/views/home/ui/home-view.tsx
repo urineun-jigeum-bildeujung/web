@@ -13,6 +13,7 @@ import {
   PetSwitcher,
   ProductFeedbackSheet,
   toAddPetHref,
+  defaultPetChangedMessage,
   useMutateChangeDefaultPet,
   useQueryPets,
   type FeedbackChoice,
@@ -51,7 +52,6 @@ import {
 } from "@/features/toggle-wishlist";
 import { useRequireSession } from "@/shared/api/use-require-session";
 import { useSessionState } from "@/shared/api/use-session-state";
-import { withJosa } from "@/shared/lib/josa/josa";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Countdown } from "@/shared/ui/countdown/countdown";
@@ -662,7 +662,7 @@ export function HomeView({ productsPromise, category, sort, dealsPromise }: Home
     const pick = ++latestPick.current;
     changeDefaultPet(id).then(
       () => {
-        if (latestPick.current === pick) showSnackbar(`${withJosa(next.name, "으로/로")} 바꿨어요`);
+        if (latestPick.current === pick) showSnackbar(defaultPetChangedMessage(next.name));
       },
       () => {
         if (latestPick.current === pick) setPetId(null);

@@ -40,7 +40,9 @@ test("로그인하면 아이 줄과 추천 제목이 실제 아이 이름을 쓴
   await defaultChange;
   await expect(page.getByText("AI가 골라주는 보리 맞춤 상품")).toBeVisible();
   // 누구 기준으로 바뀌었는지 알린다(QA r18, #611)
-  await expect(page.getByRole("status").filter({ hasText: "보리로 바꿨어요" })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: "대표 아이가 보리로 바뀌었어요" }),
+  ).toBeVisible();
   await expect.poll(() => recommendations.sent.at(-1)).toEqual({ pet_id: 7, size: 9 });
 });
 

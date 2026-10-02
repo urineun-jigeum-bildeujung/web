@@ -45,6 +45,7 @@ export { HealthPickerField } from "./ui/health-picker-field";
 export { toLabels, type HealthGroup, type HealthOption } from "./model/health";
 export { describeAgeError, formatWeight, parseAge, parseWeight } from "./model/parse-profile-input";
 export { PET_NAME_MAX, toAgeInput, toPetNameInput } from "./model/profile-input";
+export { defaultPetChangedMessage } from "./model/default-pet-notice";
 export { getHealthOptions, type HealthOptions } from "./api/health-options";
 export { useQueryHealthOptions } from "./api/use-query-health-options";
 export {
