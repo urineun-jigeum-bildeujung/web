@@ -373,6 +373,30 @@ describe("ReviewWriteView 1단계", () => {
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 1점" }));
   });
 
+  // 초점은 고른 칸을 따라가도 링은 키를 누를 때까지 숨긴다 (#659)
+  it("포인터로 매기면 초점 링이 숨고, 키를 누르거나 별 밖으로 나갔다 오면 다시 보인다", () => {
+    renderAt();
+    const { group } = starGroup();
+    const ringShown = () => (document.activeElement as HTMLElement).className.includes("ring-2");
+
+    fireEvent.pointerDown(group, { ...finger, clientX: 50 });
+    fireEvent.pointerUp(group, { ...finger, clientX: 170 });
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4점" }));
+    expect(ringShown()).toBe(false);
+
+    fireEvent.keyDown(document.activeElement!, { key: "ArrowRight" });
+    expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4.5점" }));
+    expect(ringShown()).toBe(true);
+
+    // 다시 포인터로 매긴 뒤 별 밖으로 초점이 나가면, Tab으로 돌아올 칸에 링이 되살아나 있다
+    fireEvent.pointerDown(group, { ...finger, clientX: 50 });
+    fireEvent.pointerUp(group, { ...finger, clientX: 50 });
+    const picked = screen.getByRole("radio", { name: "5점 만점에 1.5점" });
+    expect(ringShown()).toBe(false);
+    fireEvent.blur(picked, { relatedTarget: null });
+    expect(picked.className).toContain("ring-2");
+  });
+
   it("누르지 않은 채 지나가거나 둘째 손가락이 닿으면 점수가 바뀌지 않는다", () => {
     renderAt();
     const { group, checked } = starGroup();
