@@ -373,8 +373,9 @@ describe("ReviewWriteView 1단계", () => {
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 1점" }));
   });
 
-  // 초점은 고른 칸을 따라가도 링은 키를 누를 때까지 숨긴다 (#659)
-  it("포인터로 매기면 초점 링이 숨고, 키를 누르거나 별 밖으로 나갔다 오면 다시 보인다", () => {
+  // 초점은 고른 칸을 따라가도 링은 키를 누를 때까지 숨긴다 (#659).
+  // jsdom은 :focus-visible을 계산하지 않아 링 클래스가 붙었는지만 본다
+  it("포인터로 매기면 링 클래스가 빠지고, 키를 누르거나 초점이 별 묶음 밖으로 나가면 돌아온다", () => {
     renderAt();
     const { group } = starGroup();
     const ringShown = () => (document.activeElement as HTMLElement).className.includes("ring-2");
@@ -388,7 +389,7 @@ describe("ReviewWriteView 1단계", () => {
     expect(document.activeElement).toBe(screen.getByRole("radio", { name: "5점 만점에 4.5점" }));
     expect(ringShown()).toBe(true);
 
-    // 다시 포인터로 매긴 뒤 별 밖으로 초점이 나가면, Tab으로 돌아올 칸에 링이 되살아나 있다
+    // 다시 포인터로 매긴 뒤 초점이 별 묶음 밖으로 나가면(blur의 relatedTarget이 없음) 고른 칸에 링 클래스가 돌아온다
     fireEvent.pointerDown(group, { ...finger, clientX: 50 });
     fireEvent.pointerUp(group, { ...finger, clientX: 50 });
     const picked = screen.getByRole("radio", { name: "5점 만점에 1.5점" });
