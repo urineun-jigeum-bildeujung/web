@@ -4,13 +4,14 @@
 // 별 하나를 좌우 22px로 갈라 왼쪽이 반 개, 오른쪽이 한 개다. 시안 값(44px)을 그대로 쓴다.
 // 반쪽마다 라디오 하나가 되고 화살표 키는 0.5씩 움직인다.
 // 누른 채 밀면 손가락이 지나는 반쪽으로 값이 따라간다. 세로로 밀면 페이지가 스크롤되고 값은 그대로다.
+// 초점은 포인터로 매겨도 고른 칸을 따라가지만, 초점 링은 키를 누를 때까지 숨긴다.
 //
 // `min`보다 낮은 반쪽은 두지 않는다. 리뷰는 1점부터라(QA RV-020) 첫 별은 가르지 않고 한 칸이 1점이다.
 // 0.5점 칸을 남겨 두고 1점으로 올려 주면 "0.5점"이라 읽힌 칸이 한 번도 선택되지 않는다.
 
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 import { cn } from "@/shared/lib/utils";
 import { RatingStar } from "@/shared/ui/rating/rating";
@@ -35,6 +36,9 @@ export function RatingInput({
   className,
 }: RatingInputProps) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);
+  // 스크립트로 옮긴 초점은 브라우저가 :focus-visible로 여겨 마우스·터치에도 링이 뜬다.
+  // focus({ focusVisible: false })는 Chrome 145·Safari 18.4 미만과 삼성 인터넷이 무시해 직접 가린다
+  const [pointerFocus, setPointerFocus] = useState(false);
   const steps = max * 2;
   const minSteps = min * 2;
 
@@ -74,6 +78,7 @@ export function RatingInput({
       aria-label={label}
       onPointerDown={(event) => {
         if (!event.isPrimary || event.button !== 0) return;
+        setPointerFocus(true);
         // 누른 뒤 손가락이 별 밖으로 나가도 끝까지 따라가게 포인터를 붙잡는다
         event.currentTarget.setPointerCapture(event.pointerId);
         const { left, width } = event.currentTarget.getBoundingClientRect();
@@ -99,6 +104,10 @@ export function RatingInput({
           buttons.current[(current.from || minSteps) - 1]?.focus({ preventScroll: true });
         }
         drag.current = null;
+      }}
+      // 별 묶음을 벗어나면 다음에 Tab으로 들어올 때 링이 보여야 한다
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPointerFocus(false);
       }}
       className={cn("flex w-fit touch-pan-y justify-center select-none", className)}
     >
@@ -132,6 +141,8 @@ export function RatingInput({
                   tabIndex={checked || (halves === 0 && step === minSteps) ? 0 : -1}
                   onClick={() => onChange(score)}
                   onKeyDown={(event) => {
+                    // 키를 누르면 키보드 사용자다. Tab으로 빠져나갈 때도 여기를 지난다
+                    setPointerFocus(false);
                     if (event.key === "ArrowRight" || event.key === "ArrowUp") {
                       event.preventDefault();
                       move(halves + 1);
@@ -142,7 +153,8 @@ export function RatingInput({
                     }
                   }}
                   className={cn(
-                    "absolute inset-y-0 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    "absolute inset-y-0 focus-visible:outline-none",
+                    !pointerFocus && "focus-visible:ring-2 focus-visible:ring-ring",
                     whole
                       ? "inset-x-0 rounded-md"
                       : half === 1
