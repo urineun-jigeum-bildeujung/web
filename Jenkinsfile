@@ -15,6 +15,7 @@ pipeline {
         // 실행되며 2vCPU 노드 CPU를 포화시켜 kubelet이 NotReady로 전환된 장애가
         // 있었다(#545). ci-build는 sever-ci/ai-ci도 같은 노드 풀을 쓰는 CI 파이프라인
         // 전체를 아우르는 공용 lock 이름이라, 브랜치는 물론 레포가 달라도 직렬화된다.
+        // agent none으로 Pod 없이 잠금을 기다리고, CI 단계에서만 Pod를 생성한다.
         lock(resource: 'ci-build')
     }
 
@@ -23,9 +24,18 @@ pipeline {
     // 3Gi를 초과해 파드가 Evicted됨(2026-09-14 실제 web-ci 첫 빌드에서 재현 — sever의
     // gradle bootJar를 kaniko 밖으로 뺀 것과 동일한 문제/해법). node 컨테이너에서
     // standalone 산출물을 미리 만들어두고, kaniko는 그 결과물(약 80MB)만 COPY한다.
-    agent {
-        kubernetes {
-            yaml """
+    agent none
+
+    environment {
+        IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
+        GITOPS_VALUE_REPO_PUBLIC = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
+    }
+
+    stages {
+        stage('CI') {
+            agent {
+                kubernetes {
+                    yaml """
 apiVersion: v1
 kind: Pod
 spec:
@@ -110,141 +120,137 @@ spec:
         name: "workspace-volume"
         readOnly: false
 """
-        }
-    }
-
-    environment {
-        IMAGE_REGISTRY = '297165773875.dkr.ecr.ap-northeast-2.amazonaws.com/petflow'
-        GITOPS_VALUE_REPO_PUBLIC = 'https://github.com/urineun-jigeum-bildeujung/gitops-value.git'
-    }
-
-    stages {
-        stage('Prepare') {
-            steps {
-                script {
-                    imageTag = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
-
-                    // sever/Jenkinsfile과 동일한 이유 — 사람이 수동으로 "Build Now" 누른
-                    // 빌드는 실배포에서 제외해서 재실행이 실수로 ECR push/GitOps 갱신으로
-                    // 이어지지 않게 한다.
-                    def isManualTrigger = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
-                    isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
-
-                    echo "실배포 여부: ${isRealDeploy}"
                 }
             }
-        }
+            stages {
+                stage('Prepare') {
+                    steps {
+                        script {
+                            imageTag = sh(script: 'git rev-parse HEAD', returnStdout: true).trim()
 
-        stage('Build App') {
-            // NEXT_PUBLIC_*는 npm run build 때 번들에 박히는 값이라 런타임이 아니라 여기서 넣어야 한다.
-            // 모두 브라우저에 그대로 노출되는 공개 값(토스는 공개 문서 데모 키)이라
-            // 자격증명으로 뺄 이유가 없다. stage 단위 environment라 이미지 빌드·GitOps 단계엔 퍼지지 않는다.
-            environment {
-                NEXT_PUBLIC_FARO_URL = 'https://leechs.shop/collect'
-                NEXT_PUBLIC_FARO_API_KEY = '7e2d175c4d7f58aa0fe7c1a813b1dd376467bb7f5531239cbf1fc435c08ed28e'
-                NEXT_PUBLIC_TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'
-                NEXT_PUBLIC_FIREBASE_API_KEY = 'AIzaSyApCrrmSDaVj_yWqTd7Q8x8Z_VZR6ofa9Y'
-                NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = 'golajugaenyang-b0f97.firebaseapp.com'
-                NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'golajugaenyang-b0f97'
-                NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = 'golajugaenyang-b0f97.firebasestorage.app'
-                NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = '246935625635'
-                NEXT_PUBLIC_FIREBASE_APP_ID = '1:246935625635:web:6fb31b4f16e42672a18416'
-                NEXT_PUBLIC_FIREBASE_VAPID_KEY = 'BFXFtBFCq1ykVxE1vEAPc45l_aRgVd9O9mqph7sC4BiU4XHMSYJ_R146DdfFBEvyaU7rP9LjJdgyXDOKlaB0-mE'
-            }
-            steps {
-                container('node') {
-                    sh """
+                            // sever/Jenkinsfile과 동일한 이유 — 사람이 수동으로 "Build Now" 누른
+                            // 빌드는 실배포에서 제외해서 재실행이 실수로 ECR push/GitOps 갱신으로
+                            // 이어지지 않게 한다.
+                            def isManualTrigger = !currentBuild.getBuildCauses('hudson.model.Cause$UserIdCause').isEmpty()
+                            isRealDeploy = (env.CHANGE_ID == null) && (env.BRANCH_NAME == 'dev') && !isManualTrigger
+
+                            echo "실배포 여부: ${isRealDeploy}"
+                        }
+                    }
+                }
+
+                stage('Build App') {
+                    // NEXT_PUBLIC_*는 npm run build 때 번들에 박히는 값이라 런타임이 아니라 여기서 넣어야 한다.
+                    // 모두 브라우저에 그대로 노출되는 공개 값(토스는 공개 문서 데모 키)이라
+                    // 자격증명으로 뺄 이유가 없다. stage 단위 environment라 이미지 빌드·GitOps 단계엔 퍼지지 않는다.
+                    environment {
+                        NEXT_PUBLIC_FARO_URL = 'https://leechs.shop/collect'
+                        NEXT_PUBLIC_FARO_API_KEY = '7e2d175c4d7f58aa0fe7c1a813b1dd376467bb7f5531239cbf1fc435c08ed28e'
+                        NEXT_PUBLIC_TOSS_CLIENT_KEY = 'test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm'
+                        NEXT_PUBLIC_FIREBASE_API_KEY = 'AIzaSyApCrrmSDaVj_yWqTd7Q8x8Z_VZR6ofa9Y'
+                        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = 'golajugaenyang-b0f97.firebaseapp.com'
+                        NEXT_PUBLIC_FIREBASE_PROJECT_ID = 'golajugaenyang-b0f97'
+                        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = 'golajugaenyang-b0f97.firebasestorage.app'
+                        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = '246935625635'
+                        NEXT_PUBLIC_FIREBASE_APP_ID = '1:246935625635:web:6fb31b4f16e42672a18416'
+                        NEXT_PUBLIC_FIREBASE_VAPID_KEY = 'BFXFtBFCq1ykVxE1vEAPc45l_aRgVd9O9mqph7sC4BiU4XHMSYJ_R146DdfFBEvyaU7rP9LjJdgyXDOKlaB0-mE'
+                    }
+                    steps {
+                        container('node') {
+                            sh """
                         npm ci
                         npm run build
-                    """
+                            """
+                        }
+                    }
                 }
-            }
-        }
 
-        stage('Build & Scan') {
-            steps {
-                script {
-                    def tarFile = 'web.tar'
-                    def imageRef = "${env.IMAGE_REGISTRY}/web:${imageTag}"
+                stage('Build & Scan') {
+                    steps {
+                        script {
+                            def tarFile = 'web.tar'
+                            def imageRef = "${env.IMAGE_REGISTRY}/web:${imageTag}"
 
-                    container('kaniko') {
-                        sh """
+                            container('kaniko') {
+                                sh """
                             /kaniko/executor \\
                               --context=`pwd` \\
                               --dockerfile=Dockerfile \\
                               --destination=${imageRef} \\
                               --no-push \\
                               --tarPath=${tarFile}
-                        """
-                    }
+                                """
+                            }
 
-                    container('trivy') {
-                        sh """
+                            container('trivy') {
+                                sh """
                             trivy image --input ${tarFile} \\
                               --severity CRITICAL --exit-code 1 --ignore-unfixed \\
                               --ignorefile .trivyignore.yaml
-                        """
-                    }
+                                """
+                            }
 
-                    if (isRealDeploy) {
-                        container('awscli') {
-                            sh "aws ecr get-login-password --region ap-northeast-2 > ecr-token.txt"
-                        }
-                        container('crane') {
-                            sh """
+                            if (isRealDeploy) {
+                                container('awscli') {
+                                    sh "aws ecr get-login-password --region ap-northeast-2 > ecr-token.txt"
+                                }
+                                container('crane') {
+                                    sh """
                                 crane auth login ${env.IMAGE_REGISTRY.split('/')[0]} --username AWS --password-stdin < ecr-token.txt
                                 crane push ${tarFile} ${imageRef}
-                            """
+                                    """
+                                }
+                                sh "rm -f ecr-token.txt"
+                            }
+
+                            sh "rm -f ${tarFile}"
                         }
-                        sh "rm -f ecr-token.txt"
                     }
-
-                    sh "rm -f ${tarFile}"
                 }
-            }
-        }
 
-        stage('Update GitOps') {
-            when {
-                expression { return isRealDeploy }
-            }
-            steps {
-                script {
-                    // gitops-value는 public 레포라 clone 자체엔 인증이 필요 없음 — clone
-                    // 단계에서 자격증명을 URL에 담지 않는다(CodeRabbit 리뷰로 발견, 2026-09-14).
-                    // git remote에 토큰을 박아두면 워크스페이스에 .git/config 형태로 남는데,
-                    // push 시점에만 URL 인자로 넘기면 원격 설정에는 남지 않는다.
-                    sh """
+                stage('Update GitOps') {
+                    when {
+                        expression { return isRealDeploy }
+                    }
+                    steps {
+                        script {
+                            // gitops-value는 public 레포라 clone 자체엔 인증이 필요 없음 — clone
+                            // 단계에서 자격증명을 URL에 담지 않는다(CodeRabbit 리뷰로 발견, 2026-09-14).
+                            // git remote에 토큰을 박아두면 워크스페이스에 .git/config 형태로 남는데,
+                            // push 시점에만 URL 인자로 넘기면 원격 설정에는 남지 않는다.
+                            sh """
                         rm -rf gitops-value-checkout
                         git clone ${env.GITOPS_VALUE_REPO_PUBLIC} gitops-value-checkout
-                    """
+                            """
 
-                    // yq 바이너리를 고정 버전으로 받되, 공급망 변조 방지를 위해 mikefarah/yq가
-                    // 배포한 체크섬과 대조 후 실행한다 (CodeRabbit 리뷰로 발견, 2026-09-14).
-                    sh '''
+                            // yq 바이너리를 고정 버전으로 받되, 공급망 변조 방지를 위해 mikefarah/yq가
+                            // 배포한 체크섬과 대조 후 실행한다 (CodeRabbit 리뷰로 발견, 2026-09-14).
+                            sh '''
                         curl -sL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /tmp/yq
                         echo "a2c097180dd884a8d50c956ee16a9cec070f30a7947cf4ebf87d5f36213e9ed7  /tmp/yq" | sha256sum -c -
                         chmod +x /tmp/yq
-                    '''
+                            '''
 
-                    sh """
+                            sh """
                         /tmp/yq -i '.image.tag = "${imageTag}"' gitops-value-checkout/values/dev/services/web/values.yaml
-                    """
+                            """
 
-                    dir('gitops-value-checkout') {
-                        sh """
+                            dir('gitops-value-checkout') {
+                                sh """
                             git config user.email 'jenkins@petflow.local'
                             git config user.name 'jenkins-ci'
                             git add values/
                             git diff --cached --quiet && echo '변경 없음, commit 생략' || git commit -m 'chore: deploy web @ ${imageTag}'
-                        """
+                                """
 
-                        withCredentials([usernamePassword(
-                            credentialsId: 'gitops-value-push',
-                            usernameVariable: 'GIT_USER',
-                            passwordVariable: 'GIT_TOKEN'
-                        )]) {
-                            sh "git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/urineun-jigeum-bildeujung/gitops-value.git HEAD:main"
+                                withCredentials([usernamePassword(
+                                    credentialsId: 'gitops-value-push',
+                                    usernameVariable: 'GIT_USER',
+                                    passwordVariable: 'GIT_TOKEN'
+                                )]) {
+                                    sh "git push https://\${GIT_USER}:\${GIT_TOKEN}@github.com/urineun-jigeum-bildeujung/gitops-value.git HEAD:main"
+                                }
+                            }
                         }
                     }
                 }
