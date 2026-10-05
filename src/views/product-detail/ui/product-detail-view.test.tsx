@@ -46,6 +46,17 @@ const { useSessionState, useQueryPets, useQueryPetDetail } = vi.hoisted(() => ({
   useQueryPetDetail: vi.fn(),
 }));
 vi.mock("@/shared/api/use-session-state", () => ({ useSessionState }));
+vi.mock("../api/nutrition-analysis", () => ({
+  useQueryNutritionAnalysis: (petId?: number) => ({
+    data:
+      petId === undefined
+        ? undefined
+        : [{ name: "단백질", valueLabel: "30%", position: 0.5, properRange: [1 / 3, 2 / 3] }],
+    isLoading: false,
+    error: null,
+    refetch: vi.fn(),
+  }),
+}));
 vi.mock("@/entities/pet", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/entities/pet")>()),
   useQueryPets,
@@ -318,7 +329,9 @@ describe("ProductDetailView", () => {
     });
     await renderWith();
 
-    const alert = screen.getByRole("alert");
+    const alert = screen
+      .getAllByRole("alert")
+      .find((item) => item.textContent?.includes("적합도를"))!;
     expect(alert.textContent).toContain("적합도를 불러오지 못했어요");
     fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
     expect(refetch).toHaveBeenCalledOnce();
@@ -335,7 +348,10 @@ describe("ProductDetailView", () => {
     });
     await renderWith();
 
-    fireEvent.click(within(screen.getByRole("alert")).getByRole("button", { name: "다시 시도" }));
+    const alert = screen
+      .getAllByRole("alert")
+      .find((item) => item.textContent?.includes("적합도를"))!;
+    fireEvent.click(within(alert).getByRole("button", { name: "다시 시도" }));
     expect(refetch).toHaveBeenCalledOnce();
   });
 

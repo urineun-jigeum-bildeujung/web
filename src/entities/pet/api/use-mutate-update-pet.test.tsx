@@ -26,3 +26,23 @@ test("아이 정보를 고치면 맞춤 추천 캐시도 비운다", async () =>
 
   expect(queryClient.getQueryState(recommendationKey)?.isInvalidated).toBe(true);
 });
+
+test("아이 정보를 고치면 영양 분석 캐시도 비운다", async () => {
+  const queryClient = createQueryClient({ retry: false });
+  const nutritionKey = QUERY_KEYS.nutrition.analysis(3, 141);
+  queryClient.setQueryData(nutritionKey, []);
+  const { result } = renderHook(() => useMutateUpdatePet("3"), {
+    wrapper: ({ children }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+  });
+
+  await act(() =>
+    result.current.updatePet({
+      patch: { allergyProfileStatus: "KNOWN_NONE", allergies: [] },
+      photo: null,
+    }),
+  );
+
+  expect(queryClient.getQueryState(nutritionKey)?.isInvalidated).toBe(true);
+});

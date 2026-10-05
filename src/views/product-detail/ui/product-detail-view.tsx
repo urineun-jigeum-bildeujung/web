@@ -6,7 +6,7 @@
 // 판단하게 하지 않고, 살지 말지를 정하는 자리에서 근거를 먼저 보인다.
 //
 // 상품 자체(이름·가격·별점·품절·스펙)는 `GET /products/{id}`의 실데이터다(#413).
-// 적합도·영양 분석은 서버가 계산해 내려줄 값이라 지금도 `model/mock-product`의 목이다(#123).
+// 적합도 점수는 기존 예시를 유지하고, 로그인한 아이의 영양 막대는 Nutrition API로 받는다(#654).
 //
 // Q&A 탭은 PD 확인 결과 이번 MVP 범위 밖이다 — 좋아요 화면의 두 탭과 같은 방식으로
 // 탭은 시안대로 남기고 disabled로 막으며, tab 쿼리도 닿는 값만 받게 좁힌다(#549).
@@ -59,6 +59,7 @@ import { showCartAddedSnackbar } from "./cart-added-snackbar";
 import { DetailOptionSheet } from "./detail-option-sheet";
 import { MatchPanel } from "./match-panel";
 import { ProductInfoPanel } from "./product-info-panel";
+import { useQueryNutritionAnalysis } from "../api/nutrition-analysis";
 import { QnaPanel } from "./qna-panel";
 import { ReviewPanel } from "./review-panel";
 
@@ -460,6 +461,16 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
   const selectedPetId = session === true ? (petId ?? pets?.[0]?.id) : undefined;
   const petDetail = useQueryPetDetail(selectedPetId);
   const match = petDetail.pet ? toPetMatch(petDetail.pet, product.detail) : null;
+  const nutrition = useQueryNutritionAnalysis(
+    session === true && match?.score !== null && petDetail.pet
+      ? Number(petDetail.pet.id)
+      : undefined,
+    product.productId,
+  );
+  const nutritionMatch =
+    session === false
+      ? EXAMPLE_MATCH_WITHOUT_PET
+      : { ...(match ?? EXAMPLE_MATCH_WITHOUT_PET), nutrients: nutrition.data ?? [] };
   // 로그인 여부를 아직 모르거나 아이를 받는 중이면 자리를 잡는다. 늦게 끼어들면 아래가 통째로 밀린다
   const isWaitingMatch = session === null || petList.isLoading || petDetail.isLoading;
   // 로그인했는데 아이를 받지 못했으면 그 자리에서 알린다. 조용히 비우면 로그아웃과 구별되지 않는다
@@ -722,8 +733,11 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
           <TabsContent value="info">
             <ProductInfoPanel
               detail={product.detail}
-              match={match ?? EXAMPLE_MATCH_WITHOUT_PET}
+              match={nutritionMatch}
               petName={match?.petName}
+              nutritionLoading={session !== false && (isWaitingMatch || nutrition.isLoading)}
+              nutritionFailed={session === true && (matchFailed || Boolean(nutrition.error))}
+              onRetryNutrition={() => (matchFailed ? retryMatch() : void nutrition.refetch())}
             />
           </TabsContent>
 

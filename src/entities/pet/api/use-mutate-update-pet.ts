@@ -37,6 +37,7 @@ export function useMutateUpdatePet(petId: string | undefined) {
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pet.list() }),
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.pet.detail(petId ?? "") }),
         queryClient.invalidateQueries({ queryKey: QUERY_KEYS.recommendation.all }),
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.nutrition.all }),
       ]);
     },
   });

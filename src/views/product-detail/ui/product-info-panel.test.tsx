@@ -1,6 +1,6 @@
 // 성분과 점수가 따로 오는 경우에 글자가 빠진 문장이 남지 않는지 본다.
 import { fireEvent, render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { ProductDetailInfo } from "@/entities/product";
 
@@ -38,6 +38,22 @@ const BASE: PetMatch = {
 };
 
 describe("상세 설명 표", () => {
+  it("영양 분석 대기 중에는 예시값 대신 뼈대를 그린다", () => {
+    render(<ProductInfoPanel detail={DETAIL} match={BASE} nutritionLoading />);
+    expect(screen.getByRole("status", { name: "영양 분석을 불러오는 중" })).toBeDefined();
+    expect(screen.queryByText("28%")).toBeNull();
+  });
+
+  it("분석 실패 시 예시값을 숨기고 다시 시도한다", () => {
+    const retry = vi.fn();
+    render(
+      <ProductInfoPanel detail={DETAIL} match={BASE} nutritionFailed onRetryNutrition={retry} />,
+    );
+    expect(screen.getByRole("alert")).toBeDefined();
+    expect(screen.queryByText("28%")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
   // 종은 체구 뒤에 접미로 붙는다(시안 1702-18844). 응답은 "강아지"·"고양이" 표시명으로 온다
   it("급여 대상을 체구 뒤에 종 접미를 붙여 한 문구로 적는다", () => {
     render(<ProductInfoPanel detail={DETAIL} match={BASE} />);

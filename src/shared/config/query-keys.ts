@@ -172,6 +172,11 @@ const catalogKeys = {
 };
 
 export const QUERY_KEYS = {
+  nutrition: {
+    all: ["nutrition"] as const,
+    analysis: (petId: ResourceId, productId: ResourceId) =>
+      ["nutrition", "analysis", petId, productId] as const,
+  },
   product: productKeys,
   timedeal: timedealKeys,
   cart: cartKeys,
