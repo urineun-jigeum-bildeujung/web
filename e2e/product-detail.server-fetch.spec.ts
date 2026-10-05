@@ -112,6 +112,8 @@ test("상세 설명 표가 응답으로 채워지고 빈 항목은 줄째로 빠
 test("세 안내는 응답과 무관한 고정 문구를 쓴다", async ({ page }) => {
   await page.goto(PATH);
 
+  // 영양 칸의 서버 대기 화면이 바뀌는 동안 누르면 안내 버튼의 위치가 달라진다.
+  await expect(page.getByRole("status", { name: "영양 분석을 불러오는 중" })).toHaveCount(0);
   await page.getByRole("button", { name: "상품정보 제공고시" }).click();
   const notice = page.getByRole("region", { name: "상품정보 제공고시" });
   await expect(notice.getByText("품명 및 모델명: 상품 상단 및 상세설명 별도 표기")).toBeVisible();

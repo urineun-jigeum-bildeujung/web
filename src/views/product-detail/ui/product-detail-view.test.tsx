@@ -308,6 +308,16 @@ describe("ProductDetailView", () => {
     expect(screen.getByRole("heading", { name: "영양 성분 분석" })).toBeDefined();
   });
 
+  it("로그인했지만 아이가 없으면 기존 영양 예시를 유지한다", async () => {
+    useQueryPets.mockReturnValue({ pets: [], isLoading: false });
+    useQueryPetDetail.mockReturnValue({ pet: undefined, isLoading: false });
+    await renderWith();
+
+    const panel = screen.getByRole("region", { name: "영양 성분 분석" });
+    expect(within(panel).getByText("28%")).toBeDefined();
+    expect(within(panel).queryByText(/아직 분석하지 못했어요/)).toBeNull();
+  });
+
   // 서버는 로그인을 모른다. 늦게 끼어들면 아래가 통째로 밀리니 자리를 잡는다
   it("로그인 여부를 아직 모르면 적합도 자리를 잡아 둔다", async () => {
     useSessionState.mockReturnValue(null);
