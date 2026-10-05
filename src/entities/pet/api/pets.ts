@@ -108,6 +108,11 @@ export async function getPets(): Promise<PetListItem[]> {
   );
 }
 
+/**
+ * 아이 상세를 조회해 화면에서 쓰는 값으로 옮긴다.
+ * 서버가 알레르기 상태를 생략하면 목록이 있을 때만 `KNOWN_LIST`로 보완하고,
+ * 빈 목록은 `UNKNOWN`으로 두어 명시적인 알레르기 없음과 구분한다.
+ */
 export async function getPetDetail(petId: string): Promise<PetDetail> {
   const pet = await apiRequest<PetDetailResponse>(`/members/me/pets/${petId}`);
 

@@ -26,6 +26,10 @@ type HealthFormProps = {
   onSave: (patch: PetUpdate) => void;
 };
 
+/**
+ * 저장된 건강 정보로 수정 폼을 채우고, 두 질문에 답한 뒤 저장할 수 있게 한다.
+ * 알레르기 없음은 `KNOWN_NONE`일 때만 선택하며, 선택지를 받지 못하면 저장을 막는다.
+ */
 function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
   // 갈래도 항목도 종마다 다르다. 저장된 아이의 종으로 받는다
   const { options, isLoading, error } = useQueryHealthOptions(pet.species);
@@ -54,12 +58,14 @@ function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
     <EditPetScreen
       submitDisabled={!optionsReady || !concernAnswered || !allergyAnswered}
       submitting={isSaving}
-      onSubmit={() =>
-        onSave({
-          healthConcerns: noConcern ? [] : concern,
-          allergies: noAllergy ? [] : allergy,
-          allergyProfileStatus: noAllergy ? "KNOWN_NONE" : "KNOWN_LIST",
-        })
+      onSubmit={
+        /** 해당 없음은 빈 목록으로 바꾸고, 알레르기 응답 상태를 함께 저장한다. */
+        () =>
+          onSave({
+            healthConcerns: noConcern ? [] : concern,
+            allergies: noAllergy ? [] : allergy,
+            allergyProfileStatus: noAllergy ? "KNOWN_NONE" : "KNOWN_LIST",
+          })
       }
     >
       <div className="flex flex-col gap-5 px-5">
