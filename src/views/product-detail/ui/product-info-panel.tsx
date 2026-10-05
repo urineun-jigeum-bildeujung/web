@@ -194,18 +194,17 @@ export function ProductInfoPanel({
                 </li>
               ))}
             </ul>
-
-            {/* 성분은 있는데 종합 점수를 못 받는 경우가 있다. 한 줄만 그리면
-                "종합 점 — "처럼 글자가 빠진 문장이 남으므로 카드 전체를 함께 가린다 */}
-            {match.score !== null && match.summary && (
-              <div className="mt-4 flex flex-col rounded-xl bg-surface-brand-weak px-2 py-3 text-text-body-brand-strong">
-                <p className="text-label-bold-14">종합 {match.score}점</p>
-                <p className="text-body-medium-14">{match.summary}</p>
-                <p className="text-body-medium-14">기능성 성분 - {match.functions}</p>
-              </div>
-            )}
           </>
         )}
+        {(nutritionLoading || nutritionFailed || match.nutrients.length > 0) &&
+          match.score !== null &&
+          match.summary && (
+            <div className="mt-4 flex flex-col rounded-xl bg-surface-brand-weak px-2 py-3 text-text-body-brand-strong">
+              <p className="text-label-bold-14">종합 {match.score}점</p>
+              <p className="text-body-medium-14">{match.summary}</p>
+              <p className="text-body-medium-14">기능성 성분 - {match.functions}</p>
+            </div>
+          )}
       </section>
 
       <div className="h-2 bg-muted" />

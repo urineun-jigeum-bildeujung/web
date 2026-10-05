@@ -33,6 +33,18 @@ test("알 수 없는 코드는 첫 기준표 원문 이름만 사용한다", () 
       {
         ...item,
         nutrient_code: "CUSTOM",
+        reference_provenance: [
+          { source_name_original: null },
+          { source_name_original: "뒤의 성분" },
+        ],
+      },
+    ]),
+  ).toEqual([]);
+  expect(
+    toNutritionBars([
+      {
+        ...item,
+        nutrient_code: "CUSTOM",
         reference_provenance: [{ source_name_original: "시험 성분" }],
       },
     ])[0].name,

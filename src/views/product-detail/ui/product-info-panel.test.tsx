@@ -42,6 +42,8 @@ describe("상세 설명 표", () => {
     render(<ProductInfoPanel detail={DETAIL} match={BASE} nutritionLoading />);
     expect(screen.getByRole("status", { name: "영양 분석을 불러오는 중" })).toBeDefined();
     expect(screen.queryByText("28%")).toBeNull();
+    expect(screen.getByText("종합 92점")).toBeDefined();
+    expect(screen.getByText("기능성 성분 - 관절 건강")).toBeDefined();
   });
 
   it("분석 실패 시 예시값을 숨기고 다시 시도한다", () => {
@@ -51,6 +53,8 @@ describe("상세 설명 표", () => {
     );
     expect(screen.getByRole("alert")).toBeDefined();
     expect(screen.queryByText("28%")).toBeNull();
+    expect(screen.getByText("종합 92점")).toBeDefined();
+    expect(screen.getByText("기능성 성분 - 관절 건강")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: "다시 시도" }));
     expect(retry).toHaveBeenCalledOnce();
   });

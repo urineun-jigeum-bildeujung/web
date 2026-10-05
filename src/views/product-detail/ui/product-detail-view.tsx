@@ -468,7 +468,7 @@ export function ProductDetailView({ productId, product, relatedPromise }: Produc
     product.productId,
   );
   const nutritionMatch =
-    session === false
+    session === false || !petDetail.pet
       ? EXAMPLE_MATCH_WITHOUT_PET
       : { ...(match ?? EXAMPLE_MATCH_WITHOUT_PET), nutrients: nutrition.data ?? [] };
   // 로그인 여부를 아직 모르거나 아이를 받는 중이면 자리를 잡는다. 늦게 끼어들면 아래가 통째로 밀린다
