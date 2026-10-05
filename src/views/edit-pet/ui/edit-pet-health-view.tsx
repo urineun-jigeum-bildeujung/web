@@ -6,7 +6,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   HealthPickerField,
@@ -33,6 +33,15 @@ function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
   const [noConcern, setNoConcern] = useState(pet.healthConcerns.length === 0);
   const [allergy, setAllergy] = useState(pet.allergies.map((item) => item.code));
   const [noAllergy, setNoAllergy] = useState(pet.allergyProfileStatus === "KNOWN_NONE");
+  const allergyEdited = useRef(false);
+
+  // 같은 아이의 상세가 다시 조회되면 아직 손대지 않은 알레르기 입력만 최신 서버 값으로 맞춘다.
+  // 한 번 수정한 뒤에는 백그라운드 재조회가 작성 중인 선택을 덮어쓰지 않는다.
+  useEffect(() => {
+    if (allergyEdited.current) return;
+    setAllergy(pet.allergies.map((item) => item.code));
+    setNoAllergy(pet.allergyProfileStatus === "KNOWN_NONE");
+  }, [pet.allergies, pet.allergyProfileStatus]);
 
   const concernAnswered = concern.length > 0 || noConcern;
   const allergyAnswered = allergy.length > 0 || noAllergy;
@@ -107,7 +116,10 @@ function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
               title="피해야 할 성분"
               groups={options?.allergies ?? []}
               value={allergy}
-              onChange={setAllergy}
+              onChange={(next) => {
+                allergyEdited.current = true;
+                setAllergy(next);
+              }}
               disabled={noAllergy || !optionsReady}
             />
             {/* 시안이 알러지 쪽에만 예시를 남긴다 */}
@@ -120,6 +132,7 @@ function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
             className="min-h-8"
             checked={noAllergy}
             onCheckedChange={(next) => {
+              allergyEdited.current = true;
               setNoAllergy(next);
               if (next) setAllergy([]);
             }}
