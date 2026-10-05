@@ -8,6 +8,7 @@ import { apiRequest } from "@/shared/api/client";
 import type { PresignedUpload } from "@/shared/api/upload-image";
 import { formatDisplayFullDate } from "@/shared/lib/date/display-date";
 
+import { toRepurchaseLabels } from "../lib/repurchase-label";
 import { toUsageLabel } from "../lib/usage-label";
 import type { Review, ReviewPet } from "../model/review";
 import { toReviewSortParam, type ReviewSort } from "../model/review-sort";
@@ -49,6 +50,8 @@ type MyReviewListResponse = {
     productName: string;
     productImage: string | null;
     rating: number;
+    /** 화면에는 그리지 않는다 — 작성한 리뷰 시안에 재구매 배지가 없다 */
+    repurchaseCount: number;
     text: string;
     /** `YYYY-MM-DD` */
     createdAt: string;
@@ -170,6 +173,8 @@ type ReviewDetailResponse = {
   rating: number;
   /** 일 단위 */
   usagePeriod: number;
+  /** 실제 구매 이력이 아니라 백엔드가 평점에 따라 뽑아 저장한 표시용 값이다(sever#217) */
+  repurchaseCount: number;
   answerValues: { questionKey: string; answerValue: string }[];
   /** "기호성 좋음" 같은 문구. 하나도 없으면 `null` */
   goodPoints: string[] | null;
@@ -198,6 +203,7 @@ export type ReviewDetail = {
   /** 0~5, 0.5 단위 */
   rating: number;
   usageDays: number;
+  repurchaseCount: number;
   /** "기호성 좋음"처럼 문항 이름과 답을 붙인 문구 */
   goodPoints: string[];
   badPoints: string[];
@@ -223,6 +229,7 @@ export function getReviewDetail(reviewId: string): Promise<ReviewDetail> {
     pets: response.pets.map(toReviewPet),
     rating: response.rating,
     usageDays: response.usagePeriod,
+    repurchaseCount: response.repurchaseCount,
     goodPoints: response.goodPoints ?? [],
     badPoints: response.badPoints ?? [],
     content: response.text,
@@ -273,6 +280,8 @@ type ProductReviewListResponse = {
     rating: number;
     /** 일 단위. 상세와 같은 숫자다 */
     usagePeriod: number;
+    /** 실제 구매 이력이 아니라 백엔드가 평점에 따라 뽑아 저장한 표시용 값이다(sever#217) */
+    repurchaseCount: number;
     /** 기호성 문항에 답하지 않았으면 `null` */
     palatability: string | null;
     text: string;
@@ -356,8 +365,7 @@ export function getProductReviews({
       // 서버가 주는 날짜는 전부 shared/lib/date를 거친다. 읽을 수 없으면 날짜 줄을 비운다
       date: formatDisplayFullDate(item.createdAt) ?? "",
       images: item.images ?? [],
-      // 지금 배지로 세울 수 있는 것은 사용 기간뿐이다. 재구매 횟수는 응답에 없다
-      tags: [toUsageLabel(item.usagePeriod)],
+      tags: [toUsageLabel(item.usagePeriod), ...toRepurchaseLabels(item.repurchaseCount)],
       content: item.text,
       likeCount: item.likeCount,
       liked: item.liked,

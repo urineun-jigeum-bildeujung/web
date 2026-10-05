@@ -72,6 +72,7 @@ const REVIEW: ReviewDetail = {
   ],
   rating: 4.5,
   usageDays: 16,
+  repurchaseCount: 2,
   goodPoints: ["기호성 좋음"],
   badPoints: ["소화·배변 나쁨"],
   content: "확실히 잘 먹어요",
@@ -94,17 +95,17 @@ beforeEach(() => {
   useQueryReviewDetail.mockReturnValue(loaded(REVIEW));
 });
 
-test("사진·닉네임·0.5 별점·날짜·칩(아이마다·사용 기간·반응)·글을 시안 꼴로 보인다", () => {
+test("사진·닉네임·0.5 별점·날짜·칩(아이마다·사용 기간·재구매·반응)·글을 시안 꼴로 보인다", () => {
   render(<ReviewDetailView reviewId="1" />);
 
   expect(screen.getByAltText("후기 사진 1번째")).toBeDefined();
   expect(screen.getByText("보리엄마")).toBeDefined();
   expect(screen.getByText("5점 만점에 4.5점")).toBeDefined();
   expect(screen.getByText("2026. 09. 21")).toBeDefined();
-  const chips = screen.getByRole("list", { name: "아이와 사용 기간, 반응" });
+  const chips = screen.getByRole("list", { name: "아이와 사용 기간, 재구매, 반응" });
   // 품종명이 있는 아이(3)는 그대로, 없는 아이(9)는 체구도 없어 종으로 떨어진다
   expect(chips.textContent).toBe(
-    "시츄 · 8세 · 4kg고양이 · 2세 · 4.2kg사용 2주째기호성 좋음소화·배변 나쁨",
+    "시츄 · 8세 · 4kg고양이 · 2세 · 4.2kg사용 2주째재구매 2회기호성 좋음소화·배변 나쁨",
   );
   // 후기를 쓴 뒤 바뀐 값이 그때 값인 것처럼 보이면 안 된다
   expect(useQueryPetDetail).not.toHaveBeenCalled();

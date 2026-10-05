@@ -72,6 +72,7 @@ const DETAIL: ReviewDetail = {
   ],
   rating: 4.5,
   usageDays: 21,
+  repurchaseCount: 1,
   goodPoints: [],
   badPoints: [],
   content: "계단 오를 때 덜 힘들어해요.",
@@ -259,6 +260,7 @@ describe("뷰어 아래 후기 카드", () => {
     expect(screen.getByText("시츄 · 8세 · 4kg")).toBeDefined();
     expect(screen.getByText("계단 오를 때 덜 힘들어해요.")).toBeDefined();
     expect(screen.getByText("사용 3주째")).toBeDefined();
+    expect(screen.getByText("재구매 1회")).toBeDefined();
   });
 
   // 공개 상세에 셋이 실려 이름 줄과 도움돼요가 살아났다

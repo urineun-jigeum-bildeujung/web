@@ -15,6 +15,7 @@ import { useToggleWishlist } from "@/features/toggle-wishlist";
 import { useQueryMyProfile } from "@/entities/member";
 import {
   formatPetProfile,
+  toRepurchaseLabels,
   toUsageLabel,
   useQueryReviewDetail,
   type ReviewDetail,
@@ -276,7 +277,12 @@ function ReviewDetailContent({
   // 아이 칩은 `isMine`으로 가리지 않는다 — 새로고침 직후엔 액세스 토큰이 아직 메모리에 없어 이 조회가
   // 인증 없이 나가고 `isMine`이 `false`로 온다. 내 아이가 아니면 스냅샷 값으로만 그린다
   const { profile } = useQueryMyProfile();
-  const chips = [toUsageLabel(review.usageDays), ...review.goodPoints, ...review.badPoints];
+  const chips = [
+    toUsageLabel(review.usageDays),
+    ...toRepurchaseLabels(review.repurchaseCount),
+    ...review.goodPoints,
+    ...review.badPoints,
+  ];
 
   return (
     <>
@@ -294,7 +300,7 @@ function ReviewDetailContent({
         </div>
 
         {/* 시안의 "[옵션] …" 줄은 응답에 옵션이 없어 두지 않는다 */}
-        <ul aria-label="아이와 사용 기간, 반응" className="flex flex-wrap gap-2">
+        <ul aria-label="아이와 사용 기간, 재구매, 반응" className="flex flex-wrap gap-2">
           {review.pets.map((pet) => (
             <PetChip key={pet.id} pet={pet} />
           ))}

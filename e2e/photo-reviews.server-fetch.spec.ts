@@ -173,6 +173,7 @@ test("뷰어 카드가 목록 카드와 같은 내용을 보여준다", async ({
   await expect(card.getByText("시츄 · 8세 · 4kg / 먼치킨 · 3세 · 4.2kg")).toBeVisible();
   await expect(card.getByText("확실히 예전보다 계단 오를 때 덜 힘들어해요.")).toBeVisible();
   await expect(card.getByText("사용 3주째")).toBeVisible();
+  await expect(card.getByText("재구매 2회")).toBeVisible();
 
   await expect(card.getByText("댕댕이맘", { exact: true })).toBeVisible();
   await expect(card.getByText("도움이 됐다고 했어요")).toBeVisible();
