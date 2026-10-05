@@ -14,6 +14,8 @@ import {
 } from "@/shared/ui/accordion";
 import { DefinitionRow } from "@/shared/ui/definition-row/definition-row";
 import { Icon } from "@/shared/ui/icon/icon";
+import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 
 import type { ProductDetailInfo } from "@/entities/product";
 
@@ -27,6 +29,9 @@ type ProductInfoPanelProps = {
   detail: ProductDetailInfo;
   match: PetMatch;
   petName?: string;
+  nutritionLoading?: boolean;
+  nutritionFailed?: boolean;
+  onRetryNutrition?: () => void;
 };
 
 /**
@@ -87,7 +92,14 @@ const NUTRIENT_LEGEND = [
   { label: "과다", src: "/images/product-detail/nutrient-legend-high.svg" },
 ] as const;
 
-export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelProps) {
+export function ProductInfoPanel({
+  detail,
+  match,
+  petName,
+  nutritionLoading,
+  nutritionFailed,
+  onRetryNutrition,
+}: ProductInfoPanelProps) {
   const specRows = toSpecRows(detail);
   return (
     <div className="flex flex-col">
@@ -142,7 +154,25 @@ export function ProductInfoPanel({ detail, match, petName }: ProductInfoPanelPro
           </ul>
         </div>
 
-        {match.nutrients.length === 0 ? (
+        {nutritionLoading ? (
+          <div
+            role="status"
+            aria-label="영양 분석을 불러오는 중"
+            className="flex flex-col gap-3 pt-3"
+          >
+            <Skeleton className="h-7 w-44" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        ) : nutritionFailed ? (
+          <div role="alert" className="flex flex-col items-start gap-3 pt-3">
+            <p className="text-sm text-muted-foreground">
+              영양 분석을 불러오지 못했어요. 다시 시도해 주세요.
+            </p>
+            <Button variant="outline" className="min-h-11 px-4" onClick={onRetryNutrition}>
+              다시 시도
+            </Button>
+          </div>
+        ) : match.nutrients.length === 0 ? (
           <p className="pt-3 text-sm text-muted-foreground">
             {petName ? `${petName} 기준으로는 ` : ""}아직 분석하지 못했어요.
           </p>

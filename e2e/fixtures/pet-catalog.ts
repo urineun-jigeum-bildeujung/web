@@ -96,6 +96,23 @@ const PET_DETAIL: Record<string, unknown> = {
  * 무엇을 보내는지는 `to-register-request.test.ts`가 본다.
  */
 export async function stubPetCatalog(page: Page) {
+  // Nutrition API의 합성 응답이다. 실제 제조사 성분·안전 근거로 사용하지 않는다 (#654).
+  await page.route("**/nutrition/analyze/by-service-id", (route) =>
+    route.fulfill({
+      json: {
+        nutrition_items: [
+          {
+            nutrient_code: "CRUDE_PROTEIN",
+            value: 28,
+            unit: "PERCENT",
+            nias_min: 18,
+            nias_max: 50,
+          },
+          { nutrient_code: "CRUDE_FAT", value: 12, unit: "PERCENT", nias_min: 2, nias_max: 8 },
+        ],
+      },
+    }),
+  );
   await page.route("**/pets/breeds*", (route) =>
     route.fulfill({
       json: route.request().url().includes("CAT") ? CAT_BREEDS : DOG_BREEDS,
