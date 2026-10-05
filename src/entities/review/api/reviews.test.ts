@@ -139,6 +139,7 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리
       ],
       rating: 4.5,
       usagePeriod: 16,
+      repurchaseCount: 1,
       answerValues: [{ questionKey: "PALATABILITY", answerValue: "POSITIVE" }],
       goodPoints: ["기호성 좋음"],
       badPoints: null,
@@ -168,6 +169,7 @@ test("리뷰 상세를 받아 화면 모양으로 옮기고(아이 여러 마리
     ],
     rating: 4.5,
     usageDays: 16,
+    repurchaseCount: 1,
     goodPoints: ["기호성 좋음"],
     badPoints: [],
     content: "확실히 잘 먹어요",
@@ -209,6 +211,7 @@ const PRODUCT_REVIEWS = {
       ],
       rating: 4.5,
       usagePeriod: 21,
+      repurchaseCount: 2,
       palatability: null,
       text: "계단 오를 때 덜 힘들어해요.",
       images: ["https://cdn/a.webp", "https://cdn/b.webp"],
@@ -225,6 +228,7 @@ const PRODUCT_REVIEWS = {
       ],
       rating: 4.5,
       usagePeriod: 22,
+      repurchaseCount: 0,
       palatability: "좋아함",
       text: "닉네임을 못 찾는 회원의 후기입니다.",
       images: null,
@@ -284,8 +288,8 @@ test("상품 후기 목록을 카드 모양으로 옮긴다", async () => {
     rating: 4.5,
     date: "2026. 09. 27",
     images: ["https://cdn/a.webp", "https://cdn/b.webp"],
-    // 서버가 일 수를 주므로 상세와 같은 함수로 적는다
-    tags: ["사용 3주째"],
+    // 서버가 일 수를 주므로 상세와 같은 함수로 적는다. 재구매는 사용 기간 뒤에 둔다
+    tags: ["사용 3주째", "재구매 2회"],
     content: "계단 오를 때 덜 힘들어해요.",
     likeCount: 3,
     liked: false,
@@ -301,6 +305,14 @@ test("사진이 없는 후기의 images를 빈 배열로 옮긴다", async () =>
   expect(page.reviews[1].images).toEqual([]);
   // 닉네임을 못 찾은 회원은 빈 문자열로 온다. 카드가 이름 줄을 그리지 않는 근거다
   expect(page.reviews[1].nickname).toBe("");
+});
+
+test("재구매가 0회인 후기에는 재구매 칩을 두지 않는다", async () => {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(Response.json(PRODUCT_REVIEWS)));
+
+  const page = await getProductReviews({ productId: "1", sort: "recommend", page: 0, size: 10 });
+
+  expect(page.reviews[1].tags).toEqual(["사용 3주째"]);
 });
 
 test("후기 사진은 쪽 정보를 그대로 넘기고 hasNext를 살려 준다", async () => {

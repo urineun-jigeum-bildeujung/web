@@ -38,6 +38,7 @@ const DETAIL: ReviewDetail = {
   pets: [],
   rating: 4.5,
   usageDays: 21,
+  repurchaseCount: 0,
   goodPoints: [],
   badPoints: [],
   content: "잘 먹어요",

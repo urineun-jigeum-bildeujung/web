@@ -40,6 +40,7 @@ export { useQueryReviewPhotos } from "./api/use-query-review-photos";
 export { useQueryFeaturedReviewPhotos } from "./api/use-query-featured-review-photos";
 export { formatPetProfile, formatPetProfiles } from "./lib/pet-label";
 export { toUsageLabel } from "./lib/usage-label";
+export { toRepurchaseLabels } from "./lib/repurchase-label";
 export { ReviewCard } from "./ui/review-card";
 export type { Review, ReviewPet } from "./model/review";
 export {

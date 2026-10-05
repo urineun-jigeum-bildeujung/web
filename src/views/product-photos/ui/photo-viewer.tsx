@@ -19,6 +19,7 @@ import { IoChevronBack, IoChevronForward } from "react-icons/io5";
 import { useToggleWishlist } from "@/features/toggle-wishlist";
 import {
   ReviewCard,
+  toRepurchaseLabels,
   toUsageLabel,
   useMutateReviewRecommend,
   useQueryReviewDetail,
@@ -231,7 +232,10 @@ export function PhotoViewer({
                 date: formatDisplayFullDate(review.createdAt) ?? "",
                 images: review.images,
                 // 목록 배지와 같은 문구를 쓴다
-                tags: [toUsageLabel(review.usageDays)],
+                tags: [
+                  toUsageLabel(review.usageDays),
+                  ...toRepurchaseLabels(review.repurchaseCount),
+                ],
                 content: review.content,
                 likeCount: review.likeCount,
                 liked: review.liked,
