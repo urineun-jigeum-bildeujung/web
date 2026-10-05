@@ -73,6 +73,7 @@ describe("toRegisterRequest", () => {
       breedId: 1,
       healthConcerns: [],
       allergies: [],
+      allergyProfileStatus: "UNKNOWN",
     });
   });
 
@@ -108,6 +109,7 @@ describe("toRegisterRequest", () => {
 
     expect(request?.healthConcerns).toEqual(["슬개골 탈구"]);
     expect(request?.allergies).toEqual(["CHICKEN"]);
+    expect(request?.allergyProfileStatus).toBe("KNOWN_LIST");
   });
 
   // 앞서 골라 둔 것이 "해당 없음"을 켠 뒤에도 흘러가면 추천 근거가 거짓이 된다
@@ -122,6 +124,7 @@ describe("toRegisterRequest", () => {
 
     expect(request?.healthConcerns).toEqual([]);
     expect(request?.allergies).toEqual([]);
+    expect(request?.allergyProfileStatus).toBe("KNOWN_NONE");
   });
 
   // 업로드 엔드포인트가 없어 URL을 만들 수 없다(#226)

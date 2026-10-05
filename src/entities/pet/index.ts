@@ -56,6 +56,7 @@ export {
   changeDefaultPet,
   type PetUpdate,
   type AllergyOption,
+  type AllergyProfileStatus,
   type PetListItem,
   type PetDetail,
 } from "./api/pets";
