@@ -7,7 +7,10 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 // 어느 아이를 고치는지는 쿼리로 온다(#268). 저장된 값도 상세 조회에서 온다 —
 // 무엇을 부르는지는 `entities/pet/api/pets.test.ts`가 본다
 const save = vi.fn();
-const profile = { status: "KNOWN_NONE" };
+const profile: {
+  status: "UNKNOWN" | "KNOWN_NONE" | "KNOWN_LIST";
+  allergies: { code: string; displayName: string }[];
+} = { status: "KNOWN_NONE", allergies: [] };
 vi.mock("../model/use-edit-pet", () => ({
   useEditPet: () => ({
     pet: {
@@ -24,7 +27,7 @@ vi.mock("../model/use-edit-pet", () => ({
       weight: 4,
       bcs: 3,
       healthConcerns: ["슬개골 탈구"],
-      allergies: [],
+      allergies: profile.allergies,
       allergyProfileStatus: profile.status,
       isDefault: true,
     },
@@ -162,4 +165,58 @@ test("미확인 빈 목록은 알레르기 없음으로 자동 선택하지 않�
   } finally {
     profile.status = "KNOWN_NONE";
   }
+});
+
+
+test("사용자가 수정하기 전에는 상세 갱신의 알레르기 상태를 반영한다", () => {
+  save.mockClear();
+  profile.status = "KNOWN_NONE";
+  profile.allergies = [];
+  const view = renderView();
+
+  expect(screen.getAllByRole("checkbox")[1].getAttribute("data-state")).toBe("checked");
+
+  profile.status = "KNOWN_LIST";
+  profile.allergies = [{ code: "CHICKEN", displayName: "닭고기" }];
+  view.rerender(<EditPetHealthView />);
+
+  expect(screen.getAllByRole("checkbox")[1].getAttribute("data-state")).toBe("unchecked");
+  expect(picker("피해야 할 성분").textContent).toContain("닭고기");
+
+  fireEvent.click(submitButton());
+  expect(save).toHaveBeenCalledWith({
+    healthConcerns: ["슬개골 탈구"],
+    allergies: ["CHICKEN"],
+    allergyProfileStatus: "KNOWN_LIST",
+  });
+
+  profile.status = "KNOWN_NONE";
+  profile.allergies = [];
+});
+
+test("사용자가 알레르기 상태를 수정한 뒤에는 상세 갱신이 로컬 선택을 덮어쓰지 않는다", () => {
+  save.mockClear();
+  profile.status = "UNKNOWN";
+  profile.allergies = [];
+  const view = renderView();
+
+  fireEvent.click(screen.getAllByRole("checkbox")[1]);
+  expect(screen.getAllByRole("checkbox")[1].getAttribute("data-state")).toBe("checked");
+
+  profile.status = "KNOWN_LIST";
+  profile.allergies = [{ code: "CHICKEN", displayName: "닭고기" }];
+  view.rerender(<EditPetHealthView />);
+
+  expect(screen.getAllByRole("checkbox")[1].getAttribute("data-state")).toBe("checked");
+  expect(picker("피해야 할 성분").disabled).toBe(true);
+
+  fireEvent.click(submitButton());
+  expect(save).toHaveBeenCalledWith({
+    healthConcerns: ["슬개골 탈구"],
+    allergies: [],
+    allergyProfileStatus: "KNOWN_NONE",
+  });
+
+  profile.status = "KNOWN_NONE";
+  profile.allergies = [];
 });
