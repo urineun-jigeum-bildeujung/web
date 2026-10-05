@@ -167,7 +167,6 @@ test("미확인 빈 목록은 알레르기 없음으로 자동 선택하지 않�
   }
 });
 
-
 test("사용자가 수정하기 전에는 상세 갱신의 알레르기 상태를 반영한다", () => {
   save.mockClear();
   profile.status = "KNOWN_NONE";
