@@ -8,7 +8,12 @@
 
 import { useState } from "react";
 
-import { HealthPickerField, useQueryHealthOptions, type PetDetail } from "@/entities/pet";
+import {
+  HealthPickerField,
+  useQueryHealthOptions,
+  type PetDetail,
+  type PetUpdate,
+} from "@/entities/pet";
 import { CheckboxRow } from "@/shared/ui/checkbox-row/checkbox-row";
 
 import { useEditPet } from "../model/use-edit-pet";
@@ -18,18 +23,16 @@ import { EditPetStatus } from "./edit-pet-status";
 type HealthFormProps = {
   pet: PetDetail;
   isSaving: boolean;
-  onSave: (patch: { healthConcerns: string[]; allergies: string[] }) => void;
+  onSave: (patch: PetUpdate) => void;
 };
 
 function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
   // 갈래도 항목도 종마다 다르다. 저장된 아이의 종으로 받는다
   const { options, isLoading, error } = useQueryHealthOptions(pet.species);
-  // 빈 배열은 "해당 없음"으로 답한 것이다 — 안 고른 것과 없다고 답한 것을 서버가
-  // 가리지 못해, 비어 있으면 켠 것으로 읽는다
   const [concern, setConcern] = useState(pet.healthConcerns);
   const [noConcern, setNoConcern] = useState(pet.healthConcerns.length === 0);
   const [allergy, setAllergy] = useState(pet.allergies.map((item) => item.code));
-  const [noAllergy, setNoAllergy] = useState(pet.allergies.length === 0);
+  const [noAllergy, setNoAllergy] = useState(pet.allergyProfileStatus === "KNOWN_NONE");
 
   const concernAnswered = concern.length > 0 || noConcern;
   const allergyAnswered = allergy.length > 0 || noAllergy;
@@ -46,6 +49,7 @@ function HealthForm({ pet, isSaving, onSave }: HealthFormProps) {
         onSave({
           healthConcerns: noConcern ? [] : concern,
           allergies: noAllergy ? [] : allergy,
+          allergyProfileStatus: noAllergy ? "KNOWN_NONE" : "KNOWN_LIST",
         })
       }
     >

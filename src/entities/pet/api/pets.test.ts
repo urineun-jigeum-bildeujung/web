@@ -96,7 +96,20 @@ test("알레르기는 코드와 표시명을 함께 넘긴다", async () => {
 
   expect(pet.allergies).toEqual([{ code: "CHICKEN", displayName: "닭고기" }]);
   expect(pet.healthConcerns).toEqual(["슬개골 탈구"]);
+  expect(pet.allergyProfileStatus).toBe("KNOWN_LIST");
 });
+
+test.each([undefined, "UNKNOWN", "KNOWN_NONE"])(
+  "빈 목록은 명시 상태만 보존한다: %s",
+  async (allergyProfileStatus) => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(Response.json({ ...DETAIL, allergies: [], allergyProfileStatus })),
+    );
+    const pet = await getPetDetail("3");
+    expect(pet.allergyProfileStatus).toBe(allergyProfileStatus ?? "UNKNOWN");
+  },
+);
 
 // 고양이는 체구를 묻지 않아 서버가 `null`을 준다(#391). 매핑에서 깨지면 안 된다
 test("고양이 상세의 체구 null은 그대로 null이다", async () => {

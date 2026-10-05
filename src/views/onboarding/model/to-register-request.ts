@@ -4,7 +4,13 @@
 // API는 서버가 다루기 좋은 enum과 숫자로 받는다. 옮기는 자리를 화면 안에 두면
 // 테스트할 수 없어 여기로 뺐다.
 
-import { parseAge, parseWeight, SPECIES_PARAM, type PetProfileDraft } from "@/entities/pet";
+import {
+  parseAge,
+  parseWeight,
+  SPECIES_PARAM,
+  type PetProfileDraft,
+  type AllergyProfileStatus,
+} from "@/entities/pet";
 import { parseBirthDate } from "@/shared/lib/birth-date";
 
 /** 백엔드 `PetRegisterRequest`와 같은 모양이다 */
@@ -25,6 +31,7 @@ export type PetRegisterRequest = {
   healthConcerns: string[];
   /** `CHICKEN` 같은 코드다 */
   allergies: string[];
+  allergyProfileStatus: AllergyProfileStatus;
   /** 올린 사진의 CDN 주소. 등록 훅이 업로드를 마친 뒤 채운다 */
   image?: string;
 };
@@ -38,8 +45,7 @@ const SIZE = { small: "SMALL", medium: "MEDIUM", large: "LARGE" } as const;
  * **사진은 여기서 다루지 않는다.** 요청의 `image`는 URL이라 먼저 S3에 올려야 하는데 그것은
  * 비동기 왕복이다. 등록 훅이 올린 뒤 `image`를 채운다(#269).
  *
- * "해당 없음"을 켠 항목은 빈 배열로 보낸다. 안 고른 것과 없다고 답한 것을 서버가
- * 가릴 수는 없지만, 적어도 앞서 골라 둔 것이 남아 흘러가지는 않는다.
+ * 알레르기 없음은 명시 상태와 빈 배열을 함께 보내 미응답과 구분한다.
  */
 export function toRegisterRequest(draft: PetProfileDraft): PetRegisterRequest | null {
   const sex = SEX[draft.gender as keyof typeof SEX];
@@ -73,5 +79,10 @@ export function toRegisterRequest(draft: PetProfileDraft): PetRegisterRequest | 
     breedId: draft.breedId,
     healthConcerns: draft.noConcern ? [] : draft.concern,
     allergies: draft.noAllergy ? [] : draft.allergy,
+    allergyProfileStatus: draft.noAllergy
+      ? "KNOWN_NONE"
+      : draft.allergy.length > 0
+        ? "KNOWN_LIST"
+        : "UNKNOWN",
   };
 }

@@ -34,6 +34,7 @@ type PetDetailResponse = {
   healthConcerns: string[];
   /** 등록 선택지(`GET /pets/health-options`)와 같은 모양이다 */
   allergies: { code: string; displayName: string }[];
+  allergyProfileStatus?: AllergyProfileStatus;
   image: string | null;
   isDefault: boolean;
 };
@@ -44,6 +45,8 @@ export type AllergyOption = {
   code: string;
   displayName: string;
 };
+
+export type AllergyProfileStatus = "UNKNOWN" | "KNOWN_NONE" | "KNOWN_LIST";
 
 /** 아이 전환 줄이 쓰는 최소 정보 */
 export type PetListItem = {
@@ -78,6 +81,7 @@ export type PetDetail = {
    * 코드를 그대로 보여야 했는데, 백엔드가 표시명을 함께 싣기로 하면서 사라진 문제다.
    */
   allergies: AllergyOption[];
+  allergyProfileStatus?: AllergyProfileStatus;
   photoUrl?: string;
   isDefault: boolean;
 };
@@ -122,6 +126,8 @@ export async function getPetDetail(petId: string): Promise<PetDetail> {
     bcs: pet.bcs,
     healthConcerns: pet.healthConcerns,
     allergies: pet.allergies,
+    allergyProfileStatus:
+      pet.allergyProfileStatus ?? (pet.allergies.length > 0 ? "KNOWN_LIST" : "UNKNOWN"),
     ...(pet.image && { photoUrl: pet.image }),
     isDefault: pet.isDefault,
   };
@@ -149,6 +155,7 @@ export type PetUpdate = Partial<{
   breedId: number;
   healthConcerns: string[];
   allergies: string[];
+  allergyProfileStatus: AllergyProfileStatus;
 }>;
 
 export function updatePet(petId: string, patch: PetUpdate): Promise<void> {

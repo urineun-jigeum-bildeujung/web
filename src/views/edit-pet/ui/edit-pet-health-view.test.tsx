@@ -7,6 +7,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn() }) }));
 // 어느 아이를 고치는지는 쿼리로 온다(#268). 저장된 값도 상세 조회에서 온다 —
 // 무엇을 부르는지는 `entities/pet/api/pets.test.ts`가 본다
 const save = vi.fn();
+const profile = { status: "KNOWN_NONE" };
 vi.mock("../model/use-edit-pet", () => ({
   useEditPet: () => ({
     pet: {
@@ -24,6 +25,7 @@ vi.mock("../model/use-edit-pet", () => ({
       bcs: 3,
       healthConcerns: ["슬개골 탈구"],
       allergies: [],
+      allergyProfileStatus: profile.status,
       isDefault: true,
     },
     missingPetId: false,
@@ -141,5 +143,23 @@ test("수정완료를 누르면 고른 값만 보낸다", () => {
 
   fireEvent.click(submitButton());
 
-  expect(save).toHaveBeenCalledWith({ healthConcerns: ["슬개골 탈구"], allergies: [] });
+  expect(save).toHaveBeenCalledWith({
+    healthConcerns: ["슬개골 탈구"],
+    allergies: [],
+    allergyProfileStatus: "KNOWN_NONE",
+  });
+});
+
+test("미확인 빈 목록은 알레르기 없음으로 자동 선택하지 않는다", () => {
+  profile.status = "UNKNOWN";
+  try {
+    renderView();
+    const [, allergyCheck] = screen.getAllByRole("checkbox");
+    expect(allergyCheck.getAttribute("data-state")).toBe("unchecked");
+    expect(submitButton().disabled).toBe(true);
+    fireEvent.click(allergyCheck);
+    expect(submitButton().disabled).toBe(false);
+  } finally {
+    profile.status = "KNOWN_NONE";
+  }
 });
